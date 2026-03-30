@@ -1,0 +1,145 @@
+"use server"
+
+import { createClient } from "@/utils/supabase/server";
+import { revalidatePath } from "next/cache";
+
+const SAFETY_KEYWORDS = ["whatsapp", "phone", "paypal", "email", "contact", "pay me", "transfer"];
+const CONTACT_INFO_REGEX = /([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6})|(\+?[0-9\s-]{10,})/g;
+
+export async function sendMessage(conversationId: string, content: string) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) return { error: "Unauthorized" };
+
+  // 1. Safety Flagging (Keywords & Contact Info)
+  const lowerContent = content.toLowerCase();
+  const flaggedKeywords = SAFETY_KEYWORDS.filter(kw => lowerContent.includes(kw));
+  const hasContactInfo = CONTACT_INFO_REGEX.test(content);
+  const isFlagged = flaggedKeywords.length > 0 || hasContactInfo;
+
+  let flaggedReason = null;
+  if (isFlagged) {
+    const reasons = [];
+    if (flaggedKeywords.length > 0) reasons.push(`Keywords: ${flaggedKeywords.join(", ")}`);
+    if (hasContactInfo) reasons.push("Detected contact info (email/phone)");
+    flaggedReason = reasons.join(" | ");
+  }
+
+  const { error } = await supabase
+    .from("messages")
+    .insert({
+      conversation_id: conversationId,
+      sender_id: user.id,
+      content: content,
+      is_flagged: isFlagged,
+      flagged_reason: flaggedReason
+    });
+
+  if (error) {
+    console.error("Send message error:", error.message);
+    return { error: error.message };
+  }
+
+  // Also update the conversation last_message_at timestamp (trigger handles this but revalidate helps)
+  revalidatePath("/dashboard/messages");
+  
+  return { success: true };
+}
+
+export async function createConversation(otherParticipantId: string, bookingId?: string) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) return { error: "Unauthorized" };
+
+  // Check if conversation already exists between these two users for this specific context
+  let query = supabase
+    .from("conversations")
+    .select("id")
+    .or(`and(participant_1_id.eq.${user.id},participant_2_id.eq.${otherParticipantId}),and(participant_1_id.eq.${otherParticipantId},participant_2_id.eq.${user.id})`);
+    
+  if (bookingId) {
+    query = query.eq("booking_id", bookingId);
+  } else {
+    query = query.is("booking_id", null);
+  }
+
+  const { data: existing } = await query.single();
+
+  if (existing) {
+    return { conversationId: existing.id };
+  }
+
+  // Create new conversation
+  const { data: newConv, error } = await supabase
+    .from("conversations")
+    .insert({
+       participant_1_id: user.id,
+       participant_2_id: otherParticipantId,
+       booking_id: bookingId || null
+    })
+    .select("id")
+    .single();
+
+  if (error) {
+    console.error("Create conversation error:", error.message);
+    return { error: error.message };
+  }
+
+  revalidatePath("/dashboard/messages");
+  return { conversationId: newConv.id };
+}
+
+export async function initiateInquiry(otherParticipantId: string, subject: string, goal: string) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) return { error: "Unauthorized" };
+
+  // 1. Create the conversation
+  const convResult = await createConversation(otherParticipantId);
+  if (convResult.error || !convResult.conversationId) return convResult;
+
+  // 2. Send the structured first message
+  const inquiryContent = `**New Lead Inquiry** 🛡️\n\n**Subject**: ${subject}\n**Learning Goal**: ${goal}`;
+  
+  const { error } = await supabase
+    .from("messages")
+    .insert({
+      conversation_id: convResult.conversationId,
+      sender_id: user.id,
+      content: inquiryContent,
+      is_flagged: CONTACT_INFO_REGEX.test(subject) || CONTACT_INFO_REGEX.test(goal),
+      flagged_reason: (CONTACT_INFO_REGEX.test(subject) || CONTACT_INFO_REGEX.test(goal)) ? "Detected contact info in inquiry" : null
+    });
+
+  if (error) {
+    console.error("Inquiry message error:", error.message);
+    return { error: error.message };
+  }
+
+  revalidatePath("/dashboard/messages");
+  return { success: true, conversationId: convResult.conversationId };
+}
+
+export async function markAsRead(conversationId: string) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) return { error: "Unauthorized" };
+
+  const { error } = await supabase
+    .from("messages")
+    .update({ is_read: true })
+    .eq("conversation_id", conversationId)
+    .neq("sender_id", user.id);
+
+  if (error) {
+    console.error("Mark read error:", error.message);
+    return { error: error.message };
+  }
+
+  revalidatePath("/dashboard/messages");
+  return { success: true };
+}
