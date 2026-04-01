@@ -1,17 +1,12 @@
 import React from 'react';
-import { Booking } from '@/lib/supabase-queries';
+import { ClassPost } from '@/lib/class-queries';
 
 interface HomeworkFeedProps {
-  bookings: Booking[];
+  assignments: (ClassPost & { class_display_name?: string; tutor_name?: string; tutor_avatar?: string })[];
 }
 
-export default function HomeworkFeed({ bookings }: HomeworkFeedProps) {
-  // Find completed bookings that have homework assigned
-  const assignments = bookings
-    .filter(b => b.status === "completed" && b.lesson_notes?.homework && b.lesson_notes.homework.trim() !== "")
-    .sort((a, b) => new Date(b.requested_date).getTime() - new Date(a.requested_date).getTime());
-
-  if (assignments.length === 0) return null;
+export default function HomeworkFeed({ assignments }: HomeworkFeedProps) {
+  if (!assignments || assignments.length === 0) return null;
 
   return (
     <section className="bg-primary/5 rounded-[2.5rem] p-8 border-2 border-primary/20 shadow-xl shadow-primary/5 mb-12">
@@ -28,32 +23,38 @@ export default function HomeworkFeed({ bookings }: HomeworkFeedProps) {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-         {assignments.slice(0, 4).map(booking => (
-            <div key={`hw-${booking.id}`} className="bg-white p-6 rounded-[2rem] border border-primary/10 shadow-lg flex gap-4 relative overflow-hidden group">
+         {assignments.slice(0, 4).map(post => (
+            <div key={`hw-${post.id}`} className="bg-white p-6 rounded-[2rem] border border-primary/10 shadow-lg flex gap-4 relative overflow-hidden group">
                <div className="w-1.5 bg-primary/20 absolute left-0 top-0 bottom-0 rounded-l-[2rem] group-hover:bg-primary transition-colors"></div>
                
                <div className="flex-1 pl-2">
                  <div className="flex justify-between items-start mb-2">
                     <span className="inline-block px-2.5 py-0.5 bg-primary/10 text-primary text-[10px] font-black rounded-lg uppercase tracking-wider">
-                       {booking.subject}
+                       {post.class_display_name || "Class"}
                     </span>
                     <span className="text-[10px] font-black uppercase tracking-wider text-secondary/40">
-                       {new Date(booking.requested_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                       {new Date(post.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
                     </span>
                  </div>
                  
-                 <p className="text-secondary font-medium text-sm my-3 italic border-l-2 border-secondary/10 pl-3 py-1">
-                    "{booking.lesson_notes?.homework}"
+                 <p className="text-secondary font-medium text-sm my-3 italic border-l-2 border-secondary/10 pl-3 py-1 line-clamp-3">
+                    "{post.content}"
                  </p>
+                 
+                 {post.due_date && (
+                   <div className="mb-3 text-[10px] font-black text-orange-600 bg-orange-50 px-2 py-1 rounded inline-block">
+                      Due: {new Date(post.due_date).toLocaleDateString()}
+                   </div>
+                 )}
                  
                  <div className="flex items-center gap-2 mt-4 pt-4 border-t border-secondary/5">
                     <img 
-                      src={booking.tutor_avatar || "/tutor_placeholder.webp"} 
-                      alt={booking.tutor_name || "Tutor"} 
+                      src={post.tutor_avatar || "/tutor_placeholder.webp"} 
+                      alt={post.tutor_name || "Tutor"} 
                       className="w-6 h-6 rounded-full object-cover shadow-sm bg-secondary/10" 
                     />
                     <span className="text-xs font-bold text-secondary/60">
-                       Assigned by <span className="text-secondary">{booking.tutor_name}</span>
+                       Assigned by <span className="text-secondary">{post.tutor_name}</span>
                     </span>
                  </div>
                </div>
@@ -63,3 +64,4 @@ export default function HomeworkFeed({ bookings }: HomeworkFeedProps) {
     </section>
   );
 }
+

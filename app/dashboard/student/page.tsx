@@ -73,6 +73,9 @@ export default async function StudentDashboard() {
   const availableTutors = await getTutors("", "All");
   const announcements = await getActiveAnnouncementsForUser();
 
+  const { getHomeworkForStudent } = await import("@/lib/class-queries");
+  const assignments = await getHomeworkForStudent(user.id);
+
   return (
     <div className="p-8 max-w-5xl mx-auto space-y-12">
       {/* Platform Announcements Hub */}
@@ -106,7 +109,7 @@ export default async function StudentDashboard() {
 
       <StudentProgressStats bookings={bookings} />
 
-      <HomeworkFeed bookings={bookings} />
+      <HomeworkFeed assignments={assignments} />
 
       {/* SECURE PAYMENT REQUIRED (Accepted Handshake) */}
       {toPay.length > 0 && (

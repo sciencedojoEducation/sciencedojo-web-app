@@ -46,6 +46,7 @@ export default async function DashboardSidebar({ role }: DashboardSidebarProps) 
   const navLinks = {
     parent: [
       { name: "My Bookings", href: "/dashboard/parent", icon: "📅" },
+      { name: "My Classes", href: "/dashboard/classes", icon: "🎓" },
       { name: "Messages", href: "/dashboard/messages", icon: "💬", badge: unreadCount },
       { name: "Browse Tutors", href: "/dashboard/parent/tutors", icon: "🔍" },
       { name: "Settings", href: "/dashboard/parent/settings", icon: "⚙️" },
@@ -53,6 +54,7 @@ export default async function DashboardSidebar({ role }: DashboardSidebarProps) 
     ],
     student: [
       { name: "My Bookings", href: "/dashboard/student", icon: "📅" },
+      { name: "My Classes", href: "/dashboard/classes", icon: "🎓" },
       { name: "Messages", href: "/dashboard/messages", icon: "💬", badge: unreadCount },
       { name: "Browse Tutors", href: "/dashboard/student/tutors", icon: "🔍" },
       { name: "Settings", href: "/dashboard/student/settings", icon: "⚙️" },
@@ -60,6 +62,7 @@ export default async function DashboardSidebar({ role }: DashboardSidebarProps) 
     ],
     tutor: [
       { name: "My Schedule", href: "/dashboard/tutor", icon: "📆" },
+      { name: "My Classes", href: "/dashboard/classes", icon: "🎓" },
       { name: "Messages", href: "/dashboard/messages", icon: "💬", badge: unreadCount },
       { name: "Earnings", href: "/dashboard/tutor/earnings", icon: "💰" },
       { name: "Profile Settings", href: "/dashboard/tutor/settings", icon: "👤" },

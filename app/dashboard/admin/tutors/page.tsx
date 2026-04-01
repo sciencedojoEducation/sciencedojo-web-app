@@ -181,10 +181,12 @@ export default async function AdminTutorsPage() {
                 <tr key={tutor.id} className="group hover:bg-slate-50/50 transition-all border-b border-slate-100 last:border-0">
                   <td className="p-8">
                     <div className="flex items-center gap-6">
-                      <div className="w-14 h-14 rounded-full border-2 border-white shadow-md overflow-hidden bg-slate-100 ring-2 ring-slate-100 relative">
-                        <Image src={tutor.avatar_url || "/tutor_placeholder.webp"} alt={tutor.full_name} fill className="object-cover" />
-                        <div className="absolute -bottom-1 -right-1 bg-blue-500 text-white p-1 rounded-full border-2 border-white">
-                          <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={4} d="M5 13l4 4L19 7" /></svg>
+                      <div className="relative">
+                        <div className="w-14 h-14 rounded-full border-2 border-white shadow-md overflow-hidden bg-slate-100 ring-2 ring-slate-100">
+                          <Image src={tutor.avatar_url || "/tutor_placeholder.webp"} alt={tutor.full_name} fill className="object-cover" />
+                        </div>
+                        <div className="absolute -bottom-0.5 -right-0.5 bg-blue-500 text-white p-1 rounded-full border-2 border-white shadow-sm z-10 flex items-center justify-center">
+                          <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
                         </div>
                       </div>
                       <div>

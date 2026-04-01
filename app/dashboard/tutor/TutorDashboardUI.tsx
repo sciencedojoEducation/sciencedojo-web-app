@@ -3,6 +3,7 @@
 import { Booking, TutorProfile, AvailabilitySlot } from "@/lib/supabase-queries";
 import { Announcement } from "@/lib/announcement-queries";
 import { useState } from "react";
+import Link from "next/link";
 import { updateBookingStatus, updateTutorProfile, completeSessionAction } from "@/app/tutor/actions";
 import TutorSchedule from "@/components/TutorSchedule";
 import TutorAvailabilityCalendar from "@/components/TutorAvailabilityCalendar";
@@ -155,12 +156,13 @@ export default function TutorDashboardUI({ userId, userName, avatarUrl, bookings
   ];
 
   // Classroom grouping logic
-  const studentsMap: Record<string, { name: string; avatar: string; history: Booking[] }> = {};
+  const studentsMap: Record<string, { name: string; avatar: string; classId?: string; history: Booking[] }> = {};
   past.forEach(b => {
     if (!studentsMap[b.student_id]) {
       studentsMap[b.student_id] = { 
         name: b.student_name || "ScienceDojo Student", 
         avatar: b.student_avatar || "", 
+        classId: (b as any).class_id,
         history: [] 
       };
     }
@@ -341,9 +343,12 @@ export default function TutorDashboardUI({ userId, userName, avatarUrl, bookings
                           <h3 className="font-black text-secondary text-xl">
                              {new Date(booking.requested_date).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}
                           </h3>
-                          <p className="text-secondary/60 text-sm mt-1 font-bold">Student Account Found</p>
+                        <div className="flex items-center gap-4 mt-1">
+                           <StudentAvatar name={booking.student_name || "Student"} avatarUrl={booking.student_avatar} sizePx={32} />
+                           <p className="text-secondary/60 text-sm font-bold">{booking.student_name}</p>
+                        </div>
                        </div>
-                       <div className="flex flex-wrap gap-2">
+                       <div className="flex flex-row items-center gap-3 shrink-0">
                           <a href={booking.meeting_url || "#"} target="_blank" rel="noreferrer" className="px-8 py-3 bg-primary text-white font-black rounded-2xl hover:bg-primary-hover transition-all shadow-xl text-sm">
                              Launch Dojo
                           </a>
@@ -387,7 +392,9 @@ export default function TutorDashboardUI({ userId, userName, avatarUrl, bookings
                                     <p className="text-xs font-bold text-secondary/40">{student.history.length} Lessons Completed</p>
                                  </div>
                               </div>
-                              <span className="text-[10px] font-black py-2 px-4 bg-primary/10 text-primary rounded-full uppercase tracking-widest">ScienceDojo Classroom</span>
+                              <Link href={(student.classId && student.classId !== "undefined") ? `/dashboard/classes/${student.classId}` : "/dashboard/classes"} className="text-[10px] font-black py-2 px-4 bg-accent/10 hover:bg-accent/20 transition-colors text-accent rounded-full uppercase tracking-widest flex items-center gap-2">
+                                 Open Classroom <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
+                              </Link>
                            </div>
                            
                            <div className="p-8 space-y-4">

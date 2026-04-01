@@ -11,16 +11,60 @@ interface LessonHistoryTableProps {
   currentUserRole?: string;
 }
 
+const AVATAR_GRADIENTS = [
+  "from-violet-500 to-indigo-500",
+  "from-pink-500 to-rose-500",
+  "from-amber-500 to-orange-500",
+  "from-emerald-500 to-teal-500",
+  "from-sky-500 to-blue-500",
+  "from-purple-500 to-fuchsia-500",
+];
+
+function getAvatarGradient(seed: string): string {
+  let hash = 0;
+  for (let i = 0; i < seed.length; i++) {
+    hash = seed.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return AVATAR_GRADIENTS[Math.abs(hash) % AVATAR_GRADIENTS.length];
+}
+
 export default function LessonHistoryTable({ bookings, currentUserRole = "student" }: LessonHistoryTableProps) {
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [reviewBooking, setReviewBooking] = useState<Booking | null>(null);
   const [disputeBooking, setDisputeBooking] = useState<Booking | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [startX, setStartX] = useState(0);
+  const [scrollLeft, setScrollLeft] = useState(0);
+
+  // Implementing Grab-to-Scroll
+  const handleMouseDown = (e: React.MouseEvent) => {
+    const container = e.currentTarget as HTMLDivElement;
+    setIsDragging(true);
+    setStartX(e.pageX - container.offsetLeft);
+    setScrollLeft(container.scrollLeft);
+  };
+
+  const handleMouseLeave = () => {
+    setIsDragging(false);
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging) return;
+    e.preventDefault();
+    const container = e.currentTarget as HTMLDivElement;
+    const x = e.pageX - container.offsetLeft;
+    const walk = (x - startX) * 2; // Scroll speed
+    container.scrollLeft = scrollLeft - walk;
+  };
 
   // Helper to safely get the first note or null
   const getNote = (booking: Booking) => {
     if (!booking.lesson_notes) return null;
-    // Handle both object and array return formats from Supabase join
     if (Array.isArray(booking.lesson_notes)) {
       return booking.lesson_notes[0] || null;
     }
@@ -28,78 +72,116 @@ export default function LessonHistoryTable({ bookings, currentUserRole = "studen
   };
 
   return (
-    <div className="bg-white rounded-[2rem] border border-secondary/10 shadow-sm overflow-hidden overflow-x-auto">
-      <table className="w-full text-left border-collapse min-w-[600px]">
-        <thead>
-          <tr className="bg-slate-50 border-b border-secondary/10 text-secondary/40 text-[10px] font-black uppercase tracking-[0.2em]">
-            <th className="p-6">Date</th>
-            <th className="p-6">Tutor</th>
-            <th className="p-6">Subject</th>
-            <th className="p-6">Status</th>
-            <th className="p-6 text-right">Actions</th>
-          </tr>
-        </thead>
-        <tbody className="font-medium">
-          {bookings.map((booking, i) => {
-            const note = getNote(booking);
-            return (
-              <tr key={booking.id} className={`border-b border-secondary/5 hover:bg-slate-50/50 transition-colors ${i === bookings.length - 1 ? 'border-none' : ''}`}>
-                <td className="p-6 text-sm text-secondary font-black">
-                  {new Date(booking.requested_date).toLocaleDateString(undefined, { 
-                    month: 'short', 
-                    day: 'numeric', 
-                    year: 'numeric' 
-                  })}
-                </td>
-                <td className="p-6 text-sm text-secondary flex items-center gap-3 font-bold">
-                  <div className="w-10 h-10 relative rounded-xl overflow-hidden border-2 border-white shadow-xl">
-                    <Image src={booking.tutor_avatar || "/tutor_placeholder.webp"} alt="" fill className="object-cover" />
-                  </div>
-                  {booking.tutor_name}
-                </td>
-                <td className="p-6">
-                   <span className="text-[10px] font-black text-secondary/40 bg-secondary/5 px-2 py-1 rounded-md uppercase tracking-wider">{booking.subject}</span>
-                </td>
-                <td className="p-6">
-                  <span className="px-3 py-1 bg-green-500/10 text-green-600 rounded-full text-[10px] font-black uppercase tracking-widest border border-green-500/20">Completed</span>
-                </td>
-                <td className="p-6 text-right flex justify-end gap-2">
-                  {note ? (
-                    <button 
-                      onClick={() => {
-                        setSelectedBooking(booking);
-                        setShowModal(true);
-                      }}
-                      className="px-6 py-2 bg-primary text-white text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-primary-hover shadow-lg transition-all active:scale-95 h-8"
-                    >
-                      View Summary
-                    </button>
-                  ) : (
-                    <span className="text-[10px] font-black text-secondary/20 uppercase tracking-widest italic flex h-8 items-center mr-2">Note Pending</span>
-                  )}
+    <div className="relative group/scroll bg-white rounded-[2.5rem] border border-secondary/10 shadow-xl shadow-black/[0.02] overflow-hidden p-4">
+      {/* 💎 Grab-to-Scroll Table Container */}
+      <div 
+        onMouseDown={handleMouseDown}
+        onMouseLeave={handleMouseLeave}
+        onMouseUp={handleMouseUp}
+        onMouseMove={handleMouseMove}
+        className={`overflow-x-auto pb-6 grab-scroll ${isDragging ? 'grabbing select-none cursor-grabbing' : 'cursor-grab'}`}
+      >
+        {/* Right-Fade Indicator to signal more content */}
+        <div className="absolute right-4 top-4 bottom-10 w-20 bg-gradient-to-l from-white to-transparent pointer-events-none z-10 opacity-0 group-hover/scroll:opacity-100 transition-opacity"></div>
+        
+        <table className="w-full text-left border-collapse min-w-[800px]">
+          <thead>
+            <tr className="bg-slate-50/50 border-b border-secondary/5 text-secondary/40 text-[10px] font-black uppercase tracking-[0.2em]">
+              <th className="px-8 py-5">Date</th>
+              <th className="px-8 py-5">Instructor</th>
+              <th className="px-8 py-5">Subject</th>
+              <th className="px-8 py-5">Status</th>
+              <th className="px-8 py-5 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody className="font-medium">
+            {bookings.map((booking, i) => {
+              const note = getNote(booking);
+              const tutorInitial = (booking.tutor_name || "T").charAt(0).toUpperCase();
+              const gradient = getAvatarGradient(booking.tutor_id || booking.tutor_name || "seed");
 
-                  {currentUserRole !== 'tutor' && !booking.has_review && (
-                    <button 
-                      onClick={() => setReviewBooking(booking)}
-                      className="px-6 py-2 bg-yellow-400 text-yellow-900 border border-yellow-500 shadow-sm text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-yellow-500 transition-all active:scale-95 flex flex-col justify-center items-center h-8"
-                    >
-                      Review
-                    </button>
-                  )}
+              return (
+                <tr key={booking.id} className={`border-b border-secondary/5 hover:bg-slate-50/30 transition-colors ${i === bookings.length - 1 ? 'border-none' : ''}`}>
+                  <td className="px-8 py-6 text-sm text-secondary font-black">
+                     <div className="flex flex-col">
+                        <span>{new Date(booking.requested_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                        <span className="text-[10px] text-secondary/30 font-bold tracking-tight mt-0.5">#{booking.id.slice(0, 8)}</span>
+                     </div>
+                  </td>
+                  <td className="px-8 py-6">
+                    <div className="flex items-center gap-4">
+                       <div className="w-12 h-12 relative rounded-2xl overflow-hidden border-2 border-white shadow-lg flex-shrink-0">
+                          {booking.tutor_avatar ? (
+                             <Image src={booking.tutor_avatar} alt="" fill className="object-cover" />
+                          ) : (
+                             <div className={`w-full h-full bg-gradient-to-br ${gradient} flex items-center justify-center text-white font-black text-lg`}>
+                                {tutorInitial}
+                             </div>
+                          )}
+                       </div>
+                       <div>
+                          <p className="text-sm font-black text-secondary">{booking.tutor_name}</p>
+                          <p className="text-[10px] font-bold text-secondary/40 uppercase tracking-widest">Verified Expert</p>
+                       </div>
+                    </div>
+                  </td>
+                  <td className="px-8 py-6">
+                     <span className="text-[10px] font-black text-primary bg-primary/5 px-3 py-1.5 rounded-full border border-primary/10 uppercase tracking-widest">{booking.subject}</span>
+                  </td>
+                  <td className="px-8 py-6">
+                    <div className="inline-flex items-center gap-2 px-3 py-1 bg-emerald-50 text-emerald-600 rounded-full text-[10px] font-black uppercase tracking-widest border border-emerald-100">
+                       <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                       Completed
+                    </div>
+                  </td>
+                  <td className="px-8 py-6 text-right">
+                    <div className="flex items-center justify-end gap-3">
+                      {note ? (
+                        <button 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedBooking(booking);
+                            setShowModal(true);
+                          }}
+                          className="px-5 py-2.5 bg-primary text-white text-[10px] font-black uppercase tracking-widest rounded-full hover:bg-primary/90 shadow-lg shadow-primary/20 transition-all active:scale-95 whitespace-nowrap"
+                        >
+                          View Summary
+                        </button>
+                      ) : (
+                        <span className="text-[10px] font-black text-secondary/30 uppercase tracking-widest italic mr-2">Note Pending</span>
+                      )}
 
-                  <button 
-                    onClick={() => setDisputeBooking(booking)}
-                    className="w-8 h-8 flex items-center justify-center bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-all border border-red-100"
-                    title="Report an Issue"
-                  >
-                     ⚖️
-                  </button>
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
+                      {currentUserRole !== 'tutor' && !booking.has_review && (
+                        <button 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setReviewBooking(booking);
+                          }}
+                          className="px-5 py-2.5 bg-amber-400 text-amber-950 text-[10px] font-black uppercase tracking-widest rounded-full hover:bg-amber-500 shadow-lg shadow-amber-200 transition-all active:scale-95 whitespace-nowrap"
+                        >
+                          Review
+                        </button>
+                      )}
+
+                      <button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setDisputeBooking(booking);
+                        }}
+                        className="w-10 h-10 flex items-center justify-center bg-slate-50 text-secondary/40 rounded-xl hover:bg-red-50 hover:text-red-500 transition-all border border-secondary/5 group shadow-sm flex-shrink-0"
+                        title="Report an Issue"
+                      >
+                         <svg className="w-4 h-4 group-hover:scale-110 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M3 21h18M3 10h18M3 7l9 5 9-5M4 10v11h16V10" /></svg>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+
       {bookings.length === 0 && (
         <div className="p-20 text-center flex flex-col items-center gap-4 text-secondary/20">
            <svg className="w-16 h-16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
@@ -167,10 +249,6 @@ export default function LessonHistoryTable({ bookings, currentUserRole = "studen
           tutorName={reviewBooking.tutor_name || 'Tutor'}
           onClose={() => setReviewBooking(null)}
           onSuccess={() => {
-            // Optimistically update the local bookings array or trigger a refresh
-            // Currently, re-rendering happens via Next.js router implicitly or the parent needs to handle it.
-            // But just dismissing the modal is fine for now. The page revalidatePath will handle the fetch.
-            // Actually, we can use window.location.reload() for a quick fix or just let the button hide by updating the array.
             window.location.reload();
           }}
         />

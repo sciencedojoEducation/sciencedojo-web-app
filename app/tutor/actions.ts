@@ -330,31 +330,70 @@ export async function completeSessionAction(formData: FormData) {
 
   if (notesError) {
     console.error("Lesson notes error:", notesError.message);
-    // Even if notes fail, booking is completed, but we should log it
-  } else {
-    // Determine student to notify
-    const { data: booking } = await supabase
-      .from("bookings")
-      .select("student_id, requested_date")
-      .eq("id", bookingId)
-      .single();
+  }
 
-    if (booking) {
-      const { data: studentProfile } = await supabase
-        .from("profiles")
-        .select("email")
-        .eq("id", booking.student_id)
-        .single();
-        
-      if (studentProfile?.email) {
-        await sendLessonNotesEmail(
-          studentProfile.email,
-          user.user_metadata?.full_name || "Your Tutor",
-          new Date(booking.requested_date),
-          summary,
-          homework
-        );
+  // 3. Get booking details for class integration + email
+  const { data: booking } = await supabase
+    .from("bookings")
+    .select("student_id, subject, requested_date")
+    .eq("id", bookingId)
+    .single();
+
+  if (booking) {
+    // 4. Find or create the class for this student+tutor+subject
+    const { findOrCreateClass } = await import("@/lib/class-queries");
+    try {
+      const classId = await findOrCreateClass(booking.student_id, user.id, booking.subject);
+
+      // Link booking to class
+      await supabase
+        .from("bookings")
+        .update({ class_id: classId })
+        .eq("id", bookingId);
+
+      // Create lesson_report post in class feed
+      await supabase
+        .from("class_posts")
+        .insert({
+          class_id: classId,
+          author_id: user.id,
+          content: summary,
+          post_type: "lesson_report",
+          booking_id: bookingId,
+        });
+
+      // If homework was assigned, create assignment post in class feed
+      if (homework && homework.trim()) {
+        await supabase
+          .from("class_posts")
+          .insert({
+            class_id: classId,
+            author_id: user.id,
+            content: homework,
+            post_type: "assignment",
+            booking_id: bookingId,
+          });
       }
+    } catch (classErr) {
+      console.error("Class integration error:", classErr);
+      // Non-blocking — session is still completed
+    }
+
+    // 5. Send email notification
+    const { data: studentProfile } = await supabase
+      .from("profiles")
+      .select("email")
+      .eq("id", booking.student_id)
+      .single();
+      
+    if (studentProfile?.email) {
+      await sendLessonNotesEmail(
+        studentProfile.email,
+        user.user_metadata?.full_name || "Your Tutor",
+        new Date(booking.requested_date),
+        summary,
+        homework
+      );
     }
   }
 
@@ -362,6 +401,7 @@ export async function completeSessionAction(formData: FormData) {
   revalidatePath("/dashboard/tutor/earnings");
   revalidatePath("/dashboard/student");
   revalidatePath("/dashboard/parent");
+  revalidatePath("/dashboard/classes");
   
   redirect("/dashboard/tutor?message=Session completed and summary sent!");
 }

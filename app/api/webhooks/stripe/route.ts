@@ -3,6 +3,7 @@ import Stripe from 'stripe';
 import { createMeetingUrl } from '@/lib/meetings';
 import { createCalendarEvent } from '@/lib/calendar';
 import { createClient } from '@/utils/supabase/server';
+import { findOrCreateClass } from '@/lib/class-queries';
 
 const stripeSecretKey = process.env.STRIPE_SECRET_KEY || "sk_test_dummy";
 const stripe = new Stripe(stripeSecretKey);
@@ -62,6 +63,34 @@ export async function POST(req: Request) {
           
           // 3. Create Google Calendar invite (Automated invite if configured)
           await createCalendarEvent(id);
+
+          // 4. Auto-create class for this booking
+          try {
+            const { data: bookingData } = await supabase
+              .from("bookings")
+              .select("student_id, tutor_id, subject")
+              .eq("id", id)
+              .single();
+
+            if (bookingData) {
+              const classId = await findOrCreateClass(
+                bookingData.student_id,
+                bookingData.tutor_id,
+                bookingData.subject
+              );
+
+              // Link booking to class
+              await supabase
+                .from("bookings")
+                .update({ class_id: classId })
+                .eq("id", id);
+
+              console.log(`[Stripe Webhook] Booking ${id} linked to class ${classId}`);
+            }
+          } catch (classErr) {
+            console.error(`[Stripe Webhook] Class creation failed for ${id}:`, classErr);
+            // Non-blocking — booking is still confirmed
+          }
         }
       }
     }
@@ -69,3 +98,4 @@ export async function POST(req: Request) {
 
   return NextResponse.json({ received: true });
 }
+
