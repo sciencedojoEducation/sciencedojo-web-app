@@ -15,6 +15,13 @@ export interface TutorProfile {
   is_available_now: boolean;
   chat_availability?: any;
   youtube_intro_url?: string | null;
+
+  // New credential fields
+  education_level?: string;
+  university?: string;
+  experience_summary?: string;
+  has_teaching_license?: boolean;
+  cv_url?: string;
 }
 
 export async function getTutors(searchTerm: string = "", subject: string = "All"): Promise<TutorProfile[]> {
@@ -36,7 +43,8 @@ export async function getTutors(searchTerm: string = "", subject: string = "All"
         full_name,
         avatar_url
       )
-    `);
+    `)
+    .eq('is_verified', true);
 
   if (subject !== "All") {
     query = query.contains('subjects', [subject]);
@@ -53,7 +61,7 @@ export async function getTutors(searchTerm: string = "", subject: string = "All"
   const tutorIds = data.map((t: any) => t.id);
   const { data: newFieldsData } = await supabase
     .from('tutors')
-    .select('id, youtube_intro_url')
+    .select('id, youtube_intro_url, education_level, university, experience_summary, has_teaching_license, cv_url')
     .in('id', tutorIds);
 
   const newFieldsMap: Record<string, any> = {};
@@ -76,6 +84,11 @@ export async function getTutors(searchTerm: string = "", subject: string = "All"
     is_verified: tutor.is_verified,
     is_available_now: tutor.is_available_now,
     youtube_intro_url: newFieldsMap[tutor.id]?.youtube_intro_url || null,
+    education_level: newFieldsMap[tutor.id]?.education_level,
+    university: newFieldsMap[tutor.id]?.university,
+    experience_summary: newFieldsMap[tutor.id]?.experience_summary,
+    has_teaching_license: newFieldsMap[tutor.id]?.has_teaching_license,
+    cv_url: newFieldsMap[tutor.id]?.cv_url,
   })).filter(t => 
     (t.full_name?.toLowerCase() || '').includes(searchTerm.toLowerCase()) || 
     (t.bio?.toLowerCase() || '').includes(searchTerm.toLowerCase())
@@ -97,6 +110,12 @@ export async function getTutorById(id: string): Promise<TutorProfile | null> {
       review_count,
       is_verified,
       is_available_now,
+      youtube_intro_url,
+      education_level,
+      university,
+      experience_summary,
+      has_teaching_license,
+      cv_url,
       profiles (
         full_name,
         avatar_url
@@ -156,6 +175,11 @@ export interface Booking {
     homework: string;
   };
   has_review?: boolean;
+  recurrence_group_id?: string | null;
+  is_recurring?: boolean;
+  recurrence_count?: number;
+  recurrence_index?: number;
+  duration_hours?: number;
 }
 
 export async function getBookingsByUserId(userId: string): Promise<Booking[]> {

@@ -59,112 +59,169 @@ export default async function AdminTutorsPage() {
     })) || [];
   }
 
+  const pendingTutors = mergedTutors.filter(t => !t.tutorDetail?.is_verified);
+  const verifiedTutors = mergedTutors.filter(t => t.tutorDetail?.is_verified);
+
   return (
-    <div className="p-8 max-w-6xl mx-auto min-h-screen">
+    <div className="p-8 max-w-6xl mx-auto min-h-screen space-y-12">
       <div className="mb-10 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
          <div>
-            <h1 className="text-3xl font-black text-slate-800 mb-2 tracking-tight">Tutors Directory</h1>
-            <p className="text-slate-500 font-medium tracking-tight">Full platform roster management and verification.</p>
+            <h1 className="text-3xl font-black text-slate-800 mb-2 tracking-tight">Tutor Command Center 🏴</h1>
+            <p className="text-slate-500 font-medium tracking-tight">Review applications, verify experts, and manage the marketplace.</p>
          </div>
          
-         {/* DIAGNOSTICS BANNER (Temporary) */}
-         <div className="bg-slate-50 border border-slate-200 px-4 py-2 rounded-2xl flex items-center gap-4 text-[10px] font-black uppercase tracking-widest text-slate-400">
+         <div className="bg-slate-50 border border-slate-200 px-6 py-3 rounded-2xl flex items-center gap-6 text-[10px] font-black uppercase tracking-widest text-slate-400 shadow-sm">
             <div className="flex items-center gap-2">
-               <div className="w-2 h-2 rounded-full bg-blue-500"></div>
-               Profiles: {tutorProfiles?.length || 0}
+               <div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></div>
+               Pending: {pendingTutors.length}
             </div>
-            <div className="flex items-center gap-2">
-               <div className={`w-2 h-2 rounded-full ${rawTutorData?.length === tutorProfiles?.length ? 'bg-green-500' : 'bg-amber-500 animate-pulse'}`}></div>
-               Tutor Entries: {rawTutorData?.length || 0}
+            <div className="flex items-center gap-2 border-l border-slate-200 pl-6">
+               <div className="w-2 h-2 rounded-full bg-green-500"></div>
+               Verified: {verifiedTutors.length}
             </div>
          </div>
       </div>
 
-      <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-xl shadow-slate-200/50 overflow-hidden transition-all duration-300">
-         <div className="p-8 border-b border-slate-100 flex justify-between items-center bg-slate-50/50 backdrop-blur-sm">
-            <h2 className="font-black text-slate-800 tracking-tight uppercase text-xs">All Registered Tutors ({mergedTutors.length})</h2>
-         </div>
-         <table className="w-full text-left border-collapse">
-            <thead>
-               <tr className="border-b border-slate-200 text-slate-400 text-[10px] font-black uppercase tracking-[0.2em] bg-slate-50/30">
-                  <th className="p-8">Tutor Profile</th>
-                  <th className="p-8">Subjects & Rate</th>
-                  <th className="p-8 text-center">Marketplace Status</th>
+      {/* PENDING APPROVAL SECTION */}
+      {pendingTutors.length > 0 && (
+        <section className="space-y-6">
+          <div className="flex items-center gap-4">
+            <h2 className="text-xl font-black text-amber-600 tracking-tight uppercase text-xs bg-amber-50 px-4 py-2 rounded-full border border-amber-100">
+              ⚡ Pending Review ({pendingTutors.length})
+            </h2>
+            <div className="h-[1px] flex-1 bg-gradient-to-r from-amber-200 to-transparent"></div>
+          </div>
+
+          <div className="bg-white rounded-[2.5rem] border-2 border-amber-100 shadow-xl shadow-amber-900/5 overflow-hidden">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="border-b border-amber-100 text-amber-600/40 text-[10px] font-black uppercase tracking-[0.2em] bg-amber-50/30">
+                  <th className="p-8">Application</th>
+                  <th className="p-8">Draft Profile</th>
                   <th className="p-8 text-right">Actions</th>
-               </tr>
+                </tr>
+              </thead>
+              <tbody className="font-medium text-slate-600">
+                {pendingTutors.map((tutor: any, i) => (
+                  <tr key={tutor.id} className="group hover:bg-amber-50/30 transition-all border-b border-amber-50 last:border-0">
+                    <td className="p-8">
+                      <div className="flex items-center gap-6">
+                        <div className="w-14 h-14 rounded-2xl border-2 border-white shadow-md overflow-hidden bg-slate-100 ring-2 ring-amber-100 relative">
+                          <Image src={tutor.avatar_url || "/tutor_placeholder.webp"} alt={tutor.full_name} fill className="object-cover" />
+                        </div>
+                        <div>
+                          <div className="font-black text-slate-800 text-lg tracking-tight">{tutor.full_name}</div>
+                          <div className="text-xs text-slate-400 font-bold">{tutor.email}</div>
+                          <div className="text-[9px] uppercase font-black text-amber-400 mt-2 tracking-widest">Applied {new Date(tutor.created_at).toLocaleDateString()}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="p-8">
+                      <div className="max-w-md">
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className="text-[10px] font-black uppercase tracking-widest bg-blue-50 text-blue-600 px-2 py-0.5 rounded">
+                            {tutor.tutorDetail?.education_level ? `${tutor.tutorDetail.education_level} @ ${tutor.tutorDetail.university || 'N/A'}` : 'No Credentials'}
+                          </span>
+                          {tutor.tutorDetail?.has_teaching_license && (
+                            <span className="text-[10px] font-black uppercase tracking-widest bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded">Licensed</span>
+                          )}
+                        </div>
+                        <p className="text-xs text-slate-500 line-clamp-2 italic mb-3">"{tutor.tutorDetail?.experience_summary || tutor.tutorDetail?.bio || "No summary written yet."}"</p>
+                        <div className="flex items-center gap-4">
+                          <div className="flex items-center gap-2">
+                             <span className="text-sm font-black text-slate-800">£{tutor.tutorDetail?.hourly_rate}/hr</span>
+                             <div className="flex gap-1">
+                               {tutor.tutorDetail?.subjects?.slice(0, 2).map((s: string) => (
+                                 <span key={s} className="text-[8px] font-black bg-slate-100 px-1.5 py-0.5 rounded uppercase tracking-tighter">{s}</span>
+                               ))}
+                             </div>
+                          </div>
+                          {tutor.tutorDetail?.cv_url && (
+                             <a href={tutor.tutorDetail.cv_url} target="_blank" rel="noreferrer" className="text-[10px] font-black text-indigo-500 hover:underline uppercase tracking-widest border-l border-slate-200 pl-4">
+                               View CV/LinkedIn ↗
+                             </a>
+                          )}
+                        </div>
+                      </div>
+                    </td>
+                    <td className="p-8 text-right space-x-2">
+                       <a href={`/tutor/${tutor.id}`} target="_blank" className="inline-block px-4 py-3 bg-slate-100 text-slate-600 text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-slate-200 transition-all">
+                         🔍 Preview
+                       </a>
+                       <VerifyButton tutorId={tutor.id} isVerified={false} />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
+
+      {/* VERIFIED MARKETPLACE SECTION */}
+      <section className="space-y-6">
+        <div className="flex items-center gap-4">
+          <h2 className="text-xl font-black text-slate-800 tracking-tight uppercase text-xs bg-slate-100 px-4 py-2 rounded-full border border-slate-200">
+            ✅ Live Marketplace ({verifiedTutors.length})
+          </h2>
+          <div className="h-[1px] flex-1 bg-gradient-to-r from-slate-200 to-transparent"></div>
+        </div>
+
+        <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-xl shadow-slate-200/50 overflow-hidden">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="border-b border-slate-200 text-slate-400 text-[10px] font-black uppercase tracking-[0.2em] bg-slate-50/30">
+                <th className="p-8">Expert Profile</th>
+                <th className="p-8">Marketplace Stats</th>
+                <th className="p-8 text-right">Actions</th>
+              </tr>
             </thead>
             <tbody className="font-medium text-slate-600">
-               {mergedTutors.map((tutor: any, i) => {
-                  const detail = tutor.tutorDetail;
-                  const isVerified = detail?.is_verified || false;
-
-                  return (
-                    <tr key={tutor.id} className={`group hover:bg-slate-50/50 transition-all ${i !== mergedTutors.length - 1 ? 'border-b border-slate-100' : ''}`}>
-                       <td className="p-8">
-                          <div className="flex items-center gap-6">
-                             <div className="relative">
-                               <div className="w-14 h-14 rounded-full border-2 border-white shadow-md overflow-hidden bg-slate-100 ring-2 ring-slate-100">
-                                 <Image src={tutor.avatar_url || "/tutor_placeholder.webp"} alt={tutor.full_name} fill className="object-cover group-hover:scale-105 transition-transform" />
-                               </div>
-                               {isVerified && (
-                                 <div className="absolute -bottom-1 -right-1 bg-blue-500 text-white p-1 rounded-full border-2 border-white">
-                                   <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={4} d="M5 13l4 4L19 7" /></svg>
-                                 </div>
-                               )}
-                             </div>
-                             <div>
-                               <div className="font-black text-slate-800 text-lg tracking-tight -mb-0.5">{tutor.full_name}</div>
-                               <div className="text-xs text-slate-400 font-bold">{tutor.email}</div>
-                               <div className="text-[9px] uppercase font-black text-slate-300 mt-2 tracking-widest">Joined {new Date(tutor.created_at).toLocaleDateString()}</div>
-                             </div>
-                          </div>
-                       </td>
-                       <td className="p-8">
-                          {detail?.subjects && detail.subjects.length > 0 ? (
-                            <div className="flex flex-wrap gap-1.5 mb-3">
-                              {detail.subjects.map((sub: string) => (
-                                <span key={sub} className="text-[9px] uppercase font-black bg-indigo-50 border border-indigo-100 text-indigo-600 px-2.5 py-1 rounded-full tracking-widest leading-none">
-                                  {sub}
-                                </span>
-                              ))}
-                            </div>
-                          ) : (
-                            <span className="text-xs text-slate-400 italic font-bold mb-3 block">No subjects listed</span>
-                          )}
-                          <div className="flex items-baseline gap-1">
-                             <span className="text-lg font-black text-slate-800">£{detail?.hourly_rate || 0}</span>
-                             <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">/hr</span>
-                          </div>
-                       </td>
-                       <td className="p-8 text-center text-[10px]">
-                          <span className={`px-4 py-1.5 rounded-full font-black uppercase tracking-widest shadow-sm ${
-                            isVerified 
-                              ? "bg-green-100 text-green-700 border border-green-200" 
-                              : "bg-red-50 text-red-600 border border-red-100 animate-pulse"
-                          }`}>
-                            {isVerified ? "Verified (Live)" : "Unverified (Hidden)"}
-                          </span>
-                       </td>
-                       <td className="p-8 text-right">
-                          <VerifyButton tutorId={tutor.id} isVerified={isVerified} />
-                       </td>
-                    </tr>
-                  )
-               })}
-               
-               {mergedTutors.length === 0 && (
-                 <tr>
-                   <td colSpan={4} className="p-24 text-center">
-                      <div className="text-slate-300 mb-2">
-                        <svg className="w-12 h-12 mx-auto opacity-20" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+              {verifiedTutors.map((tutor: any, i) => (
+                <tr key={tutor.id} className="group hover:bg-slate-50/50 transition-all border-b border-slate-100 last:border-0">
+                  <td className="p-8">
+                    <div className="flex items-center gap-6">
+                      <div className="w-14 h-14 rounded-full border-2 border-white shadow-md overflow-hidden bg-slate-100 ring-2 ring-slate-100 relative">
+                        <Image src={tutor.avatar_url || "/tutor_placeholder.webp"} alt={tutor.full_name} fill className="object-cover" />
+                        <div className="absolute -bottom-1 -right-1 bg-blue-500 text-white p-1 rounded-full border-2 border-white">
+                          <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={4} d="M5 13l4 4L19 7" /></svg>
+                        </div>
                       </div>
-                      <p className="text-slate-400 font-black uppercase tracking-widest text-[10px]">No tutors found.</p>
-                   </td>
-                 </tr>
-               )}
+                      <div>
+                        <div className="font-black text-slate-800 text-lg tracking-tight">{tutor.full_name}</div>
+                        <div className="text-xs text-slate-400 font-bold">{tutor.email}</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="p-8">
+                    <div className="flex items-center gap-6">
+                      <div>
+                        <p className="text-[9px] font-black text-slate-300 uppercase tracking-widest mb-1">Fee</p>
+                        <p className="font-black text-slate-800">£{tutor.tutorDetail?.hourly_rate}/hr</p>
+                      </div>
+                      <div>
+                        <p className="text-[9px] font-black text-slate-300 uppercase tracking-widest mb-1">Rating</p>
+                        <p className="font-black text-slate-800">⭐ {tutor.tutorDetail?.rating || "N/A"}</p>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="p-8 text-right space-x-2">
+                    <a href={`/tutor/${tutor.id}`} target="_blank" className="inline-block px-4 py-3 bg-slate-100 text-slate-600 text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-slate-200 transition-all">
+                      View Profile
+                    </a>
+                    <VerifyButton tutorId={tutor.id} isVerified={true} />
+                  </td>
+                </tr>
+              ))}
+              {verifiedTutors.length === 0 && (
+                <tr>
+                  <td colSpan={3} className="p-12 text-center text-slate-400 italic">No verified tutors yet.</td>
+                </tr>
+              )}
             </tbody>
-         </table>
-      </div>
+          </table>
+        </div>
+      </section>
     </div>
   );
 }

@@ -3,7 +3,17 @@
 import { createClient } from "@/utils/supabase/server";
 import { revalidatePath } from "next/cache";
 
-const SAFETY_KEYWORDS = ["whatsapp", "phone", "paypal", "email", "contact", "pay me", "transfer"];
+const SAFETY_KEYWORDS = [
+  "whatsapp", "phone", "paypal", "email", "contact", "pay me", "transfer",
+  "telegram", "instagram", "facebook", "sms", "mobile", "discord", "skype", 
+  "venmo", "zelle", "cashapp", "wechat", "snapchat", "call you"
+];
+const PROFANITY_KEYWORDS = [
+  "fuck", "shit", "bitch", "asshole", "bastard", "whore", "slut", "cunt",
+  "nigger", "faggot", "retard", "dick", "pussy", "cock", "rape", "pedo",
+  "kill yourself", "kys", "nazi", "chink", "spic", "dyke", "tranny",
+  "kill yourself", "kys"
+];
 const CONTACT_INFO_REGEX = /([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6})|(\+?[0-9\s-]{10,})/g;
 
 export async function sendMessage(conversationId: string, content: string) {
@@ -14,14 +24,20 @@ export async function sendMessage(conversationId: string, content: string) {
 
   // 1. Safety Flagging (Keywords & Contact Info)
   const lowerContent = content.toLowerCase();
-  const flaggedKeywords = SAFETY_KEYWORDS.filter(kw => lowerContent.includes(kw));
+  
+  // Use regex with word boundaries for profanity to avoid false positives (e.g. 'dick' in 'Dickens' or 'glasshole')
+  // For basic substrings, includes is fine, but for short words \b is safer. We'll stick to a simple filter for now.
+  const flaggedSafety = SAFETY_KEYWORDS.filter(kw => lowerContent.includes(kw));
+  const flaggedProfanity = PROFANITY_KEYWORDS.filter(kw => new RegExp(`\\b${kw}\\b`, 'i').test(lowerContent) || (kw.length > 4 && lowerContent.includes(kw)));
   const hasContactInfo = CONTACT_INFO_REGEX.test(content);
-  const isFlagged = flaggedKeywords.length > 0 || hasContactInfo;
+  
+  const isFlagged = flaggedSafety.length > 0 || flaggedProfanity.length > 0 || hasContactInfo;
 
   let flaggedReason = null;
   if (isFlagged) {
     const reasons = [];
-    if (flaggedKeywords.length > 0) reasons.push(`Keywords: ${flaggedKeywords.join(", ")}`);
+    if (flaggedSafety.length > 0) reasons.push(`Contact/Bypass: ${flaggedSafety.join(", ")}`);
+    if (flaggedProfanity.length > 0) reasons.push(`Inappropriate/Profanity: ${flaggedProfanity.join(", ")}`);
     if (hasContactInfo) reasons.push("Detected contact info (email/phone)");
     flaggedReason = reasons.join(" | ");
   }

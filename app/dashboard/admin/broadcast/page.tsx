@@ -7,8 +7,14 @@ export default async function AdminBroadcastPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
-  if (!user || user.user_metadata?.role !== 'admin') {
-    redirect("/dashboard");
+  if (!user) {
+    redirect("/login");
+  }
+
+  const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single();
+  
+  if (profile?.role !== 'admin') {
+    redirect("/dashboard/parent");
   }
 
   const announcements = await getAllAnnouncementsForAdmin();

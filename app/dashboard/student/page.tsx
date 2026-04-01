@@ -38,7 +38,35 @@ export default async function StudentDashboard() {
 
   const bookings = await getBookingsByUserId(user.id);
   const requested = bookings.filter(b => b.status === "requested");
+  const groupedRequested = Object.values(requested.reduce((acc, booking) => {
+    const groupId = booking.recurrence_group_id || booking.id;
+    if (!acc[groupId]) {
+      acc[groupId] = {
+        id: groupId,
+        isGroup: !!booking.recurrence_group_id,
+        count: 0,
+        mainBooking: booking,
+      };
+    }
+    acc[groupId].count++;
+    return acc;
+  }, {} as Record<string, { id: string, isGroup: boolean, count: number, mainBooking: (typeof bookings)[0] }>));
+
   const toPay = bookings.filter(b => b.status === "accepted");
+  const groupedToPay = Object.values(toPay.reduce((acc, booking) => {
+    const groupId = booking.recurrence_group_id || booking.id;
+    if (!acc[groupId]) {
+      acc[groupId] = {
+        id: groupId,
+        isGroup: !!booking.recurrence_group_id,
+        count: 0,
+        mainBooking: booking,
+      };
+    }
+    acc[groupId].count++;
+    return acc;
+  }, {} as Record<string, { id: string, isGroup: boolean, count: number, mainBooking: (typeof bookings)[0] }>));
+
   const upcoming = bookings.filter(b => b.status === "confirmed");
   const past = bookings.filter(b => b.status === "completed");
 
@@ -95,14 +123,21 @@ export default async function StudentDashboard() {
             <span className="text-xs font-black text-primary uppercase tracking-[0.2em] animate-pulse">Accepted by Tutor</span>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-             {toPay.map(booking => (
-                <div key={booking.id} className="bg-white p-8 rounded-[2rem] border border-primary/10 shadow-lg flex flex-col relative overflow-hidden group">
+             {groupedToPay.map(group => {
+                const booking = group.mainBooking;
+                return (
+                <div key={group.id} className="bg-white p-8 rounded-[2rem] border border-primary/10 shadow-lg flex flex-col relative overflow-hidden group">
                    <div className="flex items-center gap-5 mb-6">
                       <div className="w-16 h-16 relative rounded-2xl overflow-hidden border-2 border-slate-50 shadow-md">
                          <Image src={booking.tutor_avatar || "/tutor_placeholder.webp"} alt="" fill className="object-cover" />
                       </div>
                       <div>
-                        <span className="inline-block px-3 py-1 bg-primary/10 text-primary text-[10px] font-black rounded-lg mb-1 uppercase tracking-widest">{booking.subject}</span>
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="inline-block px-3 py-1 bg-primary/10 text-primary text-[10px] font-black rounded-lg uppercase tracking-widest">{booking.subject}</span>
+                          {group.isGroup && (
+                            <span className="px-2 py-0.5 bg-yellow-100 text-yellow-800 text-[9px] font-black uppercase tracking-widest rounded">{group.count}-Week Series</span>
+                          )}
+                        </div>
                         <h3 className="font-black text-secondary text-lg">{booking.tutor_name}</h3>
                       </div>
                    </div>
@@ -111,15 +146,18 @@ export default async function StudentDashboard() {
                       <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-wider text-secondary/30">
                          <span className="flex items-center gap-1.5">
                             <svg className="w-4 h-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2-2v12a2 2 0 002 2z" /></svg>
-                            {new Date(booking.requested_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
+                            {group.isGroup ? `Starts ${new Date(booking.requested_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}` : new Date(booking.requested_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
                          </span>
-                         <span>£{booking.price_at_booking}/hr</span>
+                         <div className="text-right">
+                           <div className="text-secondary font-black text-xs">£{booking.price_at_booking * group.count} Total</div>
+                           {group.isGroup && <div className="text-[8px] opacity-50">£{booking.price_at_booking} × {group.count} sessions</div>}
+                         </div>
                       </div>
                       
                       <CheckoutButton bookingId={booking.id} />
                    </div>
                 </div>
-             ))}
+             )})}
           </div>
         </section>
       )}
@@ -133,15 +171,22 @@ export default async function StudentDashboard() {
             <span className="text-xs font-black text-secondary/40 uppercase tracking-widest">Awaiting Tutor Acceptance</span>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-             {requested.map(booking => (
-                <div key={booking.id} className="bg-white p-6 rounded-3xl border border-secondary/10 shadow-sm flex flex-col relative overflow-hidden group">
+             {groupedRequested.map(group => {
+                const booking = group.mainBooking;
+                return (
+                <div key={group.id} className="bg-white p-6 rounded-3xl border border-secondary/10 shadow-sm flex flex-col relative overflow-hidden group">
                    <div className="flex justify-between items-start mb-4">
                       <div className="flex items-center gap-4">
                         <div className="w-10 h-10 relative rounded-xl overflow-hidden border border-secondary/5 shadow-sm">
                            <Image src={booking.tutor_avatar || "/tutor_placeholder.webp"} alt="" fill className="object-cover" />
                         </div>
                         <div>
-                          <span className="inline-block px-2 py-0.5 bg-secondary/5 text-secondary/40 text-[9px] font-black rounded-md mb-1 uppercase tracking-wider">{booking.subject}</span>
+                          <div className="flex items-center gap-1.5 mb-1">
+                            <span className="inline-block px-2 py-0.5 bg-secondary/5 text-secondary/40 text-[9px] font-black rounded-md uppercase tracking-wider">{booking.subject}</span>
+                            {group.isGroup && (
+                              <span className="px-1.5 py-0.5 bg-yellow-50 text-yellow-600 text-[8px] font-black uppercase tracking-widest rounded">{group.count} Weeks</span>
+                            )}
+                          </div>
                           <h3 className="font-bold text-secondary text-sm">{booking.tutor_name}</h3>
                         </div>
                       </div>
@@ -158,19 +203,25 @@ export default async function StudentDashboard() {
                      <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-wider text-secondary/30">
                         <span className="flex items-center gap-1.5 font-black">
                            <svg className="w-4 h-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2-2v12a2 2 0 002 2z" /></svg>
-                           {new Date(booking.requested_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
+                           {group.isGroup ? `Starts ${new Date(booking.requested_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}` : new Date(booking.requested_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
                         </span>
                         <span>£{booking.price_at_booking}/hr</span>
                      </div>
                    </div>
                 </div>
-             ))}
+             )})}
           </div>
         </section>
       )}
 
       <section>
-        <h2 className="text-xl font-black text-secondary mb-6">Confirmed Sessions</h2>
+        <div className="flex items-center justify-between mb-6">
+           <h2 className="text-xl font-black text-secondary">Confirmed Sessions</h2>
+           <a href={`/api/calendar?id=${user.id}`} target="_blank" className="px-4 py-2 bg-slate-100 text-secondary/60 text-xs font-black uppercase tracking-widest rounded-xl hover:bg-slate-200 transition-all flex items-center gap-2">
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2-2v12a2 2 0 002 2z" /></svg>
+              Sync iCal
+           </a>
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
            {upcoming.map(booking => (
               <div key={booking.id} className="bg-white p-6 rounded-3xl border border-secondary/10 shadow-sm flex flex-col relative overflow-hidden group">

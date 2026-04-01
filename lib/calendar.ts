@@ -48,12 +48,11 @@ export async function createCalendarEvent(bookingId: string) {
     }
 
     // 3. Authenticate with Google
-    const auth = new google.auth.JWT(
-      clientEmail,
-      undefined,
-      privateKey,
-      ["https://www.googleapis.com/auth/calendar.events"]
-    );
+    const auth = new google.auth.JWT({
+      email: clientEmail,
+      key: privateKey,
+      scopes: ["https://www.googleapis.com/auth/calendar.events"]
+    });
 
     const calendar = google.calendar({ version: "v3", auth });
 

@@ -86,13 +86,21 @@ export async function updateBookingStatus(formData: FormData) {
   }
 
   const bookingId = formData.get("bookingId") as string;
+  const recurrenceGroupId = formData.get("recurrenceGroupId") as string | null;
   const status = formData.get("status") as string;
 
-  const { error } = await supabase
+  let query = supabase
     .from("bookings")
     .update({ status: status })
-    .eq("id", bookingId)
     .eq("tutor_id", user.id); // Security: Ensure only the tutor can accept/decline
+
+  if (recurrenceGroupId) {
+    query = query.eq("recurrence_group_id", recurrenceGroupId);
+  } else {
+    query = query.eq("id", bookingId);
+  }
+
+  const { error } = await query;
 
   if (error) {
     console.error("Update Status Error:", error.message);

@@ -65,37 +65,35 @@ export default function LessonHistoryTable({ bookings, currentUserRole = "studen
                 </td>
                 <td className="p-6 text-right flex justify-end gap-2">
                   {note ? (
-                    <>
-                      <button 
-                        onClick={() => {
-                          setSelectedBooking(booking);
-                          setShowModal(true);
-                        }}
-                        className="px-6 py-2 bg-primary text-white text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-primary-hover shadow-lg transition-all active:scale-95"
-                      >
-                        View Summary
-                      </button>
-                      
-                      {currentUserRole !== 'tutor' && !booking.has_review && (
-                        <button 
-                          onClick={() => setReviewBooking(booking)}
-                          className="px-6 py-2 bg-yellow-400 text-yellow-900 border border-yellow-500 shadow-sm text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-yellow-500 transition-all active:scale-95 flex flex-col justify-center items-center h-8"
-                        >
-                          Review
-                        </button>
-                      )}
-
-                      <button 
-                        onClick={() => setDisputeBooking(booking)}
-                        className="w-8 h-8 flex items-center justify-center bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-all border border-red-100"
-                        title="Report an Issue"
-                      >
-                         ⚖️
-                      </button>
-                    </>
+                    <button 
+                      onClick={() => {
+                        setSelectedBooking(booking);
+                        setShowModal(true);
+                      }}
+                      className="px-6 py-2 bg-primary text-white text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-primary-hover shadow-lg transition-all active:scale-95 h-8"
+                    >
+                      View Summary
+                    </button>
                   ) : (
-                    <span className="text-[10px] font-black text-secondary/20 uppercase tracking-widest italic flex h-8 items-center">Note Pending</span>
+                    <span className="text-[10px] font-black text-secondary/20 uppercase tracking-widest italic flex h-8 items-center mr-2">Note Pending</span>
                   )}
+
+                  {currentUserRole !== 'tutor' && !booking.has_review && (
+                    <button 
+                      onClick={() => setReviewBooking(booking)}
+                      className="px-6 py-2 bg-yellow-400 text-yellow-900 border border-yellow-500 shadow-sm text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-yellow-500 transition-all active:scale-95 flex flex-col justify-center items-center h-8"
+                    >
+                      Review
+                    </button>
+                  )}
+
+                  <button 
+                    onClick={() => setDisputeBooking(booking)}
+                    className="w-8 h-8 flex items-center justify-center bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-all border border-red-100"
+                    title="Report an Issue"
+                  >
+                     ⚖️
+                  </button>
                 </td>
               </tr>
             );

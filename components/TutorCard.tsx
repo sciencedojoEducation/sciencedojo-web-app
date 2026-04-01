@@ -5,6 +5,7 @@ import { useState } from "react";
 import { createConversation } from "@/app/dashboard/messages/actions";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import UserAvatar from "./UserAvatar";
 import Link from "next/link";
 
 interface TutorCardProps {
@@ -23,11 +24,11 @@ export default function TutorCard({ tutor, currentUserRole }: TutorCardProps) {
           <div className="flex items-center gap-4">
             <div className="relative h-20 w-20 shrink-0">
               <div className="relative h-full w-full overflow-hidden rounded-full border-4 border-surface shadow-md z-0">
-                <Image 
-                  src={tutor.avatar_url || "/tutor_placeholder.webp"} 
+                <UserAvatar 
+                  src={tutor.avatar_url} 
                   alt={tutor.full_name} 
                   fill 
-                  className="object-cover" 
+                  className="object-cover group-hover:scale-105 transition-transform duration-500" 
                   sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                 />
               </div>

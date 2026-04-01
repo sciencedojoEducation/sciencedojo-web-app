@@ -1,5 +1,6 @@
 import { getBookingsByUserId, getTutorEarnings } from "@/lib/supabase-queries";
 import { createClient } from "@/utils/supabase/server";
+import StripeConnectButton from "@/components/StripeConnectButton";
 
 export default async function TutorEarnings() {
   const supabase = await createClient();
@@ -10,9 +11,14 @@ export default async function TutorEarnings() {
   // Fetch real data from Supabase
   const bookings = await getBookingsByUserId(user.id);
   const completedBookings = bookings.filter(b => b.status === "completed");
+
   const rawTotalCollected = await getTutorEarnings(user.id);
   
-  // Fetch live platform fee
+  // Fetch tutor to check stripe connect status
+  const { data: tutor } = await supabase.from('tutors').select('stripe_onboarding_complete, stripe_account_id').eq('id', user.id).maybeSingle();
+  const isOnboarded = tutor?.stripe_onboarding_complete;
+  
+  // ... rest of fee code ...
   const { data: settings } = await supabase.from("platform_settings").select("platform_fee_percent").limit(1).single();
   const platformFeeRaw = settings?.platform_fee_percent ?? 25;
   const platformFee = platformFeeRaw / 100;
@@ -37,12 +43,17 @@ export default async function TutorEarnings() {
             <h2 className="text-white/50 font-black uppercase tracking-[0.2em] text-[10px] mb-4">Available Balance</h2>
             <div className="text-6xl font-black mb-2 tracking-tighter">£{liveTotalEarned.toFixed(2)}</div>
             <p className="text-white/40 text-xs font-bold mb-10 flex items-center gap-2">
-               <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse"></span>
-               Next Automatic Transfer: Friday
+               <span className={`w-1.5 h-1.5 rounded-full ${isOnboarded ? 'bg-green-400 animate-pulse' : 'bg-red-400'}`}></span>
+               {isOnboarded ? "Next Automatic Transfer: Friday" : "Verification Required for Payouts"}
             </p>
-            <button className="w-full py-4 bg-white text-secondary font-black rounded-2xl shadow-xl hover:bg-slate-50 transition-all hover:-translate-y-1 active:scale-95 text-sm uppercase tracking-widest">
-               Express Payout (Stripe Connect)
-            </button>
+            {isOnboarded ? (
+               <div className="w-full py-4 bg-white/10 text-white/50 font-black rounded-2xl flex items-center justify-center gap-2 text-sm uppercase tracking-widest cursor-not-allowed">
+                 <svg className="w-5 h-5 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                 Payouts Enabled
+               </div>
+            ) : (
+               <StripeConnectButton />
+            )}
          </div>
 
          <div className="bg-white p-10 rounded-[2.5rem] border border-secondary/10 shadow-xl flex flex-col justify-between">

@@ -15,7 +15,10 @@ export default function CheckoutButton({ bookingId }: CheckoutButtonProps) {
       const res = await fetch("/api/checkout_sessions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ bookingId }),
+        body: JSON.stringify({ 
+          bookingId,
+          returnUrl: window.location.origin + window.location.pathname
+        }),
       });
       const data = await res.json();
       if (data.url) {

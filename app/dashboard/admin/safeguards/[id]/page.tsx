@@ -2,13 +2,14 @@ import { createClient } from "@/utils/supabase/server";
 import Link from "next/link";
 import { format } from "date-fns";
 import DojoFilter from "@/components/DojoFilter";
+import SafeguardActionButtons from "./SafeguardActionButtons";
 
 export default async function ConversationTranscript({ params }: { params: Promise<{ id: string }> }) {
   const { id: conversationId } = await params;
   const supabase = await createClient();
 
   // 1. Fetch Conversation Context (Participants)
-  const { data: conversation } = await supabase
+  const { data: rawConversation, error: convError } = await supabase
     .from("conversations")
     .select(`
       id,
@@ -18,6 +19,22 @@ export default async function ConversationTranscript({ params }: { params: Promi
     .eq("id", conversationId)
     .single();
 
+  console.log(`[Transcript DEBUG] ID: ${conversationId} | Data: ${rawConversation ? 'Found' : 'NULL'} | Error: ${convError?.message || 'None'}`);
+
+  if (!rawConversation) return (
+    <div className="p-20 text-center">
+      <h3 className="text-xl font-bold text-secondary">Conversation Not Found</h3>
+      <p className="text-secondary/60 mt-2">The requested conversation could not be retrieved.</p>
+      <Link href="/dashboard/admin/safeguards" className="mt-4 text-secondary font-bold underline">Back to Safeguards</Link>
+    </div>
+  );
+
+  const conversation = {
+    ...rawConversation,
+    participant_1: Array.isArray((rawConversation as any).participant_1) ? (rawConversation as any).participant_1[0] : (rawConversation as any).participant_1,
+    participant_2: Array.isArray((rawConversation as any).participant_2) ? (rawConversation as any).participant_2[0] : (rawConversation as any).participant_2,
+  } as any;
+
   // 2. Fetch All Messages
   const { data: messages } = await supabase
     .from("messages")
@@ -25,7 +42,7 @@ export default async function ConversationTranscript({ params }: { params: Promi
     .eq("conversation_id", conversationId)
     .order("created_at", { ascending: true });
 
-  if (!conversation) return <div>Conversation not found</div>;
+  const hasMessages = messages && messages.length > 0;
 
   return (
     <div className="p-8 max-w-4xl mx-auto">
@@ -90,14 +107,14 @@ export default async function ConversationTranscript({ params }: { params: Promi
          </div>
       </div>
       
-      <div className="mt-8 flex justify-end gap-3">
-         <button className="px-6 py-3 bg-white border border-secondary/10 text-secondary/60 text-xs font-black uppercase tracking-widest rounded-2xl hover:bg-slate-50 transition-colors">
-            Dismiss as Noise
-         </button>
-         <button className="px-6 py-3 bg-secondary text-white text-xs font-black uppercase tracking-widest rounded-2xl hover:bg-secondary/90 shadow-lg active:scale-95 transition-all">
-            Issue Warning
-         </button>
-      </div>
+      {hasMessages && messages.some(m => m.is_flagged) && (
+        <div className="mt-8 flex justify-end">
+           <SafeguardActionButtons 
+              conversationId={conversationId} 
+              offenderId={messages.find(m => m.is_flagged)?.sender_id || ""} 
+           />
+        </div>
+      )}
     </div>
   );
 }

@@ -33,11 +33,13 @@ export default async function DashboardSidebar({ role }: DashboardSidebarProps) 
 
   const unreadCount = await getUnreadMessageCount();
   
-  // Fetch flagged message count for admin sidebar badge
-  const { count: flaggedCount } = await supabase
+  // Fetch distinct flagged conversation count for admin sidebar badge
+  const { data: flaggedConvs } = await supabase
     .from("messages")
-    .select("*", { count: 'exact', head: true })
+    .select("conversation_id")
     .eq("is_flagged", true);
+  const flaggedCount = new Set(flaggedConvs?.map(m => m.conversation_id)).size;
+
 
   const pathname = ""; // We will handle pathname if needed, but for now we focus on data
 
@@ -69,6 +71,8 @@ export default async function DashboardSidebar({ role }: DashboardSidebarProps) 
       { name: "Dojo Safeguards", href: "/dashboard/admin/safeguards", icon: "🛡️", badge: flaggedCount || 0 },
       { name: "Broadcast Center", href: "/dashboard/admin/broadcast", icon: "📢" },
       { name: "Manage Tutors", href: "/dashboard/admin/tutors", icon: "👥" },
+      { name: "User Directory", href: "/dashboard/admin/users", icon: "🧑‍💻" },
+      { name: "Tutor Payouts", href: "/dashboard/admin/payouts", icon: "💸" },
       { name: "Platform Settings", href: "/dashboard/admin/settings", icon: "⚙️" },
     ],
   };

@@ -107,8 +107,12 @@ async function TutorProfileServer({ id }: { id: string }) {
                         </svg>
                       ))}
                     </div>
-                    <span className="font-bold text-secondary">{tutor.rating}</span>
-                    <span className="text-secondary/40 font-medium">({tutor.review_count} reviews)</span>
+                    <span className="font-bold text-secondary">
+                      {tutor.review_count > 0 ? Number(tutor.rating).toFixed(1) : "New"}
+                    </span>
+                    <span className="text-secondary/40 font-medium">
+                      ({tutor.review_count || 0} review{tutor.review_count !== 1 ? 's' : ''})
+                    </span>
                   </div>
                   <div className="h-4 w-px bg-slate-200 hidden md:block"></div>
                   <div className="flex items-center gap-2 text-secondary/60">

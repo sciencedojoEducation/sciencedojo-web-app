@@ -69,7 +69,15 @@ export default function ConversationList({ conversations, activeId }: Conversati
                   </span>
                 </div>
                 <p className={`text-xs truncate ${conv.unread_count && conv.unread_count > 0 ? "font-bold text-secondary" : "text-secondary/60"}`}>
-                  {conv.last_message}
+                  {(() => {
+                    try {
+                      if (conv.last_message?.startsWith('{')) {
+                        const parsed = JSON.parse(conv.last_message);
+                        if (parsed.type) return `${parsed.icon || '🔔'} System Alert`;
+                      }
+                    } catch (e) {}
+                    return conv.last_message;
+                  })()}
                 </p>
               </div>
             </button>

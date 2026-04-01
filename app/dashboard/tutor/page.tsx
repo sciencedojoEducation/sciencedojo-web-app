@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
 import { getBookingsByUserId, getTutorById, getAvailabilityByTutorId } from "@/lib/supabase-queries";
 import { getActiveAnnouncementsForUser } from "@/lib/announcement-queries";
@@ -13,6 +14,22 @@ export default async function TutorDashboard() {
 
   const bookings = await getBookingsByUserId(user.id);
   const tutorData = await getTutorById(user.id);
+  // Mandatory GDPR Recruitment Flow Gate
+  if (!tutorData || !tutorData.is_verified) {
+    const { data: application } = await supabase
+      .from('applications')
+      .select('status')
+      .eq('user_id', user.id)
+      .maybeSingle();
+
+    if (!application || application.status === 'draft') {
+      redirect("/tutor/onboarding");
+    } else if (application.status === 'approved') {
+      redirect("/tutor/contract");
+    }
+    // If 'pending', they stay on the dashboard to see the "Under Review" banner!
+  }
+
   const slots = await getAvailabilityByTutorId(user.id);
   const announcements = await getActiveAnnouncementsForUser();
 
@@ -21,6 +38,7 @@ export default async function TutorDashboard() {
 
   return (
     <TutorDashboardUI 
+      userId={user.id}
       userName={userName} 
       avatarUrl={avatarUrl} 
       bookings={bookings} 

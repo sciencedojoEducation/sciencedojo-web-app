@@ -36,14 +36,19 @@ export async function createAnnouncement(formData: FormData) {
 
 export async function toggleAnnouncementActive(id: string, currentStatus: boolean) {
   const supabase = await createClient();
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from("announcements")
     .update({ is_active: !currentStatus })
-    .eq("id", id);
+    .eq("id", id)
+    .select("id");
 
   if (error) {
     console.error("Error toggling announcement:", error.message);
     throw new Error(error.message);
+  }
+
+  if (!data || data.length === 0) {
+    throw new Error("Action blocked by database. Please ensure you have admin permissions.");
   }
 
   revalidatePath("/dashboard/admin/broadcast");
@@ -53,14 +58,19 @@ export async function toggleAnnouncementActive(id: string, currentStatus: boolea
 
 export async function deleteAnnouncement(id: string) {
   const supabase = await createClient();
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from("announcements")
     .delete()
-    .eq("id", id);
+    .eq("id", id)
+    .select("id");
 
   if (error) {
     console.error("Error deleting announcement:", error.message);
     throw new Error(error.message);
+  }
+
+  if (!data || data.length === 0) {
+    throw new Error("Action blocked by database. Please ensure you have admin permissions.");
   }
 
   revalidatePath("/dashboard/admin/broadcast");

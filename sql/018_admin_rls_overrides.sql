@@ -32,10 +32,30 @@ CREATE POLICY "Admins can update all bookings" ON public.bookings
     (SELECT role FROM public.profiles WHERE id = auth.uid()) = 'admin'
   );
 
--- 4. Messaging Overrides
 -- Allow admins to view all messages (necessary for Safeguards review)
 DROP POLICY IF EXISTS "Admins can view all messages" ON public.messages;
 CREATE POLICY "Admins can view all messages" ON public.messages
+  FOR SELECT USING (
+    (SELECT role FROM public.profiles WHERE id = auth.uid()) = 'admin'
+  );
+
+-- Allow admins to update messages (necessary for dismiss/warning actions)
+DROP POLICY IF EXISTS "Admins can update all messages" ON public.messages;
+CREATE POLICY "Admins can update all messages" ON public.messages
+  FOR UPDATE USING (
+    (SELECT role FROM public.profiles WHERE id = auth.uid()) = 'admin'
+  );
+
+-- Allow admins to insert messages (necessary for system warning notifications)
+DROP POLICY IF EXISTS "Admins can insert messages" ON public.messages;
+CREATE POLICY "Admins can insert messages" ON public.messages
+  FOR INSERT WITH CHECK (
+    (SELECT role FROM public.profiles WHERE id = auth.uid()) = 'admin'
+  );
+
+-- Allow admins to view all conversations (necessary for Safeguards review)
+DROP POLICY IF EXISTS "Admins can view all conversations" ON public.conversations;
+CREATE POLICY "Admins can view all conversations" ON public.conversations
   FOR SELECT USING (
     (SELECT role FROM public.profiles WHERE id = auth.uid()) = 'admin'
   );
@@ -44,3 +64,10 @@ DO $$
 BEGIN
   RAISE NOTICE 'Admin RLS Overrides Applied! 🚀🛡️';
 END $$;
+
+-- Allow admins to have full access to announcements (override metadata checks)
+DROP POLICY IF EXISTS "Admins have full access to announcements" ON public.announcements;
+CREATE POLICY "Admins have full access to announcements" ON public.announcements
+  FOR ALL TO authenticated USING (
+    (SELECT role FROM public.profiles WHERE id = auth.uid()) = 'admin'
+  );

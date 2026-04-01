@@ -122,9 +122,21 @@ export async function getUnreadMessageCount() {
 
   if (!user) return 0;
 
+  // First, get conversations where the user is an actual participant
+  const { data: conversations } = await supabase
+    .from("conversations")
+    .select("id")
+    .or(`participant_1_id.eq.${user.id},participant_2_id.eq.${user.id}`);
+
+  if (!conversations || conversations.length === 0) return 0;
+
+  const conversationIds = conversations.map(c => c.id);
+
+  // Then, count unread messages only within those conversations
   const { count, error } = await supabase
     .from("messages")
     .select("*", { count: 'exact', head: true })
+    .in("conversation_id", conversationIds)
     .neq("sender_id", user.id)
     .eq("is_read", false);
 

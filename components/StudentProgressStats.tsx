@@ -1,5 +1,6 @@
 import React from 'react';
 import { Booking } from '@/lib/supabase-queries';
+import StudentProgressChart from './StudentProgressChart';
 
 interface StudentProgressStatsProps {
   bookings: Booking[];
@@ -24,7 +25,7 @@ export default function StudentProgressStats({ bookings }: StudentProgressStatsP
   return (
     <section>
       <h2 className="text-xl font-black text-secondary mb-6">Your Progress</h2>
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-2">
         
         <div className="bg-white p-6 rounded-3xl border border-secondary/10 shadow-sm flex flex-col items-center justify-center text-center">
           <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center mb-3">
@@ -59,6 +60,8 @@ export default function StudentProgressStats({ bookings }: StudentProgressStatsP
         </div>
 
       </div>
+
+      <StudentProgressChart bookings={bookings} />
     </section>
   );
 }

@@ -184,6 +184,43 @@ export default function ChatWindow({
       >
         {messages.map((msg) => {
           const isMe = msg.sender_id === currentUserId;
+
+          // Detect structured system alert messages
+          let systemAlert: { type: string; icon: string; title: string; reason: string; body: string; footer: string } | null = null;
+          if (msg.content.startsWith('{')) {
+            try {
+              const parsed = JSON.parse(msg.content);
+              if (parsed.type === 'SYSTEM_ALERT') systemAlert = parsed;
+            } catch { /* not JSON, render normally */ }
+          }
+
+          if (systemAlert) {
+            return (
+              <div key={msg.id} className="flex justify-center my-2">
+                <div className="max-w-[85%] w-full rounded-2xl border border-amber-200 bg-amber-50 shadow-sm overflow-hidden">
+                  {/* Header */}
+                  <div className="flex items-center gap-2 bg-amber-100 px-4 py-2.5 border-b border-amber-200">
+                    <span className="text-base">{systemAlert.icon}</span>
+                    <span className="text-xs font-black text-amber-800 uppercase tracking-widest">{systemAlert.title}</span>
+                  </div>
+                  {/* Body */}
+                  <div className="px-4 py-3 space-y-2">
+                    <div className="flex items-start gap-2">
+                      <span className="text-[10px] font-black text-amber-700 uppercase tracking-widest mt-0.5 shrink-0">Flagged for:</span>
+                      <span className="text-xs font-bold text-amber-900">{systemAlert.reason}</span>
+                    </div>
+                    <p className="text-xs text-amber-800 leading-relaxed">{systemAlert.body}</p>
+                    <p className="text-[10px] text-amber-600 font-bold italic border-t border-amber-200 pt-2 mt-2">{systemAlert.footer}</p>
+                  </div>
+                  {/* Timestamp */}
+                  <div className="px-4 pb-2">
+                    <p className="text-[9px] text-amber-500 font-bold text-right">{format(new Date(msg.created_at), "HH:mm")}</p>
+                  </div>
+                </div>
+              </div>
+            );
+          }
+
           return (
             <div
               key={msg.id}
@@ -226,6 +263,7 @@ export default function ChatWindow({
             </div>
           );
         })}
+
       </div>
 
       {/* Input */}

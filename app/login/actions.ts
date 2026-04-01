@@ -86,7 +86,11 @@ export async function signup(formData: FormData) {
   }
 
   revalidatePath('/', 'layout')
-  redirect(`/dashboard/${role}`)
+  if (role === 'tutor') {
+    redirect('/tutor/onboarding')
+  } else {
+    redirect(`/dashboard/${role}`)
+  }
 }
 
 export async function requestPasswordReset(formData: FormData) {
