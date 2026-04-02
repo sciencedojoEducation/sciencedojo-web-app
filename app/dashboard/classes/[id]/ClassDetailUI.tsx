@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { ClassRoom, ClassPost } from "@/lib/class-queries";
 import ClassPostComposer from "@/components/ClassPostComposer";
 import ClassFeed from "@/components/ClassFeed";
@@ -26,6 +27,7 @@ const COLOR_PRESETS = [
 ];
 
 export default function ClassDetailUI({ classRoom, posts: initialPosts, bookings, isTutor, currentUserId }: ClassDetailUIProps) {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<"stream" | "assignments" | "sessions">("stream");
   const [isEditingName, setIsEditingName] = useState(false);
   const [displayName, setDisplayName] = useState(classRoom.display_name);
@@ -133,8 +135,8 @@ export default function ClassDetailUI({ classRoom, posts: initialPosts, bookings
   const startLiveClass = async () => {
     setIsSettingUpMeeting(true);
     try {
-      // Launch the Premium ScienceDojo Call Hub in a new tab 🏎️🚀
-      window.open(`/dashboard/classes/${classRoom.id}/call`, '_blank', 'noopener,noreferrer');
+      // Launch the Premium ScienceDojo Call Hub in the same window 🏎️🚀
+      router.push(`/dashboard/classes/${classRoom.id}/call`);
     } catch (e) {
       console.error(e);
       alert("Failed to start classroom.");

@@ -55,19 +55,19 @@ export default function DailyClassroom({ url, onLeave, onJoined, exitTrigger }: 
             width: "100%",
             height: "100%",
             border: "0",
-            backgroundColor: "#0f172a" 
+            backgroundColor: "#020617" 
           },
           showLeaveButton: true,
           showFullscreenButton: true,
           theme: {
             colors: {
-              accent: '#6366f1',
+              accent: '#1E5AA8',
               accentText: '#ffffff',
-              background: '#0f172a',
-              backgroundAccent: '#1e293b',
-              baseText: '#f8fafc',
-              border: '#334155',
-              mainAreaBg: '#0f172a',
+              background: '#020617',
+              backgroundAccent: '#0f172a',
+              baseText: '#ffffff',
+              border: '#1E5AA8',
+              mainAreaBg: '#020617',
             },
           },
         });
@@ -144,24 +144,48 @@ export default function DailyClassroom({ url, onLeave, onJoined, exitTrigger }: 
 
   return (
     <div className="relative w-full h-full min-h-[600px] flex flex-col gap-4">
-      {/* Background Glow for Premium Feel */}
-      <div className="absolute -inset-1 bg-gradient-to-r from-blue-600/20 to-purple-600/20 rounded-2xl blur-xl opacity-50 pointer-events-none" />
+      {/* Atmospheric Cosmic Pulse Induction: Global Aura 🌌🏁 */}
+      <div className="absolute top-1/4 -left-32 w-[500px] h-[500px] bg-[#6FE3D6]/20 blur-[150px] pointer-events-none rounded-full animate-pulse" />
+      <div className="absolute bottom-1/4 -right-32 w-[500px] h-[500px] bg-[#1E5AA8]/20 blur-[150px] pointer-events-none rounded-full animate-pulse" style={{ animationDelay: '1s' }} />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-[#1E5AA8]/5 blur-[100px] pointer-events-none rounded-full animate-pulse" style={{ animationDelay: '0.5s' }} />
       
       <div 
         id={containerId}
-        className="relative flex-1 w-full h-full bg-slate-900/50 backdrop-blur-sm rounded-xl border border-white/10 shadow-2xl overflow-hidden"
+        className="relative flex-1 w-full h-full bg-[#020617]/50 backdrop-blur-sm rounded-2xl border border-[#6FE3D6]/20 shadow-[0_0_50px_-12px_rgba(30,90,168,0.3)] overflow-hidden"
       >
+        {/* Branding Overlay (Non-intrusive) 🧬✨ */}
+        {!isInitializing && (
+          <div className="absolute top-4 left-6 z-10 pointer-events-none animate-in fade-in slide-in-from-top-4 duration-1000">
+             <div className="flex items-center gap-3">
+                <img src="/images/sciencedojo-logo-brand.jpg" alt="ScienceDojo" className="w-8 h-8 rounded-lg border border-white/10" />
+                <span className="text-white/30 font-black text-[10px] uppercase tracking-[0.3em]">Gatekeeping Logic Active</span>
+             </div>
+          </div>
+        )}
         {isInitializing && (
-          <div className="absolute inset-0 flex items-center justify-center bg-slate-900/95 z-50 transition-opacity duration-300">
-            <div className="flex flex-col items-center gap-6">
+          <div className="absolute inset-0 flex items-center justify-center bg-[#020617]/95 z-50 transition-opacity duration-300 overflow-hidden">
+            {/* Atmospheric Cosmic Pulse Induction 🛡️✨ */}
+            <div className="absolute top-0 -left-1/4 w-1/2 h-1/2 bg-[#6FE3D6]/20 blur-[120px] pointer-events-none rounded-full animate-pulse" />
+            <div className="absolute bottom-0 -right-1/4 w-1/2 h-1/2 bg-[#1E5AA8]/20 blur-[120px] pointer-events-none rounded-full animate-pulse" style={{ animationDelay: '1.5s' }} />
+
+            <div className="flex flex-col items-center gap-6 relative z-10 text-center animate-in fade-in duration-700 delay-200">
               <div className="relative">
-                <div className="w-16 h-16 border-4 border-blue-500/20 border-t-blue-500 rounded-full animate-spin" />
-                <div className="absolute inset-0 w-16 h-16 border-4 border-purple-500/20 border-b-purple-500 rounded-full animate-[spin_2s_linear_infinite_reverse]" />
+                <img 
+                  src="/images/sciencedojo-logo-brand.jpg" 
+                  alt="ScienceDojo" 
+                  className="w-16 h-16 rounded-2xl shadow-xl shadow-[#1E5AA8]/30 animate-pulse border border-white/10" 
+                />
               </div>
-              <div className="text-center space-y-2">
-                <p className="text-white font-black text-xs tracking-[0.3em] uppercase animate-pulse">Initializing Secure Dojo</p>
-                <div className="h-1 w-32 bg-white/5 rounded-full overflow-hidden">
-                  <div className="h-full bg-gradient-to-r from-blue-500 to-purple-500 animate-[progress_2s_ease-in-out_infinite]" style={{ width: '100%' }} />
+              <div className="space-y-4">
+                <div className="inline-flex items-center gap-2 px-3 py-1 bg-[#6FE3D6]/10 border border-[#6FE3D6]/20 rounded-full text-[#6FE3D6] text-[8px] font-black uppercase tracking-[0.2em] mb-1 mx-auto">
+                   <div className="w-1 h-1 bg-[#6FE3D6] rounded-full animate-pulse" />
+                   Secure Link Active
+                </div>
+                <h3 className="text-white font-black text-2xl lg:text-3xl tracking-tighter leading-none">
+                  Initializing Nexus Hub
+                </h3>
+                <div className="h-1.5 w-40 bg-white/5 rounded-full overflow-hidden mx-auto mt-4">
+                  <div className="h-full bg-gradient-to-r from-[#1E5AA8] to-[#6FE3D6] animate-[progress_2s_ease-in-out_infinite]" style={{ width: '100%' }} />
                 </div>
               </div>
             </div>
@@ -176,7 +200,7 @@ export default function DailyClassroom({ url, onLeave, onJoined, exitTrigger }: 
            Secure End-to-End
         </span>
         <span className="flex items-center gap-2">
-           <div className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse" />
+           <div className="w-1.5 h-1.5 bg-[#1E5AA8] rounded-full animate-pulse" />
            High Performance Engine
         </span>
       </div>

@@ -24,6 +24,8 @@ export default function PremiumCallHub() {
   const [isJoined, setIsJoined] = useState(false);
   const [isExiting, setIsExiting] = useState(false);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
+  const [isSessionCompleted, setIsSessionCompleted] = useState(false);
+  const [countdown, setCountdown] = useState(5);
 
   useEffect(() => {
     const initCall = async () => {
@@ -85,10 +87,27 @@ export default function PremiumCallHub() {
   }, [classId, router]);
 
   const handleLeave = useCallback(() => {
-    console.log("[Daily.co] Absolute migration pulse initiated... 🏎️🚀");
-    // Using absolute location to force purge of call engine state 🧬
-    window.location.href = `/dashboard/classes/${classId}`;
-  }, [classId]);
+    console.log("[Daily.co] Premium Finale Pulse Initiated... 🧬✨");
+    setIsSessionCompleted(true);
+  }, []);
+
+  // 💎 Premium Finale Redirect Handshake 🏎️🚀
+  useEffect(() => {
+    if (isSessionCompleted) {
+      const timer = setInterval(() => {
+        setCountdown((prev) => {
+          if (prev <= 1) {
+            clearInterval(timer);
+            console.log("[Daily.co] Absolute migration pulse authorized... 🏁🧤");
+            window.location.href = `/dashboard/classes/${classId}`;
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+      return () => clearInterval(timer);
+    }
+  }, [isSessionCompleted, classId]);
 
   const handleManualExit = () => {
     setShowExitConfirm(true);
@@ -127,32 +146,47 @@ export default function PremiumCallHub() {
     );
   }
 
-  if (isLoading || !meetingUrl) {
-    return (
-      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center gap-8">
-         <div className="relative">
-            <div className="w-24 h-24 border-4 border-indigo-500/20 border-t-indigo-500 rounded-full animate-spin" />
-            <div className="absolute inset-0 w-24 h-24 border-4 border-purple-500/20 border-b-purple-500 rounded-full animate-[spin_3s_linear_infinite_reverse]" />
-         </div>
-         <div className="text-center space-y-2">
-            <p className="text-white font-black text-sm tracking-[0.4em] uppercase animate-pulse">Initializing Premium Dojo</p>
-            <p className="text-slate-500 text-[10px] uppercase font-bold tracking-widest">Encrypting End-to-End Pulse</p>
-         </div>
-      </div>
-    );
-  }
+    if (isLoading || !meetingUrl) {
+      return (
+        <div className="min-h-screen bg-[#020617] flex flex-col items-center justify-center gap-8 relative overflow-hidden">
+           {/* Atmospheric Cosmic Pulse Induction 🛡️✨ */}
+           <div className="absolute top-0 -left-1/4 w-1/2 h-1/2 bg-[#6FE3D6]/20 blur-[120px] pointer-events-none rounded-full animate-pulse" />
+           <div className="absolute bottom-0 -right-1/4 w-1/2 h-1/2 bg-[#1E5AA8]/20 blur-[120px] pointer-events-none rounded-full animate-pulse" style={{ animationDelay: '1.5s' }} />
 
-  return (
-    <div className="fixed inset-0 bg-slate-950 z-[9999] overflow-hidden flex flex-col">
+             <div className="relative z-10">
+                <img 
+                  src="/images/sciencedojo-logo-brand.jpg" 
+                  alt="ScienceDojo" 
+                  className="w-24 h-24 rounded-3xl shadow-2xl shadow-[#1E5AA8]/40 animate-pulse border border-white/10" 
+                />
+             </div>
+             <div className="text-center space-y-4 relative z-10 animate-in slide-in-from-bottom-8 duration-700 delay-300">
+                <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-[#6FE3D6]/10 border border-[#6FE3D6]/20 rounded-full text-[#6FE3D6] text-[10px] font-black uppercase tracking-[0.3em] mb-2 mx-auto">
+                   <div className="w-1.5 h-1.5 bg-[#6FE3D6] rounded-full animate-pulse" />
+                   Genesis Sequence
+                </div>
+                <h1 className="text-white font-black text-4xl lg:text-5xl tracking-tighter leading-tight drop-shadow-2xl">
+                   High-Performance Session Initializing
+                </h1>
+                <p className="text-slate-400 text-lg font-medium leading-relaxed max-w-sm mx-auto">
+                   Preparing your secure interactive environment and high-fidelity video engine.
+                </p>
+             </div>
+        </div>
+      );
+    }
+
+   return (
+     <div className="fixed inset-0 bg-[#020617] z-[9999] overflow-hidden flex flex-col">
        {/* Premium Top Bar */}
        <div className="h-16 px-6 flex items-center justify-between border-b border-white/5 bg-slate-900/50 backdrop-blur-xl relative z-50">
           <div className="flex items-center gap-4">
-             <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-500/20">
-                <span className="text-white font-black text-xl">🧬</span>
+             <div className="w-12 h-12 rounded-xl overflow-hidden shadow-lg shadow-[#1E5AA8]/20 border border-white/10">
+                <img src="/images/sciencedojo-logo-brand.jpg" alt="ScienceDojo Logo" className="w-full h-full object-cover" />
              </div>
              <div>
                 <h2 className="text-white font-black text-sm tracking-tight">{classRoom?.display_name || "ScienceDojo"}</h2>
-                <p className="text-[10px] text-indigo-400 font-black uppercase tracking-widest">Live Interactive Session</p>
+                <p className="text-[10px] text-[#6FE3D6] font-black uppercase tracking-widest">Live Interactive Session</p>
              </div>
           </div>
 
@@ -162,7 +196,7 @@ export default function PremiumCallHub() {
                   onClick={() => setShowWhiteboard(!showWhiteboard)}
                   className={`px-5 py-2.5 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all border flex items-center gap-2 ${
                     showWhiteboard 
-                    ? "bg-indigo-500 text-white border-indigo-400 shadow-lg shadow-indigo-500/20" 
+                    ? "bg-[#1E5AA8] text-white border-[#6FE3D6]/30 shadow-lg shadow-[#1E5AA8]/20" 
                     : "bg-white/5 text-slate-300 border-white/10 hover:bg-white/10"
                   }`}
                 >
@@ -201,9 +235,57 @@ export default function PremiumCallHub() {
           )}
        </div>
 
-       {/* Ambient Glows */}
-       <div className="absolute top-0 -left-1/4 w-1/2 h-1/2 bg-indigo-500/10 blur-[120px] pointer-events-none rounded-full" />
-       <div className="absolute bottom-0 -right-1/4 w-1/2 h-1/2 bg-purple-500/10 blur-[120px] pointer-events-none rounded-full" />
+       {/* Ambient Glows: Atmospheric Bokeh System 🌌🏁 */}
+       <div className="absolute top-0 -left-1/4 w-1/2 h-1/2 bg-[#6FE3D6]/10 blur-[120px] pointer-events-none rounded-full animate-pulse" />
+       <div className="absolute bottom-0 -right-1/4 w-1/2 h-1/2 bg-[#1E5AA8]/10 blur-[120px] pointer-events-none rounded-full animate-pulse" style={{ animationDelay: '2s' }} />
+
+       {/* ScienceDojo Premium Finale Induction 🧬🏁 */}
+       {isSessionCompleted && (
+          <div className="fixed inset-0 z-[20000] bg-[#020617] flex items-center justify-center p-6 animate-in fade-in duration-500 overflow-hidden">
+             {/* Atmospheric Cosmic Pulse */}
+             <div className="absolute top-0 -left-1/4 w-1/2 h-1/2 bg-[#6FE3D6]/20 blur-[120px] pointer-events-none rounded-full animate-pulse" />
+             <div className="absolute bottom-0 -right-1/4 w-1/2 h-1/2 bg-[#1E5AA8]/20 blur-[120px] pointer-events-none rounded-full animate-pulse" style={{ animationDelay: '1s' }} />
+
+             <div className="w-full max-w-lg relative z-10 text-center space-y-12">
+                <div className="relative inline-block">
+                   <div className="w-32 h-32 rounded-[2.5rem] overflow-hidden shadow-2xl shadow-[#1E5AA8]/40 animate-in zoom-in spin-in-90 duration-700 border border-white/10">
+                      <img src="/images/sciencedojo-logo-brand.jpg" alt="ScienceDojo Success" className="w-full h-full object-cover" />
+                   </div>
+                   <div className="absolute -inset-4 bg-[#6FE3D6]/20 blur-2xl rounded-full animate-pulse" />
+                </div>
+
+                <div className="space-y-4 animate-in slide-in-from-bottom-8 duration-700 delay-300">
+                   <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-[#6FE3D6]/10 border border-[#6FE3D6]/20 rounded-full text-[#6FE3D6] text-[10px] font-black uppercase tracking-[0.3em] mb-2">
+                      <div className="w-1.5 h-1.5 bg-[#6FE3D6] rounded-full animate-pulse" />
+                      Session Success
+                   </div>
+                   <h2 className="text-white font-black text-4xl lg:text-5xl tracking-tighter leading-tight drop-shadow-2xl">
+                      High-Performance Learning Concluded
+                   </h2>
+                   <p className="text-slate-400 text-lg font-medium leading-relaxed max-w-sm mx-auto">
+                      Your ScienceDojo session details have been securely synchronized.
+                   </p>
+                </div>
+
+                <div className="pt-8 space-y-6 animate-in fade-in duration-1000 delay-700">
+                   <button 
+                     onClick={() => window.location.href = `/dashboard/classes/${classId}`}
+                     className="px-12 py-5 bg-white text-[#020617] rounded-2xl font-black text-sm uppercase tracking-[0.2em] transition-all shadow-2xl shadow-white/10 hover:scale-[1.02] active:scale-95"
+                   >
+                      Return to Dashboard
+                   </button>
+                   
+                   <p className="text-slate-500 text-[10px] uppercase font-black tracking-[0.4em] flex items-center justify-center gap-3">
+                      Auto-Redirecting Pulse in
+                      <span className="text-[#6FE3D6] w-4">{countdown}s</span>
+                   </p>
+                </div>
+             </div>
+             
+             {/* Decorative Grain Overlay */}
+             <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[url('https://grainy-gradients.vercel.app/noise.svg')] blend-overlay" />
+          </div>
+       )}
 
        {/* ScienceDojo Premium Exit Modal Induction 🧬✨ */}
        {showExitConfirm && (
@@ -236,7 +318,7 @@ export default function PremiumCallHub() {
                </div>
                
                {/* Modal Footer Decorative */}
-               <div className="h-1 bg-gradient-to-r from-red-500/50 via-indigo-500/50 to-purple-500/50" />
+               <div className="h-1 bg-gradient-to-r from-red-500/50 via-[#1E5AA8]/50 to-[#6FE3D6]/50" />
             </div>
          </div>
        )}

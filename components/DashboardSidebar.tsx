@@ -1,7 +1,31 @@
 import Link from "next/link";
 import { createClient } from "@/utils/supabase/server";
 import { getUnreadMessageCount } from "@/lib/messaging-queries";
-import Logo from "@/components/Logo";
+import SidebarLink from "./SidebarLink";
+import { 
+  Calendar, 
+  GraduationCap, 
+  MessageSquare, 
+  Search, 
+  Settings, 
+  LifeBuoy, 
+  LayoutDashboard, 
+  ShieldCheck, 
+  Megaphone, 
+  Users, 
+  UserCircle, 
+  Banknote,
+  LogOut
+} from "lucide-react";
+
+interface NavLink {
+  name: string;
+  href: string;
+  icon: React.ReactNode;
+  badge?: number;
+  badgeColor?: string;
+  exact?: boolean;
+}
 
 interface DashboardSidebarProps {
   role: "admin" | "tutor" | "parent" | "student";
@@ -13,10 +37,12 @@ export default async function DashboardSidebar({ role }: DashboardSidebarProps) 
   const metadata = user?.user_metadata;
   const subRole = metadata?.sub_role; // 'student' or 'parent'
   
-  // Security Fix: If the main role is admin, always display as Admin to avoid legacy metadata confusion
   const displayRole = (role === 'admin') ? 'admin' : (subRole || role);
   
-  // Fetch fresh profile data to avoid stale Auth metadata (e.g. John Smith vs Piumal)
+  // ScienceDojo Aesthetic Pulse: Light-Modern Evolution 🌬️✨
+  const variant = 'light'; 
+  const isLight = variant === 'light';
+
   let userName = metadata?.full_name || `${displayRole.charAt(0).toUpperCase() + displayRole.slice(1)} User`;
   let avatarUrl = metadata?.avatar_url;
 
@@ -32,20 +58,15 @@ export default async function DashboardSidebar({ role }: DashboardSidebarProps) 
   }
 
   const unreadCount = await getUnreadMessageCount();
-  
-  // Fetch distinct flagged conversation count for admin sidebar badge
   const { data: flaggedConvs } = await supabase
     .from("messages")
     .select("conversation_id")
     .eq("is_flagged", true);
   const flaggedCount = new Set(flaggedConvs?.map(m => m.conversation_id)).size;
 
-
-  const pathname = ""; // We will handle pathname if needed, but for now we focus on data
-
-  const navLinks = {
+  const navLinks: Record<string, NavLink[]> = {
     parent: [
-      { name: "My Bookings", href: "/dashboard/parent", icon: "📅" },
+      { name: "My Bookings", href: "/dashboard/parent", icon: "🗓️", exact: true },
       { name: "My Classes", href: "/dashboard/classes", icon: "🎓" },
       { name: "Messages", href: "/dashboard/messages", icon: "💬", badge: unreadCount },
       { name: "Browse Tutors", href: "/dashboard/parent/tutors", icon: "🔍" },
@@ -53,7 +74,7 @@ export default async function DashboardSidebar({ role }: DashboardSidebarProps) 
       { name: "Support", href: "/dashboard/support", icon: "🆘" },
     ],
     student: [
-      { name: "My Bookings", href: "/dashboard/student", icon: "📅" },
+      { name: "My Bookings", href: "/dashboard/student", icon: "🗓️", exact: true },
       { name: "My Classes", href: "/dashboard/classes", icon: "🎓" },
       { name: "Messages", href: "/dashboard/messages", icon: "💬", badge: unreadCount },
       { name: "Browse Tutors", href: "/dashboard/student/tutors", icon: "🔍" },
@@ -61,7 +82,7 @@ export default async function DashboardSidebar({ role }: DashboardSidebarProps) 
       { name: "Support", href: "/dashboard/support", icon: "🆘" },
     ],
     tutor: [
-      { name: "My Schedule", href: "/dashboard/tutor", icon: "📆" },
+      { name: "My Schedule", href: "/dashboard/tutor", icon: "🗓️", exact: true },
       { name: "My Classes", href: "/dashboard/classes", icon: "🎓" },
       { name: "Messages", href: "/dashboard/messages", icon: "💬", badge: unreadCount },
       { name: "Earnings", href: "/dashboard/tutor/earnings", icon: "💰" },
@@ -69,67 +90,105 @@ export default async function DashboardSidebar({ role }: DashboardSidebarProps) 
       { name: "Support", href: "/dashboard/support", icon: "🆘" },
     ],
     admin: [
-      { name: "Overview", href: "/dashboard/admin", icon: "📊" },
+      { name: "Overview", href: "/dashboard/admin", icon: "📊", exact: true },
       { name: "Messages", href: "/dashboard/messages", icon: "💬", badge: unreadCount },
-      { name: "Dojo Safeguards", href: "/dashboard/admin/safeguards", icon: "🛡️", badge: flaggedCount || 0 },
-      { name: "Broadcast Center", href: "/dashboard/admin/broadcast", icon: "📢" },
+      { name: "Dojo Safeguards", href: "/dashboard/admin/safeguards", icon: "🛡️", badge: flaggedCount || 0, badgeColor: "bg-red-500 shadow-red-500/20" },
+      { name: "Broadcast Center", href: "/dashboard/admin/broadcast", icon: "📣" },
       { name: "Manage Tutors", href: "/dashboard/admin/tutors", icon: "👥" },
-      { name: "User Directory", href: "/dashboard/admin/users", icon: "🧑‍💻" },
-      { name: "Tutor Payouts", href: "/dashboard/admin/payouts", icon: "💸" },
+      { name: "User Directory", href: "/dashboard/admin/users", icon: "👤" },
+      { name: "Tutor Payouts", href: "/dashboard/admin/payouts", icon: "💰" },
       { name: "Platform Settings", href: "/dashboard/admin/settings", icon: "⚙️" },
     ],
   };
 
-  const links = navLinks[role];
+  const links = navLinks[role] || [];
 
   return (
-    <aside className="w-64 bg-surface border-r border-secondary/10 flex flex-col h-[calc(100vh-80px)] top-[80px] sticky overflow-y-auto">
-      <div className="p-8">
-        <h2 className="text-[10px] font-black tracking-[0.2em] text-primary uppercase mb-6 opacity-30">
-          {displayRole} Portal
-        </h2>
-        <nav className="space-y-2">
-          {links.map((link) => {
-            return (
-              <Link
-                key={link.name}
-                href={link.href}
-                className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors text-secondary/70 hover:bg-secondary/5 hover:text-secondary`}
-              >
-                <span>{link.icon}</span>
-                <span className="flex-1">{link.name}</span>
-                {link.badge && link.badge > 0 && (
-                  <span className={`${link.name === 'Dojo Safeguards' ? 'bg-red-600' : 'bg-primary'} text-white text-[10px] font-black px-1.5 py-0.5 rounded-full min-w-[1.2rem] text-center shadow-sm`}>
-                    {link.badge}
-                  </span>
-                )}
-              </Link>
-            );
-          })}
+    <aside className={`w-64 flex flex-col h-[calc(100vh-80px)] top-[80px] sticky overflow-y-auto overflow-x-hidden transition-all duration-500 border-r ${
+      isLight 
+        ? "bg-slate-50/70 backdrop-blur-xl border-slate-200 shadow-[20px_0_40px_-20px_rgba(30,90,168,0.05)]"
+        : "bg-[#020617] border-white/5"
+    }`}>
+      <div className={`absolute inset-0 pointer-events-none ${
+        isLight ? "bg-gradient-to-b from-white to-transparent" : "bg-gradient-to-b from-[#1E5AA8]/5 to-transparent"
+      }`} />
+      
+      <div className="p-6 relative z-10">
+        <div className="flex items-center gap-3 mb-8 px-2">
+           <div className="w-8 h-8 rounded-lg overflow-hidden border border-white/10 shadow-lg shadow-[#1E5AA8]/20 group hover:scale-105 transition-transform duration-300">
+              <img src="/images/sciencedojo-logo-brand.jpg" alt="ScienceDojo" className="w-full h-full object-cover" />
+           </div>
+           <h2 className={`text-[10px] font-black tracking-[0.3em] uppercase opacity-70 ${
+             isLight ? "text-[#1E5AA8]" : "text-[#6FE3D6]"
+           }`}>
+              {displayRole} Nexus
+           </h2>
+        </div>
+
+        <nav className="space-y-1">
+          {links.map((link) => (
+            <SidebarLink
+              key={link.name}
+              href={link.href}
+              name={link.name}
+              icon={<span className="text-xl">{link.icon}</span>}
+              badge={link.badge}
+              badgeColor={link.badgeColor}
+              variant={variant}
+              exact={link.exact}
+            />
+          ))}
         </nav>
       </div>
       
-      <div className="mt-auto p-6 border-t border-secondary/10">
-        <div className="flex items-center gap-3 mb-6">
-           <div className="w-10 h-10 rounded-full bg-secondary/10 flex items-center justify-center font-bold text-secondary overflow-hidden">
-             {avatarUrl ? (
-               <img src={avatarUrl} alt="Profile" className="w-full h-full object-cover" />
-             ) : (
-               userName.charAt(0).toUpperCase()
-             )}
+      <div className={`mt-auto p-6 relative z-10 border-t backdrop-blur-sm ${
+        isLight ? "border-slate-100 bg-white/40 shadow-[0_-10px_30px_rgba(0,0,0,0.02)]" : "border-white/5 bg-white/2"
+      }`}>
+        <div className="flex items-center gap-3 mb-6 group cursor-pointer">
+           <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#1E5AA8] to-[#154C9E] p-[1.5px] shadow-lg shadow-[#1E5AA8]/10 group-hover:scale-105 transition-all duration-300">
+              <div className={`w-full h-full rounded-[14px] flex items-center justify-center font-bold overflow-hidden border border-white/5 ${
+                isLight ? "bg-white text-[#1E5AA8]" : "bg-slate-900 text-white"
+              }`}>
+                {avatarUrl ? (
+                  <img src={avatarUrl} alt="Profile" className="w-full h-full object-cover" />
+                ) : (
+                  <span className="text-sm font-black tracking-tighter">{userName.charAt(0).toUpperCase()}</span>
+                )}
+              </div>
            </div>
-           <div>
-              <p className="text-sm font-bold text-secondary truncate max-w-[120px]">{userName}</p>
-              <p className="text-[10px] text-secondary/60 uppercase font-black tracking-tighter">Verified {displayRole}</p>
+           <div className="overflow-hidden">
+              <p className={`text-sm font-bold truncate max-w-[140px] group-hover:text-[#1E5AA8] transition-colors duration-300 ${
+                isLight ? "text-slate-900" : "text-white"
+              }`}>{userName}</p>
+              <div className="flex items-center gap-1.5">
+                 <div className="w-1.5 h-1.5 rounded-full bg-[#6FE3D6] animate-pulse" />
+                 <p className={`text-[9px] uppercase font-black tracking-widest opacity-60 ${
+                   isLight ? "text-slate-500" : "text-[#6FE3D6]"
+                 }`}>Verified {displayRole}</p>
+              </div>
            </div>
         </div>
+
         <Link 
           href="/" 
-          className="flex items-center justify-center w-full gap-2 px-4 py-2 border border-secondary/20 rounded-lg text-sm font-bold text-secondary hover:bg-secondary/5 transition-colors"
+          className={`flex items-center justify-center w-full gap-2 px-4 py-3 border rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-500 shadow-lg shadow-black/5 group ${
+            isLight 
+              ? "bg-slate-100 border-slate-200 text-slate-500 hover:bg-slate-900 hover:text-white hover:border-slate-900"
+              : "bg-white/5 border-white/10 text-slate-300 hover:bg-white hover:text-[#020617] hover:border-white shadow-black/20"
+          }`}
         >
+          <span className="text-base">🚪</span>
           <span>Exit to Site</span>
         </Link>
       </div>
+
+      {/* Subtle Background Atmospherics 🏔️✨ */}
+      <div className={`absolute -bottom-24 -left-24 w-48 h-48 blur-[80px] pointer-events-none rounded-full ${
+        isLight ? "bg-[#6FE3D6]/20" : "bg-[#6FE3D6]/10"
+      }`} />
+      <div className={`absolute top-1/4 -right-24 w-48 h-48 blur-[80px] pointer-events-none rounded-full ${
+        isLight ? "bg-[#1E5AA8]/20" : "bg-[#1E5AA8]/10"
+      }`} />
     </aside>
   );
 }
