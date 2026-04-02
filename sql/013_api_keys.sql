@@ -1,10 +1,11 @@
--- Create the platform_integrations table for storing sensitive API keys
 CREATE TABLE IF NOT EXISTS public.platform_integrations (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   provider text NOT NULL UNIQUE, -- 'stripe', 'zoom', etc.
   key_1 text, -- e.g., STRIPE_SECRET_KEY or ZOOM_ACCOUNT_ID
   key_2 text, -- e.g., STRIPE_WEBHOOK_SECRET or ZOOM_CLIENT_ID
   key_3 text, -- e.g., ZOOM_CLIENT_SECRET
+  key_4 text, -- e.g., ZOOM_SDK_KEY
+  key_5 text, -- e.g., ZOOM_SDK_SECRET
   is_active boolean DEFAULT false NOT NULL,
   created_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
   updated_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL

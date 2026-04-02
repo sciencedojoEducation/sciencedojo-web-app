@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { ClassRoom, ClassPost } from "@/lib/class-queries";
 import ClassPostComposer from "@/components/ClassPostComposer";
@@ -8,6 +8,9 @@ import ClassFeed from "@/components/ClassFeed";
 import LessonHistoryTable from "@/components/LessonHistoryTable";
 import { updateClassSettings, archiveClass, unarchiveClass, fetchPostById } from "@/app/classes/actions";
 import { createClient } from "@/utils/supabase/client";
+import { createMeetingUrl } from "@/lib/meetings";
+
+
 
 interface ClassDetailUIProps {
   classRoom: ClassRoom;
@@ -28,6 +31,8 @@ export default function ClassDetailUI({ classRoom, posts: initialPosts, bookings
   const [displayName, setDisplayName] = useState(classRoom.display_name);
   const [isArchiving, setIsArchiving] = useState(false);
   const [currentCoverColor, setCurrentCoverColor] = useState(classRoom.cover_color || COLOR_PRESETS[0]);
+  const [isSettingUpMeeting, setIsSettingUpMeeting] = useState(false);
+
   
   // Real-time State
   const [posts, setPosts] = useState<ClassPost[]>(initialPosts);
@@ -123,6 +128,20 @@ export default function ClassDetailUI({ classRoom, posts: initialPosts, bookings
          setIsArchiving(false);
      }
   };
+
+
+  const startLiveClass = async () => {
+    setIsSettingUpMeeting(true);
+    try {
+      // Launch the Premium ScienceDojo Call Hub in a new tab 🏎️🚀
+      window.open(`/dashboard/classes/${classRoom.id}/call`, '_blank', 'noopener,noreferrer');
+    } catch (e) {
+      console.error(e);
+      alert("Failed to start classroom.");
+    }
+    setIsSettingUpMeeting(false);
+  };
+
 
   return (
     <div className="min-h-screen bg-background">
@@ -248,7 +267,20 @@ export default function ClassDetailUI({ classRoom, posts: initialPosts, bookings
            {/* Upcoming Mini Card */}
            <div className="bg-white p-6 rounded-[2rem] border border-secondary/10 shadow-sm relative overflow-hidden group">
               <div className="absolute top-0 right-0 w-16 h-16 bg-primary/5 rounded-bl-[2rem] group-hover:scale-125 transition-transform"></div>
+              
+              {!classRoom.is_archived && (
+                 <button 
+                   onClick={startLiveClass}
+                   disabled={isSettingUpMeeting}
+                   className="w-full bg-blue-600 hover:bg-blue-700 text-white p-4 rounded-2xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-3 shadow-lg shadow-blue-200 transition-all mb-6 disabled:opacity-50"
+                 >
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+                    {isSettingUpMeeting ? "Connecting..." : (isTutor ? "Start Live Class" : "Join Live Class")}
+                 </button>
+              )}
+
               <h3 className="font-black text-secondary text-sm mb-4">Course Info</h3>
+
               <div className="space-y-3">
                  <div className="flex justify-between items-center">
                     <span className="text-[10px] font-black text-secondary/40 uppercase tracking-widest">Total Sessions</span>
@@ -309,6 +341,8 @@ export default function ClassDetailUI({ classRoom, posts: initialPosts, bookings
            )}
         </div>
       </div>
+
     </div>
   );
 }
+
