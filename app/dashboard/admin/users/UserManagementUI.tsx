@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import Image from "next/image";
 import UserAvatar from "@/components/UserAvatar";
 import { adminCreateUser, adminDeleteUser } from "./actions";
@@ -15,6 +16,7 @@ interface UserProfile {
 }
 
 export default function UserManagementUI({ users, currentUserId }: { users: UserProfile[], currentUserId: string }) {
+  const router = useRouter();
   const [filter, setFilter] = useState("all");
   
   // Modals
@@ -57,6 +59,8 @@ export default function UserManagementUI({ users, currentUserId }: { users: User
     try {
       await adminDeleteUser(deletingUser.id);
       setDeletingUser(null);
+      // Force RSC to re-fetch the latest database state
+      router.refresh();
     } catch (err: any) {
       setError(err.message || "Failed to delete user.");
     } finally {

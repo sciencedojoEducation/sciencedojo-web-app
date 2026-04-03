@@ -16,21 +16,21 @@ export async function saveApplicationStage(stage: number, formData: FormData) {
   const updateData: any = {};
 
   if (stage === 1) {
-    updateData.full_name = formData.get("full_name") as string;
+    updateData.user_type = formData.get("user_type") as string;
     updateData.university = formData.get("university") as string;
-    const subjectsStr = formData.get("subjects") as string;
-    
-    if (!updateData.full_name || !updateData.university || !subjectsStr) {
-      throw new Error("Please fill out all Stage 1 fields.");
-    }
-
-    updateData.subjects = subjectsStr.split(",").map((s) => s.trim()).filter(Boolean);
+    updateData.year_of_study = formData.get("year_of_study") as string;
+    updateData.top_grades = formData.get("top_grades") as string;
+    updateData.current_company = formData.get("current_company") as string;
+    updateData.years_experience = formData.get("years_experience") as string;
+    updateData.industry_skillset = formData.get("industry_skillset") as string;
+    updateData.timezone = formData.get("timezone") as string;
   }
 
   if (stage === 2) {
-    const youtubeUrl = formData.get("youtube_url") as string;
-    if (!youtubeUrl) throw new Error("Please provide a YouTube URL.");
-    updateData.youtube_url = youtubeUrl;
+    updateData.youtube_url = formData.get("youtube_url") as string;
+    const stylesStr = formData.get("teaching_styles") as string;
+    updateData.teaching_styles = stylesStr ? stylesStr.split(",").map(s => s.trim()) : [];
+    updateData.teaching_philosophy = formData.get("teaching_philosophy") as string;
   }
 
   if (stage === 3) {
@@ -39,6 +39,7 @@ export async function saveApplicationStage(stage: number, formData: FormData) {
     
     updateData.consent_timestamp = new Date().toISOString();
     updateData.status = 'pending'; // Ready for review!
+    updateData.onboarding_status = 'pending_review';
   }
 
   // Perform Upsert
@@ -51,7 +52,7 @@ export async function saveApplicationStage(stage: number, formData: FormData) {
 
   if (error) {
     console.error(`Failed to save Stage ${stage}:`, error.message);
-    throw new Error("Database error while saving your application.");
+    throw new Error(`Database error: ${error.message}`);
   }
 
   revalidatePath("/tutor/onboarding");

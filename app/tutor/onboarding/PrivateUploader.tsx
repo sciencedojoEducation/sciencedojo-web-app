@@ -5,7 +5,7 @@ import { createClient } from "@/utils/supabase/client";
 
 interface Props {
   userId: string;
-  docType: "id" | "background_check";
+  docType: "government_id" | "background_check";
   onUploadSuccess: (url: string) => void;
 }
 
@@ -55,30 +55,37 @@ export default function PrivateUploader({ userId, docType, onUploadSuccess }: Pr
   };
 
   return (
-    <div className={`p-6 border-2 border-dashed rounded-2xl flex flex-col items-center justify-center transition-all ${success ? 'border-emerald-400 bg-emerald-50 text-emerald-700' : error ? 'border-red-300 bg-red-50' : 'border-slate-200 bg-slate-50 hover:bg-slate-100 hover:border-slate-300'}`}>
+    <div className={`p-8 border-2 border-dashed rounded-[2rem] flex flex-col items-center justify-center transition-all ${success ? 'border-mint bg-mint/5 text-navy' : error ? 'border-red-300 bg-red-50' : 'border-navy/10 bg-white/50 hover:bg-white hover:border-mint/50'}`}>
       
       {success ? (
-        <div className="flex flex-col items-center gap-2">
-           <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 font-bold text-lg">✓</div>
-           <span className="font-bold tracking-tight text-sm">Document Secured in Vault</span>
+        <div className="flex flex-col items-center gap-3 text-center">
+           <div className="w-14 h-14 rounded-2xl bg-mint flex items-center justify-center text-navy shadow-lg shadow-mint/20">
+             <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
+           </div>
+           <div className="space-y-1">
+             <span className="block font-black text-navy text-sm uppercase tracking-tight">Document Secured</span>
+             <span className="block text-[10px] font-black opacity-30 uppercase tracking-[0.2em]">AES-256 Vaulted</span>
+           </div>
         </div>
       ) : (
         <>
-          <svg className="w-8 h-8 opacity-20 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
-          <p className="text-sm font-bold text-slate-500 mb-1">{docType === 'id' ? 'Upload Government ID' : 'Upload Background Check'}</p>
-          <p className="text-[10px] text-slate-400 uppercase tracking-widest font-black mb-4">PDF, JPG, PNG up to 5MB</p>
+          <div className="w-12 h-12 rounded-2xl bg-navy/5 flex items-center justify-center text-navy/20 mb-4">
+            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
+          </div>
+          <p className="text-sm font-black text-navy mb-1 uppercase tracking-tight">{docType === 'government_id' ? 'Government Photo ID' : 'Background Check'}</p>
+          <p className="text-[10px] text-navy/30 uppercase tracking-[0.2em] font-black mb-6">PDF, JPG, PNG &lt; 5MB</p>
           
-          <label className={`cursor-pointer px-6 py-2 rounded-full font-bold text-xs transition-colors shadow-sm ${isUploading ? 'bg-slate-200 text-slate-400 cursor-not-allowed' : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'}`}>
-            {isUploading ? "Encrypting & Uploading..." : "Select File"}
+          <label className={`cursor-pointer px-8 py-3 rounded-xl font-black text-xs transition-all shadow-xl active:scale-95 ${isUploading ? 'bg-navy/10 text-navy/20 cursor-not-allowed' : 'bg-navy text-mint hover:bg-black shadow-navy/10'}`}>
+            {isUploading ? "Encrypting..." : "Choose File"}
             <input 
               type="file" 
               className="hidden" 
-              accept=".pdf,.jpg,.jpeg,.png"
+              accept=".pdf,.jpg,.jpeg,.png,.webp"
               onChange={handleFileChange}
               disabled={isUploading}
             />
           </label>
-          {error && <p className="text-red-500 text-[10px] mt-3 font-bold text-center max-w-[200px]">{error}</p>}
+          {error && <p className="text-red-500 text-[10px] mt-4 font-black text-center max-w-[200px] uppercase tracking-wider leading-relaxed">{error}</p>}
         </>
       )}
     </div>

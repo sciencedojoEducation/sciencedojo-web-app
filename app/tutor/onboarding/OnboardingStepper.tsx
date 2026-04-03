@@ -1,53 +1,59 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { saveApplicationStage } from "./actions";
-import YoutubePreview from "./YoutubePreview";
-import PrivateUploader from "./PrivateUploader";
+import WhiteBeltStage from "./WhiteBeltStage";
+import BlueBeltStage from "./BlueBeltStage";
+import BlackBeltStage from "./BlackBeltStage";
+import confetti from "canvas-confetti";
 
-export default function OnboardingStepper({ initialData, userId }: { initialData: any, userId: string }) {
-  // Determine which stage to start on based on DB state
-  let initialStage = 1;
-  if (initialData?.university && initialData?.subjects?.length > 0) initialStage = 2;
-  if (initialData?.youtube_url) initialStage = 3;
-  if (initialData?.status === 'pending') initialStage = 4; // Completed
+interface OnboardingStepperProps {
+  initialData: any;
+  userId: string;
+}
 
-  const [stage, setStage] = useState(initialStage);
-  
-  // Stage 1 Fields
-  const [fullName, setFullName] = useState(initialData?.full_name || "");
-  const [university, setUniversity] = useState(initialData?.university || "");
-  const [subjects, setSubjects] = useState(initialData?.subjects?.join(", ") || "");
-
-  // Stage 2 Fields
-  const [youtubeUrl, setYoutubeUrl] = useState(initialData?.youtube_url || "");
-
-  // Stage 3 Fields
-  const [consent, setConsent] = useState(!!initialData?.consent_timestamp);
-  const [idUploaded, setIdUploaded] = useState(false);
-  const [bgUploaded, setBgUploaded] = useState(false);
-
+export default function OnboardingStepper({ initialData, userId }: OnboardingStepperProps) {
+  const [stage, setStage] = useState(1);
+  const [formData, setFormData] = useState(initialData || {});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleStageNavigation = async (nextStage: number) => {
+  // Stage 3 local states (we'll move these to a component later)
+  const [idUploaded, setIdUploaded] = useState(false);
+  const [bgUploaded, setBgUploaded] = useState(false);
+
+  const updateFormData = (fields: any) => {
+    setFormData((prev: any) => ({ ...prev, ...fields }));
+  };
+
+  const handleNext = async () => {
     setError(null);
     setIsSubmitting(true);
-    
     try {
+      // Create FormData compatible with current server action structure
       const data = new FormData();
-      if (stage === 1) {
-        data.append("full_name", fullName);
-        data.append("university", university);
-        data.append("subjects", subjects);
-      } else if (stage === 2) {
-        data.append("youtube_url", youtubeUrl);
-      } else if (stage === 3) {
-        data.append("gdpr_consent", consent ? "true" : "false");
-      }
+      Object.entries(formData).forEach(([key, value]) => {
+        if (Array.isArray(value)) {
+          data.append(key, value.join(","));
+        } else {
+          data.append(key, String(value));
+        }
+      });
 
       await saveApplicationStage(stage, data);
-      setStage(nextStage);
+      
+      if (stage === 3) {
+        confetti({
+          particleCount: 150,
+          spread: 70,
+          origin: { y: 0.6 },
+          colors: ["#00F5D4", "#0A192F", "#FFFFFF"]
+        });
+        setStage(4); // Success state
+      } else {
+        setStage((s) => s + 1);
+      }
     } catch (err: any) {
       setError(err.message || "Failed to save progress.");
     } finally {
@@ -55,178 +61,124 @@ export default function OnboardingStepper({ initialData, userId }: { initialData
     }
   };
 
+  const handleBack = () => {
+    setStage((s) => Math.max(1, s - 1));
+  };
+
   if (stage === 4) {
     return (
-      <div className="text-center py-12 animate-in slide-in-from-bottom-4 duration-500">
-         <div className="w-24 h-24 bg-green-50 rounded-full mx-auto flex items-center justify-center border-4 border-green-100 mb-6">
-            <span className="text-4xl">🎉</span>
-         </div>
-         <h2 className="text-2xl font-black tracking-tight text-slate-800 mb-2">Application Secured</h2>
-         <p className="text-slate-500 font-medium max-w-sm mx-auto">
-            Your credentials and private documents are securely stored in our vault. An Admin will review them within 48 hours.
-         </p>
-         <button className="mt-8 px-6 py-2 bg-slate-100 font-bold uppercase tracking-widest text-[10px] rounded-full text-slate-500 cursor-default">Status: Pending Review</button>
-      </div>
+      <motion.div 
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="text-center py-20 px-6 rounded-[3rem] bg-white shadow-2xl border-4 border-mint/20"
+      >
+        <div className="w-32 h-32 bg-mint/10 rounded-full mx-auto flex items-center justify-center mb-8 border-8 border-mint/20">
+          <span className="text-6xl">🎓</span>
+        </div>
+        <h2 className="text-4xl font-black text-navy mb-4 tracking-tight">Calibration Complete!</h2>
+        <p className="text-navy/50 font-medium max-w-sm mx-auto text-lg leading-relaxed">
+          Your Sensei profile is now being reviewed by our Grandmasters. Expect a decision within <span className="text-navy font-bold">48 hours</span>.
+        </p>
+        
+        <div className="mt-12 flex flex-col items-center gap-4">
+          <div className="px-8 py-3 bg-navy text-mint font-black uppercase tracking-[0.3em] text-xs rounded-full">
+            Status: Black Belt Pending
+          </div>
+          <p className="text-[10px] font-black text-navy/20 uppercase tracking-widest">
+            Encryption ID: {userId.slice(0, 8)}...
+          </p>
+        </div>
+      </motion.div>
     );
   }
 
+  const stages = [
+    { id: 1, name: "White Belt", color: "bg-white border-navy/10" },
+    { id: 2, name: "Blue Belt", color: "bg-blue-500 shadow-blue-200" },
+    { id: 3, name: "Black Belt", color: "bg-navy shadow-navy-200" }
+  ];
+
   return (
-    <div className="space-y-8 relative">
-      <div className="flex gap-2">
-         {[1, 2, 3].map(step => (
-           <div key={step} className={`h-2 flex-1 rounded-full transition-all ${step <= stage ? 'bg-primary' : 'bg-slate-100'}`}></div>
-         ))}
+    <div className="space-y-12">
+      {/* Premium Progress Bar (Belt Themed) */}
+      <div className="relative pt-8">
+        <div className="flex justify-between relative z-10">
+          {stages.map((s) => (
+            <div key={s.id} className="flex flex-col items-center gap-3">
+              <motion.div
+                animate={{ 
+                  scale: stage === s.id ? 1.2 : 1,
+                  opacity: stage >= s.id ? 1 : 0.4
+                }}
+                className={`w-14 h-6 rounded-full border-2 transition-all ${
+                  stage >= s.id ? s.color : "bg-slate-100 border-slate-200"
+                } ${stage === s.id ? "ring-4 ring-mint/30" : ""}`}
+              />
+              <span className={`text-[10px] font-black uppercase tracking-widest transition-colors ${
+                stage >= s.id ? "text-navy" : "text-navy/20"
+              }`}>
+                {s.name}
+              </span>
+            </div>
+          ))}
+        </div>
+        {/* Connection Line */}
+        <div className="absolute top-[calc(2rem+0.75rem)] left-0 w-full h-[2px] bg-slate-100 -z-0">
+          <motion.div 
+            className="h-full bg-navy/20"
+            initial={{ width: "0%" }}
+            animate={{ width: `${((stage - 1) / 2) * 100}%` }}
+          />
+        </div>
       </div>
 
       {error && (
-        <div className="p-4 bg-red-50 text-red-600 border border-red-200 rounded-xl text-sm font-bold shadow-sm">
-          {error}
-        </div>
+        <motion.div 
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="p-5 bg-red-50 border-2 border-red-100 rounded-3xl text-red-600 text-sm font-bold flex items-center gap-3"
+        >
+          <span className="text-xl">⚠️</span> {error}
+        </motion.div>
       )}
 
-      {/* STAGE 1: Eligibility */}
-      {stage === 1 && (
-        <div className="animate-in fade-in slide-in-from-right-4 duration-300">
-           <h2 className="text-xl font-black mb-6 flex items-center gap-2">
-             <span className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-sm font-bold">1</span> 
-             Stage 1: Eligibility
-           </h2>
-           
-           <div className="space-y-4">
-             <div>
-               <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1">Legal Full Name</label>
-               <input
-                 type="text"
-                 className="w-full p-4 rounded-2xl border border-slate-200 focus:outline-none focus:border-primary font-bold text-slate-800"
-                 placeholder="Jane Doe"
-                 value={fullName}
-                 onChange={(e) => setFullName(e.target.value)}
-                 disabled={isSubmitting}
-               />
-             </div>
-             <div>
-               <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1">University / Institution</label>
-               <input
-                 type="text"
-                 className="w-full p-4 rounded-2xl border border-slate-200 focus:outline-none focus:border-primary font-bold text-slate-800"
-                 placeholder="University of Oxford"
-                 value={university}
-                 onChange={(e) => setUniversity(e.target.value)}
-                 disabled={isSubmitting}
-               />
-             </div>
-             <div>
-               <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1">Teaching Subjects (CSV)</label>
-               <input
-                 type="text"
-                 className="w-full p-4 rounded-2xl border border-slate-200 focus:outline-none focus:border-primary font-bold text-slate-800"
-                 placeholder="A-Level Maths, GCSE Physics"
-                 value={subjects}
-                 onChange={(e) => setSubjects(e.target.value)}
-                 disabled={isSubmitting}
-               />
-             </div>
-           </div>
-
-           <button 
-             onClick={() => handleStageNavigation(2)}
-             disabled={isSubmitting || !fullName || !university || !subjects}
-             className="w-full mt-8 py-4 bg-slate-800 hover:bg-black text-white rounded-2xl font-black tracking-tight shadow-lg shadow-slate-200 transition-all disabled:opacity-50"
-           >
-             {isSubmitting ? "Saving Draft..." : "Save & Continue →"}
-           </button>
-        </div>
-      )}
-
-      {/* STAGE 2: Talent */}
-      {stage === 2 && (
-        <div className="animate-in fade-in slide-in-from-right-4 duration-300">
-           <h2 className="text-xl font-black mb-6 flex items-center gap-2">
-             <span className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-sm font-bold">2</span> 
-             Stage 2: Talent Presentation
-           </h2>
-           
-           <div className="space-y-6">
-             <div className="bg-blue-50 border border-blue-100 p-4 rounded-xl text-blue-800 text-sm font-medium">
-               A high-quality 2-minute introduction video drastically increases booking rates. Paste an unlisted YouTube link below to preview it.
-             </div>
-
-             <div>
-               <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1">Video YouTube URL</label>
-               <input
-                 type="url"
-                 className="w-full p-4 rounded-2xl border border-slate-200 focus:outline-none focus:border-primary font-bold text-slate-800"
-                 placeholder="https://www.youtube.com/watch?v=..."
-                 value={youtubeUrl}
-                 onChange={(e) => setYoutubeUrl(e.target.value)}
-                 disabled={isSubmitting}
-               />
-             </div>
-
-             <YoutubePreview url={youtubeUrl} />
-           </div>
-
-           <div className="flex gap-3 mt-8">
-             <button onClick={() => setStage(1)} className="px-6 py-4 bg-slate-50 border border-slate-200 hover:bg-slate-100 text-slate-600 rounded-2xl font-bold transition-all">Back</button>
-             <button 
-               onClick={() => handleStageNavigation(3)}
-               disabled={isSubmitting || !youtubeUrl}
-               className="flex-1 py-4 bg-slate-800 hover:bg-black text-white rounded-2xl font-black tracking-tight shadow-lg shadow-slate-200 transition-all disabled:opacity-50"
-             >
-               {isSubmitting ? "Saving Draft..." : "Save & Proceed to ID Check"}
-             </button>
-           </div>
-        </div>
-      )}
-
-      {/* STAGE 3: GDPR Compliance & ID */}
-      {stage === 3 && (
-        <div className="animate-in fade-in slide-in-from-right-4 duration-300">
-           <h2 className="text-xl font-black mb-6 flex items-center gap-2">
-             <span className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-sm font-bold">3</span> 
-             Stage 3: Identity Verification
-           </h2>
-           
-           <div className="bg-amber-50 border border-amber-200 p-6 rounded-3xl mb-8">
-              <h3 className="font-black text-amber-900 mb-2 uppercase tracking-widest text-[10px]">⚖️ GDPR Data Control Consent</h3>
-              <p className="text-amber-800 text-sm font-medium mb-4 leading-relaxed">
-                 To ensure the deepest safeguarding for our students, we require government ID and a Clean Criminal Record Check (DBS).
-                 These files are uploaded to an encrypted, strict access-controlled vault and will NEVER be publicly accessible or shared unconditionally.
-              </p>
-              
-              <div className="flex items-center gap-3 bg-white p-4 rounded-xl border border-amber-100 shadow-sm">
-                <input 
-                  type="checkbox" 
-                  id="gdpr_consent"
-                  checked={consent}
-                  onChange={(e) => setConsent(e.target.checked)}
-                  className="w-5 h-5 accent-amber-600 rounded cursor-pointer"
-                />
-                <label htmlFor="gdpr_consent" className="font-bold text-slate-700 cursor-pointer">
-                  I consent to ScienceDojo processing my sensitive identity documents exclusively for background verification.
-                </label>
-              </div>
-           </div>
-
-           <div className={`transition-all duration-500 ${consent ? 'opacity-100 translate-y-0' : 'opacity-30 blur-[2px] pointer-events-none translate-y-4'}`}>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-                 <PrivateUploader userId={userId} docType="id" onUploadSuccess={() => setIdUploaded(true)} />
-                 <PrivateUploader userId={userId} docType="background_check" onUploadSuccess={() => setBgUploaded(true)} />
-              </div>
-
-              <div className="flex gap-3">
-                <button onClick={() => setStage(2)} className="px-6 py-4 bg-slate-50 border border-slate-200 hover:bg-slate-100 text-slate-600 rounded-2xl font-bold transition-all">Back</button>
-                <button 
-                  onClick={() => handleStageNavigation(4)}
-                  disabled={isSubmitting || !consent || !idUploaded || !bgUploaded}
-                  className="flex-1 py-4 bg-amber-500 hover:bg-amber-600 text-white rounded-2xl font-black tracking-tight shadow-lg shadow-amber-200 transition-all disabled:opacity-50"
-                 >
-                  {isSubmitting ? "Finalizing Encryption..." : "Complete Submission"}
-                 </button>
-              </div>
-           </div>
-        </div>
-      )}
+      {/* Stage Transitioning */}
+      <div className="min-h-[500px] relative">
+        <AnimatePresence mode="wait">
+          {stage === 1 && (
+            <WhiteBeltStage 
+              key="stage1"
+              data={formData} 
+              updateData={updateFormData} 
+              onNext={handleNext} 
+            />
+          )}
+          {stage === 2 && (
+            <BlueBeltStage 
+              key="stage2"
+              data={formData} 
+              updateData={updateFormData} 
+              onNext={handleNext} 
+              onBack={handleBack}
+            />
+          )}
+          {stage === 3 && (
+            <BlackBeltStage 
+              key="stage3"
+              data={formData}
+              updateData={updateFormData}
+              onComplete={handleNext}
+              onBack={handleBack}
+              isSubmitting={isSubmitting}
+              userId={userId}
+              idUploaded={idUploaded}
+              bgUploaded={bgUploaded}
+              setIdUploaded={setIdUploaded}
+              setBgUploaded={setBgUploaded}
+            />
+          )}
+        </AnimatePresence>
+      </div>
     </div>
   );
 }

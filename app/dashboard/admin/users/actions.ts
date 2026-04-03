@@ -77,12 +77,28 @@ export async function adminDeleteUser(targetUserId: string) {
   // Engage Admin API
   const adminClient = createAdminClient();
 
-  // Wipes the user from auth.users (Cascading deletes across entirely database natively)
+  // Wipes the record from public.profiles FIRST
+  const { error: profileError } = await adminClient
+    .from("profiles")
+    .delete()
+    .eq("id", targetUserId);
+
+  if (profileError) {
+    console.error(`Failed to delete profile for user ${targetUserId}:`, profileError.message);
+    // Continue anyway to try and wipe the auth user
+  }
+
+  // Wipes the user from auth.users (Cascading deletes across entire database natively)
   const { error } = await adminClient.auth.admin.deleteUser(targetUserId);
 
   if (error) {
-    console.error(`Failed to wipe user ${targetUserId}:`, error);
-    throw new Error(`Failed to completely delete the user: ${error.message}`);
+    // If the user is already gone from Auth, it's a success for us
+    if (error.message?.includes("User not found")) {
+      console.log(`User ${targetUserId} already removed from Auth.`);
+    } else {
+      console.error(`Failed to wipe user ${targetUserId}:`, error);
+      throw new Error(`Failed to completely delete the user: ${error.message}`);
+    }
   }
 
   revalidatePath("/dashboard/admin/users");
