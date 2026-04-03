@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
+import { cookies } from 'next/headers'
 import { createClient } from '@/utils/supabase/server'
 
 export async function login(formData: FormData) {
@@ -32,6 +33,36 @@ export async function signOut() {
   await supabase.auth.signOut()
   revalidatePath('/', 'layout')
   redirect('/')
+}
+
+export async function signInWithGoogle(role?: string, subRole?: string) {
+  const supabase = await createClient();
+  const cookieStore = await cookies();
+
+  // If a role is provided (signup flow), store it in a temporary cookie
+  // The auth/callback route will read this to update the user's profile
+  if (role) {
+    cookieStore.set('pending_role', role, { maxAge: 60 * 10, path: '/' });
+    if (subRole) {
+      cookieStore.set('pending_sub_role', subRole, { maxAge: 60 * 10, path: '/' });
+    }
+  }
+
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: 'google',
+    options: {
+      redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/auth/callback`,
+    },
+  });
+
+  if (error) {
+    console.error("OAuth Error:", error.message);
+    redirect(`/login?error=${encodeURIComponent(error.message)}`);
+  }
+
+  if (data.url) {
+    redirect(data.url); // Redirect to Google
+  }
 }
 
 export async function signup(formData: FormData) {

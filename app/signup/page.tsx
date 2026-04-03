@@ -1,251 +1,176 @@
 "use client";
 
 import { useState, use } from "react";
-import { signup } from "@/app/login/actions";
+import { signup, signInWithGoogle } from "@/app/login/actions";
 import Link from "next/link";
+import AuthCard, { RoleCard, Divider } from "@/components/AuthCard";
+import { motion, AnimatePresence } from "framer-motion";
+import { User, GraduationCap, Mail, Lock, ShieldCheck } from "lucide-react";
+import Image from "next/image";
 
 export default function SignupPage({ searchParams }: { searchParams: Promise<{ [key: string]: string | string[] | undefined }> }) {
   const resolvedParams = use(searchParams);
   const errorMsg = resolvedParams?.error as string | undefined;
 
-  const [role, setRole] = useState<"parent" | "tutor" | null>((resolvedParams?.role as any) || null);
-  const [subRole, setSubRole] = useState<"student" | "parent" | null>((resolvedParams?.sub_role as any) || null);
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-
-  const hasLength = password.length > 7;
-  const hasUpper = /[A-Z]/.test(password);
-  const hasSpecial = /[0-9!@#\$%\^&\*]/.test(password);
-
-  const strength = (hasLength ? 1 : 0) + (hasUpper && hasSpecial ? 1 : 0);
-  const passwordMatch = password === confirmPassword && password.length > 0;
-  const isSubmitDisabled = strength < 1 || !passwordMatch || password.length === 0;
-
-  const handleBack = () => {
-    if (subRole) {
-      setSubRole(null);
-    } else {
-      setRole(null);
-    }
-  };
+  const [role, setRole] = useState<"parent" | "tutor" | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-background min-h-[calc(100vh-80px)] py-12 px-4">
-      <div className="w-full max-w-md bg-white rounded-3xl p-8 shadow-sm border border-secondary/10">
-        
-        {/* Step 1: Base Role Choice */}
+    <AuthCard 
+      title="Join the Dojo" 
+      subtitle="Create your account to get started"
+      footer={
+        <div className="space-y-4">
+          <p className="text-xs font-bold text-navy/20 text-center">
+            Already have an account?
+          </p>
+          <Link 
+            href="/login" 
+            className="block text-primary font-black text-xs hover:text-black transition-all text-center"
+          >
+            Log In Here
+          </Link>
+        </div>
+      }
+    >
+      <AnimatePresence mode="wait">
         {!role ? (
-           <div className="animate-in fade-in slide-in-from-bottom-4 duration-300">
-              <h1 className="text-3xl font-bold text-center text-secondary mb-2">Join ScienceDojo</h1>
-              <p className="text-center text-secondary/60 mb-8">How would you like to use the platform?</p>
-              
-              <div className="space-y-4">
-                 <button 
-                   onClick={() => setRole("parent")}
-                   className="w-full p-6 bg-surface border border-secondary/10 rounded-2xl flex items-center justify-between text-left hover:border-primary/50 hover:shadow-md transition-all group"
-                 >
-                    <div>
-                       <h3 className="font-bold text-secondary text-lg group-hover:text-primary transition-colors">I am a Student / Parent</h3>
-                       <p className="text-sm text-secondary/60 mt-1">I want to find tutors and book sessions.</p>
-                    </div>
-                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold">→</div>
-                 </button>
-
-                 <button 
-                   onClick={() => setRole("tutor")}
-                   className="w-full p-6 bg-surface border border-secondary/10 rounded-2xl flex items-center justify-between text-left hover:border-accent/50 hover:shadow-md transition-all group"
-                 >
-                    <div>
-                       <h3 className="font-bold text-secondary text-lg group-hover:text-accent transition-colors">I am a Tutor</h3>
-                       <p className="text-sm text-secondary/60 mt-1">I want to apply to teach on the platform.</p>
-                    </div>
-                    <div className="w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center text-accent font-bold">→</div>
-                 </button>
-              </div>
-              <p className="text-center text-sm text-secondary/60 mt-8">
-                 Already have an account? <Link href="/login" className="font-bold text-primary hover:underline">Log In</Link>
-              </p>
-           </div>
-        ) : (role === "parent" && !subRole) ? (
-           /* Step 2: Student vs Parent Choice */
-           <div className="animate-in fade-in slide-in-from-right-4 duration-300">
-              <button onClick={handleBack} className="text-sm font-bold text-secondary/50 hover:text-secondary mb-6 flex items-center gap-2">
-                 ← Back
-              </button>
-              <h1 className="text-3xl font-bold text-secondary mb-2 text-center">Who is this for?</h1>
-              <p className="text-center text-secondary/60 mb-8">Help us personalize your dashboard.</p>
-              
-              <div className="space-y-4">
-                 <button 
-                   onClick={() => setSubRole("student")}
-                   className="w-full p-5 bg-surface border border-secondary/10 rounded-2xl text-left hover:border-primary/50 transition-all flex items-center gap-4 group"
-                 >
-                    <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center text-2xl">🎒</div>
-                    <div>
-                       <h3 className="font-bold text-secondary group-hover:text-primary transition-colors">I am the student</h3>
-                       <p className="text-xs text-secondary/60">I will be attending the classes.</p>
-                    </div>
-                 </button>
-
-                 <button 
-                   onClick={() => setSubRole("parent")}
-                   className="w-full p-5 bg-surface border border-secondary/10 rounded-2xl text-left hover:border-primary/50 transition-all flex items-center gap-4 group"
-                 >
-                    <div className="w-12 h-12 rounded-xl bg-indigo-50 flex items-center justify-center text-2xl">👨‍👩-👧</div>
-                    <div>
-                       <h3 className="font-bold text-secondary group-hover:text-primary transition-colors">I am a parent</h3>
-                       <p className="text-xs text-secondary/60">I am booking for my child.</p>
-                    </div>
-                 </button>
-              </div>
-           </div>
+          <motion.div 
+            key="roles"
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 20 }}
+            className="space-y-4"
+          >
+            <RoleCard 
+              title="I am a Student / Parent"
+              description="I want to find tutors and book sessions."
+              onClick={() => setRole("parent")}
+            />
+            <RoleCard 
+              title="I am a Tutor"
+              description="I want to apply to teach on the platform."
+              onClick={() => setRole("tutor")}
+            />
+          </motion.div>
         ) : (
-           /* Step 3: Registration Form */
-           <div className="animate-in fade-in slide-in-from-right-4 duration-300">
-              <button onClick={handleBack} className="text-sm font-bold text-secondary/50 hover:text-secondary mb-6 flex items-center gap-2">
-                 ← Back
+          <motion.div 
+            key="auth-options"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="space-y-6"
+          >
+            {/* Header for Step 2 */}
+            <div className="flex items-center justify-between gap-4 mb-4">
+              <button 
+                onClick={() => { setRole(null); }}
+                className="text-xs font-bold text-navy/20 hover:text-navy transition-all"
+              >
+                ← Back
               </button>
-              <h1 className="text-3xl font-bold text-secondary mb-2">
-                 {role === "tutor" ? "Apply as Tutor" : (subRole === "parent" ? "Parent's Portal" : "Student's Portal")}
-              </h1>
-              <p className="text-secondary/60 mb-8">Enter your details to securely set up your portal.</p>
+              <span className={`px-4 py-1.5 rounded-full text-xs font-bold bg-primary/10 text-primary`}>
+                {role === 'tutor' ? 'Tutor' : 'Student'}
+              </span>
+            </div>
 
-              {errorMsg && (
-                 <div className="mb-6 p-4 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm font-medium">
-                   {errorMsg}
-                 </div>
-              )}
+            {/* Google Signup */}
+            <button 
+              onClick={() => signInWithGoogle(role)}
+              className="w-full flex items-center justify-center gap-4 py-5 bg-white border border-navy/5 rounded-[2rem] shadow-xl shadow-navy/5 hover:border-navy/10 hover:shadow-navy/10 transition-all transform active:scale-95 overflow-hidden group relative"
+            >
+              <div className="w-5 h-5 relative">
+                <svg viewBox="0 0 24 24" width="20" height="20" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                  <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                  <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
+                  <path d="M12 5.38c1.62 0 3.06.56 4.21 1.66l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 12-4.53z" fill="#EA4335"/>
+                </svg>
+              </div>
+              <span className="font-black text-navy text-sm">Continue with Google</span>
+              <motion.div 
+                className="absolute inset-0 bg-gradient-to-r from-navy/5 via-transparent to-navy/5 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"
+              />
+            </button>
 
-              <form className="space-y-4 text-left">
-                <input type="hidden" name="role" value={role} />
-                <input type="hidden" name="sub_role" value={subRole || ""} />
+            <Divider label="OR" />
+
+            <motion.div 
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="space-y-5"
+            >
+              <form action={async (formData) => {
+                formData.append('role', role);
+                setIsSubmitting(true);
+                try {
+                  await signup(formData);
+                } finally {
+                  setIsSubmitting(false);
+                }
+              }} className="space-y-4">
+                <div className="space-y-2">
+                    <label className="text-xs font-bold text-navy/40 ml-6 flex items-center gap-2">
+                       <User size={12} /> Full Name
+                    </label>
+                    <input 
+                      name="name" 
+                      type="text" 
+                      required 
+                      placeholder="Enso Calibur" 
+                      className="w-full bg-primary/5 border-none rounded-[2rem] px-8 py-5 text-primary font-bold focus:ring-4 focus:ring-primary/5 outline-none placeholder:text-primary/20"
+                    />
+                </div>
                 
-                <div>
-                  <label className="block text-sm font-bold text-secondary mb-1">
-                    {subRole === "parent" ? "Your Full Name" : "Full Name"}
-                  </label>
-                  <input
-                    name="name"
-                    type="text"
-                    required
-                    className="w-full rounded-xl border-secondary/20 bg-surface px-4 py-3 text-secondary focus:border-primary focus:ring-1 focus:ring-primary shadow-inner outline-none"
-                    placeholder="Jane Doe"
-                  />
+                <div className="space-y-2">
+                    <label className="text-xs font-bold text-navy/40 ml-6 flex items-center gap-2">
+                      <Mail size={12} /> Email Address
+                    </label>
+                    <input 
+                      name="email" 
+                      type="email" 
+                      required 
+                      placeholder="you@dojo.com" 
+                      className="w-full bg-primary/5 border-none rounded-[2rem] px-8 py-5 text-primary font-bold focus:ring-4 focus:ring-primary/5 outline-none placeholder:text-primary/20"
+                    />
                 </div>
 
-                {subRole === "parent" && (
-                   <div>
-                     <label className="block text-sm font-bold text-secondary mb-1">Student's Full Name</label>
-                     <input
-                       name="student_name"
-                       type="text"
-                       required
-                       className="w-full rounded-xl border-secondary/20 bg-surface px-4 py-3 text-secondary focus:border-primary focus:ring-1 focus:ring-primary shadow-inner outline-none"
-                       placeholder="Alex Mercer"
-                     />
-                   </div>
+                <div className="space-y-2">
+                    <label className="text-xs font-bold text-navy/40 ml-6 flex items-center gap-2">
+                      <Lock size={12} /> Password
+                    </label>
+                    <input 
+                      name="password" 
+                      type="password" 
+                      required 
+                      placeholder="At least 8 characters" 
+                      className="w-full bg-primary/5 border-none rounded-[2rem] px-8 py-5 text-primary font-bold focus:ring-4 focus:ring-primary/5 outline-none placeholder:text-primary/20 tracking-widest"
+                    />
+                </div>
+
+                {errorMsg && (
+                  <p className="text-[10px] font-black uppercase text-red-500 tracking-wider text-center pt-2">
+                    ⚠️ {errorMsg}
+                  </p>
                 )}
 
-                <div>
-                  <label className="block text-sm font-bold text-secondary mb-1">Email</label>
-                  <input
-                    name="email"
-                    type="email"
-                    required
-                    className="w-full rounded-xl border-secondary/20 bg-surface px-4 py-3 text-secondary focus:border-primary focus:ring-1 focus:ring-primary shadow-inner outline-none"
-                    placeholder="you@example.com"
-                  />
-                </div>
-                
-                <div>
-                  <div className="flex justify-between items-center mb-1">
-                     <label className="block text-sm font-bold text-secondary">Password</label>
-                     {strength === 0 && <span className="text-[10px] font-bold text-red-500 uppercase">Weak</span>}
-                     {strength === 1 && <span className="text-[10px] font-bold text-orange-500 uppercase">Medium</span>}
-                     {strength === 2 && <span className="text-[10px] font-bold text-green-500 uppercase">Strong</span>}
-                  </div>
-                  <input
-                    name="password"
-                    type="password"
-                    required
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="w-full rounded-xl border-secondary/20 bg-surface px-4 py-3 text-secondary focus:border-primary focus:ring-1 focus:ring-primary shadow-inner outline-none mb-1"
-                    placeholder="••••••••"
-                  />
-                  <div className="h-1.5 w-full bg-surface rounded-full overflow-hidden flex gap-1">
-                     <div className={`h-full flex-1 transition-colors ${strength >= 0 ? (strength === 0 ? 'bg-red-500' : strength === 1 ? 'bg-orange-500' : 'bg-green-500') : 'bg-transparent'}`}></div>
-                     <div className={`h-full flex-1 transition-colors ${strength >= 1 ? (strength === 1 ? 'bg-orange-500' : 'bg-green-500') : 'bg-transparent'}`}></div>
-                     <div className={`h-full flex-1 transition-colors ${strength >= 2 ? 'bg-green-500' : 'bg-transparent'}`}></div>
-                  </div>
-                  
-                  {/* Requirement Checklist */}
-                  <div className="mt-3 space-y-1.5">
-                    <div className={`flex items-center gap-2 text-xs transition-colors ${hasLength ? 'text-green-600' : 'text-secondary/40'}`}>
-                      <div className={`w-3.5 h-3.5 rounded-full flex items-center justify-center border ${hasLength ? 'bg-green-500 border-green-500' : 'border-secondary/20'}`}>
-                        {hasLength && <span className="text-[10px] text-white">✓</span>}
-                      </div>
-                      At least 8 characters
-                    </div>
-                    <div className={`flex items-center gap-2 text-xs transition-colors ${hasUpper ? 'text-green-600' : 'text-secondary/40'}`}>
-                      <div className={`w-3.5 h-3.5 rounded-full flex items-center justify-center border ${hasUpper ? 'bg-green-500 border-green-500' : 'border-secondary/20'}`}>
-                        {hasUpper && <span className="text-[10px] text-white">✓</span>}
-                      </div>
-                      One uppercase letter
-                    </div>
-                    <div className={`flex items-center gap-2 text-xs transition-colors ${hasSpecial ? 'text-green-600' : 'text-secondary/40'}`}>
-                      <div className={`w-3.5 h-3.5 rounded-full flex items-center justify-center border ${hasSpecial ? 'bg-green-500 border-green-500' : 'border-secondary/20'}`}>
-                        {hasSpecial && <span className="text-[10px] text-white">✓</span>}
-                      </div>
-                      One number or symbol
-                    </div>
-                  </div>
-                </div>
-
-                <div>
-                  <div className="flex justify-between items-center mb-1">
-                     <label className="block text-sm font-bold text-secondary">Confirm Password</label>
-                     {!passwordMatch && confirmPassword.length > 0 && <span className="text-[10px] font-bold text-red-500 uppercase">Passwords do not match</span>}
-                     {passwordMatch && confirmPassword.length > 0 && <span className="text-[10px] font-bold text-green-500 uppercase">Match!</span>}
-                  </div>
-                  <input
-                    type="password"
-                    required
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    className={`w-full rounded-xl border-secondary/20 bg-surface px-4 py-3 text-secondary focus:border-primary focus:ring-1 focus:ring-primary shadow-inner outline-none ${!passwordMatch && confirmPassword.length > 0 ? 'border-red-500 focus:ring-red-500' : ''}`}
-                    placeholder="••••••••"
-                  />
-                </div>
-
-                <div className="pt-4">
-                  {isSubmitDisabled && (
-                    <p className="text-[11px] text-secondary/40 text-center mb-2 animate-in fade-in slide-in-from-bottom-1 duration-300">
-                      {password.length === 0 ? "Enter a password to begin" : 
-                       !hasLength ? "Password must be at least 8 characters" :
-                       !passwordMatch ? "Passwords must match exactly" :
-                       "Check requirements above"}
-                    </p>
-                  )}
-                  <button 
-                    formAction={signup}
-                    disabled={isSubmitDisabled}
-                    className={`w-full text-white font-bold py-3 text-lg rounded-xl transition-colors shadow-sm ${role === "tutor" ? "bg-accent hover:bg-accent/90" : "bg-primary hover:bg-primary-hover"} disabled:opacity-50 disabled:cursor-not-allowed`}
-                  >
-                    {role === "tutor" ? "Submit Application" : "Create Account"}
-                  </button>
-                </div>
-                
-                {role === "tutor" && (
-                   <div className="p-4 bg-orange-50 border border-orange-200 rounded-xl mt-4 text-xs text-orange-800">
-                      Tutors must be manually vetted by an administrator before their public directory profile becomes live.
-                   </div>
-                )}
+                    <button 
+                      type="submit"
+                      disabled={isSubmitting}
+                      className="w-full py-5 bg-primary text-white rounded-[2rem] font-black tracking-tight text-lg shadow-2xl shadow-primary/20 hover:bg-primary-hover transition-all active:scale-95 disabled:opacity-50 overflow-hidden relative group"
+                    >
+                      <span className="relative z-10">{isSubmitting ? 'Creating Account...' : 'Create My Account'}</span>
+                      <motion.div 
+                        initial={{ x: '-100%' }}
+                        animate={isSubmitting ? { x: '100%' } : {}}
+                        transition={{ repeat: Infinity, duration: 1.5, ease: "linear" }}
+                        className="absolute top-0 left-0 w-full h-full bg-gradient-to-r from-transparent via-white/10 to-transparent skew-x-12"
+                      />
+                    </button>
               </form>
-           </div>
+            </motion.div>
+          </motion.div>
         )}
-
-      </div>
-    </div>
+      </AnimatePresence>
+    </AuthCard>
   );
 }
