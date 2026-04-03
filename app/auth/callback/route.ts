@@ -12,26 +12,44 @@ export async function GET(request: Request) {
     const { error } = await supabase.auth.exchangeCodeForSession(code)
     
     if (!error) {
-      // Check for pending role selection from signup
+      // Check for pending role selection from signup (URL params first, then cookies)
       const cookieStore = await cookies();
-      const pendingRole = cookieStore.get('pending_role')?.value;
-      const pendingSubRole = cookieStore.get('pending_sub_role')?.value;
+      const pendingRole = searchParams.get('role') || cookieStore.get('pending_role')?.value;
+      const pendingSubRole = searchParams.get('subRole') || cookieStore.get('pending_sub_role')?.value;
 
       if (pendingRole) {
         const { data: { user } } = await supabase.auth.getUser();
         if (user) {
-          // Update profile and metadata
+          // 1. Update Auth Metadata
           await supabase.auth.updateUser({
             data: { 
               role: pendingRole, 
-              sub_role: pendingSubRole || '' 
+              sub_role: pendingSubRole || '',
+              full_name: user.user_metadata.full_name || '',
+              avatar_url: user.user_metadata.avatar_url || ''
             }
           });
 
-          await supabase.from('profiles').update({
+          // 2. Upsert Profile (Ensure it exists with the correct role/names)
+          await supabase.from('profiles').upsert({
+            id: user.id,
+            email: user.email?.toLowerCase() || '',
+            full_name: user.user_metadata.full_name || '',
+            avatar_url: user.user_metadata.avatar_url || '',
             role: pendingRole,
             sub_role: pendingSubRole || ''
-          }).eq('id', user.id);
+          }, { onConflict: 'id' });
+
+          // 3. Provision Tutor Row if applicable
+          if (pendingRole === 'tutor') {
+            await supabase.from('tutors').upsert({
+              id: user.id,
+              is_verified: false,
+              is_available_now: true,
+              bio: '',
+              hourly_rate: 0
+            }, { onConflict: 'id' });
+          }
         }
 
         // Cleanup

@@ -10,14 +10,19 @@ export default async function OnboardingPage() {
     redirect("/login");
   }
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .single();
+  const role = user.user_metadata?.role;
+  
+  if (role !== "tutor") {
+    // Double-check profile table just in case metadata is somehow missing but profile is correct
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", user.id)
+      .single();
 
-  if (profile?.role !== "tutor") {
-    redirect("/dashboard/parent");
+    if (profile?.role !== "tutor") {
+      redirect("/dashboard/parent");
+    }
   }
 
   // Load existing draft application

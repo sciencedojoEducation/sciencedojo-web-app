@@ -48,10 +48,16 @@ export async function signInWithGoogle(role?: string, subRole?: string) {
     }
   }
 
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+  const roleParam = role ? `role=${role}` : '';
+  const subRoleParam = subRole ? `subRole=${subRole}` : '';
+  const queryParams = [roleParam, subRoleParam].filter(Boolean).join('&');
+  const redirectTo = `${baseUrl}/auth/callback${queryParams ? `?${queryParams}` : ''}`;
+
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
     options: {
-      redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/auth/callback`,
+      redirectTo,
     },
   });
 
