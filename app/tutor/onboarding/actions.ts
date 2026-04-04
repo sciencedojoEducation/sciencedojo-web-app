@@ -87,12 +87,13 @@ export async function saveApplicationStage(stage: number, formData: FormData) {
   }
 
   if (stage === 6) {
-    const gdprConsent = formData.get("gdpr_consent") === "true";
-    if (!gdprConsent) throw new Error("Consent is required to finalize calibration.");
+    const gdprAccepted = formData.get("gdpr_accepted") === "true";
+    const termsAccepted = formData.get("terms_accepted") === "true";
+    if (!gdprAccepted || !termsAccepted) throw new Error("Both agreements must be accepted to finalize calibration.");
     
-    updateData.consent_timestamp = new Date().toISOString();
     updateData.status = 'pending'; // Ready for final human review
     newData.onboarding_status = 'under_review';
+    // We store specific timestamps within the JSONB data object via VerificationStage
   }
 
   // Final sync of the JSONB blob
