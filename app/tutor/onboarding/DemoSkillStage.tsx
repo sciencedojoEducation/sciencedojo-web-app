@@ -2,6 +2,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Video, FileText, Info, AlertTriangle, ExternalLink, Scissors, ShieldCheck, User, ChevronDown, ChevronUp, Sparkles } from "lucide-react";
 import PrivateUploader from "./PrivateUploader";
+import YouTubeLite from "@/components/YouTubeLite";
 
 interface DemoSkillStageProps {
   data: any;
@@ -14,9 +15,6 @@ interface DemoSkillStageProps {
 export default function DemoSkillStage({ data, userId, updateData, onNext, onBack }: DemoSkillStageProps) {
   const [showInstructions, setShowInstructions] = useState(false);
   
-  const isYouTube = data.demo_video_url?.includes("youtube.com") || data.demo_video_url?.includes("youtu.be");
-  const videoId = isYouTube ? (data.demo_video_url.includes("v=") ? data.demo_video_url.split("v=")[1].split("&")[0] : data.demo_video_url.split("/").pop()) : null;
-
   const isComplete = !!data.demo_video_url;
 
   return (
@@ -182,27 +180,16 @@ export default function DemoSkillStage({ data, userId, updateData, onNext, onBac
                         placeholder="https://www.youtube.com/watch?v=..."
                         value={data.demo_video_url || ""}
                         onChange={(e) => updateData({ demo_video_url: e.target.value })}
-                        className="w-full bg-white border border-navy/5 rounded-[2.5rem] px-10 py-6 text-navy font-black focus:ring-4 focus:ring-blue-400/10 outline-none transition-all placeholder:text-navy/10 shadow-sm"
+                        className="w-full bg-white border border-navy/5 rounded-[2.5rem] pl-20 pr-10 py-6 text-navy font-black focus:ring-4 focus:ring-blue-400/10 outline-none transition-all placeholder:text-navy/10 shadow-sm"
                       />
-                      <div className="absolute left-6 top-1/2 -translate-y-1/2 text-navy/20">
+                      <div className="absolute left-8 top-1/2 -translate-y-1/2 text-navy/20">
                          <Video size={20} />
                       </div>
                     </div>
 
-                    {videoId && (
-                      <motion.div 
-                        initial={{ opacity: 0, scale: 0.95 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        className="aspect-video w-full rounded-[2.5rem] overflow-hidden bg-black border-4 border-white shadow-xl relative"
-                      >
-                        <iframe 
-                          src={`https://www.youtube.com/embed/${videoId}`}
-                          className="w-full h-full"
-                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                          allowFullScreen
-                        />
-                      </motion.div>
-                    )}
+                    <div className="space-y-4">
+                       <YouTubeLite url={data.demo_video_url} label="Preview Teaching Demo" />
+                    </div>
                   </div>
                </div>
             </div>

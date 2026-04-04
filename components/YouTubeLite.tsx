@@ -6,30 +6,43 @@ import Image from "next/image";
 interface YouTubeLiteProps {
   url: string;
   poster?: string;
+  label?: string;
 }
 
-export default function YouTubeLite({ url, poster }: YouTubeLiteProps) {
+export default function YouTubeLite({ url, poster, label }: YouTubeLiteProps) {
   const [isPlaying, setIsPlaying] = useState(false);
 
-  // Extract video ID from common YouTube URL formats
+  // Robust Extraction Logic
   const getYouTubeId = (url: string) => {
     const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
-    const match = url.match(regExp);
+    const match = url?.match(regExp);
     return (match && match[2].length === 11) ? match[2] : null;
   };
 
+  const getVimeoId = (url: string) => {
+    const regExp = /vimeo\.com\/(?:video\/)?(\d+)/;
+    const match = url?.match(regExp);
+    return match ? match[1] : null;
+  };
+
   const videoId = getYouTubeId(url);
+  const vimeoId = getVimeoId(url);
 
-  if (!videoId) return null;
+  if (!videoId && !vimeoId) return null;
 
-  const thumbnailUrl = `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`;
+  const thumbnailUrl = videoId 
+    ? `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`
+    : `https://vumbnail.com/${vimeoId}.jpg`; // Public Vimeo thumbnail service
 
   if (isPlaying) {
     return (
-      <div className="relative aspect-video w-full rounded-[2.5rem] overflow-hidden shadow-2xl border-4 border-white ring-1 ring-secondary/5">
+      <div className="relative aspect-video w-full rounded-[2.5rem] overflow-hidden shadow-2xl border-4 border-white ring-1 ring-secondary/5 bg-black">
         <iframe
-          src={`https://www.youtube.com/embed/${videoId}?autoplay=1&modestbranding=1&rel=0&showinfo=0`}
-          title="YouTube video player"
+          src={videoId 
+            ? `https://www.youtube.com/embed/${videoId}?autoplay=1&modestbranding=1&rel=0` 
+            : `https://player.vimeo.com/video/${vimeoId}?autoplay=1`
+          }
+          title="Video player"
           frameBorder="0"
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
           allowFullScreen
@@ -45,10 +58,11 @@ export default function YouTubeLite({ url, poster }: YouTubeLiteProps) {
       onClick={() => setIsPlaying(true)}
     >
       <Image 
-        src={thumbnailUrl} 
+        src={thumbnailUrl || poster || "/placeholder-video.webp"} 
         alt="Video Thumbnail" 
         fill 
         className="object-cover transition-transform duration-700 group-hover:scale-105"
+        unoptimized={!!vimeoId} // vumbnail might need this
       />
       
       {/* Overlay Gradient */}
@@ -63,10 +77,10 @@ export default function YouTubeLite({ url, poster }: YouTubeLiteProps) {
         </div>
       </div>
 
-      {/* Intro Label */}
+      {/* Label */}
       <div className="absolute bottom-6 left-6 right-6">
         <span className="bg-white/90 backdrop-blur-md px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest text-secondary shadow-lg">
-           Watch Intro Video
+           {label || `Watch ${videoId ? "YouTube" : "Vimeo"} Video`}
         </span>
       </div>
     </div>
