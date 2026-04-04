@@ -200,7 +200,10 @@ export default function DemoSkillStage({ data, userId, updateData, onNext, onBac
         <div className="space-y-6">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 rounded-full bg-navy/5 border-2 border-navy/10 text-navy flex items-center justify-center font-black text-2xl shadow-sm">3</div>
-            <h3 className="text-xl font-black text-navy uppercase tracking-tight">Supplementary zone</h3>
+            <div className="space-y-1">
+              <h3 className="text-xl font-black text-navy uppercase tracking-tight leading-none">Supplementary zone</h3>
+              <p className="text-[11px] font-bold text-navy/40 leading-relaxed italic">Upload any lesson materials that showcase your teaching style. This can include slides, worksheets, or structured lesson plans.</p>
+            </div>
           </div>
 
           <div className="pl-14">
@@ -214,17 +217,6 @@ export default function DemoSkillStage({ data, userId, updateData, onNext, onBac
                        label="Upload Slides / Plans"
                        onUploadSuccess={() => {}}
                      />
-                  </div>
-
-                  <div className="bg-red-50/50 p-6 rounded-[2.5rem] border border-red-100/50 space-y-3">
-                     <div className="flex items-center gap-2 text-red-500 font-black text-[10px] uppercase tracking-widest">
-                        <AlertTriangle size={14} /> Final Checks
-                     </div>
-                     <ul className="space-y-1 text-[10px] font-bold text-red-900/40 leading-relaxed italic">
-                        <li>• Video must include your **Self-Introduction**</li>
-                        <li>• AI-generated voices result in immediate rejection</li>
-                        <li>• Check that your sharing link is set to "Public" or "Unlisted"</li>
-                     </ul>
                   </div>
                </div>
             </div>
