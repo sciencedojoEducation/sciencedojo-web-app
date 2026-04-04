@@ -5,11 +5,12 @@ import { createClient } from "@/utils/supabase/client";
 
 interface Props {
   userId: string;
-  docType: "government_id" | "background_check";
+  docType: string;
+  label?: string;
   onUploadSuccess: (url: string) => void;
 }
 
-export default function PrivateUploader({ userId, docType, onUploadSuccess }: Props) {
+export default function PrivateUploader({ userId, docType, label, onUploadSuccess }: Props) {
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
@@ -55,27 +56,36 @@ export default function PrivateUploader({ userId, docType, onUploadSuccess }: Pr
   };
 
   return (
-    <div className={`p-8 border-2 border-dashed rounded-[2rem] flex flex-col items-center justify-center transition-all ${success ? 'border-mint bg-mint/5 text-navy' : error ? 'border-red-300 bg-red-50' : 'border-navy/10 bg-white/50 hover:bg-white hover:border-mint/50'}`}>
+    <div className={`relative group overflow-hidden transition-all duration-500 rounded-[2rem] border-2 ${
+      success 
+        ? 'border-mint bg-mint/5 shadow-lg shadow-mint/10' 
+        : error 
+        ? 'border-red-200 bg-red-50' 
+        : 'border-white/60 bg-white/40 backdrop-blur-md hover:bg-white/60 hover:border-mint/30 shadow-sm'
+    }`}>
       
       {success ? (
-        <div className="flex flex-col items-center gap-3 text-center">
-           <div className="w-14 h-14 rounded-2xl bg-mint flex items-center justify-center text-navy shadow-lg shadow-mint/20">
-             <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
+        <div className="p-6 flex flex-col items-center gap-2 text-center group-hover:scale-105 transition-transform">
+           <div className="w-12 h-12 rounded-2xl bg-mint flex items-center justify-center text-navy shadow-lg shadow-mint/20">
+             <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor font-bold"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
            </div>
-           <div className="space-y-1">
-             <span className="block font-black text-navy text-sm uppercase tracking-tight">Document Secured</span>
-             <span className="block text-[10px] font-black opacity-30 uppercase tracking-[0.2em]">AES-256 Vaulted</span>
+           <div className="space-y-0.5">
+             <span className="block font-black text-navy text-[11px] uppercase tracking-tighter">Document Secured</span>
+             <span className="block text-[8px] font-black text-mint-700/40 uppercase tracking-widest">AES-256 Vaulted</span>
            </div>
         </div>
       ) : (
-        <>
-          <div className="w-12 h-12 rounded-2xl bg-navy/5 flex items-center justify-center text-navy/20 mb-4">
-            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
+        <div className="p-6 flex flex-col items-center justify-center gap-2 text-center">
+          <div className="w-10 h-10 rounded-2xl bg-navy/5 flex items-center justify-center text-navy/20 group-hover:text-mint group-hover:bg-mint/10 transition-all">
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
           </div>
-          <p className="text-sm font-black text-navy mb-1 uppercase tracking-tight">{docType === 'government_id' ? 'Government Photo ID' : 'Background Check'}</p>
-          <p className="text-[10px] text-navy/30 uppercase tracking-[0.2em] font-black mb-6">PDF, JPG, PNG &lt; 5MB</p>
           
-          <label className={`cursor-pointer px-8 py-3 rounded-xl font-black text-xs transition-all shadow-xl active:scale-95 ${isUploading ? 'bg-navy/10 text-navy/20 cursor-not-allowed' : 'bg-navy text-mint hover:bg-black shadow-navy/10'}`}>
+          <div className="space-y-0.5">
+            <p className="text-[10px] font-black text-navy/40 uppercase tracking-tight group-hover:text-navy transition-colors">{label || docType.replace(/_/g, ' ')}</p>
+            <p className="text-[8px] text-navy/20 uppercase tracking-[0.1em] font-black group-hover:text-navy/30 transition-colors">PDF, JPG, PNG &lt; 5MB</p>
+          </div>
+
+          <label className={`mt-2 cursor-pointer px-6 py-2 rounded-xl font-black text-[10px] transition-all shadow-lg active:scale-95 ${isUploading ? 'bg-navy/10 text-navy/20 cursor-not-allowed' : 'bg-navy text-mint hover:bg-black shadow-navy/20'}`}>
             {isUploading ? "Encrypting..." : "Choose File"}
             <input 
               type="file" 
@@ -85,8 +95,8 @@ export default function PrivateUploader({ userId, docType, onUploadSuccess }: Pr
               disabled={isUploading}
             />
           </label>
-          {error && <p className="text-red-500 text-[10px] mt-4 font-black text-center max-w-[200px] uppercase tracking-wider leading-relaxed">{error}</p>}
-        </>
+          {error && <p className="text-red-500 text-[8px] mt-2 font-black text-center max-w-[150px] uppercase tracking-wider leading-tight">{error}</p>}
+        </div>
       )}
     </div>
   );

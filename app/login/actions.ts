@@ -98,6 +98,50 @@ export async function signup(formData: FormData) {
     redirect(`/signup?error=${encodeURIComponent("Email already in use. Please log in instead.")}&role=${role}&sub_role=${subRole}`)
   }
 
+  // --- START SILENT TESTING PATH (PREVENTS BOUNCES) ---
+  if (data.email.endsWith('@test.sciencedojo.com')) {
+    const { createAdminClient } = await import('@/utils/supabase/server');
+    const adminClient = await createAdminClient();
+    
+    // 1. Silent Create (No Email Sent)
+    const { data: adminData, error: adminError } = await adminClient.auth.admin.createUser({
+      email: data.email,
+      password: data.password,
+      email_confirm: true,
+      user_metadata: {
+        role: role,
+        sub_role: (formData.get('sub_role') as string) || '',
+        full_name: formData.get('name') as string || '',
+      }
+    });
+
+    if (adminError) {
+      console.error("[SILENT] Admin creation error:", adminError.message);
+      // If user already exists, just try to log in
+      if (!adminError.message.includes('already exists')) {
+        redirect(`/signup?error=${encodeURIComponent(adminError.message)}`)
+      }
+    }
+
+    console.log(`[SILENT MODE] Created/Verified user: ${data.email}`);
+    
+    // 2. Establish Session (Silent Login)
+    const { error: loginError } = await supabase.auth.signInWithPassword(data);
+    if (loginError) {
+       console.error("[SILENT] Sign-in error:", loginError.message);
+       redirect(`/login?error=${encodeURIComponent(loginError.message)}`)
+    }
+
+    revalidatePath('/', 'layout')
+    if (role === 'tutor') {
+      redirect('/tutor/onboarding')
+    } else {
+      redirect(`/dashboard/${role}`)
+    }
+    return; // Early return for silent path
+  }
+  // --- END SILENT TESTING PATH ---
+
   const { error, data: authData } = await supabase.auth.signUp({
     email: data.email,
     password: data.password,

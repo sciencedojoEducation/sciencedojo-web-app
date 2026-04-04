@@ -11,6 +11,7 @@ interface AuthCardProps {
   subtitle?: string;
   footer?: React.ReactNode;
   showLogo?: boolean;
+  maxWidth?: string;
 }
 
 export default function AuthCard({ 
@@ -18,7 +19,8 @@ export default function AuthCard({
   title, 
   subtitle, 
   footer, 
-  showLogo = true 
+  showLogo = true,
+  maxWidth = "max-w-[480px]"
 }: AuthCardProps) {
   return (
     <div className="relative min-h-screen w-full flex items-center justify-center p-4 overflow-hidden bg-[#F8FAFC]">
@@ -129,7 +131,7 @@ export default function AuthCard({
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="relative z-10 w-full max-w-[480px]"
+        className={`relative z-10 w-full ${maxWidth}`}
       >
         <div className="bg-white/95 backdrop-blur-xl rounded-[3rem] p-10 md:p-12 shadow-2xl shadow-primary/10 border border-white/60">
           

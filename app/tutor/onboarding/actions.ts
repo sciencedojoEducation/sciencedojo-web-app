@@ -4,6 +4,30 @@ import { createClient } from "@/utils/supabase/server";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
+/**
+ * Automated scoring based on tutor input
+ */
+function calculateAutomatedScore(data: any): number {
+  let score = 0;
+  
+  // Experience points
+  if (data.years_experience === "5+ Years") score += 20;
+  else if (data.years_experience === "3-5 Years") score += 15;
+  else if (data.years_experience === "1-2 Years") score += 10;
+
+  // Level of instruction
+  if (data.levels?.includes("University")) score += 15;
+  if (data.levels?.includes("A-Level") || data.levels?.includes("IB")) score += 10;
+
+  // Success story points (length based heuristic for MVP)
+  if (data.success_story?.length > 100) score += 10;
+
+  // Tech points
+  if (data.has_mic === "true" && data.has_camera === "true") score += 10;
+
+  return score;
+}
+
 export async function saveApplicationStage(stage: number, formData: FormData) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -14,33 +38,65 @@ export async function saveApplicationStage(stage: number, formData: FormData) {
 
   // UPSERT the application record incrementally
   const updateData: any = {};
+  
+  // Get existing data if any
+  const { data: existingApp } = await supabase
+    .from("applications")
+    .select("data")
+    .eq("user_id", user.id)
+    .single();
+    
+  const currentData = existingApp?.data || {};
+  const newData: any = { ...currentData };
 
+  // Sync new form data into the JSONB object
+  formData.forEach((value, key) => {
+    newData[key] = value;
+  });
+
+  // Track progress stage
+  newData.current_stage = stage + 1;
+
+  updateData.data = newData;
+
+  // Synchronize critical top-level columns from the JSONB blob to satisfy DB constraints
+  if (newData.full_name) updateData.full_name = newData.full_name;
+  if (newData.university) updateData.university = newData.university;
+  if (newData.user_type) updateData.user_type = newData.user_type;
+
+  // Logic based on Stage Completion
   if (stage === 1) {
-    updateData.user_type = formData.get("user_type") as string;
-    updateData.university = formData.get("university") as string;
-    updateData.year_of_study = formData.get("year_of_study") as string;
-    updateData.top_grades = formData.get("top_grades") as string;
-    updateData.current_company = formData.get("current_company") as string;
-    updateData.years_experience = formData.get("years_experience") as string;
-    updateData.industry_skillset = formData.get("industry_skillset") as string;
-    updateData.timezone = formData.get("timezone") as string;
-  }
-
-  if (stage === 2) {
-    updateData.youtube_url = formData.get("youtube_url") as string;
-    const stylesStr = formData.get("teaching_styles") as string;
-    updateData.teaching_styles = stylesStr ? stylesStr.split(",").map(s => s.trim()) : [];
-    updateData.teaching_philosophy = formData.get("teaching_philosophy") as string;
+    // Knockout Logic: Online tutoring is mandatory
+    if (newData.online_available === "false") {
+      newData.is_knocked_out = true;
+      newData.onboarding_status = 'rejected';
+    } else {
+      newData.onboarding_status = 'screening';
+    }
+    // Sync to top-level if mapping exists, otherwise JSONB handles it
+    updateData.user_type = newData.user_type;
   }
 
   if (stage === 3) {
+    // Scoring logic triggered after Style & Fit is completed
+    newData.score = calculateAutomatedScore(newData);
+  }
+
+  if (stage === 4) {
+    newData.onboarding_status = 'demo_submitted';
+  }
+
+  if (stage === 6) {
     const gdprConsent = formData.get("gdpr_consent") === "true";
-    if (!gdprConsent) throw new Error("Consent is required to process your application.");
+    if (!gdprConsent) throw new Error("Consent is required to finalize calibration.");
     
     updateData.consent_timestamp = new Date().toISOString();
-    updateData.status = 'pending'; // Ready for review!
-    updateData.onboarding_status = 'pending_review';
+    updateData.status = 'pending'; // Ready for final human review
+    newData.onboarding_status = 'under_review';
   }
+
+  // Final sync of the JSONB blob
+  updateData.data = newData;
 
   // Perform Upsert
   const { error } = await supabase
