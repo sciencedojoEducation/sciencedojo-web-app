@@ -1,7 +1,9 @@
 import { createClient } from "@/utils/supabase/server";
+import { createAdminClient } from "@/utils/supabase/admin";
 import { redirect } from "next/navigation";
 import Image from "next/image";
 import VerifyButton from "./VerifyButton";
+import PendingTutorsTable from "./PendingTutorsTable";
 
 export default async function AdminTutorsPage() {
   const supabase = await createClient();
@@ -16,26 +18,45 @@ export default async function AdminTutorsPage() {
     redirect("/dashboard/parent");
   }
 
+  // Use admin client for cross-user queries to bypass RLS
+  const adminClient = createAdminClient();
+
   // --- ZERO-JOIN AUTO-REPAIR ARCHITECTURE ---
   // 1. Fetch all profiles with role = 'tutor'
-  const { data: tutorProfiles } = await supabase
+  const { data: tutorProfiles } = await adminClient
     .from("profiles")
     .select("id, full_name, email, avatar_url, created_at")
     .eq("role", "tutor")
     .order("created_at", { ascending: false });
 
   // 2. Fetch all entries from the tutors table
-  const { data: rawTutorData } = await supabase
+  const { data: rawTutorData } = await adminClient
     .from("tutors")
     .select("*");
 
-  // 3. AUTO-REPAIR: If any profile is missing a detailed 'tutors' record, create it now.
+  // 3. Fetch ALL applications with full data (including JSONB `data` column)
+  const { data: applications, error: appError } = await adminClient
+    .from("applications")
+    .select("*");
+
+  if (appError) {
+    console.error("❌ Failed to fetch applications:", appError.message);
+  }
+
+  console.log(`📊 Admin fetch: ${tutorProfiles?.length} tutor profiles, ${applications?.length} applications`);
+  applications?.forEach(a => {
+    console.log(`   App: user_id=${a.user_id} status=${a.status} has_data=${!!a.data} stage=${a.data?.current_stage}`);
+  });
+
+  const applicationMap = Object.fromEntries(applications?.map(a => [a.user_id, a]) || []);
+
+  // 4. AUTO-REPAIR: If any profile is missing a detailed 'tutors' record, create it now.
   const tutorMap = Object.fromEntries(rawTutorData?.map(t => [t.id, t]) || []);
   const missingRecords = tutorProfiles?.filter(p => !tutorMap[p.id]) || [];
 
   if (missingRecords.length > 0) {
     console.log(`🔧 Auto-Repairing ${missingRecords.length} missing tutor records...`);
-    await supabase.from("tutors").upsert(
+    await adminClient.from("tutors").upsert(
       missingRecords.map(p => ({
         id: p.id,
         subjects: ['General'],
@@ -45,17 +66,18 @@ export default async function AdminTutorsPage() {
       }))
     );
     
-    // Final sync fetch to ensure the view is 100% complete
-    const { data: finalData } = await supabase.from("tutors").select("*");
+    const { data: finalData } = await adminClient.from("tutors").select("*");
     const finalMap = Object.fromEntries(finalData?.map(t => [t.id, t]) || []);
     var mergedTutors = tutorProfiles?.map(p => ({
       ...p,
-      tutorDetail: finalMap[p.id] || null
+      tutorDetail: finalMap[p.id] || null,
+      application: applicationMap[p.id] || null,
     })) || [];
   } else {
     var mergedTutors = tutorProfiles?.map(p => ({
       ...p,
-      tutorDetail: tutorMap[p.id] || null
+      tutorDetail: tutorMap[p.id] || null,
+      application: applicationMap[p.id] || null,
     })) || [];
   }
 
@@ -92,69 +114,7 @@ export default async function AdminTutorsPage() {
             <div className="h-[1px] flex-1 bg-gradient-to-r from-amber-200 to-transparent"></div>
           </div>
 
-          <div className="bg-white rounded-[2.5rem] border-2 border-amber-100 shadow-xl shadow-amber-900/5 overflow-hidden">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="border-b border-amber-100 text-amber-600/40 text-[10px] font-black uppercase tracking-[0.2em] bg-amber-50/30">
-                  <th className="p-8">Application</th>
-                  <th className="p-8">Draft Profile</th>
-                  <th className="p-8 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="font-medium text-slate-600">
-                {pendingTutors.map((tutor: any, i) => (
-                  <tr key={tutor.id} className="group hover:bg-amber-50/30 transition-all border-b border-amber-50 last:border-0">
-                    <td className="p-8">
-                      <div className="flex items-center gap-6">
-                        <div className="w-14 h-14 rounded-2xl border-2 border-white shadow-md overflow-hidden bg-slate-100 ring-2 ring-amber-100 relative">
-                          <Image src={tutor.avatar_url || "/tutor_placeholder.webp"} alt={tutor.full_name} fill className="object-cover" />
-                        </div>
-                        <div>
-                          <div className="font-black text-slate-800 text-lg tracking-tight">{tutor.full_name}</div>
-                          <div className="text-xs text-slate-400 font-bold">{tutor.email}</div>
-                          <div className="text-[9px] uppercase font-black text-amber-400 mt-2 tracking-widest">Applied {new Date(tutor.created_at).toLocaleDateString()}</div>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="p-8">
-                      <div className="max-w-md">
-                        <div className="flex items-center gap-2 mb-2">
-                          <span className="text-[10px] font-black uppercase tracking-widest bg-blue-50 text-blue-600 px-2 py-0.5 rounded">
-                            {tutor.tutorDetail?.education_level ? `${tutor.tutorDetail.education_level} @ ${tutor.tutorDetail.university || 'N/A'}` : 'No Credentials'}
-                          </span>
-                          {tutor.tutorDetail?.has_teaching_license && (
-                            <span className="text-[10px] font-black uppercase tracking-widest bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded">Licensed</span>
-                          )}
-                        </div>
-                        <p className="text-xs text-slate-500 line-clamp-2 italic mb-3">"{tutor.tutorDetail?.experience_summary || tutor.tutorDetail?.bio || "No summary written yet."}"</p>
-                        <div className="flex items-center gap-4">
-                          <div className="flex items-center gap-2">
-                             <span className="text-sm font-black text-slate-800">£{tutor.tutorDetail?.hourly_rate}/hr</span>
-                             <div className="flex gap-1">
-                               {tutor.tutorDetail?.subjects?.slice(0, 2).map((s: string) => (
-                                 <span key={s} className="text-[8px] font-black bg-slate-100 px-1.5 py-0.5 rounded uppercase tracking-tighter">{s}</span>
-                               ))}
-                             </div>
-                          </div>
-                          {tutor.tutorDetail?.cv_url && (
-                             <a href={tutor.tutorDetail.cv_url} target="_blank" rel="noreferrer" className="text-[10px] font-black text-indigo-500 hover:underline uppercase tracking-widest border-l border-slate-200 pl-4">
-                               View CV/LinkedIn ↗
-                             </a>
-                          )}
-                        </div>
-                      </div>
-                    </td>
-                    <td className="p-8 text-right space-x-2">
-                       <a href={`/tutor/${tutor.id}`} target="_blank" className="inline-block px-4 py-3 bg-slate-100 text-slate-600 text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-slate-200 transition-all">
-                         🔍 Preview
-                       </a>
-                       <VerifyButton tutorId={tutor.id} isVerified={false} />
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <PendingTutorsTable tutors={pendingTutors} />
         </section>
       )}
 

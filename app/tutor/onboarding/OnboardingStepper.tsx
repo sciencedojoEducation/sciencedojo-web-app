@@ -35,16 +35,7 @@ export default function OnboardingStepper({ initialData, userId }: OnboardingSte
     setIsSubmitting(true);
     try {
       // Create FormData compatible with current server action structure
-      const data = new FormData();
-      Object.entries(formData).forEach(([key, value]) => {
-        if (Array.isArray(value)) {
-          data.append(key, value.join(","));
-        } else {
-          data.append(key, String(value));
-        }
-      });
-
-      await saveApplicationStage(stage, data);
+      await saveApplicationStage(stage, formData);
       
       if (stage === 6) {
         confetti({

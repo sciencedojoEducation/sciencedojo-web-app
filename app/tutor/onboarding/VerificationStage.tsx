@@ -145,7 +145,10 @@ export default function VerificationStage({
               userId={userId} 
               docType="government_id" 
               label="Govt Issued ID Card"
-              onUploadSuccess={() => setIdUploaded(true)} 
+              onUploadSuccess={(url: string) => {
+                setIdUploaded(true);
+                updateData({ government_id_url: url });
+              }} 
             />
           </div>
 
@@ -155,7 +158,10 @@ export default function VerificationStage({
               userId={userId} 
               docType="background_check" 
               label="DBS / Background Check"
-              onUploadSuccess={() => setBgUploaded(true)} 
+              onUploadSuccess={(url: string) => {
+                setBgUploaded(true);
+                updateData({ background_check_url: url });
+              }} 
             />
           </div>
         </div>

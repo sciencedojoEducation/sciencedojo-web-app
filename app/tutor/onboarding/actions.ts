@@ -28,7 +28,7 @@ function calculateAutomatedScore(data: any): number {
   return score;
 }
 
-export async function saveApplicationStage(stage: number, formData: FormData) {
+export async function saveApplicationStage(stage: number, dataPayload: any) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
@@ -47,12 +47,14 @@ export async function saveApplicationStage(stage: number, formData: FormData) {
     .single();
     
   const currentData = existingApp?.data || {};
-  const newData: any = { ...currentData };
+  
+  // Check if dataPayload is a FormData object, if so parse it to object (for fallback)
+  let payloadObject = dataPayload;
+  if (dataPayload instanceof FormData) {
+    payloadObject = Object.fromEntries(dataPayload.entries());
+  }
 
-  // Sync new form data into the JSONB object
-  formData.forEach((value, key) => {
-    newData[key] = value;
-  });
+  const newData: any = { ...currentData, ...payloadObject };
 
   // Track progress stage
   newData.current_stage = stage + 1;
@@ -87,8 +89,8 @@ export async function saveApplicationStage(stage: number, formData: FormData) {
   }
 
   if (stage === 6) {
-    const gdprAccepted = formData.get("gdpr_accepted") === "true";
-    const termsAccepted = formData.get("terms_accepted") === "true";
+    const gdprAccepted = String(newData.gdpr_accepted) === "true";
+    const termsAccepted = String(newData.terms_accepted) === "true";
     if (!gdprAccepted || !termsAccepted) throw new Error("Both agreements must be accepted to finalize calibration.");
     
     updateData.status = 'pending'; // Ready for final human review
