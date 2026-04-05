@@ -10,6 +10,7 @@ import LessonHistoryTable from "@/components/LessonHistoryTable";
 import { updateClassSettings, archiveClass, unarchiveClass, fetchPostById } from "@/app/classes/actions";
 import { createClient } from "@/utils/supabase/client";
 import { createMeetingUrl } from "@/lib/meetings";
+import MissionsDashboard from "./missions/MissionsDashboard";
 
 
 
@@ -249,7 +250,8 @@ export default function ClassDetailUI({ classRoom, posts: initialPosts, bookings
               {[
                 { id: "stream", label: "Stream", emoji: "📢" },
                 { id: "assignments", label: "Assignments", emoji: "📋" },
-                { id: "sessions", label: "Session History", emoji: "📅" }
+                { id: "sessions", label: "Session History", emoji: "📅" },
+                { id: "missions", label: "Missions & Analytics", emoji: "🚀"}
               ].map(tab => (
                  <button 
                    key={tab.id}
@@ -340,6 +342,10 @@ export default function ClassDetailUI({ classRoom, posts: initialPosts, bookings
                    <LessonHistoryTable bookings={pastBookings} />
                 </div>
              </div>
+           )}
+
+           {activeTab === "missions" as any && (
+             <MissionsDashboard classId={classRoom.id} studentId={classRoom.student_id} tutorId={classRoom.tutor_id} />
            )}
         </div>
       </div>
