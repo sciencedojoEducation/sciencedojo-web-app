@@ -93,6 +93,26 @@ export async function saveApplicationStage(stage: number, formData: FormData) {
     
     updateData.status = 'pending'; // Ready for final human review
     newData.onboarding_status = 'under_review';
+    
+    // Final check: Ensure they are marked as a tutor in metadata AND profiles table
+    await supabase.auth.updateUser({
+      data: { ...user.user_metadata, role: 'tutor' }
+    });
+
+    // CRITICAL: Sync role to profiles table (the single source of truth for dashboard)
+    await supabase
+      .from('profiles')
+      .update({ role: 'tutor' })
+      .eq('id', user.id);
+
+    // Ensure tutor row exists
+    await supabase.from('tutors').upsert({
+      id: user.id,
+      is_verified: false,
+      is_available_now: true,
+      bio: '',
+      hourly_rate: 0
+    }, { onConflict: 'id' });
     // We store specific timestamps within the JSONB data object via VerificationStage
   }
 

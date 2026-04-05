@@ -17,12 +17,19 @@ export async function login(formData: FormData) {
 
   const { data: { user }, error } = await supabase.auth.signInWithPassword(data)
   
-  if (error) {
-    console.error("Login Error:", error.message);
-    redirect(`/login?error=${encodeURIComponent(error.message)}`)
+  if (error || !user) {
+    console.error("Login Error:", error?.message);
+    redirect(`/login?error=${encodeURIComponent(error?.message || "Authentication failed.")}`)
   }
 
-  const role = user?.user_metadata?.role || 'parent'
+  // PRIORITIZE Database Profile Role over Metadata
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single();
+
+  const role = profile?.role || user?.user_metadata?.role || 'parent';
   
   revalidatePath('/', 'layout')
   redirect(`/dashboard/${role}`)
@@ -160,6 +167,35 @@ export async function signup(formData: FormData) {
     console.error("Signup error:", error.message);
     const subRole = (formData.get('sub_role') as string) || '';
     redirect(`/signup?error=${encodeURIComponent(error.message)}&role=${role}&sub_role=${subRole}`)
+  }
+
+  // --- ENSURE PROFILE EXISTS WITH CORRECT ROLE ---
+  if (authData?.user) {
+    await supabase.from('profiles').upsert({
+      id: authData.user.id,
+      email: data.email.toLowerCase(),
+      full_name: formData.get('name') as string || '',
+      role: role,
+      student_name: formData.get('student_name') as string || '',
+    }, { onConflict: 'id' });
+
+    if (role === 'tutor') {
+      // Create a skeleton application row immediately to lock in the tutor path
+      await supabase.from('applications').upsert({
+        user_id: authData.user.id,
+        status: 'draft',
+        full_name: formData.get('name') as string || '',
+        data: { onboarding_status: 'screening', current_stage: 1 }
+      }, { onConflict: 'user_id' });
+
+      await supabase.from('tutors').upsert({
+        id: authData.user.id,
+        is_verified: false,
+        is_available_now: true,
+        bio: '',
+        hourly_rate: 0
+      }, { onConflict: 'id' });
+    }
   }
 
   if (authData?.user && authData?.session === null) {

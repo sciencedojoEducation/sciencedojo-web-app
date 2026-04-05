@@ -18,8 +18,31 @@ export default async function Home({
   const { data: { user } } = await supabase.auth.getUser();
 
   if (user) {
-    const role = user.user_metadata.role || "parent";
-    redirect(`/dashboard/${role}`);
+    // 1. Check Profiles Table (Source of Truth)
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single();
+
+    let role = profile?.role || user.user_metadata.role;
+
+    // 2. If Role is still missing or defaults to parent, check for Tutor Application Status
+    if (!role || role === 'parent') {
+      const { data: application } = await supabase
+        .from('applications')
+        .select('status')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      
+      if (application) {
+        role = 'tutor'; // They are in the tutor flow!
+      }
+    }
+
+    // Default to parent if all else fails
+    const finalRole = role || 'parent';
+    redirect(`/dashboard/${finalRole}`);
   }
 
   const tutors = await getTutors(searchTerm, selectedSubject);

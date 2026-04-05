@@ -21,7 +21,17 @@ export default async function OnboardingPage() {
       .single();
 
     if (profile?.role !== "tutor") {
-      redirect("/dashboard/parent");
+      // One last check: maybe they have a DRAFT tutor application? 
+      // If so, they ARE a tutor in progress!
+      const { data: appDraft } = await supabase
+        .from('applications')
+        .select('id')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (!appDraft) {
+        redirect("/dashboard/parent");
+      }
     }
   }
 

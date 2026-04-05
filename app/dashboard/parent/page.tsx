@@ -3,6 +3,7 @@ import { getActiveAnnouncementsForUser } from "@/lib/announcement-queries";
 import Link from "next/link";
 import Image from "next/image";
 import { createClient } from "@/utils/supabase/server";
+import { redirect } from "next/navigation";
 import TutorCard from "@/components/TutorCard";
 import CheckoutButton from "@/components/CheckoutButton";
 import LessonHistoryTable from "@/components/LessonHistoryTable";
@@ -21,6 +22,18 @@ export default async function ParentDashboard() {
         <Link href="/login" className="text-primary font-bold hover:underline mt-4 inline-block">Log in</Link>
       </div>
     );
+  }
+
+  // --- SENSEI REDIRECT GUARD ---
+  // If a tutor accidentally lands on the parent dashboard, send them to the right place.
+  const { data: application } = await supabase
+    .from('applications')
+    .select('status')
+    .eq('user_id', user.id)
+    .maybeSingle();
+
+  if (application || user.user_metadata.role === 'tutor') {
+    redirect("/dashboard/tutor");
   }
 
   const meta = user?.user_metadata;

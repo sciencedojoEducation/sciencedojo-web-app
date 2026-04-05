@@ -60,6 +60,20 @@ export async function GET(request: Request) {
         return NextResponse.redirect(`${origin}${redirectPath}`);
       }
 
+      // No pending role — this is a returning user login via Google.
+      // Check their existing profile to redirect correctly.
+      const { data: { user: existingUser } } = await supabase.auth.getUser();
+      if (existingUser) {
+        const { data: existingProfile } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', existingUser.id)
+          .single();
+
+        const existingRole = existingProfile?.role || existingUser.user_metadata?.role || 'parent';
+        return NextResponse.redirect(`${origin}/dashboard/${existingRole}`);
+      }
+
       return NextResponse.redirect(`${origin}${next}`);
     }
     

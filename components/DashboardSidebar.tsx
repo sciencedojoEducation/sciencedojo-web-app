@@ -37,7 +37,7 @@ export default async function DashboardSidebar({ role }: DashboardSidebarProps) 
   const metadata = user?.user_metadata;
   const subRole = metadata?.sub_role; // 'student' or 'parent'
   
-  const displayRole = (role === 'admin') ? 'admin' : (subRole || role);
+  const displayRole = (role === 'admin' || role === 'tutor') ? role : (subRole || role);
   
   // ScienceDojo Aesthetic Pulse: Light-Modern Evolution 🌬️✨
   const variant = 'light'; 
