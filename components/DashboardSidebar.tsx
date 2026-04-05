@@ -77,6 +77,7 @@ export default async function DashboardSidebar({ role }: DashboardSidebarProps) 
       { name: "My Bookings", href: "/dashboard/student", icon: "🗓️", exact: true },
       { name: "My Classes", href: "/dashboard/classes", icon: "🎓" },
       { name: "Messages", href: "/dashboard/messages", icon: "💬", badge: unreadCount },
+      { name: "Missions", href: "/dashboard/student/missions", icon: "🚀" },
       { name: "Browse Tutors", href: "/dashboard/student/tutors", icon: "🔍" },
       { name: "Focus Timers", href: "/dashboard/student/timers", icon: "⏱️" },
       { name: "Settings", href: "/dashboard/student/settings", icon: "⚙️" },
