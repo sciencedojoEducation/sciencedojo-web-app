@@ -173,6 +173,7 @@ Transform the provided lesson summaries into a progressive 4-stage mission. Ensu
     const { data: newMission, error: insertErr } = await supabase.from('student_missions').insert({
         student_id: classRoom.student_id,
         tutor_id: classRoom.tutor_id,
+        class_id: classId,
         mission_tier: tier,
         booking_ids: bookingIds,
         mission_blueprint: missionData,
@@ -188,5 +189,91 @@ Transform the provided lesson summaries into a progressive 4-stage mission. Ensu
   } catch (err: any) {
     console.error("Gemini Error:", err);
     return { error: "Failed to generate mission from AI." };
+  }
+}
+
+export async function evaluateMission(missionId: string, s1Answers: any, s2Answer: string, s3Answer: string, s4Answers: any) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) return { error: "Not authenticated" };
+
+  const { data: mission, error: err } = await supabase.from('student_missions').select('*').eq('id', missionId).single();
+  if (err || !mission) return { error: "Mission not found." };
+  
+  if (mission.status !== 'pending_assessment') {
+     return { error: "Mission already assessed." };
+  }
+
+  const blueprint = mission.mission_blueprint;
+  
+  // Calculate Stage 1 automatically (safe)
+  let s1Score = 0;
+  if (blueprint.stage1?.questions) {
+      blueprint.stage1.questions.forEach((q: any, idx: number) => {
+         if (s1Answers[idx] === q.correctIndex) s1Score++;
+      });
+  }
+
+  // Ask AI to evaluate 2/3/4
+  if (!process.env.GEMINI_API_KEY) return { error: "Gemini API missing." };
+  const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+  
+  const evalSchema: ResponseSchema = {
+      type: SchemaType.OBJECT,
+      properties: {
+          logicScoreOutOf10: { type: SchemaType.INTEGER },
+          applicationScoreOutOf10: { type: SchemaType.INTEGER },
+          correctionScoreOutOf10: { type: SchemaType.INTEGER },
+          tutorFeedbackSummary: { type: SchemaType.STRING, description: "2 sentences of feedback grading their freeform answers." },
+          weakTopics: { type: SchemaType.ARRAY, items: { type: SchemaType.STRING } }
+      },
+      required: ["logicScoreOutOf10", "applicationScoreOutOf10", "correctionScoreOutOf10", "tutorFeedbackSummary", "weakTopics"]
+  };
+
+  const model = genAI.getGenerativeModel({
+    model: "gemini-2.5-flash",
+    generationConfig: {
+      temperature: 0.2, // Be precise when grading
+      responseMimeType: "application/json",
+      responseSchema: evalSchema,
+    },
+    systemInstruction: "You are an austere grader. Given the mission exam questions, read the student's text answers. Give a fair numerical score for Logic (Stage 2), Application (Stage 3), and Accuracy (Stage 4). Identify weak topics."
+  });
+
+  try {
+      const prompt = `EXAM BLUEPRINT: ${JSON.stringify({ s2: blueprint.stage2, s3: blueprint.stage3, s4: blueprint.stage4 })}
+      
+STUDENT ANSWERS:
+Stage 2: ${s2Answer}
+Stage 3: ${s3Answer}
+Stage 4 Corrections: ${JSON.stringify(s4Answers)}`;
+
+      const result = await model.generateContent(prompt);
+      const evalData = JSON.parse(result.response.text());
+
+      // Let's create an overall out-of-100 score relative to Stage 1
+      const totalPossible = (blueprint.stage1.questions.length * 10) + 30; // 10 pts per s1 question + 30 for text stages
+      const achieved = (s1Score * 10) + evalData.logicScoreOutOf10 + evalData.applicationScoreOutOf10 + evalData.correctionScoreOutOf10;
+      const percentage = Math.round((achieved / totalPossible) * 100);
+
+      // Save to database as PENDING TUTOR APPROVAL!
+      const studentAnswersJson = { s1: s1Answers, s2: s2Answer, s3: s3Answer, s4: s4Answers };
+      
+      const { error: updateErr } = await supabase.from('student_missions').update({
+          status: 'pending_tutor_approval',
+          student_answers: studentAnswersJson,
+          ai_evaluation: evalData,
+          score_percentage: percentage,
+          completed_at: new Date().toISOString()
+      }).eq('id', missionId);
+
+      if (updateErr) return { error: "Failed to log mission grade." };
+
+      return { success: true, score: percentage };
+
+  } catch (error) {
+      console.error(error);
+      return { error: "AI failed to grade exam." };
   }
 }

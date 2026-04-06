@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ShieldCheck, Brain, Beaker, Bug } from "lucide-react";
+import { ShieldCheck, Brain, Beaker, Bug, Loader2 } from "lucide-react";
+import { evaluateMission } from "../../classes/[id]/missions/actions";
 
 type MissionData = {
   topic: string;
@@ -20,7 +21,7 @@ type MissionData = {
   };
 };
 
-export default function MissionViewer({ mission }: { mission: MissionData }) {
+export default function MissionViewer({ mission, missionId, onComplete }: { mission: MissionData, missionId: string, onComplete?: () => void }) {
   const [activeStage, setActiveStage] = useState(1);
   const [s1Answers, setS1Answers] = useState<Record<number, number>>({});
   
@@ -29,6 +30,8 @@ export default function MissionViewer({ mission }: { mission: MissionData }) {
   const [s3Answer, setS3Answer] = useState("");
   const [s4Answers, setS4Answers] = useState<Record<number, string>>({});
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isEvaluating, setIsEvaluating] = useState(false);
+  const [scoreAchieved, setScoreAchieved] = useState(0);
   
   // Minimal checks
   const s1Complete = Object.keys(s1Answers).length === mission.stage1.questions.length;
@@ -197,10 +200,25 @@ export default function MissionViewer({ mission }: { mission: MissionData }) {
           </div>
 
           <button 
-            onClick={() => setIsSubmitted(true)}
-            className="w-full mt-10 py-5 rounded-2xl bg-gradient-to-r from-red-600 to-[#1E5AA8] hover:shadow-[0_0_30px_rgba(30,90,168,0.4)] text-white font-black tracking-widest uppercase transition-all shadow-xl shadow-red-900/20"
+            onClick={async () => {
+                setIsEvaluating(true);
+                try {
+                    const res = await evaluateMission(missionId, s1Answers, s2Answer, s3Answer, s4Answers);
+                    if (res.error) alert(res.error);
+                    else {
+                        setScoreAchieved(res.score || 0);
+                        setIsSubmitted(true);
+                    }
+                } catch(e) {
+                    console.error(e);
+                }
+                setIsEvaluating(false);
+            }}
+            disabled={isEvaluating}
+            className="w-full mt-10 py-5 flex justify-center items-center gap-3 rounded-2xl bg-gradient-to-r from-red-600 to-[#1E5AA8] hover:shadow-[0_0_30px_rgba(30,90,168,0.4)] text-white font-black tracking-widest uppercase transition-all shadow-xl shadow-red-900/20 disabled:opacity-50"
           >
-            Submit Final Mission
+            {isEvaluating ? <Loader2 className="animate-spin" size={20} /> : null}
+            {isEvaluating ? "EVALUATING VIA AI..." : "Submit Final Mission"}
           </button>
         </div>
       </motion.section>
@@ -216,25 +234,12 @@ export default function MissionViewer({ mission }: { mission: MissionData }) {
                <ShieldCheck size={48} />
             </div>
             <h2 className="text-xl font-black text-emerald-400 uppercase tracking-[0.3em] mb-2">Operation Successful</h2>
-            <h1 className="text-5xl font-black tracking-tight mb-8">Topic Master</h1>
+            <h1 className="text-5xl font-black tracking-tight mb-8 text-emerald-400">{scoreAchieved}% Achieved</h1>
             
             <div className="bg-black/40 border border-white/10 rounded-3xl p-8 w-full max-w-md mb-8">
                <div className="flex justify-between items-center mb-4">
-                  <span className="font-bold text-slate-400">Recall Score (Stage 1)</span>
-                  <span className="font-black text-2xl text-emerald-300">
-                    {Object.keys(s1Answers).reduce((acc, idx) => {
-                       const numIdx = Number(idx);
-                       return acc + (s1Answers[numIdx] === mission.stage1.questions[numIdx].correctIndex ? 1 : 0);
-                    }, 0)} / {mission.stage1.questions.length}
-                  </span>
-               </div>
-               <div className="flex justify-between items-center mb-4">
-                  <span className="font-bold text-slate-400">Critical Analysis</span>
-                  <span className="font-black text-xl text-sky-300">Logged</span>
-               </div>
-               <div className="flex justify-between items-center">
-                  <span className="font-bold text-slate-400">Data Correction</span>
-                  <span className="font-black text-xl text-indigo-300">Submitted</span>
+                  <span className="font-bold text-slate-400">Status</span>
+                  <span className="font-black text-xl text-yellow-500">PENDING TUTOR APPROVAL</span>
                </div>
             </div>
 
@@ -242,8 +247,17 @@ export default function MissionViewer({ mission }: { mission: MissionData }) {
               Excellent work! Your logical framework and error correction sequences have been securely logged. Your Sensei will review your architectural blueprints.
             </p>
 
-            <div className="bg-gradient-to-r from-amber-500 to-orange-600 text-white font-black px-8 py-3 rounded-full text-sm tracking-widest shadow-lg shadow-orange-500/30">
+            <div className="inline-block px-8 py-3 bg-gradient-to-r from-orange-500 to-amber-500 rounded-full font-black text-white shadow-[0_0_30px_rgba(249,115,22,0.4)] mb-10">
                +500 XP EARNED
+            </div>
+
+            <div>
+               <button 
+                 onClick={() => onComplete && onComplete()}
+                 className="px-10 py-5 bg-white text-[#1E5AA8] rounded-2xl font-black tracking-widest uppercase hover:scale-105 transition-transform shadow-2xl"
+               >
+                  Return to Mission Control
+               </button>
             </div>
          </div>
       </motion.div>
