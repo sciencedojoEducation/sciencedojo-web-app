@@ -52,7 +52,7 @@ export async function POST(req: Request) {
           .from("bookings")
           .update({ 
             status: "confirmed",
-            meeting_url: meetingUrl,
+            meeting_url: meetingUrl.joinUrl,
             payment_intent_id: session.payment_intent as string
           })
           .eq("id", id);
@@ -98,4 +98,3 @@ export async function POST(req: Request) {
 
   return NextResponse.json({ received: true });
 }
-

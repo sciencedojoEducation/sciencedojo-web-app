@@ -24,7 +24,7 @@ export interface TutorProfile {
   cv_url?: string;
 }
 
-export async function getTutors(searchTerm: string = "", subject: string = "All"): Promise<TutorProfile[]> {
+export async function getTutors(searchTerm: string = "", subject: string = "All", limit?: number): Promise<TutorProfile[]> {
   const supabase = await createClient();
   
   // Fetch basic tutor info (those guaranteed to be in the cache)
@@ -50,6 +50,10 @@ export async function getTutors(searchTerm: string = "", subject: string = "All"
     query = query.contains('subjects', [subject]);
   }
 
+  if (limit && !searchTerm && subject === "All") {
+    query = query.limit(limit);
+  }
+
   const { data, error } = await query;
 
   if (error) {
@@ -59,10 +63,12 @@ export async function getTutors(searchTerm: string = "", subject: string = "All"
 
   // 1. Resiliently fetch new columns if available, to bypass cache delay
   const tutorIds = data.map((t: any) => t.id);
-  const { data: newFieldsData } = await supabase
-    .from('tutors')
-    .select('id, youtube_intro_url, education_level, university, experience_summary, has_teaching_license, cv_url')
-    .in('id', tutorIds);
+  const { data: newFieldsData } = tutorIds.length > 0
+    ? await supabase
+      .from('tutors')
+      .select('id, youtube_intro_url, education_level, university, experience_summary, has_teaching_license, cv_url')
+      .in('id', tutorIds)
+    : { data: [] };
 
   const newFieldsMap: Record<string, any> = {};
   if (newFieldsData) {

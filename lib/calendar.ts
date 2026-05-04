@@ -1,6 +1,21 @@
 import { google } from "googleapis";
 import { createClient } from "@/utils/supabase/server";
 
+function getMeetingJoinUrl(meetingUrl: unknown) {
+  if (typeof meetingUrl === "string") return meetingUrl;
+  if (meetingUrl && typeof meetingUrl === "object" && "joinUrl" in meetingUrl) {
+    return String((meetingUrl as { joinUrl?: string }).joinUrl || "");
+  }
+  return "";
+}
+
+function getMeetingPassword(meetingUrl: unknown) {
+  if (meetingUrl && typeof meetingUrl === "object" && "password" in meetingUrl) {
+    return String((meetingUrl as { password?: string }).password || "");
+  }
+  return "";
+}
+
 export async function createCalendarEvent(bookingId: string) {
   const supabase = await createClient();
 
@@ -42,6 +57,8 @@ export async function createCalendarEvent(bookingId: string) {
     }
 
     const { student, tutor_profile, subject, description, requested_date, meeting_url, duration_hours } = booking as any;
+    const joinUrl = getMeetingJoinUrl(meeting_url);
+    const password = getMeetingPassword(meeting_url);
     
     if (!student?.email || !tutor_profile?.email) {
       throw new Error("Missing student or tutor email for calendar invite.");
@@ -62,7 +79,7 @@ export async function createCalendarEvent(bookingId: string) {
 
     const event = {
       summary: `ScienceDojo: ${subject} with ${tutor_profile.full_name}`,
-      location: meeting_url?.joinUrl || "Online Class",
+      location: joinUrl || "Online Class",
       description: `
 Tutoring Session: ${subject}
 Student: ${student.full_name}
@@ -70,8 +87,8 @@ Tutor: ${tutor_profile.full_name}
 
 Topic: ${description || 'N/A'}
 
-CLASSROOM LINK: ${meeting_url?.joinUrl || 'To be provided'}
-Password: ${meeting_url?.password || 'N/A'}
+CLASSROOM LINK: ${joinUrl || 'To be provided'}
+Password: ${password || 'N/A'}
 
 Managed by ScienceDojo Platform.
       `.trim(),
@@ -92,7 +109,7 @@ Managed by ScienceDojo Platform.
           { method: "popup", minutes: 30 },
         ],
       },
-      conferenceData: meeting_url?.joinUrl ? {
+      conferenceData: joinUrl ? {
         createRequest: {
           requestId: `sd-${bookingId}`,
           conferenceSolutionKey: { type: "hangoutsMeet" } // Just a fallback if Zoom link isn't used as primary location

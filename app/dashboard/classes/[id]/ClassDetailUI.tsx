@@ -40,6 +40,10 @@ export default function ClassDetailUI({ classRoom, posts: initialPosts, bookings
   // Real-time State
   const [posts, setPosts] = useState<ClassPost[]>(initialPosts);
 
+  useEffect(() => {
+    setPosts(initialPosts);
+  }, [initialPosts]);
+
   const isStudent = currentUserId === classRoom.student_id;
   const otherName = isStudent ? classRoom.tutor_name : classRoom.student_name;
   const otherAvatar = isStudent ? classRoom.tutor_avatar : classRoom.student_avatar;
@@ -62,7 +66,7 @@ export default function ClassDetailUI({ classRoom, posts: initialPosts, bookings
           if (payload.eventType === 'INSERT') {
             const fullPost = await fetchPostById(payload.new.id);
             if (fullPost) {
-               setPosts(current => [fullPost, ...current]);
+               setPosts(current => current.some(post => post.id === fullPost.id) ? current : [fullPost, ...current]);
             }
           } else if (payload.eventType === 'UPDATE') {
              const fullPost = await fetchPostById(payload.new.id);
@@ -320,7 +324,15 @@ export default function ClassDetailUI({ classRoom, posts: initialPosts, bookings
         <div className="flex-1 min-w-0">
            {activeTab === "stream" && (
              <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-                {!classRoom.is_archived && <ClassPostComposer classId={classRoom.id} isTutor={isTutor} />}
+                {!classRoom.is_archived && (
+                  <ClassPostComposer
+                    classId={classRoom.id}
+                    isTutor={isTutor}
+                    onPostCreated={(post) => {
+                      setPosts(current => current.some(existing => existing.id === post.id) ? current : [post, ...current]);
+                    }}
+                  />
+                )}
                 <ClassFeed posts={posts} classId={classRoom.id} isTutor={isTutor} />
              </div>
            )}
@@ -353,4 +365,3 @@ export default function ClassDetailUI({ classRoom, posts: initialPosts, bookings
     </div>
   );
 }
-

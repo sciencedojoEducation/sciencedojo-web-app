@@ -1,0 +1,21 @@
+Dockerfile
+.dockerignore
+node_modules
+npm-debug.log
+README.md
+.next
+.git
+.DS_Store
+.env*
+*.tsbuildinfo
+coverage
+tmp
+test data
+debug-*.mjs
+test-*.mjs
+check_files.mjs
+diagnose_app.mjs
+fix_role_again.mjs
+seed-test-sensei.mjs
+backfill-posts.js
+cleanup-test-users.mjs

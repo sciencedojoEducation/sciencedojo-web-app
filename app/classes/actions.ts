@@ -59,7 +59,7 @@ export async function createClassPost(formData: FormData) {
     fileName = file.name;
   }
 
-  const { error } = await supabase
+  const { data: insertedPost, error } = await supabase
     .from("class_posts")
     .insert({
       class_id: classId,
@@ -70,7 +70,9 @@ export async function createClassPost(formData: FormData) {
       due_date: dueDateStr || null,
       file_url: fileUrl,
       file_name: fileName,
-    });
+    })
+    .select("id")
+    .single();
 
   if (error) {
     console.error("Create post error:", error.message);
@@ -80,6 +82,10 @@ export async function createClassPost(formData: FormData) {
   revalidatePath(`/dashboard/classes/${classId}`);
   revalidatePath("/dashboard/classes");
   revalidatePath("/dashboard/student");
+
+  if (!insertedPost?.id) return null;
+
+  return await fetchPostById(insertedPost.id);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -286,4 +292,3 @@ export async function fetchPostById(postId: string) {
   const allPosts = await getClassPosts(postRef.class_id);
   return allPosts.find(p => p.id === postId) || null;
 }
-

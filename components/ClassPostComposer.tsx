@@ -2,13 +2,15 @@
 
 import { useState, useRef } from "react";
 import { createClassPost } from "@/app/classes/actions";
+import type { ClassPost } from "@/lib/class-queries";
 
 interface ClassPostComposerProps {
   classId: string;
   isTutor: boolean;
+  onPostCreated?: (post: ClassPost) => void;
 }
 
-export default function ClassPostComposer({ classId, isTutor }: ClassPostComposerProps) {
+export default function ClassPostComposer({ classId, isTutor, onPostCreated }: ClassPostComposerProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [postType, setPostType] = useState<"post" | "assignment" | "link">("post");
   const [content, setContent] = useState("");
@@ -33,7 +35,10 @@ export default function ClassPostComposer({ classId, isTutor }: ClassPostCompose
     if (file) formData.set("file", file);
 
     try {
-      await createClassPost(formData);
+      const createdPost = await createClassPost(formData);
+      if (createdPost) {
+        onPostCreated?.(createdPost);
+      }
       setContent("");
       setLinkUrl("");
       setDueDate("");

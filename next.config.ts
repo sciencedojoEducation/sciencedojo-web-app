@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  output: "standalone",
   images: {
     remotePatterns: [
       {
@@ -27,7 +28,7 @@ const nextConfig: NextConfig = {
         headers: [
           {
             key: 'Content-Security-Policy',
-            value: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.daily.co blob:; connect-src 'self' https://*.daily.co wss://*.daily.co https://*.supabase.co wss://*.supabase.co https://unpkg.com https://cdn.tldraw.com; frame-src 'self' https://*.daily.co; img-src 'self' data: blob: https://*.supabase.co https://i.ytimg.com https://lh3.googleusercontent.com https://unpkg.com https://cdn.tldraw.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com https://cdn.tldraw.com; worker-src 'self' blob: https://*.daily.co; child-src 'self' blob: https://*.daily.co;",
+            value: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://unpkg.com https://cdn.tldraw.com https://meet.jit.si https://*.jit.si wss://*.jit.si; frame-src 'self' https://meet.jit.si https://*.jit.si; img-src 'self' data: blob: https://*.supabase.co https://i.ytimg.com https://lh3.googleusercontent.com https://unpkg.com https://cdn.tldraw.com https://meet.jit.si https://*.jit.si; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com https://cdn.tldraw.com https://meet.jit.si https://*.jit.si; worker-src 'self' blob:; child-src 'self' blob: https://meet.jit.si https://*.jit.si;",
           },
           {
             key: 'Cross-Origin-Opener-Policy',

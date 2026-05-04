@@ -19,15 +19,17 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const isMaintenanceMode = process.env.MAINTENANCE_MODE === "true";
+
   return (
     <html
       lang="en"
       className={`${inter.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col font-sans">
-        <Navbar />
+        {!isMaintenanceMode && <Navbar />}
         <main className="flex-1">{children}</main>
-        <Footer />
+        {!isMaintenanceMode && <Footer />}
       </body>
     </html>
   );

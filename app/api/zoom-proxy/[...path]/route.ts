@@ -7,7 +7,7 @@ import { NextRequest, NextResponse } from 'next/server';
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { path: string[] } }
+  { params }: { params: Promise<{ path: string[] }> }
 ) {
   // Wait for params to resolve in Next.js 15+
   const resolvedParams = await params;

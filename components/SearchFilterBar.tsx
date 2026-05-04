@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
-import { useCallback } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 export default function SearchFilterBar() {
   const router = useRouter();
@@ -10,6 +10,11 @@ export default function SearchFilterBar() {
 
   const searchTerm = searchParams.get("query") || "";
   const selectedSubject = searchParams.get("subject") || "All";
+  const [draftSearchTerm, setDraftSearchTerm] = useState(searchTerm);
+
+  useEffect(() => {
+    setDraftSearchTerm(searchTerm);
+  }, [searchTerm]);
 
   const createQueryString = useCallback(
     (name: string, value: string) => {
@@ -24,12 +29,20 @@ export default function SearchFilterBar() {
     [searchParams]
   );
 
-  const handleSearch = (term: string) => {
-    router.push(`${pathname}?${createQueryString("query", term)}`, { scroll: false });
-  };
+  useEffect(() => {
+    if (draftSearchTerm === searchTerm) return;
+
+    const timeoutId = window.setTimeout(() => {
+      const queryString = createQueryString("query", draftSearchTerm.trim());
+      router.replace(queryString ? `${pathname}?${queryString}` : pathname, { scroll: false });
+    }, 300);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [createQueryString, draftSearchTerm, pathname, router, searchTerm]);
 
   const handleSubject = (subject: string) => {
-    router.push(`${pathname}?${createQueryString("subject", subject)}`, { scroll: false });
+    const queryString = createQueryString("subject", subject);
+    router.replace(queryString ? `${pathname}?${queryString}` : pathname, { scroll: false });
   };
 
   const subjects = ["All", "Science", "Math", "Physics", "Chemistry", "Biology", "Programming"];
@@ -46,8 +59,8 @@ export default function SearchFilterBar() {
             id="search"
             className="block w-full rounded-xl border-secondary/20 bg-surface px-4 py-3 text-secondary focus:border-primary focus:ring-primary sm:text-sm shadow-inner transition-all outline-none"
             placeholder="Search by name, subject, or keywords..."
-            value={searchTerm}
-            onChange={(e) => handleSearch(e.target.value)}
+            value={draftSearchTerm}
+            onChange={(e) => setDraftSearchTerm(e.target.value)}
           />
         </div>
       </div>

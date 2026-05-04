@@ -1,18 +1,15 @@
 "use client";
 
 import { useEffect, useState, useMemo, useCallback } from "react";
-import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
-import Link from "next/link";
 import { createClient } from "@/utils/supabase/client";
 import { createMeetingUrl } from "@/lib/meetings";
 
-const DailyClassroom = dynamic(() => import("@/components/DailyClassroom"), { ssr: false });
 const DojoWhiteboard = dynamic(() => import("@/components/DojoWhiteboard"), { ssr: false });
 
 export default function PremiumCallHub() {
   const params = useParams();
-  const searchParams = useSearchParams();
   const router = useRouter();
   const classId = params.id as string;
   
@@ -22,10 +19,10 @@ export default function PremiumCallHub() {
   const [error, setError] = useState<string | null>(null);
   const [showWhiteboard, setShowWhiteboard] = useState(false);
   const [isJoined, setIsJoined] = useState(false);
-  const [isExiting, setIsExiting] = useState(false);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
   const [isSessionCompleted, setIsSessionCompleted] = useState(false);
   const [countdown, setCountdown] = useState(5);
+  const [displayName, setDisplayName] = useState("ScienceDojo User");
 
   useEffect(() => {
     const initCall = async () => {
@@ -36,6 +33,8 @@ export default function PremiumCallHub() {
         router.push("/login");
         return;
       }
+
+      setDisplayName(user.user_metadata?.full_name || user.email || "ScienceDojo User");
 
       // 1. Verify Class & Access
       const { data: room, error: roomError } = await supabase
@@ -64,7 +63,7 @@ export default function PremiumCallHub() {
         // We try to find a confirmed booking first, or fallback to instant
         const { data: bookings } = await supabase
           .from("bookings")
-          .select("*")
+          .select("id, requested_date, meeting_url")
           .eq("class_id", classId)
           .eq("status", "confirmed");
 
@@ -73,11 +72,25 @@ export default function PremiumCallHub() {
           Math.abs(new Date(b.requested_date).getTime() - now.getTime()) < 60 * 60 * 1000
         );
 
-        const details = await createMeetingUrl(currentBooking ? currentBooking.id : `instant-${classId}`);
-        setMeetingUrl(details.joinUrl);
+        const savedMeetingUrl = currentBooking?.meeting_url;
+        if (typeof savedMeetingUrl === "string" && savedMeetingUrl.startsWith("https://meet.jit.si/")) {
+          setMeetingUrl(savedMeetingUrl);
+        } else if (savedMeetingUrl && typeof savedMeetingUrl === "object" && "joinUrl" in savedMeetingUrl) {
+          setMeetingUrl(String(savedMeetingUrl.joinUrl));
+        } else {
+          const details = await createMeetingUrl(currentBooking ? currentBooking.id : `instant-${classId}`);
+          setMeetingUrl(details.joinUrl);
+
+          if (currentBooking) {
+            await supabase
+              .from("bookings")
+              .update({ meeting_url: details.joinUrl })
+              .eq("id", currentBooking.id);
+          }
+        }
       } catch (err: any) {
         console.error("Meeting setup failed:", err);
-        setError("Failed to initialize the high-performance video engine.");
+        setError("Failed to initialize the Jitsi classroom.");
       } finally {
         setIsLoading(false);
       }
@@ -87,9 +100,26 @@ export default function PremiumCallHub() {
   }, [classId, router]);
 
   const handleLeave = useCallback(() => {
-    console.log("[Daily.co] Premium Finale Pulse Initiated... 🧬✨");
     setIsSessionCompleted(true);
   }, []);
+
+  const externalMeetingUrl = useMemo(() => {
+    if (!meetingUrl) return "";
+
+    try {
+      const url = new URL(meetingUrl);
+      url.hash = [
+        "config.startWithAudioMuted=true",
+        "config.startWithVideoMuted=true",
+        "config.prejoinPageEnabled=true",
+        displayName ? `userInfo.displayName=${encodeURIComponent(displayName)}` : "",
+      ].filter(Boolean).join("&");
+
+      return url.toString();
+    } catch {
+      return meetingUrl;
+    }
+  }, [displayName, meetingUrl]);
 
   // 💎 Premium Finale Redirect Handshake 🏎️🚀
   useEffect(() => {
@@ -98,7 +128,6 @@ export default function PremiumCallHub() {
         setCountdown((prev) => {
           if (prev <= 1) {
             clearInterval(timer);
-            console.log("[Daily.co] Absolute migration pulse authorized... 🏁🧤");
             window.location.href = `/dashboard/classes/${classId}`;
             return 0;
           }
@@ -114,13 +143,9 @@ export default function PremiumCallHub() {
   };
 
   const confirmExit = () => {
-    console.log("[Daily.co] Graceful Exit Handshake Authorized... 🏁🧤");
     setShowExitConfirm(false);
-    setIsExiting(true);
     
-    // Fail-safe: If the video engine fails to signal leave within 2s, force redirect 🏎️🚀
     setTimeout(() => {
-      console.log("[Daily.co] Fail-safe Redirection Pulse Initiated... 🧬");
       handleLeave();
     }, 2000);
   };
@@ -169,7 +194,7 @@ export default function PremiumCallHub() {
                    High-Performance Session Initializing
                 </h1>
                 <p className="text-slate-400 text-lg font-medium leading-relaxed max-w-sm mx-auto">
-                   Preparing your secure interactive environment and high-fidelity video engine.
+                   Preparing your secure interactive Jitsi classroom.
                 </p>
              </div>
         </div>
@@ -219,12 +244,57 @@ export default function PremiumCallHub() {
        <div className={`flex-1 relative flex overflow-hidden transition-all duration-500 ease-in-out`}>
           {/* Video Engine Nexus */}
           <div className={`${showWhiteboard ? 'w-1/3 border-r border-white/5' : 'w-full'} h-full transition-all duration-500 relative`}>
-            <DailyClassroom 
-              url={meetingUrl}
-              onLeave={handleLeave}
-              onJoined={() => setIsJoined(true)}
-              exitTrigger={isExiting}
-            />
+            <div className="relative w-full h-full min-h-[600px] flex items-center justify-center overflow-hidden px-6">
+              <div className="absolute top-1/4 -left-32 w-[500px] h-[500px] bg-[#6FE3D6]/20 blur-[150px] pointer-events-none rounded-full animate-pulse" />
+              <div className="absolute bottom-1/4 -right-32 w-[500px] h-[500px] bg-[#1E5AA8]/20 blur-[150px] pointer-events-none rounded-full animate-pulse" style={{ animationDelay: "1s" }} />
+
+              <div className="relative z-10 w-full max-w-xl text-center space-y-8">
+                <img
+                  src="/images/sciencedojo-logo-brand.jpg"
+                  alt="ScienceDojo"
+                  className="w-20 h-20 rounded-3xl shadow-xl shadow-[#1E5AA8]/30 border border-white/10 mx-auto"
+                />
+
+                <div className="space-y-4">
+                  <div className="inline-flex items-center gap-2 px-3 py-1 bg-[#6FE3D6]/10 border border-[#6FE3D6]/20 rounded-full text-[#6FE3D6] text-[8px] font-black uppercase tracking-[0.2em]">
+                    <div className="w-1 h-1 bg-[#6FE3D6] rounded-full animate-pulse" />
+                    Secure Jitsi Room
+                  </div>
+                  <h1 className="text-white font-black text-4xl lg:text-5xl tracking-tighter leading-tight">
+                    Your Live Classroom Is Ready
+                  </h1>
+                  <p className="text-slate-400 text-sm lg:text-base leading-relaxed font-medium max-w-md mx-auto">
+                    Open the session in Jitsi Meet. The classroom link is only shown after your class access is verified.
+                  </p>
+                </div>
+
+                <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                  <a
+                    href={externalMeetingUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    onClick={() => setIsJoined(true)}
+                    className="inline-flex items-center justify-center px-8 py-4 bg-white text-[#020617] rounded-2xl font-black text-xs uppercase tracking-[0.2em] transition-all shadow-2xl shadow-white/10 hover:scale-[1.02] active:scale-95"
+                  >
+                    Open Jitsi Classroom
+                  </a>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      void navigator.clipboard?.writeText(meetingUrl);
+                    }}
+                    className="inline-flex items-center justify-center px-8 py-4 bg-white/5 hover:bg-white/10 text-slate-300 rounded-2xl font-black text-xs uppercase tracking-[0.2em] transition-all border border-white/10"
+                  >
+                    Copy Link
+                  </button>
+                </div>
+
+                <p className="text-slate-500 text-[10px] uppercase font-black tracking-widest">
+                  Opens in a new tab to avoid meet.jit.si embedded-call limits
+                </p>
+              </div>
+            </div>
           </div>
 
           {/* Dojo Whiteboard Workshop 🎨✨ */}

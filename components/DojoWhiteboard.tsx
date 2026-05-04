@@ -2,14 +2,12 @@
 
 import { 
   Tldraw, 
-  Editor, 
   DefaultSizeStyle, 
   STROKE_SIZES, 
   FONT_SIZES 
 } from "tldraw";
 import "tldraw/tldraw.css";
-import { useEffect, useState, useRef, useMemo } from "react";
-import DailyIframe from "@daily-co/daily-js";
+import { useMemo } from "react";
 
 // 🧬 ScienceDojo Precision Induction: Sub-scaling strokes for expert tutoring 🏎️
 // We mathematically refine the scale to deliver an "Ultra-XS" feel on the default 'S' pulse.
@@ -30,12 +28,11 @@ interface DojoWhiteboardProps {
 
 /**
  * ScienceDojo Collaborative Whiteboard 🧬🎨
- * Uses tldraw for premium sketching and Daily.co AppMessages for P2P sync.
+ * Uses tldraw for premium sketching beside the Jitsi classroom.
  * Hardened with absolute unpkg asset coordination to bypass CDN fetch errors.
  */
 export default function DojoWhiteboard({ classId }: DojoWhiteboardProps) {
-  const [editor, setEditor] = useState<Editor | null>(null);
-  const isHandlingRemoteChange = useRef(false);
+  void classId;
   
   // 1. Absolute Asset Handshake 🗺️✨
   // We authorize a global CDN-bypass using unpkg to resolve "Failed to Fetch" errors.
@@ -58,167 +55,6 @@ export default function DojoWhiteboard({ classId }: DojoWhiteboardProps) {
     };
   }, []);
 
-  // 2. Peer-to-Peer Sync Pulse 🏎️🚀
-  useEffect(() => {
-    if (!editor) return;
-
-    const call = DailyIframe.getCallInstance();
-    if (!call) return;
-
-    // 🛠️ ScienceDojo Record Filter: Block user-specific noise to neutralize glitches. 🧬
-    const isDocumentRecord = (id: string) => {
-      const isNoise = id.startsWith("instance") || 
-                      id.startsWith("pointer") || 
-                      id.startsWith("camera");
-      return !isNoise;
-    };
-
-    // For absolute debugging 🕵️‍♂️
-    (window as any).editor = editor;
-
-    // Listen for remote strokes and handshakes 🧬
-    const handleAppMessage = (event: any) => {
-      const { data, fromId } = event;
-      if (data.classId !== classId) return;
-
-      console.log(`[Whiteboard] Pulse incoming: ${data.type} from ${fromId}`);
-
-      // 🤝 Case A: Someone is requesting the current board state (Initial Handshake)
-      if (data.type === "TLDRAW_REQUEST_STATE") {
-        const fullSnapshot = editor.store.getStoreSnapshot();
-        // 🧬 Filter: Only authorize document records in the snapshot.
-        const documentStore = Object.fromEntries(
-          Object.entries(fullSnapshot.store).filter(([id]) => isDocumentRecord(id))
-        );
-        
-        console.log(`[Whiteboard] Sharing ${Object.keys(documentStore).length} foundation records.`);
-        
-        if (Object.keys(documentStore).length > 0) {
-           try {
-             call.sendAppMessage({ 
-               type: "TLDRAW_FULL_STATE", 
-               classId, 
-               snapshot: { ...fullSnapshot, store: documentStore } 
-             }, fromId);
-           } catch (err) {
-             console.warn("[Whiteboard] Full-state pulse friction:", err);
-           }
-        }
-      }
-
-      // 🧬 Case B: We received a full board snapshot (Catch-up)
-      if (data.type === "TLDRAW_FULL_STATE") {
-        console.log(`[Whiteboard] Induction trigger: ${Object.keys(data.snapshot.store).length} records shared.`);
-        isHandlingRemoteChange.current = true;
-        try {
-          editor.store.loadStoreSnapshot(data.snapshot);
-        } catch (err) {
-          console.warn("[Whiteboard] Load pulse friction:", err);
-        } finally {
-          isHandlingRemoteChange.current = false;
-        }
-      }
-
-      // 🏎️ Case C: Incremental Sync (Real-time Strokes)
-      if (data.type === "TLDRAW_SYNC") {
-        isHandlingRemoteChange.current = true;
-        try {
-          const changes = data.changes as any;
-          editor.store.mergeRemoteChanges(() => {
-            if (changes.added) {
-              Object.values(changes.added).forEach((record: any) => {
-                if (isDocumentRecord(record.id)) editor.store.put([record]);
-              });
-            }
-            if (changes.updated) {
-              Object.values(changes.updated).forEach((records: any) => {
-                const [_, newRecord] = records as [any, any];
-                if (isDocumentRecord(newRecord.id)) editor.store.put([newRecord]);
-              });
-            }
-            if (changes.removed) {
-              Object.keys(changes.removed).forEach((id: any) => {
-                if (isDocumentRecord(id)) editor.store.remove([id as any]);
-              });
-            }
-          });
-        } catch (err) {
-          console.warn("[Whiteboard] Sync pulse friction:", err);
-        } finally {
-          isHandlingRemoteChange.current = false;
-        }
-      }
-    };
-
-    // 🛰️ Listen for new participants to proactively share state
-    const handleParticipantJoined = (event: any) => {
-       console.log(`[Whiteboard] New participant joined: ${event.participant.session_id}. Triggering pulse...`);
-       const fullSnapshot = editor.store.getStoreSnapshot();
-       const documentStore = Object.fromEntries(
-         Object.entries(fullSnapshot.store).filter(([id]) => isDocumentRecord(id))
-       );
-       
-       if (Object.keys(documentStore).length > 0) {
-          try {
-            call.sendAppMessage({ 
-              type: "TLDRAW_FULL_STATE", 
-              classId, 
-              snapshot: { ...fullSnapshot, store: documentStore } 
-            }, event.participant.session_id);
-          } catch (err) {}
-       }
-    };
-
-    call.on("app-message", handleAppMessage);
-    call.on("participant-joined", handleParticipantJoined);
-    
-    // 🏁 Initial Handshake Pulse: Request state from others on mount
-    if (call.meetingState() === "joined-meeting") {
-       console.log("[Whiteboard] Requesting state induction...");
-       call.sendAppMessage({ type: "TLDRAW_REQUEST_STATE", classId }, "*");
-    }
-    
-    // Broadcast local strokes 🛰️
-    const cleanup = editor.store.listen((event) => {
-      if (isHandlingRemoteChange.current || event.source !== "user") return;
-      
-      // 🛡️ Filter: Only broadcast changes to document records to avoid glitch-pollution.
-      const added = Object.fromEntries(
-        Object.entries(event.changes.added).filter(([id]) => isDocumentRecord(id))
-      );
-      const updated = Object.fromEntries(
-        Object.entries(event.changes.updated).filter(([id]) => isDocumentRecord(id))
-      );
-      const removed = Object.fromEntries(
-         Object.entries(event.changes.removed).filter(([id]) => isDocumentRecord(id))
-      );
-
-      if (Object.keys(added).length === 0 && 
-          Object.keys(updated).length === 0 && 
-          Object.keys(removed).length === 0) return;
-
-      // We only authorize a broadcast if the ScienceDojo session is joined-meeting absolute. 🧬
-      if (call.meetingState() === "joined-meeting") {
-        try {
-          console.log(`[Whiteboard] Broadcasting sync: ${Object.keys(added).length} added, ${Object.keys(updated).length} updated.`);
-          call.sendAppMessage({ 
-            type: "TLDRAW_SYNC", 
-            classId, 
-            changes: { added, updated, removed } 
-          }, "*");
-        } catch (err) {
-          console.warn("[Whiteboard] Broadcast pulse friction:", err);
-        }
-      }
-    });
-
-    return () => {
-      call.off("app-message", handleAppMessage);
-      call.off("participant-joined", handleParticipantJoined);
-      cleanup();
-    };
-  }, [editor, classId]);
-
   return (
     <div className="w-full h-full bg-slate-50 overflow-hidden relative border-l border-white/5 shadow-2xl">
       {/* Background Dojo Grid 🛡️ */}
@@ -236,7 +72,6 @@ export default function DojoWhiteboard({ classId }: DojoWhiteboardProps) {
       <div className="absolute inset-0 z-10 tldraw-premium-theme">
         <Tldraw 
           onMount={(editor) => {
-            setEditor(editor);
             (window as any).editor = editor;
             // We authorize an absolute precision-handshake. 🧬✨
             editor.setStyleForNextShapes(DefaultSizeStyle, 's');

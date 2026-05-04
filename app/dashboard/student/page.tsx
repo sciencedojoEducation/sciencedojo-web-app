@@ -9,6 +9,7 @@ import LessonHistoryTable from "@/components/LessonHistoryTable";
 import HomeworkFeed from "@/components/HomeworkFeed";
 import StudentProgressStats from "@/components/StudentProgressStats";
 import AnnouncementFeed from "@/components/AnnouncementFeed";
+import { getHomeworkForStudent } from "@/lib/class-queries";
 
 export default async function StudentDashboard() {
   const supabase = await createClient();
@@ -25,18 +26,27 @@ export default async function StudentDashboard() {
 
   const meta = user?.user_metadata;
   
-  // Fetch fresh profile data to avoid stale Auth metadata
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("full_name, avatar_url")
-    .eq("id", user.id)
-    .single();
+  const [
+    { data: profile },
+    bookings,
+    availableTutors,
+    announcements,
+    assignments,
+  ] = await Promise.all([
+    supabase
+      .from("profiles")
+      .select("full_name, avatar_url")
+      .eq("id", user.id)
+      .single(),
+    getBookingsByUserId(user.id),
+    getTutors("", "All", 6),
+    getActiveAnnouncementsForUser(),
+    getHomeworkForStudent(user.id),
+  ]);
 
   const userName = profile?.full_name || meta?.full_name || "User";
   const avatarUrl = profile?.avatar_url || meta?.avatar_url;
-  const studentName = userName; // Students are themselves
 
-  const bookings = await getBookingsByUserId(user.id);
   const requested = bookings.filter(b => b.status === "requested");
   const groupedRequested = Object.values(requested.reduce((acc, booking) => {
     const groupId = booking.recurrence_group_id || booking.id;
@@ -69,12 +79,6 @@ export default async function StudentDashboard() {
 
   const upcoming = bookings.filter(b => b.status === "confirmed");
   const past = bookings.filter(b => b.status === "completed");
-
-  const availableTutors = await getTutors("", "All");
-  const announcements = await getActiveAnnouncementsForUser();
-
-  const { getHomeworkForStudent } = await import("@/lib/class-queries");
-  const assignments = await getHomeworkForStudent(user.id);
 
   return (
     <div className="p-8 max-w-5xl mx-auto space-y-12">

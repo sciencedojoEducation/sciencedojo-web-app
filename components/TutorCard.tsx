@@ -1,10 +1,4 @@
-"use client"
-
 import { TutorProfile } from "@/lib/supabase-queries";
-import { useState } from "react";
-import { createConversation } from "@/app/dashboard/messages/actions";
-import { useRouter } from "next/navigation";
-import Image from "next/image";
 import UserAvatar from "./UserAvatar";
 import Link from "next/link";
 
@@ -15,7 +9,6 @@ interface TutorCardProps {
 
 export default function TutorCard({ tutor, currentUserRole }: TutorCardProps) {
   const isTutor = currentUserRole === "tutor";
-  const router = useRouter();
 
   return (
     <div className="group relative flex flex-col overflow-hidden rounded-3xl bg-white shadow-sm border border-secondary/10 transition-all hover:shadow-xl hover:border-primary/30">

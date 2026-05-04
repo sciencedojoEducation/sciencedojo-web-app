@@ -1,6 +1,5 @@
 import DashboardSidebar from "@/components/DashboardSidebar";
 import { createClient } from "@/utils/supabase/server";
-import { DailyProvider } from "@/components/DailyProvider";
 import { headers } from "next/headers";
 
 export default async function DashboardLayout({ 
@@ -46,9 +45,7 @@ export default async function DashboardLayout({
     <div className="flex flex-1 min-h-[calc(100vh-80px)] bg-background">
       <DashboardSidebar role={role} />
       <main className="flex-1 overflow-y-auto">
-        <DailyProvider>
-          {children}
-        </DailyProvider>
+        {children}
       </main>
     </div>
   );

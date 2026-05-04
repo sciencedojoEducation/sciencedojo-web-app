@@ -58,11 +58,15 @@ export default async function DashboardSidebar({ role }: DashboardSidebarProps) 
   }
 
   const unreadCount = await getUnreadMessageCount();
-  const { data: flaggedConvs } = await supabase
-    .from("messages")
-    .select("conversation_id")
-    .eq("is_flagged", true);
-  const flaggedCount = new Set(flaggedConvs?.map(m => m.conversation_id)).size;
+  let flaggedCount = 0;
+
+  if (role === "admin") {
+    const { data: flaggedConvs } = await supabase
+      .from("messages")
+      .select("conversation_id")
+      .eq("is_flagged", true);
+    flaggedCount = new Set(flaggedConvs?.map(m => m.conversation_id)).size;
+  }
 
   const navLinks: Record<string, NavLink[]> = {
     parent: [
