@@ -2,6 +2,7 @@ import Link from "next/link";
 import { createClient } from "@/utils/supabase/server";
 import { signOut } from "@/app/login/actions";
 import Logo from "@/components/Logo";
+import BookAssessmentLink from "@/components/analytics/BookAssessmentLink";
 
 export default async function Navbar() {
   const supabase = await createClient();
@@ -30,15 +31,18 @@ export default async function Navbar() {
 
         {!user && (
           <nav className="hidden md:flex items-center gap-6">
-            <Link href="/" className="text-sm font-medium text-secondary/80 hover:text-primary transition-colors">
-              Find a Tutor
+            <Link href="/#directory" className="text-sm font-medium text-secondary/80 hover:text-primary transition-colors">
+              Find Tutors
             </Link>
-            <Link href="/#how-it-works" className="text-sm font-medium text-secondary/80 hover:text-primary transition-colors">
-              How it Works
+            <Link href="/learning-hub" className="text-sm font-medium text-secondary/80 hover:text-primary transition-colors">
+              Learning Hub
             </Link>
-            <Link href="/#pricing" className="text-sm font-medium text-secondary/80 hover:text-primary transition-colors">
-              Pricing
+            <Link href="/ai-practice-studio" className="text-sm font-medium text-secondary/80 hover:text-primary transition-colors">
+              AI Practice Studio
             </Link>
+            <BookAssessmentLink source="navbar" className="text-sm font-medium text-secondary/80 hover:text-primary transition-colors">
+              Request Free Assessment
+            </BookAssessmentLink>
           </nav>
         )}
 

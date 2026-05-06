@@ -12,6 +12,9 @@ export default function LoginPage({ searchParams }: { searchParams: Promise<{ [k
   const resolvedParams = use(searchParams);
   const errorMsg = resolvedParams?.error as string | undefined;
   const successMsg = resolvedParams?.message as string | undefined;
+  const nextParam = typeof resolvedParams?.next === "string" && resolvedParams.next.startsWith("/") && !resolvedParams.next.startsWith("//")
+    ? resolvedParams.next
+    : "";
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -25,7 +28,7 @@ export default function LoginPage({ searchParams }: { searchParams: Promise<{ [k
             Don't have an account?
           </p>
           <Link 
-            href="/signup" 
+            href={nextParam ? `/signup?next=${encodeURIComponent(nextParam)}` : "/signup"}
             className="block text-primary font-black text-xs hover:text-black transition-all text-center"
           >
             Create an Account
@@ -54,6 +57,7 @@ export default function LoginPage({ searchParams }: { searchParams: Promise<{ [k
             setIsSubmitting(false);
           }
         }} className="space-y-4 text-left">
+          {nextParam && <input type="hidden" name="next" value={nextParam} />}
           <div className="space-y-2">
              <label className="text-xs font-bold text-navy/40 ml-6 flex items-center gap-2">
                <Mail size={12} /> Email Address
@@ -106,7 +110,7 @@ export default function LoginPage({ searchParams }: { searchParams: Promise<{ [k
 
         {/* Google Login */}
         <button 
-          onClick={() => signInWithGoogle()}
+          onClick={() => signInWithGoogle(undefined, undefined, nextParam)}
           className="w-full flex items-center justify-center gap-4 py-5 bg-white border border-navy/5 rounded-[2rem] shadow-xl shadow-navy/5 hover:border-navy/10 hover:shadow-navy/10 transition-all transform active:scale-95 group relative overflow-hidden"
         >
           <div className="w-5 h-5 relative">

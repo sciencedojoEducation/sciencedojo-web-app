@@ -1,6 +1,15 @@
+import type { Metadata } from "next";
 import DashboardSidebar from "@/components/DashboardSidebar";
+import DashboardGuidedTour from "@/components/DashboardGuidedTour";
 import { createClient } from "@/utils/supabase/server";
 import { headers } from "next/headers";
+
+export const metadata: Metadata = {
+  robots: {
+    index: false,
+    follow: false,
+  },
+};
 
 export default async function DashboardLayout({ 
   children 
@@ -47,6 +56,10 @@ export default async function DashboardLayout({
       <main className="flex-1 overflow-y-auto">
         {children}
       </main>
+      <DashboardGuidedTour
+        role={role}
+        completedTours={user?.user_metadata?.dashboardToursCompleted}
+      />
     </div>
   );
 }

@@ -5,8 +5,36 @@ import { redirect } from 'next/navigation'
 import { cookies } from 'next/headers'
 import { createClient } from '@/utils/supabase/server'
 
+function getSafeNextPath(nextPath?: FormDataEntryValue | string | null) {
+  const path = String(nextPath || '').trim();
+
+  if (!path.startsWith('/') || path.startsWith('//')) {
+    return '';
+  }
+
+  if (path.startsWith('/api') || path.startsWith('/auth')) {
+    return '';
+  }
+
+  return path;
+}
+
+function isTutorBookingPath(path: string) {
+  return /^\/tutor\/[^/]+\/book(?:\?.*)?$/.test(path);
+}
+
+function withAuthReturnFlag(path: string) {
+  if (!isTutorBookingPath(path)) {
+    return path;
+  }
+
+  const separator = path.includes('?') ? '&' : '?';
+  return `${path}${separator}auth_return=1`;
+}
+
 export async function login(formData: FormData) {
   const supabase = await createClient()
+  const nextPath = getSafeNextPath(formData.get('next'));
 
   // type-casting here for convenience
   // in practice, you should validate your inputs
@@ -19,7 +47,7 @@ export async function login(formData: FormData) {
   
   if (error || !user) {
     console.error("Login Error:", error?.message);
-    redirect(`/login?error=${encodeURIComponent(error?.message || "Authentication failed.")}`)
+    redirect(`/login?error=${encodeURIComponent(error?.message || "Authentication failed.")}${nextPath ? `&next=${encodeURIComponent(nextPath)}` : ''}`)
   }
 
   // PRIORITIZE Database Profile Role over Metadata
@@ -32,7 +60,7 @@ export async function login(formData: FormData) {
   const role = profile?.role || user?.user_metadata?.role || 'parent';
   
   revalidatePath('/', 'layout')
-  redirect(`/dashboard/${role}`)
+  redirect(nextPath ? withAuthReturnFlag(nextPath) : `/dashboard/${role}`)
 }
 
 export async function signOut() {
@@ -42,9 +70,10 @@ export async function signOut() {
   redirect('/')
 }
 
-export async function signInWithGoogle(role?: string, subRole?: string) {
+export async function signInWithGoogle(role?: string, subRole?: string, nextPath?: string) {
   const supabase = await createClient();
   const cookieStore = await cookies();
+  const safeNextPath = getSafeNextPath(nextPath);
 
   // If a role is provided (signup flow), store it in a temporary cookie
   // The auth/callback route will read this to update the user's profile
@@ -55,10 +84,15 @@ export async function signInWithGoogle(role?: string, subRole?: string) {
     }
   }
 
+  if (safeNextPath) {
+    cookieStore.set('pending_next', safeNextPath, { maxAge: 60 * 10, path: '/' });
+  }
+
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
-  const roleParam = role ? `role=${role}` : '';
-  const subRoleParam = subRole ? `subRole=${subRole}` : '';
-  const queryParams = [roleParam, subRoleParam].filter(Boolean).join('&');
+  const roleParam = role ? `role=${encodeURIComponent(role)}` : '';
+  const subRoleParam = subRole ? `subRole=${encodeURIComponent(subRole)}` : '';
+  const nextParam = safeNextPath ? `next=${encodeURIComponent(safeNextPath)}` : '';
+  const queryParams = [roleParam, subRoleParam, nextParam].filter(Boolean).join('&');
   const redirectTo = `${baseUrl}/auth/callback${queryParams ? `?${queryParams}` : ''}`;
 
   const { data, error } = await supabase.auth.signInWithOAuth({
@@ -80,36 +114,68 @@ export async function signInWithGoogle(role?: string, subRole?: string) {
 
 export async function signup(formData: FormData) {
   const supabase = await createClient()
+  const { createAdminClient } = await import('@/utils/supabase/server');
+  const adminClient = await createAdminClient();
 
   const data = {
-    email: formData.get('email') as string,
+    email: ((formData.get('email') as string) || '').trim().toLowerCase(),
     password: formData.get('password') as string,
   }
   
   let role = (formData.get('role') as string) || 'parent';
   const subRole = (formData.get('sub_role') as string) || '';
+  const nextPath = getSafeNextPath(formData.get('next'));
 
   // Security: Prevent unauthorized admin signup
   if (role === 'admin') {
     role = 'parent';
   }
 
-  // Pre-check: Check if email already exists in profiles (case-insensitive)
-  const { data: existingProfile } = await supabase
+  const signupParams = `role=${encodeURIComponent(role)}&sub_role=${encodeURIComponent(subRole)}${nextPath ? `&next=${encodeURIComponent(nextPath)}` : ''}`;
+
+  if (!data.email || !data.email.includes('@')) {
+    redirect(`/signup?error=${encodeURIComponent("Please enter a valid email address.")}&${signupParams}`)
+  }
+
+  if (!data.password || data.password.length < 8) {
+    redirect(`/signup?error=${encodeURIComponent("Password must be at least 8 characters.")}&${signupParams}`)
+  }
+
+  const fullName = ((formData.get('name') as string) || '').trim();
+  const studentName = ((formData.get('student_name') as string) || '').trim();
+
+  if (!fullName) {
+    redirect(`/signup?error=${encodeURIComponent(role === 'parent' ? "Parent name is required." : "Full name is required.")}&${signupParams}`)
+  }
+
+  if (role === 'parent' && !studentName) {
+    redirect(`/signup?error=${encodeURIComponent("Student full name is required.")}&${signupParams}`)
+  }
+
+  const duplicateEmailRedirect = `/signup?error=${encodeURIComponent("That email is already registered. Please log in instead.")}&${signupParams}`;
+
+  // Pre-check: block emails already present in either public profiles or Supabase Auth.
+  const { data: existingProfile } = await adminClient
     .from('profiles')
     .select('id')
-    .eq('email', data.email.toLowerCase())
-    .single();
+    .eq('email', data.email)
+    .maybeSingle();
 
   if (existingProfile) {
-    redirect(`/signup?error=${encodeURIComponent("Email already in use. Please log in instead.")}&role=${role}&sub_role=${subRole}`)
+    redirect(duplicateEmailRedirect)
+  }
+
+  const { data: authUsers, error: authUsersError } = await adminClient.auth.admin.listUsers({
+    page: 1,
+    perPage: 1000,
+  });
+
+  if (!authUsersError && authUsers.users.some(user => user.email?.toLowerCase() === data.email)) {
+    redirect(duplicateEmailRedirect)
   }
 
   // --- START SILENT TESTING PATH (PREVENTS BOUNCES) ---
   if (data.email.endsWith('@test.sciencedojo.com')) {
-    const { createAdminClient } = await import('@/utils/supabase/server');
-    const adminClient = await createAdminClient();
-    
     // 1. Silent Create (No Email Sent)
     const { data: adminData, error: adminError } = await adminClient.auth.admin.createUser({
       email: data.email,
@@ -118,7 +184,10 @@ export async function signup(formData: FormData) {
       user_metadata: {
         role: role,
         sub_role: (formData.get('sub_role') as string) || '',
-        full_name: formData.get('name') as string || '',
+        full_name: fullName,
+        student_name: role === 'student' ? fullName : studentName,
+        auth_provider: 'email',
+        onboarding_completed: role === 'parent' ? Boolean(studentName) : true,
       }
     });
 
@@ -143,40 +212,50 @@ export async function signup(formData: FormData) {
     if (role === 'tutor') {
       redirect('/tutor/onboarding')
     } else {
-      redirect(`/dashboard/${role}`)
+      redirect(nextPath ? withAuthReturnFlag(nextPath) : `/dashboard/${role}`)
     }
     return; // Early return for silent path
   }
   // --- END SILENT TESTING PATH ---
 
   const { error, data: authData } = await supabase.auth.signUp({
-    email: data.email,
+      email: data.email,
     password: data.password,
     options: {
-      emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/auth/callback?next=/login`,
+      emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/auth/callback?next=${encodeURIComponent(nextPath || '/login')}`,
       data: {
         role: role,
         sub_role: (formData.get('sub_role') as string) || '',
-        full_name: formData.get('name') as string || '',
-        student_name: formData.get('student_name') as string || '',
+        full_name: fullName,
+        student_name: role === 'student' ? fullName : studentName,
+        auth_provider: 'email',
+        onboarding_completed: role === 'parent' ? Boolean(studentName) : true,
       }
     }
   })
 
   if (error) {
     console.error("Signup error:", error.message);
-    const subRole = (formData.get('sub_role') as string) || '';
-    redirect(`/signup?error=${encodeURIComponent(error.message)}&role=${role}&sub_role=${subRole}`)
+    const normalizedError = error.message.toLowerCase();
+    if (
+      normalizedError.includes('already registered') ||
+      normalizedError.includes('already exists') ||
+      normalizedError.includes('user already')
+    ) {
+      redirect(duplicateEmailRedirect)
+    }
+
+    redirect(`/signup?error=${encodeURIComponent(error.message)}&${signupParams}`)
   }
 
   // --- ENSURE PROFILE EXISTS WITH CORRECT ROLE ---
   if (authData?.user) {
     await supabase.from('profiles').upsert({
       id: authData.user.id,
-      email: data.email.toLowerCase(),
-      full_name: formData.get('name') as string || '',
+      email: data.email,
+      full_name: fullName,
       role: role,
-      student_name: formData.get('student_name') as string || '',
+      student_name: role === 'student' ? fullName : studentName,
     }, { onConflict: 'id' });
 
     if (role === 'tutor') {
@@ -184,7 +263,7 @@ export async function signup(formData: FormData) {
       await supabase.from('applications').upsert({
         user_id: authData.user.id,
         status: 'draft',
-        full_name: formData.get('name') as string || '',
+        full_name: fullName,
         data: { onboarding_status: 'screening', current_stage: 1 }
       }, { onConflict: 'user_id' });
 
@@ -199,15 +278,95 @@ export async function signup(formData: FormData) {
   }
 
   if (authData?.user && authData?.session === null) {
-    redirect('/login?message=Account created! Please check your email to confirm your account before logging in.')
+    redirect(`/login?message=${encodeURIComponent('Account created! Please check your email to confirm your account before logging in.')}${nextPath ? `&next=${encodeURIComponent(nextPath)}` : ''}`)
   }
 
   revalidatePath('/', 'layout')
   if (role === 'tutor') {
     redirect('/tutor/onboarding')
   } else {
-    redirect(`/dashboard/${role}`)
+    redirect(nextPath ? withAuthReturnFlag(nextPath) : `/dashboard/${role}`)
   }
+}
+
+type ParentOnboardingState = {
+  error?: string;
+  success?: boolean;
+  redirectTo?: string;
+};
+
+export async function completeGoogleParentOnboarding(
+  _prevState: ParentOnboardingState,
+  formData: FormData
+): Promise<ParentOnboardingState> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { error: "Please log in again to complete setup." };
+  }
+
+  const parentName = ((formData.get('parent_name') as string) || '').trim();
+  const studentName = ((formData.get('student_name') as string) || '').trim();
+  const nextPath = getSafeNextPath(formData.get('next'));
+  const email = user.email?.toLowerCase() || '';
+  const providerId = user.identities?.find(identity => identity.provider === 'google')?.id || '';
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .maybeSingle();
+  const role = profile?.role || user.user_metadata?.role || 'parent';
+
+  if (!parentName) {
+    return { error: role === 'student' ? "Student name is required." : "Parent name is required." };
+  }
+
+  if (!email) {
+    return { error: "Google did not return an email address. Please try again." };
+  }
+
+  if (role === 'parent' && !studentName) {
+    return { error: "Student full name is required." };
+  }
+
+  const metadata = {
+    ...user.user_metadata,
+    role,
+    sub_role: role,
+    full_name: parentName,
+    student_name: role === 'parent' ? studentName : parentName,
+    auth_provider: 'google',
+    google_id: providerId,
+    provider_id: providerId,
+    onboarding_completed: true,
+  };
+
+  const { error: metadataError } = await supabase.auth.updateUser({
+    data: metadata,
+  });
+
+  if (metadataError) {
+    console.error("Google parent onboarding metadata error:", metadataError.message);
+    return { error: "We could not save your details. Please try again." };
+  }
+
+  const { error: profileError } = await supabase.from('profiles').upsert({
+    id: user.id,
+    email,
+    full_name: parentName,
+    avatar_url: user.user_metadata.avatar_url || '',
+    role,
+    student_name: role === 'parent' ? studentName : parentName,
+  }, { onConflict: 'id' });
+
+  if (profileError) {
+    console.error("Google parent onboarding profile error:", profileError.message);
+    return { error: "We could not save your child details. Please try again." };
+  }
+
+  revalidatePath('/', 'layout');
+  return { success: true, redirectTo: nextPath ? withAuthReturnFlag(nextPath) : `/dashboard/${role}` };
 }
 
 export async function requestPasswordReset(formData: FormData) {
@@ -344,4 +503,3 @@ export async function uploadAvatarOnly(formData: FormData) {
   revalidatePath('/', 'layout');
   return { success: true, url: publicUrl };
 }
-

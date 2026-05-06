@@ -194,7 +194,7 @@ export default function TutorDashboardUI({ userId, userName, avatarUrl, bookings
          <AnnouncementFeed announcements={announcements} />
       )}
 
-      <div className="flex items-center gap-6">
+      <div data-tour="tutor-welcome" className="flex items-center gap-6">
          <div className="w-20 h-20 rounded-2xl bg-accent/10 border-4 border-white shadow-xl overflow-hidden flex items-center justify-center transform rotate-2 transition-transform hover:rotate-0">
             {avatarUrl ? (
                <img src={avatarUrl} alt="Profile" className="w-full h-full object-cover" />
@@ -213,6 +213,7 @@ export default function TutorDashboardUI({ userId, userName, avatarUrl, bookings
                </p>
                <button 
                  onClick={() => setShowProfileModal(true)}
+                 data-tour="tutor-profile"
                  className="text-[10px] font-black uppercase tracking-widest text-accent hover:underline decoration-2 underline-offset-4"
                >
                  Edit Profile
@@ -225,7 +226,7 @@ export default function TutorDashboardUI({ userId, userName, avatarUrl, bookings
          <div className="lg:col-span-2 space-y-6">
 
             {/* Tab bar */}
-            <div className="flex items-center gap-1 bg-slate-100/80 rounded-2xl p-1.5">
+            <div data-tour="tutor-tabs" className="flex items-center gap-1 bg-slate-100/80 rounded-2xl p-1.5">
               {TABS.map((tab) => (
                 <button
                   key={tab.id}
@@ -250,7 +251,9 @@ export default function TutorDashboardUI({ userId, userName, avatarUrl, bookings
 
             {/* Schedule Tab */}
             {activeTab === "schedule" && (
-              <TutorSchedule bookings={bookings} />
+              <div data-tour="tutor-main-action">
+                <TutorSchedule bookings={bookings} />
+              </div>
             )}
 
             {/* Availability Tab */}
@@ -446,7 +449,7 @@ export default function TutorDashboardUI({ userId, userName, avatarUrl, bookings
               <span className="h-6 w-1 bg-accent rounded-full"></span>
               Admin Panel
             </h2>
-            <div className="bg-white p-8 rounded-[2rem] border border-secondary/5 shadow-xl relative overflow-hidden group">
+            <div data-tour="tutor-stats" className="bg-white p-8 rounded-[2rem] border border-secondary/5 shadow-xl relative overflow-hidden group">
                <div className="absolute top-0 right-0 w-24 h-24 bg-accent/5 rounded-bl-[4rem] group-hover:scale-110 transition-transform"></div>
                <h3 className="font-black text-secondary mb-2">Expert Stats</h3>
                <div className="space-y-4">

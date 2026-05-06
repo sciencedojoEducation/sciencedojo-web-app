@@ -20,6 +20,7 @@ export default function InquiryModal({
   isAuthenticated 
 }: InquiryModalProps) {
   const router = useRouter();
+  const signupNext = encodeURIComponent(`/tutor/${tutorId}`);
   const [subject, setSubject] = useState("");
   const [goal, setGoal] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -31,16 +32,16 @@ export default function InquiryModal({
       <div className="fixed inset-0 bg-secondary/80 backdrop-blur-md z-[110] flex items-center justify-center p-4">
         <div className="bg-white rounded-[2.5rem] p-10 max-w-sm w-full shadow-2xl text-center">
            <h2 className="text-2xl font-black text-secondary mb-4">ScienceDojo Inquiry 🥋</h2>
-           <p className="text-secondary/60 text-sm font-medium mb-8">Ready to master {tutorName}'s expert modules? Please log in or create an account to start your inquiry.</p>
+           <p className="text-secondary/60 text-sm font-medium mb-8">Ready to connect with {tutorName}? Log in or create an account, then choose whether you are joining as a student or parent.</p>
            <div className="flex flex-col gap-3">
               <button 
-                onClick={() => router.push(`/signup?next=/tutor/${tutorId}`)}
+                onClick={() => router.push(`/signup?next=${signupNext}`)}
                 className="w-full py-4 bg-primary text-white font-black rounded-2xl hover:bg-primary-hover shadow-lg uppercase tracking-widest text-xs transition-all"
               >
                 Create Account
               </button>
               <button 
-                onClick={() => router.push(`/login?next=/tutor/${tutorId}`)}
+                onClick={() => router.push(`/login?next=${signupNext}`)}
                 className="w-full py-4 bg-secondary text-white font-black rounded-2xl hover:bg-secondary/90 shadow-lg uppercase tracking-widest text-xs transition-all"
               >
                 Sign In

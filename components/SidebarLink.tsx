@@ -12,9 +12,10 @@ interface SidebarLinkProps {
   badgeColor?: string;
   variant?: 'light' | 'dark';
   exact?: boolean;
+  tourId?: string;
 }
 
-export default function SidebarLink({ href, name, icon, badge, badgeColor, variant = 'dark', exact = false }: SidebarLinkProps) {
+export default function SidebarLink({ href, name, icon, badge, badgeColor, variant = 'dark', exact = false, tourId }: SidebarLinkProps) {
   const pathname = usePathname();
   // Exact match or prefix match based on the exact prop pulse 🏎️🚀
   const isActive = exact ? pathname === href : (pathname === href || (href !== "/dashboard" && pathname.startsWith(href + "/")));
@@ -24,6 +25,7 @@ export default function SidebarLink({ href, name, icon, badge, badgeColor, varia
   return (
     <Link
       href={href}
+      data-tour={tourId}
       className={`group relative flex items-center gap-3 px-4 py-3.5 rounded-2xl font-bold transition-all duration-300 border border-transparent ${
         isActive
           ? isLight

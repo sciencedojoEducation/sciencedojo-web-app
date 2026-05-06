@@ -2,6 +2,7 @@ import Link from "next/link";
 import { createClient } from "@/utils/supabase/server";
 import { getUnreadMessageCount } from "@/lib/messaging-queries";
 import SidebarLink from "./SidebarLink";
+import DashboardTourReplayButton from "./DashboardTourReplayButton";
 import { 
   Calendar, 
   GraduationCap, 
@@ -25,6 +26,7 @@ interface NavLink {
   badge?: number;
   badgeColor?: string;
   exact?: boolean;
+  tourId?: string;
 }
 
 interface DashboardSidebarProps {
@@ -70,34 +72,36 @@ export default async function DashboardSidebar({ role }: DashboardSidebarProps) 
 
   const navLinks: Record<string, NavLink[]> = {
     parent: [
-      { name: "My Bookings", href: "/dashboard/parent", icon: "🗓️", exact: true },
-      { name: "My Classes", href: "/dashboard/classes", icon: "🎓" },
-      { name: "Messages", href: "/dashboard/messages", icon: "💬", badge: unreadCount },
-      { name: "Browse Tutors", href: "/dashboard/parent/tutors", icon: "🔍" },
+      { name: "My Bookings", href: "/dashboard/parent", icon: "🗓️", exact: true, tourId: "parent-bookings" },
+      { name: "My Classes", href: "/dashboard/classes", icon: "🎓", tourId: "parent-classes" },
+      { name: "Messages", href: "/dashboard/messages", icon: "💬", badge: unreadCount, tourId: "parent-messages" },
+      { name: "Browse Tutors", href: "/dashboard/parent/tutors", icon: "🔍", tourId: "parent-browse" },
       { name: "Settings", href: "/dashboard/parent/settings", icon: "⚙️" },
-      { name: "Support", href: "/dashboard/support", icon: "🆘" },
+      { name: "Support", href: "/dashboard/support", icon: "🆘", tourId: "parent-support" },
     ],
     student: [
-      { name: "My Bookings", href: "/dashboard/student", icon: "🗓️", exact: true },
-      { name: "My Classes", href: "/dashboard/classes", icon: "🎓" },
-      { name: "Messages", href: "/dashboard/messages", icon: "💬", badge: unreadCount },
-      { name: "Missions", href: "/dashboard/student/missions", icon: "🚀" },
+      { name: "My Bookings", href: "/dashboard/student", icon: "🗓️", exact: true, tourId: "student-bookings" },
+      { name: "My Classes", href: "/dashboard/classes", icon: "🎓", tourId: "student-classes" },
+      { name: "Messages", href: "/dashboard/messages", icon: "💬", badge: unreadCount, tourId: "student-messages" },
+      { name: "Missions", href: "/dashboard/student/missions", icon: "🚀", tourId: "student-tasks" },
       { name: "Browse Tutors", href: "/dashboard/student/tutors", icon: "🔍" },
       { name: "Focus Timers", href: "/dashboard/student/timers", icon: "⏱️" },
       { name: "Settings", href: "/dashboard/student/settings", icon: "⚙️" },
       { name: "Support", href: "/dashboard/support", icon: "🆘" },
     ],
     tutor: [
-      { name: "My Schedule", href: "/dashboard/tutor", icon: "🗓️", exact: true },
-      { name: "My Classes", href: "/dashboard/classes", icon: "🎓" },
-      { name: "Messages", href: "/dashboard/messages", icon: "💬", badge: unreadCount },
+      { name: "My Schedule", href: "/dashboard/tutor", icon: "🗓️", exact: true, tourId: "tutor-sessions" },
+      { name: "My Classes", href: "/dashboard/classes", icon: "🎓", tourId: "tutor-students" },
+      { name: "Messages", href: "/dashboard/messages", icon: "💬", badge: unreadCount, tourId: "tutor-messages" },
       { name: "Student Missions", href: "/dashboard/tutor/missions", icon: "🚀" },
       { name: "Earnings", href: "/dashboard/tutor/earnings", icon: "💰" },
-      { name: "Profile Settings", href: "/dashboard/tutor/settings", icon: "👤" },
+      { name: "Profile Settings", href: "/dashboard/tutor/settings", icon: "👤", tourId: "tutor-availability" },
       { name: "Support", href: "/dashboard/support", icon: "🆘" },
     ],
     admin: [
       { name: "Overview", href: "/dashboard/admin", icon: "📊", exact: true },
+      { name: "Funnel Overview", href: "/dashboard/admin/overview", icon: "📈" },
+      { name: "Assessment Leads", href: "/dashboard/admin/leads", icon: "🧲" },
       { name: "Messages", href: "/dashboard/messages", icon: "💬", badge: unreadCount },
       { name: "Dojo Safeguards", href: "/dashboard/admin/safeguards", icon: "🛡️", badge: flaggedCount || 0, badgeColor: "bg-red-500 shadow-red-500/20" },
       { name: "Broadcast Center", href: "/dashboard/admin/broadcast", icon: "📣" },
@@ -111,7 +115,7 @@ export default async function DashboardSidebar({ role }: DashboardSidebarProps) 
   const links = navLinks[role] || [];
 
   return (
-    <aside className={`w-64 flex flex-col h-[calc(100vh-80px)] top-[80px] sticky overflow-y-auto overflow-x-hidden transition-all duration-500 border-r ${
+    <aside data-tour={`${role}-sidebar`} className={`w-64 flex flex-col h-[calc(100vh-80px)] top-[80px] sticky overflow-y-auto overflow-x-hidden transition-all duration-500 border-r ${
       isLight 
         ? "bg-slate-50/70 backdrop-blur-xl border-slate-200 shadow-[20px_0_40px_-20px_rgba(30,90,168,0.05)]"
         : "bg-[#020617] border-white/5"
@@ -143,6 +147,7 @@ export default async function DashboardSidebar({ role }: DashboardSidebarProps) 
               badgeColor={link.badgeColor}
               variant={variant}
               exact={link.exact}
+              tourId={link.tourId}
             />
           ))}
         </nav>
@@ -175,6 +180,12 @@ export default async function DashboardSidebar({ role }: DashboardSidebarProps) 
               </div>
            </div>
         </div>
+
+        {role !== "admin" && (
+          <div className="mb-3">
+            <DashboardTourReplayButton />
+          </div>
+        )}
 
         <Link 
           href="/" 

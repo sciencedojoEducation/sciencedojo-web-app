@@ -1,17 +1,75 @@
 import { TutorProfile } from "@/lib/supabase-queries";
 import UserAvatar from "./UserAvatar";
 import Link from "next/link";
+import TutorConnectLink from "./analytics/TutorConnectLink";
 
 interface TutorCardProps {
   tutor: TutorProfile;
   currentUserRole?: string | null;
+  isFeatured?: boolean;
 }
 
-export default function TutorCard({ tutor, currentUserRole }: TutorCardProps) {
+function buildTutorTags(tutor: TutorProfile) {
+  const tags = new Set<string>();
+  const subjectText = tutor.subjects.join(" ").toLowerCase();
+  const educationText = tutor.education_level?.toLowerCase() || "";
+  const combinedText = `${subjectText} ${educationText}`;
+
+  if (combinedText.includes("gcse")) tags.add("GCSE");
+  if (combinedText.includes("ib")) tags.add("IB");
+  if (combinedText.includes("a-level") || combinedText.includes("a level")) tags.add("A-Level");
+  if (combinedText.includes("cambridge")) tags.add("Cambridge");
+  if (combinedText.includes("ks2")) tags.add("KS2");
+  if (combinedText.includes("computer")) tags.add("Computer Science");
+  if (combinedText.includes("physics")) tags.add("Physics");
+  if (combinedText.includes("chemistry")) tags.add("Chemistry");
+  if (combinedText.includes("math")) tags.add("Maths");
+  if (tutor.has_teaching_license) tags.add("Teaching license");
+
+  return Array.from(tags).slice(0, 3);
+}
+
+function getTeachingSupportLine(tutor: TutorProfile) {
+  const combinedText = `${tutor.subjects.join(" ")} ${tutor.education_level || ""}`.toLowerCase();
+
+  if (combinedText.includes("ib") && combinedText.includes("physics")) {
+    return "Structured support for IB Physics learners.";
+  }
+
+  if (combinedText.includes("gcse") && combinedText.includes("math")) {
+    return "Best for GCSE confidence building.";
+  }
+
+  if (combinedText.includes("ks2") && combinedText.includes("math")) {
+    return "Patient support for KS2 maths foundations.";
+  }
+
+  if ((combinedText.includes("a-level") || combinedText.includes("a level")) && combinedText.includes("chemistry")) {
+    return "Focused support for A-Level Chemistry topics.";
+  }
+
+  if (combinedText.includes("computer")) {
+    return "Clear guidance for programming and computing skills.";
+  }
+
+  return "Structured online support adapted to each learner.";
+}
+
+export default function TutorCard({ tutor, currentUserRole, isFeatured = false }: TutorCardProps) {
   const isTutor = currentUserRole === "tutor";
+  const connectHref = currentUserRole
+    ? `/tutor/${tutor.id}/book`
+    : `/signup?next=${encodeURIComponent(`/tutor/${tutor.id}/book`)}`;
+  const tutorTags = buildTutorTags(tutor);
+  const supportLine = getTeachingSupportLine(tutor);
 
   return (
-    <div className="group relative flex flex-col overflow-hidden rounded-3xl bg-white shadow-sm border border-secondary/10 transition-all hover:shadow-xl hover:border-primary/30">
+    <div className={`group relative flex flex-col overflow-hidden rounded-3xl bg-white shadow-sm border transition-all hover:shadow-xl hover:border-primary/30 ${isFeatured ? "border-primary/30 ring-1 ring-primary/10" : "border-secondary/10"}`}>
+      {isFeatured && (
+        <div className="absolute right-4 top-4 z-10 rounded-full bg-secondary px-3 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-white shadow-sm">
+          Featured Educator
+        </div>
+      )}
       <div className="p-6 flex flex-col flex-1">
         <div className="flex items-start justify-between mb-4">
           <div className="flex items-center gap-4">
@@ -57,6 +115,20 @@ export default function TutorCard({ tutor, currentUserRole }: TutorCardProps) {
           {tutor.bio}
         </p>
 
+        {tutorTags.length > 0 && (
+          <div className="mb-4 flex flex-wrap gap-2">
+            {tutorTags.map((tag) => (
+              <span key={tag} className="rounded-full border border-primary/15 bg-primary/5 px-3 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-primary">
+                {tag}
+              </span>
+            ))}
+          </div>
+        )}
+
+        <div className="mb-5 rounded-2xl bg-surface px-4 py-3 text-sm font-bold leading-6 text-secondary/70">
+          {supportLine}
+        </div>
+
         <div className="flex items-center justify-between border-t border-secondary/5 pt-4 mt-auto">
           <div>
             <div className="flex items-center gap-1">
@@ -83,9 +155,14 @@ export default function TutorCard({ tutor, currentUserRole }: TutorCardProps) {
               Tutor Profile
             </span>
           ) : (
-            <Link href={`/tutor/${tutor.id}/book`} className="flex-1 inline-flex justify-center items-center rounded-xl bg-primary px-4 py-2.5 text-sm font-black text-white hover:bg-primary-hover transition-all shadow-lg active:scale-95">
+            <TutorConnectLink
+              href={connectHref}
+              isGuest={!currentUserRole}
+              subjects={tutor.subjects}
+              className="flex-1 inline-flex justify-center items-center rounded-xl bg-primary px-4 py-2.5 text-sm font-black text-white hover:bg-primary-hover transition-all shadow-lg active:scale-95"
+            >
               Connect
-            </Link>
+            </TutorConnectLink>
           )}
        </div>
     </div>

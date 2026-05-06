@@ -72,7 +72,7 @@ export const mockTutors: Tutor[] = [
     id: "6",
     name: "David Kim",
     subject: "Science",
-    bio: "General science expert for middle and high schoolers. My approach is hands-on and heavily uses visual aids to guarantee understanding.",
+    bio: "General science tutor for middle and high schoolers. My approach is hands-on and uses visual aids to support understanding.",
     hourlyRate: 50,
     rating: 4.6,
     reviewCount: 32,

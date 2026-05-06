@@ -87,7 +87,7 @@ export default async function StudentDashboard() {
          <AnnouncementFeed announcements={announcements} />
       )}
 
-      <div className="flex justify-between items-end">
+      <div data-tour="student-welcome" className="flex justify-between items-end">
          <div className="flex items-center gap-6">
             <div className="w-20 h-20 rounded-[1.5rem] bg-primary/10 border-4 border-white shadow-xl overflow-hidden flex items-center justify-center transform -rotate-3 transition-transform hover:rotate-0">
                {avatarUrl ? (
@@ -111,9 +111,13 @@ export default async function StudentDashboard() {
          </Link>
       </div>
 
-      <StudentProgressStats bookings={bookings} />
+      <div data-tour="student-progress">
+        <StudentProgressStats bookings={bookings} />
+      </div>
 
-      <HomeworkFeed assignments={assignments} />
+      <div data-tour="student-homework">
+        <HomeworkFeed assignments={assignments} />
+      </div>
 
       {/* SECURE PAYMENT REQUIRED (Accepted Handshake) */}
       {toPay.length > 0 && (
@@ -221,7 +225,7 @@ export default async function StudentDashboard() {
         </section>
       )}
 
-      <section>
+      <section data-tour="student-sessions">
         <div className="flex items-center justify-between mb-6">
            <h2 className="text-xl font-black text-secondary">Confirmed Sessions</h2>
            <a href={`/api/calendar?id=${user.id}`} target="_blank" className="px-4 py-2 bg-slate-100 text-secondary/60 text-xs font-black uppercase tracking-widest rounded-xl hover:bg-slate-200 transition-all flex items-center gap-2">
@@ -268,13 +272,13 @@ export default async function StudentDashboard() {
         </div>
       </section>
 
-      <section>
+      <section data-tour="student-history">
         <h2 className="text-xl font-black text-secondary mb-6">Lesson History</h2>
         <LessonHistoryTable bookings={past} />
       </section>
 
       {/* AVAILABLE EXPERTS (Directory integrated into dashboard) */}
-      <section className="pt-8 border-t border-secondary/10">
+      <section data-tour="student-tutors" className="pt-8 border-t border-secondary/10">
         <div className="flex items-center justify-between mb-8">
            <div>
               <h2 className="text-2xl font-black text-secondary">Discover New Experts</h2>

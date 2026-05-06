@@ -96,7 +96,7 @@ export default async function ParentDashboard() {
          <AnnouncementFeed announcements={announcements} />
       )}
 
-      <div className="flex justify-between items-end">
+      <div data-tour="parent-welcome" className="flex justify-between items-end">
          <div className="flex items-center gap-6">
             <div className="w-20 h-20 rounded-[1.5rem] bg-primary/10 border-4 border-white shadow-xl overflow-hidden flex items-center justify-center transform -rotate-3 transition-transform hover:rotate-0">
                {avatarUrl ? (
@@ -117,14 +117,18 @@ export default async function ParentDashboard() {
                </p>
             </div>
          </div>
-         <Link href="/dashboard/parent/tutors" className="px-8 py-3 bg-secondary text-white font-black rounded-2xl hover:bg-secondary/90 transition-all shadow-lg active:scale-95">
+         <Link data-tour="parent-main-action" href="/dashboard/parent/tutors" className="px-8 py-3 bg-secondary text-white font-black rounded-2xl hover:bg-secondary/90 transition-all shadow-lg active:scale-95">
             Find New Expert
          </Link>
       </div>
 
-      <StudentProgressStats bookings={bookings} />
+      <div data-tour="parent-progress">
+        <StudentProgressStats bookings={bookings} />
+      </div>
 
-      <HomeworkFeed assignments={assignments} />
+      <div data-tour="parent-homework">
+        <HomeworkFeed assignments={assignments} />
+      </div>
 
       {/* SECURE PAYMENT REQUIRED (Accepted Handshake) */}
       {toPay.length > 0 && (
@@ -231,7 +235,7 @@ export default async function ParentDashboard() {
         </section>
       )}
 
-      <section>
+      <section data-tour="parent-sessions">
         <h2 className="text-xl font-black text-secondary mb-6">Confirmed Sessions</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
            {upcoming.map(booking => (
@@ -272,13 +276,13 @@ export default async function ParentDashboard() {
         </div>
       </section>
 
-      <section>
+      <section data-tour="parent-history">
         <h2 className="text-xl font-black text-secondary mb-6">Lesson History</h2>
         <LessonHistoryTable bookings={past} />
       </section>
 
       {/* AVAILABLE EXPERTS (Directory integrated into dashboard) */}
-      <section className="pt-8 border-t border-secondary/10">
+      <section data-tour="parent-tutors" className="pt-8 border-t border-secondary/10">
         <div className="flex items-center justify-between mb-8">
            <div>
               <h2 className="text-2xl font-black text-secondary">Discover New Experts</h2>

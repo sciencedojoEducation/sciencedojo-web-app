@@ -2,13 +2,17 @@ import { getTutorById, getAvailabilityByTutorIdForMonth } from "@/lib/supabase-q
 import { createClient } from "@/utils/supabase/server";
 import { notFound, redirect } from "next/navigation";
 import CalendlyBookingWizard from "@/components/CalendlyBookingWizard";
+import AuthReturnTracker from "@/components/analytics/AuthReturnTracker";
 
 export default async function BookTutorPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ auth_return?: string }>;
 }) {
   const { id } = await params;
+  const query = await searchParams;
   const tutor = await getTutorById(id);
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -18,7 +22,7 @@ export default async function BookTutorPage({
   }
 
   if (!user) {
-    redirect(`/login?next=/tutor/${id}/book`);
+    redirect(`/login?next=${encodeURIComponent(`/tutor/${id}/book`)}`);
   }
 
   // Pre-fetch the current month's availability to avoid a blank loading flash
@@ -31,6 +35,7 @@ export default async function BookTutorPage({
 
   return (
     <div className="bg-slate-50/50 min-h-screen py-12">
+      <AuthReturnTracker enabled={query.auth_return === "1"} source="tutor_booking" />
       <main className="max-w-5xl mx-auto w-full px-4 md:px-8">
         <CalendlyBookingWizard tutor={tutor} initialSlots={initialSlots} />
       </main>

@@ -20,7 +20,7 @@ export default async function StudentTutorsPage({
     <div className="p-8 max-w-6xl mx-auto space-y-8">
       <div>
         <h1 className="text-3xl font-black text-secondary tracking-tight mb-2">Expert Directory</h1>
-        <p className="text-secondary/60 font-bold">Find and connect with world-class tutors for 1-1 sessions.</p>
+        <p className="text-secondary/60 font-bold">Find and connect with experienced tutors for 1-1 sessions.</p>
       </div>
 
       <div className="bg-white p-6 rounded-3xl border border-secondary/10 shadow-sm">
