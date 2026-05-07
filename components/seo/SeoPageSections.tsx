@@ -153,7 +153,7 @@ export function AiPracticeStudioSeoCta({ page }: { page: SeoPage }) {
     <section className="border-y border-secondary/10 bg-white px-4 py-12 md:px-8">
       <div className="mx-auto flex max-w-7xl flex-col gap-6 rounded-3xl bg-surface p-7 shadow-sm md:flex-row md:items-center md:justify-between">
         <div>
-          <p className="text-xs font-black uppercase tracking-[0.25em] text-primary">AI Practice Studio</p>
+          <p className="text-xs font-black uppercase tracking-[0.25em] text-primary">Practice Dojo</p>
           <h2 className="mt-3 text-2xl font-black tracking-tight">
             {subject === "study" ? "Generate targeted practice questions by topic." : `Generate ${subject} practice questions by topic.`}
           </h2>
@@ -189,7 +189,7 @@ export function InternalLinksSection({ pages }: { pages: SeoPage[] }) {
           </Link>
         ))}
         <Link href="/ai-practice-studio" className="font-bold text-white/85 hover:text-white">
-          AI Practice Studio
+          Practice Dojo
         </Link>
         <BookAssessmentLink source="seo_internal_link" className="font-bold text-white/85 hover:text-white">
           Book Free Assessment

@@ -140,8 +140,8 @@ export default async function Home({
       <JsonLd data={faqJsonLd(homeFaqs)} />
 
       {/* Hero Section */}
-      <section className="relative flex min-h-[84vh] w-full items-center overflow-hidden bg-[linear-gradient(135deg,#06172f_0%,#073f7b_52%,#0b64bd_100%)] px-4 py-28 text-center md:px-10 lg:py-36">
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_78%_22%,rgba(0,245,212,0.14),transparent_34%),linear-gradient(180deg,rgba(255,255,255,0.06),transparent_42%)]"></div>
+      <section className="relative flex min-h-[86vh] w-full items-center overflow-hidden bg-[linear-gradient(135deg,#06172f_0%,#073f7b_52%,#0b64bd_100%)] px-4 py-24 text-center md:px-10 lg:py-32">
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_80%_26%,rgba(0,245,212,0.16),transparent_33%),radial-gradient(circle_at_18%_78%,rgba(255,255,255,0.1),transparent_28%),linear-gradient(180deg,rgba(255,255,255,0.06),transparent_42%)]"></div>
 
         <div className="relative z-10 mx-auto grid w-full max-w-[1360px] items-center gap-16 lg:grid-cols-[0.88fr_1.12fr]">
           <div className="sd-fade-up flex flex-col items-center text-center lg:items-start lg:text-left">
@@ -177,8 +177,9 @@ export default async function Home({
 
           </div>
 
-          <div className="sd-fade-up relative w-full max-w-2xl justify-self-center lg:max-w-none lg:-mr-10">
-            <div className="relative aspect-[4/3] overflow-hidden rounded-[2.25rem] border border-white/15 bg-white/10 shadow-2xl shadow-black/25">
+          <div className="sd-fade-up relative w-full max-w-2xl justify-self-center lg:max-w-none lg:-mr-16">
+            <div className="pointer-events-none absolute -inset-6 rounded-[3rem] bg-cyan-300/10 blur-2xl"></div>
+            <div className="relative aspect-[4/3] overflow-hidden rounded-[2.5rem] border border-white/15 bg-white/10 shadow-[0_34px_100px_rgba(0,0,0,0.32)]">
               <Image
                 src={homeImages.heroStem.src}
                 alt={homeImages.heroStem.alt}
@@ -189,9 +190,17 @@ export default async function Home({
               />
               <div className="absolute inset-0 bg-gradient-to-tr from-secondary/65 via-primary/10 to-cyan-300/15"></div>
             </div>
+            <div className="sd-float-soft absolute -right-2 top-6 hidden rounded-2xl border border-white/15 bg-white/95 px-5 py-4 text-left shadow-2xl shadow-black/20 backdrop-blur md:block">
+              <p className="text-[10px] font-black uppercase tracking-[0.16em] text-primary">Built-in classroom</p>
+              <p className="mt-1 text-sm font-black text-secondary">Lessons inside ScienceDojo</p>
+            </div>
+            <div className="sd-float-soft-delayed absolute -left-3 bottom-28 hidden rounded-2xl border border-white/15 bg-secondary/95 px-5 py-4 text-left text-white shadow-2xl shadow-black/20 backdrop-blur md:block">
+              <p className="text-[10px] font-black uppercase tracking-[0.16em] text-white/45">Mentor-led</p>
+              <p className="mt-1 text-sm font-black">Human tutoring first</p>
+            </div>
             <div className="absolute -bottom-5 left-4 right-4 grid gap-3 sm:grid-cols-2 lg:left-8 lg:right-auto lg:w-[82%]">
-              {["Practice Dojo", "IB Physics", "Weekly Progress", "Parent Updates", "Live Online Lessons"].map((item) => (
-                <div key={item} className="flex items-center gap-2 rounded-xl border border-white/15 bg-white/92 px-4 py-2.5 text-[10px] font-black uppercase tracking-[0.12em] text-secondary shadow-lg backdrop-blur">
+              {["Practice Dojo", "IB Physics", "Weekly Progress", "Parent Updates"].map((item) => (
+                <div key={item} className="flex items-center gap-2 rounded-xl border border-white/15 bg-white/94 px-4 py-2.5 text-[10px] font-black uppercase tracking-[0.12em] text-secondary shadow-xl backdrop-blur transition-transform hover:-translate-y-0.5">
                   <svg className="h-3.5 w-3.5 shrink-0 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
                   </svg>
@@ -202,7 +211,7 @@ export default async function Home({
           </div>
         </div>
         <div className="relative z-10 mx-auto mt-14 grid w-full max-w-[860px] grid-cols-2 gap-3 px-4 text-center sm:grid-cols-5 lg:absolute lg:bottom-8 lg:left-1/2 lg:-translate-x-1/2">
-          {["Cambridge", "Edexcel", "IB", "GCSE", "Trusted by families"].map((item) => (
+          {["Cambridge", "Edexcel", "IB", "GCSE", "Online lessons"].map((item) => (
             <div key={item} className="rounded-full border border-white/10 bg-white/5 px-3 py-2 text-[10px] font-black uppercase tracking-[0.16em] text-white/60 backdrop-blur">
               {item}
             </div>
@@ -210,7 +219,7 @@ export default async function Home({
         </div>
       </section>
 
-      <section className="w-full border-b border-secondary/10 bg-[linear-gradient(180deg,#ffffff_0%,#f7fbff_100%)] px-4 py-32 md:px-10">
+      <section className="w-full border-b border-secondary/10 bg-[linear-gradient(180deg,#ffffff_0%,#f7fbff_100%)] px-4 py-28 md:px-10">
         <HomepageSectionTracker eventName="homepage_ai_practice_visible" />
         <div className="group relative mx-auto grid max-w-[1360px] gap-12 overflow-hidden rounded-[2.5rem] border border-primary/10 bg-white p-8 shadow-2xl shadow-secondary/5 transition-all hover:-translate-y-1 hover:shadow-primary/10 lg:grid-cols-[0.78fr_1.22fr] lg:items-center lg:p-12">
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_78%_20%,rgba(0,102,255,0.08),transparent_32%),linear-gradient(135deg,rgba(255,255,255,0.9),rgba(242,248,255,0.72))]"></div>
@@ -341,7 +350,7 @@ export default async function Home({
         </div>
       </section>
 
-      <section className="w-full border-b border-secondary/10 bg-white px-4 py-32 md:px-10">
+      <section className="w-full border-b border-secondary/10 bg-[linear-gradient(180deg,#f8fbff_0%,#ffffff_45%,#f7fbff_100%)] px-4 py-28 md:px-10">
         <div className="mx-auto max-w-[1360px]">
           <div className="max-w-3xl">
             <p className="text-xs font-black uppercase tracking-[0.28em] text-primary">Learning support system</p>
@@ -365,10 +374,27 @@ export default async function Home({
               </div>
             ))}
           </div>
+
+          <div className="mt-10 grid gap-4 rounded-[2rem] border border-primary/10 bg-white/85 p-5 shadow-sm backdrop-blur md:grid-cols-3">
+            {[
+              "Built by educators and technologists",
+              "Designed around real student learning",
+              "Structured support that keeps students motivated",
+            ].map((item) => (
+              <div key={item} className="flex items-center gap-3 rounded-2xl bg-surface px-5 py-4 text-sm font-black text-secondary/70">
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                  </svg>
+                </span>
+                {item}
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
-      <section className="relative w-full overflow-hidden bg-gradient-to-b from-white via-[#f7fbff] to-surface px-4 py-28 md:px-10">
+      <section className="relative w-full overflow-hidden bg-gradient-to-b from-white via-[#f7fbff] to-surface px-4 py-24 md:px-10">
         <HomepageSectionTracker eventName="homepage_why_sciencedojo_visible" />
         <div className="mx-auto max-w-[1360px]">
           <div className="mx-auto max-w-3xl text-center">
@@ -435,7 +461,7 @@ export default async function Home({
               ))}
             </div>
             <div className="mt-4 grid gap-3 text-sm font-bold text-secondary/65 md:grid-cols-4">
-              {["Structured learning plans", "Personalized tutoring", "International curriculum support", "Smart practice support"].map((item) => (
+              {["Mentorship-led support", "Personalized tutoring", "International curriculum support", "Smart practice support"].map((item) => (
                 <div key={item} className="flex items-center gap-2">
                   <span className="h-2 w-2 rounded-full bg-primary"></span>
                   {item}
@@ -446,7 +472,7 @@ export default async function Home({
         </div>
       </section>
 
-      <section className="relative w-full overflow-hidden bg-[#fffdf8] px-4 py-32 md:px-10">
+      <section className="relative w-full overflow-hidden bg-[#fffdf8] px-4 py-28 md:px-10">
         <div className="mx-auto grid max-w-[1360px] items-center gap-14 lg:grid-cols-[0.95fr_1.05fr]">
           <div className="relative order-2 lg:order-1">
             <div className="relative aspect-[4/3] overflow-hidden rounded-[2.25rem] border border-secondary/10 bg-surface shadow-2xl shadow-primary/10">
@@ -480,51 +506,40 @@ export default async function Home({
         </div>
       </section>
 
-      <section className="w-full bg-gradient-to-b from-surface to-white px-4 py-20 md:px-10">
+      <section className="w-full bg-gradient-to-b from-surface to-white px-4 py-16 md:px-10">
         <div className="mx-auto max-w-[1360px]">
-          <div className="mb-10 max-w-3xl">
+          <div className="mb-8 max-w-3xl">
             <p className="text-xs font-black uppercase tracking-[0.28em] text-primary">Curriculum support</p>
             <h2 className="mt-3 text-3xl font-black tracking-tight text-secondary md:text-4xl">Support Across Learning Stages</h2>
             <p className="mt-4 leading-7 text-secondary/65">
               ScienceDojo supports learners from early foundations through GCSE, IGCSE, IB, and A-Level pathways.
             </p>
           </div>
-          <div className="grid gap-5 md:grid-cols-2">
-            {[
-              {
-                title: "Primary and lower secondary",
-                text: "Build strong foundations early.",
-                image: homeImages.primaryLearner,
-              },
-              {
-                title: "GCSE, IGCSE, IB and A-Level",
-                text: "Structured support for GCSE, IGCSE, IB, and A-Level learners.",
-                image: homeImages.teenStudy,
-              },
-            ].map((item) => (
-              <div key={item.title} className="group grid overflow-hidden rounded-3xl border border-secondary/10 bg-white shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-lg sm:grid-cols-[0.62fr_1.38fr]">
-                <div className="relative aspect-[16/10] sm:aspect-auto">
-                  <Image
-                    src={item.image.src}
-                    alt={item.image.alt}
-                    fill
-                    sizes="(max-width: 768px) 92vw, 28vw"
-                    className="object-cover transition-transform duration-700 group-hover:scale-105"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-tr from-secondary/30 to-transparent"></div>
+          <div className="rounded-[2rem] border border-secondary/10 bg-white p-4 shadow-sm">
+            <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-6">
+              {[
+                { label: "Primary", text: "Strong foundations" },
+                { label: "KS3", text: "Core confidence" },
+                { label: "GCSE", text: "Exam support" },
+                { label: "IGCSE", text: "International pathway" },
+                { label: "A-Level", text: "Advanced depth" },
+                { label: "IB", text: "Structured rigor" },
+              ].map((stage) => (
+                <div key={stage.label} className="rounded-2xl border border-secondary/10 bg-surface px-5 py-5 text-center transition-all hover:-translate-y-0.5 hover:border-primary/25 hover:bg-white hover:shadow-lg">
+                  <p className="text-lg font-black text-secondary">{stage.label}</p>
+                  <p className="mt-2 text-xs font-bold uppercase tracking-[0.12em] text-secondary/45">{stage.text}</p>
                 </div>
-                <div className="p-6">
-                  <h3 className="text-xl font-black text-secondary">{item.title}</h3>
-                  <p className="mt-3 text-sm font-bold leading-6 text-secondary/65">{item.text}</p>
-                </div>
-              </div>
-            ))}
+              ))}
+            </div>
+            <p className="mt-5 text-center text-sm font-bold text-secondary/55">
+              Curriculum-aware tutoring across British and international learning routes.
+            </p>
           </div>
         </div>
       </section>
 
       {/* Directory Section */}
-      <section id="directory" className="w-full max-w-[1360px] mx-auto border-t border-secondary/10 px-4 md:px-10 py-32 relative z-20 bg-white">
+      <section id="directory" className="w-full max-w-[1360px] mx-auto border-t border-secondary/10 px-4 md:px-10 py-28 relative z-20 bg-white">
         <HomepageSectionTracker eventName="homepage_tutor_marketplace_visible" />
         <div className="mb-8 grid gap-8 lg:grid-cols-[1fr_0.9fr] lg:items-end">
           <div>
@@ -536,7 +551,7 @@ export default async function Home({
           </div>
           <div className="relative min-h-[180px] overflow-hidden rounded-[2rem] border border-primary/10 bg-gradient-to-br from-surface via-white to-[#eef7ff] p-6 shadow-lg shadow-primary/5">
             <div className="relative flex flex-wrap gap-3">
-              {["GCSE Maths", "IB Physics", "Cambridge Science", "Primary Support", "Practice Dojo", "Online Tutoring", "Computer Science", "A-Level Chemistry"].map((chip, index) => (
+              {["GCSE Maths", "IB Physics", "Cambridge Science", "Primary Support", "Online Tutoring", "Computer Science", "A-Level Chemistry"].map((chip, index) => (
                 <div
                   key={chip}
                   className={`${index % 2 === 0 ? "sd-float-soft" : "sd-float-soft-delayed"} rounded-full border border-primary/10 bg-white/90 px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-secondary shadow-sm backdrop-blur`}
@@ -568,7 +583,7 @@ export default async function Home({
         </div>
 
         {tutors.length > 0 ? (
-          <div className="grid grid-cols-1 gap-10 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-12 md:grid-cols-2 lg:grid-cols-3">
             {tutors.map((tutor, index) => (
               <TutorCard key={tutor.id} tutor={tutor as any} currentUserRole={null} isFeatured={index === 0} />
             ))}
@@ -593,7 +608,7 @@ export default async function Home({
       </section>
 
       {/* How it Works Section */}
-      <section id="how-it-works" className="relative w-full overflow-hidden border-y border-secondary/10 bg-gradient-to-b from-surface to-white py-32">
+      <section id="how-it-works" className="relative w-full overflow-hidden border-y border-secondary/10 bg-gradient-to-b from-surface to-white py-28">
         <div className="max-w-[1360px] mx-auto px-4 md:px-10">
           <div className="text-center mb-16">
             <span className="text-primary font-bold tracking-wider text-sm uppercase mb-2 block">The Process</span>
@@ -645,7 +660,7 @@ export default async function Home({
       </section>
 
       {/* SEO Pathways Section */}
-      <section className="w-full border-y border-secondary/10 bg-white py-24">
+      <section className="w-full border-y border-secondary/10 bg-white py-20">
         <div className="mx-auto max-w-[1360px] px-4 md:px-10">
           <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
             <div>
@@ -678,7 +693,7 @@ export default async function Home({
       </section>
 
       {/* Pricing Section */}
-      <section id="pricing" className="w-full bg-secondary px-4 py-28 text-center md:px-10">
+      <section id="pricing" className="w-full bg-secondary px-4 py-24 text-center md:px-10">
         <div className="mx-auto max-w-[1360px]">
         <span className="text-cyan-200 font-bold tracking-wider text-sm uppercase mb-2 block">Transparent Costs</span>
         <h2 className="text-3xl md:text-5xl font-bold text-white mb-6">Flexible Learning Support</h2>
@@ -724,7 +739,7 @@ export default async function Home({
         </div>
       </section>
 
-      <section className="relative w-full overflow-hidden bg-white px-4 py-32 md:px-10">
+      <section className="relative w-full overflow-hidden bg-white px-4 py-28 md:px-10">
         <div className="mx-auto max-w-[1360px]">
           <div className="mx-auto max-w-3xl text-center">
             <span className="mb-2 block text-sm font-bold uppercase tracking-wider text-primary">Learning journeys</span>
@@ -794,7 +809,7 @@ export default async function Home({
         </div>
       </section>
 
-      <section className="w-full bg-gradient-to-b from-surface to-white px-4 py-32 md:px-10">
+      <section className="w-full bg-gradient-to-b from-surface to-white px-4 py-28 md:px-10">
         <div className="mx-auto max-w-[1040px]">
           <div className="text-center">
             <span className="mb-2 block text-sm font-bold uppercase tracking-wider text-primary">FAQ</span>
@@ -821,7 +836,7 @@ export default async function Home({
         </div>
       </section>
 
-      <section className="w-full bg-[linear-gradient(135deg,#071a35_0%,#0a4d95_58%,#0066ff_100%)] px-4 py-32 md:px-10">
+      <section className="w-full bg-[linear-gradient(135deg,#071a35_0%,#0a4d95_58%,#0066ff_100%)] px-4 py-28 md:px-10">
         <div className="relative mx-auto max-w-[1120px] text-center">
           <div className="pointer-events-none absolute inset-0 rounded-[3rem] bg-[radial-gradient(circle_at_50%_0%,rgba(255,255,255,0.14),transparent_42%)]"></div>
           <div className="relative">
@@ -832,7 +847,7 @@ export default async function Home({
               </div>
             ))}
           </div>
-          <h2 className="text-4xl font-black tracking-tight text-white md:text-6xl">Learn With Confidence</h2>
+          <h2 className="text-4xl font-black tracking-tight text-white md:text-6xl">Expert Online Tutoring That Feels Personal</h2>
           <p className="mx-auto mt-6 max-w-2xl text-lg leading-8 text-white/70">
             From Practice Dojo knowledge checks to expert online tutoring, ScienceDojo supports modern learners through structured, curriculum-aligned learning.
           </p>
@@ -849,7 +864,7 @@ export default async function Home({
               source="homepage_final_cta"
               className="rounded-2xl border border-white/15 bg-white/5 px-8 py-4 text-sm font-black uppercase tracking-[0.14em] text-white backdrop-blur transition-all hover:bg-white/10"
             >
-              Try Practice Dojo
+              Explore Practice Dojo
             </AiPracticeStudioCtaLink>
           </div>
           <div className="mt-10 grid gap-3 sm:grid-cols-5">

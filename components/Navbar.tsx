@@ -38,7 +38,7 @@ export default async function Navbar() {
               Learning Hub
             </Link>
             <Link href="/ai-practice-studio" className="text-sm font-medium text-secondary/80 hover:text-primary transition-colors">
-              AI Practice Studio
+              Practice Dojo
             </Link>
             <BookAssessmentLink source="navbar" className="text-sm font-medium text-secondary/80 hover:text-primary transition-colors">
               Request Free Assessment

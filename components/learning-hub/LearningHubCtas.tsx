@@ -16,7 +16,7 @@ const ctaConfig: Record<CtaVariant, { title: string; body: string; href?: string
     label: "Browse Tutors",
   },
   questions: {
-    title: "AI Practice Studio",
+    title: "Practice Dojo",
     body: "Generate targeted practice questions by curriculum, subject, and topic.",
     href: "/ai-practice-studio",
     label: "Try Free Tool",

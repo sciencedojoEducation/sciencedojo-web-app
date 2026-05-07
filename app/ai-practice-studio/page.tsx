@@ -7,11 +7,11 @@ import QuestionGenerator from "./QuestionGenerator";
 
 const faqs = [
   {
-    question: "What is AI Practice Studio?",
-    answer: "AI Practice Studio is a free ScienceDojo study tool that generates targeted practice questions by educational stage, curriculum, level, subject, and topic.",
+    question: "What is Practice Dojo?",
+    answer: "Practice Dojo is a free ScienceDojo study tool that generates targeted practice questions by educational stage, curriculum, level, subject, and topic.",
   },
   {
-    question: "Which curricula does AI Practice Studio support?",
+    question: "Which curricula does Practice Dojo support?",
     answer: "It supports major pathways including UK National Curriculum, Cambridge, Edexcel, AQA, SQA, IB, GCSE, IGCSE, A-Level, and primary or lower secondary routes.",
   },
   {
@@ -21,13 +21,13 @@ const faqs = [
 ];
 
 export const metadata: Metadata = {
-  title: "AI Practice Studio | Free Curriculum-Aligned Practice Questions | ScienceDojo",
+  title: "Practice Dojo | Free Curriculum-Aligned Practice Questions | ScienceDojo",
   description: "Generate curriculum-aligned practice questions for KS1, KS2, KS3, GCSE, IGCSE, A-Level, IB, Cambridge, Edexcel, AQA, SQA, and more.",
   alternates: {
     canonical: `${siteUrl}/ai-practice-studio`,
   },
   openGraph: {
-    title: "AI Practice Studio | ScienceDojo",
+    title: "Practice Dojo | ScienceDojo",
     description: "Generate curriculum-aligned practice instantly with a free ScienceDojo study tool.",
     url: `${siteUrl}/ai-practice-studio`,
     siteName: "ScienceDojo",
@@ -44,8 +44,8 @@ export default function AiPracticeStudioPage() {
 
       <section className="bg-gradient-to-br from-[#002244] via-[#004488] to-[#0066cc] px-4 py-20 text-white md:px-8 md:py-24">
         <div className="mx-auto max-w-5xl text-center">
-          <p className="text-xs font-black uppercase tracking-[0.3em] text-cyan-100/80">Free AI study tool</p>
-          <h1 className="mt-5 text-4xl font-black tracking-tight md:text-6xl">AI Practice Studio</h1>
+          <p className="text-xs font-black uppercase tracking-[0.3em] text-cyan-100/80">Free knowledge-check tool</p>
+          <h1 className="mt-5 text-4xl font-black tracking-tight md:text-6xl">Practice Dojo</h1>
           <p className="mx-auto mt-6 max-w-2xl text-xl font-black leading-8 text-white">
             Generate curriculum-aligned practice instantly.
           </p>

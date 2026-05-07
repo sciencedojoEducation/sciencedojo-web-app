@@ -7,7 +7,7 @@ const footerGroups = [
     title: "Learning",
     links: [
       ["Find Tutors", "/#directory"],
-      ["AI Practice Studio", "/ai-practice-studio"],
+      ["Practice Dojo", "/ai-practice-studio"],
       ["Free Assessment", "/free-assessment"],
     ],
   },
@@ -43,7 +43,7 @@ export default function Footer() {
           <div className="flex flex-col items-center gap-5 text-center md:items-start md:text-left">
             <Logo className="text-lg" dotClassName="w-1.5 h-1.5" />
             <p className="max-w-sm text-sm font-semibold leading-7 text-secondary/60">
-              AI-powered study tools and expert tutoring support for modern online learning.
+              Expert tutoring enhanced by smarter learning tools for modern online learning.
             </p>
             <SocialLinks />
           </div>

@@ -232,7 +232,7 @@ export default function QuestionGenerator() {
         {questions.length === 0 ? (
           <div className="mt-5 rounded-2xl border border-secondary/10 bg-surface p-6">
             <p className="font-bold leading-7 text-secondary/65">
-              AI Practice Studio creates targeted practice questions by stage, curriculum, level, subject, and topic.
+              Practice Dojo creates targeted practice questions by stage, curriculum, level, subject, and topic.
             </p>
           </div>
         ) : (
