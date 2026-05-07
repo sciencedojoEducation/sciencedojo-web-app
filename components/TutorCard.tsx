@@ -67,17 +67,17 @@ export default function TutorCard({ tutor, currentUserRole, isFeatured = false }
   const availabilityLabel = tutor.is_available_now ? "Available online" : "Online lessons";
 
   return (
-    <div className={`group relative flex flex-col overflow-hidden rounded-[2rem] bg-white shadow-sm border transition-all duration-300 hover:-translate-y-1.5 hover:border-primary/40 hover:shadow-2xl hover:shadow-primary/10 ${isFeatured ? "border-primary/30 ring-1 ring-primary/10" : "border-secondary/10"}`}>
+    <div className={`group relative flex flex-col overflow-hidden rounded-[2.25rem] bg-white shadow-[0_18px_55px_rgba(0,26,68,0.06)] border transition-all duration-300 hover:-translate-y-1.5 hover:border-primary/40 hover:shadow-[0_28px_80px_rgba(0,102,255,0.13)] ${isFeatured ? "border-primary/30 ring-1 ring-primary/10" : "border-secondary/10"}`}>
       {isFeatured && (
-        <div className="absolute right-5 top-5 z-10 rounded-full border border-primary/15 bg-primary/5 px-3 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-primary shadow-sm">
+        <div className="absolute right-5 top-5 z-10 rounded-full border border-primary/15 bg-white/90 px-3 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-primary shadow-sm backdrop-blur">
           Featured Educator
         </div>
       )}
       <div className="p-7 flex flex-col flex-1">
-        <div className="mb-5 flex items-start justify-between">
-          <div className="flex items-center gap-4">
-            <div className="relative h-28 w-28 shrink-0">
-              <div className="relative z-0 h-full w-full overflow-hidden rounded-[2rem] border-4 border-surface shadow-lg">
+        <div className="mb-6 flex items-start justify-between">
+          <div className="flex items-center gap-5">
+            <div className="relative h-32 w-32 shrink-0">
+              <div className="relative z-0 h-full w-full overflow-hidden rounded-[2.1rem] border-4 border-surface shadow-xl">
                 <UserAvatar 
                   src={tutor.avatar_url} 
                   alt={tutor.full_name} 
@@ -91,8 +91,8 @@ export default function TutorCard({ tutor, currentUserRole, isFeatured = false }
               )}
             </div>
             <div className="min-w-0">
-              <div className="flex items-center gap-2">
-                <h3 className="font-black text-2xl leading-tight text-secondary group-hover:text-primary transition-colors">
+              <div className="flex items-start gap-2">
+                <h3 className="font-black text-[1.7rem] leading-[1.05] text-secondary group-hover:text-primary transition-colors">
                   {tutor.full_name}
                 </h3>
                 {tutor.is_verified && (
@@ -103,7 +103,7 @@ export default function TutorCard({ tutor, currentUserRole, isFeatured = false }
                   </div>
                 )}
               </div>
-              <div className="mt-2 flex flex-wrap gap-1.5">
+              <div className="mt-3 flex flex-wrap gap-1.5">
                 {tutor.is_verified && (
                   <span className="inline-flex items-center rounded-full border border-primary/15 bg-primary/5 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-primary">
                     Verified Tutor
@@ -130,21 +130,21 @@ export default function TutorCard({ tutor, currentUserRole, isFeatured = false }
         {tutorTags.length > 0 && (
           <div className="mb-5 flex flex-wrap gap-2">
             {tutorTags.map((tag) => (
-              <span key={tag} className="rounded-full border border-primary/15 bg-primary/5 px-3.5 py-1.5 text-[10px] font-black uppercase tracking-[0.14em] text-primary">
+              <span key={tag} className="rounded-full border border-primary/15 bg-primary/5 px-4 py-1.5 text-[10px] font-black uppercase tracking-[0.14em] text-primary shadow-sm">
                 {tag}
               </span>
             ))}
           </div>
         )}
 
-        <div className="mb-5 rounded-2xl border border-secondary/10 bg-surface px-4 py-3">
+        <div className="mb-5 rounded-2xl border border-secondary/10 bg-gradient-to-br from-surface to-white px-4 py-3">
           <p className="text-[10px] font-black uppercase tracking-[0.14em] text-secondary/40">Teaching strength</p>
           <p className="mt-1 text-sm font-bold leading-6 text-secondary/70">{supportLine}</p>
         </div>
 
         <div className="mt-auto flex items-center justify-between border-t border-secondary/5 pt-5">
           <div>
-            <p className="mb-1 text-[10px] font-black uppercase tracking-[0.14em] text-secondary/35">Rating</p>
+            <p className="mb-1 text-[10px] font-black uppercase tracking-[0.14em] text-secondary/35">Tutor rating</p>
             <div className="flex items-center gap-1">
               <svg className="h-4 w-4 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
                 <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
@@ -155,7 +155,7 @@ export default function TutorCard({ tutor, currentUserRole, isFeatured = false }
           </div>
           <div className="text-right">
             <p className="mb-1 text-[10px] font-black uppercase tracking-[0.14em] text-secondary/35">Lesson rate</p>
-            <span className="text-2xl font-black text-primary">£{tutor.hourly_rate}</span>
+            <span className="text-3xl font-black text-primary">£{tutor.hourly_rate}</span>
             <span className="text-xs text-secondary/40 font-bold ml-1 uppercase tracking-widest">/hr</span>
           </div>
         </div>

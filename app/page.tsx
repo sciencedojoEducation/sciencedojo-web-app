@@ -143,7 +143,7 @@ export default async function Home({
       <section className="relative flex min-h-[86vh] w-full items-center overflow-hidden bg-[linear-gradient(135deg,#06172f_0%,#073f7b_52%,#0b64bd_100%)] px-4 py-24 text-center md:px-10 lg:py-32">
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_80%_26%,rgba(0,245,212,0.16),transparent_33%),radial-gradient(circle_at_18%_78%,rgba(255,255,255,0.1),transparent_28%),linear-gradient(180deg,rgba(255,255,255,0.06),transparent_42%)]"></div>
 
-        <div className="relative z-10 mx-auto grid w-full max-w-[1360px] items-center gap-16 lg:grid-cols-[0.88fr_1.12fr]">
+        <div className="relative z-10 mx-auto grid w-full max-w-[1400px] items-center gap-14 lg:grid-cols-[0.8fr_1.2fr]">
           <div className="sd-fade-up flex flex-col items-center text-center lg:items-start lg:text-left">
           <div className="flex items-center gap-2 mb-8 bg-white/5 backdrop-blur-sm border border-white/10 px-4 py-1.5 rounded-full shadow-inner animate-in fade-in slide-in-from-top-4 duration-1000">
              <span className="flex h-1.5 w-1.5 rounded-full bg-green-400"></span>
@@ -177,34 +177,41 @@ export default async function Home({
 
           </div>
 
-          <div className="sd-fade-up relative w-full max-w-2xl justify-self-center lg:max-w-none lg:-mr-16">
-            <div className="pointer-events-none absolute -inset-6 rounded-[3rem] bg-cyan-300/10 blur-2xl"></div>
-            <div className="relative aspect-[4/3] overflow-hidden rounded-[2.5rem] border border-white/15 bg-white/10 shadow-[0_34px_100px_rgba(0,0,0,0.32)]">
+          <div className="sd-fade-up relative w-full max-w-2xl justify-self-center lg:max-w-none lg:-mr-24">
+            <div className="sd-glow-pulse pointer-events-none absolute -inset-10 rounded-[3.5rem] bg-[radial-gradient(circle_at_50%_45%,rgba(0,245,212,0.18),rgba(0,102,255,0.1)_38%,transparent_68%)] blur-2xl"></div>
+            <div className="relative aspect-[4/3] overflow-hidden rounded-[2.75rem] border border-white/15 bg-white/10 shadow-[0_48px_130px_rgba(0,0,0,0.42)] lg:scale-[1.04] lg:origin-center">
               <Image
                 src={homeImages.heroStem.src}
                 alt={homeImages.heroStem.alt}
                 fill
                 priority
-                sizes="(max-width: 1024px) 92vw, 48vw"
-                className="object-cover"
+                sizes="(max-width: 1024px) 92vw, 54vw"
+                className="object-cover scale-[1.04]"
               />
               <div className="absolute inset-0 bg-gradient-to-tr from-secondary/65 via-primary/10 to-cyan-300/15"></div>
+              <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-secondary/55 to-transparent"></div>
             </div>
-            <div className="sd-float-soft absolute -right-2 top-6 hidden rounded-2xl border border-white/15 bg-white/95 px-5 py-4 text-left shadow-2xl shadow-black/20 backdrop-blur md:block">
+            <div className="sd-float-soft absolute -right-4 top-8 hidden w-56 rounded-3xl border border-white/15 bg-white/95 px-5 py-4 text-left shadow-2xl shadow-black/25 backdrop-blur md:block">
               <p className="text-[10px] font-black uppercase tracking-[0.16em] text-primary">Built-in classroom</p>
               <p className="mt-1 text-sm font-black text-secondary">Lessons inside ScienceDojo</p>
             </div>
-            <div className="sd-float-soft-delayed absolute -left-3 bottom-28 hidden rounded-2xl border border-white/15 bg-secondary/95 px-5 py-4 text-left text-white shadow-2xl shadow-black/20 backdrop-blur md:block">
-              <p className="text-[10px] font-black uppercase tracking-[0.16em] text-white/45">Mentor-led</p>
-              <p className="mt-1 text-sm font-black">Human tutoring first</p>
+            <div className="sd-float-soft-delayed absolute -left-6 top-1/2 hidden w-52 rounded-3xl border border-white/15 bg-secondary/95 px-5 py-4 text-left text-white shadow-2xl shadow-black/25 backdrop-blur md:block">
+              <p className="text-[10px] font-black uppercase tracking-[0.16em] text-white/45">Weekly progress</p>
+              <p className="mt-1 text-sm font-black">Clear next steps after lessons</p>
             </div>
-            <div className="absolute -bottom-5 left-4 right-4 grid gap-3 sm:grid-cols-2 lg:left-8 lg:right-auto lg:w-[82%]">
-              {["Practice Dojo", "IB Physics", "Weekly Progress", "Parent Updates"].map((item) => (
-                <div key={item} className="flex items-center gap-2 rounded-xl border border-white/15 bg-white/94 px-4 py-2.5 text-[10px] font-black uppercase tracking-[0.12em] text-secondary shadow-xl backdrop-blur transition-transform hover:-translate-y-0.5">
+            <div className="absolute -bottom-7 left-4 right-4 grid gap-3 sm:grid-cols-2 lg:left-10 lg:right-auto lg:w-[74%]">
+              {[
+                { label: "Practice Dojo", detail: "Targeted checks" },
+                { label: "Parent updates", detail: "Visible support" },
+              ].map((item) => (
+                <div key={item.label} className="flex items-center gap-3 rounded-2xl border border-white/15 bg-white/95 px-5 py-4 text-left text-secondary shadow-2xl shadow-black/15 backdrop-blur transition-transform hover:-translate-y-0.5">
                   <svg className="h-3.5 w-3.5 shrink-0 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
                   </svg>
-                  {item}
+                  <span>
+                    <span className="block text-[10px] font-black uppercase tracking-[0.14em]">{item.label}</span>
+                    <span className="mt-1 block text-xs font-bold text-secondary/50">{item.detail}</span>
+                  </span>
                 </div>
               ))}
             </div>
@@ -405,12 +412,15 @@ export default async function Home({
             </p>
           </div>
 
-          <div className="relative mt-16 grid gap-8 md:grid-cols-2 xl:grid-cols-4">
-            <div className="absolute left-[8%] right-[8%] top-16 hidden h-px bg-gradient-to-r from-primary/0 via-primary/25 to-primary/0 xl:block"></div>
-            {[
+          <div className="relative mt-16 overflow-hidden rounded-[2.5rem] border border-secondary/10 bg-white p-6 shadow-xl shadow-secondary/5 md:p-8">
+            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_12%_10%,rgba(0,102,255,0.08),transparent_28%),linear-gradient(135deg,rgba(248,251,255,0.9),rgba(255,255,255,0.96))]"></div>
+            <div className="relative grid gap-5 lg:grid-cols-4">
+              <div className="absolute left-[10%] right-[10%] top-16 hidden h-1 rounded-full bg-gradient-to-r from-primary/10 via-primary/35 to-cyan-300/20 lg:block"></div>
+              {[
               {
                 title: "Targeted Practice",
                 text: "Focus revision on the topics that need attention now.",
+                stage: "Foundation",
                 icon: (
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                 ),
@@ -418,6 +428,7 @@ export default async function Home({
               {
                 title: "Adaptive Support",
                 text: "Adjust the pace and explanation style around each learner.",
+                stage: "Growth",
                 icon: (
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422A12.083 12.083 0 0118 16.5c0 1.657-2.686 3-6 3s-6-1.343-6-3c0-1.994.32-3.938.917-5.722L12 14z" />
                 ),
@@ -425,6 +436,7 @@ export default async function Home({
               {
                 title: "Tutor Guidance",
                 text: "Use expert feedback to turn confusion into clear next steps.",
+                stage: "Guidance",
                 icon: (
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-6m4 6V7m4 10v-4M5 19h14" />
                 ),
@@ -432,6 +444,7 @@ export default async function Home({
               {
                 title: "Confidence Through Structure",
                 text: "Build confidence through routine, feedback, and steady progress.",
+                stage: "Mastery",
                 icon: (
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 21a9 9 0 100-18 9 9 0 000 18zm0 0c2.5-2.4 4-5.4 4-9s-1.5-6.6-4-9m0 18c-2.5-2.4-4-5.4-4-9s1.5-6.6 4-9" />
                 ),
@@ -439,20 +452,31 @@ export default async function Home({
             ].map((feature) => (
               <div
                 key={feature.title}
-                className="group relative rounded-[2rem] border border-secondary/10 bg-white p-10 shadow-sm transition-all hover:-translate-y-1 hover:border-primary/25 hover:shadow-2xl hover:shadow-primary/10"
+                className="group relative rounded-[2rem] border border-secondary/10 bg-white/90 p-6 shadow-sm backdrop-blur transition-all hover:-translate-y-1 hover:border-primary/25 hover:shadow-2xl hover:shadow-primary/10"
               >
-                <div className="mb-8 flex h-20 w-20 items-center justify-center rounded-3xl bg-primary/10 text-primary transition-all group-hover:bg-primary group-hover:text-white group-hover:shadow-lg group-hover:shadow-primary/20">
+                <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-3xl bg-primary/10 text-primary transition-all group-hover:bg-primary group-hover:text-white group-hover:shadow-lg group-hover:shadow-primary/20">
                   <svg className="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     {feature.icon}
                   </svg>
                 </div>
+                <p className="mb-3 text-[10px] font-black uppercase tracking-[0.18em] text-primary/70">{feature.stage}</p>
                 <h3 className="text-xl font-black text-secondary">{feature.title}</h3>
                 <p className="mt-4 leading-7 text-secondary/65">{feature.text}</p>
               </div>
             ))}
+            </div>
+            <div className="relative mt-6 rounded-[2rem] border border-primary/10 bg-secondary px-6 py-5 text-white shadow-xl shadow-secondary/10 md:flex md:items-center md:justify-between md:gap-6">
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-cyan-200/70">ScienceDojo rhythm</p>
+                <p className="mt-2 text-lg font-black">Foundation to growth to mastery, with tutor guidance at every step.</p>
+              </div>
+              <p className="mt-3 text-sm font-bold leading-6 text-white/60 md:mt-0 md:max-w-sm">
+                Practice builds momentum. Lessons turn that momentum into clearer understanding.
+              </p>
+            </div>
           </div>
 
-          <div className="mt-10 rounded-[2rem] border border-secondary/10 bg-white/80 p-5 shadow-sm backdrop-blur">
+          <div className="mt-8 rounded-[2rem] border border-secondary/10 bg-white/80 p-5 shadow-sm backdrop-blur">
             <div className="grid gap-3 sm:grid-cols-5">
               {["Cambridge", "Edexcel", "IB", "AQA", "SQA"].map((curriculum) => (
                 <div key={curriculum} className="rounded-2xl border border-secondary/10 bg-surface px-4 py-4 text-center text-sm font-black uppercase tracking-[0.2em] text-secondary/45 transition-colors hover:text-primary">
@@ -743,9 +767,9 @@ export default async function Home({
         <div className="mx-auto max-w-[1360px]">
           <div className="mx-auto max-w-3xl text-center">
             <span className="mb-2 block text-sm font-bold uppercase tracking-wider text-primary">Learning journeys</span>
-            <h2 className="text-3xl font-bold text-secondary md:text-5xl">Success Stories</h2>
+            <h2 className="text-3xl font-bold text-secondary md:text-5xl">What Families Value About ScienceDojo</h2>
             <p className="mt-5 text-lg leading-8 text-secondary/65">
-              ScienceDojo is designed for the moments families care about most: confidence, consistency, and clearer learning support.
+              ScienceDojo is designed for the moments families care about most: confidence, consistency, clearer practice, and structured support.
             </p>
           </div>
           <div className="mt-12 grid gap-0 lg:grid-cols-[1.08fr_0.92fr]">
@@ -759,8 +783,8 @@ export default async function Home({
               />
               <div className="absolute inset-0 bg-gradient-to-r from-secondary/65 via-secondary/20 to-transparent"></div>
               <div className="absolute bottom-8 left-8 max-w-sm text-white">
-                <p className="text-xs font-black uppercase tracking-[0.22em] text-cyan-100">Warm support, clearer progress</p>
-                <h3 className="mt-4 text-3xl font-black">Learning feels better when support is structured.</h3>
+                <p className="text-xs font-black uppercase tracking-[0.22em] text-cyan-100">Guided learning, calmer progress</p>
+                <h3 className="mt-4 text-3xl font-black">Online tutoring feels more personal when families can see the path forward.</h3>
               </div>
             </div>
             <div className="relative z-10 grid gap-5 self-center lg:-ml-16">
@@ -768,19 +792,19 @@ export default async function Home({
                   {
                     quote: "The structure helped our child know what to practise each week.",
                     subject: "GCSE Maths",
-                    improvement: "Improved confidence with exam-style questions",
+                    improvement: "Clearer practice between lessons",
                     year: "Year 10",
                   },
                   {
                     quote: "The lessons connected difficult topics to clearer steps.",
                     subject: "IB Physics",
-                    improvement: "More consistent independent revision",
+                    improvement: "More consistent independent study",
                     year: "Year 12",
                   },
                   {
                     quote: "We finally had a clearer picture of what support was needed.",
                     subject: "Parent support",
-                    improvement: "Better routine and learning visibility",
+                    improvement: "Better routine and visibility",
                     year: "Family update",
                   },
                 ].map((story) => (
