@@ -6,7 +6,6 @@ import TutorConnectLink from "./analytics/TutorConnectLink";
 interface TutorCardProps {
   tutor: TutorProfile;
   currentUserRole?: string | null;
-  isFeatured?: boolean;
 }
 
 function buildTutorTags(tutor: TutorProfile) {
@@ -57,7 +56,7 @@ function getTeachingSupportLine(tutor: TutorProfile) {
   return "Structured online support adapted to each learner.";
 }
 
-export default function TutorCard({ tutor, currentUserRole, isFeatured = false }: TutorCardProps) {
+export default function TutorCard({ tutor, currentUserRole }: TutorCardProps) {
   const isTutor = currentUserRole === "tutor";
   const connectHref = currentUserRole
     ? `/tutor/${tutor.id}/book`
@@ -67,12 +66,7 @@ export default function TutorCard({ tutor, currentUserRole, isFeatured = false }
   const availabilityLabel = tutor.is_available_now ? "Available online" : "Online lessons";
 
   return (
-    <div className={`group relative flex flex-col overflow-hidden rounded-[2.25rem] bg-white shadow-[0_18px_55px_rgba(0,26,68,0.06)] border transition-all duration-300 hover:-translate-y-1.5 hover:border-primary/40 hover:shadow-[0_28px_80px_rgba(0,102,255,0.13)] ${isFeatured ? "border-primary/30 ring-1 ring-primary/10" : "border-secondary/10"}`}>
-      {isFeatured && (
-        <div className="absolute right-5 top-5 z-10 rounded-full border border-primary/15 bg-white/90 px-3 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-primary shadow-sm backdrop-blur">
-          Featured Educator
-        </div>
-      )}
+    <div className="group relative flex flex-col overflow-hidden rounded-[2.25rem] border border-secondary/10 bg-white shadow-[0_18px_55px_rgba(0,26,68,0.06)] transition-all duration-300 hover:-translate-y-1.5 hover:border-primary/40 hover:shadow-[0_28px_80px_rgba(0,102,255,0.13)]">
       <div className="p-7 flex flex-col flex-1">
         <div className="mb-6 flex items-start justify-between">
           <div className="flex items-center gap-5">
@@ -138,7 +132,7 @@ export default function TutorCard({ tutor, currentUserRole, isFeatured = false }
         )}
 
         <div className="mb-5 rounded-2xl border border-secondary/10 bg-gradient-to-br from-surface to-white px-4 py-3">
-          <p className="text-[10px] font-black uppercase tracking-[0.14em] text-secondary/40">Teaching strength</p>
+          <p className="text-[10px] font-black uppercase tracking-[0.14em] text-secondary/40">Best for</p>
           <p className="mt-1 text-sm font-bold leading-6 text-secondary/70">{supportLine}</p>
         </div>
 

@@ -3,6 +3,7 @@ import { createClient } from "@/utils/supabase/server";
 import { signOut } from "@/app/login/actions";
 import Logo from "@/components/Logo";
 import BookAssessmentLink from "@/components/analytics/BookAssessmentLink";
+import MobileNavbarMenu from "@/components/MobileNavbarMenu";
 
 export default async function Navbar() {
   const supabase = await createClient();
@@ -23,7 +24,8 @@ export default async function Navbar() {
   return (
     <header className="sticky top-0 z-50 w-full border-b border-secondary/10 bg-surface/80 backdrop-blur-md transition-all">
       <div className={`${user ? 'w-full px-8' : 'container mx-auto px-4 md:px-8'} h-20 flex items-center justify-between transition-all duration-300`}>
-        <div className="flex items-center">
+        <div className="flex items-center gap-3">
+          <MobileNavbarMenu />
           <Link href="/" className="hover:opacity-80 transition-opacity">
             <Logo className="text-xl md:text-2xl" dotClassName="w-1.5 h-1.5 md:w-2 md:h-2" />
           </Link>
@@ -46,7 +48,7 @@ export default async function Navbar() {
           </nav>
         )}
 
-        <div className="flex items-center gap-4">
+        <div className="hidden items-center gap-4 md:flex">
           {user ? (
             <>
               <Link href={`/dashboard/${role}`} className="relative text-sm font-medium text-secondary hover:text-primary transition-colors flex items-center gap-2">
