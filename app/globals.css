@@ -18,6 +18,7 @@
 :root {
   --background: #f8fafc;
   --foreground: #0f172a;
+  scroll-behavior: smooth;
 }
 
 
@@ -61,4 +62,81 @@ input::placeholder, textarea::placeholder {
 
 .grab-scroll:active {
   cursor: grabbing;
+}
+
+@keyframes sd-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes sd-float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+@keyframes sd-glow-pulse {
+  0%, 100% {
+    opacity: 0.55;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.04);
+  }
+}
+
+@keyframes sd-bar-rise {
+  from {
+    transform: scaleY(0.72);
+    opacity: 0.72;
+  }
+  to {
+    transform: scaleY(1);
+    opacity: 1;
+  }
+}
+
+.sd-fade-up {
+  animation: sd-fade-up 700ms ease-out both;
+}
+
+.sd-float-soft {
+  animation: sd-float 7s ease-in-out infinite;
+}
+
+.sd-float-soft-delayed {
+  animation: sd-float 8s ease-in-out 900ms infinite;
+}
+
+.sd-glow-pulse {
+  animation: sd-glow-pulse 9s ease-in-out infinite;
+}
+
+.sd-bar-rise {
+  animation: sd-bar-rise 1400ms ease-out both;
+  transform-origin: bottom;
+}
+
+.sd-premium-shadow {
+  box-shadow: 0 24px 80px rgba(0, 26, 68, 0.08);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sd-fade-up,
+  .sd-float-soft,
+  .sd-float-soft-delayed,
+  .sd-glow-pulse,
+  .sd-bar-rise {
+    animation: none;
+  }
 }

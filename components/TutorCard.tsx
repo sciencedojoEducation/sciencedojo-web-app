@@ -15,11 +15,13 @@ function buildTutorTags(tutor: TutorProfile) {
   const educationText = tutor.education_level?.toLowerCase() || "";
   const combinedText = `${subjectText} ${educationText}`;
 
-  if (combinedText.includes("gcse")) tags.add("GCSE");
-  if (combinedText.includes("ib")) tags.add("IB");
+  if (combinedText.includes("gcse") && combinedText.includes("math")) tags.add("GCSE Maths");
+  else if (combinedText.includes("gcse")) tags.add("GCSE");
+  if (combinedText.includes("ib") && combinedText.includes("physics")) tags.add("IB Physics");
+  else if (combinedText.includes("ib")) tags.add("IB");
   if (combinedText.includes("a-level") || combinedText.includes("a level")) tags.add("A-Level");
   if (combinedText.includes("cambridge")) tags.add("Cambridge");
-  if (combinedText.includes("ks2")) tags.add("KS2");
+  if (combinedText.includes("ks2") || combinedText.includes("primary")) tags.add("Primary Learning");
   if (combinedText.includes("computer")) tags.add("Computer Science");
   if (combinedText.includes("physics")) tags.add("Physics");
   if (combinedText.includes("chemistry")) tags.add("Chemistry");
@@ -64,16 +66,16 @@ export default function TutorCard({ tutor, currentUserRole, isFeatured = false }
   const supportLine = getTeachingSupportLine(tutor);
 
   return (
-    <div className={`group relative flex flex-col overflow-hidden rounded-3xl bg-white shadow-sm border transition-all hover:shadow-xl hover:border-primary/30 ${isFeatured ? "border-primary/30 ring-1 ring-primary/10" : "border-secondary/10"}`}>
+    <div className={`group relative flex flex-col overflow-hidden rounded-3xl bg-white shadow-sm border transition-all duration-300 hover:-translate-y-1 hover:border-primary/40 hover:shadow-2xl hover:shadow-primary/10 ${isFeatured ? "border-primary/30 ring-1 ring-primary/10" : "border-secondary/10"}`}>
       {isFeatured && (
-        <div className="absolute right-4 top-4 z-10 rounded-full bg-secondary px-3 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-white shadow-sm">
+        <div className="absolute right-4 top-4 z-10 rounded-full border border-primary/15 bg-primary/5 px-3 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-primary shadow-sm">
           Featured Educator
         </div>
       )}
       <div className="p-6 flex flex-col flex-1">
-        <div className="flex items-start justify-between mb-4">
+        <div className="flex items-start justify-between mb-5">
           <div className="flex items-center gap-4">
-            <div className="relative h-20 w-20 shrink-0">
+            <div className="relative h-24 w-24 shrink-0">
               <div className="relative h-full w-full overflow-hidden rounded-full border-4 border-surface shadow-md z-0">
                 <UserAvatar 
                   src={tutor.avatar_url} 
@@ -89,11 +91,11 @@ export default function TutorCard({ tutor, currentUserRole, isFeatured = false }
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="font-black text-xl text-secondary group-hover:text-primary transition-colors">
+                <h3 className="font-black text-2xl leading-tight text-secondary group-hover:text-primary transition-colors">
                   {tutor.full_name}
                 </h3>
                 {tutor.is_verified && (
-                  <div className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/10 text-primary" title="Verified Expert">
+                  <div className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/10 text-primary" title="Verified Tutor">
                     <svg className="h-3 w-3" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                     </svg>
@@ -101,6 +103,11 @@ export default function TutorCard({ tutor, currentUserRole, isFeatured = false }
                 )}
               </div>
               <div className="flex flex-wrap gap-1 mt-1">
+                {tutor.is_verified && (
+                  <span className="inline-flex items-center rounded-full border border-primary/15 bg-primary/5 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-primary">
+                    Verified Tutor
+                  </span>
+                )}
                 {tutor.subjects.slice(0, 2).map((subject) => (
                   <span key={subject} className="inline-flex items-center rounded-full bg-primary/5 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-primary/80">
                     {subject}
@@ -111,7 +118,7 @@ export default function TutorCard({ tutor, currentUserRole, isFeatured = false }
           </div>
         </div>
 
-        <p className="text-secondary/70 text-sm line-clamp-2 md:line-clamp-3 mb-6 flex-1 leading-relaxed">
+        <p className="text-secondary/65 text-sm line-clamp-2 mb-6 flex-1 leading-relaxed">
           {tutor.bio}
         </p>
 
