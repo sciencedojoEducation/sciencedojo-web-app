@@ -17,6 +17,7 @@
 - Always use Tailwind responsive prefixes for breakpoint-specific styles; never use raw media queries in JSX.
 - Use `next/image` (`<Image />`) for all images — never use a bare `<img>` tag.
 - Run `npm run build` to verify no type errors or build failures before marking any task complete.
+- In this Next.js version, middleware is `proxy.ts` (not `middleware.ts`) and the exported function must be named `proxy`. This is a v16 breaking change from standard Next.js.
 - No `any` types in TypeScript — use proper types, generics, or `unknown` with narrowing.
 
 # Current Work

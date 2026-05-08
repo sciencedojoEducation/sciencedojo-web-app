@@ -63,15 +63,14 @@ export default function TutorCard({ tutor, currentUserRole }: TutorCardProps) {
     : `/signup?next=${encodeURIComponent(`/tutor/${tutor.id}/book`)}`;
   const tutorTags = buildTutorTags(tutor);
   const supportLine = getTeachingSupportLine(tutor);
-  const availabilityLabel = tutor.is_available_now ? "Available online" : "Online lessons";
 
   return (
-    <div className="group relative flex flex-col overflow-hidden rounded-[2.25rem] border border-secondary/10 bg-white shadow-[0_18px_55px_rgba(0,26,68,0.06)] transition-all duration-300 hover:-translate-y-1.5 hover:border-primary/40 hover:shadow-[0_28px_80px_rgba(0,102,255,0.13)]">
-      <div className="p-7 flex flex-col flex-1">
-        <div className="mb-6 flex items-start justify-between">
-          <div className="flex items-center gap-5">
-            <div className="relative h-32 w-32 shrink-0">
-              <div className="relative z-0 h-full w-full overflow-hidden rounded-[2.1rem] border-4 border-surface shadow-xl">
+    <div className="group relative flex flex-col overflow-hidden rounded-[2.25rem] border border-secondary/[0.07] bg-white shadow-[0_12px_40px_rgba(0,26,68,0.05)] transition-all duration-300 hover:-translate-y-1 hover:border-primary/30 hover:shadow-[0_24px_70px_rgba(0,102,255,0.11)]">
+      <div className="flex flex-1 flex-col p-6 sm:p-8">
+        <div className="mb-6">
+          <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
+            <div className="relative h-32 w-32 shrink-0 sm:h-36 sm:w-36">
+              <div className="relative z-0 h-full w-full overflow-hidden rounded-[2.25rem] border-4 border-surface shadow-2xl shadow-secondary/10">
                 <UserAvatar 
                   src={tutor.avatar_url} 
                   alt={tutor.full_name} 
@@ -86,7 +85,7 @@ export default function TutorCard({ tutor, currentUserRole }: TutorCardProps) {
             </div>
             <div className="min-w-0">
               <div className="flex items-start gap-2">
-                <h3 className="font-black text-[1.7rem] leading-[1.05] text-secondary group-hover:text-primary transition-colors">
+                <h3 className="font-black text-2xl leading-[1.05] text-secondary transition-colors group-hover:text-primary md:text-[1.7rem]">
                   {tutor.full_name}
                 </h3>
                 {tutor.is_verified && (
@@ -97,48 +96,39 @@ export default function TutorCard({ tutor, currentUserRole }: TutorCardProps) {
                   </div>
                 )}
               </div>
-              <div className="mt-3 flex flex-wrap gap-1.5">
-                {tutor.is_verified && (
-                  <span className="inline-flex items-center rounded-full border border-primary/15 bg-primary/5 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-primary">
-                    Verified Tutor
-                  </span>
-                )}
+              <div className="mt-4 flex flex-wrap gap-1.5">
                 {tutor.subjects.slice(0, 2).map((subject) => (
-                  <span key={subject} className="inline-flex items-center rounded-full bg-primary/5 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-primary/80">
+                  <span key={subject} className="inline-flex items-center rounded-full bg-primary/5 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-primary/65">
                     {subject}
                   </span>
                 ))}
-              </div>
-              <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-secondary/10 bg-surface px-3 py-1 text-[10px] font-black uppercase tracking-[0.12em] text-secondary/55">
-                <span className={`h-2 w-2 rounded-full ${tutor.is_available_now ? "bg-green-500" : "bg-primary/60"}`}></span>
-                {availabilityLabel}
               </div>
             </div>
           </div>
         </div>
 
-        <p className="text-secondary/65 text-sm line-clamp-2 mb-5 flex-1 leading-relaxed">
+        <p className="mb-5 line-clamp-3 flex-1 text-sm leading-7 text-secondary/58">
           {tutor.bio}
         </p>
 
         {tutorTags.length > 0 && (
           <div className="mb-5 flex flex-wrap gap-2">
             {tutorTags.map((tag) => (
-              <span key={tag} className="rounded-full border border-primary/15 bg-primary/5 px-4 py-1.5 text-[10px] font-black uppercase tracking-[0.14em] text-primary shadow-sm">
+              <span key={tag} className="rounded-full border border-primary/10 bg-primary/5 px-4 py-1.5 text-[10px] font-bold uppercase tracking-[0.08em] text-primary/80">
                 {tag}
               </span>
             ))}
           </div>
         )}
 
-        <div className="mb-5 rounded-2xl border border-secondary/10 bg-gradient-to-br from-surface to-white px-4 py-3">
-          <p className="text-[10px] font-black uppercase tracking-[0.14em] text-secondary/40">Best for</p>
-          <p className="mt-1 text-sm font-bold leading-6 text-secondary/70">{supportLine}</p>
+        <div className="mb-6 rounded-2xl border border-primary/10 bg-primary/[0.03] px-4 py-4">
+          <p className="text-[10px] font-black uppercase tracking-[0.12em] text-primary/55">Teaching focus</p>
+          <p className="mt-1 text-sm font-medium leading-6 text-secondary/60">{supportLine}</p>
         </div>
 
         <div className="mt-auto flex items-center justify-between border-t border-secondary/5 pt-5">
           <div>
-            <p className="mb-1 text-[10px] font-black uppercase tracking-[0.14em] text-secondary/35">Tutor rating</p>
+            <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.10em] text-secondary/35">Tutor rating</p>
             <div className="flex items-center gap-1">
               <svg className="h-4 w-4 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
                 <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
@@ -148,15 +138,15 @@ export default function TutorCard({ tutor, currentUserRole }: TutorCardProps) {
             </div>
           </div>
           <div className="text-right">
-            <p className="mb-1 text-[10px] font-black uppercase tracking-[0.14em] text-secondary/35">Lesson rate</p>
+            <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.10em] text-secondary/35">Lesson rate</p>
             <span className="text-3xl font-black text-primary">£{tutor.hourly_rate}</span>
             <span className="text-xs text-secondary/40 font-bold ml-1 uppercase tracking-widest">/hr</span>
           </div>
         </div>
       </div>
       
-      <div className="absolute inset-x-0 bottom-0 p-4 translate-y-full opacity-0 bg-white/95 backdrop-blur-md border-t border-secondary/10 transition-all group-hover:translate-y-0 group-hover:opacity-100 flex gap-2">
-         <Link href={`/tutor/${tutor.id}`} className="flex-1 inline-flex justify-center items-center rounded-xl bg-secondary/5 px-4 py-2.5 text-sm font-bold text-secondary hover:bg-secondary/10 transition-colors">
+      <div className="p-4 bg-white/95 backdrop-blur-md border-t border-secondary/10 transition-all flex gap-2 md:absolute md:inset-x-0 md:bottom-0 md:translate-y-full md:opacity-0 md:group-hover:translate-y-0 md:group-hover:opacity-100 md:group-focus-within:translate-y-0 md:group-focus-within:opacity-100">
+         <Link href={`/tutor/${tutor.id}`} className="flex-1 inline-flex justify-center items-center rounded-xl bg-secondary/5 px-4 py-2.5 text-sm font-bold text-secondary hover:bg-secondary/10 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2">
             View Profile
          </Link>
           {isTutor ? (
@@ -168,7 +158,7 @@ export default function TutorCard({ tutor, currentUserRole }: TutorCardProps) {
               href={connectHref}
               isGuest={!currentUserRole}
               subjects={tutor.subjects}
-              className="flex-1 inline-flex justify-center items-center rounded-xl bg-primary px-4 py-2.5 text-sm font-black text-white hover:bg-primary-hover transition-all shadow-lg active:scale-95"
+              className="flex-1 inline-flex justify-center items-center rounded-xl bg-primary px-4 py-2.5 text-sm font-black text-white hover:bg-primary-hover transition-all shadow-lg active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
             >
               Connect
             </TutorConnectLink>

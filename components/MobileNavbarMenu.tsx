@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useId, useRef, useState } from "react";
 import BookAssessmentLink from "@/components/analytics/BookAssessmentLink";
+import { signOut } from "@/app/login/actions";
 
 const navLinkClass =
   "rounded-2xl border border-transparent px-4 py-3 text-sm font-medium text-secondary/80 transition-colors hover:border-primary/10 hover:bg-primary/5 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2";
@@ -10,7 +11,15 @@ const navLinkClass =
 const utilityLinkClass =
   "rounded-2xl border border-transparent px-4 py-3 text-sm font-medium text-secondary/70 transition-colors hover:border-secondary/10 hover:bg-secondary/5 hover:text-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2";
 
-export default function MobileNavbarMenu() {
+type MobileNavbarMenuProps = {
+  isLoggedIn?: boolean;
+  dashboardHref?: string;
+};
+
+export default function MobileNavbarMenu({
+  isLoggedIn = false,
+  dashboardHref = "/dashboard/parent",
+}: MobileNavbarMenuProps) {
   const inputId = useId();
   const menuId = useId();
   const checkboxRef = useRef<HTMLInputElement>(null);
@@ -127,32 +136,53 @@ export default function MobileNavbarMenu() {
           aria-label="Mobile navigation"
           className="mr-auto flex h-full min-h-full w-[min(82vw,24rem)] flex-col border-r border-secondary/10 bg-white px-4 pb-8 pt-6 shadow-2xl"
         >
-          <nav className="grid gap-1.5" aria-label="Mobile primary navigation">
-            <Link href="/#directory" onClick={closeMenu} className={navLinkClass}>
-              Find Tutors
-            </Link>
-            <Link href="/learning-hub" onClick={closeMenu} className={navLinkClass}>
-              Learning Hub
-            </Link>
-            <Link href="/ai-practice-studio" onClick={closeMenu} className={navLinkClass}>
-              Practice Dojo
-            </Link>
-            <BookAssessmentLink source="navbar_mobile" onClick={closeMenu} className={navLinkClass}>
-              Request Free Assessment
-            </BookAssessmentLink>
-          </nav>
+          {isLoggedIn ? (
+            <nav className="grid gap-1.5" aria-label="Mobile primary navigation">
+              <Link href={dashboardHref} onClick={closeMenu} className={navLinkClass}>
+                Dashboard
+              </Link>
+            </nav>
+          ) : (
+            <nav className="grid gap-1.5" aria-label="Mobile primary navigation">
+              <Link href="/#directory" onClick={closeMenu} className={navLinkClass}>
+                Find Tutors
+              </Link>
+              <Link href="/learning-hub" onClick={closeMenu} className={navLinkClass}>
+                Learning Hub
+              </Link>
+              <Link href="/ai-practice-studio" onClick={closeMenu} className={navLinkClass}>
+                Practice Dojo
+              </Link>
+              <BookAssessmentLink source="navbar_mobile" onClick={closeMenu} className={navLinkClass}>
+                Request Free Assessment
+              </BookAssessmentLink>
+            </nav>
+          )}
 
           <div className="mt-auto grid gap-2.5 border-t border-secondary/10 pt-5">
-            <Link href="/login" onClick={closeMenu} className={utilityLinkClass}>
-              Log in
-            </Link>
-            <Link
-              href="/signup"
-              onClick={closeMenu}
-              className="rounded-2xl bg-accent px-4 py-3 text-center text-sm font-bold text-white shadow-lg shadow-accent/15 transition-colors hover:bg-accent-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2"
-            >
-              Sign up
-            </Link>
+            {isLoggedIn ? (
+              <form action={signOut}>
+                <button
+                  type="submit"
+                  className="w-full rounded-2xl border border-transparent px-4 py-3 text-left text-sm font-medium text-secondary/70 transition-colors hover:border-secondary/10 hover:bg-secondary/5 hover:text-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                >
+                  Log out
+                </button>
+              </form>
+            ) : (
+              <>
+                <Link href="/login" onClick={closeMenu} className={utilityLinkClass}>
+                  Log in
+                </Link>
+                <Link
+                  href="/signup"
+                  onClick={closeMenu}
+                  className="rounded-2xl bg-accent px-4 py-3 text-center text-sm font-bold text-white shadow-lg shadow-accent/15 transition-colors hover:bg-accent-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2"
+                >
+                  Sign up
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </div>
