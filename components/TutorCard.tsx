@@ -107,7 +107,7 @@ export default function TutorCard({ tutor, currentUserRole }: TutorCardProps) {
           </div>
         </div>
 
-        <p className="mb-5 line-clamp-3 flex-1 text-sm leading-7 text-secondary/58">
+        <p className="mb-5 line-clamp-2 flex-1 text-sm leading-7 text-secondary/58">
           {tutor.bio}
         </p>
 
@@ -121,49 +121,53 @@ export default function TutorCard({ tutor, currentUserRole }: TutorCardProps) {
           </div>
         )}
 
-        <div className="mb-6 rounded-2xl border border-primary/10 bg-primary/[0.03] px-4 py-4">
-          <p className="text-[10px] font-black uppercase tracking-[0.12em] text-primary/55">Teaching focus</p>
-          <p className="mt-1 text-sm font-medium leading-6 text-secondary/60">{supportLine}</p>
-        </div>
-
         <div className="mt-auto flex items-center justify-between border-t border-secondary/5 pt-5">
           <div>
-            <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.10em] text-secondary/35">Tutor rating</p>
-            <div className="flex items-center gap-1">
-              <svg className="h-4 w-4 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-              </svg>
-              <span className="text-sm font-black text-secondary">{tutor.rating}</span>
-              <span className="text-sm text-secondary/40 font-medium">({tutor.review_count} reviews)</span>
+            <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.10em] text-secondary/35">Lesson rate</p>
+            <div className="flex items-baseline gap-1">
+              <span className="text-3xl font-black text-primary">£{tutor.hourly_rate}</span>
+              <span className="text-xs text-secondary/40 font-bold ml-1 uppercase tracking-widest">/hr</span>
             </div>
           </div>
           <div className="text-right">
-            <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.10em] text-secondary/35">Lesson rate</p>
-            <span className="text-3xl font-black text-primary">£{tutor.hourly_rate}</span>
-            <span className="text-xs text-secondary/40 font-bold ml-1 uppercase tracking-widest">/hr</span>
+            <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.10em] text-secondary/35">Rating</p>
+            {tutor.review_count > 0 ? (
+              <div className="flex items-center gap-1">
+                <svg className="h-4 w-4 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                </svg>
+                <span className="text-sm font-black text-secondary">{tutor.rating}</span>
+                <span className="text-xs text-secondary/40 font-medium">({tutor.review_count})</span>
+              </div>
+            ) : (
+              <p className="text-sm text-secondary/35 font-medium">No reviews yet</p>
+            )}
           </div>
         </div>
       </div>
       
-      <div className="p-4 bg-white/95 backdrop-blur-md border-t border-secondary/10 transition-all flex gap-2 md:absolute md:inset-x-0 md:bottom-0 md:translate-y-full md:opacity-0 md:group-hover:translate-y-0 md:group-hover:opacity-100 md:group-focus-within:translate-y-0 md:group-focus-within:opacity-100">
-         <Link href={`/tutor/${tutor.id}`} className="flex-1 inline-flex justify-center items-center rounded-xl bg-secondary/5 px-4 py-2.5 text-sm font-bold text-secondary hover:bg-secondary/10 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2">
-            View Profile
-         </Link>
-          {isTutor ? (
-            <span className="flex-1 inline-flex justify-center items-center rounded-xl bg-secondary/5 px-4 py-2.5 text-sm font-bold text-secondary/40 cursor-not-allowed select-none">
-              Tutor Profile
-            </span>
-          ) : (
-            <TutorConnectLink
-              href={connectHref}
-              isGuest={!currentUserRole}
-              subjects={tutor.subjects}
-              className="flex-1 inline-flex justify-center items-center rounded-xl bg-primary px-4 py-2.5 text-sm font-black text-white hover:bg-primary-hover transition-all shadow-lg active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
-            >
-              Connect
-            </TutorConnectLink>
-          )}
-       </div>
+      <div className="flex flex-col gap-2 p-4 bg-white/95 backdrop-blur-md border-t border-secondary/10 transition-all md:absolute md:inset-x-0 md:bottom-0 md:translate-y-full md:opacity-0 md:group-hover:translate-y-0 md:group-hover:opacity-100 md:group-focus-within:translate-y-0 md:group-focus-within:opacity-100">
+        {isTutor ? (
+          <span className="w-full inline-flex justify-center items-center rounded-xl bg-secondary/5 px-4 py-3 text-sm font-bold text-secondary/40 cursor-not-allowed select-none">
+            Tutor Profile
+          </span>
+        ) : (
+          <TutorConnectLink
+            href={connectHref}
+            isGuest={!currentUserRole}
+            subjects={tutor.subjects}
+            className="w-full inline-flex justify-center items-center rounded-xl bg-primary px-4 py-3 text-sm font-black text-white hover:bg-primary-hover transition-all shadow-lg shadow-primary/20 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+          >
+            Connect
+          </TutorConnectLink>
+        )}
+        <Link
+          href={`/tutor/${tutor.id}`}
+          className="w-full inline-flex justify-center items-center rounded-xl border border-secondary/10 px-4 py-2 text-xs font-bold text-secondary/60 hover:border-secondary/20 hover:text-secondary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+        >
+          View Profile
+        </Link>
+      </div>
     </div>
   );
 }
