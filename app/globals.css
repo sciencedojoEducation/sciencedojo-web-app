@@ -1,5 +1,9 @@
 @import "tailwindcss";
 
+@theme {
+  --breakpoint-xs: 23.4375rem; /* 375px — used for sub-375 mobile font scaling */
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);

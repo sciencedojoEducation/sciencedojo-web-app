@@ -33,6 +33,16 @@ const footerGroups = [
       ["Privacy", "/privacy"],
     ],
   },
+  {
+    title: "Support & Safety",
+    links: [
+      ["Safeguarding Policy", "/safeguarding"],
+      ["How We Verify Tutors", "/how-we-verify"],
+      ["Online Classroom Guide", "/classroom-guide"],
+      ["Parent Support", "/support"],
+      ["Contact Us", "/contact"],
+    ],
+  },
 ];
 
 export default function Footer() {
@@ -47,7 +57,7 @@ export default function Footer() {
             </p>
             <SocialLinks />
           </div>
-          <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-5">
             {footerGroups.map((group) => (
               <div key={group.title}>
                 <h3 className="text-xs font-black uppercase tracking-[0.2em] text-secondary/45">{group.title}</h3>

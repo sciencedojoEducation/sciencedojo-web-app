@@ -11,7 +11,9 @@ export interface TutorProfile {
   hourly_rate: number;
   rating: number;
   review_count: number;
+  average_rating: number | null;
   is_verified: boolean;
+  verified_at: string | null;
   is_available_now: boolean;
   chat_availability?: Record<string, unknown>;
   youtube_intro_url?: string | null;
@@ -180,7 +182,9 @@ export async function getTutors(searchTerm: string = "", subject: string = "All"
     hourly_rate: tutor.hourly_rate,
     rating: tutor.rating,
     review_count: tutor.review_count,
+    average_rating: tutor.review_count > 0 ? (tutor.rating ?? null) : null,
     is_verified: tutor.is_verified,
+    verified_at: tutor.is_verified ? 'verified' : null,
     is_available_now: tutor.is_available_now,
     youtube_intro_url: newFieldsMap[tutor.id]?.youtube_intro_url || null,
     education_level: newFieldsMap[tutor.id]?.education_level,
@@ -248,7 +252,9 @@ export async function getTutorById(id: string): Promise<TutorProfile | null> {
     hourly_rate: tutor.hourly_rate,
     rating: tutor.rating,
     review_count: tutor.review_count,
+    average_rating: tutor.review_count > 0 ? (tutor.rating ?? null) : null,
     is_verified: tutor.is_verified,
+    verified_at: tutor.is_verified ? 'verified' : null,
     is_available_now: tutor.is_available_now,
     chat_availability: extendedData?.chat_availability ?? undefined,
     youtube_intro_url: extendedData?.youtube_intro_url,

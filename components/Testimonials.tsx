@@ -87,10 +87,10 @@ const ACHIEVEMENT_STORY = {
 
 export function FeaturedTestimonialCard() {
   return (
-    <div className="relative mt-12 overflow-hidden rounded-[2rem] bg-[linear-gradient(135deg,#06172f_0%,#0a3a70_100%)] p-7 shadow-2xl shadow-secondary/20 md:p-11 lg:p-14">
+    <div className="relative mt-12 overflow-hidden rounded-[2rem] bg-[linear-gradient(135deg,#06172f_0%,#0a3a70_100%)] p-8 shadow-2xl shadow-secondary/20 md:p-12 lg:p-16">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_24%_12%,rgba(0,245,212,0.11),transparent_35%),radial-gradient(circle_at_88%_64%,rgba(255,255,255,0.07),transparent_31%)]"></div>
-      <div className="relative grid gap-10 lg:grid-cols-[minmax(0,1.55fr)_minmax(250px,0.52fr)] lg:items-center">
-        <div className="min-w-0 lg:pr-8">
+      <div className="relative grid gap-12 lg:grid-cols-[minmax(0,1.55fr)_minmax(250px,0.52fr)] lg:items-center">
+        <div className="min-w-0 lg:pr-10">
           <div className="flex flex-wrap gap-3">
             <span className="rounded-full bg-primary px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.22em] text-white">
               Featured Story
@@ -99,15 +99,15 @@ export function FeaturedTestimonialCard() {
               {FEATURED_STORY.badge}
             </span>
           </div>
-          <p className="mt-7 max-w-4xl text-2xl font-black leading-9 text-white md:text-3xl md:leading-10 lg:text-[2.28rem] lg:leading-[1.22]">
+          <p className="mt-8 max-w-4xl text-2xl font-black leading-9 text-white md:text-3xl md:leading-10 lg:text-[2.28rem] lg:leading-[1.22]">
             &ldquo;{FEATURED_STORY.quote}&rdquo;
           </p>
-          <p className="mt-4 text-sm font-black text-white/65">— {FEATURED_STORY.firstName}</p>
-          <p className="mt-6 max-w-2xl text-sm leading-7 text-white/58">
+          <p className="mt-5 text-sm font-black text-white/65">— {FEATURED_STORY.firstName}</p>
+          <p className="mt-7 max-w-2xl text-sm leading-7 text-white/58">
             {FEATURED_STORY.context}
           </p>
 
-          <div className="mt-8 rounded-2xl border border-white/10 bg-white/[0.055] p-6">
+          <div className="mt-10 rounded-2xl border border-white/10 bg-white/[0.055] p-6 md:p-7">
             <p className="text-[10px] font-black uppercase tracking-[0.22em] text-white/45">Achievement</p>
             <p className="mt-3 text-xl font-black leading-7 text-white md:text-2xl md:leading-8">
               Physics learning journey <span className="text-primary">→</span> TU Delft
@@ -149,7 +149,7 @@ export function FeaturedTestimonialCard() {
 
 export function AchievementStoryCard() {
   return (
-    <div className="rounded-3xl border border-primary/15 bg-[linear-gradient(135deg,rgba(0,102,255,0.075),rgba(255,255,255,0.98))] p-8 shadow-xl shadow-primary/10 xl:p-9">
+    <div className="rounded-3xl border border-primary/20 bg-[linear-gradient(135deg,rgba(0,102,255,0.09),rgba(255,255,255,0.99))] p-8 shadow-xl shadow-primary/10 xl:p-9">
       <div className="mb-5 flex flex-wrap items-center gap-3">
         <span className="rounded-full bg-primary/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-primary">
           {ACHIEVEMENT_STORY.badge}
@@ -180,13 +180,13 @@ export function TestimonialCard({ story, variant = "standard" }: { story: Testim
 
   return (
     <div
-      className={`rounded-3xl border border-secondary/10 p-8 shadow-xl shadow-secondary/10 backdrop-blur transition-all hover:-translate-y-1 hover:border-primary/20 hover:shadow-2xl hover:shadow-primary/10 xl:p-9 ${
+      className={`rounded-3xl border border-secondary/[0.08] p-7 shadow-md shadow-secondary/[0.06] backdrop-blur transition-all hover:-translate-y-1 hover:border-primary/20 hover:shadow-xl hover:shadow-primary/[0.07] xl:p-8 ${
         isWide
           ? "bg-[linear-gradient(135deg,#ffffff_0%,#f7fbff_100%)] sm:grid sm:grid-cols-[auto_1fr] sm:items-start sm:gap-6"
-          : "h-full bg-white/95"
+          : "h-full bg-white"
       }`}
     >
-      <div className={`flex items-start justify-between gap-3 ${isWide ? "mb-6 sm:mb-0" : "mb-6"}`}>
+      <div className={`flex items-start justify-between gap-3 ${isWide ? "mb-5 sm:mb-0" : "mb-5"}`}>
         <div className="flex items-center gap-3">
           <div
             className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-black text-white"

@@ -23,7 +23,7 @@ const homeFaqs = [
   },
   {
     question: "Which subjects does ScienceDojo support?",
-    answer: "ScienceDojo focuses on high-intent academic support including math, physics, chemistry, GCSE, IB, and A-Level tutoring.",
+    answer: "ScienceDojo offers specialist academic support across math, physics, chemistry, GCSE, IB, and A-Level programmes.",
   },
   {
     question: "Can I book a free assessment?",
@@ -152,7 +152,7 @@ export default async function Home({
              <span className="text-[10px] uppercase font-black tracking-[0.3em] text-white/50">Supporting students across British and international curricula</span>
           </div>
 
-          <h1 className="mb-6 text-5xl font-bold leading-[1.04] tracking-tight text-white md:mb-10 md:text-6xl lg:text-[5.25rem]">
+          <h1 className="mb-6 text-4xl xs:text-5xl font-bold leading-[1.04] tracking-tight text-white md:mb-10 md:text-6xl lg:text-[5.25rem]">
             Helping students learn with <span className="text-cyan-200/90 italic">confidence</span> anywhere.
           </h1>
           <p className="text-lg md:text-xl text-white/70 max-w-2xl mb-3 md:mb-5 font-medium leading-relaxed">
@@ -179,7 +179,7 @@ export default async function Home({
 
           </div>
 
-          <div className="sd-fade-up relative mb-3 w-full max-w-[calc(100vw-1rem)] justify-self-center sm:max-w-[43rem] lg:-mr-24 lg:mb-0 lg:max-w-none">
+          <div className="sd-fade-up relative mb-3 w-full max-w-[calc(100vw-1rem)] justify-self-center order-2 sm:max-w-[43rem] lg:order-none lg:-mr-24 lg:mb-0 lg:max-w-none">
             <div className="sd-glow-pulse pointer-events-none absolute -inset-10 rounded-[3.5rem] bg-[radial-gradient(circle_at_50%_45%,rgba(0,245,212,0.18),rgba(0,102,255,0.1)_38%,transparent_68%)] blur-2xl"></div>
             <div className="sd-shimmer relative aspect-[4/3] overflow-hidden rounded-[2.75rem] border border-white/15 bg-white/10 shadow-[0_48px_130px_rgba(0,0,0,0.42)] lg:scale-[1.04] lg:origin-center">
               <HeroIntroMedia imageSrc={homeImages.heroStem.src} imageAlt={homeImages.heroStem.alt} videoSrc="/videos/hero-video.mp4" />
@@ -212,23 +212,23 @@ export default async function Home({
             </div>
           </div>
 
-          <div className="relative z-10 grid w-full max-w-[calc(100vw-1rem)] justify-self-center gap-5 lg:hidden">
-            <div className="mt-6 flex flex-col gap-3 md:mt-10">
+          <div className="relative z-10 grid w-full max-w-[calc(100vw-1rem)] justify-self-center gap-5 order-3 lg:hidden">
+            <div className="flex flex-col gap-3 md:mt-10">
               <BookAssessmentLink
                 source="homepage_hero_mobile"
-                className="mx-auto w-[40%] min-w-max whitespace-nowrap rounded-2xl border border-white/80 bg-white px-6 py-3.5 text-center text-sm font-bold text-secondary shadow-xl shadow-white/20 transition-all active:scale-95"
+                className="w-full sm:mx-auto sm:w-[40%] sm:min-w-max sm:whitespace-nowrap rounded-2xl border border-white/80 bg-white px-6 py-3.5 text-center text-sm font-bold text-secondary shadow-xl shadow-white/20 transition-all active:scale-95"
               >
                 Book Free Assessment
               </BookAssessmentLink>
               <Link
                 href="/ai-practice-studio"
-                className="mx-auto w-[40%] min-w-max whitespace-nowrap rounded-2xl border border-white/20 bg-secondary/35 px-6 py-3.5 text-center text-sm font-bold text-white shadow-lg shadow-secondary/15 backdrop-blur-md transition-all hover:bg-secondary/45"
+                className="w-full sm:mx-auto sm:w-[40%] sm:min-w-max sm:whitespace-nowrap rounded-2xl border border-white/20 bg-secondary/35 px-6 py-3.5 text-center text-sm font-bold text-white shadow-lg shadow-secondary/15 backdrop-blur-md transition-all hover:bg-secondary/45"
               >
                 Try Practice Dojo
               </Link>
             </div>
             <div className="-mx-4 overflow-x-auto px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-              <div className="flex w-max gap-2 text-center">
+              <div className="flex w-max gap-2 pr-4 text-center">
                 {heroPills.map((item) => (
                   <div key={item} className="inline-flex shrink-0 rounded-full border border-white/15 bg-white/[0.07] px-4 py-2 text-[10px] font-black uppercase tracking-[0.1em] text-white/60 backdrop-blur">
                     {item}
@@ -247,7 +247,7 @@ export default async function Home({
         </div>
       </section>
 
-      <section aria-label="Practice Dojo" className="w-full border-b border-secondary/10 bg-[linear-gradient(180deg,#ffffff_0%,#f7fbff_100%)] px-4 py-24 md:px-10 md:py-28">
+      <section id="classroom" aria-label="Practice Dojo" className="w-full border-b border-secondary/10 bg-[linear-gradient(180deg,#ffffff_0%,#f7fbff_100%)] px-4 py-24 md:px-10 md:py-28">
         <HomepageSectionTracker eventName="homepage_ai_practice_visible" />
         <div className="group relative mx-auto grid max-w-[1360px] gap-12 overflow-hidden rounded-[2.5rem] border border-primary/10 bg-white p-8 shadow-2xl shadow-secondary/5 transition-all hover:-translate-y-1 hover:shadow-primary/10 lg:grid-cols-[0.78fr_1.22fr] lg:items-center lg:p-12">
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_78%_20%,rgba(0,102,255,0.08),transparent_32%),linear-gradient(135deg,rgba(255,255,255,0.9),rgba(242,248,255,0.72))]"></div>
@@ -519,7 +519,7 @@ export default async function Home({
         </div>
       </section>
 
-      <section aria-label="Support parents can trust" className="relative w-full overflow-hidden bg-[#fffdf8] px-4 py-28 md:px-10 md:py-32">
+      <section id="safeguarding" aria-label="Support parents can trust" className="relative w-full overflow-hidden bg-[#fffdf8] px-4 py-28 md:px-10 md:py-32">
         <div className="mx-auto grid max-w-[1360px] items-center gap-14 lg:grid-cols-[0.95fr_1.05fr]">
           <div className="relative order-2 lg:order-1">
             <div className="relative aspect-[4/3] overflow-hidden rounded-[2.25rem] border border-secondary/10 bg-surface shadow-2xl shadow-primary/10">
@@ -583,7 +583,7 @@ export default async function Home({
         <div className="mb-8 border-t border-secondary/5 pt-10">
           <div className="max-w-3xl">
             <p className="text-xs font-black uppercase tracking-[0.28em] text-primary">Tutor marketplace</p>
-            <h2 className="mt-4 text-4xl font-black tracking-tight text-secondary md:text-5xl">Find the Right Tutor</h2>
+            <h2 id="how-we-verify" className="mt-4 text-4xl font-black tracking-tight text-secondary md:text-5xl">Find the Right Tutor</h2>
             <p className="mt-4 max-w-2xl text-lg leading-8 text-secondary/65">
               Connect with tutors who match your child&apos;s learning goals, curriculum, and learning style.
             </p>
@@ -726,7 +726,7 @@ export default async function Home({
               <div className="flex flex-col gap-4">
                 {([
                   "Start with a free assessment",
-                  "100% secure checkout",
+                  "100% secure payment",
                   "Cancel bookings up to 24 hours prior",
                   "Direct messaging with your tutor",
                 ] as const).map((item) => (
@@ -756,13 +756,13 @@ export default async function Home({
         </div>
       </section>
 
-      <section aria-label="Family testimonials" className="relative w-full overflow-hidden bg-[linear-gradient(180deg,#ffffff_0%,#f7fbff_48%,#fffefe_100%)] px-4 py-24 md:px-10 md:py-32">
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_18%_24%,rgba(0,102,255,0.065),transparent_31%),radial-gradient(circle_at_78%_40%,rgba(0,245,212,0.05),transparent_29%)]"></div>
+      <section aria-label="Family testimonials" className="relative w-full overflow-hidden bg-[linear-gradient(180deg,#eef4ff_0%,#f5f9ff_14%,#f8fafe_46%,#fdfeff_100%)] px-4 py-28 md:px-10 md:py-36">
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_15%_18%,rgba(0,102,255,0.08),transparent_34%),radial-gradient(circle_at_80%_38%,rgba(0,102,255,0.04),transparent_28%)]"></div>
         <div className="mx-auto max-w-[1360px]">
-          <div className="mx-auto max-w-4xl text-center">
-            <p className="mb-4 text-xs font-black uppercase tracking-[0.28em] text-primary">Learning journeys</p>
-            <h2 className="text-3xl font-black leading-tight text-secondary md:text-5xl md:leading-tight xl:text-[3.35rem]">What Families Say About <span className="text-primary">sciencedojo</span></h2>
-            <p className="mx-auto mt-6 max-w-2xl text-lg leading-8 text-secondary/65">
+          <div className="mx-auto max-w-3xl text-center">
+            <p className="mb-5 text-xs font-black uppercase tracking-[0.28em] text-primary">Learning journeys</p>
+            <h2 className="text-4xl font-black leading-[1.08] tracking-tight text-secondary md:text-5xl xl:text-[3.75rem]">What Families Say About <span className="text-primary">sciencedojo</span></h2>
+            <p className="mx-auto mt-5 max-w-lg text-lg leading-[1.75] text-secondary/55">
               Real messages from students and parents supported through structured tutoring.
             </p>
           </div>
@@ -799,7 +799,7 @@ export default async function Home({
         </div>
       </section>
 
-      <section aria-label="Frequently asked questions" className="w-full bg-gradient-to-b from-surface to-white px-4 py-24 md:px-10 md:py-28">
+      <section id="faq" aria-label="Frequently asked questions" className="w-full bg-gradient-to-b from-surface to-white px-4 py-24 md:px-10 md:py-28">
         <div className="mx-auto max-w-[1040px]">
           <div className="text-center">
             <p className="mb-4 text-xs font-black uppercase tracking-[0.28em] text-primary">FAQ</p>
