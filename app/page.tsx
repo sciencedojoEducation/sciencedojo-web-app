@@ -152,7 +152,7 @@ export default async function Home({
              <span className="text-[10px] uppercase font-black tracking-[0.3em] text-white/50">Supporting students across British and international curricula</span>
           </div>
 
-          <h1 className="mb-6 text-4xl xs:text-5xl font-bold leading-[1.04] tracking-tight text-white md:mb-10 md:text-6xl lg:text-[5.25rem]">
+          <h1 className="mb-6 text-3xl xs:text-4xl font-bold leading-[1.04] tracking-tight text-white md:mb-10 md:text-6xl lg:text-[5.25rem]">
             Helping students learn with <span className="text-cyan-200/90 italic">confidence</span> anywhere.
           </h1>
           <p className="text-lg md:text-xl text-white/70 max-w-2xl mb-3 md:mb-5 font-medium leading-relaxed">
@@ -179,27 +179,27 @@ export default async function Home({
 
           </div>
 
-          <div className="sd-fade-up relative mb-3 w-full max-w-[calc(100vw-1rem)] justify-self-center order-2 sm:max-w-[43rem] lg:order-none lg:-mr-24 lg:mb-0 lg:max-w-none">
+          <div className="sd-fade-up relative mb-20 w-full max-w-[calc(100vw-1rem)] justify-self-center order-2 sm:max-w-[43rem] lg:order-none lg:-mr-24 lg:mb-0 lg:max-w-none">
             <div className="sd-glow-pulse pointer-events-none absolute -inset-10 rounded-[3.5rem] bg-[radial-gradient(circle_at_50%_45%,rgba(0,245,212,0.18),rgba(0,102,255,0.1)_38%,transparent_68%)] blur-2xl"></div>
             <div className="sd-shimmer relative aspect-[4/3] overflow-hidden rounded-[2.75rem] border border-white/15 bg-white/10 shadow-[0_48px_130px_rgba(0,0,0,0.42)] lg:scale-[1.04] lg:origin-center">
               <HeroIntroMedia imageSrc={homeImages.heroStem.src} imageAlt={homeImages.heroStem.alt} videoSrc="/videos/hero-video.mp4" />
               <div className="absolute inset-0 bg-gradient-to-tr from-secondary/65 via-primary/10 to-cyan-300/15"></div>
               <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-secondary/55 to-transparent"></div>
             </div>
-            <div className="sd-float-soft absolute right-0 top-8 hidden w-56 rounded-3xl border border-white/15 bg-white/95 px-5 py-4 text-left shadow-2xl shadow-black/25 backdrop-blur md:block md:translate-x-1/2">
+            <div className="sd-float-soft absolute -right-6 top-[1%] block w-[11rem] rounded-3xl border border-white/15 bg-white/95 px-3.5 py-3 text-left shadow-2xl shadow-black/25 backdrop-blur lg:left-auto lg:right-0 lg:top-8 lg:block lg:w-56 lg:translate-x-1/2 lg:px-5 lg:py-4 scale-[0.78] lg:scale-100 origin-center lg:origin-center">
               <p className="text-[10px] font-black uppercase tracking-[0.16em] text-primary">Built-in Classroom</p>
               <p className="mt-1 text-sm font-black text-secondary">Lessons inside ScienceDojo</p>
             </div>
-            <div className="sd-float-soft-delayed absolute -left-6 top-1/2 hidden w-52 rounded-3xl border border-white/15 bg-secondary/95 px-5 py-4 text-left text-white shadow-2xl shadow-black/25 backdrop-blur md:block">
+            <div className="sd-float-soft-delayed absolute -left-14 top-[34%] block w-[11.25rem] rounded-3xl border border-white/15 bg-secondary/95 px-3.5 py-3 text-left text-white shadow-2xl shadow-black/25 backdrop-blur lg:-left-6 lg:right-auto lg:top-1/2 lg:block lg:w-52 lg:px-5 lg:py-4 scale-[0.72] lg:scale-100 origin-top-right lg:origin-center">
               <p className="text-[10px] font-black uppercase tracking-[0.16em] text-white/45">Weekly Progress</p>
               <p className="mt-1 text-sm font-black">Clear next steps after lessons</p>
             </div>
-            <div className="absolute -bottom-8 left-6 grid w-[46%] min-w-[10.5rem] gap-2 sm:grid-cols-2 sm:w-[54%] lg:-bottom-7 lg:left-10 lg:right-auto lg:w-[74%] lg:gap-3">
+            <div className="absolute -bottom-12 -left-1 grid w-[70%] max-w-[19rem] min-w-[12rem] gap-2 lg:-bottom-7 lg:left-10 lg:right-auto lg:w-[74%] lg:max-w-none lg:grid-cols-2 lg:gap-3">
               {[
                 { label: "Practice Dojo", detail: "Targeted checks" },
                 { label: "Parent Updates", detail: "Visible support" },
               ].map((item) => (
-                <div key={item.label} className="flex items-center gap-2.5 rounded-[1.05rem] border border-white/15 bg-white/95 px-3.5 py-2.5 text-left text-secondary shadow-2xl shadow-black/15 backdrop-blur transition-transform hover:-translate-y-0.5 lg:gap-3 lg:rounded-2xl lg:px-5 lg:py-4">
+                <div key={item.label} className={`flex items-center gap-2.5 rounded-[1.05rem] border border-white/15 bg-white/95 px-3.5 py-2.5 text-left text-secondary shadow-2xl shadow-black/15 backdrop-blur transition-transform hover:-translate-y-0.5 lg:gap-3 lg:rounded-2xl lg:px-5 lg:py-4 scale-[0.86] md:scale-100 ${item.label === "Practice Dojo" ? "origin-bottom-left md:origin-center" : "origin-bottom-right md:origin-center"}`}>
                   <svg className="h-3.5 w-3.5 shrink-0 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
                   </svg>
@@ -227,10 +227,10 @@ export default async function Home({
                 Try Practice Dojo
               </Link>
             </div>
-            <div className="-mx-4 overflow-x-auto px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-              <div className="flex w-max gap-2 pr-4 text-center">
+            <div className="px-1">
+              <div className="flex flex-wrap justify-center gap-2 text-center">
                 {heroPills.map((item) => (
-                  <div key={item} className="inline-flex shrink-0 rounded-full border border-white/15 bg-white/[0.07] px-4 py-2 text-[10px] font-black uppercase tracking-[0.1em] text-white/60 backdrop-blur">
+                  <div key={item} className="inline-flex shrink-0 rounded-full border border-white/15 bg-white/[0.07] px-3 py-1.5 text-[9px] font-black uppercase tracking-[0.08em] text-white/60 backdrop-blur sm:px-4 sm:py-2 sm:text-[10px] sm:tracking-[0.1em]">
                     {item}
                   </div>
                 ))}
