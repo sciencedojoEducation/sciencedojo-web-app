@@ -1,6 +1,6 @@
 import Image from "next/image";
 
-interface Testimonial {
+export interface Testimonial {
   quote: string;
   firstName: string;
   context: string;
@@ -17,7 +17,7 @@ interface TestimonialsProps {
 // Shared with permission where applicable.
 // Do not add fake ratings, fake outcomes, or unverifiable claims.
 // Individual outcomes vary.
-const REAL_TESTIMONIALS: Testimonial[] = [
+export const REAL_TESTIMONIALS: Testimonial[] = [
   {
     quote: "I really wouldn't have been able to do this without your help and advice.",
     firstName: "Kehara",
@@ -87,10 +87,10 @@ const ACHIEVEMENT_STORY = {
 
 export function FeaturedTestimonialCard() {
   return (
-    <div className="relative mt-12 overflow-hidden rounded-[2rem] bg-[linear-gradient(135deg,#06172f_0%,#0a3a70_100%)] p-7 shadow-2xl shadow-secondary/20 md:p-11 xl:p-14">
+    <div className="relative mt-12 overflow-hidden rounded-[2rem] bg-[linear-gradient(135deg,#06172f_0%,#0a3a70_100%)] p-7 shadow-2xl shadow-secondary/20 md:p-11 lg:p-14">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_24%_12%,rgba(0,245,212,0.11),transparent_35%),radial-gradient(circle_at_88%_64%,rgba(255,255,255,0.07),transparent_31%)]"></div>
-      <div className="relative grid gap-10 xl:grid-cols-[minmax(0,1.55fr)_minmax(250px,0.52fr)] xl:items-center">
-        <div className="min-w-0 xl:pr-8">
+      <div className="relative grid gap-10 lg:grid-cols-[minmax(0,1.55fr)_minmax(250px,0.52fr)] lg:items-center">
+        <div className="min-w-0 lg:pr-8">
           <div className="flex flex-wrap gap-3">
             <span className="rounded-full bg-primary px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.22em] text-white">
               Featured Story
@@ -99,7 +99,7 @@ export function FeaturedTestimonialCard() {
               {FEATURED_STORY.badge}
             </span>
           </div>
-          <p className="mt-7 max-w-4xl text-2xl font-black leading-9 text-white md:text-3xl md:leading-10 xl:text-[2.28rem] xl:leading-[1.22]">
+          <p className="mt-7 max-w-4xl text-2xl font-black leading-9 text-white md:text-3xl md:leading-10 lg:text-[2.28rem] lg:leading-[1.22]">
             &ldquo;{FEATURED_STORY.quote}&rdquo;
           </p>
           <p className="mt-4 text-sm font-black text-white/65">— {FEATURED_STORY.firstName}</p>
@@ -108,7 +108,7 @@ export function FeaturedTestimonialCard() {
           </p>
 
           <div className="mt-8 rounded-2xl border border-white/10 bg-white/[0.055] p-6">
-            <p className="text-[10px] font-black uppercase tracking-[0.22em] text-white/45">Outcome line</p>
+            <p className="text-[10px] font-black uppercase tracking-[0.22em] text-white/45">Achievement</p>
             <p className="mt-3 text-xl font-black leading-7 text-white md:text-2xl md:leading-8">
               Physics learning journey <span className="text-primary">→</span> TU Delft
             </p>
@@ -124,13 +124,13 @@ export function FeaturedTestimonialCard() {
         </div>
 
         <aside aria-label="Achievement proof" className="min-w-0">
-          <div className="mx-auto w-full max-w-[400px] rounded-[1.75rem] border border-white/10 bg-white/[0.065] p-3 shadow-xl shadow-black/15 backdrop-blur sm:max-w-[360px] xl:ml-auto xl:max-w-[300px]">
-            <div className="relative h-[350px] overflow-hidden rounded-[1.25rem] bg-white sm:h-[410px] xl:h-[318px]">
+          <div className="mx-auto w-full max-w-[400px] rounded-[1.75rem] border border-white/10 bg-white/[0.065] p-3 shadow-xl shadow-black/15 backdrop-blur lg:ml-auto lg:max-w-[300px]">
+            <div className="relative h-[260px] overflow-hidden rounded-[1.25rem] bg-white sm:h-[320px] lg:h-[318px]">
               <Image
                 src={FEATURED_STORY.certificateSrc}
                 alt="Privacy-blurred Pearson achievement certificate showing Highest Mark in Europe recognition for a ScienceDojo student."
                 fill
-                sizes="(max-width: 768px) 82vw, (max-width: 1280px) 46vw, 300px"
+                sizes="(max-width: 768px) 82vw, (max-width: 1024px) 46vw, 300px"
                 className="object-contain opacity-85 brightness-95 contrast-90"
               />
             </div>
@@ -175,35 +175,48 @@ export function AchievementStoryCard() {
   );
 }
 
-export default function Testimonials({ useRealData = false }: TestimonialsProps) {
-  const stories = useRealData ? REAL_TESTIMONIALS : [];
+export function TestimonialCard({ story, variant = "standard" }: { story: Testimonial; variant?: "standard" | "wide" }) {
+  const isWide = variant === "wide";
 
   return (
-    <div className="relative z-10 grid gap-6 md:grid-cols-2">
-      {stories.map((story, index) => (
-        <div
-          key={index}
-          className="rounded-3xl border border-secondary/10 bg-white/95 p-8 shadow-xl shadow-secondary/10 backdrop-blur transition-all hover:-translate-y-1 hover:border-primary/20 hover:shadow-2xl hover:shadow-primary/10 xl:p-9"
-        >
-          <div className="mb-6 flex items-start justify-between gap-3">
-            <div className="flex items-center gap-3">
-              <div
-                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-black text-white"
-                aria-hidden="true"
-              >
-                {story.initials}
-              </div>
-              <div>
-                <p className="text-sm font-black text-secondary">{story.firstName}</p>
-                <p className="mt-0.5 text-xs leading-5 text-secondary/52">{story.context}</p>
-              </div>
-            </div>
-            <span className="shrink-0 rounded-full bg-primary/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-primary">
-              {story.badge}
-            </span>
+    <div
+      className={`rounded-3xl border border-secondary/10 p-8 shadow-xl shadow-secondary/10 backdrop-blur transition-all hover:-translate-y-1 hover:border-primary/20 hover:shadow-2xl hover:shadow-primary/10 xl:p-9 ${
+        isWide
+          ? "bg-[linear-gradient(135deg,#ffffff_0%,#f7fbff_100%)] sm:grid sm:grid-cols-[auto_1fr] sm:items-start sm:gap-6"
+          : "h-full bg-white/95"
+      }`}
+    >
+      <div className={`flex items-start justify-between gap-3 ${isWide ? "mb-6 sm:mb-0" : "mb-6"}`}>
+        <div className="flex items-center gap-3">
+          <div
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-black text-white"
+            aria-hidden="true"
+          >
+            {story.initials}
           </div>
+          <div>
+            <p className="text-sm font-black text-secondary">{story.firstName}</p>
+            <p className="mt-0.5 text-xs leading-5 text-secondary/52">{story.context}</p>
+          </div>
+        </div>
+        <span className="shrink-0 rounded-full bg-primary/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-primary">
+          {story.badge}
+        </span>
+      </div>
+      <p className={`text-xl font-black leading-8 text-secondary xl:leading-9 ${isWide ? "xl:text-[1.45rem]" : "xl:text-[1.34rem]"}`}>
+        &ldquo;{story.quote}&rdquo;
+      </p>
+    </div>
+  );
+}
 
-          <p className="text-xl font-black leading-8 text-secondary xl:text-[1.34rem] xl:leading-9">&ldquo;{story.quote}&rdquo;</p>
+export default function Testimonials({ useRealData = false }: TestimonialsProps) {
+  const stories = useRealData ? REAL_TESTIMONIALS : [];
+  return (
+    <div className="grid gap-6 sm:grid-cols-2">
+      {stories.map((story, index) => (
+        <div key={index} className={index === stories.length - 1 ? "sm:col-span-2" : ""}>
+          <TestimonialCard story={story} variant={index === stories.length - 1 ? "wide" : "standard"} />
         </div>
       ))}
     </div>

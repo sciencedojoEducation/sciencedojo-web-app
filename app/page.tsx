@@ -12,7 +12,7 @@ import AiPracticeStudioCtaLink from "@/components/analytics/AiPracticeStudioCtaL
 import BookAssessmentLink from "@/components/analytics/BookAssessmentLink";
 import HomepageSectionTracker from "@/components/analytics/HomepageSectionTracker";
 import HeroIntroMedia from "@/components/HeroIntroMedia";
-import Testimonials, { AchievementStoryCard, FeaturedTestimonialCard } from "@/components/Testimonials";
+import { AchievementStoryCard, FeaturedTestimonialCard, REAL_TESTIMONIALS, TestimonialCard } from "@/components/Testimonials";
 import { homeImages } from "@/lib/homeImages";
 import { faqJsonLd, localBusinessJsonLd, organizationJsonLd } from "@/lib/seo";
 
@@ -775,9 +775,25 @@ export default async function Home({
                 <h3 className="mt-2 text-2xl font-black text-secondary">Real learning stories</h3>
               </div>
             </div>
-            <div className="grid gap-7 xl:grid-cols-[minmax(320px,0.34fr)_minmax(0,0.66fr)] xl:items-start">
+
+            {/* sm+: unified 3-col grid — all 6 cards as peers, clean 2×3 layout */}
+            <div className="hidden sm:grid sm:grid-cols-2 sm:gap-6 lg:grid-cols-3 lg:items-start">
               <AchievementStoryCard />
-              <Testimonials useRealData={true} />
+              {REAL_TESTIMONIALS.map((story, index) => (
+                <TestimonialCard key={index} story={story} />
+              ))}
+            </div>
+
+            {/* Mobile: full-width achievement card + horizontal scroll for testimonials */}
+            <div className="flex flex-col gap-5 sm:hidden">
+              <AchievementStoryCard />
+              <div className="-mx-4 flex snap-x snap-mandatory gap-5 overflow-x-auto px-4 pb-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                {REAL_TESTIMONIALS.map((story, index) => (
+                  <div key={index} className="w-[82vw] shrink-0 snap-start">
+                    <TestimonialCard story={story} />
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>
