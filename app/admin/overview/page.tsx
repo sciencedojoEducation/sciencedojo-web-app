@@ -11,7 +11,17 @@ export const metadata: Metadata = {
   },
 };
 
-type LeadStatus = "new" | "contacted" | "booked" | "converted" | "closed";
+type LeadStatus =
+  | "new_inquiry"
+  | "awaiting_review"
+  | "consultation_booked"
+  | "tutor_matched"
+  | "converted"
+  | "inactive"
+  | "new"
+  | "contacted"
+  | "booked"
+  | "closed";
 
 type AssessmentLead = {
   id: string;
@@ -24,11 +34,12 @@ type AssessmentLead = {
 };
 
 const statuses: Array<{ key: LeadStatus; label: string; tone: string }> = [
-  { key: "new", label: "New", tone: "bg-sky-50 text-sky-700 border-sky-100" },
-  { key: "contacted", label: "Contacted", tone: "bg-indigo-50 text-indigo-700 border-indigo-100" },
-  { key: "booked", label: "Booked", tone: "bg-amber-50 text-amber-700 border-amber-100" },
+  { key: "new_inquiry", label: "New inquiry", tone: "bg-sky-50 text-sky-700 border-sky-100" },
+  { key: "awaiting_review", label: "Awaiting review", tone: "bg-indigo-50 text-indigo-700 border-indigo-100" },
+  { key: "consultation_booked", label: "Consultation booked", tone: "bg-amber-50 text-amber-700 border-amber-100" },
+  { key: "tutor_matched", label: "Tutor matched", tone: "bg-cyan-50 text-cyan-700 border-cyan-100" },
   { key: "converted", label: "Converted", tone: "bg-emerald-50 text-emerald-700 border-emerald-100" },
-  { key: "closed", label: "Closed", tone: "bg-slate-50 text-slate-600 border-slate-100" },
+  { key: "inactive", label: "Inactive", tone: "bg-slate-50 text-slate-600 border-slate-100" },
 ];
 
 function getFilterStart(filter: string) {
@@ -98,7 +109,7 @@ export default async function AdminOverviewPage({
   }
 
   const newestLeads = leads.slice(0, 5);
-  const bookedCount = counts.booked + counts.converted;
+  const bookedCount = (counts.consultation_booked || 0) + (counts.tutor_matched || 0) + (counts.converted || 0) + (counts.booked || 0);
   const convertedCount = counts.converted;
 
   return (
@@ -159,7 +170,7 @@ export default async function AdminOverviewPage({
           </div>
         </section>
 
-        <section className="mb-8 grid gap-4 md:grid-cols-5">
+        <section className="mb-8 grid gap-4 md:grid-cols-3 xl:grid-cols-6">
           {statuses.map((status) => (
             <div key={status.key} className={`rounded-3xl border p-5 shadow-sm ${status.tone}`}>
               <p className="text-xs font-black uppercase tracking-[0.2em] opacity-70">{status.label}</p>

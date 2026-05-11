@@ -51,9 +51,9 @@ export default async function DashboardLayout({
   }
   
   return (
-    <div className="flex flex-1 min-h-[calc(100vh-80px)] bg-background">
+    <div className="flex h-[100dvh] min-h-0 flex-1 flex-col overflow-hidden bg-background lg:flex-row">
       <DashboardSidebar role={role} />
-      <main className="flex-1 overflow-y-auto">
+      <main className="min-h-0 min-w-0 flex-1 overflow-y-auto overscroll-contain">
         {children}
       </main>
       <DashboardGuidedTour

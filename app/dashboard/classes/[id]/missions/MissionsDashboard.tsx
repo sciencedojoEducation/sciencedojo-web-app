@@ -41,14 +41,14 @@ export default function MissionsDashboard({ classId, studentId, tutorId }: { cla
              <div className="relative z-10 space-y-2">
                  <h2 className="text-3xl font-black tracking-tight flex items-center gap-3">
                     <BrainCircuit className="text-emerald-400" size={32} />
-                    Historical Analytics
+                    Learning Progress
                  </h2>
-                 <p className="text-indigo-200 font-medium">Your AI-driven academic progress tracker for this class.</p>
+                 <p className="text-indigo-200 font-medium">Structured Mission progress connected to this class.</p>
              </div>
           </div>
 
           <div className="bg-white rounded-[2rem] p-6 shadow-sm border border-slate-100 flex flex-col h-[350px]">
-              <h3 className="font-black text-slate-800 uppercase tracking-widest text-xs mb-6">Precision over Time</h3>
+              <h3 className="font-black text-slate-800 uppercase tracking-widest text-xs mb-6">Progress over time</h3>
               {chartData.length > 0 ? (
               <div className="flex-1 w-full h-full">
                   <ResponsiveContainer width="100%" height="100%">
@@ -67,14 +67,14 @@ export default function MissionsDashboard({ classId, studentId, tutorId }: { cla
               ) : (
                 <div className="flex-1 flex flex-col items-center justify-center text-slate-400">
                     <LineChartIcon size={48} className="opacity-20 mb-4" />
-                    <p className="font-medium text-sm">No graded missions yet to graph.</p>
+                    <p className="font-medium text-sm">No completed Missions yet to graph.</p>
                 </div>
               )}
           </div>
 
           {/* Mission Log - Read Only */}
           <div>
-            <h3 className="font-black text-slate-800 uppercase tracking-widest text-xs mb-4">Classroom Exam Records</h3>
+            <h3 className="font-black text-slate-800 uppercase tracking-widest text-xs mb-4">Mission history</h3>
             <div className="space-y-4">
                {missions.map((m, index) => {
                   const missionNumber = String(missions.length - index).padStart(3, '0');
@@ -98,24 +98,24 @@ export default function MissionsDashboard({ classId, studentId, tutorId }: { cla
                                 ID: {missionNumber}
                              </span>
                          </div>
-                         <h4 className="font-bold text-slate-800">{m.mission_blueprint?.topic || "Active Mission"}</h4>
-                         <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Generated {new Date(m.created_at).toLocaleDateString()} at {new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+                         <h4 className="font-bold text-slate-800">{m.mission_blueprint?.topic || "Guided practice pathway"}</h4>
+                         <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Prepared {new Date(m.created_at).toLocaleDateString()} at {new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
                       </div>
                       <div className="flex items-center gap-6">
                          {m.score_percentage !== null ? (
                              <div className="text-right">
-                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Final Score</p>
+                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Progress score</p>
                                 <p className="font-black text-2xl text-emerald-500">{m.score_percentage}%</p>
                              </div>
                          ) : (
                              <div className="text-right text-slate-400 font-medium text-sm italic">
-                                 {m.status === 'pending_assessment' ? 'Currently Taking' : 'Awaiting Grade'}
+                                 {m.status === 'pending_assessment' ? 'In progress' : 'Awaiting tutor review'}
                              </div>
                          )}
                       </div>
                   </div>
                )})}
-               {missions.length === 0 && <p className="text-sm text-slate-500 font-medium">No missions active.</p>}
+               {missions.length === 0 && <p className="text-sm text-slate-500 font-medium">No Missions active yet.</p>}
             </div>
           </div>
 

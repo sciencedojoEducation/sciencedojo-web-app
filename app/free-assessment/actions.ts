@@ -9,6 +9,12 @@ export type AssessmentFormState = {
   fallbackText?: string;
   mailtoHref?: string;
   whatsappHref?: string;
+  summary?: {
+    confidenceAreas: string[];
+    supportAreas: string[];
+    recommendedDirection: string;
+    nextSteps: string[];
+  };
 };
 
 const recipientEmail = process.env.ASSESSMENT_RECIPIENT_EMAIL || "hello@sciencedojo.co.uk";
@@ -36,10 +42,79 @@ function buildFallbackMessage(fields: Record<string, string>) {
     `Student year/grade: ${fields.studentYear}`,
     `Curriculum: ${fields.curriculum}`,
     `Subject help needed: ${fields.subject}`,
-    `Main learning challenge: ${fields.challenge}`,
-    `Preferred lesson time: ${fields.preferredTime}`,
+    `Weak topics: ${fields.weakTopics}`,
+    `Target grade or goal: ${fields.targetGrade}`,
+    `Upcoming exams: ${fields.upcomingExams}`,
+    `What feels hardest: ${fields.hardestAreas}`,
+    `Support needed now: ${fields.challenge}`,
+    `Study habits and concerns: ${fields.studyConcerns}`,
+    `Successful next few months: ${fields.goalsTimeline}`,
+    `Preferred support style: ${fields.supportStyle}`,
+    `Preferred assessment time: ${fields.preferredTime}`,
     `Message: ${fields.message}`,
   ].join("\n");
+}
+
+function buildStructuredLeadNotes(fields: Record<string, string>) {
+  return [
+    "Premium assessment intake profile",
+    "",
+    "Student Profile",
+    `Student: ${fields.studentName || "Not specified"} (${fields.studentYear || "Not specified"})`,
+    `Curriculum: ${fields.curriculum || "Not specified"}`,
+    "",
+    "Subject & Goals",
+    `Subject: ${fields.subject || "Not specified"}`,
+    `Weak topics: ${fields.weakTopics || "Not specified"}`,
+    `Target grade or goal: ${fields.targetGrade || "Not specified"}`,
+    `Upcoming exams: ${fields.upcomingExams || "Not specified"}`,
+    "",
+    "Confidence & Gaps",
+    `What feels hardest: ${fields.hardestAreas || "Not specified"}`,
+    `Support needed now: ${fields.challenge || "Not specified"}`,
+    "",
+    "Study Habits & Concerns",
+    `Study habits and concerns: ${fields.studyConcerns || "Not specified"}`,
+    "",
+    "Support Style",
+    `Preferred support style: ${fields.supportStyle || "Not specified"}`,
+    `Successful next few months: ${fields.goalsTimeline || "Not specified"}`,
+    "",
+    "Contact & Assessment Time",
+    `Preferred assessment time: ${fields.preferredTime || "Not specified"}`,
+    "",
+    "Optional final note",
+    fields.message || "No extra message provided.",
+  ].join("\n");
+}
+
+function buildAssessmentSummary(fields: Record<string, string>): AssessmentFormState["summary"] {
+  const subject = fields.subject || "STEM";
+  const curriculum = fields.curriculum || "curriculum";
+  const focus = (fields.hardestAreas || fields.challenge || "confidence and understanding")
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean)[0] || "confidence and understanding";
+  const supportAreas = [
+    fields.subject,
+    fields.hardestAreas,
+    fields.studyConcerns,
+    fields.supportStyle,
+  ]
+    .filter(Boolean)
+    .flatMap((value) => value.split(",").map((item) => item.trim()).filter(Boolean))
+    .slice(0, 5);
+
+  return {
+    confidenceAreas: [fields.hardestAreas, fields.challenge].filter(Boolean),
+    supportAreas: supportAreas.length > 0 ? supportAreas : ["Confidence", "Structured practice", "Tutor guidance"],
+    recommendedDirection: `Structured ${curriculum} ${subject} support focused on ${focus.toLowerCase()}.`,
+    nextSteps: [
+      "Review the intake before the assessment call",
+      "Discuss confidence, subject gaps, and exam timeline",
+      "Recommend a suitable tutor and learning support rhythm",
+    ],
+  };
 }
 
 export async function requestFreeAssessment(
@@ -54,7 +129,14 @@ export async function requestFreeAssessment(
     studentYear: clean(formData.get("studentYear")),
     curriculum: clean(formData.get("curriculum")),
     subject: clean(formData.get("subject")),
+    weakTopics: clean(formData.get("weakTopics")),
+    targetGrade: clean(formData.get("targetGrade")),
+    upcomingExams: clean(formData.get("upcomingExams")),
+    hardestAreas: clean(formData.get("hardestAreas")),
     challenge: clean(formData.get("challenge")),
+    studyConcerns: clean(formData.get("studyConcerns")),
+    goalsTimeline: clean(formData.get("goalsTimeline")),
+    supportStyle: clean(formData.get("supportStyle")),
     preferredTime: clean(formData.get("preferredTime")),
     message: clean(formData.get("message")),
   };
@@ -67,7 +149,6 @@ export async function requestFreeAssessment(
     fields.studentYear,
     fields.curriculum,
     fields.subject,
-    fields.challenge,
     fields.preferredTime,
   ];
 
@@ -86,6 +167,8 @@ export async function requestFreeAssessment(
   }
 
   const fallbackText = buildFallbackMessage(fields);
+  const structuredLeadNotes = buildStructuredLeadNotes(fields);
+  const assessmentSummary = buildAssessmentSummary(fields);
   const mailtoHref = `mailto:${recipientEmail}?subject=${encodeURIComponent("Free assessment request")}&body=${encodeURIComponent(fallbackText)}`;
   const whatsappNumber = (process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "+94773850821").replace(/[^\d]/g, "");
   const whatsappHref = whatsappNumber ? `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(fallbackText)}` : undefined;
@@ -103,8 +186,15 @@ export async function requestFreeAssessment(
           "Student year/grade": fields.studentYear,
           Curriculum: fields.curriculum,
           "Subject help needed": fields.subject,
-          "Main learning challenge": fields.challenge,
-          "Preferred lesson time": fields.preferredTime,
+          "Weak topics": fields.weakTopics || "Not specified.",
+          "Target grade or goal": fields.targetGrade || "Not specified.",
+          "Upcoming exams": fields.upcomingExams || "Not specified.",
+          "What feels hardest": fields.hardestAreas || "Not specified.",
+          "Support needed now": fields.challenge || "Not specified.",
+          "Study habits and concerns": fields.studyConcerns || "Not specified.",
+          "Successful next few months": fields.goalsTimeline || "Not specified.",
+          "Preferred support style": fields.supportStyle || "Not specified.",
+          "Preferred assessment time": fields.preferredTime,
           Message: fields.message || "No extra message provided.",
         })
           .map(
@@ -121,11 +211,9 @@ export async function requestFreeAssessment(
   `;
 
   // TODO: Track an analytics conversion event here after server-side analytics is configured.
-  let leadId: string | null = null;
-
   try {
     const adminClient = await createAdminClient();
-    const { data: lead, error: leadError } = await adminClient
+    const { error: leadError } = await adminClient
       .from("assessment_leads")
       .insert({
         parent_name: fields.parentName,
@@ -135,14 +223,12 @@ export async function requestFreeAssessment(
         student_grade: fields.studentYear,
         curriculum: fields.curriculum,
         subject_needed: fields.subject,
-        main_challenge: fields.challenge,
+        main_challenge: fields.challenge || fields.hardestAreas || "Assessment intake completed",
         preferred_time: fields.preferredTime,
-        message: fields.message || null,
-        status: "new",
+        message: structuredLeadNotes,
+        status: "new_inquiry",
         source: "free_assessment_page",
-      })
-      .select("id")
-      .single();
+      });
 
     if (leadError) {
       console.error("Assessment lead insert error:", leadError.message);
@@ -155,7 +241,6 @@ export async function requestFreeAssessment(
       };
     }
 
-    leadId = lead?.id || null;
   } catch (error) {
     console.error("Assessment lead storage failed:", error);
     return {
@@ -180,14 +265,16 @@ export async function requestFreeAssessment(
       fallbackText,
       mailtoHref,
       whatsappHref,
+      summary: assessmentSummary,
     };
   }
 
   return {
     status: "success",
-    message: `Thank you. Your free assessment request has been saved${leadId ? ` as lead ${leadId.slice(0, 8)}` : ""} and sent to ScienceDojo.`,
+    message: "Thank you. Your assessment intake has been received. We will review it before the call so the conversation can focus on the right support for your child.",
     fallbackText,
     mailtoHref,
     whatsappHref,
+    summary: assessmentSummary,
   };
 }

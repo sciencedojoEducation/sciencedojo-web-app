@@ -17,29 +17,29 @@ export default async function ParentTutorsPage({
   const tutors = await getTutors(searchTerm, selectedSubject);
 
   return (
-    <div className="p-8 max-w-6xl mx-auto space-y-8">
+    <div className="p-4 sm:p-6 md:p-8 max-w-6xl mx-auto space-y-8">
       <div>
-        <h1 className="text-3xl font-black text-secondary tracking-tight mb-2">Expert Directory</h1>
-        <p className="text-secondary/60 font-bold">Find and connect with experienced tutors for your child's 1-1 sessions.</p>
+        <h1 className="text-3xl font-black text-secondary tracking-tight mb-2">Tutor support</h1>
+        <p className="text-secondary/60 font-bold">Find verified tutor support for your child's subject, confidence needs, and next learning step.</p>
       </div>
 
       <div className="bg-white p-6 rounded-3xl border border-secondary/10 shadow-sm">
         <SearchFilterBar />
       </div>
 
-      <div className="flex justify-between items-end">
+      <div className="flex flex-col gap-2 sm:flex-row sm:justify-between sm:items-end">
         <h2 className="text-xl font-black text-secondary uppercase tracking-widest text-[10px] opacity-40">
-          {selectedSubject === "All" ? "All Available Experts" : `${selectedSubject} Specialists`}
+          {selectedSubject === "All" ? "Available tutor support" : `${selectedSubject} support`}
         </h2>
         <span className="text-xs font-bold text-secondary/40">
-          {tutors.length} experts match your search
+          {tutors.length} support options match your search
         </span>
       </div>
 
       {tutors.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pb-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 pb-12">
           {tutors.map((tutor) => (
-            <TutorCard key={tutor.id} tutor={tutor as any} currentUserRole="parent" />
+            <TutorCard key={tutor.id} tutor={tutor as any} currentUserRole="parent" variant="dashboard" />
           ))}
         </div>
       ) : (
@@ -49,7 +49,7 @@ export default async function ParentTutorsPage({
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
           </div>
-          <h3 className="text-lg font-black text-secondary mb-2">No experts found</h3>
+          <h3 className="text-lg font-black text-secondary mb-2">No tutor support found</h3>
           <p className="text-secondary/60 max-w-sm mx-auto">Try adjusting your filters or search terms.</p>
         </div>
       )}

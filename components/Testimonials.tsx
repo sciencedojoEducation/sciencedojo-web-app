@@ -7,6 +7,7 @@ export interface Testimonial {
   type: "parent" | "student";
   initials: string;
   badge: string;
+  journey: string;
 }
 
 interface TestimonialsProps {
@@ -25,6 +26,7 @@ export const REAL_TESTIMONIALS: Testimonial[] = [
     type: "student",
     initials: "K",
     badge: "Student story",
+    journey: "Help and advice → GCSE support",
   },
   {
     quote:
@@ -34,6 +36,7 @@ export const REAL_TESTIMONIALS: Testimonial[] = [
     type: "student",
     initials: "U",
     badge: "Student story",
+    journey: "Preparation pressure → place secured",
   },
   {
     quote:
@@ -43,6 +46,7 @@ export const REAL_TESTIMONIALS: Testimonial[] = [
     type: "student",
     initials: "A",
     badge: "Student story",
+    journey: "Teacher support → 8 A*s",
   },
   {
     quote:
@@ -52,6 +56,7 @@ export const REAL_TESTIMONIALS: Testimonial[] = [
     type: "student",
     initials: "AN",
     badge: "Student story",
+    journey: "Lab report uncertainty → full marks",
   },
   {
     quote:
@@ -61,6 +66,7 @@ export const REAL_TESTIMONIALS: Testimonial[] = [
     type: "student",
     initials: "S",
     badge: "Student story",
+    journey: "Teacher support → trusted mentor relationship",
   },
 ];
 
@@ -87,7 +93,7 @@ const ACHIEVEMENT_STORY = {
 
 export function FeaturedTestimonialCard() {
   return (
-    <div className="relative mt-12 overflow-hidden rounded-[2rem] bg-[linear-gradient(135deg,#06172f_0%,#0a3a70_100%)] p-8 shadow-2xl shadow-secondary/20 md:p-12 lg:p-16">
+    <div className="relative mt-14 overflow-hidden rounded-[2rem] bg-[linear-gradient(135deg,#06172f_0%,#0a3a70_100%)] p-8 shadow-2xl shadow-secondary/20 md:p-12 lg:p-16">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_24%_12%,rgba(0,245,212,0.11),transparent_35%),radial-gradient(circle_at_88%_64%,rgba(255,255,255,0.07),transparent_31%)]"></div>
       <div className="relative grid gap-12 lg:grid-cols-[minmax(0,1.55fr)_minmax(250px,0.52fr)] lg:items-center">
         <div className="min-w-0 lg:pr-10">
@@ -99,7 +105,7 @@ export function FeaturedTestimonialCard() {
               {FEATURED_STORY.badge}
             </span>
           </div>
-          <p className="mt-8 max-w-4xl text-2xl font-black leading-9 text-white md:text-3xl md:leading-10 lg:text-[2.28rem] lg:leading-[1.22]">
+          <p className="mt-9 max-w-4xl text-2xl font-black leading-9 text-white md:text-3xl md:leading-10 lg:text-[2.35rem] lg:leading-[1.24]">
             &ldquo;{FEATURED_STORY.quote}&rdquo;
           </p>
           <p className="mt-5 text-sm font-black text-white/65">— {FEATURED_STORY.firstName}</p>
@@ -107,7 +113,7 @@ export function FeaturedTestimonialCard() {
             {FEATURED_STORY.context}
           </p>
 
-          <div className="mt-10 rounded-2xl border border-white/10 bg-white/[0.055] p-6 md:p-7">
+          <div className="mt-11 rounded-2xl border border-white/10 bg-white/[0.055] p-6 md:p-7">
             <p className="text-[10px] font-black uppercase tracking-[0.22em] text-white/45">Achievement</p>
             <p className="mt-3 text-xl font-black leading-7 text-white md:text-2xl md:leading-8">
               Physics learning journey <span className="text-primary">→</span> TU Delft
@@ -149,7 +155,7 @@ export function FeaturedTestimonialCard() {
 
 export function AchievementStoryCard() {
   return (
-    <div className="rounded-3xl border border-primary/20 bg-[linear-gradient(135deg,rgba(0,102,255,0.09),rgba(255,255,255,0.99))] p-8 shadow-xl shadow-primary/10 xl:p-9">
+    <div className="rounded-3xl border border-primary/20 bg-[linear-gradient(135deg,rgba(0,102,255,0.08),rgba(255,255,255,0.99))] p-8 shadow-xl shadow-primary/10 xl:p-9">
       <div className="mb-5 flex flex-wrap items-center gap-3">
         <span className="rounded-full bg-primary/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-primary">
           {ACHIEVEMENT_STORY.badge}
@@ -180,7 +186,7 @@ export function TestimonialCard({ story, variant = "standard" }: { story: Testim
 
   return (
     <div
-      className={`rounded-3xl border border-secondary/[0.08] p-7 shadow-md shadow-secondary/[0.06] backdrop-blur transition-all hover:-translate-y-1 hover:border-primary/20 hover:shadow-xl hover:shadow-primary/[0.07] xl:p-8 ${
+      className={`rounded-3xl border border-secondary/[0.08] p-8 shadow-md shadow-secondary/[0.05] backdrop-blur transition-all hover:-translate-y-0.5 hover:border-primary/20 hover:shadow-xl hover:shadow-primary/[0.06] xl:p-9 ${
         isWide
           ? "bg-[linear-gradient(135deg,#ffffff_0%,#f7fbff_100%)] sm:grid sm:grid-cols-[auto_1fr] sm:items-start sm:gap-6"
           : "h-full bg-white"
@@ -206,6 +212,10 @@ export function TestimonialCard({ story, variant = "standard" }: { story: Testim
       <p className={`text-xl font-black leading-8 text-secondary xl:leading-9 ${isWide ? "xl:text-[1.45rem]" : "xl:text-[1.34rem]"}`}>
         &ldquo;{story.quote}&rdquo;
       </p>
+      <div className="mt-6 rounded-2xl border border-secondary/[0.06] bg-surface/70 px-4 py-3">
+        <p className="text-[10px] font-black uppercase tracking-[0.14em] text-secondary/35">Learning shift</p>
+        <p className="mt-1 text-xs font-bold leading-5 text-secondary/56">{story.journey}</p>
+      </div>
     </div>
   );
 }

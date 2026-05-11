@@ -169,7 +169,7 @@ export default async function AdminTutorsPage() {
                   </td>
                   <td className="p-8 text-right space-x-2">
                     <a href={`/tutor/${tutor.id}`} target="_blank" className="inline-block px-4 py-3 bg-slate-100 text-slate-600 text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-slate-200 transition-all">
-                      View Profile
+                      View profile
                     </a>
                     <VerifyButton tutorId={tutor.id} isVerified={true} />
                   </td>

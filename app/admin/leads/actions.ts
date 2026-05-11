@@ -3,7 +3,18 @@
 import { revalidatePath } from "next/cache";
 import { createAdminClient, createClient } from "@/utils/supabase/server";
 
-const allowedStatuses = ["new", "contacted", "booked", "converted", "closed"] as const;
+const allowedStatuses = [
+  "new_inquiry",
+  "awaiting_review",
+  "consultation_booked",
+  "tutor_matched",
+  "converted",
+  "inactive",
+  "new",
+  "contacted",
+  "booked",
+  "closed",
+] as const;
 
 export type LeadStatusState = {
   error?: string;

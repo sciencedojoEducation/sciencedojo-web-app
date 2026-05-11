@@ -43,6 +43,12 @@ export default async function StudentDashboard() {
     getActiveAnnouncementsForUser(),
     getHomeworkForStudent(user.id),
   ]);
+  const { data: missionMomentum } = await supabase
+    .from("student_missions")
+    .select("id, status, mission_tier, score_percentage, created_at, mission_blueprint, classes(display_name, subject)")
+    .eq("student_id", user.id)
+    .order("created_at", { ascending: false })
+    .limit(3);
 
   const userName = profile?.full_name || meta?.full_name || "User";
   const avatarUrl = profile?.avatar_url || meta?.avatar_url;
@@ -107,13 +113,54 @@ export default async function StudentDashboard() {
             </div>
          </div>
          <Link href="/dashboard/student/tutors" className="px-8 py-3 bg-secondary text-white font-black rounded-2xl hover:bg-secondary/90 transition-all shadow-lg active:scale-95">
-            Find New Expert
+            Find tutor support
          </Link>
       </div>
 
       <div data-tour="student-progress">
         <StudentProgressStats bookings={bookings} />
       </div>
+
+      <section className="rounded-[2.5rem] border border-primary/10 bg-white p-8 shadow-sm">
+        <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
+          <div>
+            <p className="text-xs font-black uppercase tracking-[0.22em] text-primary">Personalized Missions</p>
+            <h2 className="mt-2 text-2xl font-black text-secondary">Your next steps between lessons</h2>
+            <p className="mt-3 max-w-2xl text-sm font-medium leading-7 text-secondary/55">
+              Missions turn lesson notes and class progress into guided reinforcement, so you always know what to practise next.
+            </p>
+          </div>
+          <Link href="/dashboard/student/missions" className="rounded-2xl bg-secondary px-6 py-3 text-center text-xs font-black uppercase tracking-[0.14em] text-white transition-colors hover:bg-secondary/90">
+            Open Missions
+          </Link>
+        </div>
+
+        {missionMomentum && missionMomentum.length > 0 ? (
+          <div className="mt-6 grid gap-4 md:grid-cols-3">
+            {missionMomentum.map((mission: any) => (
+              <div key={mission.id} className="rounded-3xl border border-secondary/10 bg-surface p-5">
+                <div className="mb-3 flex flex-wrap gap-2">
+                  <span className="rounded-full bg-primary/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-primary">
+                    {String(mission.mission_tier || "mission").replace(/_/g, " ")}
+                  </span>
+                  <span className="rounded-full bg-white px-3 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-secondary/45">
+                    {mission.status === "completed" ? "Completed" : mission.status === "pending_tutor_approval" ? "Tutor review" : "Ready"}
+                  </span>
+                </div>
+                <h3 className="font-black text-secondary">{mission.mission_blueprint?.topic || "Guided practice pathway"}</h3>
+                <p className="mt-2 text-sm font-medium leading-6 text-secondary/50">
+                  {mission.classes?.display_name || "Class-linked support"} {mission.score_percentage !== null ? `- ${mission.score_percentage}% progress score` : ""}
+                </p>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="mt-6 rounded-3xl border border-dashed border-secondary/15 bg-surface p-7">
+            <p className="font-bold text-secondary/55">Your Missions will appear after your learning pathway begins.</p>
+            <p className="mt-2 text-sm text-secondary/45">They are designed to support clarity, momentum, and confidence between tutoring sessions.</p>
+          </div>
+        )}
+      </section>
 
       <div data-tour="student-homework">
         <HomeworkFeed assignments={assignments} />
@@ -281,17 +328,17 @@ export default async function StudentDashboard() {
       <section data-tour="student-tutors" className="pt-8 border-t border-secondary/10">
         <div className="flex items-center justify-between mb-8">
            <div>
-              <h2 className="text-2xl font-black text-secondary">Discover New Experts</h2>
-              <p className="text-sm text-secondary/60 font-bold mt-1">Connect with verified tutors and schedule your next session.</p>
+              <h2 className="text-2xl font-black text-secondary">Find tutor support</h2>
+              <p className="text-sm text-secondary/60 font-bold mt-1">Get help with difficult topics and your next learning step through guided STEM support.</p>
            </div>
            <Link href="/dashboard/student/tutors" className="text-sm font-black text-primary hover:underline flex items-center gap-1">
-              View All <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M9 5l7 7-7 7" /></svg>
+              View support options <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M9 5l7 7-7 7" /></svg>
            </Link>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
            {availableTutors.slice(0, 6).map((tutor) => (
-             <TutorCard key={tutor.id} tutor={tutor as any} currentUserRole="student" />
+             <TutorCard key={tutor.id} tutor={tutor as any} currentUserRole="student" variant="dashboard" />
            ))}
         </div>
       </section>

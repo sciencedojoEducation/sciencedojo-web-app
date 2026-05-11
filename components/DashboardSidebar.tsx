@@ -3,6 +3,7 @@ import { createClient } from "@/utils/supabase/server";
 import { getUnreadMessageCount } from "@/lib/messaging-queries";
 import SidebarLink from "./SidebarLink";
 import DashboardTourReplayButton from "./DashboardTourReplayButton";
+import DashboardMobileDrawer from "./DashboardMobileDrawer";
 import { 
   Calendar, 
   GraduationCap, 
@@ -22,7 +23,7 @@ import {
 interface NavLink {
   name: string;
   href: string;
-  icon: React.ReactNode;
+  icon: string;
   badge?: number;
   badgeColor?: string;
   exact?: boolean;
@@ -83,7 +84,7 @@ export default async function DashboardSidebar({ role }: DashboardSidebarProps) 
       { name: "My Bookings", href: "/dashboard/student", icon: "🗓️", exact: true, tourId: "student-bookings" },
       { name: "My Classes", href: "/dashboard/classes", icon: "🎓", tourId: "student-classes" },
       { name: "Messages", href: "/dashboard/messages", icon: "💬", badge: unreadCount, tourId: "student-messages" },
-      { name: "Missions", href: "/dashboard/student/missions", icon: "🚀", tourId: "student-tasks" },
+      { name: "Missions", href: "/dashboard/student/missions", icon: "🧭", tourId: "student-tasks" },
       { name: "Browse Tutors", href: "/dashboard/student/tutors", icon: "🔍" },
       { name: "Focus Timers", href: "/dashboard/student/timers", icon: "⏱️" },
       { name: "Settings", href: "/dashboard/student/settings", icon: "⚙️" },
@@ -93,7 +94,7 @@ export default async function DashboardSidebar({ role }: DashboardSidebarProps) 
       { name: "My Schedule", href: "/dashboard/tutor", icon: "🗓️", exact: true, tourId: "tutor-sessions" },
       { name: "My Classes", href: "/dashboard/classes", icon: "🎓", tourId: "tutor-students" },
       { name: "Messages", href: "/dashboard/messages", icon: "💬", badge: unreadCount, tourId: "tutor-messages" },
-      { name: "Student Missions", href: "/dashboard/tutor/missions", icon: "🚀" },
+      { name: "Mission Reviews", href: "/dashboard/tutor/missions", icon: "🧭" },
       { name: "Earnings", href: "/dashboard/tutor/earnings", icon: "💰" },
       { name: "Profile Settings", href: "/dashboard/tutor/settings", icon: "👤", tourId: "tutor-availability" },
       { name: "Support", href: "/dashboard/support", icon: "🆘" },
@@ -115,7 +116,16 @@ export default async function DashboardSidebar({ role }: DashboardSidebarProps) 
   const links = navLinks[role] || [];
 
   return (
-    <aside data-tour={`${role}-sidebar`} className={`w-64 flex flex-col h-[calc(100vh-80px)] top-[80px] sticky overflow-y-auto overflow-x-hidden transition-all duration-500 border-r ${
+    <>
+    <DashboardMobileDrawer
+      role={role}
+      displayRole={displayRole}
+      userName={userName}
+      avatarUrl={avatarUrl}
+      links={links}
+    />
+
+    <aside data-tour={`${role}-sidebar`} className={`hidden w-64 shrink-0 lg:flex flex-col h-full max-h-full top-0 sticky overflow-y-auto overflow-x-hidden transition-all duration-500 border-r ${
       isLight 
         ? "bg-slate-50/70 backdrop-blur-xl border-slate-200 shadow-[20px_0_40px_-20px_rgba(30,90,168,0.05)]"
         : "bg-[#020617] border-white/5"
@@ -208,5 +218,6 @@ export default async function DashboardSidebar({ role }: DashboardSidebarProps) 
         isLight ? "bg-[#1E5AA8]/20" : "bg-[#1E5AA8]/10"
       }`} />
     </aside>
+    </>
   );
 }

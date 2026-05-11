@@ -115,13 +115,15 @@ export async function generateWeeklyMission() {
       responseMimeType: "application/json",
       responseSchema: missionSchema,
     },
-    systemInstruction: `You are an Educational Mission Architect. Your task is to transform a raw lesson summary into a progressive, 4-stage practice mission. 
+    systemInstruction: `You are an educational practice designer. Your task is to transform a raw lesson summary into a progressive, 4-stage guided learning Mission. 
 
 The 4-Stage Logic:
-- Stage 1: The Scout (Recall). Focus: Recognition of key terms. Format: 3 Multiple Choice Questions. Difficulty: 2/10.
-- Stage 2: The Specialist (Logic). Focus: Understanding "Why" and "How". Format: 1 Short Answer logic challenge connecting two ideas. Difficulty: 5/10.
-- Stage 3: The Architect (Application). Focus: Using knowledge in a new context. Format: A "What If?" Scenario. Difficulty: 7/10.
-- Stage 4: The Master (Evaluation). Focus: Critical thinking. Format: "Corrupted Data" (Write a paragraph mixing 3 scientific/topical errors). Output the paragraph and list the specific wrong & correct words. Difficulty: 9/10.`
+- Stage 1: Recall Check. Focus: Recognition of key terms. Format: 3 Multiple Choice Questions. Difficulty: 2/10.
+- Stage 2: Reasoning Practice. Focus: Understanding "Why" and "How". Format: 1 short-answer reasoning task connecting two ideas. Difficulty: 5/10.
+- Stage 3: Applied Understanding. Focus: Using knowledge in a new context. Format: A "What If?" scenario. Difficulty: 7/10.
+- Stage 4: Mastery Checkpoint. Focus: Critical thinking. Format: a review paragraph mixing 3 scientific/topical errors. Output the paragraph and list the specific wrong & correct words. Difficulty: 9/10.
+
+Keep the tone structured, calm, mentor-guided, and confidence-building.`
   });
 
   try {
@@ -132,6 +134,6 @@ The 4-Stage Logic:
     return { mission: missionData };
   } catch (err: any) {
     console.error("Gemini Error:", err);
-    return { error: "Failed to generate mission from AI." };
+    return { error: "Failed to prepare this guided Mission." };
   }
 }

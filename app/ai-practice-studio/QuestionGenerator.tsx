@@ -27,7 +27,7 @@ function SubmitButton({ isPending }: { isPending: boolean }) {
       disabled={isPending}
       className="mt-6 w-full rounded-2xl bg-primary px-6 py-4 text-sm font-black uppercase tracking-[0.14em] text-white shadow-lg shadow-primary/20 transition-all hover:bg-primary-hover disabled:cursor-wait disabled:opacity-70"
     >
-      {isPending ? "Generating Questions..." : "Generate Questions"}
+      {isPending ? "Preparing Practice..." : "Create Practice Set"}
     </button>
   );
 }
@@ -197,7 +197,7 @@ export default function QuestionGenerator() {
         </div>
 
         <p className="mt-5 text-sm font-bold leading-6 text-secondary/55">
-          Choose your stage, curriculum, subject, and topic to generate targeted practice questions.
+          Choose your stage, curriculum, subject, and topic to create a focused knowledge check.
         </p>
         <p className="mt-2 text-xs font-black uppercase tracking-[0.14em] text-primary/70">
           Supports major pathways including UK National Curriculum, Cambridge, Edexcel, AQA, SQA, and IB.
@@ -208,7 +208,7 @@ export default function QuestionGenerator() {
 
       {isPending && (
         <div className="mt-8 rounded-2xl border border-primary/15 bg-primary/5 p-5 font-bold text-primary">
-          Generating curriculum-aligned practice questions...
+          Preparing curriculum-aligned practice questions...
         </div>
       )}
 
@@ -222,9 +222,9 @@ export default function QuestionGenerator() {
         <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
           <div>
             <p className="text-xs font-black uppercase tracking-[0.2em] text-primary">
-              {questions.length > 0 ? `${state.source === "llm" ? "AI-generated" : "Fallback"} practice set` : "Ready when you are"}
+              {questions.length > 0 ? "Structured practice set" : "Ready when you are"}
             </p>
-            <h2 className="mt-2 text-2xl font-black">{questions.length ? "Your practice questions" : "Generate curriculum-aligned practice instantly"}</h2>
+            <h2 className="mt-2 text-2xl font-black">{questions.length ? "Your practice questions" : "Create curriculum-aligned practice"}</h2>
           </div>
           {questions.length > 0 && <p className="text-sm font-bold text-secondary/45">{questions.length} questions with answers</p>}
         </div>
@@ -232,7 +232,7 @@ export default function QuestionGenerator() {
         {questions.length === 0 ? (
           <div className="mt-5 rounded-2xl border border-secondary/10 bg-surface p-6">
             <p className="font-bold leading-7 text-secondary/65">
-              Practice Dojo creates targeted practice questions by stage, curriculum, level, subject, and topic.
+              Practice Dojo creates structured practice questions by stage, curriculum, level, subject, and topic.
             </p>
           </div>
         ) : (
@@ -262,7 +262,7 @@ export default function QuestionGenerator() {
         <div className="mt-8 rounded-3xl bg-secondary p-6 text-white shadow-xl">
           <h2 className="text-2xl font-black">Need help understanding these questions?</h2>
           <p className="mt-3 leading-7 text-white/70">
-            A ScienceDojo tutor can help your child turn practice into real progress.
+            A ScienceDojo tutor can help your child turn uncertain topics into a clear learning plan. Enrolled students can also receive personalized Missions between lessons.
           </p>
           <div className="mt-6 flex flex-col gap-3 sm:flex-row">
             <AiPracticeStudioCtaLink
@@ -271,7 +271,7 @@ export default function QuestionGenerator() {
               source="ai_practice_studio_after_generation"
               className="inline-flex justify-center rounded-2xl bg-primary px-6 py-3 text-sm font-black uppercase tracking-[0.14em] text-white transition-all hover:bg-primary-hover"
             >
-              Request Free Assessment
+              Book Free Assessment
             </AiPracticeStudioCtaLink>
             <AiPracticeStudioCtaLink
               href="/#directory"

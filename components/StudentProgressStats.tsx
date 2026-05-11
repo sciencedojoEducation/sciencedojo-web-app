@@ -10,7 +10,8 @@ export default function StudentProgressStats({ bookings }: StudentProgressStatsP
   const completed = bookings.filter(b => b.status === 'completed');
   
   const lessonsCompleted = completed.length;
-  const hoursStudied = completed.length; // Assuming 1hr sessions for now
+  const totalHours = completed.reduce((sum, booking) => sum + (booking.duration_hours || 1), 0);
+  const hoursStudied = Number.isInteger(totalHours) ? totalHours : Number(totalHours.toFixed(1));
   
   const subjects = new Set(completed.map(b => b.subject)).size;
   
@@ -24,7 +25,12 @@ export default function StudentProgressStats({ bookings }: StudentProgressStatsP
 
   return (
     <section>
-      <h2 className="text-xl font-black text-secondary mb-6">Your Progress</h2>
+      <div className="mb-6">
+        <h2 className="text-xl font-black text-secondary">Learning progress</h2>
+        <p className="mt-2 max-w-2xl text-sm font-medium leading-7 text-secondary/50">
+          A calm snapshot of tutoring activity and learning rhythm, not a scorecard.
+        </p>
+      </div>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-2">
         
         <div className="bg-white p-6 rounded-3xl border border-secondary/10 shadow-sm flex flex-col items-center justify-center text-center">
@@ -40,7 +46,7 @@ export default function StudentProgressStats({ bookings }: StudentProgressStatsP
              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
           </div>
           <div className="text-3xl font-black text-secondary">{hoursStudied}</div>
-          <div className="text-[10px] font-black uppercase tracking-widest text-secondary/40">Hours Studied</div>
+          <div className="text-[10px] font-black uppercase tracking-widest text-secondary/40">Tutoring hours</div>
         </div>
 
         <div className="bg-white p-6 rounded-3xl border border-secondary/10 shadow-sm flex flex-col items-center justify-center text-center">
@@ -55,8 +61,8 @@ export default function StudentProgressStats({ bookings }: StudentProgressStatsP
           <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mb-3 ${isActive ? 'bg-white/20 text-white' : 'bg-gray-50 text-gray-400'}`}>
              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
           </div>
-          <div className={`text-3xl font-black ${isActive ? 'text-white' : 'text-secondary'}`}>{isActive ? 'Active' : 'N/A'}</div>
-          <div className={`text-[10px] font-black uppercase tracking-widest ${isActive ? 'text-white/80' : 'text-secondary/40'}`}>Streak</div>
+          <div className={`text-3xl font-black ${isActive ? 'text-white' : 'text-secondary'}`}>{isActive ? 'Active' : 'Soon'}</div>
+          <div className={`text-[10px] font-black uppercase tracking-widest ${isActive ? 'text-white/80' : 'text-secondary/40'}`}>Recent activity</div>
         </div>
 
       </div>
