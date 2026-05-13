@@ -87,23 +87,23 @@ export default async function StudentDashboard() {
   const past = bookings.filter(b => b.status === "completed");
 
   return (
-    <div className="p-8 max-w-5xl mx-auto space-y-12">
+    <div className="px-3 py-5 sm:p-6 md:p-8 max-w-5xl mx-auto space-y-7 md:space-y-12">
       {/* Platform Announcements Hub */}
       {announcements.length > 0 && (
          <AnnouncementFeed announcements={announcements} />
       )}
 
-      <div data-tour="student-welcome" className="flex justify-between items-end">
-         <div className="flex items-center gap-6">
-            <div className="w-20 h-20 rounded-[1.5rem] bg-primary/10 border-4 border-white shadow-xl overflow-hidden flex items-center justify-center transform -rotate-3 transition-transform hover:rotate-0">
+      <div data-tour="student-welcome" className="flex flex-col gap-4 md:flex-row md:justify-between md:items-end">
+         <div className="flex items-center gap-4 sm:gap-6">
+            <div className="w-14 h-14 rounded-2xl bg-primary/10 border-2 border-white shadow-md overflow-hidden flex items-center justify-center transform -rotate-3 transition-transform hover:rotate-0 sm:h-20 sm:w-20 sm:rounded-[1.5rem] sm:border-4 sm:shadow-xl">
                {avatarUrl ? (
                   <img src={avatarUrl} alt="Profile" className="w-full h-full object-cover" />
                ) : (
-                  <span className="text-3xl font-black text-primary">{userName.charAt(0)}</span>
+                  <span className="text-2xl font-black text-primary sm:text-3xl">{userName.charAt(0)}</span>
                )}
             </div>
             <div>
-               <h1 className="text-4xl font-black mb-1 bg-gradient-to-r from-secondary to-primary bg-clip-text text-transparent tracking-tight">
+               <h1 className="text-3xl font-black mb-1 bg-gradient-to-r from-secondary to-primary bg-clip-text text-transparent tracking-tight sm:text-4xl">
                   Hello, {userName.trim().split(' ')[0]}!
                </h1>
                <p className="text-secondary/60 text-sm font-bold flex items-center gap-2">
@@ -112,7 +112,7 @@ export default async function StudentDashboard() {
                </p>
             </div>
          </div>
-         <Link href="/dashboard/student/tutors" className="px-8 py-3 bg-secondary text-white font-black rounded-2xl hover:bg-secondary/90 transition-all shadow-lg active:scale-95">
+         <Link href="/dashboard/student/tutors" className="w-full min-h-11 px-6 py-3 text-center bg-secondary text-white font-black rounded-2xl hover:bg-secondary/90 transition-all shadow-lg active:scale-95 md:w-auto md:px-8">
             Find tutor support
          </Link>
       </div>
@@ -121,11 +121,11 @@ export default async function StudentDashboard() {
         <StudentProgressStats bookings={bookings} />
       </div>
 
-      <section className="rounded-[2.5rem] border border-primary/10 bg-white p-8 shadow-sm">
+      <section className="rounded-[1.5rem] border border-primary/10 bg-white p-4 shadow-sm sm:p-5 md:rounded-[2.5rem] md:p-8">
         <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
           <div>
-            <p className="text-xs font-black uppercase tracking-[0.22em] text-primary">Personalized Missions</p>
-            <h2 className="mt-2 text-2xl font-black text-secondary">Your next steps between lessons</h2>
+            <p className="text-[10px] font-black uppercase tracking-[0.16em] text-primary/65">Personalized Missions</p>
+            <h2 className="mt-2 text-xl font-black text-secondary md:text-2xl">Your next steps between lessons</h2>
             <p className="mt-3 max-w-2xl text-sm font-medium leading-7 text-secondary/55">
               Missions turn lesson notes and class progress into guided reinforcement, so you always know what to practise next.
             </p>
@@ -136,12 +136,12 @@ export default async function StudentDashboard() {
         </div>
 
         {missionMomentum && missionMomentum.length > 0 ? (
-          <div className="mt-6 grid gap-4 md:grid-cols-3">
+          <div className="mt-5 grid gap-3 md:mt-6 md:grid-cols-3 md:gap-4">
             {missionMomentum.map((mission: any) => (
-              <div key={mission.id} className="rounded-3xl border border-secondary/10 bg-surface p-5">
+              <div key={mission.id} className="rounded-2xl border border-secondary/10 bg-surface p-4 md:rounded-3xl md:p-5">
                 <div className="mb-3 flex flex-wrap gap-2">
                   <span className="rounded-full bg-primary/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-primary">
-                    {String(mission.mission_tier || "mission").replace(/_/g, " ")}
+                  {String(mission.mission_tier || "mission").replace(/_/g, " ")}
                   </span>
                   <span className="rounded-full bg-white px-3 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-secondary/45">
                     {mission.status === "completed" ? "Completed" : mission.status === "pending_tutor_approval" ? "Tutor review" : "Ready"}
@@ -149,15 +149,15 @@ export default async function StudentDashboard() {
                 </div>
                 <h3 className="font-black text-secondary">{mission.mission_blueprint?.topic || "Guided practice pathway"}</h3>
                 <p className="mt-2 text-sm font-medium leading-6 text-secondary/50">
-                  {mission.classes?.display_name || "Class-linked support"} {mission.score_percentage !== null ? `- ${mission.score_percentage}% progress score` : ""}
+                  {mission.classes?.display_name || "Class-linked support"} {mission.score_percentage !== null ? "- tutor review ready" : ""}
                 </p>
               </div>
             ))}
           </div>
         ) : (
-          <div className="mt-6 rounded-3xl border border-dashed border-secondary/15 bg-surface p-7">
-            <p className="font-bold text-secondary/55">Your Missions will appear after your learning pathway begins.</p>
-            <p className="mt-2 text-sm text-secondary/45">They are designed to support clarity, momentum, and confidence between tutoring sessions.</p>
+          <div className="mt-5 rounded-2xl border border-dashed border-secondary/15 bg-surface p-5 md:mt-6 md:rounded-3xl md:p-7">
+            <p className="font-bold text-secondary/55">Your learning journey begins here.</p>
+            <p className="mt-2 text-sm text-secondary/45">After your first sessions, personalized Missions will show what to practise next and why it matters.</p>
           </div>
         )}
       </section>
@@ -168,23 +168,23 @@ export default async function StudentDashboard() {
 
       {/* SECURE PAYMENT REQUIRED (Accepted Handshake) */}
       {toPay.length > 0 && (
-        <section className="bg-primary/5 rounded-[2.5rem] p-8 border-2 border-primary/20 shadow-xl shadow-primary/5">
-          <div className="flex items-center justify-between mb-8">
+        <section className="bg-primary/5 rounded-[1.5rem] p-4 border border-primary/20 shadow-sm md:rounded-[2.5rem] md:p-8 md:border-2 md:shadow-xl md:shadow-primary/5">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-5 md:mb-8">
             <h2 className="text-2xl font-black text-secondary flex items-center gap-4">
               <span className="p-2 bg-primary text-white rounded-xl">
                  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
                  </svg>
               </span>
-              Secure Payment Required
+              Secure payment required
             </h2>
             <span className="text-xs font-black text-primary uppercase tracking-[0.2em] animate-pulse">Accepted by Tutor</span>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-8">
              {groupedToPay.map(group => {
                 const booking = group.mainBooking;
                 return (
-                <div key={group.id} className="bg-white p-8 rounded-[2rem] border border-primary/10 shadow-lg flex flex-col relative overflow-hidden group">
+                <div key={group.id} className="bg-white p-4 rounded-[1.5rem] border border-primary/10 shadow-sm flex flex-col relative overflow-hidden group md:p-8 md:rounded-[2rem] md:shadow-lg">
                    <div className="flex items-center gap-5 mb-6">
                       <div className="w-16 h-16 relative rounded-2xl overflow-hidden border-2 border-slate-50 shadow-md">
                          <Image src={booking.tutor_avatar || "/tutor_placeholder.webp"} alt="" fill className="object-cover" />
@@ -224,15 +224,15 @@ export default async function StudentDashboard() {
         <section>
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-xl font-black text-secondary flex items-center gap-3">
-              Booking Requests
+              Lesson requests
             </h2>
-            <span className="text-xs font-black text-secondary/40 uppercase tracking-widest">Awaiting Tutor Acceptance</span>
+            <span className="text-xs font-black text-secondary/40 uppercase tracking-widest">Awaiting tutor confirmation</span>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-3 md:gap-6">
              {groupedRequested.map(group => {
                 const booking = group.mainBooking;
                 return (
-                <div key={group.id} className="bg-white p-6 rounded-3xl border border-secondary/10 shadow-sm flex flex-col relative overflow-hidden group">
+                <div key={group.id} className="bg-white p-4 rounded-2xl border border-secondary/10 shadow-sm flex flex-col relative overflow-hidden group md:p-6 md:rounded-3xl">
                    <div className="flex justify-between items-start mb-4">
                       <div className="flex items-center gap-4">
                         <div className="w-10 h-10 relative rounded-xl overflow-hidden border border-secondary/5 shadow-sm">
@@ -274,15 +274,15 @@ export default async function StudentDashboard() {
 
       <section data-tour="student-sessions">
         <div className="flex items-center justify-between mb-6">
-           <h2 className="text-xl font-black text-secondary">Confirmed Sessions</h2>
+           <h2 className="text-xl font-black text-secondary">Upcoming lessons</h2>
            <a href={`/api/calendar?id=${user.id}`} target="_blank" className="px-4 py-2 bg-slate-100 text-secondary/60 text-xs font-black uppercase tracking-widest rounded-xl hover:bg-slate-200 transition-all flex items-center gap-2">
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2-2v12a2 2 0 002 2z" /></svg>
               Sync iCal
            </a>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6">
            {upcoming.map(booking => (
-              <div key={booking.id} className="bg-white p-6 rounded-3xl border border-secondary/10 shadow-sm flex flex-col relative overflow-hidden group">
+              <div key={booking.id} className="bg-white p-4 rounded-2xl border border-secondary/10 shadow-sm flex flex-col relative overflow-hidden group md:p-6 md:rounded-3xl">
                  <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-bl-full -z-10 group-hover:scale-110 transition-transform"></div>
                  
                  <div className="flex justify-between items-start mb-4">
@@ -306,14 +306,14 @@ export default async function StudentDashboard() {
 
                  <div className="mt-auto">
                     <a href={booking.meeting_url || "#"} target="_blank" rel="noreferrer" className="block text-center w-full py-4 bg-secondary text-white rounded-2xl font-black hover:bg-secondary/90 transition-all shadow-xl hover:-translate-y-1">
-                       Join Zoom Classroom
+                       Join classroom
                     </a>
                  </div>
               </div>
            ))}
            {upcoming.length === 0 && (
-              <div className="md:col-span-2 p-12 text-center bg-slate-50 border border-dashed border-secondary/20 rounded-3xl">
-                 <p className="text-secondary/40 font-bold">No upcoming sessions. Book an expert to get started!</p>
+              <div className="md:col-span-2 p-6 text-center bg-slate-50 border border-dashed border-secondary/20 rounded-2xl md:p-12 md:rounded-3xl">
+                 <p className="text-secondary/45 font-bold">Practice and lesson support will appear here once your next session is scheduled.</p>
               </div>
            )}
         </div>
@@ -326,7 +326,7 @@ export default async function StudentDashboard() {
 
       {/* AVAILABLE EXPERTS (Directory integrated into dashboard) */}
       <section data-tour="student-tutors" className="pt-8 border-t border-secondary/10">
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-5 md:mb-8">
            <div>
               <h2 className="text-2xl font-black text-secondary">Find tutor support</h2>
               <p className="text-sm text-secondary/60 font-bold mt-1">Get help with difficult topics and your next learning step through guided STEM support.</p>
@@ -336,7 +336,7 @@ export default async function StudentDashboard() {
            </Link>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6 xl:grid-cols-3">
            {availableTutors.slice(0, 6).map((tutor) => (
              <TutorCard key={tutor.id} tutor={tutor as any} currentUserRole="student" variant="dashboard" />
            ))}

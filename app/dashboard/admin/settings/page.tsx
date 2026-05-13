@@ -16,26 +16,54 @@ export default async function AdminSettings() {
     .select("*");
 
   const currentFee = settings?.platform_fee_percent ?? 25;
+  const activeIntegrations = (integrations || []).filter((integration) => integration.is_active).length;
 
   return (
-    <div className="p-8 max-w-4xl mx-auto">
-      <div className="mb-10">
-         <h1 className="text-3xl font-bold text-secondary mb-2">Platform Settings</h1>
-         <p className="text-secondary/60">Configure global platform behavior and API integrations.</p>
+    <div className="mx-auto max-w-4xl px-3 py-5 sm:px-4 md:p-8">
+      <div className="mb-5 md:mb-8">
+         <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.18em] text-secondary/40">Platform control center</p>
+         <h1 className="mb-2 text-2xl font-black tracking-tight text-secondary md:text-3xl">Platform Settings</h1>
+         <p className="max-w-2xl text-sm font-medium leading-relaxed text-secondary/60 md:text-base">
+           Configure financial rules and live integrations with calm operational control.
+         </p>
       </div>
 
-      <div className="space-y-8">
+      <div className="mb-4 grid grid-cols-2 gap-3 md:mb-8 md:grid-cols-3">
+         <div className="rounded-2xl border border-secondary/10 bg-white p-4 shadow-sm">
+            <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-secondary/40">Platform fee</p>
+            <p className="mt-1 text-2xl font-black tracking-tight text-secondary">{currentFee}%</p>
+         </div>
+         <div className="rounded-2xl border border-secondary/10 bg-white p-4 shadow-sm">
+            <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-secondary/40">Tutor share</p>
+            <p className="mt-1 text-2xl font-black tracking-tight text-green-700">{100 - currentFee}%</p>
+         </div>
+         <div className="col-span-2 rounded-2xl border border-secondary/10 bg-white p-4 shadow-sm md:col-span-1">
+            <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-secondary/40">Live integrations</p>
+            <p className="mt-1 text-2xl font-black tracking-tight text-primary">{activeIntegrations}</p>
+         </div>
+      </div>
+
+      <div className="space-y-4 md:space-y-8">
          {/* Financial Config */}
-         <div className="bg-white p-8 rounded-3xl border border-secondary/10 shadow-sm">
-            <h2 className="text-xl font-bold text-secondary mb-2">Financial Configuration</h2>
-            <p className="text-sm text-secondary/60 mb-6">Set the global commission rate that the platform takes from every booking before routing the payout to the tutor.</p>
+         <div className="rounded-[1.5rem] border border-secondary/10 bg-white p-4 shadow-sm md:rounded-3xl md:p-8">
+            <div className="mb-5 md:mb-6">
+              <h2 className="text-lg font-black text-secondary md:text-xl">Financial configuration</h2>
+              <p className="mt-1 text-sm font-medium leading-relaxed text-secondary/60">
+                Set the platform commission applied before tutor payout calculations.
+              </p>
+            </div>
             
             <FeeForm currentFee={currentFee} />
          </div>
 
          {/* API Integrations */}
-         <div className="bg-white p-8 rounded-3xl border border-secondary/10 shadow-sm">
-            <h2 className="text-xl font-bold text-secondary mb-6">Live API Integrations</h2>
+         <div className="rounded-[1.5rem] border border-secondary/10 bg-white p-4 shadow-sm md:rounded-3xl md:p-8">
+            <div className="mb-5 md:mb-6">
+              <h2 className="text-lg font-black text-secondary md:text-xl">Live API integrations</h2>
+              <p className="mt-1 text-sm font-medium leading-relaxed text-secondary/60">
+                Review connected services and configure live platform infrastructure.
+              </p>
+            </div>
             <IntegrationsList integrations={integrations || []} />
          </div>
       </div>

@@ -23,10 +23,10 @@ export default function ClassFeed({ posts, classId, isTutor }: ClassFeedProps) {
 
   if (posts.length === 0) {
     return (
-      <div className="p-16 text-center bg-white rounded-[2rem] border-2 border-dashed border-secondary/10 mt-6">
-        <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center text-3xl opacity-20 text-secondary mx-auto mb-4">💬</div>
-        <p className="text-secondary/40 font-bold">This class feed is currently empty.</p>
-        <p className="text-xs text-secondary/30 uppercase tracking-widest font-black mt-2">Start the conversation above</p>
+      <div className="mt-4 rounded-[1.5rem] border border-dashed border-secondary/10 bg-white p-8 text-center md:mt-6 md:rounded-[2rem] md:border-2 md:p-16">
+        <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-slate-50 text-3xl text-secondary opacity-20 md:h-16 md:w-16">💬</div>
+        <p className="font-bold text-secondary/40">This class feed is ready.</p>
+        <p className="mt-2 text-xs font-black uppercase tracking-widest text-secondary/30">Updates, lesson notes, and resources will appear here.</p>
       </div>
     );
   }
@@ -41,9 +41,9 @@ export default function ClassFeed({ posts, classId, isTutor }: ClassFeedProps) {
   };
 
   return (
-    <div className="mt-8 space-y-6">
+    <div className="mt-5 space-y-4 md:mt-8 md:space-y-6">
       {/* Filters (Optional, nice to have) */}
-      <div className="flex gap-2 mb-6 overscroll-x-auto pb-2">
+      <div className="mb-3 flex gap-2 overflow-x-auto pb-2 md:mb-6">
          {["all", "assignments", "reports"].map((f) => (
             <button 
               key={f}
@@ -68,7 +68,7 @@ export default function ClassFeed({ posts, classId, isTutor }: ClassFeedProps) {
         return (
           <div 
             key={post.id} 
-            className={`bg-white rounded-[2rem] p-6 shadow-sm border transition-shadow hover:shadow-md relative overflow-hidden ${
+            className={`relative overflow-hidden rounded-[1.5rem] border bg-white p-4 shadow-sm transition-shadow hover:shadow-md md:rounded-[2rem] md:p-6 ${
               isPinned ? "border-amber-300 ring-2 ring-amber-50" :
               isAssignment ? "border-primary/20" : 
               isReport ? "border-green-500/20" : "border-secondary/10"
@@ -78,9 +78,9 @@ export default function ClassFeed({ posts, classId, isTutor }: ClassFeedProps) {
             {isAssignment && <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-primary/20"></div>}
             {isReport && <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-green-500/20"></div>}
             
-            <div className="flex justify-between items-start mb-4">
-              <div className="flex items-center gap-3">
-                <div className={`w-10 h-10 rounded-xl overflow-hidden shadow-sm flex-shrink-0 flex items-center justify-center ${
+            <div className="mb-4 flex items-start justify-between gap-3">
+              <div className="flex min-w-0 items-center gap-3">
+                <div className={`flex h-10 w-10 flex-shrink-0 items-center justify-center overflow-hidden rounded-xl shadow-sm ${
                    isReport ? "bg-green-100" : isAssignment ? "bg-primary/10" : "bg-slate-100"
                 }`}>
                   {isReport ? <span className="text-lg">✅</span> :
@@ -88,8 +88,8 @@ export default function ClassFeed({ posts, classId, isTutor }: ClassFeedProps) {
                    post.author_avatar ? <img src={post.author_avatar} alt={post.author_name} className="w-full h-full object-cover" /> :
                    <span className="font-black text-secondary">{post.author_name?.charAt(0)}</span>}
                 </div>
-                <div>
-                  <h3 className="font-bold text-secondary text-sm flex items-center gap-2">
+                <div className="min-w-0">
+                  <h3 className="flex min-w-0 flex-wrap items-center gap-2 text-sm font-bold text-secondary">
                     {post.author_name}
                     {isPinned && <span className="text-[10px] text-amber-600 font-black uppercase tracking-[0.2em] bg-amber-100 px-2 py-0.5 rounded-full">Pinned</span>}
                   </h3>
@@ -101,7 +101,7 @@ export default function ClassFeed({ posts, classId, isTutor }: ClassFeedProps) {
               
               {/* Context menu / Pin toggle for Tutor */}
               {isTutor && (
-                 <button onClick={() => handleTogglePin(post.id)} className="p-2 text-secondary/20 hover:text-amber-500 transition-colors tooltip-trigger" title={isPinned ? "Unpin Post" : "Pin to Top"}>
+                 <button onClick={() => handleTogglePin(post.id)} className="shrink-0 p-2 text-secondary/20 transition-colors hover:text-amber-500 tooltip-trigger" title={isPinned ? "Unpin Post" : "Pin to Top"}>
                     <svg className={`w-5 h-5 ${isPinned ? "text-amber-500 fill-current" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
                     </svg>
@@ -110,7 +110,7 @@ export default function ClassFeed({ posts, classId, isTutor }: ClassFeedProps) {
             </div>
 
             {/* Main Content Area */}
-            <div className="pl-[52px]">
+            <div className="min-w-0 sm:pl-[52px]">
                {isAssignment && (
                  <div className="mb-2">
                     <span className="inline-block px-2.5 py-1 bg-primary text-white text-[10px] font-black rounded uppercase tracking-[0.2em] shadow-sm mb-3">
@@ -132,7 +132,7 @@ export default function ClassFeed({ posts, classId, isTutor }: ClassFeedProps) {
                  </div>
                )}
 
-               <div className="text-secondary/80 font-medium whitespace-pre-wrap leading-relaxed">
+               <div className="whitespace-pre-wrap text-sm font-medium leading-relaxed text-secondary/80 md:text-base">
                   {post.content}
                </div>
 

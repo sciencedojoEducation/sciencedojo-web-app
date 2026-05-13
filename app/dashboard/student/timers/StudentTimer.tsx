@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Play, Pause, RotateCcw, Maximize2, Minimize2, SkipForward, Clock, BookOpen } from "lucide-react";
+import FocusSoundtrack from "./FocusSoundtrack";
 
 export default function StudentTimer() {
   const [mode, setMode] = useState<"pomodoro" | "exam">("pomodoro");
@@ -17,6 +18,7 @@ export default function StudentTimer() {
   const [examIsActive, setExamIsActive] = useState(false);
 
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isVisualFullscreen, setIsVisualFullscreen] = useState(false);
 
   // Exam mode specific
   const [customHours, setCustomHours] = useState(1);
@@ -25,8 +27,10 @@ export default function StudentTimer() {
   const containerRef = useRef<HTMLDivElement>(null);
 
   const compliments = [
-    "Incredible focus!", "You're crushing it!", "Masterful session!", 
-    "One step closer to greatness!", "Outstanding discipline!", "Brain gains!"
+    "Focused session complete.",
+    "Good work. Take the next step calmly.",
+    "Strong concentration.",
+    "Progress through steady focus.",
   ];
 
   useEffect(() => {
@@ -140,25 +144,47 @@ export default function StudentTimer() {
     }
   };
 
-  const toggleFullscreen = () => {
-    if (!document.fullscreenElement) {
-      containerRef.current?.requestFullscreen().catch(err => console.log(err));
-      setIsFullscreen(true);
-    } else {
-      document.exitFullscreen();
+  const toggleFullscreen = async () => {
+    const element = containerRef.current;
+
+    if (document.fullscreenElement || isVisualFullscreen) {
+      if (document.fullscreenElement) {
+        await document.exitFullscreen().catch((err) => console.log(err));
+      }
+      setIsVisualFullscreen(false);
       setIsFullscreen(false);
+      return;
+    }
+
+    try {
+      if (element?.requestFullscreen) {
+        await element.requestFullscreen();
+        setIsFullscreen(true);
+      } else {
+        setIsVisualFullscreen(true);
+        setIsFullscreen(true);
+      }
+    } catch (err) {
+      console.log(err);
+      setIsVisualFullscreen(true);
+      setIsFullscreen(true);
     }
   };
 
   // Sync state if user exits fullscreen with ESC key
   useEffect(() => {
-    const handleFullscreenChange = () => setIsFullscreen(!!document.fullscreenElement);
+    const handleFullscreenChange = () => {
+      const nativeFullscreenActive = !!document.fullscreenElement;
+      setIsFullscreen(nativeFullscreenActive || isVisualFullscreen);
+      if (nativeFullscreenActive) setIsVisualFullscreen(false);
+    };
     document.addEventListener("fullscreenchange", handleFullscreenChange);
     return () => document.removeEventListener("fullscreenchange", handleFullscreenChange);
-  }, []);
+  }, [isVisualFullscreen]);
 
   const changeMode = (newMode: "pomodoro" | "exam") => {
     setMode(newMode);
+    setCompliment(null);
     // Don't stop or reset the timers when changing views!
   };
 
@@ -184,39 +210,39 @@ export default function StudentTimer() {
     if (mode === "pomodoro") {
       if (pomoState === "shortBreak") {
         return {
-          bg: "bg-emerald-950",
-          ring: "ring-emerald-500/30",
-          text: "text-emerald-400",
-          btn: "bg-emerald-500 hover:bg-emerald-400 text-emerald-950",
-          panelBg: "bg-emerald-900/40",
+          bg: "bg-[linear-gradient(135deg,#06392f,#0f5c50)]",
+          ring: "ring-emerald-300/20",
+          text: "text-emerald-100",
+          btn: "bg-emerald-100 hover:bg-white text-emerald-950",
+          panelBg: "bg-emerald-950/30",
         };
       }
       if (pomoState === "longBreak") {
         return {
-          bg: "bg-cyan-950",
-          ring: "ring-cyan-500/30",
-          text: "text-cyan-400",
-          btn: "bg-cyan-500 hover:bg-cyan-400 text-cyan-950",
-          panelBg: "bg-cyan-900/40",
+          bg: "bg-[linear-gradient(135deg,#062f45,#0d4d64)]",
+          ring: "ring-cyan-200/20",
+          text: "text-cyan-100",
+          btn: "bg-cyan-100 hover:bg-white text-cyan-950",
+          panelBg: "bg-cyan-950/30",
         };
       }
     }
     if (mode === "exam") {
       return {
-        bg: "bg-indigo-950",
-        ring: "ring-indigo-500/30",
-        text: "text-indigo-400",
-        btn: "bg-indigo-500 hover:bg-indigo-400 text-indigo-950",
-        panelBg: "bg-indigo-900/40",
+        bg: "bg-[linear-gradient(135deg,#071a35,#102d62)]",
+        ring: "ring-indigo-200/20",
+        text: "text-indigo-100",
+        btn: "bg-indigo-100 hover:bg-white text-indigo-950",
+        panelBg: "bg-indigo-950/30",
       };
     }
     // Default Pomodoro Focus
     return {
-      bg: "bg-rose-950",
-      ring: "ring-rose-500/30",
-      text: "text-rose-400",
-      btn: "bg-rose-500 hover:bg-rose-400 text-rose-950",
-      panelBg: "bg-rose-900/40",
+      bg: "bg-[linear-gradient(135deg,#06172f,#0a3d68)]",
+      ring: "ring-cyan-200/20",
+      text: "text-white",
+      btn: "bg-white hover:bg-cyan-50 text-navy",
+      panelBg: "bg-slate-950/30",
     };
   };
 
@@ -225,36 +251,39 @@ export default function StudentTimer() {
   return (
     <div 
       ref={containerRef}
-      className={`relative w-full ${isFullscreen ? 'h-screen fixed inset-0 z-50' : 'h-[80vh] min-h-[600px] rounded-[3rem] overflow-hidden'} transition-colors duration-1000 ${theme.bg} flex items-center justify-center font-sans tracking-tight`}
+      className={`relative flex w-full items-center justify-center overflow-hidden font-sans tracking-tight transition-colors duration-1000 ${isFullscreen ? 'fixed inset-0 z-50 h-screen' : 'min-h-[560px] rounded-[2rem] md:min-h-[640px] md:rounded-[3rem]'} ${theme.bg}`}
     >
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-black/0 via-black/40 to-black/80 pointer-events-none" />
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_36%,rgba(255,255,255,0.12),transparent_30%),linear-gradient(180deg,rgba(255,255,255,0.08),rgba(0,0,0,0.22))]" />
 
       {/* Mode Switcher */}
-      <div className="absolute top-8 left-1/2 -translate-x-1/2 z-10 flex p-1 bg-black/40 backdrop-blur-md rounded-full border border-white/5 shadow-2xl">
+      <div className="absolute left-1/2 top-4 z-40 flex -translate-x-1/2 rounded-full border border-white/10 bg-black/20 p-1 shadow-lg backdrop-blur-md md:top-8">
         <button
+          type="button"
           onClick={() => changeMode("pomodoro")}
-          className={`px-6 py-2 rounded-full text-xs font-black uppercase tracking-widest transition-all ${mode === "pomodoro" ? "bg-white/10 text-white" : "text-white/40 hover:text-white/60"}`}
+          className={`rounded-full px-4 py-2 text-[10px] font-black uppercase tracking-widest transition-all md:px-6 md:text-xs ${mode === "pomodoro" ? "bg-white/12 text-white" : "text-white/45 hover:text-white/70"}`}
         >
-          Pomodoro
+          Focus
         </button>
         <button
+          type="button"
           onClick={() => changeMode("exam")}
-          className={`px-6 py-2 rounded-full text-xs font-black uppercase tracking-widest transition-all ${mode === "exam" ? "bg-white/10 text-white" : "text-white/40 hover:text-white/60"}`}
+          className={`rounded-full px-4 py-2 text-[10px] font-black uppercase tracking-widest transition-all md:px-6 md:text-xs ${mode === "exam" ? "bg-white/12 text-white" : "text-white/45 hover:text-white/70"}`}
         >
-          Exam Mode
+          Exam
         </button>
       </div>
 
       {/* Fullscreen Toggle */}
       <button 
+        type="button"
         onClick={toggleFullscreen}
-        className="absolute top-8 right-8 z-10 p-3 rounded-full bg-black/40 border border-white/5 text-white/50 hover:text-white hover:bg-white/10 transition-all backdrop-blur-md"
+        className="absolute right-4 top-4 z-40 rounded-full border border-white/10 bg-black/20 p-3 text-white/55 backdrop-blur-md transition-all hover:bg-white/10 hover:text-white md:right-8 md:top-8"
       >
         {isFullscreen ? <Minimize2 size={20} /> : <Maximize2 size={20} />}
       </button>
 
       {/* Main Content */}
-      <div className="relative z-10 flex flex-col items-center">
+      <div className="relative z-10 flex w-full max-w-3xl flex-col items-center px-4 pb-6 pt-20 md:pb-10 md:pt-28">
         
         {/* Status Indicator */}
         <AnimatePresence mode="wait">
@@ -263,16 +292,16 @@ export default function StudentTimer() {
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 10 }}
-            className="flex items-center gap-2 mb-8 text-white/50"
+            className="mb-6 flex items-center gap-2 text-white/55 md:mb-8"
           >
             {mode === "exam" ? (
-              <><BookOpen size={18} /> <span className="font-bold tracking-widest uppercase text-sm">Exam Simulation</span></>
+              <><BookOpen size={18} /> <span className="text-xs font-bold uppercase tracking-widest md:text-sm">Exam timing environment</span></>
             ) : pomoState === "focus" ? (
-              <><Clock size={18} /> <span className="font-bold tracking-widest uppercase text-sm">Deep Focus • Round {round}/4</span></>
+              <><Clock size={18} /> <span className="text-xs font-bold uppercase tracking-widest md:text-sm">Focused study • Round {round}/4</span></>
             ) : pomoState === "longBreak" ? (
-              <><Clock size={18} /> <span className="font-bold tracking-widest uppercase text-sm">Long Recovery • Well Earned</span></>
+              <><Clock size={18} /> <span className="text-xs font-bold uppercase tracking-widest md:text-sm">Long break • Reset calmly</span></>
             ) : (
-              <><Clock size={18} /> <span className="font-bold tracking-widest uppercase text-sm">Short Rest • Recharge</span></>
+              <><Clock size={18} /> <span className="text-xs font-bold uppercase tracking-widest md:text-sm">Short break • Breathe</span></>
             )}
           </motion.div>
         </AnimatePresence>
@@ -284,7 +313,7 @@ export default function StudentTimer() {
               initial={{ opacity: 0, scale: 0.8, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.8, y: -20 }}
-              className="absolute z-20 top-[60%] bg-white text-rose-600 px-6 py-3 rounded-full shadow-2xl font-black uppercase tracking-widest text-sm"
+              className="absolute top-[58%] z-20 rounded-full bg-white px-5 py-3 text-xs font-black uppercase tracking-widest text-navy shadow-xl md:text-sm"
             >
               {compliment}
             </motion.div>
@@ -292,49 +321,54 @@ export default function StudentTimer() {
         </AnimatePresence>
 
         {/* Timer Ring */}
-        <div className={`relative flex items-center justify-center w-80 h-80 rounded-full ring-4 ${theme.ring} bg-black/20 backdrop-blur-xl shadow-2xl mb-12`}>
-           <div className={`text-7xl font-black tabular-nums tracking-tighter ${theme.text} drop-shadow-[0_0_30px_rgba(255,255,255,0.1)]`}>
+        <div className={`relative mb-8 flex h-64 w-64 items-center justify-center rounded-full bg-black/12 shadow-xl ring-2 backdrop-blur-xl ${theme.ring} md:mb-12 md:h-80 md:w-80 md:ring-4`}>
+           <div className={`text-5xl font-black tabular-nums tracking-tighter ${theme.text} drop-shadow-[0_0_24px_rgba(255,255,255,0.08)] md:text-7xl`}>
              {formatTime(mode === "pomodoro" ? pomoTimeLeft : examTimeLeft)}
            </div>
            
            {/* Decorative Outer Glow */}
-           <div className={`absolute inset-0 rounded-full blur-3xl opacity-20 ${theme.bg}`} />
+           <div className={`pointer-events-none absolute inset-0 rounded-full blur-3xl opacity-20 ${theme.bg}`} />
         </div>
 
         {/* Controls */}
-        <div className="flex items-center gap-6">
+        <div className="flex items-center gap-4 md:gap-6">
            <button 
+             type="button"
              onClick={resetTimer}
-             className="w-14 h-14 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-white/50 hover:text-white hover:bg-white/10 transition-all active:scale-95"
+             className="flex h-12 w-12 items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-white/55 transition-all hover:bg-white/10 hover:text-white active:scale-95 md:h-14 md:w-14"
            >
              <RotateCcw size={24} />
            </button>
            
            <button 
+             type="button"
              onClick={toggleTimer}
-             className={`w-24 h-24 rounded-3xl flex items-center justify-center transition-all transform active:scale-95 shadow-xl ${theme.btn}`}
+             className={`flex h-20 w-20 items-center justify-center rounded-[1.5rem] shadow-lg transition-all active:scale-95 md:h-24 md:w-24 md:rounded-3xl md:shadow-xl ${theme.btn}`}
            >
              {(mode === "pomodoro" ? pomoIsActive : examIsActive) ? <Pause size={40} className="fill-current" /> : <Play size={40} className="fill-current ml-2" />}
            </button>
 
            {mode === "pomodoro" && (pomoState === "shortBreak" || pomoState === "longBreak") ? (
               <button 
+                type="button"
                 onClick={skipBreak}
-                className="w-14 h-14 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-white/50 hover:text-white hover:bg-white/10 transition-all active:scale-95"
+                className="flex h-12 w-12 items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-white/55 transition-all hover:bg-white/10 hover:text-white active:scale-95 md:h-14 md:w-14"
               >
                 <SkipForward size={24} />
               </button>
            ) : (
-              <div className="w-14 h-14" /> /* Spacer to keep Play button centered */
+              <div className="h-12 w-12 md:h-14 md:w-14" /> /* Spacer to keep Play button centered */
            )}
         </div>
+
+        {mode === "pomodoro" && <FocusSoundtrack isFullscreen={isFullscreen} />}
 
         {/* Exam Mode Settings */}
         {mode === "exam" && !examIsActive && (
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className={`mt-12 p-6 rounded-3xl ${theme.panelBg} border border-white/10 flex gap-4 items-center backdrop-blur-md`}
+            className={`mt-8 flex flex-wrap items-end justify-center gap-3 rounded-3xl border border-white/10 p-4 backdrop-blur-md md:mt-12 md:p-6 ${theme.panelBg}`}
           >
             <div className="flex flex-col gap-1">
               <label className="text-[10px] font-black text-indigo-200/50 uppercase tracking-widest">Hours</label>
@@ -342,7 +376,7 @@ export default function StudentTimer() {
                 type="number" 
                 value={customHours} 
                 onChange={(e) => setCustomHours(Math.max(0, parseInt(e.target.value) || 0))} 
-                className="bg-black/40 text-white border border-white/10 rounded-xl px-4 py-2 w-20 font-bold outline-none focus:border-indigo-500/50"
+                className="w-20 rounded-xl border border-white/10 bg-black/30 px-4 py-2 font-bold text-white outline-none focus:border-indigo-500/50"
               />
             </div>
             <div className="flex flex-col gap-1">
@@ -351,12 +385,13 @@ export default function StudentTimer() {
                 type="number" 
                 value={customMinutes} 
                 onChange={(e) => setCustomMinutes(Math.max(0, parseInt(e.target.value) || 0))} 
-                className="bg-black/40 text-white border border-white/10 rounded-xl px-4 py-2 w-20 font-bold outline-none focus:border-indigo-500/50"
+                className="w-20 rounded-xl border border-white/10 bg-black/30 px-4 py-2 font-bold text-white outline-none focus:border-indigo-500/50"
               />
             </div>
             <button 
+              type="button"
               onClick={applyCustomExamTime}
-              className="mt-5 px-6 py-2.5 rounded-xl bg-white/10 text-white font-bold text-sm hover:bg-white/20 transition-all"
+              className="min-h-10 rounded-xl bg-white/10 px-6 py-2.5 text-sm font-bold text-white transition-all hover:bg-white/20"
             >
               Set Time
             </button>

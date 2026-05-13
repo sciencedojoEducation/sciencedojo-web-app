@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
 import UserAvatar from "@/components/UserAvatar";
 import { adminCreateUser, adminDeleteUser } from "./actions";
 
@@ -18,6 +17,7 @@ interface UserProfile {
 export default function UserManagementUI({ users, currentUserId }: { users: UserProfile[], currentUserId: string }) {
   const router = useRouter();
   const [filter, setFilter] = useState("all");
+  const [searchQuery, setSearchQuery] = useState("");
   
   // Modals
   const [isCreating, setIsCreating] = useState(false);
@@ -28,12 +28,28 @@ export default function UserManagementUI({ users, currentUserId }: { users: User
   const [error, setError] = useState<string | null>(null);
 
   // Filtered List
-  const displayUsers = filter === "all" ? users : users.filter(u => u.role === filter);
+  const normalizedSearch = searchQuery.trim().toLowerCase();
+  const displayUsers = users.filter((user) => {
+    const matchesRole = filter === "all" || user.role === filter;
+    const searchable = [user.full_name, user.email, user.role].filter(Boolean).join(" ").toLowerCase();
+    const matchesSearch = !normalizedSearch || searchable.includes(normalizedSearch);
+    return matchesRole && matchesSearch;
+  });
 
   // Metric Counts
   const tutorCount = users.filter(u => u.role === 'tutor').length;
   const parentCount = users.filter(u => u.role === 'parent').length;
   const adminCount = users.filter(u => u.role === 'admin').length;
+  const roleTone = (role: string) => (
+    role === 'admin' ? 'bg-amber-100 text-amber-700 border-amber-200' :
+    role === 'tutor' ? 'bg-blue-100 text-blue-700 border-blue-200' :
+    'bg-violet-100 text-violet-700 border-violet-200'
+  );
+  const joinedDate = (date: string) => new Date(date).toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
 
   const handleCreate = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -69,31 +85,57 @@ export default function UserManagementUI({ users, currentUserId }: { users: User
   };
 
   return (
-    <div className="p-8 max-w-6xl mx-auto min-h-screen">
+    <div className="mx-auto min-h-screen max-w-6xl px-3 py-5 sm:px-4 md:p-8">
       {/* HEADER SECTION */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
-        <div>
-           <h1 className="text-3xl font-black text-slate-800 tracking-tight mb-2">User Directory 👥</h1>
-           <p className="text-slate-500 font-medium tracking-tight max-w-xl">
-             Manage all active accounts on ScienceDojo. Note: Deleting a user permanently wipes all their lessons, payouts, and history.
+      <div className="mb-5 flex flex-col gap-4 lg:mb-8 lg:flex-row lg:items-end lg:justify-between">
+        <div className="min-w-0">
+           <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.18em] text-slate-400">User operations</p>
+           <h1 className="mb-2 text-2xl font-black tracking-tight text-slate-900 md:text-3xl">User Directory</h1>
+           <p className="max-w-2xl text-sm font-medium leading-relaxed text-slate-500 md:text-base">
+             Manage platform users quickly, clearly, and safely. Delete actions permanently remove related account history.
            </p>
         </div>
         <button 
           onClick={() => setIsCreating(true)}
-          className="px-6 py-3 bg-slate-800 text-white font-black tracking-widest text-[10px] uppercase rounded-xl hover:bg-black transition-all whitespace-nowrap shadow-lg shadow-slate-200"
+          className="inline-flex min-h-10 w-fit items-center justify-center rounded-2xl bg-slate-900 px-4 py-2.5 text-[10px] font-black uppercase tracking-[0.14em] text-white shadow-sm shadow-slate-200 transition-all hover:bg-black md:px-6 md:py-3"
         >
           + Add New User
         </button>
       </div>
 
       {/* METRICS & FILTERS */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8 pt-6 border-t border-slate-200">
-        <div className="flex gap-2">
-           <button onClick={() => setFilter('all')} className={`px-4 py-2 rounded-full text-xs font-bold transition-all ${filter === 'all' ? 'bg-slate-800 text-white' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}>All ({users.length})</button>
-           <button onClick={() => setFilter('tutor')} className={`px-4 py-2 rounded-full text-xs font-bold transition-all ${filter === 'tutor' ? 'bg-blue-600 text-white' : 'bg-blue-50 text-blue-600 hover:bg-blue-100'}`}>Tutors ({tutorCount})</button>
-           <button onClick={() => setFilter('parent')} className={`px-4 py-2 rounded-full text-xs font-bold transition-all ${filter === 'parent' ? 'bg-violet-600 text-white' : 'bg-violet-50 text-violet-600 hover:bg-violet-100'}`}>Parents ({parentCount})</button>
-           <button onClick={() => setFilter('admin')} className={`px-4 py-2 rounded-full text-xs font-bold transition-all ${filter === 'admin' ? 'bg-amber-500 text-white' : 'bg-amber-50 text-amber-600 hover:bg-amber-100'}`}>Admins ({adminCount})</button>
+      <div className="mb-4 border-t border-slate-200 pt-4 md:mb-6 md:pt-6">
+        <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
+           <button onClick={() => setFilter('all')} className={`shrink-0 rounded-full px-3 py-2 text-xs font-bold transition-all md:px-4 ${filter === 'all' ? 'bg-slate-800 text-white' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}>All ({users.length})</button>
+           <button onClick={() => setFilter('tutor')} className={`shrink-0 rounded-full px-3 py-2 text-xs font-bold transition-all md:px-4 ${filter === 'tutor' ? 'bg-blue-600 text-white' : 'bg-blue-50 text-blue-600 hover:bg-blue-100'}`}>Tutors ({tutorCount})</button>
+           <button onClick={() => setFilter('parent')} className={`shrink-0 rounded-full px-3 py-2 text-xs font-bold transition-all md:px-4 ${filter === 'parent' ? 'bg-violet-600 text-white' : 'bg-violet-50 text-violet-600 hover:bg-violet-100'}`}>Parents ({parentCount})</button>
+           <button onClick={() => setFilter('admin')} className={`shrink-0 rounded-full px-3 py-2 text-xs font-bold transition-all md:px-4 ${filter === 'admin' ? 'bg-amber-500 text-white' : 'bg-amber-50 text-amber-600 hover:bg-amber-100'}`}>Admins ({adminCount})</button>
         </div>
+      </div>
+
+      <div className="relative mb-4 max-w-xl md:mb-6">
+        <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" aria-hidden="true">
+          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="m21 21-4.35-4.35M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z" /></svg>
+        </span>
+        <input
+          value={searchQuery}
+          onChange={(event) => setSearchQuery(event.target.value)}
+          placeholder="Search users"
+          className="min-h-11 w-full rounded-2xl border border-slate-200 bg-white px-11 py-3 text-sm font-bold text-slate-700 outline-none transition-colors placeholder:text-slate-400 focus:border-primary focus:ring-4 focus:ring-primary/10 md:placeholder:text-transparent"
+          aria-label="Search users by name, email, or role"
+        />
+        <span className="pointer-events-none absolute left-11 top-1/2 hidden -translate-y-1/2 text-sm font-bold text-slate-400 md:block">
+          {searchQuery ? "" : "Search users by name or email"}
+        </span>
+        {searchQuery && (
+          <button
+            type="button"
+            onClick={() => setSearchQuery("")}
+            className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full px-2 py-1 text-[10px] font-black uppercase tracking-[0.1em] text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
+          >
+            Clear
+          </button>
+        )}
       </div>
 
       {/* ERROR BANNER */}
@@ -104,8 +146,68 @@ export default function UserManagementUI({ users, currentUserId }: { users: User
       )}
 
       {/* DIRECTORY TABLE */}
-      <div className="bg-white rounded-3xl border border-slate-200 shadow-xl shadow-slate-200/50 overflow-hidden relative min-h-[400px]">
-        <table className="w-full text-left border-collapse">
+      <div className="relative overflow-hidden rounded-[1.5rem] border border-slate-200 bg-white shadow-sm shadow-slate-200/50 md:rounded-3xl md:shadow-xl">
+        <div className="grid gap-3 p-3 lg:hidden">
+          {displayUsers.map(u => (
+            <article key={u.id} className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex min-w-0 items-center gap-3">
+                  <div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-2xl border-2 border-white bg-slate-100 shadow-sm">
+                    <UserAvatar src={u.avatar_url} alt={u.full_name} fill className="object-cover" />
+                  </div>
+                  <div className="min-w-0">
+                    <h3 className="break-words text-sm font-black leading-tight text-slate-900">{u.full_name || "New User"}</h3>
+                    <p className="mt-1 break-words text-xs font-medium text-slate-400">{u.email}</p>
+                  </div>
+                </div>
+                <span className={`shrink-0 whitespace-nowrap rounded-full border px-2.5 py-1 text-[9px] font-black uppercase tracking-widest ${roleTone(u.role)}`}>
+                  {u.role}
+                </span>
+              </div>
+
+              <div className="mt-4 grid grid-cols-2 gap-2">
+                <div className="rounded-2xl bg-slate-50 p-3">
+                  <p className="text-[9px] font-bold uppercase tracking-widest text-slate-400">Joined</p>
+                  <p className="mt-1 text-xs font-black text-slate-700">{joinedDate(u.created_at)}</p>
+                </div>
+                <div className="rounded-2xl bg-slate-50 p-3">
+                  <p className="text-[9px] font-bold uppercase tracking-widest text-slate-400">Account</p>
+                  <p className="mt-1 text-xs font-black capitalize text-slate-700">{u.id === currentUserId ? "Current admin" : "Managed user"}</p>
+                </div>
+              </div>
+
+              <div className="mt-4 flex items-center justify-between gap-2 border-t border-slate-100 pt-3">
+                <a
+                  href={`mailto:${u.email}`}
+                  className="inline-flex min-h-10 items-center rounded-xl px-3 py-2 text-xs font-black text-slate-600 transition-colors hover:bg-slate-50"
+                >
+                  Email
+                </a>
+                {u.id !== currentUserId ? (
+                  <button
+                    onClick={() => setDeletingUser(u)}
+                    className="inline-flex min-h-10 items-center rounded-xl px-3 py-2 text-xs font-black text-red-500 transition-colors hover:bg-red-50"
+                  >
+                    Delete user
+                  </button>
+                ) : (
+                  <span className="inline-flex min-h-10 items-center rounded-xl px-3 py-2 text-xs font-black text-slate-300">
+                    Protected
+                  </span>
+                )}
+              </div>
+            </article>
+          ))}
+
+          {displayUsers.length === 0 && (
+            <div className="rounded-2xl border border-slate-100 bg-slate-50 p-5 text-center">
+              <p className="font-black text-slate-700">No users found</p>
+              <p className="mt-1 text-xs font-bold leading-relaxed text-slate-400">Try searching by another name, email, or role.</p>
+            </div>
+          )}
+        </div>
+
+        <table className="hidden w-full border-collapse text-left lg:table">
           <thead>
             <tr className="border-b border-slate-200 bg-slate-50/50 text-[10px] uppercase tracking-[0.2em] font-black text-slate-400">
               <th className="p-6">User Profile</th>
@@ -129,16 +231,12 @@ export default function UserManagementUI({ users, currentUserId }: { users: User
                      </div>
                   </td>
                   <td className="p-6">
-                    <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${
-                      u.role === 'admin' ? 'bg-amber-100 text-amber-700' :
-                      u.role === 'tutor' ? 'bg-blue-100 text-blue-700' :
-                      'bg-violet-100 text-violet-700'
-                    }`}>
+                    <span className={`inline-flex whitespace-nowrap rounded-full border px-3 py-1 text-[10px] font-black uppercase tracking-widest ${roleTone(u.role)}`}>
                       {u.role}
                     </span>
                   </td>
                   <td className="p-6 text-sm text-slate-500">
-                    {new Date(u.created_at).toLocaleDateString()}
+                    {joinedDate(u.created_at)}
                   </td>
                   <td className="p-6 text-right">
                     {u.id !== currentUserId ? (
@@ -157,7 +255,10 @@ export default function UserManagementUI({ users, currentUserId }: { users: User
             
             {displayUsers.length === 0 && (
                <tr>
-                 <td colSpan={4} className="p-12 text-center text-slate-400 italic">No users found for this filter.</td>
+                 <td colSpan={4} className="p-12 text-center">
+                   <p className="font-black text-slate-600">No users found</p>
+                   <p className="mt-2 text-sm font-bold text-slate-400">Try searching by another name, email, or role.</p>
+                 </td>
                </tr>
             )}
           </tbody>

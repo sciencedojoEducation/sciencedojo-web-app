@@ -25,44 +25,44 @@ export default function StudentProgressStats({ bookings }: StudentProgressStatsP
 
   return (
     <section>
-      <div className="mb-6">
-        <h2 className="text-xl font-black text-secondary">Learning progress</h2>
+      <div className="mb-4 md:mb-6">
+        <h2 className="text-lg font-black text-secondary md:text-xl">Learning progress</h2>
         <p className="mt-2 max-w-2xl text-sm font-medium leading-7 text-secondary/50">
           A calm snapshot of tutoring activity and learning rhythm, not a scorecard.
         </p>
       </div>
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-2">
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4 mb-2">
         
-        <div className="bg-white p-6 rounded-3xl border border-secondary/10 shadow-sm flex flex-col items-center justify-center text-center">
-          <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center mb-3">
-             <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+        <div className="bg-white p-4 rounded-2xl border border-secondary/10 shadow-sm flex flex-col items-center justify-center text-center md:p-6 md:rounded-3xl">
+          <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center mb-2 md:mb-3 md:h-12 md:w-12 md:rounded-2xl">
+             <svg className="w-5 h-5 md:h-6 md:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
           </div>
-          <div className="text-3xl font-black text-secondary">{lessonsCompleted}</div>
-          <div className="text-[10px] font-black uppercase tracking-widest text-secondary/40">Lessons</div>
+          <div className="text-2xl font-black text-secondary md:text-3xl">{lessonsCompleted}</div>
+          <div className="text-[9px] font-black uppercase tracking-[0.12em] text-secondary/40 md:text-[10px] md:tracking-widest">Lessons</div>
         </div>
 
-        <div className="bg-white p-6 rounded-3xl border border-secondary/10 shadow-sm flex flex-col items-center justify-center text-center">
-          <div className="w-12 h-12 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center mb-3">
-             <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+        <div className="bg-white p-4 rounded-2xl border border-secondary/10 shadow-sm flex flex-col items-center justify-center text-center md:p-6 md:rounded-3xl">
+          <div className="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center mb-2 md:mb-3 md:h-12 md:w-12 md:rounded-2xl">
+             <svg className="w-5 h-5 md:h-6 md:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
           </div>
-          <div className="text-3xl font-black text-secondary">{hoursStudied}</div>
-          <div className="text-[10px] font-black uppercase tracking-widest text-secondary/40">Tutoring hours</div>
+          <div className="text-2xl font-black text-secondary md:text-3xl">{hoursStudied}</div>
+          <div className="text-[9px] font-black uppercase tracking-[0.12em] text-secondary/40 md:text-[10px] md:tracking-widest">Tutoring hours</div>
         </div>
 
-        <div className="bg-white p-6 rounded-3xl border border-secondary/10 shadow-sm flex flex-col items-center justify-center text-center">
-          <div className="w-12 h-12 rounded-2xl bg-orange-50 text-orange-600 flex items-center justify-center mb-3">
-             <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
+        <div className="bg-white p-4 rounded-2xl border border-secondary/10 shadow-sm flex flex-col items-center justify-center text-center md:p-6 md:rounded-3xl">
+          <div className="w-10 h-10 rounded-xl bg-orange-50 text-orange-600 flex items-center justify-center mb-2 md:mb-3 md:h-12 md:w-12 md:rounded-2xl">
+             <svg className="w-5 h-5 md:h-6 md:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
           </div>
-          <div className="text-3xl font-black text-secondary">{subjects}</div>
-          <div className="text-[10px] font-black uppercase tracking-widest text-secondary/40">Subjects</div>
+          <div className="text-2xl font-black text-secondary md:text-3xl">{subjects}</div>
+          <div className="text-[9px] font-black uppercase tracking-[0.12em] text-secondary/40 md:text-[10px] md:tracking-widest">Subjects</div>
         </div>
 
-        <div className={`p-6 rounded-3xl border shadow-sm flex flex-col items-center justify-center text-center ${isActive ? 'bg-gradient-to-br from-green-400 to-green-600 border-green-500 text-white' : 'bg-white border-secondary/10'}`}>
-          <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mb-3 ${isActive ? 'bg-white/20 text-white' : 'bg-gray-50 text-gray-400'}`}>
-             <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+        <div className={`p-4 rounded-2xl border shadow-sm flex flex-col items-center justify-center text-center md:p-6 md:rounded-3xl ${isActive ? 'bg-gradient-to-br from-green-400 to-green-600 border-green-500 text-white' : 'bg-white border-secondary/10'}`}>
+          <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-2 md:mb-3 md:h-12 md:w-12 md:rounded-2xl ${isActive ? 'bg-white/20 text-white' : 'bg-gray-50 text-gray-400'}`}>
+             <svg className="w-5 h-5 md:h-6 md:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
           </div>
-          <div className={`text-3xl font-black ${isActive ? 'text-white' : 'text-secondary'}`}>{isActive ? 'Active' : 'Soon'}</div>
-          <div className={`text-[10px] font-black uppercase tracking-widest ${isActive ? 'text-white/80' : 'text-secondary/40'}`}>Recent activity</div>
+          <div className={`text-2xl font-black md:text-3xl ${isActive ? 'text-white' : 'text-secondary'}`}>{isActive ? 'Active' : 'Soon'}</div>
+          <div className={`text-[9px] font-black uppercase tracking-[0.12em] md:text-[10px] md:tracking-widest ${isActive ? 'text-white/80' : 'text-secondary/40'}`}>Recent activity</div>
         </div>
 
       </div>

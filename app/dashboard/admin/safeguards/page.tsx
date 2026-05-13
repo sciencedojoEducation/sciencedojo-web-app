@@ -50,29 +50,101 @@ export default async function AdminSafeguards() {
   const groupedAlerts = Array.from(conversationMap.values());
 
   return (
-    <div className="p-8 max-w-6xl mx-auto">
-      <div className="mb-10 flex items-center justify-between">
+    <div className="mx-auto max-w-6xl px-3 py-5 sm:px-4 md:p-8">
+      <div className="mb-5 flex flex-col gap-4 lg:mb-10 lg:flex-row lg:items-center lg:justify-between">
          <div className="flex items-center gap-3">
             <Link 
               href="/dashboard/admin"
-              className="w-10 h-10 rounded-full bg-secondary/5 flex items-center justify-center hover:bg-secondary/10 transition-colors"
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-secondary/5 transition-colors hover:bg-secondary/10"
             >
                <svg className="w-5 h-5 text-secondary" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
             </Link>
             <div>
-               <h1 className="text-3xl font-black mb-1 bg-gradient-to-r from-secondary to-red-600 bg-clip-text text-transparent">
-                  Dojo Safeguards 🛡️
+               <h1 className="mb-1 bg-gradient-to-r from-secondary to-red-600 bg-clip-text text-2xl font-black text-transparent md:text-3xl">
+                  Dojo Safeguards
                </h1>
-               <p className="text-secondary/70 text-sm font-medium tracking-tight">Review flagged messaging violations and maintain platform safety.</p>
+               <p className="max-w-xl text-sm font-medium leading-6 tracking-tight text-secondary/65">
+                  Review flagged conversations and keep ScienceDojo learning spaces protected.
+               </p>
             </div>
          </div>
-         <div className="bg-red-50 px-4 py-2 rounded-2xl border border-red-100 flex items-center gap-2">
-            <span className="flex h-2 w-2 rounded-full bg-red-600 animate-pulse"></span>
-            <span className="text-xs font-black text-red-600 uppercase tracking-widest">{groupedAlerts.length} Alerts Active</span>
+         <div className="flex w-fit items-center gap-2 rounded-2xl border border-red-100 bg-red-50 px-4 py-2">
+            <span className="flex h-2 w-2 rounded-full bg-red-600"></span>
+            <span className="text-xs font-black uppercase tracking-widest text-red-600">{groupedAlerts.length} Alerts Active</span>
          </div>
       </div>
 
-      <div className="bg-white rounded-[2.5rem] border border-secondary/10 shadow-sm overflow-hidden">
+      <div className="grid gap-3 lg:hidden">
+         {groupedAlerts.map((alert: any) => {
+            const reasons = Array.from(alert.flaggedReasons as Set<string>);
+
+            return (
+               <article key={alert.conversation_id} className="rounded-[1.5rem] border border-secondary/10 bg-white p-4 shadow-sm">
+                  <div className="flex items-start justify-between gap-3">
+                     <div className="flex min-w-0 items-center gap-3">
+                        <div className="h-10 w-10 shrink-0 overflow-hidden rounded-2xl border border-white bg-secondary/10 shadow-sm">
+                           {alert.sender?.avatar_url ? (
+                              <img src={alert.sender.avatar_url} alt="Sender" className="h-full w-full object-cover" />
+                           ) : (
+                              <div className="flex h-full w-full items-center justify-center font-bold text-secondary">{alert.sender?.full_name?.charAt(0)}</div>
+                           )}
+                        </div>
+                        <div className="min-w-0">
+                           <p className="truncate text-sm font-black text-secondary">{alert.sender?.full_name || "Unknown sender"}</p>
+                           <p className="mt-1 text-[10px] font-black uppercase tracking-[0.12em] text-secondary/38">{alert.sender?.role || "Participant"}</p>
+                        </div>
+                     </div>
+                     <span className="shrink-0 rounded-full border border-red-100 bg-red-50 px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.1em] text-red-600">
+                        {alert.count} flag{alert.count === 1 ? "" : "s"}
+                     </span>
+                  </div>
+
+                  <div className="mt-4 rounded-2xl border border-secondary/5 bg-slate-50 p-3">
+                     <p className="text-sm font-semibold italic leading-6 text-secondary/75">
+                        &quot;{alert.latestMessage.content.substring(0, 130)}{alert.latestMessage.content.length > 130 ? "..." : ""}&quot;
+                     </p>
+                     <p className="mt-2 text-[10px] font-bold uppercase tracking-[0.1em] text-secondary/35">
+                        {formatDistanceToNow(new Date(alert.latestMessage.created_at))} ago
+                     </p>
+                  </div>
+
+                  <div className="mt-3 flex flex-wrap gap-1.5">
+                     {reasons.length > 0 ? reasons.map((reason: string) => (
+                        <span key={reason} className="rounded-full border border-red-100 bg-red-50 px-2 py-1 text-[10px] font-black uppercase tracking-[0.1em] text-red-600">
+                           {reason}
+                        </span>
+                     )) : (
+                        <span className="rounded-full border border-red-100 bg-red-50 px-2 py-1 text-[10px] font-black uppercase tracking-[0.1em] text-red-600">
+                           Safety violation
+                        </span>
+                     )}
+                  </div>
+
+                  <Link
+                     href={`/dashboard/admin/safeguards/${alert.conversation_id}`}
+                     className="mt-4 inline-flex min-h-11 w-full items-center justify-center rounded-2xl bg-secondary px-4 py-3 text-[10px] font-black uppercase tracking-[0.12em] text-white shadow-sm transition-colors hover:bg-secondary/90"
+                  >
+                     Review transcript
+                     <svg className="ml-2 h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+                  </Link>
+               </article>
+            );
+         })}
+
+         {groupedAlerts.length === 0 && (
+            <div className="rounded-[1.5rem] border border-emerald-100 bg-white p-6 text-center shadow-sm">
+               <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-500">
+                  <svg className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
+               </div>
+               <h3 className="text-lg font-black text-secondary">Platform secure</h3>
+               <p className="mx-auto mt-2 max-w-sm text-sm font-medium leading-6 text-secondary/55">
+                  No flagged conversations need review right now. ScienceDojo is actively monitoring learning spaces.
+               </p>
+            </div>
+         )}
+      </div>
+
+      <div className="hidden overflow-hidden rounded-[2.5rem] border border-secondary/10 bg-white shadow-sm lg:block">
          <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
                <thead>

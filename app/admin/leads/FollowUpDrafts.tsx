@@ -6,6 +6,7 @@ type FollowUpDraftsProps = {
   whatsappMessage: string;
   emailSubject: string;
   emailBody: string;
+  variant?: "details" | "panel";
 };
 
 async function copyText(value: string, onCopied: () => void) {
@@ -17,6 +18,7 @@ export default function FollowUpDrafts({
   whatsappMessage,
   emailSubject,
   emailBody,
+  variant = "details",
 }: FollowUpDraftsProps) {
   const [whatsapp, setWhatsapp] = useState(whatsappMessage);
   const [subject, setSubject] = useState(emailSubject);
@@ -36,12 +38,8 @@ export default function FollowUpDrafts({
   const copyButtonClass = "rounded-xl border border-secondary/10 bg-white px-3 py-2 text-[10px] font-black uppercase tracking-[0.12em] text-secondary/55 transition-colors hover:border-primary/30 hover:text-primary focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15";
   const fieldClass = "w-full rounded-2xl border border-secondary/10 bg-white px-4 py-3 text-xs font-semibold leading-6 text-secondary/70 outline-none transition-colors focus:border-primary focus:ring-4 focus:ring-primary/10";
 
-  return (
-    <details className="mt-3 rounded-2xl border border-primary/10 bg-primary/5 p-3">
-      <summary className="cursor-pointer text-xs font-black uppercase tracking-[0.14em] text-primary">
-        Suggested Follow-Up
-      </summary>
-      <div className="mt-4 grid gap-4">
+  const content = (
+    <div className={variant === "details" ? "mt-4 grid gap-4" : "grid gap-4"}>
         <p className="text-xs font-bold leading-5 text-secondary/55">
           Review and personalize before sending. These are drafts only; nothing is sent automatically.
         </p>
@@ -119,6 +117,18 @@ export default function FollowUpDrafts({
           </p>
         )}
       </div>
+  );
+
+  if (variant === "panel") {
+    return content;
+  }
+
+  return (
+    <details className="mt-3 rounded-2xl border border-primary/10 bg-primary/5 p-3">
+      <summary className="cursor-pointer text-xs font-black uppercase tracking-[0.14em] text-primary">
+        Suggested Follow-Up
+      </summary>
+      {content}
     </details>
   );
 }

@@ -23,7 +23,7 @@ export default function AuthCard({
   maxWidth = "max-w-[480px]"
 }: AuthCardProps) {
   return (
-    <div className="relative min-h-screen w-full flex items-center justify-center p-4 overflow-hidden bg-[#F8FAFC]">
+    <div className="relative flex min-h-[calc(100svh-5rem)] w-full items-start justify-center overflow-y-auto overflow-x-hidden bg-[#F8FAFC] px-3 py-3 sm:px-4 sm:py-5 md:min-h-[calc(100dvh-5rem)] md:items-center md:p-6">
       {/* Premium Digital Dojo Background */}
       <div className="absolute inset-0 z-0 pointer-events-none">
         
@@ -133,14 +133,14 @@ export default function AuthCard({
         animate={{ opacity: 1, y: 0 }}
         className={`relative z-10 w-full ${maxWidth}`}
       >
-        <div className="bg-white/95 backdrop-blur-xl rounded-[3rem] p-10 md:p-12 shadow-2xl shadow-primary/10 border border-white/60">
+        <div className="rounded-[2rem] border border-white/60 bg-white/95 p-5 shadow-2xl shadow-primary/10 backdrop-blur-xl sm:p-7 md:rounded-[3rem] md:p-12">
           
           {showLogo && (
-            <div className="flex justify-center mb-8">
+            <div className="mb-4 flex justify-center md:mb-8">
               <motion.div 
                 initial={{ scale: 0.8 }}
                 animate={{ scale: 1 }}
-                className="relative w-20 h-20 rounded-2xl overflow-hidden shadow-2xl shadow-navy/20 ring-4 ring-white"
+                className="relative h-14 w-14 overflow-hidden rounded-2xl shadow-2xl shadow-navy/20 ring-4 ring-white md:h-20 md:w-20"
               >
                 <Image 
                   src="/images/sciencedojo-logo-brand.jpg" 
@@ -152,8 +152,8 @@ export default function AuthCard({
             </div>
           )}
 
-          <div className="text-center mb-10">
-            <h1 className="text-4xl font-black text-navy tracking-tight mb-2">
+          <div className="mb-5 text-center md:mb-10">
+            <h1 className="mb-1 text-2xl font-black tracking-tight text-navy md:mb-2 md:text-4xl">
               {title}
             </h1>
             {subtitle && (
@@ -163,12 +163,12 @@ export default function AuthCard({
             )}
           </div>
 
-          <div className="space-y-6">
+          <div className="space-y-4 md:space-y-6">
             {children}
           </div>
 
           {footer && (
-            <div className="mt-12 pt-8 border-t border-navy/5 text-center">
+            <div className="mt-6 border-t border-navy/5 pt-5 text-center md:mt-12 md:pt-8">
               {footer}
             </div>
           )}
@@ -211,7 +211,7 @@ export function RoleCard({
 
 export function Divider({ label }: { label: string }) {
   return (
-    <div className="relative py-6">
+    <div className="relative py-3 md:py-6">
       <div className="absolute inset-0 flex items-center">
         <div className="w-full border-t border-navy/5"></div>
       </div>

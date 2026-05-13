@@ -4,6 +4,7 @@ import { getUnreadMessageCount } from "@/lib/messaging-queries";
 import SidebarLink from "./SidebarLink";
 import DashboardTourReplayButton from "./DashboardTourReplayButton";
 import DashboardMobileDrawer from "./DashboardMobileDrawer";
+import { signOut } from "@/app/login/actions";
 import { 
   Calendar, 
   GraduationCap, 
@@ -208,6 +209,22 @@ export default async function DashboardSidebar({ role }: DashboardSidebarProps) 
           <span className="text-base">🚪</span>
           <span>Exit to Site</span>
         </Link>
+
+        <form action={signOut} className={`mt-5 border-t pt-5 ${
+          isLight ? "border-slate-200" : "border-white/10"
+        }`}>
+          <button
+            type="submit"
+            className={`flex w-full items-center justify-center gap-2 rounded-2xl border px-4 py-3 text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-500 shadow-lg shadow-black/5 ${
+              isLight
+                ? "border-slate-200 bg-white text-slate-500 hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900"
+                : "border-white/10 bg-white/5 text-slate-300 hover:bg-white hover:text-[#020617]"
+            }`}
+          >
+            <LogOut className="h-4 w-4" aria-hidden="true" />
+            <span>Log Out</span>
+          </button>
+        </form>
       </div>
 
       {/* Subtle Background Atmospherics 🏔️✨ */}

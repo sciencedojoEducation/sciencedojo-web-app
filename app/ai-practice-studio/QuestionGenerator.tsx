@@ -236,21 +236,31 @@ export default function QuestionGenerator() {
             </p>
           </div>
         ) : (
-          <div className="mt-5 grid gap-4">
+          <div className="mt-5 grid gap-3">
             {questions.map((question, index) => (
-              <details key={`${question.question}-${index}`} className="group rounded-2xl border border-secondary/10 bg-surface p-5">
+              <details key={`${question.question}-${index}`} className="group rounded-xl border border-secondary/12 bg-white p-4 shadow-sm shadow-secondary/5 md:p-5">
                 <summary className="cursor-pointer list-none">
-                  <p className="text-xs font-black uppercase tracking-[0.2em] text-primary">Question {index + 1}</p>
-                  <p className="mt-2 text-lg font-black leading-8 text-secondary">{question.question}</p>
-                  <p className="mt-3 text-xs font-black uppercase tracking-[0.16em] text-secondary/35">
-                    {question.skill} | {question.difficulty} | Tap to show answer
-                  </p>
+                  <div className="flex items-start gap-3">
+                    <span className="shrink-0 pt-0.5 text-sm font-semibold text-secondary/45">{index + 1}.</span>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-lg font-semibold leading-7 text-secondary md:text-xl md:leading-8">{question.question}</p>
+                      <p className="mt-3 text-xs font-medium leading-5 text-secondary/42">
+                        Topic: {question.skill} <span className="text-secondary/25">&middot;</span> Difficulty: {question.difficulty}{" "}
+                        <span className="text-secondary/25">&middot;</span>{" "}
+                        <span className="text-primary/70 group-open:hidden">Show answer</span>
+                        <span className="hidden text-primary/70 group-open:inline">Hide answer</span>
+                      </p>
+                      <div className="mt-4 border-b border-dashed border-secondary/25 pb-2 text-sm font-medium text-secondary/38">
+                        Answer: <span className="text-secondary/20">____________________________</span>
+                      </div>
+                    </div>
+                  </div>
                 </summary>
-                <div className="mt-5 rounded-2xl bg-white p-5">
-                  <p className="text-xs font-black uppercase tracking-[0.18em] text-emerald-600">Answer</p>
-                  <p className="mt-2 font-bold leading-7 text-secondary">{question.answer}</p>
-                  <p className="mt-4 text-xs font-black uppercase tracking-[0.18em] text-primary">Working / marking guidance</p>
-                  <p className="mt-2 leading-7 text-secondary/65">{question.working}</p>
+                <div className="mt-4 rounded-xl border border-secondary/8 bg-surface px-4 py-4 md:px-5">
+                  <p className="text-xs font-semibold text-emerald-700">Answer</p>
+                  <p className="mt-2 text-sm font-semibold leading-6 text-secondary md:text-base md:leading-7">{question.answer}</p>
+                  <p className="mt-4 text-xs font-semibold text-primary/75">Working / marking guidance</p>
+                  <p className="mt-2 text-sm leading-6 text-secondary/65 md:text-base md:leading-7">{question.working}</p>
                 </div>
               </details>
             ))}

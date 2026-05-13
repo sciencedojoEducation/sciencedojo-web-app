@@ -104,124 +104,233 @@ export default async function AdminDashboard() {
     .order('rating', { ascending: false })
     .limit(4);
 
+  const operationalMetrics = [
+    {
+      label: `Platform profit (${platformFeeRaw}%)`,
+      value: `£${totalPlatformProfit.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+      detail: `Gross volume £${totalPlatformVolume.toFixed(2)}`,
+      tone: "border-secondary/20 bg-gradient-to-br from-secondary to-primary",
+      labelTone: "text-white/72",
+      valueTone: "text-white",
+      detailTone: "text-white/58",
+    },
+    {
+      label: "Tutoring hours",
+      value: `${hoursTaught}`,
+      detail: "Completed session hours",
+      tone: "border-sky-100 bg-sky-50/85 hover:border-sky-200",
+      labelTone: "text-sky-700/70",
+      valueTone: "text-sky-900",
+      detailTone: "text-sky-700/55",
+    },
+    {
+      label: "Verified tutors",
+      value: `${activeTutors || 0}`,
+      detail: "Approved educators",
+      tone: "border-cyan-100 bg-cyan-50/85 hover:border-cyan-200",
+      labelTone: "text-cyan-700/70",
+      valueTone: "text-cyan-900",
+      detailTone: "text-cyan-700/55",
+    },
+    {
+      label: "Safety alerts",
+      value: `${flaggedCount || 0}`,
+      detail: flaggedCount && flaggedCount > 0 ? "Needs review" : "No active flags",
+      href: "/dashboard/admin/safeguards",
+      attention: !!flaggedCount && flaggedCount > 0,
+      tone: flaggedCount && flaggedCount > 0 ? "border-red-200 bg-red-50/80 hover:border-red-300" : "border-emerald-100 bg-emerald-50/80 hover:border-emerald-200",
+      labelTone: flaggedCount && flaggedCount > 0 ? "text-red-500" : "text-emerald-700/70",
+      valueTone: flaggedCount && flaggedCount > 0 ? "text-red-600" : "text-emerald-800",
+      detailTone: flaggedCount && flaggedCount > 0 ? "text-red-500/65" : "text-emerald-700/55",
+    },
+  ];
+
+  const attentionLinks = [
+    {
+      label: flaggedCount && flaggedCount > 0 ? `${flaggedCount} safeguard alert${flaggedCount === 1 ? "" : "s"}` : "Safeguards clear",
+      detail: flaggedCount && flaggedCount > 0 ? "Review flagged messages" : "Monitor student safety",
+      href: "/dashboard/admin/safeguards",
+      attention: !!flaggedCount && flaggedCount > 0,
+      tone: flaggedCount && flaggedCount > 0 ? "border-red-200 bg-red-50/80 hover:border-red-300" : "border-emerald-100 bg-emerald-50/85 hover:border-emerald-200",
+      labelTone: flaggedCount && flaggedCount > 0 ? "text-red-600" : "text-emerald-800",
+      detailTone: flaggedCount && flaggedCount > 0 ? "text-red-500/65" : "text-emerald-700/55",
+    },
+    {
+      label: "Assessment leads",
+      detail: "Review parent intake",
+      href: "/dashboard/admin/leads",
+      tone: "border-sky-100 bg-sky-50/85 hover:border-sky-200",
+      labelTone: "text-sky-800",
+      detailTone: "text-sky-700/55",
+    },
+    {
+      label: "Tutor review",
+      detail: "Verify experts and applications",
+      href: "/dashboard/admin/tutors",
+      tone: "border-indigo-100 bg-indigo-50/85 hover:border-indigo-200",
+      labelTone: "text-indigo-800",
+      detailTone: "text-indigo-700/55",
+    },
+    {
+      label: "Payouts",
+      detail: "Check tutor balances",
+      href: "/dashboard/admin/payouts",
+      tone: "border-cyan-100 bg-cyan-50/85 hover:border-cyan-200",
+      labelTone: "text-cyan-800",
+      detailTone: "text-cyan-700/55",
+    },
+  ];
+
   return (
-    <div className="p-8 max-w-6xl mx-auto">
-      <div className="mb-10 flex items-center gap-6">
-         <div className="w-16 h-16 rounded-full bg-secondary/10 border-2 border-white shadow-sm overflow-hidden flex items-center justify-center">
+    <div className="px-3 py-5 sm:p-6 md:p-8 max-w-6xl mx-auto space-y-6 md:space-y-8">
+      <div className="flex items-center gap-4 md:gap-5">
+         <div className="w-11 h-11 rounded-2xl bg-secondary/10 border-2 border-white shadow-sm overflow-hidden flex items-center justify-center md:h-14 md:w-14">
             {avatarUrl ? (
                <img src={avatarUrl} alt="Profile" className="w-full h-full object-cover" />
             ) : (
-               <span className="text-2xl font-bold text-secondary">{userName.charAt(0)}</span>
+               <span className="text-lg font-bold text-secondary md:text-xl">{userName.charAt(0)}</span>
             )}
          </div>
          <div>
-            <h1 className="text-3xl font-black mb-1 bg-gradient-to-r from-secondary to-primary bg-clip-text text-transparent">
+            <h1 className="text-2xl font-black mb-1 bg-gradient-to-r from-secondary to-primary bg-clip-text text-transparent md:text-3xl">
                Hello, {userName.split(' ')[0]}!
             </h1>
-            <p className="text-secondary/70 text-sm font-medium tracking-tight">System overview and platform management.</p>
+            <p className="text-secondary/60 text-sm font-medium tracking-tight">Educational operations, tutor support, and platform health.</p>
          </div>
       </div>
 
-      {/* KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-12">
-         <div className="bg-gradient-to-br from-indigo-900 to-indigo-700 p-6 rounded-3xl shadow-lg relative overflow-hidden group">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/30 rounded-full blur-2xl -z-10 group-hover:scale-110 transition-transform"></div>
-            <div className="text-indigo-200 text-sm font-bold uppercase tracking-wider mb-2">Platform Profit ({platformFeeRaw}%)</div>
-            <div className="text-4xl font-black text-white">£{totalPlatformProfit.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
-            <div className="text-indigo-300 text-xs font-bold mt-2">
-               Gross Vol: £{totalPlatformVolume.toFixed(2)}
-            </div>
-         </div>
-         <div className="bg-white p-6 rounded-3xl border border-secondary/10 shadow-sm">
-            <div className="text-secondary/50 text-sm font-bold uppercase tracking-wider mb-2">Hours Taught</div>
-            <div className="text-4xl font-black text-secondary">{hoursTaught} <span className="text-2xl text-secondary/40 font-bold">hrs</span></div>
-            <div className="text-secondary/40 text-xs font-bold mt-2">Based on completed sessions</div>
-         </div>
-         <div className="bg-white p-6 rounded-3xl border border-secondary/10 shadow-sm">
-            <div className="text-secondary/50 text-sm font-bold uppercase tracking-wider mb-2">Verified Tutors</div>
-            <div className="text-4xl font-black text-secondary">{activeTutors || 0}</div>
-            <div className="text-secondary/40 text-xs font-bold mt-2">Active on marketplace</div>
-         </div>
-          <Link href="/dashboard/admin/safeguards" className="bg-white p-6 rounded-3xl border border-secondary/10 shadow-sm hover:border-red-200 transition-colors group">
-             <div className="text-secondary/50 text-sm font-bold uppercase tracking-wider mb-2 group-hover:text-red-500 transition-colors">Safety Alerts</div>
-             <div className="text-4xl font-black text-secondary group-hover:text-red-600 transition-colors">{flaggedCount || 0}</div>
-             <div className="text-secondary/40 text-xs font-bold mt-2">Flagged violations</div>
-          </Link>
-      </div>
+      <section className="rounded-[1.5rem] border border-secondary/10 bg-white p-4 shadow-sm md:rounded-[2rem] md:p-5">
+        <div className="mb-4 flex flex-col gap-1 md:flex-row md:items-end md:justify-between">
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-[0.14em] text-secondary/35">Operational snapshot</p>
+            <h2 className="mt-1 text-xl font-black text-secondary">Platform health</h2>
+          </div>
+          <p className="text-xs font-bold text-secondary/45">{totalStudents || 0} family/student accounts tracked</p>
+        </div>
 
-      {/* Recent Activity */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+          {operationalMetrics.map((metric) => {
+            const content = (
+              <div className={`h-full rounded-2xl border p-4 transition-colors ${metric.tone}`}>
+                <p className={`text-[10px] font-black uppercase tracking-[0.1em] ${metric.labelTone}`}>
+                  {metric.label}
+                </p>
+                <p className={`mt-2 text-2xl font-black md:text-3xl ${metric.valueTone}`}>
+                  {metric.value}
+                </p>
+                <p className={`mt-1 text-xs font-bold leading-5 ${metric.detailTone}`}>{metric.detail}</p>
+              </div>
+            );
+
+            return metric.href ? (
+              <Link key={metric.label} href={metric.href} className="block rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2">
+                {content}
+              </Link>
+            ) : (
+              <div key={metric.label}>{content}</div>
+            );
+          })}
+        </div>
+      </section>
+
+      <section className="rounded-[1.5rem] border border-primary/10 bg-gradient-to-br from-white via-[#fbfdff] to-[#f4f9ff] p-4 shadow-sm md:rounded-[2rem] md:p-5">
+        <div className="mb-3 flex items-center justify-between gap-3">
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-[0.14em] text-secondary/35">Needs attention</p>
+            <h2 className="mt-1 text-lg font-black text-secondary">Operational next checks</h2>
+          </div>
+        </div>
+        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+          {attentionLinks.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={`rounded-2xl border px-4 py-3 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${item.tone}`}
+            >
+              <p className={`text-sm font-black ${item.labelTone}`}>{item.label}</p>
+              <p className={`mt-1 text-xs font-bold ${item.detailTone}`}>{item.detail}</p>
+            </Link>
+          ))}
+        </div>
+      </section>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 md:gap-6">
          <div className="lg:col-span-2">
-            <div className="flex justify-between items-center mb-4">
-               <h2 className="text-xl font-bold text-secondary">Recent Bookings (Live)</h2>
-               <Link href="/dashboard/admin/bookings" className="text-sm font-bold text-primary hover:underline">View All Bookings</Link>
+            <div className="flex flex-col gap-2 sm:flex-row sm:justify-between sm:items-end mb-3">
+               <div>
+                  <p className="text-[10px] font-black uppercase tracking-[0.14em] text-secondary/35">Learning movement</p>
+                  <h2 className="mt-1 text-xl font-black text-secondary">Recent learning activity</h2>
+               </div>
+               <Link href="/dashboard/admin/bookings" className="text-xs font-black uppercase tracking-[0.12em] text-primary hover:underline">View bookings</Link>
             </div>
-            <div className="bg-white rounded-3xl border border-secondary/10 shadow-sm overflow-hidden min-h-[300px]">
+            <div className="bg-white rounded-[1.5rem] border border-secondary/10 shadow-sm overflow-hidden min-h-[180px] md:rounded-[2rem]">
                {recentBookings?.map((booking: any, i) => {
                   const studentName = booking.student?.full_name || "Unknown Student";
                   const tutorName = booking.tutor?.full_name || "Unknown Tutor";
                   return (
-                     <div key={booking.id} className={`p-4 sm:p-6 flex flex-col sm:flex-row justify-between sm:items-center gap-4 ${i !== (recentBookings?.length || 0) - 1 ? 'border-b border-secondary/5' : ''}`}>
-                        <div className="flex items-center gap-4">
-                           <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                             booking.status === 'completed' ? 'bg-green-100 text-green-600' :
-                             booking.status === 'confirmed' ? 'bg-blue-100 text-blue-600' :
-                             'bg-amber-100 text-amber-600'
+                     <div key={booking.id} className={`p-4 flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center ${i !== (recentBookings?.length || 0) - 1 ? 'border-b border-secondary/5' : ''}`}>
+                        <div className="flex min-w-0 items-center gap-3">
+                           <div className={`w-8 h-8 shrink-0 rounded-xl flex items-center justify-center ${
+                             booking.status === 'completed' ? 'bg-green-50 text-green-600' :
+                             booking.status === 'confirmed' ? 'bg-blue-50 text-blue-600' :
+                             'bg-amber-50 text-amber-600'
                            }`}>
-                              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                            </div>
-                           <div>
-                              <p className="font-bold text-secondary sm:text-lg">
-                                {studentName} <span className="text-secondary/50 font-normal">booked</span> {tutorName}
+                           <div className="min-w-0">
+                              <p className="truncate text-sm font-black text-secondary">
+                                {studentName} <span className="text-secondary/45 font-semibold">with</span> {tutorName}
                               </p>
-                              <div className="flex gap-2 items-center text-xs">
-                                <span className="text-secondary/60">{new Date(booking.requested_date).toLocaleDateString()}</span>
+                              <div className="mt-1 flex flex-wrap gap-2 items-center text-xs">
+                                <span className="font-bold text-secondary/45">{new Date(booking.requested_date).toLocaleDateString()}</span>
                                 <span className="uppercase font-black text-[9px] px-2 py-0.5 rounded-full bg-slate-100 text-slate-500">
                                   {booking.status}
                                 </span>
                               </div>
                            </div>
                         </div>
-                        <div className="font-black text-secondary sm:text-lg text-right">
+                        <div className="text-sm font-black text-secondary/60 sm:text-right">
                            £{booking.price_at_booking}
                         </div>
                      </div>
                   );
                })}
                {(!recentBookings || recentBookings.length === 0) && (
-                 <div className="flex items-center justify-center p-12 text-secondary/40 font-bold">
-                    No recent bookings.
+                 <div className="flex min-h-[180px] items-center justify-center p-8 text-center text-sm font-bold text-secondary/40">
+                    No recent learning activity yet.
                  </div>
                )}
             </div>
          </div>
 
-         {/* Tutor Roster Teaser */}
          <div>
-            <h2 className="text-xl font-bold text-secondary mb-4">Top Tutors</h2>
-            <div className="bg-white rounded-3xl border border-secondary/10 shadow-sm p-4">
-               <div className="space-y-3">
+            <div className="mb-3">
+              <p className="text-[10px] font-black uppercase tracking-[0.14em] text-secondary/35">Educator operations</p>
+              <h2 className="mt-1 text-xl font-black text-secondary">Tutor support snapshot</h2>
+            </div>
+            <div className="bg-white rounded-[1.5rem] border border-secondary/10 shadow-sm p-3 md:rounded-[2rem] md:p-4">
+               <div className="space-y-2">
                   {topTutors?.map((tutor: any) => (
-                     <div key={tutor.id} className="flex justify-between items-center p-2 hover:bg-slate-50 rounded-xl transition-colors">
-                        <div className="flex items-center gap-3">
-                           <div className="w-10 h-10 rounded-full bg-secondary/10 relative overflow-hidden">
+                     <div key={tutor.id} className="flex justify-between items-center gap-3 rounded-2xl p-2 transition-colors hover:bg-slate-50">
+                        <div className="flex min-w-0 items-center gap-3">
+                           <div className="w-9 h-9 shrink-0 rounded-xl bg-secondary/10 relative overflow-hidden">
                               <Image src={tutor.profiles?.avatar_url || "/tutor_placeholder.webp"} alt={tutor.profiles?.full_name || "Tutor"} fill className="object-cover" />
                            </div>
-                           <div>
-                              <p className="text-sm font-bold text-secondary">{tutor.profiles?.full_name || "Tutor"}</p>
-                              <p className="text-[10px] uppercase font-black tracking-widest text-primary truncate max-w-[120px]">
-                                {tutor.subjects?.[0] || "General"}
+                           <div className="min-w-0">
+                              <p className="truncate text-sm font-black text-secondary">{tutor.profiles?.full_name || "Tutor"}</p>
+                              <p className="truncate text-[10px] uppercase font-black tracking-[0.1em] text-secondary/38">
+                                {tutor.subjects?.[0] || "General support"}
                               </p>
                            </div>
                         </div>
-                        <div className="text-xs font-black text-amber-500 bg-amber-50 px-2 py-1 rounded-md">
-                           ★ {tutor.rating > 0 ? tutor.rating : "New"}
+                        <div className="shrink-0 rounded-full bg-amber-50 px-2 py-1 text-[10px] font-black text-amber-600">
+                           {tutor.rating > 0 ? `★ ${tutor.rating}` : "New"}
                         </div>
                      </div>
                   ))}
                </div>
-               <Link href="/dashboard/admin/payouts" className="block w-full mt-4 py-3 text-center bg-slate-50 text-secondary font-black tracking-widest uppercase text-[10px] rounded-xl hover:bg-slate-100 transition-colors border border-secondary/10">
-                  Manage Payouts
+               <Link href="/dashboard/admin/payouts" className="mt-4 flex w-full items-center justify-center rounded-2xl border border-secondary/10 bg-slate-50 px-4 py-3 text-[10px] font-black uppercase tracking-[0.12em] text-secondary/60 transition-colors hover:bg-slate-100 hover:text-secondary">
+                  Manage payouts
                </Link>
             </div>
          </div>

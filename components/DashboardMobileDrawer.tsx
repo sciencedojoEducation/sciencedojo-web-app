@@ -96,7 +96,7 @@ export default function DashboardMobileDrawer({
 
   return (
     <div className="lg:hidden">
-      <header className="sticky top-0 z-50 border-b border-slate-200 bg-white/92 px-4 py-3 shadow-sm backdrop-blur-xl">
+      <header className="sticky top-0 z-50 border-b border-slate-200 bg-white/92 px-3 py-2.5 shadow-sm backdrop-blur-xl sm:px-4 sm:py-3">
         <div className="flex items-center justify-between gap-3">
           <div className="flex min-w-0 items-center gap-3">
             <button
@@ -106,7 +106,7 @@ export default function DashboardMobileDrawer({
               aria-controls={drawerId}
               aria-expanded={isOpen}
               onClick={() => setIsOpen(true)}
-              className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-slate-200 bg-white text-[#001A3D] shadow-sm transition-colors hover:bg-[#1E5AA8]/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1E5AA8] focus-visible:ring-offset-2"
+              className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-[#001A3D] shadow-sm transition-colors hover:bg-[#1E5AA8]/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1E5AA8] focus-visible:ring-offset-2 sm:h-11 sm:w-11 sm:rounded-2xl"
             >
               <span className="flex h-4 w-5 flex-col justify-between" aria-hidden="true">
                 <span className="h-0.5 rounded-full bg-current" />
@@ -115,12 +115,12 @@ export default function DashboardMobileDrawer({
               </span>
             </button>
 
-            <Link href={dashboardHref} className="min-w-0 text-2xl font-black tracking-tight text-[#001A3D]">
+            <Link href={dashboardHref} className="min-w-0 text-xl font-black tracking-tight text-[#001A3D] sm:text-2xl">
               science<span className="text-[#0066FF]">dojo</span><span className="text-[#00CFE8]">.</span>
             </Link>
           </div>
 
-          <span className="shrink-0 rounded-full border border-[#1E5AA8]/10 bg-[#1E5AA8]/5 px-3 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-[#1E5AA8]">
+          <span className="shrink-0 rounded-full border border-[#1E5AA8]/10 bg-[#1E5AA8]/5 px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.12em] text-[#1E5AA8] sm:px-3 sm:text-[10px] sm:tracking-[0.14em]">
             {displayRole}
           </span>
         </div>
@@ -222,7 +222,6 @@ export default function DashboardMobileDrawer({
               <form action={signOut} className="mt-5 border-t border-slate-200 pt-5">
                 <button
                   type="submit"
-                  onClick={() => setIsOpen(false)}
                   className="flex w-full items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 transition-colors hover:border-slate-300 hover:bg-slate-50 hover:text-[#001A3D] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1E5AA8] focus-visible:ring-offset-2"
                 >
                   <span className="text-base" aria-hidden="true">↳</span>

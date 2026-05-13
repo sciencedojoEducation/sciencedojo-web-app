@@ -37,37 +37,40 @@ export default function MissionViewer({ mission, missionId, onComplete }: { miss
   const s1Complete = Object.keys(s1Answers).length === mission.stage1.questions.length;
 
   return (
-    <div className="space-y-8 pb-20">
+    <div className="space-y-5 pb-20 md:space-y-8">
       
       {!isSubmitted ? (
       <>
       {/* Header */}
-      <div className="text-center py-10 bg-gradient-to-br from-indigo-900 via-[#1E5AA8] to-emerald-900 rounded-[3rem] text-white shadow-2xl relative overflow-hidden">
+      <div className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-indigo-900 via-[#1E5AA8] to-emerald-900 px-5 py-8 text-center text-white shadow-xl md:rounded-[3rem] md:py-10 md:shadow-2xl">
          <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-20" />
          <div className="relative z-10 flex flex-col items-center">
-            <h2 className="text-[10px] font-black tracking-[0.4em] uppercase text-emerald-300 mb-4 opacity-80">Guided Practice Mission</h2>
-            <h1 className="text-4xl md:text-5xl font-black tracking-tight">{mission.topic}</h1>
+            <h2 className="mb-3 text-[10px] font-black uppercase tracking-[0.28em] text-emerald-300 opacity-80 md:mb-4 md:tracking-[0.4em]">Guided learning pathway</h2>
+            <h1 className="text-3xl font-black tracking-tight md:text-5xl">{mission.topic}</h1>
+            <p className="mt-3 max-w-xl text-sm font-medium leading-relaxed text-white/70">
+              Work through each stage calmly. Your tutor will review the thinking, not just the final answers.
+            </p>
          </div>
       </div>
 
       {/* Stage 1: Recall Check */}
       <motion.section 
         initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-        className="bg-white rounded-[2rem] p-8 border border-slate-100 shadow-xl shadow-slate-200/50"
+        className="rounded-[1.5rem] border border-slate-100 bg-white p-5 shadow-sm shadow-slate-200/50 md:rounded-[2rem] md:p-8 md:shadow-xl"
       >
-        <div className="flex items-center gap-4 mb-6">
-           <div className="w-12 h-12 bg-sky-100 text-sky-600 rounded-2xl flex items-center justify-center">
+        <div className="mb-5 flex items-center gap-4 md:mb-6">
+           <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-sky-100 text-sky-600 md:h-12 md:w-12">
              <ShieldCheck size={24} />
            </div>
            <div>
              <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest">Stage 1</h3>
-             <h2 className="text-2xl font-black text-slate-800">{mission.stage1.title || "Recall Check"}</h2>
+             <h2 className="text-xl font-black text-slate-800 md:text-2xl">{mission.stage1.title || "Recall Check"}</h2>
            </div>
         </div>
 
-        <div className="space-y-8">
+        <div className="space-y-4 md:space-y-8">
           {mission.stage1.questions.map((q, i) => (
-            <div key={i} className="bg-slate-50 p-6 rounded-2xl border border-slate-100">
+            <div key={i} className="rounded-2xl border border-slate-100 bg-slate-50 p-4 md:p-6">
               <p className="font-bold text-slate-700 tracking-tight mb-4">{i + 1}. {q.question}</p>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {q.options.map((opt, optIdx) => {
@@ -96,20 +99,20 @@ export default function MissionViewer({ mission, missionId, onComplete }: { miss
       {/* Stage 2: Reasoning Practice */}
       <motion.section 
         initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
-        className="bg-slate-900 text-white rounded-[2rem] p-8 shadow-2xl relative overflow-hidden"
+        className="relative overflow-hidden rounded-[1.5rem] bg-slate-900 p-5 text-white shadow-xl md:rounded-[2rem] md:p-8 md:shadow-2xl"
       >
         <div className="absolute -right-20 -top-20 w-64 h-64 bg-emerald-500/10 blur-3xl rounded-full" />
         <div className="relative z-10">
-          <div className="flex items-center gap-4 mb-6">
-             <div className="w-12 h-12 bg-emerald-950 text-emerald-400 rounded-2xl flex items-center justify-center border border-emerald-500/20">
+          <div className="mb-5 flex items-center gap-4 md:mb-6">
+             <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-emerald-500/20 bg-emerald-950 text-emerald-400 md:h-12 md:w-12">
                <Brain size={24} />
              </div>
              <div>
                <h3 className="text-xs font-black text-emerald-500/50 uppercase tracking-widest">Stage 2</h3>
-               <h2 className="text-2xl font-black text-white">{mission.stage2.title || "Reasoning Practice"}</h2>
+               <h2 className="text-xl font-black text-white md:text-2xl">{mission.stage2.title || "Reasoning Practice"}</h2>
              </div>
           </div>
-          <p className="text-slate-300 font-medium leading-relaxed bg-black/20 p-6 rounded-2xl border border-white/5">
+          <p className="rounded-2xl border border-white/5 bg-black/20 p-4 text-sm font-medium leading-relaxed text-slate-300 md:p-6 md:text-base">
             {mission.stage2.missionPrompt}
           </p>
           <textarea 
@@ -125,20 +128,20 @@ export default function MissionViewer({ mission, missionId, onComplete }: { miss
       {/* Stage 3: Applied Understanding */}
       <motion.section 
         initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
-        className="bg-indigo-950 text-white rounded-[2rem] p-8 shadow-2xl relative overflow-hidden"
+        className="relative overflow-hidden rounded-[1.5rem] bg-indigo-950 p-5 text-white shadow-xl md:rounded-[2rem] md:p-8 md:shadow-2xl"
       >
         <div className="absolute -left-20 -bottom-20 w-64 h-64 bg-indigo-500/20 blur-3xl rounded-full" />
         <div className="relative z-10">
-          <div className="flex items-center gap-4 mb-6">
-             <div className="w-12 h-12 bg-indigo-900 border border-indigo-500/30 text-indigo-300 rounded-2xl flex items-center justify-center">
+          <div className="mb-5 flex items-center gap-4 md:mb-6">
+             <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-indigo-500/30 bg-indigo-900 text-indigo-300 md:h-12 md:w-12">
                 <Beaker size={24} />
              </div>
              <div>
                <h3 className="text-xs font-black text-indigo-400/50 uppercase tracking-widest">Stage 3</h3>
-               <h2 className="text-2xl font-black text-white">{mission.stage3.title || "Applied Understanding"}</h2>
+               <h2 className="text-xl font-black text-white md:text-2xl">{mission.stage3.title || "Applied Understanding"}</h2>
              </div>
           </div>
-          <div className="bg-white/5 p-6 rounded-2xl border border-white/10 mb-6">
+          <div className="mb-5 rounded-2xl border border-white/10 bg-white/5 p-4 md:mb-6 md:p-6">
             <p className="text-xs font-black tracking-widest text-indigo-300 uppercase mb-3">Scenario Context</p>
             <p className="text-slate-300 leading-relaxed font-medium">{mission.stage3.scenarioContext}</p>
           </div>
@@ -156,17 +159,17 @@ export default function MissionViewer({ mission, missionId, onComplete }: { miss
       {/* Stage 4: Mastery Checkpoint */}
       <motion.section 
         initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
-        className="bg-slate-950 text-white rounded-[2rem] p-8 shadow-2xl relative overflow-hidden border border-cyan-500/15"
+        className="relative overflow-hidden rounded-[1.5rem] border border-cyan-500/15 bg-slate-950 p-5 text-white shadow-xl md:rounded-[2rem] md:p-8 md:shadow-2xl"
       >
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-cyan-500/10 via-transparent to-transparent opacity-50" />
         <div className="relative z-10">
-          <div className="flex items-center gap-4 mb-6">
-             <div className="w-12 h-12 bg-cyan-950/70 border border-cyan-500/30 text-cyan-300 rounded-2xl flex items-center justify-center">
+          <div className="mb-5 flex items-center gap-4 md:mb-6">
+             <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-cyan-500/30 bg-cyan-950/70 text-cyan-300 md:h-12 md:w-12">
                 <CheckCircle2 size={24} />
              </div>
              <div>
                <h3 className="text-xs font-black text-cyan-300/70 uppercase tracking-widest">Final Stage</h3>
-               <h2 className="text-2xl font-black text-white">{mission.stage4.title || "Mastery Checkpoint"}</h2>
+               <h2 className="text-xl font-black text-white md:text-2xl">{mission.stage4.title || "Mastery Checkpoint"}</h2>
              </div>
           </div>
           <p className="text-cyan-100/75 font-medium mb-6">{mission.stage4.missionPrompt}</p>
@@ -212,7 +215,7 @@ export default function MissionViewer({ mission, missionId, onComplete }: { miss
                 setIsEvaluating(false);
             }}
             disabled={isEvaluating}
-            className="w-full mt-10 py-5 flex justify-center items-center gap-3 rounded-2xl bg-[#1E5AA8] hover:bg-[#174a8b] text-white font-black tracking-widest uppercase transition-all shadow-xl shadow-slate-900/20 disabled:opacity-50"
+            className="mt-8 flex w-full items-center justify-center gap-3 rounded-2xl bg-[#1E5AA8] py-4 font-black uppercase tracking-widest text-white shadow-xl shadow-slate-900/20 transition-all hover:bg-[#174a8b] disabled:opacity-50 md:mt-10 md:py-5"
           >
             {isEvaluating ? <Loader2 className="animate-spin" size={20} /> : null}
             {isEvaluating ? "Reviewing your responses..." : "Submit for Tutor Review"}

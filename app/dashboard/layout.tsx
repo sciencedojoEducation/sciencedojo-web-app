@@ -4,12 +4,18 @@ import DashboardGuidedTour from "@/components/DashboardGuidedTour";
 import { createClient } from "@/utils/supabase/server";
 import { headers } from "next/headers";
 
+type DashboardRole = "admin" | "tutor" | "parent" | "student";
+
 export const metadata: Metadata = {
   robots: {
     index: false,
     follow: false,
   },
 };
+
+function normalizeDashboardRole(role?: unknown): DashboardRole | null {
+  return role === "admin" || role === "tutor" || role === "parent" || role === "student" ? role : null;
+}
 
 export default async function DashboardLayout({ 
   children 
@@ -22,15 +28,24 @@ export default async function DashboardLayout({
     .from("profiles")
     .select("role")
     .eq("id", user?.id)
-    .single();
+    .maybeSingle();
     
-  let role = (profile?.role as "admin" | "tutor" | "parent" | "student") || "parent";
+  const profileRole = normalizeDashboardRole(profile?.role);
+  const metadataRole = normalizeDashboardRole(user?.user_metadata?.role);
+  let role: DashboardRole = profileRole || metadataRole || "parent";
 
   // ROUTE-BASED ROLE INFERENCE: If the URL is /dashboard/tutor but the profile says 'parent',
   // check for an existing application record. If found, auto-repair the profile.
   const headersList = await headers();
   const pathname = headersList.get("x-next-pathname") || headersList.get("referer") || "";
   const isTutorRoute = pathname.includes("/dashboard/tutor");
+
+  // Admin accounts are sometimes created/updated through auth metadata first.
+  // Treat either trusted source as admin so the shared dashboard shell does not
+  // fall back to the parent navigation while admin pages load.
+  if (profileRole === "admin" || metadataRole === "admin") {
+    role = "admin";
+  }
 
   if (isTutorRoute && role !== "tutor" && role !== "admin" && user) {
     // Check if this user has an application (i.e., they went through tutor onboarding)

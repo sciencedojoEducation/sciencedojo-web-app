@@ -59,21 +59,21 @@ export default function ClassPostComposer({ classId, isTutor, onPostCreated }: C
   };
 
   return (
-    <div className="bg-white rounded-[2rem] border border-secondary/10 shadow-lg overflow-hidden transition-all">
+    <div className="overflow-hidden rounded-[1.5rem] border border-secondary/10 bg-white shadow-sm transition-all md:rounded-[2rem] md:shadow-lg">
       {!isExpanded ? (
         <button
           onClick={() => setIsExpanded(true)}
-          className="w-full p-6 text-left flex items-center gap-4 hover:bg-slate-50/50 transition-colors"
+          className="flex w-full items-center gap-3 p-4 text-left transition-colors hover:bg-slate-50/50 md:gap-4 md:p-6"
         >
-          <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+          <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-primary/10">
             <svg className="w-5 h-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
             </svg>
           </div>
-          <span className="text-secondary/40 font-bold text-sm">Share something with your class...</span>
+          <span className="text-sm font-bold text-secondary/40">Share an update, assignment, or resource...</span>
         </button>
       ) : (
-        <form ref={formRef} onSubmit={handleSubmit} className="p-6 space-y-4">
+        <form ref={formRef} onSubmit={handleSubmit} className="space-y-4 p-4 md:p-6">
           {/* Post Type Tabs */}
           <div className="flex items-center gap-1 bg-slate-100/80 rounded-xl p-1">
             <button
@@ -161,7 +161,7 @@ export default function ClassPostComposer({ classId, isTutor, onPostCreated }: C
 
           {/* File Attachment */}
           <div className="flex items-center gap-3">
-            <label className="cursor-pointer flex items-center gap-2 px-4 py-2 bg-slate-100 rounded-xl hover:bg-slate-200 transition-colors text-xs font-bold text-secondary/60">
+            <label className="flex cursor-pointer items-center gap-2 rounded-xl bg-slate-100 px-4 py-2 text-xs font-bold text-secondary/60 transition-colors hover:bg-slate-200">
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
               </svg>
@@ -185,7 +185,7 @@ export default function ClassPostComposer({ classId, isTutor, onPostCreated }: C
           </div>
 
           {/* Actions */}
-          <div className="flex items-center justify-end gap-3 pt-2">
+          <div className="flex flex-col-reverse gap-2 pt-2 sm:flex-row sm:items-center sm:justify-end sm:gap-3">
             <button
               type="button"
               onClick={() => {
@@ -193,14 +193,14 @@ export default function ClassPostComposer({ classId, isTutor, onPostCreated }: C
                 setContent("");
                 setPostType("post");
               }}
-              className="px-6 py-2.5 text-secondary/40 font-bold text-sm hover:text-secondary rounded-xl transition-colors"
+              className="min-h-11 rounded-xl px-6 py-2.5 text-sm font-bold text-secondary/40 transition-colors hover:text-secondary"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isSubmitting || !content.trim()}
-              className="px-8 py-2.5 bg-primary text-white font-black text-sm rounded-xl hover:bg-primary-hover transition-all shadow-lg active:scale-95 disabled:opacity-50"
+              className="min-h-11 rounded-xl bg-primary px-8 py-2.5 text-sm font-black text-white shadow-md transition-all hover:bg-primary-hover active:scale-95 disabled:opacity-50"
             >
               {isSubmitting ? (
                 <span className="flex items-center gap-2">

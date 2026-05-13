@@ -36,7 +36,7 @@ export default function LoginPage({ searchParams }: { searchParams: Promise<{ [k
         </div>
       }
     >
-      <div className="space-y-6">
+      <div className="space-y-4 md:space-y-6">
         {successMsg && (
           <div className="p-4 rounded-2xl bg-mint/10 border border-mint/20 text-mint text-[10px] font-black uppercase tracking-wider text-center animate-in fade-in zoom-in-95">
              {successMsg}
@@ -56,7 +56,7 @@ export default function LoginPage({ searchParams }: { searchParams: Promise<{ [k
           } finally {
             setIsSubmitting(false);
           }
-        }} className="space-y-4 text-left">
+        }} className="space-y-3 text-left md:space-y-4">
           {nextParam && <input type="hidden" name="next" value={nextParam} />}
           <div className="space-y-2">
              <label className="text-xs font-bold text-navy/40 ml-6 flex items-center gap-2">
@@ -67,7 +67,7 @@ export default function LoginPage({ searchParams }: { searchParams: Promise<{ [k
                type="email" 
                required 
                placeholder="you@dojo.com" 
-               className="w-full bg-white/60 backdrop-blur-md border border-white/40 rounded-[2rem] px-8 py-5 text-navy font-bold focus:ring-4 focus:ring-mint/10 outline-none transition-all placeholder:text-navy/20 shadow-sm"
+               className="w-full rounded-[1.5rem] border border-white/40 bg-white/60 px-6 py-4 font-bold text-navy shadow-sm outline-none backdrop-blur-md transition-all placeholder:text-navy/20 focus:ring-4 focus:ring-mint/10 md:rounded-[2rem] md:px-8 md:py-5"
              />
           </div>
 
@@ -85,15 +85,15 @@ export default function LoginPage({ searchParams }: { searchParams: Promise<{ [k
                type="password" 
                required 
                placeholder="••••••••" 
-               className="w-full bg-white/60 backdrop-blur-md border border-white/40 rounded-[2rem] px-8 py-5 text-navy font-bold focus:ring-4 focus:ring-mint/10 outline-none transition-all placeholder:text-navy/20 shadow-sm tracking-widest"
+                className="w-full rounded-[1.5rem] border border-white/40 bg-white/60 px-6 py-4 font-bold tracking-widest text-navy shadow-sm outline-none backdrop-blur-md transition-all placeholder:text-navy/20 focus:ring-4 focus:ring-mint/10 md:rounded-[2rem] md:px-8 md:py-5"
              />
           </div>
 
-          <div className="pt-4">
+          <div className="pt-2 md:pt-4">
             <button 
               type="submit"
               disabled={isSubmitting}
-              className="w-full py-5 bg-primary text-white rounded-[2rem] font-black tracking-tight text-lg shadow-2xl shadow-primary/20 hover:bg-primary-hover transition-all active:scale-95 disabled:opacity-50 overflow-hidden relative group"
+              className="group relative w-full overflow-hidden rounded-[1.5rem] bg-primary py-4 text-base font-black tracking-tight text-white shadow-2xl shadow-primary/20 transition-all hover:bg-primary-hover active:scale-95 disabled:opacity-50 md:rounded-[2rem] md:py-5 md:text-lg"
             >
               <span className="relative z-10">{isSubmitting ? 'Logging in...' : 'Log In'}</span>
               <motion.div 
@@ -111,7 +111,7 @@ export default function LoginPage({ searchParams }: { searchParams: Promise<{ [k
         {/* Google Login */}
         <button 
           onClick={() => signInWithGoogle(undefined, undefined, nextParam)}
-          className="w-full flex items-center justify-center gap-4 py-5 bg-white border border-navy/5 rounded-[2rem] shadow-xl shadow-navy/5 hover:border-navy/10 hover:shadow-navy/10 transition-all transform active:scale-95 group relative overflow-hidden"
+          className="group relative flex w-full transform items-center justify-center gap-3 overflow-hidden rounded-[1.5rem] border border-navy/5 bg-white py-4 shadow-xl shadow-navy/5 transition-all hover:border-navy/10 hover:shadow-navy/10 active:scale-95 md:gap-4 md:rounded-[2rem] md:py-5"
         >
           <div className="w-5 h-5 relative">
             <svg viewBox="0 0 24 24" width="20" height="20" xmlns="http://www.w3.org/2000/svg">

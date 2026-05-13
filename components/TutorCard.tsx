@@ -31,30 +31,48 @@ function buildTutorTags(tutor: TutorProfile) {
   return Array.from(tags).slice(0, 3);
 }
 
-function getTeachingSupportLine(tutor: TutorProfile) {
+function getTutorMatchInsight(tutor: TutorProfile) {
   const combinedText = `${tutor.subjects.join(" ")} ${tutor.education_level || ""}`.toLowerCase();
 
   if (combinedText.includes("ib") && combinedText.includes("physics")) {
-    return "Structured support for IB Physics learners.";
+    return {
+      title: "IB Physics structure",
+      body: "Useful when concepts make sense in class but exam application feels inconsistent.",
+    };
   }
 
   if (combinedText.includes("gcse") && combinedText.includes("math")) {
-    return "Best for GCSE confidence building.";
+    return {
+      title: "GCSE confidence support",
+      body: "Helpful for rebuilding fluency, routine, and confidence before assessments.",
+    };
   }
 
   if (combinedText.includes("ks2") && combinedText.includes("math")) {
-    return "Patient support for KS2 maths foundations.";
+    return {
+      title: "Foundation building",
+      body: "Patient guidance for younger learners who need steadier maths foundations.",
+    };
   }
 
   if ((combinedText.includes("a-level") || combinedText.includes("a level")) && combinedText.includes("chemistry")) {
-    return "Focused support for A-Level Chemistry topics.";
+    return {
+      title: "A-Level topic clarity",
+      body: "Focused support for difficult chemistry ideas and structured exam preparation.",
+    };
   }
 
   if (combinedText.includes("computer")) {
-    return "Clear guidance for programming and computing skills.";
+    return {
+      title: "Computing guidance",
+      body: "Clear support for programming thinking, debugging, and technical confidence.",
+    };
   }
 
-  return "Structured online support adapted to each learner.";
+  return {
+    title: "Structured mentor support",
+    body: "Guided online tutoring adapted to the learner’s subject needs and confidence level.",
+  };
 }
 
 export default function TutorCard({ tutor, currentUserRole, variant = "default" }: TutorCardProps) {
@@ -64,10 +82,16 @@ export default function TutorCard({ tutor, currentUserRole, variant = "default" 
     ? `/tutor/${tutor.id}/book`
     : `/signup?next=${encodeURIComponent(`/tutor/${tutor.id}/book`)}`;
   const tutorTags = buildTutorTags(tutor);
-  const supportLine = getTeachingSupportLine(tutor);
+  const matchInsight = getTutorMatchInsight(tutor);
+  const hasReviews = tutor.review_count > 0;
+  const trustSignals = [
+    tutor.verified_at !== null ? "Verified" : null,
+    tutor.has_teaching_license ? "Teaching license" : null,
+    hasReviews ? `${tutor.average_rating?.toFixed(1)} from families` : "New mentor",
+  ].filter(Boolean);
 
   return (
-    <div className="group relative flex min-w-0 flex-col overflow-hidden rounded-[2.25rem] border border-secondary/[0.07] bg-white shadow-[0_12px_40px_rgba(0,26,68,0.045)] transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/25 hover:shadow-[0_22px_64px_rgba(0,102,255,0.09)]">
+    <div className="group relative flex min-w-0 flex-col overflow-hidden rounded-[1.75rem] border border-secondary/[0.07] bg-white shadow-[0_12px_40px_rgba(0,26,68,0.045)] transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/25 hover:shadow-[0_22px_64px_rgba(0,102,255,0.09)] md:rounded-[2.25rem]">
       <div className={`flex min-w-0 flex-1 flex-col ${isDashboard ? "p-5 sm:p-6" : "p-6 sm:p-8"}`}>
         <div className={isDashboard ? "mb-5" : "mb-7"}>
           <div className={isDashboard ? "flex min-w-0 items-start gap-4" : "flex min-w-0 flex-col gap-5 sm:flex-row sm:items-center"}>
@@ -101,7 +125,7 @@ export default function TutorCard({ tutor, currentUserRole, variant = "default" 
                   </div>
                 )}
               </div>
-              <div className="mt-4 flex flex-wrap gap-1.5">
+              <div className="mt-3 flex flex-wrap gap-1.5 md:mt-4">
                 {tutor.subjects.slice(0, 2).map((subject) => (
                   <span key={subject} className="inline-flex items-center rounded-full bg-primary/5 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-primary/65">
                     {subject}
@@ -112,46 +136,35 @@ export default function TutorCard({ tutor, currentUserRole, variant = "default" 
           </div>
         </div>
 
-        <p className={`mb-5 min-w-0 text-sm text-secondary/58 ${isDashboard ? "line-clamp-3 leading-6" : "line-clamp-2 leading-7"}`}>
+        <p className={`mb-4 min-w-0 text-sm text-secondary/58 ${isDashboard ? "line-clamp-2 leading-6" : "line-clamp-2 leading-7"}`}>
           {tutor.bio}
         </p>
 
-        {tutorTags.length > 0 && (
-          <div className="mb-5 flex flex-wrap gap-2">
-            {tutorTags.map((tag) => (
-              <span key={tag} className={`rounded-full border border-primary/10 bg-primary/5 text-[10px] font-bold uppercase tracking-[0.08em] text-primary/80 ${isDashboard ? "px-3 py-1.5" : "px-4 py-1.5"}`}>
-                {tag}
-              </span>
-            ))}
-          </div>
-        )}
-
-        <div className={`mb-6 rounded-2xl border border-secondary/8 bg-surface/70 ${isDashboard ? "p-3.5" : "p-4"}`}>
-          <p className="text-[10px] font-black uppercase tracking-[0.14em] text-secondary/35">Teaching focus</p>
-          <p className="mt-2 text-sm font-bold leading-6 text-secondary/65">{supportLine}</p>
+        <div className={`mb-4 rounded-2xl border border-primary/10 bg-primary/5 ${isDashboard ? "p-3.5" : "p-4"} md:mb-5`}>
+          <p className="text-[10px] font-black uppercase tracking-[0.14em] text-primary/55">Recommended support fit</p>
+          <h4 className="mt-1 text-sm font-black text-secondary">{matchInsight.title}</h4>
+          <p className="mt-1 text-sm font-medium leading-6 text-secondary/62">{matchInsight.body}</p>
         </div>
 
-        <div className="mt-auto flex min-w-0 flex-wrap items-end justify-between gap-4 border-t border-secondary/5 pt-5">
+        <div className="mb-4 flex flex-wrap gap-2">
+          {[...trustSignals, ...tutorTags.slice(0, Math.max(0, 3 - trustSignals.length))].slice(0, 3).map((signal) => (
+            <span key={signal} className="rounded-full border border-secondary/10 bg-slate-50 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.08em] text-secondary/55">
+              {signal}
+            </span>
+          ))}
+        </div>
+
+        <div className="mt-auto flex min-w-0 items-center justify-between gap-3 border-t border-secondary/5 pt-4">
           <div className="min-w-0">
-            <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.10em] text-secondary/35">Lesson rate</p>
+            <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.10em] text-secondary/35">Session</p>
             <div className="flex flex-wrap items-baseline gap-1">
-              <span className="text-2xl font-black text-secondary">£{tutor.hourly_rate}</span>
+              <span className="text-xl font-black text-secondary md:text-2xl">£{tutor.hourly_rate}</span>
               <span className="text-xs text-secondary/40 font-bold ml-1 uppercase tracking-widest">/hr</span>
             </div>
           </div>
-          <div className={isDashboard ? "min-w-0 text-left sm:text-right" : "min-w-0 text-right"}>
-            <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.10em] text-secondary/35">Rating</p>
-            {tutor.review_count > 0 ? (
-              <div className="flex flex-wrap items-center gap-1">
-                <svg className="h-4 w-4 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                </svg>
-                <span className="text-sm font-black text-secondary">{tutor.average_rating?.toFixed(1)}</span>
-                <span className="text-xs text-secondary/40 font-medium">({tutor.review_count})</span>
-              </div>
-            ) : (
-              <p className="text-sm text-secondary/35 font-medium">No reviews yet</p>
-            )}
+          <div className="min-w-0 text-right">
+            <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.10em] text-secondary/35">Next step</p>
+            <p className="text-sm font-black text-primary">Meet first</p>
           </div>
         </div>
       </div>
