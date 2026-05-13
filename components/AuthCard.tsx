@@ -23,16 +23,16 @@ export default function AuthCard({
   maxWidth = "max-w-[480px]"
 }: AuthCardProps) {
   return (
-    <div className="relative flex min-h-[calc(100svh-5rem)] w-full items-start justify-center overflow-y-auto overflow-x-hidden bg-[#F8FAFC] px-3 py-3 sm:px-4 sm:py-5 md:min-h-[calc(100dvh-5rem)] md:items-center md:p-6">
+    <div className="relative flex min-h-screen w-full items-start justify-center overflow-x-hidden bg-[#F8FAFC] px-3 py-6 sm:px-4 sm:py-8 md:min-h-[calc(100dvh-5rem)] md:items-center md:p-6">
       {/* Premium Digital Dojo Background */}
       <div className="absolute inset-0 z-0 pointer-events-none">
         
         {/* Cinematic Grain Overlay */}
-        <svg className="fixed inset-0 w-full h-full opacity-[0.03] pointer-events-none">
+        <svg aria-hidden="true" className="absolute inset-0 h-full w-full opacity-[0.03] pointer-events-none">
           <filter id="noiseFilter">
             <feTurbulence type="fractalNoise" baseFrequency="0.6" numOctaves="3" stitchTiles="stitch" />
           </filter>
-          <rect width="100%" height="100%" filter="url(#noiseFilter)" />
+          <rect width="100%" height="100%" filter="url(#noiseFilter)" pointerEvents="none" />
         </svg>
 
         {/* Dynamic Digital Grid */}

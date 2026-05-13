@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useId, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
+import type { PointerEvent } from "react";
 import DashboardTourReplayButton from "./DashboardTourReplayButton";
 import { signOut } from "@/app/login/actions";
 
@@ -46,7 +47,34 @@ export default function DashboardMobileDrawer({
   const [isOpen, setIsOpen] = useState(false);
   const drawerRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
+  const touchOpenLockRef = useRef(false);
   const dashboardHref = role === "admin" ? "/dashboard/admin" : role === "tutor" ? "/dashboard/tutor" : role === "student" ? "/dashboard/student" : "/dashboard/parent";
+
+  const openDrawer = useCallback(() => {
+    setIsOpen(true);
+  }, []);
+
+  const handleTriggerPointerDown = useCallback((event: PointerEvent<HTMLButtonElement>) => {
+    if (event.pointerType !== "touch" && event.pointerType !== "pen") {
+      return;
+    }
+
+    event.preventDefault();
+    touchOpenLockRef.current = true;
+    openDrawer();
+
+    window.setTimeout(() => {
+      touchOpenLockRef.current = false;
+    }, 450);
+  }, [openDrawer]);
+
+  const handleTriggerClick = useCallback(() => {
+    if (touchOpenLockRef.current) {
+      return;
+    }
+
+    openDrawer();
+  }, [openDrawer]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -105,8 +133,10 @@ export default function DashboardMobileDrawer({
               aria-label="Open dashboard menu"
               aria-controls={drawerId}
               aria-expanded={isOpen}
-              onClick={() => setIsOpen(true)}
-              className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-[#001A3D] shadow-sm transition-colors hover:bg-[#1E5AA8]/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1E5AA8] focus-visible:ring-offset-2 sm:h-11 sm:w-11 sm:rounded-2xl"
+              onPointerDown={handleTriggerPointerDown}
+              onClick={handleTriggerClick}
+              style={{ WebkitTapHighlightColor: "transparent" }}
+              className="pointer-events-auto relative z-[70] inline-flex h-11 w-11 shrink-0 cursor-pointer touch-manipulation items-center justify-center rounded-2xl border border-slate-200 bg-white text-[#001A3D] shadow-sm transition-colors hover:bg-[#1E5AA8]/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1E5AA8] focus-visible:ring-offset-2 sm:h-11 sm:w-11"
             >
               <span className="flex h-4 w-5 flex-col justify-between" aria-hidden="true">
                 <span className="h-0.5 rounded-full bg-current" />
