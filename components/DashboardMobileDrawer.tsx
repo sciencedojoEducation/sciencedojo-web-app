@@ -122,6 +122,8 @@ export default function DashboardMobileDrawer({
     return link.exact ? pathname === link.href : pathname === link.href || (link.href !== "/dashboard" && pathname.startsWith(`${link.href}/`));
   }
 
+  const utilityRowClass = "flex min-h-[52px] w-full items-center justify-center gap-2 rounded-xl border border-slate-200/80 bg-white/70 px-4 py-3 text-[10px] font-black uppercase tracking-[0.14em] text-slate-500 transition-all hover:border-[#1E5AA8]/20 hover:bg-[#1E5AA8]/5 hover:text-[#1E5AA8] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1E5AA8] focus-visible:ring-offset-2";
+
   return (
     <div className="lg:hidden">
       <header className="sticky top-0 z-50 border-b border-slate-200 bg-white/92 px-3 py-2.5 shadow-sm backdrop-blur-xl sm:px-4 sm:py-3">
@@ -173,24 +175,24 @@ export default function DashboardMobileDrawer({
             aria-label="Dashboard navigation"
             className="relative flex h-full w-[min(22rem,calc(100vw-2rem))] flex-col overflow-hidden rounded-r-[2rem] border-r border-white/70 bg-slate-50 shadow-2xl shadow-slate-950/25"
           >
-            <div className="flex items-center justify-between gap-3 border-b border-slate-200 bg-white/80 p-5">
+            <div className="flex items-center justify-between gap-3 border-b border-slate-200 bg-white/86 px-4 py-3.5 backdrop-blur-xl">
               <div className="min-w-0">
-                <p className="text-[10px] font-black uppercase tracking-[0.22em] text-[#1E5AA8]">Dashboard</p>
-                <h2 className="mt-1 truncate text-xl font-black text-[#001A3D]">{displayRole} space</h2>
+                <p className="text-[9px] font-black uppercase tracking-[0.18em] text-[#1E5AA8]/70">Dashboard</p>
+                <h2 className="mt-0.5 truncate text-lg font-black text-[#001A3D]">{displayRole} space</h2>
               </div>
               <button
                 type="button"
                 aria-label="Close menu"
                 onClick={() => setIsOpen(false)}
-                className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-slate-200 bg-white text-2xl leading-none text-slate-500 shadow-sm transition-colors hover:bg-slate-100 hover:text-[#001A3D] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1E5AA8] focus-visible:ring-offset-2"
+                className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-slate-200 bg-white text-xl leading-none text-slate-500 shadow-sm transition-colors hover:bg-slate-100 hover:text-[#001A3D] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1E5AA8] focus-visible:ring-offset-2"
               >
                 ×
               </button>
             </div>
 
-            <div className="min-h-0 flex-1 overflow-y-auto p-5">
-              <div className="mb-5 flex items-center gap-3 rounded-[1.5rem] border border-slate-200 bg-white p-4 shadow-sm">
-                <div className="h-11 w-11 shrink-0 overflow-hidden rounded-2xl border border-white bg-[#1E5AA8]/10 text-[#1E5AA8] shadow-sm">
+            <div className="min-h-0 flex-1 overflow-y-auto px-4 py-3.5">
+              <div className="mb-3 flex items-center gap-3 rounded-[1.35rem] border border-slate-200/80 bg-white/88 p-3 shadow-sm">
+                <div className="h-10 w-10 shrink-0 overflow-hidden rounded-2xl border border-white bg-[#1E5AA8]/10 text-[#1E5AA8] shadow-sm">
                   {avatarUrl ? (
                     <img src={avatarUrl} alt="Profile" className="h-full w-full object-cover" />
                   ) : (
@@ -200,12 +202,12 @@ export default function DashboardMobileDrawer({
                   )}
                 </div>
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-black text-[#001A3D]">{userName}</p>
-                  <p className="mt-0.5 text-[10px] font-black uppercase tracking-[0.14em] text-slate-400">Verified {displayRole}</p>
+                  <p className="truncate text-sm font-black leading-tight text-[#001A3D]">{userName}</p>
+                  <p className="mt-0.5 text-[9px] font-black uppercase tracking-[0.12em] text-slate-400">Verified {displayRole}</p>
                 </div>
               </div>
 
-              <nav className="space-y-1.5" aria-label="Dashboard">
+              <nav className="space-y-1" aria-label="Dashboard">
                 {links.map((link) => {
                   const isActive = isActiveLink(link);
 
@@ -215,14 +217,14 @@ export default function DashboardMobileDrawer({
                       href={link.href}
                       data-tour={link.tourId}
                       onClick={() => setIsOpen(false)}
-                      className={`group relative flex items-center gap-3 rounded-2xl border px-4 py-3.5 text-sm font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1E5AA8] focus-visible:ring-offset-2 ${
+                      className={`group relative flex min-h-12 items-center gap-3 rounded-[1.15rem] border px-3.5 py-2.5 text-sm font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1E5AA8] focus-visible:ring-offset-2 ${
                         isActive
                           ? "border-slate-200 bg-[#1E5AA8]/7 text-[#1E5AA8] shadow-[inset_0_0_20px_rgba(30,90,168,0.035)]"
                           : "border-transparent text-slate-600 hover:border-slate-200 hover:bg-white hover:text-[#001A3D]"
                       }`}
                     >
-                      {isActive && <span className="absolute left-0 top-3 bottom-3 w-1 rounded-full bg-[#6FE3D6]" />}
-                      <span className="text-lg" aria-hidden="true">{link.icon}</span>
+                      {isActive && <span className="absolute left-0 top-2.5 bottom-2.5 w-1 rounded-full bg-[#6FE3D6]" />}
+                      <span className="text-base leading-none" aria-hidden="true">{link.icon}</span>
                       <span className="min-w-0 flex-1">{link.name}</span>
                       {link.badge !== undefined && link.badge > 0 && (
                         <span className={`min-w-[1.4rem] rounded-full px-2 py-0.5 text-center text-[10px] font-black ${link.badgeColor || "bg-[#1E5AA8] text-white"}`}>
@@ -233,31 +235,34 @@ export default function DashboardMobileDrawer({
                   );
                 })}
               </nav>
-            </div>
 
-            <div className="shrink-0 border-t border-slate-200 bg-white/82 p-5 shadow-[0_-12px_32px_rgba(15,23,42,0.04)]">
-              <div className="space-y-3">
-                {role !== "admin" && <DashboardTourReplayButton onReplay={() => setIsOpen(false)} />}
-
+              <div className="mt-2 space-y-2 border-t border-slate-200/70 pt-2">
+                {role !== "admin" && (
+                  <DashboardTourReplayButton
+                    onReplay={() => setIsOpen(false)}
+                    className={utilityRowClass}
+                    iconClassName="text-base leading-none"
+                  />
+                )}
                 <Link
                   href="/"
                   onClick={() => setIsOpen(false)}
-                  className="flex w-full items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-slate-100 px-4 py-3 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 transition-colors hover:bg-slate-900 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1E5AA8] focus-visible:ring-offset-2"
+                  className={utilityRowClass}
                 >
                   <span className="text-base" aria-hidden="true">🚪</span>
                   Exit to Site
                 </Link>
-              </div>
 
-              <form action={signOut} className="mt-5 border-t border-slate-200 pt-5">
-                <button
-                  type="submit"
-                  className="flex w-full items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 transition-colors hover:border-slate-300 hover:bg-slate-50 hover:text-[#001A3D] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1E5AA8] focus-visible:ring-offset-2"
-                >
-                  <span className="text-base" aria-hidden="true">↳</span>
-                  Log Out
-                </button>
-              </form>
+                <form action={signOut} className="border-t border-slate-200/70 pt-2">
+                  <button
+                    type="submit"
+                    className="flex min-h-[52px] w-full items-center justify-center gap-2 rounded-xl border border-slate-200/70 bg-white/55 px-4 py-3 text-[10px] font-black uppercase tracking-[0.14em] text-slate-500 transition-all hover:border-slate-300 hover:bg-white hover:text-[#001A3D] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1E5AA8] focus-visible:ring-offset-2"
+                  >
+                    <span className="text-base leading-none" aria-hidden="true">↳</span>
+                    Log Out
+                  </button>
+                </form>
+              </div>
             </div>
           </div>
         </div>

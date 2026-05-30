@@ -23,7 +23,7 @@ export default function AuthCard({
   maxWidth = "max-w-[480px]"
 }: AuthCardProps) {
   return (
-    <div className="relative flex min-h-screen w-full items-start justify-center overflow-x-hidden bg-[#F8FAFC] px-3 py-6 sm:px-4 sm:py-8 md:min-h-[calc(100dvh-5rem)] md:items-center md:p-6">
+    <div className="relative flex min-h-[calc(100svh-5rem)] w-full items-start justify-center overflow-x-hidden bg-[#F8FAFC] px-4 py-3 sm:px-4 sm:py-6 md:min-h-[calc(100dvh-5rem)] md:items-center md:p-6">
       {/* Premium Digital Dojo Background */}
       <div className="absolute inset-0 z-0 pointer-events-none">
         
@@ -131,16 +131,16 @@ export default function AuthCard({
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className={`relative z-10 w-full ${maxWidth}`}
+        className={`relative z-10 w-full ${maxWidth} max-md:max-w-[440px]`}
       >
-        <div className="rounded-[2rem] border border-white/60 bg-white/95 p-5 shadow-2xl shadow-primary/10 backdrop-blur-xl sm:p-7 md:rounded-[3rem] md:p-12">
+        <div className="rounded-[1.5rem] border border-white/60 bg-white/95 p-4 shadow-xl shadow-primary/10 backdrop-blur-xl sm:p-6 md:rounded-[3rem] md:p-12 md:shadow-2xl">
           
           {showLogo && (
-            <div className="mb-4 flex justify-center md:mb-8">
+            <div className="mb-2.5 flex justify-center md:mb-8">
               <motion.div 
                 initial={{ scale: 0.8 }}
                 animate={{ scale: 1 }}
-                className="relative h-14 w-14 overflow-hidden rounded-2xl shadow-2xl shadow-navy/20 ring-4 ring-white md:h-20 md:w-20"
+                className="relative h-10 w-10 overflow-hidden rounded-xl shadow-xl shadow-navy/15 ring-2 ring-white md:h-20 md:w-20 md:rounded-2xl md:shadow-2xl md:ring-4"
               >
                 <Image 
                   src="/images/sciencedojo-logo-brand.jpg" 
@@ -152,23 +152,23 @@ export default function AuthCard({
             </div>
           )}
 
-          <div className="mb-5 text-center md:mb-10">
-            <h1 className="mb-1 text-2xl font-black tracking-tight text-navy md:mb-2 md:text-4xl">
+          <div className="mb-3 text-center md:mb-10">
+            <h1 className="mb-0.5 text-xl font-black tracking-tight text-navy sm:text-2xl md:mb-2 md:text-4xl">
               {title}
             </h1>
             {subtitle && (
-              <p className="text-navy/40 font-bold uppercase tracking-[0.2em] text-[10px]">
+              <p className="text-[9px] font-bold uppercase tracking-[0.16em] text-navy/40 md:text-[10px] md:tracking-[0.2em]">
                 {subtitle}
               </p>
             )}
           </div>
 
-          <div className="space-y-4 md:space-y-6">
+          <div className="space-y-2.5 md:space-y-6">
             {children}
           </div>
 
           {footer && (
-            <div className="mt-6 border-t border-navy/5 pt-5 text-center md:mt-12 md:pt-8">
+            <div className="mt-4 border-t border-navy/5 pt-3 text-center md:mt-12 md:pt-8">
               {footer}
             </div>
           )}
@@ -211,12 +211,12 @@ export function RoleCard({
 
 export function Divider({ label }: { label: string }) {
   return (
-    <div className="relative py-3 md:py-6">
+    <div className="relative py-2 md:py-6">
       <div className="absolute inset-0 flex items-center">
         <div className="w-full border-t border-navy/5"></div>
       </div>
       <div className="relative flex justify-center">
-        <span className="bg-white px-4 text-[10px] font-bold uppercase tracking-widest text-navy/20">
+        <span className="bg-white px-3 text-[9px] font-bold uppercase tracking-widest text-navy/20 md:px-4 md:text-[10px]">
           {label}
         </span>
       </div>

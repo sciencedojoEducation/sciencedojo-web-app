@@ -93,29 +93,29 @@ const ACHIEVEMENT_STORY = {
 
 export function FeaturedTestimonialCard() {
   return (
-    <div className="relative mt-14 overflow-hidden rounded-[2rem] bg-[linear-gradient(135deg,#06172f_0%,#0a3a70_100%)] p-8 shadow-2xl shadow-secondary/20 md:p-12 lg:p-16">
+    <div className="relative mt-10 overflow-hidden rounded-[1.75rem] bg-[linear-gradient(135deg,#06172f_0%,#0a3a70_100%)] p-5 shadow-xl shadow-secondary/20 md:mt-14 md:rounded-[2rem] md:p-12 md:shadow-2xl lg:p-16">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_24%_12%,rgba(0,245,212,0.11),transparent_35%),radial-gradient(circle_at_88%_64%,rgba(255,255,255,0.07),transparent_31%)]"></div>
       <div className="relative grid gap-12 lg:grid-cols-[minmax(0,1.55fr)_minmax(250px,0.52fr)] lg:items-center">
         <div className="min-w-0 lg:pr-10">
           <div className="flex flex-wrap gap-3">
-            <span className="rounded-full bg-primary px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.22em] text-white">
+            <span className="rounded-full bg-primary px-3 py-1.5 text-[9px] font-black uppercase tracking-[0.16em] text-white md:text-[10px] md:tracking-[0.22em]">
               Featured Story
             </span>
-            <span className="rounded-full border border-cyan-200/15 bg-white/[0.06] px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-cyan-100/80">
+            <span className="rounded-full border border-cyan-200/15 bg-white/[0.06] px-3 py-1 text-[9px] font-black uppercase tracking-[0.14em] text-cyan-100/80 md:text-[10px] md:tracking-[0.18em]">
               {FEATURED_STORY.badge}
             </span>
           </div>
-          <p className="mt-9 max-w-4xl text-2xl font-black leading-9 text-white md:text-3xl md:leading-10 lg:text-[2.35rem] lg:leading-[1.24]">
+          <p className="mt-6 max-w-4xl text-xl font-black leading-7 text-white md:mt-9 md:text-3xl md:leading-10 lg:text-[2.35rem] lg:leading-[1.24]">
             &ldquo;{FEATURED_STORY.quote}&rdquo;
           </p>
-          <p className="mt-5 text-sm font-black text-white/65">— {FEATURED_STORY.firstName}</p>
-          <p className="mt-7 max-w-2xl text-sm leading-7 text-white/58">
+          <p className="mt-4 text-sm font-black text-white/65 md:mt-5">— {FEATURED_STORY.firstName}</p>
+          <p className="mt-5 max-w-2xl text-sm leading-6 text-white/58 md:mt-7 md:leading-7">
             {FEATURED_STORY.context}
           </p>
 
-          <div className="mt-11 rounded-2xl border border-white/10 bg-white/[0.055] p-6 md:p-7">
+          <div className="mt-7 rounded-2xl border border-white/10 bg-white/[0.055] p-5 md:mt-11 md:p-7">
             <p className="text-[10px] font-black uppercase tracking-[0.22em] text-white/45">Achievement</p>
-            <p className="mt-3 text-xl font-black leading-7 text-white md:text-2xl md:leading-8">
+            <p className="mt-3 text-lg font-black leading-6 text-white md:text-2xl md:leading-8">
               Physics learning journey <span className="text-primary">→</span> TU Delft
             </p>
             <p className="mt-4 text-sm font-bold leading-6 text-cyan-100/70">
@@ -155,8 +155,8 @@ export function FeaturedTestimonialCard() {
 
 export function AchievementStoryCard() {
   return (
-    <div className="rounded-3xl border border-primary/20 bg-[linear-gradient(135deg,rgba(0,102,255,0.08),rgba(255,255,255,0.99))] p-8 shadow-xl shadow-primary/10 xl:p-9">
-      <div className="mb-5 flex flex-wrap items-center gap-3">
+    <div className="rounded-[1.5rem] border border-primary/20 bg-[linear-gradient(135deg,rgba(0,102,255,0.08),rgba(255,255,255,0.99))] p-5 shadow-lg shadow-primary/10 md:rounded-3xl md:p-8 md:shadow-xl xl:p-9">
+      <div className="mb-4 flex flex-wrap items-center gap-2 md:mb-5 md:gap-3">
         <span className="rounded-full bg-primary/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-primary">
           {ACHIEVEMENT_STORY.badge}
         </span>
@@ -164,8 +164,8 @@ export function AchievementStoryCard() {
           Parent feedback
         </span>
       </div>
-      <p className="text-xl font-black leading-8 text-secondary xl:text-[1.38rem] xl:leading-9">&ldquo;{ACHIEVEMENT_STORY.quote}&rdquo;</p>
-      <div className="mt-6 flex items-start gap-3">
+      <p className="text-lg font-black leading-7 text-secondary md:text-xl md:leading-8 xl:text-[1.38rem] xl:leading-9">&ldquo;{ACHIEVEMENT_STORY.quote}&rdquo;</p>
+      <div className="mt-5 flex items-start gap-3 md:mt-6">
         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-black text-white" aria-hidden="true">
           JD
         </div>
@@ -174,7 +174,7 @@ export function AchievementStoryCard() {
           <p className="mt-1 text-xs leading-5 text-secondary/55">{ACHIEVEMENT_STORY.context}</p>
         </div>
       </div>
-      <p className="mt-5 rounded-2xl border border-secondary/10 bg-white/70 p-4 text-xs font-bold leading-6 text-secondary/50">
+      <p className="mt-4 rounded-2xl border border-secondary/10 bg-white/70 p-3 text-xs font-bold leading-5 text-secondary/50 md:mt-5 md:p-4 md:leading-6">
         {ACHIEVEMENT_STORY.note}
       </p>
     </div>
@@ -186,13 +186,13 @@ export function TestimonialCard({ story, variant = "standard" }: { story: Testim
 
   return (
     <div
-      className={`rounded-3xl border border-secondary/[0.08] p-8 shadow-md shadow-secondary/[0.05] backdrop-blur transition-all hover:-translate-y-0.5 hover:border-primary/20 hover:shadow-xl hover:shadow-primary/[0.06] xl:p-9 ${
+      className={`rounded-[1.5rem] border border-secondary/[0.08] p-5 shadow-md shadow-secondary/[0.05] backdrop-blur transition-all hover:-translate-y-0.5 hover:border-primary/20 hover:shadow-xl hover:shadow-primary/[0.06] md:rounded-3xl md:p-8 xl:p-9 ${
         isWide
           ? "bg-[linear-gradient(135deg,#ffffff_0%,#f7fbff_100%)] sm:grid sm:grid-cols-[auto_1fr] sm:items-start sm:gap-6"
           : "h-full bg-white"
       }`}
     >
-      <div className={`flex items-start justify-between gap-3 ${isWide ? "mb-5 sm:mb-0" : "mb-5"}`}>
+      <div className={`flex items-start justify-between gap-3 ${isWide ? "mb-4 sm:mb-0 md:mb-5" : "mb-4 md:mb-5"}`}>
         <div className="flex items-center gap-3">
           <div
             className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-black text-white"
@@ -209,10 +209,10 @@ export function TestimonialCard({ story, variant = "standard" }: { story: Testim
           {story.badge}
         </span>
       </div>
-      <p className={`text-xl font-black leading-8 text-secondary xl:leading-9 ${isWide ? "xl:text-[1.45rem]" : "xl:text-[1.34rem]"}`}>
+      <p className={`text-lg font-black leading-7 text-secondary md:text-xl md:leading-8 xl:leading-9 ${isWide ? "xl:text-[1.45rem]" : "xl:text-[1.34rem]"}`}>
         &ldquo;{story.quote}&rdquo;
       </p>
-      <div className="mt-6 rounded-2xl border border-secondary/[0.06] bg-surface/70 px-4 py-3">
+      <div className="mt-4 rounded-2xl border border-secondary/[0.06] bg-surface/70 px-4 py-3 md:mt-6">
         <p className="text-[10px] font-black uppercase tracking-[0.14em] text-secondary/35">Learning shift</p>
         <p className="mt-1 text-xs font-bold leading-5 text-secondary/56">{story.journey}</p>
       </div>
