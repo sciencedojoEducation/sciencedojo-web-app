@@ -9,6 +9,7 @@ type BookAssessmentLinkProps = {
   className?: string;
   source?: string;
   pageSlug?: string;
+  onClick?: () => void;
 };
 
 export default function BookAssessmentLink({
@@ -16,6 +17,7 @@ export default function BookAssessmentLink({
   className,
   source,
   pageSlug,
+  onClick,
 }: BookAssessmentLinkProps) {
   const pathname = usePathname();
 
@@ -24,6 +26,7 @@ export default function BookAssessmentLink({
       href="/free-assessment"
       className={className}
       onClick={() => {
+        onClick?.();
         trackEvent("cta_book_free_assessment_click", {
           source: source || getPublicSource(pathname),
           page_slug: pageSlug || getPublicSource(pathname),

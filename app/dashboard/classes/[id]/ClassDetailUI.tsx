@@ -10,6 +10,7 @@ import LessonHistoryTable from "@/components/LessonHistoryTable";
 import { updateClassSettings, archiveClass, unarchiveClass, fetchPostById } from "@/app/classes/actions";
 import { createClient } from "@/utils/supabase/client";
 import { createMeetingUrl } from "@/lib/meetings";
+import { CLASS_THEME_SWATCHES, getClassSubjectTheme } from "@/lib/class-theme";
 import MissionsDashboard from "./missions/MissionsDashboard";
 
 
@@ -22,18 +23,14 @@ interface ClassDetailUIProps {
   currentUserId: string;
 }
 
-const COLOR_PRESETS = [
-  "#6366f1", "#ec4899", "#f59e0b", "#10b981", "#3b82f6",
-  "#8b5cf6", "#ef4444", "#14b8a6", "#f97316", "#06b6d4",
-];
-
 export default function ClassDetailUI({ classRoom, posts: initialPosts, bookings, isTutor, currentUserId }: ClassDetailUIProps) {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<"stream" | "assignments" | "sessions">("stream");
   const [isEditingName, setIsEditingName] = useState(false);
   const [displayName, setDisplayName] = useState(classRoom.display_name);
   const [isArchiving, setIsArchiving] = useState(false);
-  const [currentCoverColor, setCurrentCoverColor] = useState(classRoom.cover_color || COLOR_PRESETS[0]);
+  const initialTheme = getClassSubjectTheme(classRoom.subject, classRoom.cover_color);
+  const [currentCoverColor, setCurrentCoverColor] = useState(initialTheme.color);
   const [isSettingUpMeeting, setIsSettingUpMeeting] = useState(false);
 
   
@@ -113,6 +110,7 @@ export default function ClassDetailUI({ classRoom, posts: initialPosts, bookings
 
   const assignmentPosts = posts.filter(p => p.post_type === "assignment");
   const pastBookings = bookings.filter(b => b.status === "completed");
+  const currentTheme = getClassSubjectTheme(classRoom.subject, currentCoverColor);
 
   const handleArchiveToggle = async () => {
      const isArchived = classRoom.is_archived;
@@ -164,8 +162,8 @@ export default function ClassDetailUI({ classRoom, posts: initialPosts, bookings
 
       {/* Dynamic Header */}
       <div 
-        className="h-64 relative flex items-end p-8 transition-colors duration-500"
-        style={{ background: `linear-gradient(135deg, ${currentCoverColor}, ${currentCoverColor}cc)` }}
+        className="relative flex min-h-[21rem] items-end p-4 transition-colors duration-500 md:h-64 md:min-h-0 md:p-8"
+        style={{ background: currentTheme.gradient }}
       >
         <div className="absolute inset-0 opacity-20 flex justify-center items-center overflow-hidden">
            <svg className="w-full h-[200%] max-w-7xl absolute opacity-30 text-white animate-[pulse_20s_ease-in-out_infinite]" fill="currentColor" viewBox="0 0 100 100" preserveAspectRatio="none">
@@ -175,9 +173,9 @@ export default function ClassDetailUI({ classRoom, posts: initialPosts, bookings
            <div className="absolute top-24 right-40 w-16 h-16 bg-white/30 rounded-full blur-[4px]"></div>
         </div>
         
-        <div className="relative z-10 w-full max-w-5xl mx-auto flex items-end justify-between">
-          <div className="flex-1 min-w-0 pr-6">
-            <Link href="/dashboard/classes" className="inline-flex items-center gap-2 text-white/70 hover:text-white text-xs font-black uppercase tracking-widest mb-4 transition-colors">
+        <div className="relative z-10 mx-auto flex w-full max-w-5xl flex-col gap-4 md:flex-row md:items-end md:justify-between">
+          <div className="min-w-0 flex-1 md:pr-6">
+            <Link href="/dashboard/classes" className="mb-4 inline-flex items-center gap-2 text-xs font-black uppercase tracking-widest text-white/70 transition-colors hover:text-white">
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
               All Classes
             </Link>
@@ -188,14 +186,14 @@ export default function ClassDetailUI({ classRoom, posts: initialPosts, bookings
                    autoFocus
                    value={displayName}
                    onChange={e => setDisplayName(e.target.value)}
-                   className="bg-white/20 text-white font-black text-4xl tracking-tight p-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-white border border-white/30"
+                   className="min-w-0 rounded-xl border border-white/30 bg-white/20 p-2 text-3xl font-black tracking-tight text-white focus:outline-none focus:ring-2 focus:ring-white md:text-4xl"
                    onBlur={handleNameSave}
                    onKeyDown={e => e.key === "Enter" && handleNameSave()}
                  />
               </div>
             ) : (
               <div className="flex items-center gap-3 group">
-                 <h1 className="text-white font-black text-5xl tracking-tight drop-shadow-md truncate max-w-2xl text-shadow-lg">
+                 <h1 className="max-w-2xl truncate text-4xl font-black tracking-tight text-white drop-shadow-md text-shadow-lg md:text-5xl">
                    {classRoom.display_name}
                  </h1>
                  {isTutor && !classRoom.is_archived && (
@@ -207,15 +205,15 @@ export default function ClassDetailUI({ classRoom, posts: initialPosts, bookings
                  )}
               </div>
             )}
-            <div className="flex items-center gap-4 mt-2">
-              <p className="text-white font-bold text-lg flex items-center gap-3">
-                <span className="bg-white/20 backdrop-blur-md px-3 py-1 rounded-lg border border-white/20 uppercase tracking-widest text-xs">{classRoom.subject}</span>
+            <div className="mt-2 flex flex-wrap items-center gap-3 md:gap-4">
+              <p className="flex items-center gap-3 text-lg font-bold text-white">
+                <span className="rounded-lg border border-white/20 bg-white/20 px-3 py-1 text-xs uppercase tracking-widest backdrop-blur-md">{currentTheme.label}</span>
               </p>
               
               {/* 🎨 Color Presets Picker (Tutor Only) */}
               {isTutor && !classRoom.is_archived && (
                 <div className="flex items-center gap-1.5 bg-black/20 backdrop-blur-sm p-1.5 rounded-full border border-white/10 opacity-0 group-hover:opacity-100 transition-opacity ml-2">
-                  {COLOR_PRESETS.map((color) => (
+                  {CLASS_THEME_SWATCHES.map((color) => (
                     <button
                       key={color}
                       onClick={() => handleColorChange(color)}
@@ -228,8 +226,8 @@ export default function ClassDetailUI({ classRoom, posts: initialPosts, bookings
             </div>
           </div>
           
-          <div className="flex items-center gap-4 bg-white/10 backdrop-blur-md p-3 rounded-2xl border border-white/20 shadow-lg relative bottom-[-1rem]">
-             <div className="w-14 h-14 rounded-xl overflow-hidden shadow-sm flex-shrink-0 bg-white/10 border-2 border-white/50">
+          <div className="relative flex w-fit max-w-full items-center gap-3 rounded-2xl border border-white/20 bg-white/10 p-3 shadow-lg backdrop-blur-md md:bottom-[-1rem] md:gap-4">
+             <div className="h-12 w-12 flex-shrink-0 overflow-hidden rounded-xl border-2 border-white/50 bg-white/10 shadow-sm md:h-14 md:w-14">
                 {otherAvatar ? (
                   <img src={otherAvatar} alt={otherName || ""} className="w-full h-full object-cover" />
                 ) : (
@@ -238,29 +236,29 @@ export default function ClassDetailUI({ classRoom, posts: initialPosts, bookings
                   </div>
                 )}
              </div>
-             <div className="pr-2">
+             <div className="min-w-0 pr-1 md:pr-2">
                 <p className="text-xs text-white/60 font-black uppercase tracking-widest mb-0.5">{isStudent ? "Tutor" : "Student"}</p>
-                <p className="font-bold text-white text-sm whitespace-nowrap">{otherName}</p>
+                <p className="truncate text-sm font-bold text-white md:whitespace-nowrap">{otherName}</p>
              </div>
           </div>
         </div>
       </div>
 
-      <div className="max-w-5xl mx-auto px-8 py-8 flex flex-col md:flex-row gap-8">
+      <div className="mx-auto flex max-w-5xl flex-col gap-5 px-3 py-5 sm:px-4 md:px-8 md:py-8 lg:flex-row lg:gap-8">
         
         {/* Left Sidebar Info / Navigation */}
-        <div className="w-full md:w-64 flex-shrink-0 flex flex-col gap-6">
-           <div className="bg-white p-2 rounded-[2rem] border border-secondary/10 shadow-lg shadow-black/5 flex flex-col gap-1">
+        <div className="flex w-full flex-shrink-0 flex-col gap-4 lg:w-64 lg:gap-6">
+           <div className="no-scrollbar flex gap-1 overflow-x-auto rounded-[1.5rem] border border-secondary/10 bg-white p-2 shadow-sm shadow-black/5 lg:flex-col lg:rounded-[2rem] lg:shadow-lg">
               {[
                 { id: "stream", label: "Stream", emoji: "📢" },
                 { id: "assignments", label: "Assignments", emoji: "📋" },
-                { id: "sessions", label: "Session History", emoji: "📅" },
-                { id: "missions", label: "Missions & Analytics", emoji: "🚀"}
+                { id: "sessions", label: "Sessions", emoji: "📅" },
+                { id: "missions", label: "Missions", emoji: "🚀"}
               ].map(tab => (
                  <button 
                    key={tab.id}
                    onClick={() => setActiveTab(tab.id as any)}
-                   className={`flex items-center gap-3 px-6 py-4 rounded-[1.5rem] font-black text-sm transition-all ${
+                   className={`flex shrink-0 items-center gap-2 rounded-2xl px-4 py-3 text-sm font-black transition-all lg:w-full lg:gap-3 lg:px-6 lg:py-4 ${
                      activeTab === tab.id 
                        ? "bg-slate-50 text-secondary shadow-sm border border-secondary/5" 
                        : "text-secondary/50 hover:bg-slate-50/50 hover:text-secondary/80 border border-transparent"
@@ -273,21 +271,21 @@ export default function ClassDetailUI({ classRoom, posts: initialPosts, bookings
            </div>
            
            {/* Upcoming Mini Card */}
-           <div className="bg-white p-6 rounded-[2rem] border border-secondary/10 shadow-sm relative overflow-hidden group">
+           <div className="group relative overflow-hidden rounded-[1.5rem] border border-secondary/10 bg-white p-4 shadow-sm lg:rounded-[2rem] lg:p-6">
               <div className="absolute top-0 right-0 w-16 h-16 bg-primary/5 rounded-bl-[2rem] group-hover:scale-125 transition-transform"></div>
               
               {!classRoom.is_archived && (
                  <button 
                    onClick={startLiveClass}
                    disabled={isSettingUpMeeting}
-                   className="w-full bg-blue-600 hover:bg-blue-700 text-white p-4 rounded-2xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-3 shadow-lg shadow-blue-200 transition-all mb-6 disabled:opacity-50"
+                   className="mb-5 flex w-full items-center justify-center gap-3 rounded-2xl bg-blue-600 p-3 text-xs font-black uppercase tracking-widest text-white shadow-md shadow-blue-200 transition-all hover:bg-blue-700 disabled:opacity-50 lg:mb-6 lg:p-4 lg:shadow-lg"
                  >
                     <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
                     {isSettingUpMeeting ? "Connecting..." : (isTutor ? "Start Live Class" : "Join Live Class")}
                  </button>
               )}
 
-              <h3 className="font-black text-secondary text-sm mb-4">Course Info</h3>
+              <h3 className="mb-4 text-sm font-black text-secondary">Class continuity</h3>
 
               <div className="space-y-3">
                  <div className="flex justify-between items-center">
@@ -300,7 +298,7 @@ export default function ClassDetailUI({ classRoom, posts: initialPosts, bookings
                  </div>
               </div>
               {isTutor && (
-                 <div className="mt-6 pt-6 border-t border-secondary/5 text-center">
+                 <div className="mt-5 border-t border-secondary/5 pt-5 text-center lg:mt-6 lg:pt-6">
                     <button 
                       onClick={handleArchiveToggle}
                       disabled={isArchiving}
@@ -321,7 +319,7 @@ export default function ClassDetailUI({ classRoom, posts: initialPosts, bookings
         </div>
 
         {/* Main Content Area */}
-        <div className="flex-1 min-w-0">
+        <div className="min-w-0 flex-1">
            {activeTab === "stream" && (
              <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
                 {!classRoom.is_archived && (
@@ -339,7 +337,7 @@ export default function ClassDetailUI({ classRoom, posts: initialPosts, bookings
 
            {activeTab === "assignments" && (
              <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-                <h2 className="text-2xl font-black text-secondary mb-6 flex items-center gap-3">
+                <h2 className="mb-4 flex flex-wrap items-center gap-3 text-xl font-black text-secondary md:mb-6 md:text-2xl">
                    Assigned Coursework 
                    <span className="bg-primary/10 text-primary text-[10px] uppercase tracking-widest px-3 py-1 rounded-full">{assignmentPosts.length} total</span>
                 </h2>
@@ -349,8 +347,8 @@ export default function ClassDetailUI({ classRoom, posts: initialPosts, bookings
            
            {activeTab === "sessions" && (
              <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-                <h2 className="text-2xl font-black text-secondary mb-6">Historical Log</h2>
-                <div className="bg-white rounded-[2.5rem] p-4 shadow-xl border border-secondary/10 overflow-hidden">
+                <h2 className="mb-4 text-xl font-black text-secondary md:mb-6 md:text-2xl">Session history</h2>
+                <div className="overflow-hidden rounded-[1.5rem] border border-secondary/10 bg-white p-2 shadow-sm md:rounded-[2.5rem] md:p-4 md:shadow-xl">
                    <LessonHistoryTable bookings={pastBookings} />
                 </div>
              </div>

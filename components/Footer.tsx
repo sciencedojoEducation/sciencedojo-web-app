@@ -7,7 +7,7 @@ const footerGroups = [
     title: "Learning",
     links: [
       ["Find Tutors", "/#directory"],
-      ["AI Practice Studio", "/ai-practice-studio"],
+      ["Practice Dojo", "/ai-practice-studio"],
       ["Free Assessment", "/free-assessment"],
     ],
   },
@@ -33,6 +33,16 @@ const footerGroups = [
       ["Privacy", "/privacy"],
     ],
   },
+  {
+    title: "Support & Safety",
+    links: [
+      ["Safeguarding Policy", "/safeguarding"],
+      ["How We Verify Tutors", "/how-we-verify"],
+      ["Online Classroom Guide", "/classroom-guide"],
+      ["Parent Support", "/support"],
+      ["Contact Us", "/contact"],
+    ],
+  },
 ];
 
 export default function Footer() {
@@ -43,11 +53,11 @@ export default function Footer() {
           <div className="flex flex-col items-center gap-5 text-center md:items-start md:text-left">
             <Logo className="text-lg" dotClassName="w-1.5 h-1.5" />
             <p className="max-w-sm text-sm font-semibold leading-7 text-secondary/60">
-              AI-powered study tools and expert tutoring support for modern online learning.
+              Expert tutoring enhanced by smarter learning tools for modern online learning.
             </p>
             <SocialLinks />
           </div>
-          <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-5">
             {footerGroups.map((group) => (
               <div key={group.title}>
                 <h3 className="text-xs font-black uppercase tracking-[0.2em] text-secondary/45">{group.title}</h3>

@@ -12,6 +12,9 @@ export interface Tutor {
   isAvailableNow: boolean;
 }
 
+// MOCK DATA — never import this in any production render path.
+// All live tutor data comes from supabase-queries.ts (getTutors / getTutorById).
+// This array exists solely for local UI prototyping and must not be used as a fallback.
 export const mockTutors: Tutor[] = [
   {
     id: "1",

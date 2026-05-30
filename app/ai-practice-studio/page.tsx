@@ -7,28 +7,28 @@ import QuestionGenerator from "./QuestionGenerator";
 
 const faqs = [
   {
-    question: "What is AI Practice Studio?",
-    answer: "AI Practice Studio is a free ScienceDojo study tool that generates targeted practice questions by educational stage, curriculum, level, subject, and topic.",
+    question: "What is Practice Dojo?",
+    answer: "Practice Dojo is a free ScienceDojo knowledge-check system for structured curriculum-aligned practice by educational stage, curriculum, level, subject, and topic.",
   },
   {
-    question: "Which curricula does AI Practice Studio support?",
+    question: "Which curricula does Practice Dojo support?",
     answer: "It supports major pathways including UK National Curriculum, Cambridge, Edexcel, AQA, SQA, IB, GCSE, IGCSE, A-Level, and primary or lower secondary routes.",
   },
   {
-    question: "Can a tutor help with the generated questions?",
+    question: "Can a tutor help with these practice questions?",
     answer: "Yes. A ScienceDojo tutor can review the questions, explain mistakes, and help turn practice into a structured learning plan.",
   },
 ];
 
 export const metadata: Metadata = {
-  title: "AI Practice Studio | Free Curriculum-Aligned Practice Questions | ScienceDojo",
-  description: "Generate curriculum-aligned practice questions for KS1, KS2, KS3, GCSE, IGCSE, A-Level, IB, Cambridge, Edexcel, AQA, SQA, and more.",
+  title: "Practice Dojo | Free Curriculum-Aligned Practice Questions | ScienceDojo",
+  description: "Free structured STEM practice and curriculum-aligned knowledge checks for KS1, KS2, KS3, GCSE, IGCSE, A-Level, IB, Cambridge, Edexcel, AQA, SQA, and more.",
   alternates: {
     canonical: `${siteUrl}/ai-practice-studio`,
   },
   openGraph: {
-    title: "AI Practice Studio | ScienceDojo",
-    description: "Generate curriculum-aligned practice instantly with a free ScienceDojo study tool.",
+    title: "Practice Dojo | ScienceDojo",
+    description: "Try free curriculum-aligned knowledge checks with Practice Dojo.",
     url: `${siteUrl}/ai-practice-studio`,
     siteName: "ScienceDojo",
     type: "website",
@@ -42,15 +42,16 @@ export default function AiPracticeStudioPage() {
       <JsonLd data={organizationJsonLd()} />
       <JsonLd data={faqJsonLd(faqs)} />
 
-      <section className="bg-gradient-to-br from-[#002244] via-[#004488] to-[#0066cc] px-4 py-20 text-white md:px-8 md:py-24">
-        <div className="mx-auto max-w-5xl text-center">
-          <p className="text-xs font-black uppercase tracking-[0.3em] text-cyan-100/80">Free AI study tool</p>
-          <h1 className="mt-5 text-4xl font-black tracking-tight md:text-6xl">AI Practice Studio</h1>
-          <p className="mx-auto mt-6 max-w-2xl text-xl font-black leading-8 text-white">
-            Generate curriculum-aligned practice instantly.
+      <section className="relative overflow-hidden bg-gradient-to-br from-[#06172f] via-[#073f7b] to-[#0066cc] px-4 py-20 text-white md:px-8 md:py-24">
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_72%_22%,rgba(0,245,212,0.14),transparent_30%),radial-gradient(circle_at_18%_76%,rgba(255,255,255,0.1),transparent_28%)]" />
+        <div className="relative mx-auto max-w-5xl text-center">
+          <p className="text-xs font-black uppercase tracking-[0.3em] text-cyan-100/80">Free structured practice</p>
+          <h1 className="mt-5 text-4xl font-black tracking-tight md:text-6xl">Test what you know. Discover what needs support.</h1>
+          <p className="mx-auto mt-6 max-w-3xl text-xl font-black leading-8 text-white">
+            Practice Dojo gives students structured STEM practice aligned with GCSE, IGCSE, IB, and A-Level learning.
           </p>
           <p className="mx-auto mt-4 max-w-3xl text-lg leading-8 text-white/75">
-            Supports UK National Curriculum, Cambridge, Edexcel, AQA, SQA, IB, and more.
+            Use it to practise concepts, spot weak areas, and build confidence before small gaps become exam stress.
           </p>
           <div className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <AiPracticeStudioCtaLink
@@ -59,7 +60,7 @@ export default function AiPracticeStudioPage() {
               source="ai_practice_studio_hero"
               className="rounded-2xl bg-primary px-7 py-4 text-sm font-black uppercase tracking-[0.14em] text-white shadow-xl shadow-primary/20 transition-all hover:bg-primary-hover"
             >
-              Try Free Tool
+              Start Knowledge Check
             </AiPracticeStudioCtaLink>
             <AiPracticeStudioCtaLink
               href="/free-assessment"
@@ -67,9 +68,37 @@ export default function AiPracticeStudioPage() {
               source="ai_practice_studio_hero"
               className="rounded-2xl border border-white/20 bg-white/10 px-7 py-4 text-sm font-black uppercase tracking-[0.14em] text-white transition-all hover:bg-white/15"
             >
-              Request Free Assessment
+              Book Free Assessment
             </AiPracticeStudioCtaLink>
           </div>
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-5xl px-4 pt-14 md:px-8 md:pt-16">
+        <div className="grid gap-4 md:grid-cols-3">
+          {[
+            {
+              step: "01",
+              title: "Practise concepts",
+              text: "Choose the curriculum, subject, and topic so practice feels focused rather than random.",
+            },
+            {
+              step: "02",
+              title: "Spot gaps",
+              text: "Use the questions and worked guidance to notice which ideas need more support.",
+            },
+            {
+              step: "03",
+              title: "Build confidence",
+              text: "Turn uncertainty into clearer next steps, with tutor support available if needed.",
+            },
+          ].map((item) => (
+            <div key={item.title} className="rounded-3xl border border-secondary/10 bg-white p-6 shadow-sm">
+              <p className="text-xs font-black uppercase tracking-[0.2em] text-primary">{item.step}</p>
+              <h2 className="mt-3 text-xl font-black text-secondary">{item.title}</h2>
+              <p className="mt-3 text-sm leading-7 text-secondary/60">{item.text}</p>
+            </div>
+          ))}
         </div>
       </section>
 
@@ -79,21 +108,25 @@ export default function AiPracticeStudioPage() {
 
       <section className="mx-auto grid max-w-5xl gap-6 px-4 pb-20 md:grid-cols-2 md:px-8">
         <div className="rounded-3xl border border-secondary/10 bg-white p-7 shadow-sm">
-          <h2 className="text-2xl font-black">Targeted practice questions</h2>
+          <p className="text-xs font-black uppercase tracking-[0.2em] text-primary">Public learning gateway</p>
+          <h2 className="mt-3 text-2xl font-black">Free curriculum-aligned knowledge checks</h2>
           <p className="mt-4 leading-7 text-secondary/65">
-            Choose the stage, curriculum, level, subject, and topic so practice feels relevant instead of random.
+            Practice Dojo is open access. It helps students understand where they feel secure, where they feel uncertain, and what might need clearer explanation.
           </p>
         </div>
         <div className="rounded-3xl bg-secondary p-7 text-white shadow-xl">
-          <h2 className="text-2xl font-black">Need support after practice?</h2>
-          <p className="mt-4 leading-7 text-white/70">ScienceDojo tutors can help students turn mistakes into a clear weekly learning plan.</p>
+          <p className="text-xs font-black uppercase tracking-[0.2em] text-cyan-200/70">When practice reveals a gap</p>
+          <h2 className="mt-3 text-2xl font-black">A free assessment can help plan the next step.</h2>
+          <p className="mt-4 leading-7 text-white/70">
+            If a topic feels difficult, ScienceDojo can match the student with tutor support. Enrolled students can also receive personalized Missions built around their lessons and progress.
+          </p>
           <AiPracticeStudioCtaLink
             href="/free-assessment"
             cta="request_free_assessment"
             source="ai_practice_studio_static"
             className="mt-6 inline-flex rounded-2xl bg-primary px-6 py-3 text-sm font-black uppercase tracking-[0.14em] text-white"
           >
-            Request Free Assessment
+            Book Free Assessment
           </AiPracticeStudioCtaLink>
         </div>
       </section>

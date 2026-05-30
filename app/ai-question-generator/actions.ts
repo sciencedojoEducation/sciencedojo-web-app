@@ -187,7 +187,7 @@ export async function generatePracticeQuestions(
     return {
       status: "success",
       source: "fallback",
-      message: "The AI service is not configured in this environment, so ScienceDojo generated fallback practice questions instead.",
+      message: "Practice Dojo is using a built-in question set in this environment.",
       questions: buildFallbackQuestions(subject, level, topic, count),
     };
   }
@@ -249,7 +249,7 @@ Make the questions specific to the topic and suitable for independent revision.`
     return {
       status: "success",
       source: "fallback",
-      message: "The AI service was unavailable, so ScienceDojo generated fallback practice questions instead.",
+      message: "Practice Dojo could not prepare a fresh set, so it used built-in practice questions instead.",
       questions: buildFallbackQuestions(subject, level, topic, count),
     };
   }

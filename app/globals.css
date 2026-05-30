@@ -1,5 +1,9 @@
 @import "tailwindcss";
 
+@theme {
+  --breakpoint-xs: 23.4375rem; /* 375px — used for sub-375 mobile font scaling */
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -18,6 +22,7 @@
 :root {
   --background: #f8fafc;
   --foreground: #0f172a;
+  scroll-behavior: smooth;
 }
 
 
@@ -33,6 +38,14 @@ input, textarea {
 
 input::placeholder, textarea::placeholder {
   color: #94a3b8;
+}
+
+@media (max-width: 767px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
 }
 
 /* 💎 Custom Premium Scrollbar */
@@ -61,4 +74,181 @@ input::placeholder, textarea::placeholder {
 
 .grab-scroll:active {
   cursor: grabbing;
+}
+
+@keyframes sd-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes sd-float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+@keyframes sd-glow-pulse {
+  0%, 100% {
+    opacity: 0.55;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.04);
+  }
+}
+
+@keyframes sd-bar-rise {
+  from {
+    transform: scaleY(0.72);
+    opacity: 0.72;
+  }
+  to {
+    transform: scaleY(1);
+    opacity: 1;
+  }
+}
+
+@keyframes sd-gradient-drift {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+@keyframes sd-shimmer {
+  0% {
+    opacity: 1;
+    transform: translateX(-120%) skewX(-12deg);
+  }
+  32% {
+    opacity: 1;
+    transform: translateX(260%) skewX(-12deg);
+  }
+  44% {
+    opacity: 1;
+    transform: translateX(260%) skewX(-12deg);
+  }
+  76% {
+    opacity: 1;
+    transform: translateX(-120%) skewX(-12deg);
+  }
+  80%, 100% {
+    opacity: 0;
+    transform: translateX(-120%) skewX(-12deg);
+  }
+}
+
+@keyframes sd-path-pulse {
+  0%, 100% {
+    opacity: 0.42;
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(0, 245, 212, 0.16);
+  }
+  50% {
+    opacity: 0.9;
+    transform: scale(1.08);
+    box-shadow: 0 0 0 9px rgba(0, 245, 212, 0);
+  }
+}
+
+@keyframes sd-soft-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(22px);
+    filter: blur(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}
+
+.sd-fade-up {
+  animation: sd-fade-up 700ms ease-out both;
+}
+
+.sd-float-soft {
+  animation: sd-float 7s ease-in-out infinite;
+}
+
+.sd-float-soft-delayed {
+  animation: sd-float 8s ease-in-out 900ms infinite;
+}
+
+.sd-glow-pulse {
+  animation: sd-glow-pulse 9s ease-in-out infinite;
+}
+
+.sd-bar-rise {
+  animation: sd-bar-rise 1400ms ease-out both;
+  transform-origin: bottom;
+}
+
+.sd-ambient-gradient {
+  background-size: 180% 180%;
+  animation: sd-gradient-drift 18s ease-in-out infinite;
+}
+
+.sd-shimmer {
+  overflow: hidden;
+  position: relative;
+}
+
+.sd-shimmer::after {
+  animation: sd-shimmer 17s linear infinite;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.28), transparent);
+  content: "";
+  inset: 0;
+  pointer-events: none;
+  position: absolute;
+  width: 42%;
+}
+
+.sd-path-dot {
+  animation: sd-path-pulse 5.5s ease-in-out infinite;
+}
+
+.sd-soft-reveal {
+  animation: sd-soft-reveal 850ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.sd-calm-glow {
+  box-shadow: 0 32px 110px rgba(0, 102, 255, 0.14), 0 10px 40px rgba(0, 26, 68, 0.08);
+}
+
+.sd-soft-texture {
+  background-image:
+    radial-gradient(circle at 1px 1px, rgba(0, 26, 68, 0.035) 1px, transparent 0);
+  background-size: 28px 28px;
+}
+
+.sd-premium-shadow {
+  box-shadow: 0 24px 80px rgba(0, 26, 68, 0.08);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sd-fade-up,
+  .sd-float-soft,
+  .sd-float-soft-delayed,
+  .sd-glow-pulse,
+  .sd-bar-rise,
+  .sd-ambient-gradient,
+  .sd-path-dot,
+  .sd-soft-reveal,
+  .sd-shimmer::after {
+    animation: none;
+  }
 }

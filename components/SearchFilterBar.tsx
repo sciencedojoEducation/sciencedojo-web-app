@@ -3,7 +3,7 @@
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 
-export default function SearchFilterBar() {
+export default function SearchFilterBar({ variant = "default" }: { variant?: "default" | "compact" }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const pathname = usePathname();
@@ -47,18 +47,24 @@ export default function SearchFilterBar() {
 
   const subjects = ["All", "Science", "Math", "Physics", "Chemistry", "Biology", "Programming"];
 
+  const isCompact = variant === "compact";
+
   return (
-    <div className="flex flex-col md:flex-row gap-4 mb-8 w-full p-6 bg-white rounded-3xl shadow-sm border border-secondary/10">
+    <div className={`flex w-full flex-col gap-3 md:flex-row md:gap-4 ${
+      isCompact
+        ? "rounded-[1.5rem] border border-secondary/10 bg-white p-3 shadow-sm md:p-4"
+        : "mb-6 rounded-2xl border border-secondary/10 bg-white p-4 shadow-sm md:mb-8 md:rounded-3xl md:p-6"
+    }`}>
       <div className="flex-1">
-        <label htmlFor="search" className="block text-sm font-medium text-secondary mb-1">
-          Search Tutors
+        <label htmlFor="search" className="mb-1 block text-xs font-black uppercase tracking-[0.12em] text-secondary/40">
+          Search support
         </label>
         <div className="relative">
           <input
             type="text"
             id="search"
-            className="block w-full rounded-xl border-secondary/20 bg-surface px-4 py-3 text-secondary focus:border-primary focus:ring-primary sm:text-sm shadow-inner transition-all outline-none"
-            placeholder="Search by name, subject, or keywords..."
+            className="block min-h-11 w-full rounded-xl border-secondary/20 bg-surface px-4 py-3 text-sm font-bold text-secondary shadow-inner outline-none transition-all placeholder:text-secondary/35 focus:border-primary focus:ring-primary"
+            placeholder="Search by name, subject, or learning need..."
             value={draftSearchTerm}
             onChange={(e) => setDraftSearchTerm(e.target.value)}
           />
@@ -66,12 +72,12 @@ export default function SearchFilterBar() {
       </div>
       
       <div className="md:w-64">
-        <label htmlFor="subject" className="block text-sm font-medium text-secondary mb-1">
-          Subject Filter
+        <label htmlFor="subject" className="mb-1 block text-xs font-black uppercase tracking-[0.12em] text-secondary/40">
+          Subject focus
         </label>
         <select
           id="subject"
-          className="block w-full rounded-xl border-secondary/20 bg-surface px-4 py-3 text-secondary focus:border-primary focus:ring-primary sm:text-sm shadow-inner outline-none transition-all"
+          className="block min-h-11 w-full rounded-xl border-secondary/20 bg-surface px-4 py-3 text-sm font-bold text-secondary shadow-inner outline-none transition-all focus:border-primary focus:ring-primary"
           value={selectedSubject}
           onChange={(e) => handleSubject(e.target.value)}
         >

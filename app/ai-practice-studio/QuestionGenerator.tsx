@@ -27,7 +27,7 @@ function SubmitButton({ isPending }: { isPending: boolean }) {
       disabled={isPending}
       className="mt-6 w-full rounded-2xl bg-primary px-6 py-4 text-sm font-black uppercase tracking-[0.14em] text-white shadow-lg shadow-primary/20 transition-all hover:bg-primary-hover disabled:cursor-wait disabled:opacity-70"
     >
-      {isPending ? "Generating Questions..." : "Generate Questions"}
+      {isPending ? "Preparing Practice..." : "Create Practice Set"}
     </button>
   );
 }
@@ -197,7 +197,7 @@ export default function QuestionGenerator() {
         </div>
 
         <p className="mt-5 text-sm font-bold leading-6 text-secondary/55">
-          Choose your stage, curriculum, subject, and topic to generate targeted practice questions.
+          Choose your stage, curriculum, subject, and topic to create a focused knowledge check.
         </p>
         <p className="mt-2 text-xs font-black uppercase tracking-[0.14em] text-primary/70">
           Supports major pathways including UK National Curriculum, Cambridge, Edexcel, AQA, SQA, and IB.
@@ -208,7 +208,7 @@ export default function QuestionGenerator() {
 
       {isPending && (
         <div className="mt-8 rounded-2xl border border-primary/15 bg-primary/5 p-5 font-bold text-primary">
-          Generating curriculum-aligned practice questions...
+          Preparing curriculum-aligned practice questions...
         </div>
       )}
 
@@ -222,9 +222,9 @@ export default function QuestionGenerator() {
         <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
           <div>
             <p className="text-xs font-black uppercase tracking-[0.2em] text-primary">
-              {questions.length > 0 ? `${state.source === "llm" ? "AI-generated" : "Fallback"} practice set` : "Ready when you are"}
+              {questions.length > 0 ? "Structured practice set" : "Ready when you are"}
             </p>
-            <h2 className="mt-2 text-2xl font-black">{questions.length ? "Your practice questions" : "Generate curriculum-aligned practice instantly"}</h2>
+            <h2 className="mt-2 text-2xl font-black">{questions.length ? "Your practice questions" : "Create curriculum-aligned practice"}</h2>
           </div>
           {questions.length > 0 && <p className="text-sm font-bold text-secondary/45">{questions.length} questions with answers</p>}
         </div>
@@ -232,25 +232,35 @@ export default function QuestionGenerator() {
         {questions.length === 0 ? (
           <div className="mt-5 rounded-2xl border border-secondary/10 bg-surface p-6">
             <p className="font-bold leading-7 text-secondary/65">
-              AI Practice Studio creates targeted practice questions by stage, curriculum, level, subject, and topic.
+              Practice Dojo creates structured practice questions by stage, curriculum, level, subject, and topic.
             </p>
           </div>
         ) : (
-          <div className="mt-5 grid gap-4">
+          <div className="mt-5 grid gap-3">
             {questions.map((question, index) => (
-              <details key={`${question.question}-${index}`} className="group rounded-2xl border border-secondary/10 bg-surface p-5">
+              <details key={`${question.question}-${index}`} className="group rounded-xl border border-secondary/12 bg-white p-4 shadow-sm shadow-secondary/5 md:p-5">
                 <summary className="cursor-pointer list-none">
-                  <p className="text-xs font-black uppercase tracking-[0.2em] text-primary">Question {index + 1}</p>
-                  <p className="mt-2 text-lg font-black leading-8 text-secondary">{question.question}</p>
-                  <p className="mt-3 text-xs font-black uppercase tracking-[0.16em] text-secondary/35">
-                    {question.skill} | {question.difficulty} | Tap to show answer
-                  </p>
+                  <div className="flex items-start gap-3">
+                    <span className="shrink-0 pt-0.5 text-sm font-semibold text-secondary/45">{index + 1}.</span>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-lg font-semibold leading-7 text-secondary md:text-xl md:leading-8">{question.question}</p>
+                      <p className="mt-3 text-xs font-medium leading-5 text-secondary/42">
+                        Topic: {question.skill} <span className="text-secondary/25">&middot;</span> Difficulty: {question.difficulty}{" "}
+                        <span className="text-secondary/25">&middot;</span>{" "}
+                        <span className="text-primary/70 group-open:hidden">Show answer</span>
+                        <span className="hidden text-primary/70 group-open:inline">Hide answer</span>
+                      </p>
+                      <div className="mt-4 border-b border-dashed border-secondary/25 pb-2 text-sm font-medium text-secondary/38">
+                        Answer: <span className="text-secondary/20">____________________________</span>
+                      </div>
+                    </div>
+                  </div>
                 </summary>
-                <div className="mt-5 rounded-2xl bg-white p-5">
-                  <p className="text-xs font-black uppercase tracking-[0.18em] text-emerald-600">Answer</p>
-                  <p className="mt-2 font-bold leading-7 text-secondary">{question.answer}</p>
-                  <p className="mt-4 text-xs font-black uppercase tracking-[0.18em] text-primary">Working / marking guidance</p>
-                  <p className="mt-2 leading-7 text-secondary/65">{question.working}</p>
+                <div className="mt-4 rounded-xl border border-secondary/8 bg-surface px-4 py-4 md:px-5">
+                  <p className="text-xs font-semibold text-emerald-700">Answer</p>
+                  <p className="mt-2 text-sm font-semibold leading-6 text-secondary md:text-base md:leading-7">{question.answer}</p>
+                  <p className="mt-4 text-xs font-semibold text-primary/75">Working / marking guidance</p>
+                  <p className="mt-2 text-sm leading-6 text-secondary/65 md:text-base md:leading-7">{question.working}</p>
                 </div>
               </details>
             ))}
@@ -262,7 +272,7 @@ export default function QuestionGenerator() {
         <div className="mt-8 rounded-3xl bg-secondary p-6 text-white shadow-xl">
           <h2 className="text-2xl font-black">Need help understanding these questions?</h2>
           <p className="mt-3 leading-7 text-white/70">
-            A ScienceDojo tutor can help your child turn practice into real progress.
+            A ScienceDojo tutor can help your child turn uncertain topics into a clear learning plan. Enrolled students can also receive personalized Missions between lessons.
           </p>
           <div className="mt-6 flex flex-col gap-3 sm:flex-row">
             <AiPracticeStudioCtaLink
@@ -271,7 +281,7 @@ export default function QuestionGenerator() {
               source="ai_practice_studio_after_generation"
               className="inline-flex justify-center rounded-2xl bg-primary px-6 py-3 text-sm font-black uppercase tracking-[0.14em] text-white transition-all hover:bg-primary-hover"
             >
-              Request Free Assessment
+              Book Free Assessment
             </AiPracticeStudioCtaLink>
             <AiPracticeStudioCtaLink
               href="/#directory"

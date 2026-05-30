@@ -112,49 +112,116 @@ export default async function AdminPayoutsPage() {
   }
 
   const ledgersArray = Object.values(tutorLedgers).sort((a, b) => b.outstandingOwed - a.outstandingOwed);
+  const totalOutstanding = ledgersArray.reduce((s, l) => s + l.outstandingOwed, 0);
 
   return (
-    <div className="p-8 max-w-6xl mx-auto min-h-screen">
-      <div className="mb-10 flex items-end justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-slate-800 mb-2">Tutor Payouts</h1>
-          <p className="text-slate-500 font-medium">Monthly payouts — triggered manually at the end of each month.</p>
-          <p className="text-xs text-slate-400 font-bold mt-1">Platform commission: <span className="text-indigo-600">{platformFeeRaw}%</span> · Tutors receive: <span className="text-green-600">{tutorCutRaw}%</span></p>
+    <div className="mx-auto min-h-screen max-w-6xl px-3 py-5 sm:px-4 md:p-8">
+      <div className="mb-5 flex flex-col gap-4 lg:mb-8 lg:flex-row lg:items-end lg:justify-between">
+        <div className="min-w-0">
+          <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.18em] text-slate-400">Financial operations</p>
+          <h1 className="mb-2 text-2xl font-black tracking-tight text-slate-900 md:text-3xl">Tutor Payouts</h1>
+          <p className="max-w-2xl text-sm font-medium leading-relaxed text-slate-500 md:text-base">
+            Monthly tutor balances, platform commission, and payout readiness in one operational view.
+          </p>
+          <p className="mt-2 text-xs font-bold text-slate-400">
+            Platform commission: <span className="text-indigo-600">{platformFeeRaw}%</span> · Tutors receive: <span className="text-green-600">{tutorCutRaw}%</span>
+          </p>
         </div>
         <PayAllButton
           tutorLedgers={ledgersArray.map(l => ({ id: l.id, name: l.name, outstandingOwed: l.outstandingOwed, stripeReady: l.stripeReady }))}
-          totalOutstanding={ledgersArray.reduce((s, l) => s + l.outstandingOwed, 0)}
+          totalOutstanding={totalOutstanding}
         />
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-        <div className="bg-slate-800 p-8 rounded-[2rem] text-white shadow-xl">
-          <h2 className="text-slate-400 font-black uppercase tracking-[0.2em] text-[10px] mb-3">Total Gross Owed</h2>
-          <div className="text-4xl font-black tracking-tighter">£{totalTutorPayouts.toFixed(2)}</div>
-          <p className="text-slate-500 text-xs mt-2">All sessions × {tutorCutRaw}%</p>
+      <div className="mb-6 grid grid-cols-2 gap-3 md:mb-10 md:grid-cols-3 md:gap-6">
+        <div className="col-span-2 rounded-[1.5rem] bg-slate-900 p-4 text-white shadow-sm md:col-span-1 md:rounded-[2rem] md:p-8 md:shadow-xl">
+          <h2 className="mb-2 text-[9px] font-black uppercase tracking-[0.16em] text-slate-400 md:mb-3 md:text-[10px] md:tracking-[0.2em]">Total Gross Owed</h2>
+          <div className="text-3xl font-black tracking-tighter md:text-4xl">£{totalTutorPayouts.toFixed(2)}</div>
+          <p className="mt-1 text-[11px] font-medium text-slate-400 md:mt-2 md:text-xs">All completed sessions × {tutorCutRaw}%</p>
         </div>
-        <div className="bg-gradient-to-br from-blue-600 to-indigo-700 p-8 rounded-[2rem] text-white shadow-xl">
-          <h2 className="text-blue-200 font-black uppercase tracking-[0.2em] text-[10px] mb-3">ScienceDojo Revenue</h2>
-          <div className="text-4xl font-black tracking-tighter">£{totalPlatformRevenue.toFixed(2)}</div>
-          <p className="text-blue-300 text-xs mt-2">{platformFeeRaw}% platform fee retained</p>
+        <div className="rounded-[1.5rem] bg-gradient-to-br from-blue-600 to-indigo-700 p-4 text-white shadow-sm md:rounded-[2rem] md:p-8 md:shadow-xl">
+          <h2 className="mb-2 text-[9px] font-black uppercase tracking-[0.16em] text-blue-200 md:mb-3 md:text-[10px] md:tracking-[0.2em]">ScienceDojo Revenue</h2>
+          <div className="text-2xl font-black tracking-tighter md:text-4xl">£{totalPlatformRevenue.toFixed(2)}</div>
+          <p className="mt-1 text-[11px] font-medium text-blue-200/90 md:mt-2 md:text-xs">{platformFeeRaw}% retained</p>
         </div>
-        <div className="bg-gradient-to-br from-green-600 to-emerald-700 p-8 rounded-[2rem] text-white shadow-xl">
-          <h2 className="text-green-200 font-black uppercase tracking-[0.2em] text-[10px] mb-3">Outstanding Owed</h2>
-          <div className="text-4xl font-black tracking-tighter">
-            £{ledgersArray.reduce((s, l) => s + l.outstandingOwed, 0).toFixed(2)}
+        <div className="rounded-[1.5rem] bg-gradient-to-br from-green-600 to-emerald-700 p-4 text-white shadow-sm md:rounded-[2rem] md:p-8 md:shadow-xl">
+          <h2 className="mb-2 text-[9px] font-black uppercase tracking-[0.16em] text-green-200 md:mb-3 md:text-[10px] md:tracking-[0.2em]">Outstanding Owed</h2>
+          <div className="text-2xl font-black tracking-tighter md:text-4xl">
+            £{totalOutstanding.toFixed(2)}
           </div>
-          <p className="text-green-300 text-xs mt-2">Unpaid tutor balances</p>
+          <p className="mt-1 text-[11px] font-medium text-green-200/90 md:mt-2 md:text-xs">Ready to manage</p>
         </div>
       </div>
 
       {/* Tutor Ledger */}
-      <div className="bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden">
-        <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50">
-          <h2 className="font-bold text-slate-800">Tutor Ledger</h2>
-          <span className="text-xs text-slate-400 font-bold">{ledgersArray.length} tutors with completed sessions</span>
+      <div className="overflow-hidden rounded-[1.5rem] border border-slate-200 bg-white shadow-sm md:rounded-[2rem]">
+        <div className="border-b border-slate-100 bg-slate-50 p-4 md:flex md:items-center md:justify-between md:p-6">
+          <div>
+            <h2 className="font-bold text-slate-900">Tutor ledger</h2>
+            <p className="mt-1 text-xs font-medium text-slate-500">Balances by tutor, with Stripe readiness and payout action.</p>
+          </div>
+          <span className="mt-2 inline-flex text-xs font-bold text-slate-400 md:mt-0">{ledgersArray.length} tutors with completed sessions</span>
         </div>
-        <table className="w-full text-left border-collapse">
+
+        <div className="grid gap-3 p-3 lg:hidden">
+          {ledgersArray.map((ledger) => (
+            <article key={ledger.id} className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <h3 className="break-words text-sm font-black leading-tight text-slate-900">{ledger.name}</h3>
+                  <p className="mt-1 break-words text-xs font-medium text-slate-400">{ledger.email}</p>
+                </div>
+                {ledger.stripeReady ? (
+                  <span className="shrink-0 rounded-full border border-green-100 bg-green-50 px-2 py-1 text-[9px] font-black uppercase tracking-widest text-green-600">
+                    Ready
+                  </span>
+                ) : (
+                  <span className="shrink-0 rounded-full bg-slate-100 px-2 py-1 text-[9px] font-black uppercase tracking-widest text-slate-400">
+                    No Stripe
+                  </span>
+                )}
+              </div>
+
+              <div className="mt-4 rounded-2xl border border-amber-100 bg-amber-50/70 p-3">
+                <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-amber-600">Outstanding</p>
+                <div className="mt-1 text-2xl font-black tracking-tight text-amber-700">£{ledger.outstandingOwed.toFixed(2)}</div>
+              </div>
+
+              <div className="mt-3 grid grid-cols-3 gap-2 text-center">
+                <div className="rounded-2xl bg-slate-50 p-2">
+                  <p className="text-[9px] font-bold uppercase tracking-widest text-slate-400">Sessions</p>
+                  <p className="mt-1 text-sm font-black text-slate-800">{ledger.sessionCount}</p>
+                </div>
+                <div className="rounded-2xl bg-slate-50 p-2">
+                  <p className="text-[9px] font-bold uppercase tracking-widest text-slate-400">Gross</p>
+                  <p className="mt-1 text-sm font-black text-slate-800">£{ledger.grossPayout.toFixed(2)}</p>
+                </div>
+                <div className="rounded-2xl bg-slate-50 p-2">
+                  <p className="text-[9px] font-bold uppercase tracking-widest text-slate-400">Paid</p>
+                  <p className="mt-1 text-sm font-black text-green-600">£{ledger.alreadyPaid.toFixed(2)}</p>
+                </div>
+              </div>
+
+              <div className="mt-4 flex justify-end">
+                <PayoutButton
+                  tutorId={ledger.id}
+                  tutorName={ledger.name}
+                  amountOwed={ledger.outstandingOwed}
+                  stripeReady={ledger.stripeReady}
+                />
+              </div>
+            </article>
+          ))}
+          {ledgersArray.length === 0 && (
+            <div className="rounded-2xl border border-slate-100 bg-slate-50 p-5 text-center">
+              <h3 className="text-sm font-black text-slate-800">No payout records yet</h3>
+              <p className="mt-1 text-xs font-medium leading-relaxed text-slate-500">Completed tutoring sessions will appear here once there are balances to review.</p>
+            </div>
+          )}
+        </div>
+
+        <table className="hidden w-full border-collapse text-left lg:table">
           <thead>
             <tr className="border-b border-slate-200 text-slate-400 text-[10px] font-black uppercase tracking-[0.2em]">
               <th className="p-5">Tutor</th>

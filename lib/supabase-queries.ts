@@ -11,9 +11,11 @@ export interface TutorProfile {
   hourly_rate: number;
   rating: number;
   review_count: number;
+  average_rating: number | null;
   is_verified: boolean;
+  verified_at: string | null;
   is_available_now: boolean;
-  chat_availability?: any;
+  chat_availability?: Record<string, unknown>;
   youtube_intro_url?: string | null;
 
   // New credential fields
@@ -24,9 +26,102 @@ export interface TutorProfile {
   cv_url?: string;
 }
 
+// Raw shapes returned by Supabase queries before mapping to domain types
+type RawTutorQueryRow = {
+  id: string;
+  bio: string;
+  subjects: Subject[];
+  hourly_rate: number;
+  rating: number;
+  review_count: number;
+  is_verified: boolean;
+  is_available_now: boolean;
+  profiles: { full_name: string; avatar_url: string } | null;
+};
+
+type RawTutorExtendedRow = {
+  id: string;
+  youtube_intro_url: string | null;
+  education_level?: string;
+  university?: string;
+  experience_summary?: string;
+  has_teaching_license?: boolean;
+  cv_url?: string;
+};
+
+type RawTutorDetailRow = {
+  id: string;
+  bio: string;
+  subjects: Subject[];
+  hourly_rate: number;
+  rating: number;
+  review_count: number;
+  is_verified: boolean;
+  is_available_now: boolean;
+  youtube_intro_url?: string | null;
+  education_level?: string;
+  university?: string;
+  experience_summary?: string;
+  has_teaching_license?: boolean;
+  cv_url?: string;
+  profiles: { full_name: string; avatar_url: string } | null;
+};
+
+type RawTutorChatRow = {
+  chat_availability: Record<string, unknown> | null;
+  youtube_intro_url: string | null;
+};
+
+type RawTutorProfileRow = {
+  id: string;
+  profiles: { full_name: string; avatar_url: string } | null;
+};
+
+type RawBookingRow = {
+  id: string;
+  student_id: string;
+  tutor_id: string;
+  subject: string;
+  description: string;
+  requested_date: string;
+  status: 'requested' | 'accepted' | 'declined' | 'confirmed' | 'completed' | 'cancelled';
+  meeting_url?: string;
+  price_at_booking: number;
+  recurrence_group_id?: string | null;
+  is_recurring?: boolean;
+  recurrence_count?: number;
+  recurrence_index?: number;
+  duration_hours?: number;
+};
+
+type RawNoteRow = {
+  booking_id: string;
+  summary: string;
+  homework: string;
+};
+
+type RawReviewRow = {
+  booking_id: string;
+};
+
+type RawTutorJoinRow = {
+  id: string;
+  profiles: { full_name: string; avatar_url: string } | null;
+};
+
+type RawStudentRow = {
+  id: string;
+  full_name: string;
+  avatar_url: string;
+};
+
+type RawEarningsRow = {
+  price_at_booking: number;
+};
+
 export async function getTutors(searchTerm: string = "", subject: string = "All", limit?: number): Promise<TutorProfile[]> {
   const supabase = await createClient();
-  
+
   // Fetch basic tutor info (those guaranteed to be in the cache)
   let query = supabase
     .from('tutors')
@@ -62,7 +157,7 @@ export async function getTutors(searchTerm: string = "", subject: string = "All"
   }
 
   // 1. Resiliently fetch new columns if available, to bypass cache delay
-  const tutorIds = data.map((t: any) => t.id);
+  const tutorIds = (data as unknown as RawTutorQueryRow[]).map(t => t.id);
   const { data: newFieldsData } = tutorIds.length > 0
     ? await supabase
       .from('tutors')
@@ -70,15 +165,15 @@ export async function getTutors(searchTerm: string = "", subject: string = "All"
       .in('id', tutorIds)
     : { data: [] };
 
-  const newFieldsMap: Record<string, any> = {};
+  const newFieldsMap: Record<string, RawTutorExtendedRow> = {};
   if (newFieldsData) {
-    newFieldsData.forEach(row => {
+    (newFieldsData as RawTutorExtendedRow[]).forEach(row => {
       newFieldsMap[row.id] = row;
     });
   }
 
   // Flatten the join results
-  return (data as any[]).map(tutor => ({
+  return (data as unknown as RawTutorQueryRow[]).map(tutor => ({
     id: tutor.id,
     full_name: tutor.profiles?.full_name || 'Verified Tutor',
     avatar_url: tutor.profiles?.avatar_url || '',
@@ -87,7 +182,9 @@ export async function getTutors(searchTerm: string = "", subject: string = "All"
     hourly_rate: tutor.hourly_rate,
     rating: tutor.rating,
     review_count: tutor.review_count,
+    average_rating: tutor.review_count > 0 ? (tutor.rating ?? null) : null,
     is_verified: tutor.is_verified,
+    verified_at: tutor.is_verified ? 'verified' : null,
     is_available_now: tutor.is_available_now,
     youtube_intro_url: newFieldsMap[tutor.id]?.youtube_intro_url || null,
     education_level: newFieldsMap[tutor.id]?.education_level,
@@ -95,15 +192,15 @@ export async function getTutors(searchTerm: string = "", subject: string = "All"
     experience_summary: newFieldsMap[tutor.id]?.experience_summary,
     has_teaching_license: newFieldsMap[tutor.id]?.has_teaching_license,
     cv_url: newFieldsMap[tutor.id]?.cv_url,
-  })).filter(t => 
-    (t.full_name?.toLowerCase() || '').includes(searchTerm.toLowerCase()) || 
+  })).filter(t =>
+    (t.full_name?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
     (t.bio?.toLowerCase() || '').includes(searchTerm.toLowerCase())
   );
 }
 
 export async function getTutorById(id: string): Promise<TutorProfile | null> {
   const supabase = await createClient();
-  
+
   // Fetch basic info first to avoid cache errors
   const { data, error } = await supabase
     .from('tutors')
@@ -144,8 +241,8 @@ export async function getTutorById(id: string): Promise<TutorProfile | null> {
     .eq('id', id)
     .maybeSingle();
 
-  const tutor = data as any;
-  const extendedData = extended as any;
+  const tutor = data as unknown as RawTutorDetailRow;
+  const extendedData = extended as RawTutorChatRow | null;
   return {
     id: tutor.id,
     full_name: tutor.profiles?.full_name || 'Verified Tutor',
@@ -155,9 +252,11 @@ export async function getTutorById(id: string): Promise<TutorProfile | null> {
     hourly_rate: tutor.hourly_rate,
     rating: tutor.rating,
     review_count: tutor.review_count,
+    average_rating: tutor.review_count > 0 ? (tutor.rating ?? null) : null,
     is_verified: tutor.is_verified,
+    verified_at: tutor.is_verified ? 'verified' : null,
     is_available_now: tutor.is_available_now,
-    chat_availability: extendedData?.chat_availability,
+    chat_availability: extendedData?.chat_availability ?? undefined,
     youtube_intro_url: extendedData?.youtube_intro_url,
   };
 }
@@ -205,15 +304,17 @@ export async function getBookingsByUserId(userId: string): Promise<Booking[]> {
 
   if (!data || data.length === 0) return [];
 
+  const bookings = data as RawBookingRow[];
+
   // 1. Fetch Lesson Notes separately
-  const bookingIds = data.map((b: any) => b.id);
+  const bookingIds = bookings.map(b => b.id);
   const { data: notesData } = await supabase
     .from('lesson_notes')
     .select('*')
     .in('booking_id', bookingIds);
 
   const notesMap: Record<string, { summary: string; homework: string }> = {};
-  for (const n of (notesData || []) as any[]) {
+  for (const n of (notesData as RawNoteRow[] | null) ?? []) {
     notesMap[n.booking_id] = {
       summary: n.summary,
       homework: n.homework
@@ -225,18 +326,20 @@ export async function getBookingsByUserId(userId: string): Promise<Booking[]> {
     .from('reviews')
     .select('booking_id')
     .in('booking_id', bookingIds);
-    
-  const reviewedBookingIds = new Set((reviewsData || []).map((r: any) => r.booking_id));
+
+  const reviewedBookingIds = new Set(
+    ((reviewsData as RawReviewRow[] | null) ?? []).map(r => r.booking_id)
+  );
 
   // 2. Resolve Tutor & Student Info
-  const tutorIds = [...new Set(data.map((b: any) => b.tutor_id))];
+  const tutorIds = [...new Set(bookings.map(b => b.tutor_id))];
   const { data: tutorRows } = await supabase
     .from('tutors')
     .select('id, profiles(full_name, avatar_url)')
     .in('id', tutorIds);
 
   const tutorMap: Record<string, { full_name: string; avatar_url: string }> = {};
-  for (const t of (tutorRows || []) as any[]) {
+  for (const t of (tutorRows as unknown as RawTutorJoinRow[] | null) ?? []) {
     tutorMap[t.id] = {
       full_name: t.profiles?.full_name || 'Verified Tutor',
       avatar_url: t.profiles?.avatar_url || '',
@@ -244,21 +347,21 @@ export async function getBookingsByUserId(userId: string): Promise<Booking[]> {
   }
 
   // Collect unique student IDs
-  const studentIds = [...new Set(data.map((b: any) => b.student_id))];
+  const studentIds = [...new Set(bookings.map(b => b.student_id))];
   const { data: studentRows } = await supabase
     .from('profiles')
     .select('id, full_name, avatar_url')
     .in('id', studentIds);
 
   const studentMap: Record<string, { full_name: string; avatar_url: string }> = {};
-  for (const s of (studentRows || []) as any[]) {
+  for (const s of (studentRows as RawStudentRow[] | null) ?? []) {
     studentMap[s.id] = {
       full_name: s.full_name || 'ScienceDojo Student',
       avatar_url: s.avatar_url || '',
     };
   }
 
-  return data.map((booking: any) => ({
+  return bookings.map(booking => ({
     ...booking,
     tutor_name: tutorMap[booking.tutor_id]?.full_name || 'Verified Tutor',
     tutor_avatar: tutorMap[booking.tutor_id]?.avatar_url,
@@ -284,17 +387,20 @@ export async function getBookingById(bookingId: string) {
     return null;
   }
 
+  const booking = data as RawBookingRow;
+
   // Resolve tutor display info via tutors→profiles join
   const { data: tutorRow } = await supabase
     .from('tutors')
     .select('id, profiles(full_name, avatar_url)')
-    .eq('id', (data as any).tutor_id)
+    .eq('id', booking.tutor_id)
     .maybeSingle();
 
+  const typedTutorRow = tutorRow as unknown as RawTutorProfileRow | null;
   return {
     ...data,
-    tutor_name: (tutorRow as any)?.profiles?.full_name || 'Verified Tutor',
-    tutor_avatar: (tutorRow as any)?.profiles?.avatar_url,
+    tutor_name: typedTutorRow?.profiles?.full_name || 'Verified Tutor',
+    tutor_avatar: typedTutorRow?.profiles?.avatar_url,
   };
 }
 
@@ -409,5 +515,5 @@ export async function getTutorEarnings(tutorId: string) {
     return 0;
   }
 
-  return data.reduce((sum: number, b: any) => sum + Number(b.price_at_booking), 0);
+  return (data as RawEarningsRow[]).reduce((sum, b) => sum + Number(b.price_at_booking), 0);
 }

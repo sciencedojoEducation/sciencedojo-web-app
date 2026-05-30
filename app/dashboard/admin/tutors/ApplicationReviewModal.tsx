@@ -175,15 +175,15 @@ export default function ApplicationReviewModal({ application, tutorProfile, onCl
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/40 backdrop-blur-sm overflow-y-auto py-8 px-4" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/40 px-0 py-0 backdrop-blur-sm md:px-4 md:py-8" onClick={onClose}>
       <div
-        className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto relative"
+        className="relative min-h-dvh w-full max-w-4xl overflow-y-auto bg-white shadow-2xl md:max-h-[90vh] md:min-h-0 md:rounded-[2.5rem]"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="sticky top-0 z-20 bg-white/95 backdrop-blur-xl rounded-t-[2.5rem] border-b border-slate-100 px-10 py-8 flex items-center justify-between">
-          <div className="flex items-center gap-6">
-            <div className="w-16 h-16 rounded-2xl bg-slate-100 overflow-hidden border-2 border-white shadow-lg relative">
+        <div className="sticky top-0 z-20 flex items-center justify-between gap-3 border-b border-slate-100 bg-white/95 px-4 py-4 backdrop-blur-xl md:rounded-t-[2.5rem] md:px-10 md:py-8">
+          <div className="flex min-w-0 items-center gap-3 md:gap-6">
+            <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-2xl border-2 border-white bg-slate-100 shadow-lg md:h-16 md:w-16">
               <img 
                 src={tutorProfile.avatar_url || "/tutor_placeholder.webp"} 
                 alt="" 
@@ -191,10 +191,10 @@ export default function ApplicationReviewModal({ application, tutorProfile, onCl
                 onError={(e) => { e.currentTarget.src = "/tutor_placeholder.webp" }}
               />
             </div>
-            <div>
-              <h2 className="text-2xl font-black text-slate-800 tracking-tight">{d.full_name || tutorProfile.full_name}</h2>
-              <div className="flex items-center gap-3 mt-1">
-                <span className="text-xs font-bold text-slate-400">{tutorProfile.email}</span>
+            <div className="min-w-0">
+              <h2 className="truncate text-lg font-black tracking-tight text-slate-800 md:text-2xl">{d.full_name || tutorProfile.full_name}</h2>
+              <div className="mt-1 flex flex-wrap items-center gap-2 md:gap-3">
+                <span className="truncate text-xs font-bold text-slate-400">{tutorProfile.email}</span>
                 <Badge color={d.onboarding_status === "under_review" ? "amber" : d.onboarding_status === "demo_submitted" ? "blue" : "slate"}>
                   {d.onboarding_status || application.status || "unknown"}
                 </Badge>
@@ -202,13 +202,13 @@ export default function ApplicationReviewModal({ application, tutorProfile, onCl
               </div>
             </div>
           </div>
-          <button onClick={onClose} className="w-12 h-12 rounded-xl bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-400 hover:text-slate-600 transition-all">
+          <button onClick={onClose} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-400 transition-all hover:bg-slate-200 hover:text-slate-600 md:h-12 md:w-12">
             <X size={20} />
           </button>
         </div>
 
         {/* Progress Bar */}
-        <div className="px-10 py-6 bg-slate-50/50 border-b border-slate-100">
+        <div className="border-b border-slate-100 bg-slate-50/50 px-4 py-4 md:px-10 md:py-6">
           <div className="flex items-center gap-2 mb-2">
             <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Onboarding Progress</p>
             <span className="text-[9px] font-black text-slate-300 ml-auto">{completedStages}/7 Stages</span>
@@ -231,7 +231,7 @@ export default function ApplicationReviewModal({ application, tutorProfile, onCl
           )}
         </div>
 
-        <div className="p-10 space-y-10">
+        <div className="space-y-6 p-4 md:space-y-10 md:p-10">
           {/* 1. Screening */}
           <section className="space-y-6">
             <SectionHeader icon={<User size={18} />} title="Screening & Contact" subtitle="Initial Knockout Protocol" />
@@ -437,19 +437,19 @@ export default function ApplicationReviewModal({ application, tutorProfile, onCl
         </div>
 
         {/* Footer Actions */}
-        <div className="sticky bottom-0 z-20 bg-white/95 backdrop-blur-xl rounded-b-[2.5rem] border-t border-slate-100 px-10 py-6 flex items-center justify-between">
+        <div className="sticky bottom-0 z-20 flex items-center justify-between gap-3 border-t border-slate-100 bg-white/95 px-4 py-4 backdrop-blur-xl md:rounded-b-[2.5rem] md:px-10 md:py-6">
           <button
             onClick={onClose}
-            className="px-8 py-4 bg-slate-100 text-slate-600 text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-slate-200 transition-all"
+            className="rounded-xl bg-slate-100 px-5 py-3 text-[10px] font-black uppercase tracking-widest text-slate-600 transition-all hover:bg-slate-200 md:px-8 md:py-4"
           >
             Close
           </button>
-          <div className="flex items-center gap-4">
+          <div className="flex min-w-0 items-center gap-4">
             {d.onboarding_status === "under_review" && (
               <button
                 onClick={handleVerify}
                 disabled={isPending}
-                className="px-8 py-4 bg-emerald-600 text-white text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-emerald-700 shadow-lg shadow-emerald-200 transition-all disabled:opacity-50 flex items-center gap-2"
+                className="flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-3 text-[10px] font-black uppercase tracking-widest text-white shadow-lg shadow-emerald-200 transition-all hover:bg-emerald-700 disabled:opacity-50 md:px-8 md:py-4"
               >
                 <CheckCircle2 size={14} />
                 {isPending ? "Processing..." : "Approve & Verify"}

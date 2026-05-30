@@ -3,6 +3,8 @@ import { createClient } from "@/utils/supabase/server";
 import { getUnreadMessageCount } from "@/lib/messaging-queries";
 import SidebarLink from "./SidebarLink";
 import DashboardTourReplayButton from "./DashboardTourReplayButton";
+import DashboardMobileDrawer from "./DashboardMobileDrawer";
+import { signOut } from "@/app/login/actions";
 import { 
   Calendar, 
   GraduationCap, 
@@ -22,7 +24,7 @@ import {
 interface NavLink {
   name: string;
   href: string;
-  icon: React.ReactNode;
+  icon: string;
   badge?: number;
   badgeColor?: string;
   exact?: boolean;
@@ -83,7 +85,7 @@ export default async function DashboardSidebar({ role }: DashboardSidebarProps) 
       { name: "My Bookings", href: "/dashboard/student", icon: "🗓️", exact: true, tourId: "student-bookings" },
       { name: "My Classes", href: "/dashboard/classes", icon: "🎓", tourId: "student-classes" },
       { name: "Messages", href: "/dashboard/messages", icon: "💬", badge: unreadCount, tourId: "student-messages" },
-      { name: "Missions", href: "/dashboard/student/missions", icon: "🚀", tourId: "student-tasks" },
+      { name: "Missions", href: "/dashboard/student/missions", icon: "🧭", tourId: "student-tasks" },
       { name: "Browse Tutors", href: "/dashboard/student/tutors", icon: "🔍" },
       { name: "Focus Timers", href: "/dashboard/student/timers", icon: "⏱️" },
       { name: "Settings", href: "/dashboard/student/settings", icon: "⚙️" },
@@ -93,7 +95,7 @@ export default async function DashboardSidebar({ role }: DashboardSidebarProps) 
       { name: "My Schedule", href: "/dashboard/tutor", icon: "🗓️", exact: true, tourId: "tutor-sessions" },
       { name: "My Classes", href: "/dashboard/classes", icon: "🎓", tourId: "tutor-students" },
       { name: "Messages", href: "/dashboard/messages", icon: "💬", badge: unreadCount, tourId: "tutor-messages" },
-      { name: "Student Missions", href: "/dashboard/tutor/missions", icon: "🚀" },
+      { name: "Mission Reviews", href: "/dashboard/tutor/missions", icon: "🧭" },
       { name: "Earnings", href: "/dashboard/tutor/earnings", icon: "💰" },
       { name: "Profile Settings", href: "/dashboard/tutor/settings", icon: "👤", tourId: "tutor-availability" },
       { name: "Support", href: "/dashboard/support", icon: "🆘" },
@@ -115,7 +117,16 @@ export default async function DashboardSidebar({ role }: DashboardSidebarProps) 
   const links = navLinks[role] || [];
 
   return (
-    <aside data-tour={`${role}-sidebar`} className={`w-64 flex flex-col h-[calc(100vh-80px)] top-[80px] sticky overflow-y-auto overflow-x-hidden transition-all duration-500 border-r ${
+    <>
+    <DashboardMobileDrawer
+      role={role}
+      displayRole={displayRole}
+      userName={userName}
+      avatarUrl={avatarUrl}
+      links={links}
+    />
+
+    <aside data-tour={`${role}-sidebar`} className={`hidden w-64 shrink-0 lg:flex flex-col h-full max-h-full top-0 sticky overflow-y-auto overflow-x-hidden transition-all duration-500 border-r ${
       isLight 
         ? "bg-slate-50/70 backdrop-blur-xl border-slate-200 shadow-[20px_0_40px_-20px_rgba(30,90,168,0.05)]"
         : "bg-[#020617] border-white/5"
@@ -198,6 +209,22 @@ export default async function DashboardSidebar({ role }: DashboardSidebarProps) 
           <span className="text-base">🚪</span>
           <span>Exit to Site</span>
         </Link>
+
+        <form action={signOut} className={`mt-5 border-t pt-5 ${
+          isLight ? "border-slate-200" : "border-white/10"
+        }`}>
+          <button
+            type="submit"
+            className={`flex w-full items-center justify-center gap-2 rounded-2xl border px-4 py-3 text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-500 shadow-lg shadow-black/5 ${
+              isLight
+                ? "border-slate-200 bg-white text-slate-500 hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900"
+                : "border-white/10 bg-white/5 text-slate-300 hover:bg-white hover:text-[#020617]"
+            }`}
+          >
+            <LogOut className="h-4 w-4" aria-hidden="true" />
+            <span>Log Out</span>
+          </button>
+        </form>
       </div>
 
       {/* Subtle Background Atmospherics 🏔️✨ */}
@@ -208,5 +235,6 @@ export default async function DashboardSidebar({ role }: DashboardSidebarProps) 
         isLight ? "bg-[#1E5AA8]/20" : "bg-[#1E5AA8]/10"
       }`} />
     </aside>
+    </>
   );
 }

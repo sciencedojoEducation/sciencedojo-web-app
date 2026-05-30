@@ -4,6 +4,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import Analytics from "@/components/Analytics";
 import SeoConversionCtas from "@/components/SeoConversionCtas";
+import PublicChromeGate from "@/components/PublicChromeGate";
 import { siteUrl } from "@/lib/seo";
 import "./globals.css";
 
@@ -59,14 +60,23 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${inter.variable} h-full antialiased`}
+      className={`${inter.variable} h-full scroll-smooth antialiased`}
+      suppressHydrationWarning
     >
-      <body className="min-h-full flex flex-col font-sans">
+      <body className="min-h-full flex flex-col font-sans" suppressHydrationWarning>
         <Analytics />
-        {!isMaintenanceMode && <Navbar />}
-        <main className="flex-1">{children}</main>
-        {!isMaintenanceMode && <Footer />}
-        {!isMaintenanceMode && <SeoConversionCtas />}
+        {!isMaintenanceMode && (
+          <PublicChromeGate>
+            <Navbar />
+          </PublicChromeGate>
+        )}
+        <main className="flex-1 min-h-0">{children}</main>
+        {!isMaintenanceMode && (
+          <PublicChromeGate>
+            <Footer />
+            <SeoConversionCtas />
+          </PublicChromeGate>
+        )}
       </body>
     </html>
   );

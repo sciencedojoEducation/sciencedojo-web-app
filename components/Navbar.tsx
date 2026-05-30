@@ -3,6 +3,7 @@ import { createClient } from "@/utils/supabase/server";
 import { signOut } from "@/app/login/actions";
 import Logo from "@/components/Logo";
 import BookAssessmentLink from "@/components/analytics/BookAssessmentLink";
+import MobileNavbarMenu from "@/components/MobileNavbarMenu";
 
 export default async function Navbar() {
   const supabase = await createClient();
@@ -21,32 +22,33 @@ export default async function Navbar() {
   }
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-secondary/10 bg-surface/80 backdrop-blur-md transition-all">
+    <header className="sticky top-0 z-50 w-full border-b border-primary/[0.08] bg-white/90 shadow-[0_1px_14px_rgba(0,26,68,0.05)] backdrop-blur-lg transition-all">
       <div className={`${user ? 'w-full px-8' : 'container mx-auto px-4 md:px-8'} h-20 flex items-center justify-between transition-all duration-300`}>
-        <div className="flex items-center">
+        <div className="flex items-center gap-3">
+          <MobileNavbarMenu isLoggedIn={!!user} dashboardHref={user ? `/dashboard/${role}` : undefined} />
           <Link href="/" className="hover:opacity-80 transition-opacity">
             <Logo className="text-xl md:text-2xl" dotClassName="w-1.5 h-1.5 md:w-2 md:h-2" />
           </Link>
         </div>
 
         {!user && (
-          <nav className="hidden md:flex items-center gap-6">
-            <Link href="/#directory" className="text-sm font-medium text-secondary/80 hover:text-primary transition-colors">
+          <nav className="hidden md:flex items-center gap-7">
+            <Link href="/#directory" className="text-sm font-medium text-secondary/70 hover:text-primary transition-colors">
               Find Tutors
             </Link>
-            <Link href="/learning-hub" className="text-sm font-medium text-secondary/80 hover:text-primary transition-colors">
+            <Link href="/learning-hub" className="text-sm font-medium text-secondary/70 hover:text-primary transition-colors">
               Learning Hub
             </Link>
-            <Link href="/ai-practice-studio" className="text-sm font-medium text-secondary/80 hover:text-primary transition-colors">
-              AI Practice Studio
+            <Link href="/ai-practice-studio" className="text-sm font-medium text-secondary/70 hover:text-primary transition-colors">
+              Practice Dojo
             </Link>
-            <BookAssessmentLink source="navbar" className="text-sm font-medium text-secondary/80 hover:text-primary transition-colors">
+            <BookAssessmentLink source="navbar" className="text-sm font-medium text-secondary/70 hover:text-primary transition-colors">
               Request Free Assessment
             </BookAssessmentLink>
           </nav>
         )}
 
-        <div className="flex items-center gap-4">
+        <div className="hidden items-center gap-4 md:flex">
           {user ? (
             <>
               <Link href={`/dashboard/${role}`} className="relative text-sm font-medium text-secondary hover:text-primary transition-colors flex items-center gap-2">

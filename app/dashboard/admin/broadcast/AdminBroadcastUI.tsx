@@ -26,40 +26,43 @@ export default function AdminBroadcastUI({ announcements }: AdminBroadcastUIProp
   }
 
   return (
-    <div className="p-8 max-w-5xl mx-auto space-y-12">
-      <div className="flex justify-between items-center">
+    <div className="mx-auto max-w-5xl space-y-5 px-3 py-5 sm:px-4 md:p-8 md:space-y-10">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="text-3xl font-black text-secondary tracking-tight mb-1">
-            Broadcast Center 🏴📢
+          <p className="text-[10px] font-black uppercase tracking-[0.16em] text-primary/70 md:text-xs">ScienceDojo admin</p>
+          <h1 className="mt-1 text-2xl font-black tracking-tight text-secondary md:text-3xl">
+            Broadcast Center
           </h1>
-          <p className="text-secondary/50 font-medium">Manage platform-wide updates and announcements.</p>
+          <p className="mt-2 max-w-xl text-sm font-medium leading-6 text-secondary/55">
+            Manage communication across the ScienceDojo platform quickly and clearly.
+          </p>
         </div>
         <button 
           onClick={() => setShowForm(!showForm)}
-          className="px-6 py-3 bg-primary text-white font-black rounded-2xl hover:bg-primary-hover transition-all shadow-xl shadow-primary/20"
+          className="inline-flex min-h-11 w-fit items-center justify-center rounded-2xl bg-primary px-4 py-3 text-[10px] font-black uppercase tracking-[0.12em] text-white shadow-sm shadow-primary/15 transition-colors hover:bg-primary-hover md:px-6 md:text-sm"
         >
           {showForm ? "Cancel" : "New Announcement"}
         </button>
       </div>
 
       {showForm && (
-        <section className="bg-white rounded-[2rem] p-8 border-2 border-primary/20 shadow-2xl animate-in fade-in slide-in-from-top-4 duration-300">
-          <form action={handleCreate} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <section className="animate-in fade-in slide-in-from-top-4 rounded-[1.5rem] border border-primary/15 bg-white p-4 shadow-lg shadow-primary/5 duration-300 md:rounded-[2rem] md:p-8">
+          <form action={handleCreate} className="space-y-4 md:space-y-6">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6">
               <div className="space-y-2">
-                <label className="text-xs font-black uppercase tracking-widest text-secondary/40 pl-2">Headline</label>
+                <label className="pl-1 text-[10px] font-black uppercase tracking-[0.14em] text-secondary/40 md:pl-2 md:text-xs">Headline</label>
                 <input 
                   name="title" 
                   required 
                   placeholder="e.g., Upcoming Maintenance" 
-                  className="w-full p-4 rounded-2xl bg-slate-50 border border-secondary/10 focus:outline-none focus:border-primary font-bold"
+                  className="w-full rounded-2xl border border-secondary/10 bg-slate-50 p-3 font-bold outline-none focus:border-primary md:p-4"
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-xs font-black uppercase tracking-widest text-secondary/40 pl-2">Target Audience</label>
+                <label className="pl-1 text-[10px] font-black uppercase tracking-[0.14em] text-secondary/40 md:pl-2 md:text-xs">Target Audience</label>
                 <select 
                   name="target_role" 
-                  className="w-full p-4 rounded-2xl bg-slate-50 border border-secondary/10 focus:outline-none focus:border-primary font-bold appearance-none"
+                  className="w-full appearance-none rounded-2xl border border-secondary/10 bg-slate-50 p-3 font-bold outline-none focus:border-primary md:p-4"
                 >
                   <option value="all">Everyone</option>
                   <option value="tutor">Tutors Only</option>
@@ -70,28 +73,28 @@ export default function AdminBroadcastUI({ announcements }: AdminBroadcastUIProp
             </div>
 
             <div className="space-y-2">
-              <label className="text-xs font-black uppercase tracking-widest text-secondary/40 pl-2">Announcement Content</label>
+              <label className="pl-1 text-[10px] font-black uppercase tracking-[0.14em] text-secondary/40 md:pl-2 md:text-xs">Announcement Content</label>
               <textarea 
                 name="content" 
                 required 
                 rows={4}
                 placeholder="Write your platform update here..."
-                className="w-full p-4 rounded-2xl bg-slate-50 border border-secondary/10 focus:outline-none focus:border-primary font-medium leading-relaxed"
+                className="w-full rounded-2xl border border-secondary/10 bg-slate-50 p-3 font-medium leading-relaxed outline-none focus:border-primary md:p-4"
               ></textarea>
             </div>
 
-            <div className="flex items-center gap-4 pl-2">
+            <div className="flex items-center gap-4 pl-1 md:pl-2">
               <label className="flex items-center gap-3 cursor-pointer group">
                 <input name="is_pinned" type="checkbox" className="w-5 h-5 rounded-lg border-2 border-secondary/20 text-primary focus:ring-primary focus:ring-offset-0" />
                 <span className="text-sm font-bold text-secondary group-hover:text-primary transition-colors">Pin to Dashboard Top</span>
               </label>
             </div>
 
-            <div className="pt-4">
+            <div className="pt-2 md:pt-4">
               <button 
                 type="submit" 
                 disabled={isSubmitting}
-                className="w-full py-4 bg-primary text-white font-black rounded-2xl hover:bg-primary-hover transition-all shadow-xl disabled:opacity-50"
+                className="min-h-11 w-full rounded-2xl bg-primary px-4 py-3 text-[10px] font-black uppercase tracking-[0.12em] text-white shadow-sm transition-colors hover:bg-primary-hover disabled:opacity-50 md:py-4 md:text-sm"
               >
                 {isSubmitting ? "Launching..." : "Broadcast to Platform"}
               </button>
@@ -100,21 +103,21 @@ export default function AdminBroadcastUI({ announcements }: AdminBroadcastUIProp
         </section>
       )}
 
-      <div className="space-y-6">
-        <h2 className="text-xl font-black text-secondary flex items-center gap-3">
-          <span className="h-6 w-1 bg-primary rounded-full"></span>
+      <div className="space-y-4 md:space-y-6">
+        <h2 className="flex items-center gap-3 text-lg font-black text-secondary md:text-xl">
+          <span className="h-5 w-1 rounded-full bg-primary md:h-6"></span>
           Previous Broadcasts
         </h2>
         
-        <div className="grid gap-6">
+        <div className="grid gap-3 md:gap-6">
           {announcements.map((ann) => (
-            <div key={ann.id} className={`bg-white rounded-[2rem] p-6 border transition-all ${ann.is_active ? 'border-secondary/5 shadow-md' : 'opacity-50 grayscale border-dashed border-secondary/20'}`}>
-              <div className="flex justify-between items-start mb-4">
-                <div className="flex items-center gap-3">
-                  {ann.is_pinned && <span className="text-lg">📌</span>}
+            <div key={ann.id} className={`rounded-[1.5rem] border bg-white p-4 transition-all md:rounded-[2rem] md:p-6 ${ann.is_active ? 'border-secondary/5 shadow-sm md:shadow-md' : 'opacity-60 grayscale border-dashed border-secondary/20'}`}>
+              <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between md:mb-4">
+                <div className="flex min-w-0 items-start gap-3">
+                  {ann.is_pinned && <span className="mt-0.5 text-sm md:text-lg">📌</span>}
                   <div>
-                    <h3 className="text-lg font-black text-secondary">{ann.title}</h3>
-                    <div className="flex items-center gap-2 mt-1">
+                    <h3 className="text-base font-black leading-6 text-secondary md:text-lg">{ann.title}</h3>
+                    <div className="mt-2 flex flex-wrap items-center gap-2 md:mt-1">
                       <span className={`px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-widest ${
                         ann.target_role === 'all' ? 'bg-slate-100 text-slate-500' :
                         ann.target_role === 'tutor' ? 'bg-primary/10 text-primary' :
@@ -122,11 +125,11 @@ export default function AdminBroadcastUI({ announcements }: AdminBroadcastUIProp
                       }`}>
                         Target: {ann.target_role}
                       </span>
-                      <span className="text-[10px] text-secondary/30 font-bold">• {formatDistanceToNow(new Date(ann.created_at), { addSuffix: true })}</span>
+                      <span className="text-[10px] font-bold text-secondary/30">{formatDistanceToNow(new Date(ann.created_at), { addSuffix: true })}</span>
                     </div>
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex shrink-0 items-center gap-2">
                   <button 
                     onClick={async () => {
                       try {
@@ -135,7 +138,7 @@ export default function AdminBroadcastUI({ announcements }: AdminBroadcastUIProp
                         alert("Failed to toggle: " + (err as Error).message);
                       }
                     }}
-                    className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
+                    className={`min-h-10 rounded-xl px-3 py-2 text-[10px] font-black uppercase tracking-widest transition-all md:px-4 ${
                       ann.is_active ? 'bg-amber-50 text-amber-600 hover:bg-amber-100' : 'bg-green-50 text-green-600 hover:bg-green-100'
                     }`}
                   >
@@ -151,20 +154,21 @@ export default function AdminBroadcastUI({ announcements }: AdminBroadcastUIProp
                         }
                       } 
                     }}
-                    className="p-2 text-secondary/20 hover:text-red-500 transition-colors"
+                    className="min-h-10 rounded-xl p-2 text-secondary/25 transition-colors hover:bg-red-50 hover:text-red-500"
+                    aria-label={`Delete announcement ${ann.title}`}
                   >
                     <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                   </button>
                 </div>
               </div>
-              <p className="text-sm text-secondary/70 font-medium leading-relaxed whitespace-pre-wrap">{ann.content}</p>
+              <p className="whitespace-pre-wrap text-sm font-medium leading-6 text-secondary/68 md:leading-relaxed">{ann.content}</p>
             </div>
           ))}
 
           {announcements.length === 0 && (
-            <div className="p-20 text-center bg-slate-50 rounded-[2.5rem] border-2 border-dashed border-secondary/10 flex flex-col items-center gap-4">
-              <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center text-3xl opacity-20 shadow-sm text-secondary">🗞️</div>
-              <p className="text-secondary/30 font-black uppercase tracking-widest text-sm">No announcements broadcasted yet.</p>
+            <div className="flex flex-col items-center gap-3 rounded-[1.5rem] border border-dashed border-secondary/10 bg-slate-50 p-8 text-center md:rounded-[2.5rem] md:p-20">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-xl text-secondary/20 shadow-sm md:h-16 md:w-16 md:text-3xl">🗞️</div>
+              <p className="text-sm font-black uppercase tracking-widest text-secondary/30">No announcements broadcast yet.</p>
             </div>
           )}
         </div>

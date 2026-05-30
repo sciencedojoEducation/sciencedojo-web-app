@@ -148,15 +148,15 @@ export default function TutorAvailabilityCalendar({ slots }: Props) {
   };
 
   return (
-    <div className="bg-white rounded-[2rem] border border-secondary/10 shadow-sm overflow-hidden flex flex-col md:flex-row">
+    <div className="flex min-w-0 flex-col overflow-hidden rounded-[1.5rem] border border-secondary/10 bg-white shadow-sm lg:flex-row lg:rounded-[2rem]">
       {/* LEFT: Calendar Grid */}
-      <div className="w-full md:w-1/2 p-6 md:p-8 border-b md:border-b-0 md:border-r border-secondary/5">
-        <div className="flex items-center justify-between mb-8">
+      <div className="w-full min-w-0 border-b border-secondary/5 p-4 sm:p-6 lg:w-1/2 lg:border-b-0 lg:border-r lg:p-8">
+        <div className="mb-5 flex items-center justify-between gap-3 md:mb-8">
           <div>
             <h2 className="text-xl font-black text-secondary">{MONTH_NAMES[month]}</h2>
             <p className="text-sm font-bold text-secondary/40">{year}</p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex shrink-0 gap-2">
             <button onClick={handlePrevMonth} className="w-8 h-8 rounded-full bg-slate-50 hover:bg-slate-100 flex items-center justify-center text-secondary">
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" /></svg>
             </button>
@@ -223,33 +223,36 @@ export default function TutorAvailabilityCalendar({ slots }: Props) {
       </div>
 
       {/* RIGHT: Slot Editor */}
-      <div className="w-full md:w-1/2 p-6 md:p-8 bg-slate-50/50 flex flex-col items-center justify-center text-center">
+      <div className="flex w-full min-w-0 flex-col bg-slate-50/50 p-4 text-left sm:p-6 lg:w-1/2 lg:p-8">
         {!selectedDate ? (
-          <div className="text-secondary/40">
-            <svg className="w-16 h-16 mx-auto mb-4 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div className="flex min-h-[220px] flex-col items-center justify-center text-center text-secondary/40">
+            <svg className="mx-auto mb-4 h-12 w-12 opacity-50 md:h-16 md:w-16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
-            <p className="font-bold text-lg mb-1 text-secondary/60">Select a Date</p>
-            <p className="text-sm">Click any future date on the calendar to manage your availability slots.</p>
+            <p className="mb-1 text-base font-black text-secondary/60 md:text-lg">Select a date</p>
+            <p className="max-w-xs text-sm font-medium leading-relaxed">Choose a future date to manage published lesson slots.</p>
           </div>
         ) : (
-          <div className="w-full h-full flex flex-col animate-in fade-in slide-in-from-right-4 duration-300">
-            <div className="text-left border-b border-secondary/10 pb-6 mb-6">
-              <span className="text-xs font-black uppercase tracking-widest text-primary mb-1 block">Managing Availability</span>
-              <h3 className="text-2xl font-black text-secondary">
+          <div className="flex h-full w-full min-w-0 flex-col animate-in fade-in slide-in-from-right-4 duration-300">
+            <div className="mb-4 border-b border-secondary/10 pb-4 md:mb-6 md:pb-6">
+              <span className="mb-1 block text-[10px] font-black uppercase tracking-[0.16em] text-primary md:text-xs md:tracking-widest">Managing Availability</span>
+              <h3 className="break-words text-xl font-black text-secondary md:text-2xl">
                 {selectedDate.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}
               </h3>
             </div>
 
             {/* List existing slots */}
-            <div className="text-left mb-8 flex-1">
-              <h4 className="text-[10px] font-black uppercase tracking-widest text-secondary/40 mb-3">Published Slots</h4>
+            <div className="mb-5 min-w-0 flex-1 md:mb-8">
+              <h4 className="mb-3 text-[10px] font-black uppercase tracking-widest text-secondary/40">Published slots</h4>
               {slots.filter(s => {
                   const [y,m,d] = s.date.split('-');
                   const slotDateStr = new Date(Number(y), Number(m)-1, Number(d)).toDateString();
                   return slotDateStr === selectedDate.toDateString();
                 }).length === 0 ? (
-                <p className="text-sm font-medium text-secondary/50 italic">No slots published for this day.</p>
+                <div className="rounded-2xl border border-dashed border-secondary/10 bg-white/70 p-4">
+                  <p className="text-sm font-bold text-secondary/60">No slots published yet.</p>
+                  <p className="mt-1 text-xs font-medium leading-relaxed text-secondary/40">Add a quick block or custom range so families can request this time.</p>
+                </div>
               ) : (
                 <div className="space-y-2">
                   {slots
@@ -260,17 +263,17 @@ export default function TutorAvailabilityCalendar({ slots }: Props) {
                     })
                     .sort((a,b) => a.start_time.localeCompare(b.start_time))
                     .map(slot => (
-                    <div key={slot.id} className="flex items-center justify-between p-3 rounded-xl bg-white border border-secondary/10 shadow-sm group">
-                      <div className="flex items-center gap-3">
-                        <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
-                        <span className="font-bold text-secondary text-sm">
+                    <div key={slot.id} className="group flex min-w-0 items-center justify-between gap-3 rounded-xl border border-secondary/10 bg-white p-3 shadow-sm">
+                      <div className="flex min-w-0 items-center gap-3">
+                        <span className="h-2 w-2 shrink-0 animate-pulse rounded-full bg-green-500"></span>
+                        <span className="min-w-0 break-words text-sm font-bold text-secondary">
                           {formatTime(slot.start_time)} — {formatTime(slot.end_time)}
                         </span>
                       </div>
                       <button 
                         onClick={() => handleDeleteSlot(slot.id)}
                         disabled={isPending}
-                        className="w-8 h-8 rounded-lg flex items-center justify-center text-red-400 hover:bg-red-50 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100 disabled:opacity-50"
+                        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-red-400 opacity-100 transition-colors hover:bg-red-50 hover:text-red-500 disabled:opacity-50 sm:opacity-0 sm:group-hover:opacity-100"
                         title="Remove slot"
                       >
                         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
@@ -282,9 +285,9 @@ export default function TutorAvailabilityCalendar({ slots }: Props) {
             </div>
 
             {/* Add new slots */}
-            <div className="text-left bg-white p-6 rounded-2xl border border-secondary/10 shadow-sm mt-auto">
-              <h4 className="text-[10px] font-black uppercase tracking-widest text-secondary/40 mb-4">Quick Add 1-Hour Blocks</h4>
-              <div className="flex gap-2 overflow-x-auto pb-4 mb-4 snap-x no-scrollbar">
+            <div className="mt-auto min-w-0 rounded-2xl border border-secondary/10 bg-white p-4 shadow-sm md:p-6">
+              <h4 className="mb-3 text-[10px] font-black uppercase tracking-widest text-secondary/40 md:mb-4">Quick add</h4>
+              <div className="no-scrollbar mb-4 flex max-w-full snap-x gap-2 overflow-x-auto pb-3">
                 {QUICK_BLOCKS.map(block => (
                   <button
                     key={block.start}
@@ -297,30 +300,30 @@ export default function TutorAvailabilityCalendar({ slots }: Props) {
                 ))}
               </div>
 
-              <div className="flex items-center gap-4 py-2">
+              <div className="flex min-w-0 items-center gap-3 py-2">
                 <div className="h-px bg-secondary/10 flex-1"></div>
-                <span className="text-[10px] font-black uppercase text-secondary/30">OR CUSTOM RANGE</span>
+                <span className="shrink-0 text-[10px] font-black uppercase text-secondary/30">Custom range</span>
                 <div className="h-px bg-secondary/10 flex-1"></div>
               </div>
 
-              <form onSubmit={handleAddSlot} className="mt-4 flex flex-col gap-4">
-                <div className="flex items-center gap-3">
+              <form onSubmit={handleAddSlot} className="mt-4 flex min-w-0 flex-col gap-4">
+                <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 sm:gap-3">
                   <input 
                     type="time" 
                     value={startTime}
                     onChange={e => setStartTime(e.target.value)}
                     required
                     disabled={isPending}
-                    className="flex-1 p-3 bg-slate-50 border border-secondary/10 rounded-xl text-sm font-bold text-secondary focus:border-primary outline-none" 
+                    className="min-w-0 rounded-xl border border-secondary/10 bg-slate-50 p-3 text-sm font-bold text-secondary outline-none focus:border-primary" 
                   />
-                  <span className="text-secondary/40 font-black">—</span>
+                  <span className="font-black text-secondary/40">—</span>
                   <input 
                     type="time" 
                     value={endTime}
                     onChange={e => setEndTime(e.target.value)}
                     required
                     disabled={isPending}
-                    className="flex-1 p-3 bg-slate-50 border border-secondary/10 rounded-xl text-sm font-bold text-secondary focus:border-primary outline-none" 
+                    className="min-w-0 rounded-xl border border-secondary/10 bg-slate-50 p-3 text-sm font-bold text-secondary outline-none focus:border-primary" 
                   />
                 </div>
                 <button 

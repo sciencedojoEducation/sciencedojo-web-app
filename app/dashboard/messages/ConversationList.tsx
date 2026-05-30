@@ -10,6 +10,17 @@ interface ConversationListProps {
   activeId: string | null;
 }
 
+function getMessagePreview(message?: string) {
+  try {
+    if (message?.startsWith('{')) {
+      const parsed = JSON.parse(message);
+      if (parsed.type) return `${parsed.icon || '🔔'} System Alert`;
+    }
+  } catch {}
+
+  return message || "No messages yet";
+}
+
 export default function ConversationList({ conversations, activeId }: ConversationListProps) {
   const router = useRouter();
 
@@ -18,22 +29,33 @@ export default function ConversationList({ conversations, activeId }: Conversati
   };
 
   return (
-    <div className="flex flex-col h-full bg-white border-r border-secondary/10 overflow-y-auto">
-      <div className="p-6 border-b border-secondary/10">
+    <div className="flex h-full min-w-0 flex-col overflow-y-auto bg-white lg:border-r lg:border-secondary/10">
+      <div className="border-b border-secondary/10 p-5 sm:p-6">
         <h2 className="text-xl font-black text-secondary">Messages</h2>
+        <p className="mt-2 text-sm font-medium leading-6 text-secondary/45">
+          Conversations with tutors, students, and families stay connected here.
+        </p>
       </div>
       
       <div className="flex-1">
         {conversations.length === 0 ? (
-          <div className="p-8 text-center">
-            <p className="text-sm text-secondary/40 font-medium">No conversations yet.</p>
+          <div className="flex h-full min-h-[22rem] flex-col items-center justify-center p-8 text-center">
+            <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-primary/5">
+              <svg className="h-8 w-8 text-primary/40" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 4v-4z" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-black text-secondary">No messages yet</h3>
+            <p className="mt-2 max-w-xs text-sm font-medium leading-6 text-secondary/45">
+              Your conversations with tutors, students, or parents will appear here once support begins.
+            </p>
           </div>
         ) : (
           conversations.map((conv) => (
             <button
               key={conv.id}
               onClick={() => handleSelect(conv.id)}
-              className={`w-full p-4 flex items-center gap-4 transition-all border-b border-secondary/5 hover:bg-secondary/5 ${
+              className={`flex w-full min-w-0 items-start gap-4 border-b border-secondary/5 p-4 text-left transition-all hover:bg-secondary/5 sm:p-5 ${
                 activeId === conv.id ? "bg-primary/5 border-l-4 border-l-primary" : "border-l-4 border-l-transparent"
               }`}
             >
@@ -59,25 +81,17 @@ export default function ConversationList({ conversations, activeId }: Conversati
                 ) : null}
               </div>
               
-              <div className="flex-1 text-left min-w-0">
-                <div className="flex justify-between items-baseline mb-1">
-                  <h3 className="font-bold text-secondary text-sm truncate">
+              <div className="min-w-0 flex-1">
+                <div className="mb-1 flex min-w-0 items-start justify-between gap-3">
+                  <h3 className="line-clamp-2 min-w-0 text-sm font-bold leading-5 text-secondary">
                     {conv.booking ? `${conv.booking.subject} w/ ${conv.other_participant?.full_name}` : conv.other_participant?.full_name}
                   </h3>
-                  <span className="text-[10px] text-secondary/40 font-medium whitespace-nowrap ml-2">
+                  <span className="max-w-[5.5rem] shrink-0 text-right text-[10px] font-medium leading-4 text-secondary/40">
                     {formatDistanceToNow(new Date(conv.last_message_at), { addSuffix: true })}
                   </span>
                 </div>
-                <p className={`text-xs truncate ${conv.unread_count && conv.unread_count > 0 ? "font-bold text-secondary" : "text-secondary/60"}`}>
-                  {(() => {
-                    try {
-                      if (conv.last_message?.startsWith('{')) {
-                        const parsed = JSON.parse(conv.last_message);
-                        if (parsed.type) return `${parsed.icon || '🔔'} System Alert`;
-                      }
-                    } catch (e) {}
-                    return conv.last_message;
-                  })()}
+                <p className={`line-clamp-2 text-xs leading-5 ${conv.unread_count && conv.unread_count > 0 ? "font-bold text-secondary" : "text-secondary/60"}`}>
+                  {getMessagePreview(conv.last_message)}
                 </p>
               </div>
             </button>

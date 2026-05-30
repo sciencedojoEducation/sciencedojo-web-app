@@ -21,9 +21,9 @@ export default function FeeForm({ currentFee }: { currentFee: number }) {
   };
 
   return (
-    <form className="max-w-sm" onSubmit={handleSubmit}>
-       <label className="block text-sm font-bold text-secondary mb-2">Platform Cut Percentage (%)</label>
-       <div className="flex items-center gap-4">
+    <form className="max-w-xl" onSubmit={handleSubmit}>
+       <label className="mb-2 block text-sm font-bold text-secondary">Platform cut percentage</label>
+       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
           <input 
             type="number" 
             name="feePercent"
@@ -31,16 +31,18 @@ export default function FeeForm({ currentFee }: { currentFee: number }) {
             min="0" 
             max="100" 
             required
-            className="w-24 p-3 rounded-xl border border-secondary/20 bg-surface focus:outline-none focus:border-primary text-lg font-bold text-center" 
+            className="h-12 w-28 rounded-xl border border-secondary/20 bg-surface p-3 text-center text-lg font-black text-secondary focus:border-primary focus:outline-none focus:ring-4 focus:ring-primary/10" 
           />
-          <span className="text-secondary/60 font-medium">Currently taking {currentFee}%</span>
+          <div className="rounded-2xl bg-slate-50 px-3 py-2 text-xs font-bold leading-relaxed text-secondary/60 sm:flex-1">
+            Currently taking <span className="text-secondary">{currentFee}%</span> from each completed booking before tutor payouts are calculated.
+          </div>
        </div>
        <button 
          type="submit" 
          disabled={isPending}
-         className="mt-6 px-6 py-2 bg-secondary text-white font-bold rounded-xl hover:bg-secondary/90 transition-colors shadow-sm text-sm disabled:opacity-50"
+         className="mt-4 inline-flex min-h-11 items-center justify-center rounded-xl bg-secondary px-5 py-2.5 text-sm font-black text-white shadow-sm transition-colors hover:bg-secondary/90 disabled:opacity-50 md:mt-6"
        >
-          {isPending ? "Updating Ledgers..." : "Update Ledger Logic"}
+          {isPending ? "Updating ledgers..." : "Update commission"}
        </button>
     </form>
   );

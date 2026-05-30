@@ -75,7 +75,7 @@ export async function generateClassroomMission(classId: string, tier: 'daily' | 
   });
 
   if (!combinedSummary.trim()) {
-    return { error: "Your Sensei hasn't written any summaries for the specified timeframe." };
+    return { error: "Your tutor has not added lesson summaries for this timeframe yet." };
   }
 
   // 4. Setup Gemini
@@ -149,7 +149,7 @@ export async function generateClassroomMission(classId: string, tier: 'daily' | 
     required: ["topic", "stage1", "stage2", "stage3", "stage4"]
   };
 
-  const difficultyMod = tier === 'annual' ? "Level: VERY HARD. Deep synthesis required." : "Level: Moderate.";
+  const difficultyMod = tier === 'annual' ? "Level: exam preparation. Include deeper synthesis where appropriate." : "Level: calm structured reinforcement.";
   const drillDirective = tier === 'improvement_drill' ? `FOCUS HEAVILY ON THIS WEAK TOPIC: ${drillTopic}` : "";
 
   const model = genAI.getGenerativeModel({
@@ -159,9 +159,9 @@ export async function generateClassroomMission(classId: string, tier: 'daily' | 
       responseMimeType: "application/json",
       responseSchema: missionSchema,
     },
-    systemInstruction: `You are an Educational Mission Architect. You are drafting a ${tier} exam. ${difficultyMod} ${drillDirective}
+    systemInstruction: `You are an educational practice designer. You are drafting a ${tier} guided learning Mission. ${difficultyMod} ${drillDirective}
     
-Transform the provided lesson summaries into a progressive 4-stage mission. Ensure the exam covers the breadth of the provided notes.`
+Transform the provided lesson summaries into a progressive 4-stage learning journey. Keep the tone structured, calm, mentor-guided, and confidence-building.`
   });
 
   try {
@@ -188,7 +188,7 @@ Transform the provided lesson summaries into a progressive 4-stage mission. Ensu
     return { mission: newMission };
   } catch (err: any) {
     console.error("Gemini Error:", err);
-    return { error: "Failed to generate mission from AI." };
+    return { error: "Failed to prepare this guided Mission." };
   }
 }
 
@@ -215,7 +215,7 @@ export async function evaluateMission(missionId: string, s1Answers: any, s2Answe
       });
   }
 
-  // Ask AI to evaluate 2/3/4
+  // Evaluate stages 2/3/4
   if (!process.env.GEMINI_API_KEY) return { error: "Gemini API missing." };
   const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
   
@@ -238,11 +238,11 @@ export async function evaluateMission(missionId: string, s1Answers: any, s2Answe
       responseMimeType: "application/json",
       responseSchema: evalSchema,
     },
-    systemInstruction: "You are an austere grader. Given the mission exam questions, read the student's text answers. Give a fair numerical score for Logic (Stage 2), Application (Stage 3), and Accuracy (Stage 4). Identify weak topics."
+    systemInstruction: "You are an educational reviewer. Given the guided Mission questions, read the student's text answers. Give a fair numerical score for Reasoning (Stage 2), Application (Stage 3), and Accuracy (Stage 4). Identify weak topics and phrase feedback in a calm, tutor-supportive way."
   });
 
   try {
-      const prompt = `EXAM BLUEPRINT: ${JSON.stringify({ s2: blueprint.stage2, s3: blueprint.stage3, s4: blueprint.stage4 })}
+      const prompt = `MISSION BLUEPRINT: ${JSON.stringify({ s2: blueprint.stage2, s3: blueprint.stage3, s4: blueprint.stage4 })}
       
 STUDENT ANSWERS:
 Stage 2: ${s2Answer}
@@ -252,12 +252,12 @@ Stage 4 Corrections: ${JSON.stringify(s4Answers)}`;
       const result = await model.generateContent(prompt);
       const evalData = JSON.parse(result.response.text());
 
-      // Let's create an overall out-of-100 score relative to Stage 1
+      // Create an overall progress score out of 100.
       const totalPossible = (blueprint.stage1.questions.length * 10) + 30; // 10 pts per s1 question + 30 for text stages
       const achieved = (s1Score * 10) + evalData.logicScoreOutOf10 + evalData.applicationScoreOutOf10 + evalData.correctionScoreOutOf10;
       const percentage = Math.round((achieved / totalPossible) * 100);
 
-      // Save to database as PENDING TUTOR APPROVAL!
+      // Save to database for tutor review.
       const studentAnswersJson = { s1: s1Answers, s2: s2Answer, s3: s3Answer, s4: s4Answers };
       
       const { error: updateErr } = await supabase.from('student_missions').update({
@@ -268,12 +268,12 @@ Stage 4 Corrections: ${JSON.stringify(s4Answers)}`;
           completed_at: new Date().toISOString()
       }).eq('id', missionId);
 
-      if (updateErr) return { error: "Failed to log mission grade." };
+      if (updateErr) return { error: "Failed to save Mission progress." };
 
       return { success: true, score: percentage };
 
   } catch (error) {
       console.error(error);
-      return { error: "AI failed to grade exam." };
+      return { error: "The Mission review could not be completed." };
   }
 }
