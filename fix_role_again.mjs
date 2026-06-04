@@ -1,8 +1,44 @@
 import { createClient } from '@supabase/supabase-js';
+import fs from 'node:fs';
+
+function loadLocalEnv() {
+  if (!fs.existsSync(".env.local")) return;
+
+  const env = fs.readFileSync(".env.local", "utf8");
+  env.split("\n").forEach((line) => {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith("#")) return;
+
+    const firstEqual = trimmed.indexOf("=");
+    if (firstEqual === -1) return;
+
+    const key = trimmed.slice(0, firstEqual).trim();
+    let value = trimmed.slice(firstEqual + 1).trim();
+
+    if (
+      (value.startsWith('"') && value.endsWith('"')) ||
+      (value.startsWith("'") && value.endsWith("'"))
+    ) {
+      value = value.slice(1, -1);
+    }
+
+    process.env[key] ||= value;
+  });
+}
+
+function requireEnv(name) {
+  const value = process.env[name];
+  if (!value) {
+    throw new Error(`Missing required environment variable: ${name}`);
+  }
+  return value;
+}
+
+loadLocalEnv();
 
 const supabase = createClient(
-  "https://jckwqwqpbwtgnylagyum.supabase.co",
-  "sb_secret_NmmTrm-2dSDxoPUyIPwW4A_zsw8g724"
+  requireEnv("NEXT_PUBLIC_SUPABASE_URL"),
+  requireEnv("SUPABASE_SERVICE_ROLE_KEY")
 );
 
 async function fix() {

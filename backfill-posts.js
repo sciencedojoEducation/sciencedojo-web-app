@@ -1,11 +1,49 @@
 const https = require("https");
+const fs = require("fs");
+
+function loadLocalEnv() {
+  if (!fs.existsSync(".env.local")) return;
+
+  const env = fs.readFileSync(".env.local", "utf8");
+  env.split("\n").forEach((line) => {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith("#")) return;
+
+    const firstEqual = trimmed.indexOf("=");
+    if (firstEqual === -1) return;
+
+    const key = trimmed.slice(0, firstEqual).trim();
+    let value = trimmed.slice(firstEqual + 1).trim();
+
+    if (
+      (value.startsWith('"') && value.endsWith('"')) ||
+      (value.startsWith("'") && value.endsWith("'"))
+    ) {
+      value = value.slice(1, -1);
+    }
+
+    process.env[key] ||= value;
+  });
+}
+
+function requireEnv(name) {
+  const value = process.env[name];
+  if (!value) {
+    throw new Error(`Missing required environment variable: ${name}`);
+  }
+  return value;
+}
+
+loadLocalEnv();
+
+const supabaseUrl = requireEnv("NEXT_PUBLIC_SUPABASE_URL");
+const serviceRoleKey = requireEnv("SUPABASE_SERVICE_ROLE_KEY");
 
 const CONFIG = {
-  SUPABASE_URL: "https://jckwqwqpbwtgnylagyum.supabase.co",
-  SERVICE_ROLE_KEY: "sb_secret_NmmTrm-2dSDxoPUyIPwW4A_zsw8g724",
+  SUPABASE_URL: supabaseUrl,
   HEADERS: {
-    "apikey": "sb_secret_NmmTrm-2dSDxoPUyIPwW4A_zsw8g724",
-    "Authorization": "Bearer sb_secret_NmmTrm-2dSDxoPUyIPwW4A_zsw8g724",
+    "apikey": serviceRoleKey,
+    "Authorization": `Bearer ${serviceRoleKey}`,
     "Content-Type": "application/json",
     "Prefer": "resolution=merge-duplicates"
   }
