@@ -1,10 +1,13 @@
 import { getTutorById } from "@/lib/supabase-queries";
 import { createClient } from "@/utils/supabase/server";
+import { createAdminClient } from "@/utils/supabase/admin";
 import { notFound } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import YouTubeLite from "@/components/YouTubeLite";
 import MessageTutorButton from "@/components/MessageTutorButton";
+import AdminReviewCard, { type AdminTutorReview } from "@/components/AdminReviewCard";
+import { getRatingSummary, RatingTrustTooltip, StarRating, type ReviewStatus } from "@/components/ReviewTrustUI";
 
 export default async function TutorProfilePage({
   params,
@@ -26,16 +29,8 @@ async function TutorProfileServer({ id }: { id: string }) {
     notFound();
   }
 
-  const supabase = await createClient();
-
-  // Fetch verified reviews for this tutor
-  const { data: reviewsData } = await supabase
-    .from("reviews")
-    .select("id, rating, comment, created_at, profiles(full_name, avatar_url)")
-    .eq("tutor_id", id)
-    .order("created_at", { ascending: false });
-
   // Check if current viewer is a tutor — they cannot book sessions
+  const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   let viewerRole: string | null = null;
   if (user) {
@@ -47,6 +42,85 @@ async function TutorProfileServer({ id }: { id: string }) {
     viewerRole = profile?.role ?? null;
   }
   const isTutor = viewerRole === "tutor";
+  const isAdmin = viewerRole === "admin";
+
+  const reviewSelect = "id, tutor_id, rating, comment, status, admin_note, created_at, reviewed_at, profiles(full_name, avatar_url)";
+  const legacyReviewSelect = "id, tutor_id, rating, comment, created_at, profiles(full_name, avatar_url)";
+  const isMissingModerationColumn = (error: { code?: string; message?: string } | null | undefined) =>
+    error?.code === "42703" ||
+    error?.message?.includes("reviews.status") ||
+    error?.message?.includes("reviews.admin_note") ||
+    error?.message?.includes("reviews.reviewed_at");
+
+  let {
+    data: reviewsData,
+    error: publicReviewsError,
+  } = await supabase
+    .from("reviews")
+    .select(reviewSelect)
+    .eq("tutor_id", id)
+    .eq("status", "approved")
+    .order("created_at", { ascending: false });
+
+  if (isMissingModerationColumn(publicReviewsError)) {
+    const fallbackReviews = await supabase
+      .from("reviews")
+      .select(legacyReviewSelect)
+      .eq("tutor_id", id)
+      .order("created_at", { ascending: false });
+    reviewsData = (fallbackReviews.data || []).map((review: any) => ({
+      ...review,
+      status: "approved",
+      admin_note: null,
+      reviewed_at: null,
+    }));
+  }
+
+  let adminReviewsData = null;
+  if (isAdmin) {
+    const adminClient = createAdminClient();
+    let {
+      data,
+      error,
+    } = await adminClient
+      .from("reviews")
+      .select(reviewSelect)
+      .eq("tutor_id", id)
+      .order("created_at", { ascending: false });
+
+    if (isMissingModerationColumn(error)) {
+      const fallbackAdminReviews = await adminClient
+        .from("reviews")
+        .select(legacyReviewSelect)
+        .eq("tutor_id", id)
+        .order("created_at", { ascending: false });
+      data = (fallbackAdminReviews.data || []).map((review: any) => ({
+        ...review,
+        status: "approved",
+        admin_note: null,
+        reviewed_at: null,
+      }));
+    }
+
+    adminReviewsData = data;
+  }
+
+  const ratingSummary = getRatingSummary(Number(tutor.rating || 0), tutor.review_count || 0);
+  const adminReviews: AdminTutorReview[] = ((adminReviewsData as any[] | null) || []).map((review) => ({
+    id: review.id,
+    tutor_id: review.tutor_id,
+    tutorName: tutor.full_name,
+    studentName: review.profiles?.full_name || "ScienceDojo student",
+    rating: review.rating,
+    comment: review.comment,
+    status: (review.status || "approved") as ReviewStatus,
+    admin_note: review.admin_note || null,
+    created_at: review.created_at,
+    reviewed_at: review.reviewed_at || null,
+  }));
+  const approvedAdminReviews = adminReviews.filter((review) => review.status === "approved");
+  const pendingAdminReviews = adminReviews.filter((review) => review.status === "pending");
+  const hiddenAdminReviews = adminReviews.filter((review) => review.status === "rejected");
 
   return (
     <div className="bg-slate-50/50">
@@ -99,20 +173,11 @@ async function TutorProfileServer({ id }: { id: string }) {
                 </div>
 
                 <div className="flex flex-wrap justify-center md:justify-start gap-4 items-center">
-                  <div className="flex items-center gap-1.5">
-                    <div className="flex text-yellow-400">
-                      {[...Array(5)].map((_, i) => (
-                        <svg key={i} className={`h-5 w-5 ${i < Math.floor(tutor.rating) ? 'fill-current' : 'text-slate-300'}`} viewBox="0 0 20 20">
-                          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                        </svg>
-                      ))}
-                    </div>
-                    <span className="font-bold text-secondary">
-                      {tutor.review_count > 0 ? Number(tutor.rating).toFixed(1) : "New"}
-                    </span>
-                    <span className="text-secondary/40 font-medium">
-                      ({tutor.review_count || 0} review{tutor.review_count !== 1 ? 's' : ''})
-                    </span>
+                  <div className="flex flex-wrap items-center justify-center gap-2 md:justify-start">
+                    <StarRating rating={Number(tutor.rating || 0)} size="md" muted={tutor.review_count <= 0} />
+                    <span className="font-bold text-secondary">{ratingSummary.title}</span>
+                    <span className="text-secondary/40 font-medium">{ratingSummary.detail}</span>
+                    <RatingTrustTooltip />
                   </div>
                   <div className="h-4 w-px bg-slate-200 hidden md:block"></div>
                   <div className="flex items-center gap-2 text-secondary/60">
@@ -191,47 +256,89 @@ async function TutorProfileServer({ id }: { id: string }) {
                 </div>
               </section>
 
-              {reviewsData && reviewsData.length > 0 && (
+              {isAdmin ? (
+                <section className="mt-12">
+                  <h2 className="text-2xl font-black text-secondary mb-8 flex items-center gap-3">
+                    <span className="h-8 w-1 bg-primary rounded-full"></span>
+                    Admin Review View
+                  </h2>
+                  <div className="space-y-8">
+                    {[
+                      { title: "Approved Reviews", reviews: approvedAdminReviews },
+                      { title: "Pending Reviews", reviews: pendingAdminReviews },
+                      { title: "Hidden Reviews", reviews: hiddenAdminReviews },
+                    ].map((section) => (
+                      <div key={section.title} className="space-y-3">
+                        <div className="flex items-center gap-3">
+                          <h3 className="rounded-full border border-secondary/10 bg-white px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-secondary/60">
+                            {section.title} ({section.reviews.length})
+                          </h3>
+                          <div className="h-px flex-1 bg-secondary/10"></div>
+                        </div>
+                        {section.reviews.length > 0 ? (
+                          <div className="grid gap-3 md:grid-cols-2">
+                            {section.reviews.map((review) => (
+                              <AdminReviewCard key={review.id} review={review} compact={section.title !== "Pending Reviews"} />
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="rounded-2xl border border-dashed border-secondary/10 bg-white p-4 text-sm font-bold text-secondary/40">
+                            No {section.title.toLowerCase()}.
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              ) : (
                 <section className="mt-12">
                   <h2 className="text-2xl font-black text-secondary mb-8 flex items-center gap-3">
                     <span className="h-8 w-1 bg-yellow-400 rounded-full"></span>
                     Student Reviews
                   </h2>
-                  <div className="space-y-6">
-                    {reviewsData.map((review: any) => (
-                      <div key={review.id} className="bg-white p-6 rounded-3xl border border-secondary/10 shadow-sm">
-                        <div className="flex justify-between items-start mb-4">
-                          <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-full overflow-hidden bg-secondary/10 border-2 border-slate-50 relative">
-                              {review.profiles?.avatar_url ? (
-                                <Image src={review.profiles.avatar_url} alt="" fill className="object-cover" />
-                              ) : (
-                                <span className="absolute inset-0 flex items-center justify-center font-bold text-secondary">{review.profiles?.full_name?.charAt(0) || 'S'}</span>
-                              )}
+                  {reviewsData && reviewsData.length > 0 ? (
+                    <div className="space-y-6">
+                      {reviewsData.map((review: any) => (
+                        <div key={review.id} className="bg-white p-6 rounded-3xl border border-secondary/10 shadow-sm">
+                          <div className="flex justify-between items-start mb-4">
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 rounded-full overflow-hidden bg-secondary/10 border-2 border-slate-50 relative">
+                                {review.profiles?.avatar_url ? (
+                                  <Image src={review.profiles.avatar_url} alt="" fill className="object-cover" />
+                                ) : (
+                                  <span className="absolute inset-0 flex items-center justify-center font-bold text-secondary">{review.profiles?.full_name?.charAt(0) || 'S'}</span>
+                                )}
+                              </div>
+                              <div>
+                                <p className="font-bold text-secondary text-sm">{review.profiles?.full_name || 'ScienceDojo Student'}</p>
+                                <div className="mt-1 flex flex-wrap items-center gap-2">
+                                  <span className="rounded-full border border-primary/10 bg-primary/5 px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.12em] text-primary/70">
+                                    Verified lesson review
+                                  </span>
+                                  <p className="text-[10px] text-secondary/40 font-black uppercase tracking-widest">
+                                    {new Date(review.created_at).toLocaleDateString(undefined, { month: 'long', year: 'numeric' })}
+                                  </p>
+                                </div>
+                              </div>
                             </div>
-                            <div>
-                              <p className="font-bold text-secondary text-sm">{review.profiles?.full_name || 'ScienceDojo Student'}</p>
-                              <p className="text-[10px] text-secondary/40 font-black uppercase tracking-widest">
-                                {new Date(review.created_at).toLocaleDateString(undefined, { month: 'long', year: 'numeric' })}
-                              </p>
-                            </div>
+                            <StarRating rating={review.rating} />
                           </div>
-                          <div className="flex text-yellow-400">
-                            {[...Array(5)].map((_, i) => (
-                              <svg key={i} className={`h-4 w-4 ${i < review.rating ? 'fill-current' : 'text-slate-200'}`} viewBox="0 0 20 20">
-                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                              </svg>
-                            ))}
-                          </div>
+                          {review.comment && (
+                            <p className="text-sm font-medium text-secondary/70 italic border-l-2 border-secondary/10 pl-4 py-1">
+                              "{review.comment}"
+                            </p>
+                          )}
                         </div>
-                        {review.comment && (
-                          <p className="text-sm font-medium text-secondary/70 italic border-l-2 border-secondary/10 pl-4 py-1">
-                            "{review.comment}"
-                          </p>
-                        )}
-                      </div>
-                    ))}
-                  </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="rounded-3xl border border-dashed border-secondary/10 bg-white p-6 shadow-sm">
+                      <h3 className="font-black text-secondary">No public reviews yet</h3>
+                      <p className="mt-2 text-sm font-medium leading-6 text-secondary/50">
+                        No public reviews yet — this tutor is still building their ScienceDojo profile.
+                      </p>
+                    </div>
+                  )}
                 </section>
               )}
             </div>
@@ -310,4 +417,3 @@ async function TutorProfileServer({ id }: { id: string }) {
     </div>
   );
 }
-

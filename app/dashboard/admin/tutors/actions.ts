@@ -74,3 +74,99 @@ export async function getSignedDocumentUrl(filePath: string) {
 
   return { url: data.signedUrl };
 }
+
+async function requireAdminContext() {
+  const supabase = await createClient();
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: "Unauthorized" as const };
+
+  const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single();
+  if (profile?.role !== "admin") return { error: "Unauthorized" as const };
+
+  const adminClient = await import("@/utils/supabase/admin").then(m => m.createAdminClient());
+  return { user, adminClient };
+}
+
+async function refreshTutorRating(adminClient: any, tutorId: string) {
+  const { error } = await adminClient.rpc("recalculate_tutor_rating", {
+    target_tutor_id: tutorId,
+  });
+
+  if (error) {
+    console.error("🚨 Tutor rating refresh error:", error.message);
+  }
+}
+
+export async function moderateTutorReview(
+  reviewId: string,
+  status: "approved" | "rejected",
+  adminNote?: string,
+) {
+  const context = await requireAdminContext();
+  if ("error" in context) return { error: context.error };
+
+  const { data: review, error: fetchError } = await context.adminClient
+    .from("reviews")
+    .select("id, tutor_id")
+    .eq("id", reviewId)
+    .maybeSingle();
+
+  if (fetchError || !review) {
+    return { error: fetchError?.message || "Review not found" };
+  }
+
+  const { error } = await context.adminClient
+    .from("reviews")
+    .update({
+      status,
+      admin_note: adminNote?.trim() || null,
+      reviewed_at: new Date().toISOString(),
+      reviewed_by: context.user.id,
+    })
+    .eq("id", reviewId);
+
+  if (error) {
+    console.error("🚨 Review moderation error:", error.message);
+    return { error: error.message };
+  }
+
+  await refreshTutorRating(context.adminClient, review.tutor_id);
+
+  revalidatePath("/dashboard/admin/tutors");
+  revalidatePath("/");
+  revalidatePath(`/tutor/${review.tutor_id}`);
+  return { success: true };
+}
+
+export async function deleteTutorReview(reviewId: string) {
+  const context = await requireAdminContext();
+  if ("error" in context) return { error: context.error };
+
+  const { data: review, error: fetchError } = await context.adminClient
+    .from("reviews")
+    .select("id, tutor_id")
+    .eq("id", reviewId)
+    .maybeSingle();
+
+  if (fetchError || !review) {
+    return { error: fetchError?.message || "Review not found" };
+  }
+
+  const { error } = await context.adminClient
+    .from("reviews")
+    .delete()
+    .eq("id", reviewId);
+
+  if (error) {
+    console.error("🚨 Review deletion error:", error.message);
+    return { error: error.message };
+  }
+
+  await refreshTutorRating(context.adminClient, review.tutor_id);
+
+  revalidatePath("/dashboard/admin/tutors");
+  revalidatePath("/");
+  revalidatePath(`/tutor/${review.tutor_id}`);
+  return { success: true };
+}

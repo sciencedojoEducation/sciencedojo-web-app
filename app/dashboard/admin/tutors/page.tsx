@@ -82,5 +82,77 @@ export default async function AdminTutorsPage() {
   const pendingTutors = mergedTutors.filter(t => !t.tutorDetail?.is_verified);
   const verifiedTutors = mergedTutors.filter(t => t.tutorDetail?.is_verified);
 
-  return <AdminTutorsDirectory pendingTutors={pendingTutors} verifiedTutors={verifiedTutors} />;
+  let { data: reviewRows, error: reviewError } = await adminClient
+    .from("reviews")
+    .select("id, tutor_id, student_id, rating, comment, status, admin_note, created_at, reviewed_at")
+    .order("created_at", { ascending: false });
+
+  const moderationColumnsMissing =
+    reviewError?.code === "42703" ||
+    reviewError?.message?.includes("reviews.status") ||
+    reviewError?.message?.includes("reviews.admin_note") ||
+    reviewError?.message?.includes("reviews.reviewed_at");
+
+  if (moderationColumnsMissing) {
+    const fallbackReviews = await adminClient
+      .from("reviews")
+      .select("id, tutor_id, student_id, rating, comment, created_at")
+      .order("created_at", { ascending: false });
+
+    reviewRows = (fallbackReviews.data || []).map((review: any) => ({
+      ...review,
+      status: "approved",
+      admin_note: null,
+      reviewed_at: null,
+    }));
+    reviewError = fallbackReviews.error;
+  }
+
+  if (reviewError) {
+    console.error("❌ Failed to fetch tutor reviews:", reviewError.message);
+  }
+
+  const reviewProfileIds = [
+    ...new Set(
+      (reviewRows || [])
+        .flatMap((review: any) => [review.tutor_id, review.student_id])
+        .filter(Boolean)
+    ),
+  ];
+
+  const { data: reviewProfiles } = reviewProfileIds.length > 0
+    ? await adminClient
+      .from("profiles")
+      .select("id, full_name, email, avatar_url")
+      .in("id", reviewProfileIds)
+    : { data: [] };
+
+  const reviewProfileMap = Object.fromEntries(
+    (reviewProfiles || []).map((profile: any) => [profile.id, profile])
+  );
+
+  const adminReviews = (reviewRows || []).map((review: any) => ({
+    id: review.id,
+    tutor_id: review.tutor_id,
+    tutorName: reviewProfileMap[review.tutor_id]?.full_name || "Tutor",
+    studentName: reviewProfileMap[review.student_id]?.full_name || reviewProfileMap[review.student_id]?.email || "ScienceDojo student",
+    rating: review.rating,
+    comment: review.comment,
+    status: review.status || "approved",
+    admin_note: review.admin_note || null,
+    created_at: review.created_at,
+    reviewed_at: review.reviewed_at || null,
+  }));
+
+  const pendingReviews = adminReviews.filter((review: any) => review.status === "pending");
+  const moderatedReviews = adminReviews.filter((review: any) => review.status !== "pending").slice(0, 30);
+
+  return (
+    <AdminTutorsDirectory
+      pendingTutors={pendingTutors}
+      verifiedTutors={verifiedTutors}
+      pendingReviews={pendingReviews}
+      moderatedReviews={moderatedReviews}
+    />
+  );
 }

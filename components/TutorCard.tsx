@@ -87,7 +87,7 @@ export default function TutorCard({ tutor, currentUserRole, variant = "default" 
   const trustSignals = [
     tutor.verified_at !== null ? "Verified" : null,
     tutor.has_teaching_license ? "Teaching license" : null,
-    hasReviews ? `${tutor.average_rating?.toFixed(1)} from families` : "New mentor",
+    hasReviews ? `${tutor.average_rating?.toFixed(1)} verified reviews` : "No verified reviews yet",
   ].filter(Boolean);
 
   return (

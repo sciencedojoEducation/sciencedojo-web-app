@@ -28,7 +28,11 @@ function calculateAutomatedScore(data: any): number {
   return score;
 }
 
-export async function saveApplicationStage(stage: number, dataPayload: any) {
+export async function saveApplicationStage(
+  stage: number,
+  dataPayload: any,
+  options: { advance?: boolean } = {}
+) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
@@ -56,8 +60,12 @@ export async function saveApplicationStage(stage: number, dataPayload: any) {
 
   const newData: any = { ...currentData, ...payloadObject };
 
-  // Track progress stage
-  newData.current_stage = stage + 1;
+  const shouldAdvance = options.advance !== false;
+
+  // Track progress stage. Draft saves persist data without moving the applicant forward.
+  newData.current_stage = shouldAdvance
+    ? stage + 1
+    : Math.max(Number(currentData.current_stage || stage), stage);
 
   updateData.data = newData;
 
@@ -68,7 +76,7 @@ export async function saveApplicationStage(stage: number, dataPayload: any) {
 
   // Logic based on Stage Completion
   if (stage === 1) {
-    // Knockout Logic: Online tutoring is mandatory
+    // Online tutoring is mandatory for this application flow.
     if (newData.online_available === "false") {
       newData.is_knocked_out = true;
       newData.onboarding_status = 'rejected';
@@ -88,10 +96,10 @@ export async function saveApplicationStage(stage: number, dataPayload: any) {
     newData.onboarding_status = 'demo_submitted';
   }
 
-  if (stage === 6) {
+  if (stage === 6 && shouldAdvance) {
     const gdprAccepted = String(newData.gdpr_accepted) === "true";
     const termsAccepted = String(newData.terms_accepted) === "true";
-    if (!gdprAccepted || !termsAccepted) throw new Error("Both agreements must be accepted to finalize calibration.");
+    if (!gdprAccepted || !termsAccepted) throw new Error("Both agreements must be accepted to submit your application.");
     
     updateData.status = 'pending'; // Ready for final human review
     newData.onboarding_status = 'under_review';
@@ -196,4 +204,3 @@ export async function generatePrivateUploadUrl(fileName: string) {
   // No server action needed for the upload itself.
   return { folderPath: `${user.id}` };
 }
-

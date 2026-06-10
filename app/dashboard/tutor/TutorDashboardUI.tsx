@@ -70,9 +70,13 @@ interface TutorDashboardUIProps {
   tutorData: TutorProfile | null;
   slots: AvailabilitySlot[];
   announcements: Announcement[];
+  reviewVisibility: {
+    approved: number;
+    pending: number;
+  };
 }
 
-export default function TutorDashboardUI({ userId, userName, avatarUrl, bookings, tutorData, slots, announcements }: TutorDashboardUIProps) {
+export default function TutorDashboardUI({ userId, userName, avatarUrl, bookings, tutorData, slots, announcements, reviewVisibility }: TutorDashboardUIProps) {
   const [activeTab, setActiveTab] = useState<"schedule" | "requests" | "sessions" | "availability" | "students">("schedule");
   const [showNotesModal, setShowNotesModal] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
@@ -267,6 +271,31 @@ export default function TutorDashboardUI({ userId, userName, avatarUrl, bookings
            <div className="rounded-2xl bg-slate-50 p-3">
              <p className="text-[9px] font-black uppercase tracking-widest text-secondary/35">Students</p>
              <p className="mt-1 text-lg font-black text-secondary">{studentList.length}</p>
+           </div>
+         </div>
+
+         <div className="mt-3 rounded-2xl border border-primary/10 bg-primary/5 p-3 md:mt-4 md:p-4">
+           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+             <div>
+               <p className="text-[9px] font-black uppercase tracking-[0.14em] text-primary/60">Review visibility</p>
+               <p className="mt-1 text-sm font-bold text-secondary/60">
+                 ScienceDojo reviews ratings before they appear publicly.
+               </p>
+             </div>
+             <div className="grid grid-cols-2 gap-2 sm:min-w-[15rem]">
+               <div className="rounded-xl bg-white px-3 py-2">
+                 <p className="text-lg font-black text-secondary">{reviewVisibility.approved}</p>
+                 <p className="text-[9px] font-black uppercase tracking-[0.12em] text-secondary/35">
+                   public review{reviewVisibility.approved === 1 ? "" : "s"}
+                 </p>
+               </div>
+               <div className="rounded-xl bg-white px-3 py-2">
+                 <p className="text-lg font-black text-primary">{reviewVisibility.pending}</p>
+                 <p className="text-[9px] font-black uppercase tracking-[0.12em] text-secondary/35">
+                   pending review{reviewVisibility.pending === 1 ? "" : "s"}
+                 </p>
+               </div>
+             </div>
            </div>
          </div>
       </div>

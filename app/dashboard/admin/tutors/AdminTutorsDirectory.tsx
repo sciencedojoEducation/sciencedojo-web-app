@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import Image from "next/image";
 import VerifyButton from "./VerifyButton";
 import PendingTutorsTable from "./PendingTutorsTable";
+import ReviewModerationPanel, { type AdminTutorReview } from "./ReviewModerationPanel";
 
 type AdminTutor = {
   id: string;
@@ -40,9 +41,13 @@ function matchesTutorSearch(tutor: AdminTutor, query: string) {
 export default function AdminTutorsDirectory({
   pendingTutors,
   verifiedTutors,
+  pendingReviews,
+  moderatedReviews,
 }: {
   pendingTutors: AdminTutor[];
   verifiedTutors: AdminTutor[];
+  pendingReviews: AdminTutorReview[];
+  moderatedReviews: AdminTutorReview[];
 }) {
   const [searchQuery, setSearchQuery] = useState("");
   const filteredPendingTutors = useMemo(
@@ -72,6 +77,10 @@ export default function AdminTutorsDirectory({
             <div className="flex items-center gap-2 border-l border-slate-200 pl-4 md:pl-6">
                <div className="h-2 w-2 rounded-full bg-green-500"></div>
                Verified: {verifiedTutors.length}
+            </div>
+            <div className="flex items-center gap-2 border-l border-slate-200 pl-4 md:pl-6">
+               <div className="h-2 w-2 rounded-full bg-cyan-500"></div>
+               Reviews: {pendingReviews.length}
             </div>
          </div>
       </div>
@@ -107,6 +116,8 @@ export default function AdminTutorsDirectory({
           <p className="mt-2 text-sm font-bold leading-6 text-slate-500">Try searching by another name, email, or subject.</p>
         </div>
       )}
+
+      <ReviewModerationPanel pendingReviews={pendingReviews} moderatedReviews={moderatedReviews} />
 
       {filteredPendingTutors.length > 0 && (
         <section className="space-y-4 md:space-y-6">

@@ -57,7 +57,7 @@ export default function ComplianceModal({ isOpen, onClose, onAccept, title, type
 
       <section className="space-y-2">
         <h4 className="font-black text-navy text-sm uppercase tracking-tight">Teaching Standards</h4>
-        <p className="text-sm">Deliver clear, structured, and student-focused lessons that align with the ScienceDojo Gold Standard.</p>
+        <p className="text-sm">Deliver clear, structured, and student-focused lessons that align with ScienceDojo teaching standards.</p>
       </section>
 
       <section className="space-y-2">
@@ -67,7 +67,7 @@ export default function ComplianceModal({ isOpen, onClose, onAccept, title, type
 
       <section className="space-y-2 border-l-4 border-red-500/20 pl-4 py-1">
         <h4 className="font-black text-red-600 text-sm uppercase tracking-tight">Safety & Ethics</h4>
-        <p className="text-sm italic font-bold">Any misconduct or breach of safety protocols will result in immediate platform removal.</p>
+        <p className="text-sm italic font-bold">Any misconduct or breach of safety policies may result in platform removal.</p>
       </section>
 
       <section className="space-y-3 bg-blue-50/50 p-6 rounded-[2rem] border border-blue-100/50">
@@ -168,7 +168,7 @@ export default function ComplianceModal({ isOpen, onClose, onAccept, title, type
                      {isChecked && <CheckSquare size={16} className="text-white" strokeWidth={3} />}
                   </div>
                   <span className="text-sm font-bold text-navy/60 group-hover:text-navy transition-colors">
-                    I have read and agree to the {type === "gdpr" ? "GDPR Data Processing terms" : "ScienceDojo Sensei Agreement"}
+                    I have read and agree to the {type === "gdpr" ? "GDPR Data Processing terms" : "ScienceDojo Tutor Agreement"}
                   </span>
                </label>
 

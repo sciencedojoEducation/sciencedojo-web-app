@@ -1,4 +1,5 @@
 import { createClient } from "@/utils/supabase/server";
+import { createAdminClient } from "@/utils/supabase/admin";
 
 export type Subject = "Science" | "Math" | "Physics" | "Chemistry" | "Biology" | "Programming";
 
@@ -322,7 +323,8 @@ export async function getBookingsByUserId(userId: string): Promise<Booking[]> {
   }
 
   // 1.5 Fetch Reviews to flag already-reviewed bookings
-  const { data: reviewsData } = await supabase
+  const adminClient = createAdminClient();
+  const { data: reviewsData } = await adminClient
     .from('reviews')
     .select('booking_id')
     .in('booking_id', bookingIds);
