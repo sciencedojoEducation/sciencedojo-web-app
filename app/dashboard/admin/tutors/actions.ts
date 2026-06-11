@@ -3,6 +3,7 @@
 import { createClient } from "@/utils/supabase/server";
 import { revalidatePath } from "next/cache";
 import { sendTutorAcceptedEmail } from "@/lib/email";
+import { getMeaningfulTutorSubjects } from "@/lib/tutors/subjects";
 
 function isRecord(value: unknown): value is Record<string, any> {
   return !!value && typeof value === "object" && !Array.isArray(value);
@@ -21,26 +22,43 @@ export async function toggleTutorVerification(tutorId: string, currentStatus: bo
   const adminClient = await import("@/utils/supabase/admin").then(m => m.createAdminClient());
   const { data: existingApplication } = await adminClient
     .from("applications")
-    .select("status, data")
+    .select("status, data, subjects")
     .eq("user_id", tutorId)
     .maybeSingle();
 
+  const { data: existingTutor } = await adminClient
+    .from("tutors")
+    .select("subjects")
+    .eq("id", tutorId)
+    .maybeSingle();
+
   const applicationData = isRecord(existingApplication?.data) ? existingApplication.data : {};
+  const existingTutorSubjects = getMeaningfulTutorSubjects(existingTutor?.subjects);
+  const stagedApplicationSubjects = getMeaningfulTutorSubjects(applicationData.subjects);
+  const legacyApplicationSubjects = getMeaningfulTutorSubjects(existingApplication?.subjects);
+  const resolvedSubjects = existingTutorSubjects.length > 0
+    ? existingTutorSubjects
+    : stagedApplicationSubjects.length > 0
+      ? stagedApplicationSubjects
+      : legacyApplicationSubjects;
   const shouldSendAcceptanceEmail =
     !currentStatus &&
     existingApplication?.status !== "approved" &&
     !applicationData.welcome_email_sent_at;
 
+  const tutorUpsert: Record<string, unknown> = {
+    id: tutorId,
+    is_verified: !currentStatus,
+    hourly_rate: 30, // Default if not existing
+    rating: 0
+  };
+
+  tutorUpsert.subjects = resolvedSubjects;
+
   // Use upsert to handle cases where the tutors record might be missing
   const { error } = await adminClient
     .from("tutors")
-    .upsert({ 
-      id: tutorId, 
-      is_verified: !currentStatus,
-      hourly_rate: 30, // Default if not existing
-      subjects: ['General'], // Default if not existing
-      rating: 0
-    }, { onConflict: 'id' });
+    .upsert(tutorUpsert, { onConflict: 'id' });
 
   if (error) {
     console.error("🚨 Admin Verification Error for Tutor", tutorId, ":", error.message);

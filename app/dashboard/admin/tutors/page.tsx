@@ -57,7 +57,7 @@ export default async function AdminTutorsPage() {
     await adminClient.from("tutors").upsert(
       missingRecords.map(p => ({
         id: p.id,
-        subjects: ['General'],
+        subjects: [],
         hourly_rate: 30,
         is_verified: false,
         rating: 0

@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { createClient } from "@/utils/supabase/server";
+import BookingCreatedTracker from "@/components/analytics/BookingCreatedTracker";
 
 export default async function BookingSuccessPage({
   params,
@@ -38,6 +39,7 @@ export default async function BookingSuccessPage({
 
   return (
     <div className="bg-slate-50/50 min-h-[calc(100vh-80px)] flex items-center justify-center p-4">
+      <BookingCreatedTracker tutorId={tutor.id} subject={subject} />
       <div className="max-w-xl w-full">
         <div className="bg-white rounded-[3rem] shadow-2xl border border-secondary/5 overflow-hidden text-center">
           {/* Success Header */}

@@ -11,6 +11,8 @@ import TutorAvailabilityCalendar from "@/components/TutorAvailabilityCalendar";
 import ImageCropper from "@/components/ImageCropper";
 import AnnouncementFeed from "@/components/AnnouncementFeed";
 
+export type TutorWorkspaceTab = "schedule" | "requests" | "sessions" | "availability" | "students";
+
 // Deterministically pick a gradient based on a string (name or id)
 const AVATAR_GRADIENTS = [
   "from-violet-500 to-indigo-500",
@@ -77,6 +79,8 @@ interface TutorDashboardUIProps {
   };
   showAcceptedWelcome: boolean;
   showLaunchChecklist: boolean;
+  initialTab?: TutorWorkspaceTab;
+  workspaceOnly?: boolean;
   profileReadiness: {
     percent: number;
     completed: number;
@@ -106,10 +110,12 @@ export default function TutorDashboardUI({
   reviewVisibility,
   showAcceptedWelcome,
   showLaunchChecklist,
+  initialTab = "schedule",
+  workspaceOnly = false,
   profileReadiness,
   launchChecklist,
 }: TutorDashboardUIProps) {
-  const [activeTab, setActiveTab] = useState<"schedule" | "requests" | "sessions" | "availability" | "students">("schedule");
+  const [activeTab, setActiveTab] = useState<TutorWorkspaceTab>(initialTab);
   const [showNotesModal, setShowNotesModal] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [bio, setBio] = useState(tutorData?.bio || "");
@@ -190,7 +196,7 @@ export default function TutorDashboardUI({
       id: "schedule" as const,
       label: "Schedule",
       mobileLabel: "Today",
-      helper: "What needs teaching next.",
+      helper: "Calendar and upcoming teaching.",
       badge: null,
     },
     {
@@ -279,7 +285,7 @@ export default function TutorDashboardUI({
   return (
     <div className="mx-auto max-w-6xl space-y-5 px-3 py-5 sm:p-6 md:space-y-10 md:p-8">
       {/* Verification Status Banner */}
-      {!tutorData?.is_verified && (
+      {!workspaceOnly && !tutorData?.is_verified && (
         <div className="bg-amber-50 border border-amber-100 p-4 rounded-[1.5rem] flex flex-col md:flex-row items-center gap-4 shadow-sm shadow-amber-900/5 animate-in slide-in-from-top-4 duration-500 md:border-2 md:p-8 md:rounded-[2rem] md:gap-6 md:shadow-xl">
           <div className="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center text-2xl shrink-0 md:h-16 md:w-16 md:rounded-2xl md:text-3xl">⏳</div>
           <div className="flex-1 text-center md:text-left">
@@ -300,7 +306,24 @@ export default function TutorDashboardUI({
          <AnnouncementFeed announcements={announcements} />
       )}
 
-      {isWelcomeVisible && (
+      {workspaceOnly && (
+        <section className="rounded-[1.5rem] border border-secondary/5 bg-white p-4 shadow-sm md:rounded-[2rem] md:p-6">
+          <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+            <div>
+              <p className="text-[10px] font-black uppercase tracking-[0.16em] text-secondary/35">Schedule operations</p>
+              <h1 className="mt-1 text-3xl font-black tracking-tight text-secondary md:text-4xl">Schedule</h1>
+              <p className="mt-1 max-w-2xl text-sm font-semibold leading-6 text-secondary/55">
+                Manage your calendar, lesson requests, confirmed sessions, students, and availability.
+              </p>
+            </div>
+            <Link href="/dashboard/tutor" className="inline-flex min-h-10 items-center justify-center rounded-full border border-secondary/10 bg-slate-50 px-5 text-xs font-black uppercase tracking-[0.12em] text-secondary/55 transition-all hover:border-primary/20 hover:text-primary">
+              Back to dashboard
+            </Link>
+          </div>
+        </section>
+      )}
+
+      {!workspaceOnly && isWelcomeVisible && (
         <section className="overflow-hidden rounded-[1.5rem] border border-primary/10 bg-[linear-gradient(135deg,#ffffff_0%,#f5fbff_58%,#ecfeff_100%)] p-4 shadow-sm shadow-primary/5 md:rounded-[2rem] md:p-6">
           <div className="flex flex-col gap-5 lg:flex-row lg:items-center">
             <div className="flex-1">
@@ -344,6 +367,7 @@ export default function TutorDashboardUI({
         </section>
       )}
 
+      {!workspaceOnly && (
       <div data-tour="tutor-welcome" className="rounded-[1.5rem] border border-secondary/5 bg-white p-4 shadow-sm md:rounded-[2rem] md:p-6">
          <div className="flex items-center gap-4 sm:gap-6">
             <div className="flex h-14 w-14 shrink-0 rotate-2 items-center justify-center overflow-hidden rounded-2xl border-2 border-white bg-accent/10 shadow-md transition-transform hover:rotate-0 sm:h-20 sm:w-20 sm:border-4 sm:shadow-xl">
@@ -354,7 +378,7 @@ export default function TutorDashboardUI({
                )}
             </div>
             <div className="min-w-0">
-               <p className="mb-1 text-[11px] font-bold uppercase tracking-[0.16em] text-secondary/35">Tutor workspace</p>
+               <p className="mb-1 text-[11px] font-bold uppercase tracking-[0.16em] text-secondary/35">Dashboard</p>
                <h1 className="mb-1 break-words bg-gradient-to-r from-accent to-accent-hover bg-clip-text text-3xl font-black tracking-tight text-transparent sm:text-4xl">
                   Hello, {userName.trim().split(' ')[0]}!
                </h1>
@@ -414,8 +438,9 @@ export default function TutorDashboardUI({
            </div>
          </div>
       </div>
+      )}
 
-      {showLaunchChecklist && (
+      {!workspaceOnly && showLaunchChecklist && (
         <section className="grid gap-4 lg:grid-cols-[0.95fr_1.05fr]">
           <div className="rounded-[1.5rem] border border-secondary/5 bg-white p-4 shadow-sm md:rounded-[2rem] md:p-5">
             <div className="flex items-start justify-between gap-4">
@@ -469,8 +494,8 @@ export default function TutorDashboardUI({
         </section>
       )}
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 lg:gap-10">
-         <div className="lg:col-span-2 space-y-6">
+      <div className={workspaceOnly ? "grid grid-cols-1 gap-6" : "grid grid-cols-1 gap-6 lg:grid-cols-3 lg:gap-10"}>
+         <div className={workspaceOnly ? "space-y-6" : "lg:col-span-2 space-y-6"}>
 
             {/* Workspace navigation */}
             <div data-tour="tutor-tabs" className="space-y-3">
@@ -731,6 +756,7 @@ export default function TutorDashboardUI({
 
          </div>
 
+         {!workspaceOnly && (
          <div className="space-y-5 md:space-y-8">
             <h2 className="text-xl font-black text-secondary mb-4 flex items-center gap-3">
               <span className="h-6 w-1 bg-accent rounded-full"></span>
@@ -778,6 +804,7 @@ export default function TutorDashboardUI({
               </Link>
             </div>
          </div>
+         )}
       </div>
 
       {showProfileModal && (

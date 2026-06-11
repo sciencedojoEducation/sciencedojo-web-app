@@ -4,6 +4,8 @@ import { createClient } from "@/utils/supabase/server";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { sendBookingRequestedEmail, sendBookingAcceptedEmail, sendLessonNotesEmail } from "@/lib/email";
+import { getMentorAttributionFromCookies, isAttributionSchemaError, markMentorLeadConverted } from "@/lib/mentor-attribution";
+import { getMeaningfulTutorSubjects } from "@/lib/tutors/subjects";
 import crypto from 'crypto';
 
 export async function createBookingRequest(formData: FormData) {
@@ -23,6 +25,7 @@ export async function createBookingRequest(formData: FormData) {
   const recurrenceCount = Number(formData.get("recurrenceCount") || 1);
   const isRecurring = recurrenceCount > 1;
   const recurrenceGroupId = isRecurring ? crypto.randomUUID() : null;
+  const attribution = await getMentorAttributionFromCookies();
 
   const baseDate = new Date(requestedDate || new Date().toISOString());
   const bookingsToInsert = [];
@@ -43,19 +46,50 @@ export async function createBookingRequest(formData: FormData) {
       recurrence_group_id: recurrenceGroupId,
       is_recurring: isRecurring,
       recurrence_count: recurrenceCount,
-      recurrence_index: i + 1
+      recurrence_index: i + 1,
+      acquisition_source: attribution.acquisitionSource,
+      referrer_tutor_id: attribution.referrerTutorId,
+      landing_tutor_id: attribution.landingTutorId,
+      lead_source_id: attribution.leadSourceId,
     });
   }
 
-  const { error } = await supabase
+  let { data: insertedBookings, error } = await supabase
     .from("bookings")
-    .insert(bookingsToInsert);
+    .insert(bookingsToInsert)
+    .select("id");
+
+  if (error && isAttributionSchemaError(error)) {
+    const fallbackBookings = bookingsToInsert.map((booking) => {
+      const {
+        acquisition_source: _acquisitionSource,
+        referrer_tutor_id: _referrerTutorId,
+        landing_tutor_id: _landingTutorId,
+        lead_source_id: _leadSourceId,
+        ...baseBooking
+      } = booking;
+      return baseBooking;
+    });
+
+    const fallbackResult = await supabase
+      .from("bookings")
+      .insert(fallbackBookings)
+      .select("id");
+
+    insertedBookings = fallbackResult.data;
+    error = fallbackResult.error;
+  }
 
   if (error) {
     console.error("Booking Error:", error.message);
     // In a real app, we'd redirect to an error page or use useActionState
     redirect(`/tutor/${tutorId}/book?error=${encodeURIComponent(error.message)}`);
   }
+
+  await markMentorLeadConverted({
+    bookingId: insertedBookings?.[0]?.id || null,
+    userId: user.id,
+  });
 
   // Get tutor email for notification
   const { data: tutorProfile } = await supabase
@@ -147,7 +181,7 @@ export async function updateTutorProfile(formData: FormData) {
   const bio = formData.get("bio") as string;
   const hourlyRate = Number(formData.get("hourlyRate"));
   const subjectsStr = formData.get("subjects") as string;
-  const subjects = subjectsStr ? subjectsStr.split(',').map(s => s.trim()) : [];
+  const subjects = getMeaningfulTutorSubjects(subjectsStr);
   const fullName = formData.get("fullName") as string;
   const chatAvailabilityStr = formData.get("chatAvailability") as string;
   const chatAvailability = chatAvailabilityStr ? JSON.parse(chatAvailabilityStr) : null;

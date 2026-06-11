@@ -3,6 +3,7 @@
 import { createClient } from "@/utils/supabase/server";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { getMeaningfulTutorSubjects } from "@/lib/tutors/subjects";
 
 /**
  * Automated scoring based on tutor input
@@ -73,6 +74,8 @@ export async function saveApplicationStage(
   if (newData.full_name) updateData.full_name = newData.full_name;
   if (newData.university) updateData.university = newData.university;
   if (newData.user_type) updateData.user_type = newData.user_type;
+  const meaningfulSubjects = getMeaningfulTutorSubjects(newData.subjects);
+  if (meaningfulSubjects.length > 0) updateData.subjects = meaningfulSubjects;
 
   // Logic based on Stage Completion
   if (stage === 1) {
@@ -115,14 +118,20 @@ export async function saveApplicationStage(
       .update({ role: 'tutor' })
       .eq('id', user.id);
 
-    // Ensure tutor row exists
-    await supabase.from('tutors').upsert({
+    const tutorUpsert: Record<string, unknown> = {
       id: user.id,
       is_verified: false,
       is_available_now: true,
       bio: '',
       hourly_rate: 0
-    }, { onConflict: 'id' });
+    };
+
+    if (meaningfulSubjects.length > 0) {
+      tutorUpsert.subjects = meaningfulSubjects;
+    }
+
+    // Ensure tutor row exists
+    await supabase.from('tutors').upsert(tutorUpsert, { onConflict: 'id' });
     // We store specific timestamps within the JSONB data object via VerificationStage
   }
 
@@ -163,7 +172,7 @@ export async function submitTutorApplication(formData: FormData) {
   const has_teaching_license = formData.get("has_teaching_license") === "on";
   const cv_url = formData.get("cv_url") as string;
 
-  const subjects = subjectsStr ? subjectsStr.split(",").map(s => s.trim()).filter(Boolean) : [];
+  const subjects = getMeaningfulTutorSubjects(subjectsStr);
 
   const { error } = await supabase
     .from("applications")

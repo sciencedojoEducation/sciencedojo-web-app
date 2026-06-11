@@ -3,6 +3,7 @@
 import { createClient } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
+import { getMeaningfulTutorSubjects } from "@/lib/tutors/subjects";
 
 export async function acceptCodeOfConduct() {
   const supabase = await createClient();
@@ -26,15 +27,21 @@ export async function acceptCodeOfConduct() {
     .single();
 
   if (appData) {
+    const subjects = getMeaningfulTutorSubjects(appData.subjects);
+    const tutorUpdate: Record<string, unknown> = {
+      is_verified: true,
+      university: appData.university,
+      youtube_intro_url: appData.youtube_url,
+    };
+
+    if (subjects.length > 0) {
+      tutorUpdate.subjects = subjects;
+    }
+
     // Also set the tutor as verified, live in the public marketplace, AND migrate the vetted data!
     await supabase
       .from("tutors")
-      .update({ 
-        is_verified: true,
-        university: appData.university,
-        subjects: appData.subjects,
-        youtube_intro_url: appData.youtube_url,
-      })
+      .update(tutorUpdate)
       .eq('id', user.id);
     
     // Update name in profiles

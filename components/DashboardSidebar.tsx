@@ -92,12 +92,14 @@ export default async function DashboardSidebar({ role }: DashboardSidebarProps) 
       { name: "Support", href: "/dashboard/support", icon: "🆘" },
     ],
     tutor: [
-      { name: "My Schedule", href: "/dashboard/tutor", icon: "🗓️", exact: true, tourId: "tutor-sessions" },
-      { name: "My Classes", href: "/dashboard/classes", icon: "🎓", tourId: "tutor-students" },
+      { name: "Dashboard", href: "/dashboard/tutor", icon: "🏠", exact: true },
+      { name: "Schedule", href: "/dashboard/tutor/schedule", icon: "🗓️", tourId: "tutor-sessions" },
+      { name: "Students & Classes", href: "/dashboard/classes", icon: "🎓", tourId: "tutor-students" },
       { name: "Messages", href: "/dashboard/messages", icon: "💬", badge: unreadCount, tourId: "tutor-messages" },
       { name: "Mission Reviews", href: "/dashboard/tutor/missions", icon: "🧭" },
       { name: "Earnings", href: "/dashboard/tutor/earnings", icon: "💰" },
-      { name: "Profile Settings", href: "/dashboard/tutor/settings", icon: "👤", tourId: "tutor-availability" },
+      { name: "Profile", href: "/dashboard/tutor/settings", icon: "👤", tourId: "tutor-availability" },
+      { name: "Success Center", href: "/support/tutors", icon: "⭐" },
       { name: "Support", href: "/dashboard/support", icon: "🆘" },
     ],
     admin: [
