@@ -3,8 +3,9 @@ import Link from "next/link";
 import Logo from "@/components/Logo";
 import CopyCaptionButton from "@/components/CopyCaptionButton";
 import { siteUrl } from "@/lib/seo";
+import { getTutorMentorReach, type TutorMentorReach } from "@/lib/tutor-mentor-reach";
 import { buildTutorReadiness, type TutorReadinessResult } from "@/lib/tutor-readiness";
-import { getAvailabilityByTutorId, getBookingsByUserId, getTutorById } from "@/lib/supabase-queries";
+import { getAvailabilityByTutorId, getBookingsByUserId, getTutorById, type Booking } from "@/lib/supabase-queries";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { createClient } from "@/utils/supabase/server";
 
@@ -57,42 +58,54 @@ const teachingTimeline = [
     icon: "📅",
     title: "Booking",
     body: "Accept a lesson request.",
+    coach: "Respond quickly and only accept lessons you can confidently teach.",
   },
   {
     icon: "🎓",
     title: "Lesson",
     body: "Teach the agreed goal.",
+    coach: "Keep the lesson focused on one clear learning outcome.",
   },
   {
     icon: "📝",
     title: "Record",
     body: "Summarize learning.",
+    coach: "Parents value clear notes about what was covered and what comes next.",
   },
   {
     icon: "🎯",
     title: "Practice",
     body: "Assign Missions when useful.",
+    coach: "Use practice to reinforce understanding between lessons.",
   },
   {
     icon: "📈",
     title: "Progress",
     body: "Help families see growth.",
+    coach: "Small visible progress builds parent trust over time.",
   },
 ];
 
 const paymentTimeline = [
   "Connect Payouts",
-  "Teach Lessons",
-  "Complete Records",
-  "Receive Payout",
+  "Teach Lesson",
+  "Complete Record",
+  "Receive Payment",
 ];
 
-const reputationTimeline = [
-  "First Lesson",
-  "Student Success",
-  "Review",
-  "More Profile Visits",
-  "More Bookings",
+const mostTutorNeedLinks = [
+  {
+    title: "How bookings work",
+    href: "#resources-help",
+  },
+  {
+    title: "How payouts work",
+    href: "#resources-help",
+  },
+  {
+    title: "How reviews work",
+    href: "#resources-help",
+  },
 ];
 
 const sharingFlow = [
@@ -106,23 +119,23 @@ const sharingFlow = [
 const shareGroups = [
   {
     title: "WhatsApp",
-    items: ["WhatsApp Status", "Family chats", "Local parent groups"],
+    body: "Post your mentor card to your status and send your profile link to families who ask about tutoring.",
   },
   {
     title: "Facebook",
-    items: ["Timeline", "Parent Groups", "Community Groups"],
+    body: "Share your mentor profile on your timeline or in relevant parent/community groups where allowed.",
   },
   {
     title: "Instagram",
-    items: ["Story", "Feed", "Highlights"],
+    body: "Use your tutor card in Stories or posts and add your mentor profile link in your bio.",
   },
   {
     title: "LinkedIn",
-    items: ["Profile post", "Professional network", "Alumni groups"],
+    body: "Share your ScienceDojo mentor profile as a professional tutoring update.",
   },
   {
     title: "Parent/community groups",
-    items: ["School alumni groups", "Neighborhood groups", "Subject communities"],
+    body: "Share only where tutoring recommendations are welcome and avoid spammy posting.",
   },
 ];
 
@@ -132,6 +145,18 @@ const suggestedShareCaption =
 type TutorSuccessPersonalization = {
   name: string;
   readiness: TutorReadinessResult;
+  mentorReach: TutorMentorReach;
+  launchRibbon: LaunchRibbonStage[];
+  reputationMilestones: {
+    label: string;
+    completed: boolean;
+  }[];
+};
+
+type LaunchRibbonStage = {
+  label: string;
+  icon: string;
+  state: "complete" | "current" | "future";
 };
 
 function asRecord(value: unknown): Record<string, any> {
@@ -142,6 +167,106 @@ function asRecord(value: unknown): Record<string, any> {
 
 function firstName(name: string) {
   return name.trim().split(/\s+/)[0] || "Tutor";
+}
+
+function hasActiveOrCompletedBooking(bookings: Booking[]) {
+  return bookings.some((booking) =>
+    ["accepted", "confirmed", "completed"].includes(booking.status)
+  );
+}
+
+function countRepeatStudents(bookings: Booking[]) {
+  const completedByStudent = new Map<string, number>();
+
+  for (const booking of bookings) {
+    if (booking.status !== "completed" || !booking.student_id) continue;
+    completedByStudent.set(
+      booking.student_id,
+      (completedByStudent.get(booking.student_id) || 0) + 1
+    );
+  }
+
+  return Array.from(completedByStudent.values()).filter((count) => count >= 2).length;
+}
+
+function buildLaunchRibbon({
+  readiness,
+  bookings,
+  publicReviewCount,
+  stripeOnboardingComplete,
+}: {
+  readiness: TutorReadinessResult;
+  bookings: Booking[];
+  publicReviewCount: number;
+  stripeOnboardingComplete: boolean;
+}): LaunchRibbonStage[] {
+  const stages = [
+    {
+      label: "Launch",
+      icon: "🚀",
+      completed: readiness.percent >= 100,
+    },
+    {
+      label: "First Student",
+      icon: "👨‍🎓",
+      completed: hasActiveOrCompletedBooking(bookings),
+    },
+    {
+      label: "First Review",
+      icon: "⭐",
+      completed: publicReviewCount > 0,
+    },
+    {
+      label: "First Payout",
+      icon: "💰",
+      completed: stripeOnboardingComplete,
+    },
+  ];
+  const firstIncompleteIndex = stages.findIndex((stage) => !stage.completed);
+
+  return stages.map((stage, index) => ({
+    ...stage,
+    state: stage.completed
+      ? "complete"
+      : index === firstIncompleteIndex
+        ? "current"
+        : "future",
+  }));
+}
+
+function buildReputationMilestones({
+  bookings,
+  publicReviewCount,
+}: {
+  bookings: Booking[];
+  publicReviewCount: number;
+}) {
+  const completedLessonCount = bookings.filter((booking) => booking.status === "completed").length;
+  const hasTrialLesson = hasActiveOrCompletedBooking(bookings);
+  const returningStudentCount = countRepeatStudents(bookings);
+
+  return [
+    {
+      label: "First Lesson",
+      completed: completedLessonCount > 0,
+    },
+    {
+      label: "First Trial Lesson",
+      completed: hasTrialLesson,
+    },
+    {
+      label: "First Review",
+      completed: publicReviewCount > 0,
+    },
+    {
+      label: "First Returning Student",
+      completed: returningStudentCount > 0,
+    },
+    {
+      label: "Five Lessons Completed",
+      completed: completedLessonCount >= 5,
+    },
+  ];
 }
 
 async function getTutorSuccessPersonalization(): Promise<TutorSuccessPersonalization | null> {
@@ -197,19 +322,32 @@ async function getTutorSuccessPersonalization(): Promise<TutorSuccessPersonaliza
   const publicReviewCount =
     reviewRows?.filter((review: any) => review.status === "approved").length || 0;
   const completedLessonCount = bookings.filter((booking) => booking.status === "completed").length;
+  const stripeOnboardingComplete = Boolean((tutorStripe as any)?.stripe_onboarding_complete);
   const readiness = buildTutorReadiness({
     tutor: tutorData,
     applicationData: asRecord(application?.data),
     availabilitySlots: slots,
-    stripeOnboardingComplete: Boolean((tutorStripe as any)?.stripe_onboarding_complete),
+    stripeOnboardingComplete,
     publicReviewCount,
     bookingRequestCount: bookings.length,
     completedLessonCount,
   });
+  const mentorReach = await getTutorMentorReach(user.id);
 
   return {
     name: tutorData?.full_name || profile?.full_name || user.user_metadata?.full_name || "Tutor",
     readiness,
+    mentorReach,
+    launchRibbon: buildLaunchRibbon({
+      readiness,
+      bookings,
+      publicReviewCount,
+      stripeOnboardingComplete,
+    }),
+    reputationMilestones: buildReputationMilestones({
+      bookings,
+      publicReviewCount,
+    }),
   };
 }
 
@@ -288,6 +426,31 @@ export default async function TutorSupportPage() {
     completed: item.completed,
     helper: item.helper,
   }));
+  const mentorReach = personalization?.mentorReach || {
+    profileVisits: 0,
+    questions: 0,
+    trialLessons: 0,
+    learningChecks: 0,
+  };
+  const hasReach = [
+    mentorReach.profileVisits,
+    mentorReach.questions,
+    mentorReach.trialLessons,
+  ].some((value) => value > 0);
+  const reachTitle = hasReach ? "Your Reach" : "Start Your Reach";
+  const launchRibbon = personalization?.launchRibbon || [
+    { label: "Launch", icon: "🚀", state: "current" as const },
+    { label: "First Student", icon: "👨‍🎓", state: "future" as const },
+    { label: "First Review", icon: "⭐", state: "future" as const },
+    { label: "First Payout", icon: "💰", state: "future" as const },
+  ];
+  const reputationMilestones = personalization?.reputationMilestones || [
+    { label: "First Lesson", completed: false },
+    { label: "First Trial Lesson", completed: false },
+    { label: "First Review", completed: false },
+    { label: "First Returning Student", completed: false },
+    { label: "Five Lessons Completed", completed: false },
+  ];
 
   return (
     <div className="bg-[linear-gradient(180deg,#ffffff_0%,#f6fbff_42%,#ffffff_100%)] text-secondary">
@@ -348,8 +511,14 @@ export default async function TutorSupportPage() {
               </div>
             )}
             <div className="mt-5 rounded-2xl bg-primary/5 px-4 py-3">
-              <p className="text-[10px] font-black uppercase tracking-[0.14em] text-primary/60">Next Goal</p>
+              <p className="text-[10px] font-black uppercase tracking-[0.14em] text-primary/60">NEXT MISSION</p>
               <p className="mt-1 text-lg font-black tracking-tight text-secondary">🎯 Get Your First Student</p>
+              <p className="mt-2 text-xs font-semibold leading-5 text-secondary/52">
+                {readiness
+                  ? readiness.recommendedNextAction.body
+                  : "Complete your profile so families can understand your teaching style before booking."}
+              </p>
+              <p className="mt-2 text-[10px] font-black uppercase tracking-[0.12em] text-secondary/35">~2 minutes remaining</p>
             </div>
             <div className="mt-5 grid gap-2">
               {(personalizedLaunchSteps || launchSteps.map((step) => ({ label: step, completed: false }))).map((step, index) => (
@@ -370,17 +539,37 @@ export default async function TutorSupportPage() {
                 </div>
               ))}
             </div>
-            {readiness ? (
-              <div className="mt-4 rounded-2xl bg-primary/5 px-4 py-3">
-                <p className="text-[10px] font-black uppercase tracking-[0.14em] text-primary/60">Recommended next step</p>
-                <p className="mt-1 text-sm font-black text-secondary">{readiness.recommendedNextAction.title}</p>
-                <p className="mt-1 text-xs font-semibold leading-5 text-secondary/52">{readiness.recommendedNextAction.body}</p>
+          </div>
+        </div>
+        <div className="relative mx-auto mt-8 max-w-6xl rounded-[1.5rem] border border-secondary/8 bg-white/85 p-4 shadow-xl shadow-secondary/5 backdrop-blur md:p-5">
+          <div className="grid gap-3 md:grid-cols-4 md:items-center">
+            {launchRibbon.map((stage, index) => (
+              <div key={stage.label} className="relative">
+                {index > 0 && (
+                  <span className="absolute -left-1.5 top-5 hidden h-px w-3 bg-secondary/10 md:block" aria-hidden="true" />
+                )}
+                <div className={`flex items-center gap-3 rounded-2xl px-3 py-3 ring-1 ${
+                  stage.state === "complete"
+                    ? "bg-primary/8 text-secondary ring-primary/15"
+                    : stage.state === "current"
+                      ? "bg-white text-secondary shadow-sm ring-primary/20"
+                      : "bg-slate-50/70 text-secondary/45 ring-secondary/5"
+                }`}>
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-lg shadow-sm">
+                    {stage.icon}
+                  </span>
+                  <span>
+                    <span className="block text-[9px] font-black uppercase tracking-[0.13em] text-secondary/35">
+                      {stage.state === "complete" ? "Complete" : stage.state === "current" ? "Current" : "Upcoming"}
+                    </span>
+                    <span className="block text-sm font-black">{stage.label}</span>
+                  </span>
+                </div>
+                {index < launchRibbon.length - 1 && (
+                  <div className="mx-6 h-4 border-l border-secondary/10 md:hidden" aria-hidden="true" />
+                )}
               </div>
-            ) : (
-              <p className="mt-4 rounded-2xl bg-primary/5 px-4 py-3 text-sm font-semibold leading-6 text-secondary/60">
-                These are the same actions that help your profile feel ready, trustworthy, and easy for families to understand.
-              </p>
-            )}
+            ))}
           </div>
         </div>
       </section>
@@ -390,7 +579,7 @@ export default async function TutorSupportPage() {
           <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
             <div>
               <p className="text-xs font-black uppercase tracking-[0.18em] text-primary">STEP 1</p>
-              <h2 className="mt-2 text-3xl font-black tracking-tight md:text-4xl">Prepare, share, then receive enquiries.</h2>
+              <h2 className="mt-2 text-3xl font-black tracking-tight md:text-4xl">Get Your First Student</h2>
             </div>
             <p className="max-w-xl text-sm font-semibold leading-6 text-secondary/55">
               Parents discover tutors through mentor profiles. Complete the basics, share your ScienceDojo card, and guide families toward a question or trial lesson.
@@ -421,10 +610,38 @@ export default async function TutorSupportPage() {
             ))}
           </div>
 
+          <div className="mt-6 rounded-[1.5rem] border border-secondary/8 bg-white p-5 shadow-sm md:p-6">
+            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+              <div>
+                <p className="text-xs font-black uppercase tracking-[0.16em] text-primary/70">{reachTitle}</p>
+                <p className="mt-2 max-w-xl text-sm font-semibold leading-6 text-secondary/55">
+                  {hasReach
+                    ? "These are the first signals from families discovering your mentor profile."
+                    : "Share your mentor profile to begin attracting parents."}
+                </p>
+              </div>
+              <Link href="/dashboard/tutor/settings" className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-full border border-primary/15 bg-primary/5 px-5 text-xs font-black uppercase tracking-[0.12em] text-primary transition-all hover:-translate-y-0.5 hover:bg-primary/10">
+                Open Share Tools
+              </Link>
+            </div>
+            <div className="mt-5 grid gap-2 sm:grid-cols-3">
+              {[
+                ["👀", "Profile Visits", mentorReach.profileVisits],
+                ["💬", "Questions", mentorReach.questions],
+                ["📅", "Trial Lessons", mentorReach.trialLessons],
+              ].map(([icon, label, value]) => (
+                <div key={label} className="rounded-2xl bg-slate-50 px-4 py-4">
+                  <p className="text-2xl font-black text-secondary">{value}</p>
+                  <p className="mt-1 text-xs font-black text-secondary/55">{icon} {label}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
           <div className="mt-6 rounded-[1.5rem] border border-primary/10 bg-primary/5 p-5 md:p-6">
-            <p className="text-xs font-black uppercase tracking-[0.16em] text-primary/70">Why share?</p>
+            <p className="text-xs font-black uppercase tracking-[0.16em] text-primary/70">Why Parents Choose Tutors</p>
             <p className="mt-3 max-w-3xl text-sm font-semibold leading-7 text-secondary/60">
-              Parents often discover tutors through mentor profiles, WhatsApp recommendations, social media, and local community groups. Sharing your mentor profile helps families learn about your teaching style and contact you before booking.
+              Parents often discover tutors through mentor profiles, recommendations, WhatsApp groups, social media, and local communities. A complete profile and mentor card help families understand your teaching style before they book.
             </p>
           </div>
 
@@ -435,7 +652,7 @@ export default async function TutorSupportPage() {
                   <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/5 text-2xl">📣</span>
                   <h3 className="mt-5 text-2xl font-black tracking-tight text-secondary">Share Your Mentor Profile</h3>
                   <p className="mt-3 text-sm font-semibold leading-7 text-secondary/58">
-                    Download your ScienceDojo share card and post it on WhatsApp, Facebook, Instagram, LinkedIn, or local parent groups.
+                    Download your mentor card, copy your mentor link, and share with parents.
                   </p>
                 </div>
                 <Link href="/dashboard/tutor/settings" className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-full bg-primary px-5 text-xs font-black uppercase tracking-[0.12em] text-white shadow-lg shadow-primary/10 transition-all hover:-translate-y-0.5">
@@ -466,13 +683,7 @@ export default async function TutorSupportPage() {
                         {group.title}
                         <span className="text-primary transition-transform group-open:rotate-180">⌄</span>
                       </summary>
-                      <div className="mt-3 flex flex-wrap gap-2">
-                        {group.items.map((item) => (
-                          <span key={item} className="rounded-full bg-slate-50 px-2.5 py-1 text-[10px] font-bold text-secondary/50">
-                            {item}
-                          </span>
-                        ))}
-                      </div>
+                      <p className="mt-3 text-xs font-semibold leading-5 text-secondary/52">{group.body}</p>
                     </details>
                   ))}
                 </div>
@@ -512,7 +723,10 @@ export default async function TutorSupportPage() {
                     </span>
                     <span className="text-cyan-100 transition-transform group-open:rotate-180">⌄</span>
                   </summary>
-                  <p className="mt-3 pl-12 text-sm font-semibold leading-6 text-white/68">{step.body}</p>
+                  <div className="mt-3 pl-12">
+                    <p className="text-sm font-black leading-6 text-white/82">{step.body}</p>
+                    <p className="mt-1 text-xs font-semibold leading-5 text-white/58">{step.coach}</p>
+                  </div>
                 </details>
               ))}
             </div>
@@ -524,13 +738,19 @@ export default async function TutorSupportPage() {
             <p className="text-xs font-black uppercase tracking-[0.18em] text-primary">STEP 3</p>
             <h2 className="mt-2 text-2xl font-black tracking-tight">Grow Your Reputation</h2>
             <p className="mt-3 text-sm font-semibold leading-7 text-secondary/58">
-              Strong reviews come from clear lessons, steady follow-through, and families knowing what progress looks like.
+              Reviews and repeat students help parents feel confident before booking.
             </p>
             <div className="mt-5 grid gap-2">
-              {reputationTimeline.map((step, index) => (
-                <div key={step} className="flex items-center gap-3 rounded-2xl bg-slate-50 px-3 py-3">
-                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/8 text-xs font-black text-primary">{index + 1}</span>
-                  <span className="text-sm font-black text-secondary">{step}</span>
+              {reputationMilestones.map((milestone) => (
+                <div key={milestone.label} className="flex items-center gap-3 rounded-2xl bg-slate-50 px-3 py-3">
+                  <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-black ${
+                    milestone.completed
+                      ? "bg-primary text-white"
+                      : "bg-white text-primary ring-1 ring-primary/10"
+                  }`}>
+                    {milestone.completed ? "✓" : "○"}
+                  </span>
+                  <span className="text-sm font-black text-secondary">{milestone.label}</span>
                 </div>
               ))}
             </div>
@@ -538,9 +758,9 @@ export default async function TutorSupportPage() {
 
           <article className="rounded-[1.75rem] border border-secondary/8 bg-white p-5 shadow-sm md:p-6">
             <p className="text-xs font-black uppercase tracking-[0.18em] text-primary">STEP 4</p>
-            <h2 className="mt-2 text-2xl font-black tracking-tight">Get Paid</h2>
+            <h2 className="mt-2 text-2xl font-black tracking-tight">Receive Payments</h2>
             <p className="mt-3 text-sm font-semibold leading-7 text-secondary/58">
-              Keep paid teaching organized by connecting payouts and completing the records that support transparent payments.
+              Connect payouts so ScienceDojo can process your earnings after completed lessons.
             </p>
             <div className="mt-5 grid gap-2">
               {paymentTimeline.map((step, index) => (
@@ -556,7 +776,7 @@ export default async function TutorSupportPage() {
           </article>
         </section>
 
-        <section className="mt-14">
+        <section id="resources-help" className="mt-14 scroll-mt-24">
           <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
             <div>
               <p className="text-xs font-black uppercase tracking-[0.18em] text-primary">Resources &amp; Help</p>
@@ -565,6 +785,21 @@ export default async function TutorSupportPage() {
             <p className="max-w-xl text-sm font-semibold leading-6 text-secondary/55">
               Use the steps above to launch and grow. Use these guides whenever you need more detail.
             </p>
+          </div>
+
+          <div className="mt-6 rounded-[1.5rem] border border-primary/10 bg-primary/5 p-5 md:p-6">
+            <p className="text-xs font-black uppercase tracking-[0.16em] text-primary/70">Most Tutors Need</p>
+            <div className="mt-4 grid gap-3 md:grid-cols-3">
+              {mostTutorNeedLinks.map((item) => (
+                <Link
+                  key={item.title}
+                  href={item.href}
+                  className="rounded-2xl bg-white px-4 py-4 text-sm font-black text-secondary shadow-sm ring-1 ring-secondary/5 transition-all hover:-translate-y-0.5 hover:text-primary"
+                >
+                  {item.title} →
+                </Link>
+              ))}
+            </div>
           </div>
 
           <div className="mt-6 grid gap-3 lg:grid-cols-2">

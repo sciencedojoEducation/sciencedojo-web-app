@@ -4,54 +4,12 @@ import { createAdminClient } from "@/utils/supabase/admin";
 import { getActiveAnnouncementsForUser } from "@/lib/announcement-queries";
 import { getAvailabilityByTutorId, getBookingsByUserId, getTutorById } from "@/lib/supabase-queries";
 import { buildTutorLaunchChecklist, buildTutorReadiness } from "@/lib/tutor-readiness";
-import { isAttributionSchemaError } from "@/lib/mentor-attribution";
+import { getTutorMentorReach } from "@/lib/tutor-mentor-reach";
 
 function asRecord(value: unknown): Record<string, any> {
   return value && typeof value === "object" && !Array.isArray(value)
     ? (value as Record<string, any>)
     : {};
-}
-
-async function getMentorReach(tutorId: string) {
-  const adminClient = createAdminClient();
-  const startOfMonth = new Date();
-  startOfMonth.setDate(1);
-  startOfMonth.setHours(0, 0, 0, 0);
-
-  try {
-    const { data, error } = await adminClient
-      .from("lead_sources")
-      .select("id, assessment_id, booking_id")
-      .eq("landing_tutor_id", tutorId)
-      .gte("first_seen_at", startOfMonth.toISOString());
-
-    if (error) {
-      if (!isAttributionSchemaError(error)) {
-        console.error("Mentor reach fetch failed:", error.message);
-      }
-
-      return {
-        profileVisits: 0,
-        learningChecks: 0,
-        trialLessons: 0,
-      };
-    }
-
-    const rows = data || [];
-
-    return {
-      profileVisits: rows.length,
-      learningChecks: rows.filter((row: any) => Boolean(row.assessment_id)).length,
-      trialLessons: rows.filter((row: any) => Boolean(row.booking_id)).length,
-    };
-  } catch (error) {
-    console.error("Mentor reach fetch failed:", error);
-    return {
-      profileVisits: 0,
-      learningChecks: 0,
-      trialLessons: 0,
-    };
-  }
 }
 
 export async function getTutorDashboardData() {
@@ -111,7 +69,7 @@ export async function getTutorDashboardData() {
   };
 
   const completedLessonCount = bookings.filter((booking) => booking.status === "completed").length;
-  const mentorReach = await getMentorReach(user.id);
+  const mentorReach = await getTutorMentorReach(user.id);
   const profileReadiness = buildTutorReadiness({
     tutor: tutorData,
     applicationData,
