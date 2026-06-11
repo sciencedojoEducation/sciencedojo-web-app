@@ -2,6 +2,11 @@
 
 import { createClient } from "@/utils/supabase/server";
 import { revalidatePath } from "next/cache";
+import { sendTutorAcceptedEmail } from "@/lib/email";
+
+function isRecord(value: unknown): value is Record<string, any> {
+  return !!value && typeof value === "object" && !Array.isArray(value);
+}
 
 export async function toggleTutorVerification(tutorId: string, currentStatus: boolean) {
   const supabase = await createClient();
@@ -14,6 +19,17 @@ export async function toggleTutorVerification(tutorId: string, currentStatus: bo
   if (profile?.role !== "admin") return { error: "Unauthorized" };
 
   const adminClient = await import("@/utils/supabase/admin").then(m => m.createAdminClient());
+  const { data: existingApplication } = await adminClient
+    .from("applications")
+    .select("status, data")
+    .eq("user_id", tutorId)
+    .maybeSingle();
+
+  const applicationData = isRecord(existingApplication?.data) ? existingApplication.data : {};
+  const shouldSendAcceptanceEmail =
+    !currentStatus &&
+    existingApplication?.status !== "approved" &&
+    !applicationData.welcome_email_sent_at;
 
   // Use upsert to handle cases where the tutors record might be missing
   const { error } = await adminClient
@@ -37,6 +53,37 @@ export async function toggleTutorVerification(tutorId: string, currentStatus: bo
       .from("applications")
       .update({ status: "approved" })
       .eq("user_id", tutorId);
+
+    if (shouldSendAcceptanceEmail) {
+      const { data: tutorProfile } = await adminClient
+        .from("profiles")
+        .select("full_name, email")
+        .eq("id", tutorId)
+        .maybeSingle();
+
+      if (tutorProfile?.email) {
+        const result = await sendTutorAcceptedEmail(
+          tutorProfile.email,
+          tutorProfile.full_name || "Tutor"
+        );
+
+        if (result.success) {
+          await adminClient
+            .from("applications")
+            .update({
+              data: {
+                ...applicationData,
+                welcome_email_sent_at: new Date().toISOString(),
+              },
+            })
+            .eq("user_id", tutorId);
+        } else {
+          console.error("🚨 Tutor acceptance email failed for", tutorId, result.error);
+        }
+      } else {
+        console.warn("⚠️ Tutor acceptance email skipped; missing profile email for", tutorId);
+      }
+    }
   } else {
     await adminClient
       .from("applications")
@@ -46,6 +93,8 @@ export async function toggleTutorVerification(tutorId: string, currentStatus: bo
 
   console.log("✅ Tutor", tutorId, "verification toggled to:", !currentStatus);
   revalidatePath("/dashboard/admin/tutors");
+  revalidatePath("/dashboard/tutor");
+  revalidatePath("/dashboard/tutor/settings");
   revalidatePath("/"); // Update the public directory
   revalidatePath(`/tutor/${tutorId}`);
   return { success: true };

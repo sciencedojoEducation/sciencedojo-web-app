@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Laptop, Wifi, Camera, Mic, Calendar, UserCheck, DollarSign, Clock } from "lucide-react";
+import { Laptop, Wifi, Camera, Mic, Calendar, UserCheck, DollarSign, Clock, CheckCircle2 } from "lucide-react";
 
 interface LogisticsStageProps {
   data: any;
@@ -37,6 +37,7 @@ export default function LogisticsStage({ data, updateData, onNext, onBack, onSav
     data.has_camera === "true" && 
     data.hourly_rate && 
     Array.isArray(data.preferred_levels) && data.preferred_levels.length > 0;
+  const technicalSetupComplete = techPoints.every((point) => data[point.id] === "true");
 
   return (
     <motion.div
@@ -53,22 +54,32 @@ export default function LogisticsStage({ data, updateData, onNext, onBack, onSav
 
       <div className="mt-8 grid grid-cols-1 gap-8 md:grid-cols-2">
         {/* Technical Readiness */}
-        <div className="space-y-8">
-           <div className="flex items-center gap-3 border-b border-navy/6 pb-4">
-              <Laptop size={20} className="text-blue-500" />
-              <h3 className="text-lg font-black text-navy">Technical Setup</h3>
+        <div className="space-y-5">
+           <div className="space-y-4 border-b border-navy/6 pb-4">
+             <div className="flex items-center gap-3">
+                <Laptop size={20} className="text-blue-500" />
+                <h3 className="text-lg font-black text-navy">Technical Setup</h3>
+             </div>
+             <p className="text-sm font-medium leading-relaxed text-navy/60">
+                Confirm that you have the equipment needed for reliable online lessons.
+             </p>
            </div>
            <div className="grid grid-cols-2 gap-3">
               {techPoints.map((p) => (
                 <button
                   key={p.id}
                   onClick={() => updateData({ [p.id]: data[p.id] === "true" ? "false" : "true" })}
-                  className={`flex flex-col items-center gap-3 rounded-[1.35rem] border p-4 text-center transition-all active:scale-95 ${
+                  className={`relative flex flex-col items-center gap-3 rounded-[1.35rem] border p-4 text-center transition-all active:scale-95 ${
                     data[p.id] === "true"
                       ? "border-primary bg-primary/5 text-navy shadow-sm"
                       : "border-navy/10 bg-white text-navy/40 hover:border-primary/30 hover:text-navy"
                   }`}
                 >
+                  {data[p.id] === "true" && (
+                    <span className="absolute right-3 top-3 flex h-5 w-5 items-center justify-center rounded-full bg-white text-primary shadow-sm ring-1 ring-primary/15">
+                      <CheckCircle2 size={13} />
+                    </span>
+                  )}
                   <div className={`flex h-11 w-11 items-center justify-center rounded-2xl transition-all ${data[p.id] === "true" ? "bg-primary text-white shadow-lg shadow-blue-500/20" : "bg-navy/5 text-navy/30"}`}>
                     {p.icon}
                   </div>
@@ -76,6 +87,12 @@ export default function LogisticsStage({ data, updateData, onNext, onBack, onSav
                 </button>
               ))}
            </div>
+           {technicalSetupComplete && (
+             <div className="inline-flex items-center gap-2 text-xs font-bold text-emerald-700">
+               <CheckCircle2 size={14} />
+               Ready for online teaching
+             </div>
+           )}
         </div>
 
         {/* Preferences & Rates */}

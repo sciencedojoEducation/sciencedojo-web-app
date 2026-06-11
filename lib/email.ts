@@ -43,6 +43,56 @@ export async function sendEmail({
 // Specific Email Templates
 // ==========================================
 
+function escapeHtml(value: string) {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+export async function sendTutorAcceptedEmail(tutorEmail: string, tutorName: string) {
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+  const safeName = escapeHtml(tutorName || 'Tutor');
+
+  const html = `
+    <div style="font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 640px; margin: 0 auto; color: #06172f; background: #ffffff;">
+      <div style="padding: 32px 28px; border: 1px solid #e5eaf2; border-radius: 24px; background: linear-gradient(180deg, #ffffff 0%, #f7fbff 100%);">
+        <p style="margin: 0 0 14px; color: #0066ff; font-size: 12px; font-weight: 800; letter-spacing: 0.16em; text-transform: uppercase;">ScienceDojo Tutor Network</p>
+        <h1 style="margin: 0; font-size: 30px; line-height: 1.15; letter-spacing: -0.03em; color: #06172f;">Welcome to ScienceDojo, ${safeName}.</h1>
+        <p style="margin: 18px 0 0; color: #42526b; font-size: 16px; line-height: 1.7;">
+          Congratulations — your tutor application has been accepted. You are now part of our verified tutor network.
+        </p>
+
+        <div style="margin: 26px 0; padding: 20px; border-radius: 18px; background: #ffffff; border: 1px solid #e5eaf2;">
+          <p style="margin: 0 0 12px; color: #06172f; font-size: 15px; font-weight: 800;">Next goal: launch your tutor profile</p>
+          <ul style="margin: 0; padding-left: 20px; color: #42526b; font-size: 14px; line-height: 1.8;">
+            <li>Complete your public tutor profile.</li>
+            <li>Set your availability for student requests.</li>
+            <li>Connect payments so payouts can be handled smoothly.</li>
+            <li>Review the Tutor Guide Hub before your first lesson.</li>
+          </ul>
+        </div>
+
+        <div style="margin: 28px 0 20px;">
+          <a href="${siteUrl}/dashboard/tutor/settings" style="display: inline-block; background: #0066ff; color: #ffffff; padding: 14px 22px; border-radius: 999px; font-weight: 800; text-decoration: none;">Complete your tutor profile</a>
+        </div>
+
+        <p style="margin: 0; color: #64748b; font-size: 14px; line-height: 1.7;">
+          Need guidance? The <a href="${siteUrl}/support/tutors" style="color: #0066ff; font-weight: 700; text-decoration: none;">Tutor Guide Hub</a> explains profile setup, bookings, payments, safeguarding, and what to expect as you begin teaching on ScienceDojo.
+        </p>
+      </div>
+    </div>
+  `;
+
+  return sendEmail({
+    to: tutorEmail,
+    subject: 'Welcome to ScienceDojo — your tutor application has been accepted',
+    html,
+  });
+}
+
 export async function sendBookingRequestedEmail(tutorEmail: string, studentName: string, date: Date, subject: string) {
   const html = `
     <div style="font-family: sans-serif; max-w: 600px; margin: 0 auto;">

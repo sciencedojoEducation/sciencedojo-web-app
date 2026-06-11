@@ -255,22 +255,22 @@ function TrustPanel() {
   const points = [
     {
       title: "Verified & Trusted",
-      body: "Every tutor completes a review process designed to protect students and maintain teaching quality.",
+      body: "Carefully reviewed tutors.",
       icon: ShieldCheck,
     },
     {
       title: "Teach Global Students",
-      body: "Support motivated learners online across GCSE, IGCSE, IB, A-Level, and STEM subjects.",
+      body: "Support learners worldwide.",
       icon: Globe2,
     },
     {
       title: "Grow With Us",
-      body: "Access clearer teaching workflows, platform guidance, and ongoing support as ScienceDojo grows.",
+      body: "Guidance as your profile grows.",
       icon: Award,
     },
     {
       title: "Fair & Transparent",
-      body: "Clear expectations, respectful policies, and platform support for your time and expertise.",
+      body: "Clear policies and expectations.",
       icon: Scale,
     },
   ];

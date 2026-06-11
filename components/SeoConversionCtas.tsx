@@ -10,7 +10,17 @@ export default function SeoConversionCtas() {
   const [isMounted, setIsMounted] = useState(false);
   // Assume hero is visible on first render to avoid a flash on the homepage.
   const [heroVisible, setHeroVisible] = useState(true);
-  const hiddenPrefixes = ["/dashboard", "/login", "/signup", "/reset-password", "/forgot-password", "/maintenance"];
+  const hiddenPrefixes = [
+    "/dashboard",
+    "/support/tutors",
+    "/tutor/onboarding",
+    "/tutor/contract",
+    "/login",
+    "/signup",
+    "/reset-password",
+    "/forgot-password",
+    "/maintenance",
+  ];
 
   useEffect(() => {
     setIsMounted(true);

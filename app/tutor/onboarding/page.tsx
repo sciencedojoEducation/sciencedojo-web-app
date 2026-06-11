@@ -5,6 +5,8 @@ import Link from "next/link";
 import OnboardingStepper from "./OnboardingStepper";
 import { signOut } from "@/app/login/actions";
 import { Clock, HelpCircle, LogOut } from "lucide-react";
+import Logo from "@/components/Logo";
+import SDLogoBadge from "@/components/brand/SDLogoBadge";
 
 export default async function OnboardingPage() {
   const supabase = await createClient();
@@ -80,14 +82,8 @@ export default async function OnboardingPage() {
       <header className="relative z-10 border-b border-navy/10 bg-white/85 backdrop-blur-xl">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
           <Link href="/" className="flex items-center gap-3" aria-label="ScienceDojo home">
-            <Image
-              src="/images/sciencedojo-logo-full.png"
-              alt="ScienceDojo"
-              width={160}
-              height={36}
-              className="h-8 w-auto object-contain"
-              priority
-            />
+            <SDLogoBadge size="md" variant="light" alt="" priority />
+            <Logo className="text-xl sm:text-2xl" dotClassName="h-1.5 w-1.5 sm:h-2 sm:w-2" />
           </Link>
 
           <div className="flex items-center gap-3 text-sm font-semibold text-navy/65">
