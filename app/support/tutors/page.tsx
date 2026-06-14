@@ -711,13 +711,12 @@ export default async function TutorSupportPage() {
               </p>
             </div>
             <div className="grid gap-3">
-              {teachingTimeline.map((step, index) => (
+              {teachingTimeline.map((step) => (
                 <details key={step.title} className="group rounded-2xl border border-white/10 bg-white/10 p-4">
                   <summary className="flex cursor-pointer list-none items-center justify-between gap-4">
                     <span className="flex items-center gap-3">
                       <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/12 text-lg">{step.icon}</span>
                       <span>
-                        <span className="block text-[10px] font-black uppercase tracking-[0.14em] text-cyan-100/70">Step {index + 1}</span>
                         <span className="block text-base font-black">{step.title}</span>
                       </span>
                     </span>

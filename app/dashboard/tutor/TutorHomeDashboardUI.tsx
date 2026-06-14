@@ -96,12 +96,14 @@ export default function TutorHomeDashboardUI({
 
   const recentActivity = [
     ...requested.slice(0, 2).map((booking) => ({
+      id: `request-${booking.id}`,
       label: "Lesson request",
       title: `${booking.student_name || "A student"} requested ${booking.subject}`,
       meta: formatLessonDate(booking.requested_date),
       href: "/dashboard/tutor/schedule?tab=requests",
     })),
     ...upcoming.slice(0, 2).map((booking) => ({
+      id: `upcoming-${booking.id}`,
       label: "Upcoming lesson",
       title: `${booking.subject} with ${booking.student_name || "student"}`,
       meta: formatLessonDate(booking.requested_date),
@@ -109,6 +111,7 @@ export default function TutorHomeDashboardUI({
     })),
     ...(reviewVisibility.pending > 0
       ? [{
+          id: "reviews-pending",
           label: "Reviews",
           title: `${reviewVisibility.pending} review${reviewVisibility.pending === 1 ? "" : "s"} pending admin approval`,
           meta: "ScienceDojo moderation",
@@ -117,6 +120,7 @@ export default function TutorHomeDashboardUI({
       : []),
     ...(slots.length > 0
       ? [{
+          id: "availability-published",
           label: "Availability",
           title: "Your requestable lesson times are published",
           meta: `${slots.length} slot${slots.length === 1 ? "" : "s"} active`,
@@ -363,7 +367,7 @@ export default function TutorHomeDashboardUI({
         </div>
         <div className="mt-5 grid gap-3 md:grid-cols-2">
           {recentActivity.map((activity) => (
-            <Link key={`${activity.label}-${activity.title}`} href={activity.href} className="rounded-2xl border border-secondary/5 bg-slate-50/70 p-4 transition-all hover:border-primary/20 hover:bg-primary/5">
+            <Link key={activity.id} href={activity.href} className="rounded-2xl border border-secondary/5 bg-slate-50/70 p-4 transition-all hover:border-primary/20 hover:bg-primary/5">
               <p className="text-[10px] font-black uppercase tracking-[0.14em] text-primary/60">{activity.label}</p>
               <h3 className="mt-2 text-sm font-black text-secondary">{activity.title}</h3>
               <p className="mt-1 text-xs font-semibold text-secondary/42">{activity.meta}</p>

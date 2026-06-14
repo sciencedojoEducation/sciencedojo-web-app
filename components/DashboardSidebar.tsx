@@ -74,7 +74,8 @@ export default async function DashboardSidebar({ role }: DashboardSidebarProps) 
 
   const navLinks: Record<string, NavLink[]> = {
     parent: [
-      { name: "My Bookings", href: "/dashboard/parent", icon: "🗓️", exact: true, tourId: "parent-bookings" },
+      { name: "Dashboard", href: "/dashboard/parent", icon: "🗓️", exact: true, tourId: "parent-bookings" },
+      { name: "Learning Guide", href: "/support", icon: "📘" },
       { name: "My Classes", href: "/dashboard/classes", icon: "🎓", tourId: "parent-classes" },
       { name: "Messages", href: "/dashboard/messages", icon: "💬", badge: unreadCount, tourId: "parent-messages" },
       { name: "Browse Tutors", href: "/dashboard/parent/tutors", icon: "🔍", tourId: "parent-browse" },
@@ -83,6 +84,7 @@ export default async function DashboardSidebar({ role }: DashboardSidebarProps) 
     ],
     student: [
       { name: "My Bookings", href: "/dashboard/student", icon: "🗓️", exact: true, tourId: "student-bookings" },
+      { name: "Learning Guide", href: "/support", icon: "📘" },
       { name: "My Classes", href: "/dashboard/classes", icon: "🎓", tourId: "student-classes" },
       { name: "Messages", href: "/dashboard/messages", icon: "💬", badge: unreadCount, tourId: "student-messages" },
       { name: "Missions", href: "/dashboard/student/missions", icon: "🧭", tourId: "student-tasks" },

@@ -24,12 +24,25 @@ function shortText(value: string | undefined, fallback: string, limit = 150) {
   return value.length > limit ? `${value.slice(0, limit).trim()}...` : value;
 }
 
-type ParentJourneyItem = {
+type ParentActivityItem = {
   id: string;
   label: string;
   title: string;
-  meaning: string;
-  nextStep: string;
+  body: string;
+  action?: string;
+};
+
+type ParentNextStepItem = {
+  title: string;
+  body: string;
+  active: boolean;
+};
+
+type SupportTeamMember = {
+  id: string;
+  name: string;
+  subject?: string;
+  avatar?: string;
 };
 
 type ParentLearnerContext = {
@@ -59,6 +72,22 @@ function resolveParentLearnerContext({
     studentName: isParent ? childName || "your child" : userName,
     mode: isParent ? "parent_owned_profile" : "self_managed_student",
   };
+}
+
+function uniqueNonEmpty(values: Array<string | undefined | null>) {
+  return Array.from(new Set(values.map((value) => value?.trim()).filter(Boolean) as string[]));
+}
+
+function formatLessonDate(value: string) {
+  return new Date(value).toLocaleDateString(undefined, { month: "short", day: "numeric" });
+}
+
+function formatNextLessonDate(value: string) {
+  return new Date(value).toLocaleDateString(undefined, { month: "long", day: "numeric", hour: "numeric", minute: "2-digit" });
+}
+
+function formatNextLessonShort(value: string) {
+  return new Date(value).toLocaleString(undefined, { weekday: "long", hour: "numeric", minute: "2-digit" });
 }
 
 export default async function ParentDashboard() {
@@ -159,67 +188,143 @@ export default async function ParentDashboard() {
   const latestAssignment = assignments[0];
   const shouldShowTutorGrid = bookings.length === 0;
   const availableTutors = shouldShowTutorGrid ? await getTutors("", "All") : [];
+  const subjectsSupported = uniqueNonEmpty(bookings.map((booking) => booking.subject));
+  const currentFocus =
+    latestWeakTopic ||
+    latestMission?.mission_blueprint?.topic ||
+    latestAssignment?.class_display_name ||
+    nextSession?.subject ||
+    latestLesson?.subject ||
+    subjectsSupported[0] ||
+    "First lesson will identify the focus";
+  const currentStatus = nextSession
+    ? `${nextSession.subject} lesson scheduled`
+    : requested.length > 0
+      ? "Lesson request waiting for tutor confirmation"
+      : toPay.length > 0
+        ? "Tutor accepted. Payment is ready to confirm"
+        : latestLesson
+          ? "Learning support is underway"
+          : "Ready to schedule support";
+  const nextLessonTime = nextSession ? formatNextLessonShort(nextSession.requested_date) : "Not scheduled yet";
+  const nextLessonSubject = nextSession?.subject?.trim();
+  const nextLessonTutor = nextSession?.tutor_name?.trim();
+  const nextLessonDetail = nextSession
+    ? nextLessonSubject && nextLessonTutor
+      ? `${nextLessonSubject} with ${nextLessonTutor}`
+      : nextLessonSubject
+        ? `${nextLessonSubject} lesson scheduled`
+        : nextLessonTutor
+          ? `Upcoming lesson with ${nextLessonTutor}`
+          : "Upcoming lesson"
+    : "Book a lesson to continue the learning journey.";
+  const statusMeaning = nextSession
+    ? `${studentName} has a guided lesson coming up on ${formatNextLessonDate(nextSession.requested_date)}${nextSession.tutor_name ? ` with ${nextSession.tutor_name}` : ""}.`
+    : requested.length > 0
+      ? "A tutor request has been sent. Once the tutor accepts, you can confirm the booking and continue the journey."
+      : toPay.length > 0
+        ? "The tutor has accepted the request. Confirming payment secures the learning support."
+        : latestLesson
+          ? "There is completed learning activity to review and build from."
+          : "No upcoming lesson is booked yet, so the next guided step is to schedule support.";
+  const supportTeam: SupportTeamMember[] = Object.values(
+    bookings.reduce((acc, booking) => {
+      if (!booking.tutor_id || !booking.tutor_name) return acc;
+      if (!acc[booking.tutor_id]) {
+        acc[booking.tutor_id] = {
+          id: booking.tutor_id,
+          name: booking.tutor_name,
+          subject: booking.subject || undefined,
+          avatar: booking.tutor_avatar || undefined,
+        };
+      }
+      return acc;
+    }, {} as Record<string, SupportTeamMember>),
+  ).slice(0, 4);
 
-  const recommendedAction = !nextSession
+  const recommendedAction = toPay.length > 0
+    ? { label: "Confirm booking", href: "#parent-confirm-booked-support" }
+    : !nextSession
     ? { label: "Schedule a lesson", href: "/dashboard/parent/tutors" }
     : latestAssignment
       ? { label: "Review practice tasks", href: "#parent-practice-tasks" }
       : latestMission
         ? { label: "Review learning Missions", href: "#parent-missions" }
-        : { label: "Message tutor", href: "/dashboard/messages" };
+      : { label: "Message tutor", href: "/dashboard/messages" };
 
-  const parentJourneyItems: ParentJourneyItem[] = [
+  const recentLearningActivity: ParentActivityItem[] = [
     {
-      id: "current-support",
-      label: "Current support",
-      title: nextSession ? `${nextSession.subject} lesson scheduled` : "Ready to schedule support",
-      meaning: nextSession
-        ? `${new Date(nextSession.requested_date).toLocaleDateString(undefined, { month: "long", day: "numeric", hour: "numeric", minute: "2-digit" })}${nextSession.tutor_name ? ` with ${nextSession.tutor_name}` : ""}.`
-        : "No upcoming lesson is booked yet, so the learning pathway is ready for its next guided step.",
-      nextStep: nextSession
-        ? "Join the classroom when it begins, or message the tutor if anything needs clarifying."
-        : "Schedule a lesson so the next learning step is guided.",
+      id: "latest-lesson",
+      label: "Latest lesson",
+      title: latestLesson ? `${latestLesson.subject} lesson` : "No lessons yet",
+      body: latestLesson
+        ? `Completed ${formatLessonDate(latestLesson.requested_date)}${latestLesson.tutor_name ? ` with ${latestLesson.tutor_name}` : ""}.`
+        : "Learning activity will appear here after the first lesson.",
+      action: latestLesson ? "Review the lesson summary below." : "Book a lesson to begin the learning journey.",
     },
     {
-      id: "latest-learning",
-      label: "Latest learning",
-      title: latestLesson ? `${latestLesson.subject} lesson summary` : "Lesson understanding will appear here",
-      meaning: shortText(
+      id: "latest-note",
+      label: "Latest tutor feedback",
+      title: latestLesson ? "What the tutor noticed" : "Tutor feedback will appear here",
+      body: shortText(
         latestLesson?.lesson_notes?.summary,
-        "After the first completed lesson, this will show what was covered and why it matters.",
+        "After a completed lesson, this will show what was covered and what matters next.",
         125,
       ),
-      nextStep: latestLesson?.lesson_notes?.homework
+      action: latestLesson?.lesson_notes?.homework
         ? shortText(latestLesson.lesson_notes.homework, "Follow the tutor's recommended practice.", 95)
-        : "Complete the first lesson so tutor notes can shape the next step.",
+        : "Tutor guidance will shape the next step after lessons begin.",
     },
     {
-      id: "support-focus",
-      label: "Support focus",
-      title: latestWeakTopic || latestAssignment?.class_display_name || "Next focus will become clear",
-      meaning: latestWeakTopic
-        ? `${latestWeakTopic} is the clearest area for guided reinforcement.`
-        : shortText(
-            latestAssignment?.content,
-            "Tutor notes and practice tasks will reveal the topic that needs support next.",
-            125,
-      ),
-      nextStep: latestAssignment ? "Review the tutor-guided practice task." : "Begin with a lesson to identify the right focus.",
-    },
-    {
-      id: "between-lessons",
-      label: "Between lessons",
-      title: latestAssignment ? "Tutor-guided practice is ready" : latestMission ? "Learning Mission in progress" : "Practice support will build here",
-      meaning: latestAssignment
-        ? shortText(latestAssignment.content, "A practice task is ready.", 125)
+      id: "latest-practice",
+      label: "Latest practice",
+      title: latestAssignment ? "Practice task ready" : latestMission ? "Learning Mission active" : "Practice will build here",
+      body: latestAssignment
+        ? shortText(latestAssignment.content, "A tutor-guided practice task is ready.", 125)
         : latestMission
           ? `${latestMission.mission_blueprint?.topic || "A guided practice pathway"} is keeping learning connected between lessons.`
           : "Homework and Missions will appear when structured practice begins.",
-      nextStep: latestAssignment
+      action: latestAssignment
         ? "Make time for this before the next lesson."
         : latestMission
-          ? "Review the learning Mission to understand the current pathway."
+          ? "Review the Mission to understand the current pathway."
           : "Schedule a lesson to begin between-lesson support.",
+    },
+    {
+      id: "progress-signal",
+      label: "Current learning focus",
+      title: latestWeakTopic || latestMission?.mission_blueprint?.topic || "Current focus will become clearer",
+      body: latestWeakTopic
+        ? `${latestWeakTopic} is the clearest area for guided reinforcement.`
+        : "ScienceDojo will connect lesson notes, practice, and tutor guidance into a clearer learning picture over time.",
+      action: "Use the next lesson or practice task to keep momentum visible.",
+    },
+  ];
+  const whatHappensNext: ParentNextStepItem[] = [
+    {
+      title: "Schedule lesson",
+      body: "Book the next guided support session.",
+      active: !nextSession,
+    },
+    {
+      title: "Meet tutor",
+      body: "Attend the lesson and focus on one clear goal.",
+      active: !!nextSession,
+    },
+    {
+      title: "Receive summary",
+      body: "Review what was covered and why it matters.",
+      active: !!latestLesson,
+    },
+    {
+      title: "Practise between lessons",
+      body: "Use homework or Missions to reinforce learning.",
+      active: !!latestAssignment || !!latestMission,
+    },
+    {
+      title: "Track progress over time",
+      body: "Look for patterns in focus areas, notes, and confidence.",
+      active: past.length > 0,
     },
   ];
 
@@ -230,93 +335,164 @@ export default async function ParentDashboard() {
          <AnnouncementFeed announcements={announcements} />
       )}
 
-      <div data-tour="parent-welcome" className="flex flex-col gap-4 md:flex-row md:justify-between md:items-end">
-         <div className="flex items-center gap-4 sm:gap-6">
-            <div className="w-14 h-14 rounded-2xl bg-primary/10 border-2 border-white shadow-md overflow-hidden flex items-center justify-center transform -rotate-3 transition-transform hover:rotate-0 sm:h-20 sm:w-20 sm:rounded-[1.5rem] sm:border-4 sm:shadow-xl">
-               {avatarUrl ? (
-                  <img src={avatarUrl} alt="Profile" className="w-full h-full object-cover" />
-               ) : (
-                  <span className="text-2xl font-black text-primary sm:text-3xl">{userName.charAt(0)}</span>
-               )}
-            </div>
-            <div>
-               <h1 className="text-3xl font-black mb-1 bg-gradient-to-r from-secondary to-primary bg-clip-text text-transparent tracking-tight sm:text-4xl">
-                  Hello, {userName.trim().split(' ')[0]}!
-               </h1>
-               <p className="text-secondary/55 text-sm font-bold flex items-center gap-2">
-                 <span className="w-2 h-2 rounded-full bg-primary/70"></span>
-                 {meta?.sub_role === "parent" 
-                   ? `Here is where ${studentName || "your child"} is in the learning journey.`
-                   : "Ready for your next learning session?"}
-               </p>
-            </div>
-         </div>
-      </div>
-
-      <section className="rounded-[1.5rem] border border-primary/[0.07] bg-gradient-to-br from-white via-[#fbfdff] to-[#f4f9ff] p-4 sm:p-5 md:rounded-[2.25rem] md:p-6">
-        <div className="mb-3 md:mb-4">
+      <section data-tour="parent-welcome" className="rounded-[1.5rem] border border-primary/[0.07] bg-gradient-to-br from-white via-[#fbfdff] to-[#f4f9ff] p-4 sm:p-5 md:rounded-[2.25rem] md:p-7">
+        <div className="grid gap-5 lg:grid-cols-[1fr_0.78fr] lg:items-stretch">
           <div>
-            <p className="text-[9px] font-black uppercase tracking-[0.08em] text-secondary/30">Guided learning journey</p>
-            <h2 className="mt-2 text-xl font-black tracking-tight text-secondary md:text-2xl">Your child&apos;s learning journey</h2>
-            <p className="mt-2 max-w-2xl text-sm font-medium leading-6 text-secondary/56">
-              What happened, what it means, and what should happen next.
-            </p>
-          </div>
-        </div>
-
-        <div className="relative mt-3 overflow-hidden rounded-[1.25rem] border border-secondary/[0.05] bg-white md:rounded-[1.75rem]">
-          <div className="absolute bottom-5 left-5 top-5 w-px bg-primary/[0.07]" aria-hidden="true" />
-          <div className="divide-y divide-secondary/[0.045]">
-            {parentJourneyItems.map((item, index) => (
-              <div key={item.id} className="relative grid gap-1 py-3 pl-11 pr-4 md:grid-cols-[8rem_1fr] md:items-start md:gap-5 md:px-5 md:py-3.5 md:pl-14">
-                <span
-                  className={`absolute left-[1rem] top-[1rem] h-2.5 w-2.5 rounded-full border-2 border-white ${
-                    index === 0 ? "bg-primary/80" : index === parentJourneyItems.length - 1 ? "bg-secondary/70" : "bg-primary/20"
-                  }`}
-                  aria-hidden="true"
-                />
-                <p className="text-[9px] font-black uppercase tracking-[0.07em] text-secondary/28 md:pt-1">{item.label}</p>
-                <div className="min-w-0">
-                  <h3 className="text-sm font-black leading-5 text-secondary md:text-base">{item.title}</h3>
-                  <p className="mt-0.5 text-sm font-medium leading-5 text-secondary/54">{item.meaning}</p>
-                  <p className="mt-1 text-xs font-bold leading-5 text-secondary/48">
-                    <span className="text-primary/60">Next step &rarr; </span>{item.nextStep}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <div className="border-t border-secondary/[0.05] bg-[#f8fbff] p-5 md:flex md:items-center md:justify-between md:gap-6 md:px-6 md:py-5">
-            <div>
-              <h3 className="text-sm font-black text-secondary md:text-base">
-                Continue {studentName || "your child"}&apos;s guided learning journey.
-              </h3>
-              <p className="mt-1 text-sm font-medium leading-6 text-secondary/52">
-                One clear action keeps the next step calm and easy to follow.
-              </p>
+            <div className="inline-flex rounded-full border border-primary/10 bg-white px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.16em] text-primary shadow-sm">
+              Learning Home
             </div>
-            <Link
-              href={recommendedAction.href}
-              className="mt-4 inline-flex min-h-11 w-full items-center justify-center rounded-2xl bg-secondary px-5 py-3 text-xs font-black uppercase tracking-[0.1em] text-white transition-colors hover:bg-secondary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 md:mt-0 md:w-auto"
-            >
-              {recommendedAction.label}
-            </Link>
+            <h1 className="mt-4 text-3xl font-black tracking-tight text-secondary sm:text-4xl">
+              {studentName === "your child" ? "Your Child's Learning Journey" : `${studentName}'s Learning Journey`}
+            </h1>
+            <p className="mt-3 max-w-2xl text-sm font-semibold leading-7 text-secondary/58">
+              A calm place to understand what is happening, who is helping, and what should happen next.
+            </p>
+            <div className="mt-5 grid gap-3 sm:grid-cols-3">
+              <div className="rounded-2xl bg-white/90 p-4 shadow-sm ring-1 ring-secondary/[0.05]">
+                <p className="text-[10px] font-black uppercase tracking-[0.14em] text-secondary/35">Current status</p>
+                <p className="mt-2 text-lg font-black text-secondary">{currentStatus}</p>
+              </div>
+              <div className="rounded-2xl bg-white/90 p-4 shadow-sm ring-1 ring-secondary/[0.05]">
+                <p className="text-[10px] font-black uppercase tracking-[0.14em] text-secondary/35">Current focus</p>
+                <p className="mt-2 text-lg font-black text-secondary">{currentFocus}</p>
+              </div>
+              <div className="rounded-2xl bg-white/90 p-4 shadow-sm ring-1 ring-secondary/[0.05]">
+                <p className="text-[10px] font-black uppercase tracking-[0.14em] text-secondary/35">Next lesson</p>
+                <p className="mt-2 text-lg font-black text-secondary">{nextLessonTime}</p>
+                <p className="mt-1 text-xs font-semibold leading-5 text-secondary/48">{nextLessonDetail}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="rounded-[1.4rem] border border-primary/10 bg-white p-5 shadow-sm">
+            <p className="text-[10px] font-black uppercase tracking-[0.16em] text-primary/65">What it means</p>
+            <p className="mt-3 text-sm font-semibold leading-7 text-secondary/60">{statusMeaning}</p>
+            <div className="mt-5 rounded-2xl bg-primary/5 p-4">
+              <p className="text-[10px] font-black uppercase tracking-[0.14em] text-primary/65">Next recommended action</p>
+              <p className="mt-2 text-base font-black text-secondary">{recommendedAction.label}</p>
+              <Link
+                href={recommendedAction.href}
+                className="mt-4 inline-flex min-h-11 w-full items-center justify-center rounded-2xl bg-secondary px-5 py-3 text-xs font-black uppercase tracking-[0.1em] text-white transition-colors hover:bg-secondary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+              >
+                {recommendedAction.label}
+              </Link>
+            </div>
           </div>
         </div>
       </section>
 
+      <section className="rounded-[1.5rem] border border-secondary/10 bg-white p-4 shadow-sm sm:p-5 md:rounded-[2rem] md:p-6">
+        <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-[0.16em] text-primary/65">Support team</p>
+            <h2 className="mt-2 text-2xl font-black text-secondary">Your Child&apos;s Support Team</h2>
+            {supportTeam.length > 0 && (
+              <p className="mt-2 max-w-2xl text-sm font-semibold leading-6 text-secondary/55">
+                These are the tutors currently supporting your child&apos;s learning journey.
+              </p>
+            )}
+          </div>
+          <Link href="/dashboard/messages" className="text-sm font-black text-primary hover:underline">
+            Open messages →
+          </Link>
+        </div>
+        {supportTeam.length > 0 ? (
+          <div className="mt-5 grid gap-3 md:grid-cols-2">
+            {supportTeam.map((tutor) => (
+              <div key={tutor.id} className="flex items-center gap-4 rounded-2xl border border-secondary/8 bg-slate-50/70 p-4">
+                <div className="relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-primary/10 text-sm font-black text-primary">
+                  {tutor.avatar ? (
+                    <Image src={tutor.avatar} alt="" fill className="object-cover" />
+                  ) : (
+                    tutor.name.charAt(0)
+                  )}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-black text-secondary">{tutor.name}</p>
+                  {tutor.subject && <p className="mt-1 text-xs font-bold text-secondary/45">{tutor.subject} support</p>}
+                </div>
+                <div className="flex shrink-0 flex-col items-end gap-1 text-right">
+                  <Link href={`/tutor/${tutor.id}`} className="text-[10px] font-black uppercase tracking-[0.12em] text-primary hover:underline">
+                    Profile
+                  </Link>
+                  <Link href="/dashboard/messages" className="text-[10px] font-black uppercase tracking-[0.12em] text-secondary/45 hover:text-primary">
+                    Message
+                  </Link>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="mt-5 rounded-2xl border border-dashed border-secondary/15 bg-surface p-5">
+            <p className="text-sm font-bold leading-7 text-secondary/58">
+              Your support team will appear here once a tutor is connected to a lesson. Until then, you can browse verified tutor support for the right subject and learning fit.
+            </p>
+            <Link href="/dashboard/parent/tutors" className="mt-4 inline-flex rounded-2xl bg-secondary px-5 py-3 text-xs font-black uppercase tracking-[0.14em] text-white transition-colors hover:bg-secondary/90">
+              Browse Tutors
+            </Link>
+          </div>
+        )}
+      </section>
+
+      <section className="rounded-[1.5rem] border border-secondary/10 bg-white p-4 shadow-sm sm:p-5 md:rounded-[2rem] md:p-6">
+        <div className="mb-5">
+          <p className="text-[10px] font-black uppercase tracking-[0.16em] text-primary/65">What happens next</p>
+          <h2 className="mt-2 text-2xl font-black text-secondary">A simple path through the learning journey</h2>
+        </div>
+        <div className="grid gap-2">
+          {whatHappensNext.map((step, index) => (
+            <div key={step.title} className={`flex gap-3 rounded-2xl px-3 py-3 ${
+              step.active ? "bg-primary/5" : "bg-slate-50"
+            }`}>
+              <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-black ${
+                step.active ? "bg-primary text-white" : "bg-white text-primary ring-1 ring-primary/10"
+              }`}>
+                {index + 1}
+              </span>
+              <span>
+                <span className="block text-sm font-black text-secondary">{step.title}</span>
+                <span className="mt-0.5 block text-xs font-semibold leading-5 text-secondary/48">{step.body}</span>
+              </span>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="rounded-[1.5rem] border border-primary/[0.07] bg-white p-4 shadow-sm sm:p-5 md:rounded-[2rem] md:p-6">
+        <div className="mb-5">
+          <p className="text-[10px] font-black uppercase tracking-[0.16em] text-primary/65">Recent learning activity</p>
+          <h2 className="mt-2 text-2xl font-black text-secondary">What happened recently?</h2>
+          <p className="mt-2 max-w-2xl text-sm font-medium leading-6 text-secondary/56">
+            Lesson notes, practice, and Missions will build a clearer picture as support continues.
+          </p>
+        </div>
+        <div className="grid gap-3 md:grid-cols-2">
+          {recentLearningActivity.map((item) => (
+            <article key={item.id} className="rounded-2xl bg-slate-50 p-4">
+              <p className="text-[10px] font-black uppercase tracking-[0.14em] text-secondary/35">{item.label}</p>
+              <h3 className="mt-2 text-base font-black text-secondary">{item.title}</h3>
+              <p className="mt-2 text-sm font-medium leading-6 text-secondary/58">{item.body}</p>
+              {item.action && (
+                <p className="mt-3 text-xs font-bold leading-5 text-secondary/45">
+                  <span className="text-primary/65">Next &rarr; </span>{item.action}
+                </p>
+              )}
+            </article>
+          ))}
+        </div>
+      </section>
+
       <div data-tour="parent-progress">
-        <StudentProgressStats bookings={bookings} />
+        <StudentProgressStats bookings={bookings} currentFocus={currentFocus} />
       </div>
 
       <section id="parent-missions" className="rounded-[1.5rem] border border-primary/10 bg-white p-4 shadow-sm sm:p-5 md:rounded-[2.5rem] md:p-8">
         <div className="mb-7 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
           <div>
-            <p className="text-[10px] font-black uppercase tracking-[0.16em] text-primary/65">Learning Mission visibility</p>
-            <h2 className="mt-2 text-2xl font-black text-secondary">Learning momentum between lessons</h2>
+            <p className="text-[10px] font-black uppercase tracking-[0.16em] text-primary/65">Learning between lessons</p>
+            <h2 className="mt-2 text-2xl font-black text-secondary">Practice support between sessions</h2>
             <p className="mt-3 max-w-2xl text-sm font-medium leading-7 text-secondary/55">
-              Guided practice helps connect lesson notes, tutor review, and the next learning step.
+              Progress grows between lessons, not only during lessons. Homework and Missions help connect tutor guidance to steady practice.
             </p>
           </div>
           <Link href="/dashboard/classes" className="rounded-2xl border border-secondary/10 px-5 py-3 text-xs font-black uppercase tracking-[0.14em] text-secondary/60 transition-colors hover:border-primary/20 hover:text-primary">
@@ -376,7 +552,7 @@ export default async function ParentDashboard() {
 
       {/* SECURE PAYMENT REQUIRED (Accepted Handshake) */}
       {toPay.length > 0 && (
-        <section className="bg-primary/5 rounded-[1.5rem] p-4 border border-primary/20 shadow-sm md:rounded-[2.5rem] md:p-8 md:border-2 md:shadow-xl md:shadow-primary/5">
+        <section id="parent-confirm-booked-support" className="bg-primary/5 rounded-[1.5rem] p-4 border border-primary/20 shadow-sm md:rounded-[2.5rem] md:p-8 md:border-2 md:shadow-xl md:shadow-primary/5">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-5 md:mb-8">
             <h2 className="text-2xl font-black text-secondary flex items-center gap-4">
               <span className="p-2 bg-primary text-white rounded-xl">
@@ -429,7 +605,7 @@ export default async function ParentDashboard() {
       )}
 
       {requested.length > 0 && (
-        <section>
+        <section id="parent-lesson-requests">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-xl font-black text-secondary flex items-center gap-3">
               Lesson requests
