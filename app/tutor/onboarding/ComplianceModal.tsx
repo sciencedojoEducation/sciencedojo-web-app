@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, ShieldCheck, CheckSquare, ScrollText } from "lucide-react";
+import { X, ShieldCheck, CheckSquare, ScrollText, Download } from "lucide-react";
 
 interface ComplianceModalProps {
   isOpen: boolean;
@@ -14,6 +15,26 @@ interface ComplianceModalProps {
 
 export default function ComplianceModal({ isOpen, onClose, onAccept, title, type }: ComplianceModalProps) {
   const [isChecked, setIsChecked] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
+  const agreementPdfHref =
+    type === "gdpr"
+      ? "/documents/sciencedojo-gdpr-agreement.pdf"
+      : "/documents/sciencedojo-tutor-agreement.pdf";
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [isOpen]);
 
   const gdprContent = (
     <div className="space-y-6 text-navy/70 font-medium leading-relaxed">
@@ -57,7 +78,7 @@ export default function ComplianceModal({ isOpen, onClose, onAccept, title, type
 
       <section className="space-y-2">
         <h4 className="font-black text-navy text-sm uppercase tracking-tight">Teaching Standards</h4>
-        <p className="text-sm">Deliver clear, structured, and student-focused lessons that align with the ScienceDojo Gold Standard.</p>
+        <p className="text-sm">Deliver clear, structured, and student-focused lessons that align with ScienceDojo teaching standards.</p>
       </section>
 
       <section className="space-y-2">
@@ -67,7 +88,7 @@ export default function ComplianceModal({ isOpen, onClose, onAccept, title, type
 
       <section className="space-y-2 border-l-4 border-red-500/20 pl-4 py-1">
         <h4 className="font-black text-red-600 text-sm uppercase tracking-tight">Safety & Ethics</h4>
-        <p className="text-sm italic font-bold">Any misconduct or breach of safety protocols will result in immediate platform removal.</p>
+        <p className="text-sm italic font-bold">Any misconduct or breach of safety policies may result in platform removal.</p>
       </section>
 
       <section className="space-y-3 bg-blue-50/50 p-6 rounded-[2rem] border border-blue-100/50">
@@ -112,17 +133,17 @@ export default function ComplianceModal({ isOpen, onClose, onAccept, title, type
     </div>
   );
 
-  return (
+  const modal = (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-6">
+        <div className="fixed inset-0 z-[1000] flex items-center justify-center p-6">
           {/* Backdrop */}
           <motion.div 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="absolute inset-0 bg-navy/60 backdrop-blur-md"
+            className="absolute inset-0 bg-slate-950/50 backdrop-blur-sm"
           />
 
           {/* Modal Card */}
@@ -130,7 +151,7 @@ export default function ComplianceModal({ isOpen, onClose, onAccept, title, type
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            className="relative w-full max-w-2xl bg-white rounded-[3.5rem] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
+            className="relative z-[1001] w-full max-w-2xl bg-white rounded-[3.5rem] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
           >
             {/* Header */}
             <div className="p-10 border-b border-navy/5 flex justify-between items-center shrink-0">
@@ -158,6 +179,18 @@ export default function ComplianceModal({ isOpen, onClose, onAccept, title, type
 
             {/* Footer */}
             <div className="p-10 border-t border-navy/5 bg-white shrink-0 space-y-6">
+               <div className="flex flex-col gap-3 rounded-[1.5rem] border border-navy/8 bg-slate-50/70 p-4 sm:flex-row sm:items-center sm:justify-between">
+                  <p className="text-sm font-semibold text-navy/55">You can download a copy for your records.</p>
+                  <a
+                    href={agreementPdfHref}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center justify-center gap-2 rounded-xl border border-blue-100 bg-white px-4 py-2.5 text-sm font-black text-blue-600 shadow-sm transition-all hover:border-blue-200 hover:bg-blue-50"
+                  >
+                    <Download size={16} />
+                    Download PDF
+                  </a>
+               </div>
                <label className="flex items-start gap-4 cursor-pointer group">
                   <div 
                     onClick={() => setIsChecked(!isChecked)}
@@ -168,7 +201,7 @@ export default function ComplianceModal({ isOpen, onClose, onAccept, title, type
                      {isChecked && <CheckSquare size={16} className="text-white" strokeWidth={3} />}
                   </div>
                   <span className="text-sm font-bold text-navy/60 group-hover:text-navy transition-colors">
-                    I have read and agree to the {type === "gdpr" ? "GDPR Data Processing terms" : "ScienceDojo Sensei Agreement"}
+                    I have read and agree to the {type === "gdpr" ? "GDPR Data Processing terms" : "ScienceDojo Tutor Agreement"}
                   </span>
                </label>
 
@@ -195,4 +228,8 @@ export default function ComplianceModal({ isOpen, onClose, onAccept, title, type
       )}
     </AnimatePresence>
   );
+
+  if (!isMounted) return null;
+
+  return createPortal(modal, document.body);
 }

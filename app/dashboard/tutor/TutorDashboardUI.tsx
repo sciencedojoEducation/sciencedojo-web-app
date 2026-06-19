@@ -2,13 +2,16 @@
 
 import { Booking, TutorProfile, AvailabilitySlot } from "@/lib/supabase-queries";
 import { Announcement } from "@/lib/announcement-queries";
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import Link from "next/link";
 import { updateBookingStatus, updateTutorProfile, completeSessionAction } from "@/app/tutor/actions";
+import { markTutorWelcomeSeen } from "./actions";
 import TutorSchedule from "@/components/TutorSchedule";
 import TutorAvailabilityCalendar from "@/components/TutorAvailabilityCalendar";
 import ImageCropper from "@/components/ImageCropper";
 import AnnouncementFeed from "@/components/AnnouncementFeed";
+
+export type TutorWorkspaceTab = "schedule" | "requests" | "sessions" | "availability" | "students";
 
 // Deterministically pick a gradient based on a string (name or id)
 const AVATAR_GRADIENTS = [
@@ -70,10 +73,49 @@ interface TutorDashboardUIProps {
   tutorData: TutorProfile | null;
   slots: AvailabilitySlot[];
   announcements: Announcement[];
+  reviewVisibility: {
+    approved: number;
+    pending: number;
+  };
+  showAcceptedWelcome: boolean;
+  showLaunchChecklist: boolean;
+  initialTab?: TutorWorkspaceTab;
+  workspaceOnly?: boolean;
+  profileReadiness: {
+    percent: number;
+    completed: number;
+    total: number;
+    items: LaunchChecklistItem[];
+  };
+  launchChecklist: LaunchChecklistItem[];
 }
 
-export default function TutorDashboardUI({ userId, userName, avatarUrl, bookings, tutorData, slots, announcements }: TutorDashboardUIProps) {
-  const [activeTab, setActiveTab] = useState<"schedule" | "requests" | "sessions" | "availability" | "students">("schedule");
+type LaunchChecklistItem = {
+  id: string;
+  label: string;
+  helper: string;
+  completed: boolean;
+  href?: string;
+  action?: "availability";
+}
+
+export default function TutorDashboardUI({
+  userId,
+  userName,
+  avatarUrl,
+  bookings,
+  tutorData,
+  slots,
+  announcements,
+  reviewVisibility,
+  showAcceptedWelcome,
+  showLaunchChecklist,
+  initialTab = "schedule",
+  workspaceOnly = false,
+  profileReadiness,
+  launchChecklist,
+}: TutorDashboardUIProps) {
+  const [activeTab, setActiveTab] = useState<TutorWorkspaceTab>(initialTab);
   const [showNotesModal, setShowNotesModal] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [bio, setBio] = useState(tutorData?.bio || "");
@@ -82,6 +124,8 @@ export default function TutorDashboardUI({ userId, userName, avatarUrl, bookings
   const [previewUrl, setPreviewUrl] = useState<string | null>(avatarUrl || null);
   const [isUploading, setIsUploading] = useState(false);
   const [selectedBookingId, setSelectedBookingId] = useState<string | null>(null);
+  const [isWelcomeVisible, setIsWelcomeVisible] = useState(showAcceptedWelcome);
+  const [isDismissingWelcome, startWelcomeDismiss] = useTransition();
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -152,7 +196,7 @@ export default function TutorDashboardUI({ userId, userName, avatarUrl, bookings
       id: "schedule" as const,
       label: "Schedule",
       mobileLabel: "Today",
-      helper: "What needs teaching next.",
+      helper: "Calendar and upcoming teaching.",
       badge: null,
     },
     {
@@ -201,10 +245,47 @@ export default function TutorDashboardUI({ userId, userName, avatarUrl, bookings
   const studentList = Object.entries(studentsMap).map(([id, data]) => ({ id, ...data }));
   const activeTabDetails = TABS.find((tab) => tab.id === activeTab) || TABS[0];
 
+  const handleDismissWelcome = () => {
+    startWelcomeDismiss(async () => {
+      const result = await markTutorWelcomeSeen();
+      if (!result?.error) {
+        setIsWelcomeVisible(false);
+      }
+    });
+  };
+
+  const renderChecklistAction = (item: LaunchChecklistItem, compact = false) => {
+    const className = compact
+      ? "text-[10px] font-black uppercase tracking-[0.12em] text-accent hover:text-accent-hover"
+      : "rounded-full bg-white px-3 py-2 text-[10px] font-black uppercase tracking-[0.12em] text-accent shadow-sm transition-all hover:-translate-y-0.5 hover:text-accent-hover";
+
+    if (item.action === "availability") {
+      return (
+        <button
+          type="button"
+          onClick={() => setActiveTab("availability")}
+          className={className}
+        >
+          Set times
+        </button>
+      );
+    }
+
+    if (item.href) {
+      return (
+        <Link href={item.href} className={className}>
+          Open
+        </Link>
+      );
+    }
+
+    return null;
+  };
+
   return (
     <div className="mx-auto max-w-6xl space-y-5 px-3 py-5 sm:p-6 md:space-y-10 md:p-8">
       {/* Verification Status Banner */}
-      {!tutorData?.is_verified && (
+      {!workspaceOnly && !tutorData?.is_verified && (
         <div className="bg-amber-50 border border-amber-100 p-4 rounded-[1.5rem] flex flex-col md:flex-row items-center gap-4 shadow-sm shadow-amber-900/5 animate-in slide-in-from-top-4 duration-500 md:border-2 md:p-8 md:rounded-[2rem] md:gap-6 md:shadow-xl">
           <div className="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center text-2xl shrink-0 md:h-16 md:w-16 md:rounded-2xl md:text-3xl">⏳</div>
           <div className="flex-1 text-center md:text-left">
@@ -225,6 +306,68 @@ export default function TutorDashboardUI({ userId, userName, avatarUrl, bookings
          <AnnouncementFeed announcements={announcements} />
       )}
 
+      {workspaceOnly && (
+        <section className="rounded-[1.5rem] border border-secondary/5 bg-white p-4 shadow-sm md:rounded-[2rem] md:p-6">
+          <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+            <div>
+              <p className="text-[10px] font-black uppercase tracking-[0.16em] text-secondary/35">Schedule operations</p>
+              <h1 className="mt-1 text-3xl font-black tracking-tight text-secondary md:text-4xl">Schedule</h1>
+              <p className="mt-1 max-w-2xl text-sm font-semibold leading-6 text-secondary/55">
+                Manage your calendar, lesson requests, confirmed sessions, students, and availability.
+              </p>
+            </div>
+            <Link href="/dashboard/tutor" className="inline-flex min-h-10 items-center justify-center rounded-full border border-secondary/10 bg-slate-50 px-5 text-xs font-black uppercase tracking-[0.12em] text-secondary/55 transition-all hover:border-primary/20 hover:text-primary">
+              Back to dashboard
+            </Link>
+          </div>
+        </section>
+      )}
+
+      {!workspaceOnly && isWelcomeVisible && (
+        <section className="overflow-hidden rounded-[1.5rem] border border-primary/10 bg-[linear-gradient(135deg,#ffffff_0%,#f5fbff_58%,#ecfeff_100%)] p-4 shadow-sm shadow-primary/5 md:rounded-[2rem] md:p-6">
+          <div className="flex flex-col gap-5 lg:flex-row lg:items-center">
+            <div className="flex-1">
+              <p className="text-[10px] font-black uppercase tracking-[0.18em] text-primary/60">Verified tutor network</p>
+              <h2 className="mt-2 text-2xl font-black tracking-tight text-secondary md:text-3xl">
+                Welcome to ScienceDojo
+              </h2>
+              <p className="mt-2 max-w-2xl text-sm font-semibold leading-6 text-secondary/60 md:text-base">
+                You're now part of our verified tutor network. Next goal: launch your tutor profile.
+              </p>
+              <div className="mt-4 flex flex-wrap items-center gap-3">
+                <span className="rounded-full bg-white px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.12em] text-secondary/45 shadow-sm">
+                  Profile launch progress
+                </span>
+                <span className="text-sm font-black text-primary">{profileReadiness.percent}%</span>
+              </div>
+            </div>
+            <div className="min-w-0 rounded-2xl border border-white/80 bg-white/80 p-4 shadow-sm lg:w-80">
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-sm font-black text-secondary">Launch profile</p>
+                <p className="text-xs font-black text-secondary/40">
+                  {profileReadiness.completed}/{profileReadiness.total}
+                </p>
+              </div>
+              <div className="mt-3 h-2 overflow-hidden rounded-full bg-slate-100">
+                <div
+                  className="h-full rounded-full bg-gradient-to-r from-primary to-cyan-400 transition-all duration-700"
+                  style={{ width: `${profileReadiness.percent}%` }}
+                />
+              </div>
+              <button
+                type="button"
+                onClick={handleDismissWelcome}
+                disabled={isDismissingWelcome}
+                className="mt-4 w-full rounded-full border border-secondary/10 bg-white px-4 py-2.5 text-xs font-black uppercase tracking-[0.12em] text-secondary/50 transition-all hover:border-primary/20 hover:text-primary disabled:opacity-50"
+              >
+                {isDismissingWelcome ? "Saving..." : "Got it"}
+              </button>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {!workspaceOnly && (
       <div data-tour="tutor-welcome" className="rounded-[1.5rem] border border-secondary/5 bg-white p-4 shadow-sm md:rounded-[2rem] md:p-6">
          <div className="flex items-center gap-4 sm:gap-6">
             <div className="flex h-14 w-14 shrink-0 rotate-2 items-center justify-center overflow-hidden rounded-2xl border-2 border-white bg-accent/10 shadow-md transition-transform hover:rotate-0 sm:h-20 sm:w-20 sm:border-4 sm:shadow-xl">
@@ -235,7 +378,7 @@ export default function TutorDashboardUI({ userId, userName, avatarUrl, bookings
                )}
             </div>
             <div className="min-w-0">
-               <p className="mb-1 text-[11px] font-bold uppercase tracking-[0.16em] text-secondary/35">Tutor workspace</p>
+               <p className="mb-1 text-[11px] font-bold uppercase tracking-[0.16em] text-secondary/35">Dashboard</p>
                <h1 className="mb-1 break-words bg-gradient-to-r from-accent to-accent-hover bg-clip-text text-3xl font-black tracking-tight text-transparent sm:text-4xl">
                   Hello, {userName.trim().split(' ')[0]}!
                </h1>
@@ -269,10 +412,90 @@ export default function TutorDashboardUI({ userId, userName, avatarUrl, bookings
              <p className="mt-1 text-lg font-black text-secondary">{studentList.length}</p>
            </div>
          </div>
-      </div>
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 lg:gap-10">
-         <div className="lg:col-span-2 space-y-6">
+         <div className="mt-3 rounded-2xl border border-primary/10 bg-primary/5 p-3 md:mt-4 md:p-4">
+           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+             <div>
+               <p className="text-[9px] font-black uppercase tracking-[0.14em] text-primary/60">Review visibility</p>
+               <p className="mt-1 text-sm font-bold text-secondary/60">
+                 ScienceDojo reviews ratings before they appear publicly.
+               </p>
+             </div>
+             <div className="grid grid-cols-2 gap-2 sm:min-w-[15rem]">
+               <div className="rounded-xl bg-white px-3 py-2">
+                 <p className="text-lg font-black text-secondary">{reviewVisibility.approved}</p>
+                 <p className="text-[9px] font-black uppercase tracking-[0.12em] text-secondary/35">
+                   public review{reviewVisibility.approved === 1 ? "" : "s"}
+                 </p>
+               </div>
+               <div className="rounded-xl bg-white px-3 py-2">
+                 <p className="text-lg font-black text-primary">{reviewVisibility.pending}</p>
+                 <p className="text-[9px] font-black uppercase tracking-[0.12em] text-secondary/35">
+                   pending review{reviewVisibility.pending === 1 ? "" : "s"}
+                 </p>
+               </div>
+             </div>
+           </div>
+         </div>
+      </div>
+      )}
+
+      {!workspaceOnly && showLaunchChecklist && (
+        <section className="grid gap-4 lg:grid-cols-[0.95fr_1.05fr]">
+          <div className="rounded-[1.5rem] border border-secondary/5 bg-white p-4 shadow-sm md:rounded-[2rem] md:p-5">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-[0.16em] text-secondary/35">Profile readiness</p>
+                <h2 className="mt-1 text-xl font-black tracking-tight text-secondary">Ready for students</h2>
+                <p className="mt-1 text-sm font-semibold leading-6 text-secondary/55">
+                  Complete the essentials students and parents look for before booking.
+                </p>
+              </div>
+              <div className="shrink-0 rounded-2xl bg-primary/5 px-4 py-3 text-center">
+                <p className="text-2xl font-black text-primary">{profileReadiness.percent}%</p>
+                <p className="text-[9px] font-black uppercase tracking-[0.12em] text-secondary/35">complete</p>
+              </div>
+            </div>
+            <div className="mt-4 h-2 overflow-hidden rounded-full bg-slate-100">
+              <div
+                className="h-full rounded-full bg-gradient-to-r from-primary to-cyan-400 transition-all duration-700"
+                style={{ width: `${profileReadiness.percent}%` }}
+              />
+            </div>
+          </div>
+
+          <div className="rounded-[1.5rem] border border-secondary/5 bg-white p-4 shadow-sm md:rounded-[2rem] md:p-5">
+            <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-[0.16em] text-secondary/35">Tutor launch checklist</p>
+                <h2 className="mt-1 text-xl font-black tracking-tight text-secondary">Next setup steps</h2>
+              </div>
+              <Link href="/support/tutors" className="text-[10px] font-black uppercase tracking-[0.12em] text-accent hover:text-accent-hover">
+                Tutor Guide Hub
+              </Link>
+            </div>
+            <div className="grid gap-2 sm:grid-cols-2">
+              {launchChecklist.map((item) => (
+                <div key={item.id} className="flex min-w-0 items-center gap-3 rounded-2xl border border-secondary/5 bg-slate-50/70 p-3">
+                  <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-black ${
+                    item.completed ? "bg-emerald-500 text-white" : "bg-white text-secondary/25 ring-1 ring-secondary/10"
+                  }`}>
+                    {item.completed ? "✓" : ""}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-black text-secondary">{item.label}</p>
+                    <p className="line-clamp-1 text-xs font-medium text-secondary/45">{item.helper}</p>
+                  </div>
+                  {!item.completed && renderChecklistAction(item, true)}
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      <div className={workspaceOnly ? "grid grid-cols-1 gap-6" : "grid grid-cols-1 gap-6 lg:grid-cols-3 lg:gap-10"}>
+         <div className={workspaceOnly ? "space-y-6" : "lg:col-span-2 space-y-6"}>
 
             {/* Workspace navigation */}
             <div data-tour="tutor-tabs" className="space-y-3">
@@ -533,6 +756,7 @@ export default function TutorDashboardUI({ userId, userName, avatarUrl, bookings
 
          </div>
 
+         {!workspaceOnly && (
          <div className="space-y-5 md:space-y-8">
             <h2 className="text-xl font-black text-secondary mb-4 flex items-center gap-3">
               <span className="h-6 w-1 bg-accent rounded-full"></span>
@@ -565,7 +789,22 @@ export default function TutorDashboardUI({ userId, userName, avatarUrl, bookings
                   </div>
                </div>
             </div>
+
+            <div className="rounded-[1.5rem] border border-primary/10 bg-primary/5 p-5 shadow-sm md:rounded-[2rem] md:p-6">
+              <p className="text-[10px] font-black uppercase tracking-[0.16em] text-primary/60">Tutor Guide Hub</p>
+              <h3 className="mt-2 text-lg font-black text-secondary">New to ScienceDojo?</h3>
+              <p className="mt-2 text-sm font-semibold leading-6 text-secondary/55">
+                Review profile setup, bookings, payments, lesson records, and platform expectations.
+              </p>
+              <Link
+                href="/support/tutors"
+                className="mt-4 inline-flex rounded-full bg-white px-4 py-2.5 text-[10px] font-black uppercase tracking-[0.12em] text-primary shadow-sm transition-all hover:-translate-y-0.5 hover:text-primary-hover"
+              >
+                Read tutor guide
+              </Link>
+            </div>
          </div>
+         )}
       </div>
 
       {showProfileModal && (

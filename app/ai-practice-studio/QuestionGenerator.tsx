@@ -3,6 +3,7 @@
 import { useActionState, useMemo, useState } from "react";
 import { usePathname } from "next/navigation";
 import AiPracticeStudioCtaLink from "@/components/analytics/AiPracticeStudioCtaLink";
+import MathText from "@/components/MathText";
 import {
   allowedQuestionCounts,
   educationalStages,
@@ -225,6 +226,11 @@ export default function QuestionGenerator() {
               {questions.length > 0 ? "Structured practice set" : "Ready when you are"}
             </p>
             <h2 className="mt-2 text-2xl font-black">{questions.length ? "Your practice questions" : "Create curriculum-aligned practice"}</h2>
+            {questions.length > 0 && (
+              <p className="mt-2 max-w-2xl text-sm font-semibold leading-6 text-secondary/55">
+                Designed to help identify strengths, misconceptions, and topics that may need further explanation.
+              </p>
+            )}
           </div>
           {questions.length > 0 && <p className="text-sm font-bold text-secondary/45">{questions.length} questions with answers</p>}
         </div>
@@ -243,7 +249,10 @@ export default function QuestionGenerator() {
                   <div className="flex items-start gap-3">
                     <span className="shrink-0 pt-0.5 text-sm font-semibold text-secondary/45">{index + 1}.</span>
                     <div className="min-w-0 flex-1">
-                      <p className="text-lg font-semibold leading-7 text-secondary md:text-xl md:leading-8">{question.question}</p>
+                      <MathText
+                        text={question.question}
+                        className="text-lg font-semibold leading-7 text-secondary md:text-xl md:leading-8"
+                      />
                       <p className="mt-3 text-xs font-medium leading-5 text-secondary/42">
                         Topic: {question.skill} <span className="text-secondary/25">&middot;</span> Difficulty: {question.difficulty}{" "}
                         <span className="text-secondary/25">&middot;</span>{" "}
@@ -258,9 +267,15 @@ export default function QuestionGenerator() {
                 </summary>
                 <div className="mt-4 rounded-xl border border-secondary/8 bg-surface px-4 py-4 md:px-5">
                   <p className="text-xs font-semibold text-emerald-700">Answer</p>
-                  <p className="mt-2 text-sm font-semibold leading-6 text-secondary md:text-base md:leading-7">{question.answer}</p>
+                  <MathText
+                    text={question.answer}
+                    className="mt-2 text-sm font-semibold leading-6 text-secondary md:text-base md:leading-7"
+                  />
                   <p className="mt-4 text-xs font-semibold text-primary/75">Working / marking guidance</p>
-                  <p className="mt-2 text-sm leading-6 text-secondary/65 md:text-base md:leading-7">{question.working}</p>
+                  <MathText
+                    text={question.working}
+                    className="mt-2 text-sm leading-6 text-secondary/65 md:text-base md:leading-7"
+                  />
                 </div>
               </details>
             ))}

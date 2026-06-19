@@ -10,9 +10,11 @@ interface DemoSkillStageProps {
   updateData: (fields: any) => void;
   onNext: () => void;
   onBack: () => void;
+  onSaveDraft: () => void;
+  isSavingDraft: boolean;
 }
 
-export default function DemoSkillStage({ data, userId, updateData, onNext, onBack }: DemoSkillStageProps) {
+export default function DemoSkillStage({ data, userId, updateData, onNext, onBack, onSaveDraft, isSavingDraft }: DemoSkillStageProps) {
   const [showInstructions, setShowInstructions] = useState(false);
   
   const isComplete = !!data.demo_video_url;
@@ -22,32 +24,33 @@ export default function DemoSkillStage({ data, userId, updateData, onNext, onBac
       initial={{ opacity: 0, x: 20 }}
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: -20 }}
-      className="max-w-4xl mx-auto space-y-12 pb-20"
+      className="rounded-[1.75rem] border border-blue-100 bg-white/92 p-5 shadow-xl shadow-navy/5 backdrop-blur-xl sm:p-7 md:p-10"
     >
-      <div className="space-y-4 text-center">
-        <h2 className="text-5xl font-black text-navy tracking-tight leading-none">Skill Exhibition 📽️</h2>
-        <p className="text-navy/60 font-medium italic text-lg leading-relaxed max-w-2xl mx-auto">"Teaching is the highest form of understanding. Show us your spark."</p>
+      <div className="space-y-2 text-left">
+        <p className="text-sm font-black text-primary">Step 4 of 6</p>
+        <h2 className="text-2xl font-black tracking-tight text-navy md:text-3xl">Demo Lesson</h2>
+        <p className="text-sm font-medium text-navy/60 md:text-base">Share a short teaching demo so we can understand how you explain ideas.</p>
       </div>
 
-      <div className="space-y-16">
+      <div className="mt-8 space-y-8">
         {/* Step 1: Instructions */}
         <div className="space-y-6">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-full bg-navy/5 border-2 border-navy/10 text-navy flex items-center justify-center font-black text-2xl shadow-sm">1</div>
-            <h3 className="text-xl font-black text-navy uppercase tracking-tight">View instructions for the video</h3>
+            <div className="flex h-9 w-9 items-center justify-center rounded-full border border-navy/10 bg-white text-sm font-black text-navy shadow-sm">1</div>
+            <h3 className="text-lg font-black text-navy">View instructions for the video</h3>
           </div>
           
-          <div className="flex justify-start pl-14">
+          <div className="flex justify-start md:pl-12">
             <button
               onClick={() => setShowInstructions(!showInstructions)}
-              className={`flex items-center gap-3 px-8 py-4 rounded-full font-black text-sm uppercase tracking-widest transition-all transform active:scale-95 shadow-xl ${
+              className={`flex items-center gap-3 rounded-xl border px-5 py-3 text-sm font-bold transition-all active:scale-95 ${
                 showInstructions 
-                  ? "bg-blue-50 text-navy border-2 border-blue-200 shadow-none" 
-                  : "bg-white text-navy border-2 border-navy/5 hover:border-blue-500/30 hover:shadow-blue-500/10"
+                  ? "border-blue-200 bg-blue-50 text-navy" 
+                  : "border-navy/10 bg-white text-navy hover:border-blue-500/30"
               }`}
             >
               <Sparkles size={18} className={showInstructions ? "text-blue-400" : "text-blue-500"} />
-              {showInstructions ? "Hide Detailed Blueprint" : "Open Teaching Blueprint & Guidelines"}
+              {showInstructions ? "Hide guidelines" : "Open teaching demo guidelines"}
               {showInstructions ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
             </button>
           </div>
@@ -58,9 +61,9 @@ export default function DemoSkillStage({ data, userId, updateData, onNext, onBac
                 initial={{ height: 0, opacity: 0 }}
                 animate={{ height: "auto", opacity: 1 }}
                 exit={{ height: 0, opacity: 0 }}
-                className="overflow-hidden pl-14"
+                className="overflow-hidden md:pl-12"
               >
-                <div className="bg-white/60 backdrop-blur-3xl border border-white p-12 rounded-[3.5rem] shadow-2xl space-y-12 text-left relative overflow-hidden group">
+                <div className="relative space-y-8 overflow-hidden rounded-[1.5rem] border border-navy/8 bg-slate-50/80 p-5 text-left md:p-6">
                   <div className="absolute top-0 right-0 p-8 opacity-[0.03] translate-x-1/4 -translate-y-1/4">
                      <Video size={400} />
                   </div>
@@ -70,16 +73,16 @@ export default function DemoSkillStage({ data, userId, updateData, onNext, onBac
                         <div className="w-12 h-12 rounded-2xl bg-blue-600 text-white flex items-center justify-center shadow-lg shadow-blue-500/20">
                           <Video size={24} />
                         </div>
-                        <h3 className="text-2xl font-black text-navy tracking-tight">Introduction & Teaching Demo</h3>
+                        <h3 className="text-xl font-black tracking-tight text-navy">Introduction & teaching demo</h3>
                      </div>
-                     <p className="text-navy/70 text-lg font-bold leading-relaxed">Combine a brief introduction with your teaching demo. Record a **3–6 minute video** where you introduce yourself and explain a concept clearly.</p>
+                     <p className="text-sm font-semibold leading-relaxed text-navy/65">Combine a brief introduction with your teaching demo. Record a 3-6 minute video where you introduce yourself and explain a concept clearly.</p>
                   </div>
 
                   <div className="w-full h-px bg-navy/5" />
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8 relative z-10">
                      <div className="space-y-4">
-                        <h4 className="text-[11px] font-black text-navy/30 uppercase tracking-[0.3em]">🎯 What we're looking for</h4>
+                        <h4 className="text-xs font-bold text-navy/55">What we&apos;re looking for</h4>
                         <ul className="space-y-3">
                            {["Clear explanation", "Step-by-step breakdown", "Engaging communication", "Ability to simplify"].map((item) => (
                              <li key={item} className="flex items-center gap-3 text-sm font-black text-navy/70">
@@ -88,8 +91,8 @@ export default function DemoSkillStage({ data, userId, updateData, onNext, onBac
                            ))}
                         </ul>
                      </div>
-                     <div className="space-y-4 bg-blue-50/50 p-6 rounded-[2.5rem] border border-blue-100/50">
-                        <h4 className="text-[11px] font-black text-blue-600/40 uppercase tracking-[0.3em]">⏱️ Recommended structure</h4>
+                     <div className="space-y-4 rounded-[1.25rem] border border-blue-100/50 bg-blue-50/50 p-5">
+                        <h4 className="text-xs font-bold text-blue-700/60">Recommended structure</h4>
                         <div className="space-y-2 text-xs font-black text-blue-900/60 leading-relaxed italic">
                            <p>• Introduction (30–60s)</p>
                            <p>• Concept Explanation (2–3 minutes)</p>
@@ -101,14 +104,14 @@ export default function DemoSkillStage({ data, userId, updateData, onNext, onBac
 
                   <div className="text-center italic text-navy/10 text-2xl font-serif">⸻</div>
 
-                  {/* The 6-Step Blueprint */}
+                  {/* The 6-step guide */}
                   <div className="space-y-10 relative z-10">
                      {[
                        { n: "1", title: "Choose one topic", desc: "Select a concept relevant to your subject and level. (e.g. fractions, algebra, derivatives, forces, essay structure)." },
                        { n: "2", title: "Teach it simply", desc: "Explain as if the student is learning it for the first time. Use phrases like: \"Let's understand this step by step...\" or \"Think of it like this...\"" },
                        { n: "3", title: "Use visuals (Required)", desc: "Use a whiteboard (digital/physical), slides, or clear writing. Students learn with their eyes first." },
                        { n: "4", title: "Show an example", desc: "Include at least one worked example or application of the theory." },
-                       { n: "5", title: "Keep it engaging", desc: "Speak clearly, maintain high energy, and avoid reading directly from notes. Be the Sensei you'd want to have." },
+                       { n: "5", title: "Keep it engaging", desc: "Speak clearly, maintain steady energy, and avoid reading directly from notes. Be the tutor you would want to learn from." },
                        { n: "6", title: "Summary", desc: "Wrap up the key idea in 1–2 sentences." }
                      ].map((step) => (
                        <div key={step.n} className="flex gap-8 group">
@@ -121,14 +124,14 @@ export default function DemoSkillStage({ data, userId, updateData, onNext, onBac
                      ))}
                   </div>
 
-                  {/* Gold Standard */}
-                  <div className="p-10 rounded-[3rem] bg-blue-50 border border-blue-100/50 text-navy space-y-8 shadow-xl relative overflow-hidden">
+                  {/* Review criteria */}
+                  <div className="relative space-y-6 overflow-hidden rounded-[1.5rem] border border-blue-100/50 bg-blue-50 p-5 text-navy md:p-6">
                      <div className="absolute top-0 right-0 p-8 opacity-10 text-blue-500">
                        <ShieldCheck size={160} />
                      </div>
                      <div className="space-y-2 relative z-10">
-                       <h4 className="flex items-center gap-2 text-xl font-black italic tracking-tight">⭐ The Dojo Gold Standard</h4>
-                       <p className="text-navy/40 text-[10px] font-black uppercase tracking-[0.2em]">Our Application Evaluation Criteria</p>
+                       <h4 className="flex items-center gap-2 text-lg font-black tracking-tight">What we review</h4>
+                       <p className="text-xs font-bold text-navy/40">Our application evaluation criteria</p>
                      </div>
                      <div className="space-y-6 relative z-10">
                         <p className="text-sm font-bold text-navy/70">We evaluate your demo based on:</p>
@@ -161,16 +164,16 @@ export default function DemoSkillStage({ data, userId, updateData, onNext, onBac
         {/* Step 2: Exhibition Link */}
         <div className="space-y-6">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-full bg-navy/5 border-2 border-navy/10 text-navy flex items-center justify-center font-black text-2xl shadow-sm">2</div>
-            <h3 className="text-xl font-black text-navy uppercase tracking-tight">Introduction and teaching demo</h3>
+            <div className="flex h-9 w-9 items-center justify-center rounded-full border border-navy/10 bg-white text-sm font-black text-navy shadow-sm">2</div>
+            <h3 className="text-lg font-black text-navy">Introduction and teaching demo</h3>
           </div>
           
-          <div className="pl-14">
-            <div className="bg-white/80 backdrop-blur-xl border border-white p-10 rounded-[3.5rem] shadow-2xl space-y-8 group max-w-2xl">
+          <div className="md:pl-12">
+            <div className="max-w-2xl space-y-8 rounded-[1.5rem] border border-navy/8 bg-white p-5 shadow-sm md:p-6">
                <div className="space-y-6">
                   <div className="space-y-2">
-                     <h4 className="text-lg font-black text-navy tracking-tight uppercase">Sharing Link</h4>
-                     <p className="text-[10px] font-black text-navy/20 uppercase tracking-[0.2em]">YouTube or Vimeo Required (Include Intro + Demo)</p>
+                     <h4 className="text-lg font-black tracking-tight text-navy">Sharing Link</h4>
+                     <p className="text-xs font-bold text-navy/40">YouTube or Vimeo link with introduction and demo</p>
                   </div>
                   
                   <div className="space-y-6">
@@ -180,7 +183,7 @@ export default function DemoSkillStage({ data, userId, updateData, onNext, onBac
                         placeholder="https://www.youtube.com/watch?v=..."
                         value={data.demo_video_url || ""}
                         onChange={(e) => updateData({ demo_video_url: e.target.value })}
-                        className="w-full bg-white border border-navy/5 rounded-[2.5rem] pl-20 pr-10 py-6 text-navy font-black focus:ring-4 focus:ring-blue-400/10 outline-none transition-all placeholder:text-navy/10 shadow-sm"
+                        className="w-full rounded-2xl border border-navy/10 bg-white py-4 pl-14 pr-5 text-base font-semibold text-navy shadow-sm outline-none transition-all placeholder:text-navy/25 focus:border-primary/40 focus:ring-4 focus:ring-primary/10"
                       />
                       <div className="absolute left-8 top-1/2 -translate-y-1/2 text-navy/20">
                          <Video size={20} />
@@ -199,18 +202,18 @@ export default function DemoSkillStage({ data, userId, updateData, onNext, onBac
         {/* Step 3: Supplementary Zone */}
         <div className="space-y-6">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-full bg-navy/5 border-2 border-navy/10 text-navy flex items-center justify-center font-black text-2xl shadow-sm">3</div>
+            <div className="flex h-9 w-9 items-center justify-center rounded-full border border-navy/10 bg-white text-sm font-black text-navy shadow-sm">3</div>
             <div className="space-y-1">
-              <h3 className="text-xl font-black text-navy uppercase tracking-tight leading-none">Supplementary zone</h3>
-              <p className="text-[11px] font-bold text-navy/40 leading-relaxed italic">Upload any lesson materials that showcase your teaching style. This can include slides, worksheets, or structured lesson plans.</p>
+              <h3 className="text-lg font-black leading-none text-navy">Supplementary materials</h3>
+              <p className="text-sm font-medium leading-relaxed text-navy/45">Upload any lesson materials that showcase your teaching style. This can include slides, worksheets, or structured lesson plans.</p>
             </div>
           </div>
 
-          <div className="pl-14">
-            <div className="max-w-2xl bg-white border border-navy/5 p-10 rounded-[3.5rem] shadow-2xl space-y-8">
+          <div className="md:pl-12">
+            <div className="max-w-2xl space-y-8 rounded-[1.5rem] border border-navy/8 bg-white p-5 shadow-sm md:p-6">
                <div className="space-y-6">
                   <div className="space-y-4">
-                     <label className="text-[10px] font-black text-navy/30 uppercase tracking-[0.3em] ml-2">Lesson Handouts (Optional)</label>
+                     <label className="text-xs font-bold text-navy/55">Lesson handouts (optional)</label>
                      <PrivateUploader 
                        userId={userId} 
                        docType="past_materials" 
@@ -225,34 +228,15 @@ export default function DemoSkillStage({ data, userId, updateData, onNext, onBac
       </div>
 
       {/* Navigation Controls */}
-      <div className="flex justify-between items-center pt-10 border-t border-navy/5">
-        <button
-          onClick={onBack}
-          className="px-10 py-6 bg-white border border-navy/5 text-navy/40 hover:text-navy rounded-[2.5rem] font-black text-lg transition-all shadow-sm active:scale-95"
-        >
-          Back
-        </button>
-        <button
-          onClick={onNext}
-          disabled={!isComplete}
-          className={`px-16 py-6 rounded-[2.5rem] font-black text-xl tracking-tight transition-all transform active:scale-95 flex items-center justify-center gap-4 group relative overflow-hidden shadow-xl ${
-            isComplete 
-              ? "bg-blue-600 text-white hover:bg-blue-500 hover:shadow-2xl hover:shadow-blue-500/20 shadow-blue-900/10" 
-              : "bg-blue-50 text-blue-200 cursor-not-allowed shadow-none grayscale opacity-60"
-          }`}
-        >
-          <span className="relative z-10 flex items-center gap-3">
-            Submit Exhibition →
-          </span>
-          {isComplete && (
-            <motion.div 
-              initial={{ x: "-100%" }}
-              animate={{ x: "100%" }}
-              transition={{ duration: 2, repeat: Infinity, repeatDelay: 1 }}
-              className="absolute top-0 left-0 w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-12"
-            />
-          )}
-        </button>
+      <div className="mt-8 flex flex-col gap-4 border-t border-navy/8 pt-6 md:flex-row md:items-center md:justify-between">
+        <p className="text-sm font-semibold text-navy/55">You can save and continue later</p>
+        <div className="flex flex-col gap-3 sm:flex-row">
+          <button onClick={onBack} className="min-h-11 rounded-xl border border-navy/10 bg-white px-5 py-3 text-sm font-bold text-navy/65 transition-colors hover:border-primary/30 hover:text-navy">Back</button>
+          <button onClick={onSaveDraft} disabled={isSavingDraft} className="min-h-11 rounded-xl border border-navy/10 bg-white px-5 py-3 text-sm font-bold text-navy/65 transition-colors hover:border-primary/30 hover:text-navy disabled:opacity-60">{isSavingDraft ? "Saving..." : "Save Draft"}</button>
+          <button onClick={onNext} disabled={!isComplete} className={`min-h-11 rounded-xl px-6 py-3 text-sm font-black transition-all active:scale-95 ${isComplete ? "bg-primary text-white shadow-lg shadow-primary/20 hover:bg-blue-500" : "cursor-not-allowed bg-blue-50 text-blue-200"}`}>
+            Next step →
+          </button>
+        </div>
       </div>
     </motion.div>
   );

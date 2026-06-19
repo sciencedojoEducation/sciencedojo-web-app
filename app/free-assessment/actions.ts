@@ -1,6 +1,7 @@
 "use server";
 
 import { sendEmail } from "@/lib/email";
+import { getMentorAttributionFromCookies, isAttributionSchemaError, markMentorLeadConverted } from "@/lib/mentor-attribution";
 import { createAdminClient } from "@/utils/supabase/server";
 
 export type AssessmentFormState = {
@@ -213,22 +214,50 @@ export async function requestFreeAssessment(
   // TODO: Track an analytics conversion event here after server-side analytics is configured.
   try {
     const adminClient = await createAdminClient();
-    const { error: leadError } = await adminClient
+    const attribution = await getMentorAttributionFromCookies();
+    const leadPayload = {
+      parent_name: fields.parentName,
+      email: fields.email.toLowerCase(),
+      whatsapp_number: fields.whatsapp,
+      student_name: fields.studentName,
+      student_grade: fields.studentYear,
+      curriculum: fields.curriculum,
+      subject_needed: fields.subject,
+      main_challenge: fields.challenge || fields.hardestAreas || "Assessment intake completed",
+      preferred_time: fields.preferredTime,
+      message: structuredLeadNotes,
+      status: "new_inquiry",
+      source: attribution.acquisitionSource === "mentor_profile" ? "mentor_profile_learning_check" : "free_assessment_page",
+      acquisition_source: attribution.acquisitionSource,
+      referrer_tutor_id: attribution.referrerTutorId,
+      landing_tutor_id: attribution.landingTutorId,
+      lead_source_id: attribution.leadSourceId,
+    };
+
+    let { data: insertedLead, error: leadError } = await adminClient
       .from("assessment_leads")
-      .insert({
-        parent_name: fields.parentName,
-        email: fields.email.toLowerCase(),
-        whatsapp_number: fields.whatsapp,
-        student_name: fields.studentName,
-        student_grade: fields.studentYear,
-        curriculum: fields.curriculum,
-        subject_needed: fields.subject,
-        main_challenge: fields.challenge || fields.hardestAreas || "Assessment intake completed",
-        preferred_time: fields.preferredTime,
-        message: structuredLeadNotes,
-        status: "new_inquiry",
-        source: "free_assessment_page",
-      });
+      .insert(leadPayload)
+      .select("id")
+      .single();
+
+    if (leadError && isAttributionSchemaError(leadError)) {
+      const {
+        acquisition_source: _acquisitionSource,
+        referrer_tutor_id: _referrerTutorId,
+        landing_tutor_id: _landingTutorId,
+        lead_source_id: _leadSourceId,
+        ...baseLeadPayload
+      } = leadPayload;
+
+      const fallbackResult = await adminClient
+        .from("assessment_leads")
+        .insert(baseLeadPayload)
+        .select("id")
+        .single();
+
+      insertedLead = fallbackResult.data;
+      leadError = fallbackResult.error;
+    }
 
     if (leadError) {
       console.error("Assessment lead insert error:", leadError.message);
@@ -240,6 +269,10 @@ export async function requestFreeAssessment(
         whatsappHref,
       };
     }
+
+    await markMentorLeadConverted({
+      assessmentId: insertedLead?.id || null,
+    });
 
   } catch (error) {
     console.error("Assessment lead storage failed:", error);

@@ -31,9 +31,9 @@ export const metadata: Metadata = {
     type: "website",
     images: [
       {
-        url: "/images/sciencedojo-logo-brand.jpg",
-        width: 512,
-        height: 512,
+        url: "/opengraph-image.png",
+        width: 1200,
+        height: 630,
         alt: "ScienceDojo",
       },
     ],
@@ -42,7 +42,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "ScienceDojo | Online Tutoring for Confident Learners",
     description: "Expert online tutoring with clear teaching, smarter learning systems, and parent visibility.",
-    images: ["/images/sciencedojo-logo-brand.jpg"],
+    images: ["/opengraph-image.png"],
   },
   robots: {
     index: true,

@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "katex/dist/katex.min.css";
 
 @theme {
   --breakpoint-xs: 23.4375rem; /* 375px — used for sub-375 mobile font scaling */

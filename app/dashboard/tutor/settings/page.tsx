@@ -1,6 +1,7 @@
 import { createClient } from "@/utils/supabase/server";
 import { getTutorById } from "@/lib/supabase-queries";
 import TutorSettingsForm from "./TutorSettingsForm";
+import MentorSharePanel from "@/components/MentorSharePanel";
 import { redirect } from "next/navigation";
 
 export default async function TutorSettings() {
@@ -29,7 +30,10 @@ export default async function TutorSettings() {
          <p className="text-secondary/60">Manage your public directory listing, rate, and bio.</p>
       </div>
 
-      <TutorSettingsForm tutor={tutor} initialAvailability={tutor.is_available_now} />
+      <div className="space-y-8">
+        <MentorSharePanel tutor={tutor} />
+        <TutorSettingsForm tutor={tutor} initialAvailability={tutor.is_available_now} />
+      </div>
     </div>
   );
 }

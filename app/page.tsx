@@ -38,28 +38,77 @@ const problemPoints = [
 const methodStages = [
   {
     number: "01",
+    icon: "diagnose",
     title: "Diagnose",
+    meaning: "Find the gap",
     text: "Identify the concepts, exam skills, and confidence gaps behind the grade.",
   },
   {
     number: "02",
+    icon: "understand",
     title: "Understand",
+    meaning: "Make it make sense",
     text: "Use clear tutoring to rebuild the idea until it feels logical, not memorised.",
   },
   {
     number: "03",
+    icon: "practice",
     title: "Practice",
+    meaning: "Build the skill",
     text: "Strengthen weak topics with targeted questions and structured repetition.",
   },
   {
     number: "04",
+    icon: "apply",
     title: "Apply",
+    meaning: "Use it independently",
     text: "Move from topic knowledge into exam-style reasoning, working, and explanations.",
   },
   {
     number: "05",
+    icon: "confidence",
     title: "Build Confidence",
+    meaning: "Create momentum",
     text: "Create steady learning momentum through tutor feedback, Missions, and visible next steps.",
+  },
+];
+
+const learningJourneyStages = [
+  {
+    number: "01",
+    icon: "lesson",
+    title: "Tutor Lesson",
+    text: "Learn with an expert tutor.",
+  },
+  {
+    number: "02",
+    icon: "record",
+    title: "Learning Record",
+    text: "Capture what was covered and what matters next.",
+  },
+  {
+    number: "03",
+    icon: "practice",
+    title: "Practice",
+    text: "Strengthen understanding through structured practice.",
+  },
+  {
+    number: "04",
+    icon: "mission",
+    title: "Mission",
+    text: "Follow personalised next steps.",
+  },
+  {
+    number: "05",
+    icon: "visibility",
+    title: "Parent Visibility",
+    text: "Understand progress without chasing updates.",
+  },
+  {
+    number: "06",
+    icon: "growth",
+    title: "Build Confidence",
+    text: "Confidence grows through visible progress.",
   },
 ];
 
@@ -76,6 +125,161 @@ const parentVisibilityItems = [
   "Tutor recommendations and next steps",
   "Progress signals families can understand",
 ];
+
+function MethodStageIllustration({ icon }: { icon: string }) {
+  const stroke = "#063d8f";
+  const blue = "#0066ff";
+  const paleBlue = "#dbeafe";
+
+  return (
+    <svg viewBox="0 0 180 150" className="h-36 w-full max-w-[13.5rem]" fill="none" aria-hidden="true">
+      <circle cx="90" cy="78" r="54" fill="#eaf3ff" />
+      <circle cx="47" cy="61" r="2" fill="#9bc7ff" />
+      <circle cx="132" cy="45" r="2" fill="#9bc7ff" />
+      <path d="M40 97h9M132 102h9M145 76l8-3M31 77l-8-3" stroke="#b8d8ff" strokeWidth="3" strokeLinecap="round" />
+      {icon === "diagnose" && (
+        <>
+          <rect x="46" y="43" width="59" height="78" rx="5" fill="white" stroke={stroke} strokeWidth="4" />
+          <rect x="62" y="34" width="35" height="18" rx="5" fill={blue} stroke={stroke} strokeWidth="4" />
+          <path d="M67 42h25" stroke="white" strokeWidth="4" strokeLinecap="round" />
+          <path d="M61 66l6 6 12-14M61 86l6 6 12-14M61 106l6 6 12-14" stroke={blue} strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M88 67h24M88 87h21M88 107h24" stroke="#9bc7ff" strokeWidth="4" strokeLinecap="round" />
+          <circle cx="109" cy="91" r="26" fill="#d9ecff" fillOpacity=".82" stroke={stroke} strokeWidth="4" />
+          <circle cx="109" cy="91" r="18" stroke="white" strokeWidth="5" />
+          <path d="M127 110l25 25" stroke={stroke} strokeWidth="8" strokeLinecap="round" />
+          <path d="M132 115l20 20" stroke={blue} strokeWidth="5" strokeLinecap="round" />
+          <path d="M117 42c9 4 14 11 14 20 0 10-5 17-14 22M124 38c12 6 19 14 19 25 0 12-7 22-19 28" stroke="#9bc7ff" strokeWidth="3" strokeLinecap="round" />
+        </>
+      )}
+      {icon === "understand" && (
+        <>
+          <circle cx="90" cy="76" r="30" fill="white" stroke={blue} strokeWidth="4" />
+          <path d="M90 51v-10M114 61l8-7M123 81h11M66 61l-8-7M57 81H46" stroke={stroke} strokeWidth="4" strokeLinecap="round" />
+          <path d="M79 79c0-7 5-13 12-13s12 6 12 13c0 5-3 9-7 11v9H85v-9c-4-2-6-6-6-11Z" fill={paleBlue} stroke={blue} strokeWidth="4" />
+          <path d="M85 110h12M84 99h14" stroke={stroke} strokeWidth="4" strokeLinecap="round" />
+          <circle cx="45" cy="112" r="12" fill="white" stroke={stroke} strokeWidth="4" />
+          <circle cx="135" cy="111" r="12" fill="white" stroke={stroke} strokeWidth="4" />
+          <circle cx="90" cy="124" r="12" fill="white" stroke={stroke} strokeWidth="4" />
+          <path d="M57 107l21-16M123 106l-20-15M91 112v-9" stroke={blue} strokeWidth="4" strokeLinecap="round" />
+          <path d="M41 112h8M131 111h8M86 124h8" stroke="#9bc7ff" strokeWidth="3" strokeLinecap="round" />
+        </>
+      )}
+      {icon === "practice" && (
+        <>
+          <path d="M54 42l74-10a6 6 0 0 1 7 5l11 76a6 6 0 0 1-5 7l-74 10a6 6 0 0 1-7-5L49 49a6 6 0 0 1 5-7Z" fill="white" stroke={stroke} strokeWidth="4" />
+          <path d="M48 61l13-2M51 78l13-2M53 95l13-2M56 112l13-2" stroke={stroke} strokeWidth="5" strokeLinecap="round" />
+          <path d="M78 59l38-5M81 77l43-6M84 95l26-4M82 111l44-6" stroke="#b4d4ff" strokeWidth="4" strokeLinecap="round" />
+          <path d="M82 88l8-1M99 85l8-1" stroke={blue} strokeWidth="4" strokeLinecap="round" />
+          <path d="M91 79l8 14M104 77l6 14M114 86l9-1" stroke={stroke} strokeWidth="3" strokeLinecap="round" />
+          <path d="M131 79l16 9-26 47-18 7 2-19 26-44Z" fill={blue} stroke={stroke} strokeWidth="4" strokeLinejoin="round" />
+          <path d="M105 123l18 10M137 90l-17-10" stroke="white" strokeWidth="4" strokeLinecap="round" />
+        </>
+      )}
+      {icon === "apply" && (
+        <>
+          <circle cx="77" cy="74" r="45" fill="#dcecff" stroke={stroke} strokeWidth="4" />
+          <circle cx="77" cy="74" r="31" fill="white" stroke={blue} strokeWidth="10" />
+          <circle cx="77" cy="74" r="12" fill={blue} />
+          <path d="M84 69l56-42v22l-39 31" fill={blue} />
+          <path d="M84 69l56-42v22l-39 31" stroke={stroke} strokeWidth="4" strokeLinejoin="round" />
+          <path d="M102 80l26-19" stroke="white" strokeWidth="4" strokeLinecap="round" />
+          <path d="M120 89l38 9-10 49-40-8 10-50Z" fill="white" stroke={stroke} strokeWidth="4" />
+          <path d="M126 107l6 6 12-14M124 126l6 6 12-14" stroke={blue} strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M147 109h13M145 128h10" stroke="#9bc7ff" strokeWidth="4" strokeLinecap="round" />
+        </>
+      )}
+      {icon === "confidence" && (
+        <>
+          <path d="M35 113c33-8 58-26 77-54" stroke={stroke} strokeWidth="4" strokeLinecap="round" />
+          <path d="M104 62l11-14 3 18" stroke={stroke} strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
+          <rect x="38" y="112" width="18" height="18" fill={blue} stroke={stroke} strokeWidth="4" />
+          <rect x="66" y="101" width="18" height="29" fill={blue} stroke={stroke} strokeWidth="4" />
+          <rect x="94" y="88" width="18" height="42" fill={blue} stroke={stroke} strokeWidth="4" />
+          <rect x="122" y="61" width="18" height="69" fill={blue} stroke={stroke} strokeWidth="4" />
+          <path d="M140 31v101M140 33l28 9-28 11" stroke={stroke} strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
+          <circle cx="149" cy="119" r="27" fill="white" stroke={stroke} strokeWidth="4" />
+          <path d="M134 120l10 10 22-24" stroke={blue} strokeWidth="6" strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M130 137c8 5 18 7 29 4" stroke="#9bc7ff" strokeWidth="4" strokeLinecap="round" />
+        </>
+      )}
+    </svg>
+  );
+}
+
+function LearningJourneyIllustration({ icon }: { icon: string }) {
+  const stroke = "#063d8f";
+  const blue = "#0066ff";
+  const paleBlue = "#eaf3ff";
+
+  return (
+    <svg viewBox="0 0 180 140" className="h-24 w-full max-w-[10rem]" fill="none" aria-hidden="true">
+      <circle cx="90" cy="72" r="46" fill={paleBlue} />
+      <path d="M38 96h8M134 42h8M139 91h9M43 47l-6-5M131 109l6 5" stroke="#b8d8ff" strokeWidth="3" strokeLinecap="round" />
+      {icon === "lesson" && (
+        <>
+          <rect x="71" y="34" width="62" height="46" rx="7" fill="white" stroke={stroke} strokeWidth="4" />
+          <path d="M84 49h32M84 62h23" stroke="#9bc7ff" strokeWidth="4" strokeLinecap="round" />
+          <circle cx="56" cy="76" r="14" fill="white" stroke={stroke} strokeWidth="4" />
+          <path d="M36 112c4-16 15-24 20-24s16 8 20 24" fill="white" stroke={stroke} strokeWidth="4" strokeLinecap="round" />
+          <circle cx="113" cy="88" r="12" fill="white" stroke={stroke} strokeWidth="4" />
+          <path d="M94 118c4-13 14-20 19-20s15 7 19 20" fill="white" stroke={stroke} strokeWidth="4" strokeLinecap="round" />
+          <path d="M76 84l24-16" stroke={blue} strokeWidth="5" strokeLinecap="round" />
+        </>
+      )}
+      {icon === "record" && (
+        <>
+          <rect x="53" y="30" width="75" height="89" rx="8" fill="white" stroke={stroke} strokeWidth="4" />
+          <rect x="73" y="23" width="35" height="17" rx="5" fill={blue} stroke={stroke} strokeWidth="4" />
+          <path d="M68 58h44M68 74h32M68 90h41" stroke="#9bc7ff" strokeWidth="4" strokeLinecap="round" />
+          <path d="M67 108l7 7 15-18" stroke={blue} strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M99 108h17" stroke="#9bc7ff" strokeWidth="4" strokeLinecap="round" />
+        </>
+      )}
+      {icon === "practice" && (
+        <>
+          <path d="M55 34l68-8a6 6 0 0 1 7 5l9 71a6 6 0 0 1-5 7l-68 8a6 6 0 0 1-7-5l-9-71a6 6 0 0 1 5-7Z" fill="white" stroke={stroke} strokeWidth="4" />
+          <path d="M69 55l41-5M72 73l45-5M74 91l26-3" stroke="#9bc7ff" strokeWidth="4" strokeLinecap="round" />
+          <path d="M70 93l8-1M88 90l8-1M80 85l7 12M98 83l7 12" stroke={stroke} strokeWidth="3" strokeLinecap="round" />
+          <path d="M125 77l15 8-23 42-16 6 2-17 22-39Z" fill={blue} stroke={stroke} strokeWidth="4" strokeLinejoin="round" />
+          <path d="M104 116l14 8M130 88l-15-8" stroke="white" strokeWidth="4" strokeLinecap="round" />
+        </>
+      )}
+      {icon === "mission" && (
+        <>
+          <path d="M42 102c12-28 31-41 53-34 19 6 28-11 43-33" stroke={blue} strokeWidth="6" strokeLinecap="round" />
+          <circle cx="43" cy="102" r="10" fill="white" stroke={stroke} strokeWidth="4" />
+          <circle cx="88" cy="67" r="10" fill="white" stroke={stroke} strokeWidth="4" />
+          <circle cx="138" cy="35" r="10" fill="white" stroke={stroke} strokeWidth="4" />
+          <path d="M138 20v36M138 22l25 8-25 8" stroke={stroke} strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M39 103h8M84 67h8M134 35h8" stroke="#9bc7ff" strokeWidth="3" strokeLinecap="round" />
+        </>
+      )}
+      {icon === "visibility" && (
+        <>
+          <rect x="51" y="37" width="79" height="58" rx="8" fill="white" stroke={stroke} strokeWidth="4" />
+          <path d="M64 57h25M64 73h18" stroke="#9bc7ff" strokeWidth="4" strokeLinecap="round" />
+          <path d="M101 79l7 7 16-19" stroke={blue} strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" />
+          <circle cx="67" cy="111" r="12" fill="white" stroke={stroke} strokeWidth="4" />
+          <path d="M48 132c4-12 14-18 19-18s15 6 19 18" fill="white" stroke={stroke} strokeWidth="4" strokeLinecap="round" />
+          <circle cx="121" cy="112" r="11" fill="white" stroke={stroke} strokeWidth="4" />
+          <path d="M104 132c4-11 13-17 17-17s13 6 17 17" fill="white" stroke={stroke} strokeWidth="4" strokeLinecap="round" />
+        </>
+      )}
+      {icon === "growth" && (
+        <>
+          <path d="M42 105c26-6 48-22 66-49" stroke={stroke} strokeWidth="4" strokeLinecap="round" />
+          <path d="M100 58l10-13 3 16" stroke={stroke} strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
+          <rect x="44" y="101" width="17" height="18" fill={blue} stroke={stroke} strokeWidth="4" />
+          <rect x="72" y="88" width="17" height="31" fill={blue} stroke={stroke} strokeWidth="4" />
+          <rect x="100" y="70" width="17" height="49" fill={blue} stroke={stroke} strokeWidth="4" />
+          <path d="M128 42v78M128 44l26 9-26 10" stroke={stroke} strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
+          <circle cx="130" cy="112" r="19" fill="white" stroke={stroke} strokeWidth="4" />
+          <path d="M120 112l7 7 15-17" stroke={blue} strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" />
+        </>
+      )}
+    </svg>
+  );
+}
 
 export default async function Home({
   searchParams,
@@ -241,27 +445,91 @@ export default async function Home({
         </div>
       </section>
 
-      <section aria-label="The ScienceDojo Method" className="relative w-full overflow-hidden bg-[#f2f7ff] px-4 py-16 md:px-10 md:py-36">
+      <section aria-label="The ScienceDojo Method" className="relative w-full overflow-hidden bg-[linear-gradient(180deg,#f8fbff_0%,#eef6ff_54%,#f8fbff_100%)] px-4 py-16 md:px-8 md:py-28 xl:px-12">
         <HomepageSectionTracker eventName="homepage_method_visible" />
-        <div className="mx-auto max-w-[1360px]">
-          <div className="mx-auto max-w-3xl text-center">
-            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary md:text-xs md:tracking-[0.28em]">The method</p>
-            <h2 className="mt-4 text-3xl font-black tracking-tight text-secondary md:mt-5 md:text-5xl">The <span className="text-primary">sciencedojo</span> Method</h2>
-            <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-secondary/65 md:mt-6 md:text-lg md:leading-8">
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_14%_18%,rgba(0,102,255,0.08),transparent_30%),radial-gradient(circle_at_86%_36%,rgba(0,210,255,0.09),transparent_31%)]" />
+        <div className="relative mx-auto max-w-[1560px]">
+          <div className="mx-auto max-w-[76rem] text-center">
+            <p className="text-[11px] font-black uppercase text-primary md:text-sm">The method</p>
+            <h2 className="mt-5 text-4xl font-black leading-[1.05] text-secondary md:text-6xl xl:whitespace-nowrap xl:text-[4.75rem]">
+              The <span className="text-primary">sciencedojo</span> Method
+            </h2>
+            <p className="mx-auto mt-5 max-w-2xl text-lg leading-8 text-secondary/62 md:text-2xl md:leading-10">
               A structured tutoring rhythm designed to turn hidden gaps into visible progress.
             </p>
           </div>
 
-          <div className="relative mt-10 md:mt-16">
-            <div className="absolute left-[8%] right-[8%] top-[2.25rem] hidden h-0.5 rounded-full bg-gradient-to-r from-transparent via-primary/30 to-transparent lg:block" />
-            <div className="grid gap-10 lg:grid-cols-5 lg:gap-5">
-              {methodStages.map((stage) => (
-                <div key={stage.title} className="relative rounded-[1.75rem] border border-white bg-white/86 p-6 shadow-sm lg:text-center">
-                  <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-primary text-lg font-black text-white shadow-[0_0_0_8px_rgba(0,102,255,0.08)]">
+          <div className="relative mt-12 md:mt-20">
+            <div className="absolute left-[7%] right-[7%] top-[3.65rem] hidden h-1 overflow-hidden rounded-full bg-primary/10 xl:block">
+              <div className="h-full w-full rounded-full bg-[linear-gradient(90deg,rgba(0,102,255,0.18)_0%,rgba(0,102,255,0.28)_24%,rgba(0,102,255,0.42)_50%,rgba(0,210,255,0.56)_76%,rgba(0,102,255,0.72)_100%)] [mask-image:linear-gradient(90deg,transparent,black_7%,black_93%,transparent)]" />
+            </div>
+            <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-5 xl:gap-7">
+              {methodStages.map((stage, index) => {
+                const isFinalStage = index === methodStages.length - 1;
+
+                return (
+                <div
+                  key={stage.title}
+                  className={`relative flex min-h-[28rem] flex-col items-center overflow-hidden rounded-[1.75rem] bg-white px-6 pb-7 pt-5 text-center transition-all hover:-translate-y-1 md:min-h-[29.5rem] md:px-7 xl:min-h-[31rem] ${
+                    isFinalStage
+                      ? "border border-primary/22 shadow-[0_28px_82px_rgba(0,102,255,0.16)] hover:shadow-[0_32px_92px_rgba(0,102,255,0.2)]"
+                      : "border border-secondary/5 shadow-[0_22px_65px_rgba(0,26,68,0.11)] hover:shadow-[0_28px_80px_rgba(0,102,255,0.16)]"
+                  }`}
+                >
+                  <div className="relative z-10 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-lg font-black text-white shadow-[0_9px_20px_rgba(0,102,255,0.2)] ring-[7px] ring-primary/7">
                     {stage.number}
                   </div>
-                  <h3 className="text-lg font-black text-secondary">{stage.title}</h3>
-                  <p className="mt-3 text-sm leading-7 text-secondary/60">{stage.text}</p>
+                  <div className="mt-8 flex h-40 w-full items-center justify-center">
+                    <MethodStageIllustration icon={stage.icon} />
+                  </div>
+                  <h3 className="mt-4 text-2xl font-black leading-tight text-secondary md:text-[1.65rem]">{stage.title}</h3>
+                  <p className="mt-2 text-sm font-bold uppercase tracking-[0.08em] text-primary/82">{stage.meaning}</p>
+                  <div className="mt-5 h-px w-full bg-secondary/8">
+                    <div className="mx-auto h-px w-16 bg-primary" />
+                  </div>
+                  <p className="mt-5 max-w-[14rem] text-base font-medium leading-7 text-secondary/66">{stage.text}</p>
+                </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section aria-label="The ScienceDojo Learning Journey" className="relative w-full overflow-hidden bg-white px-4 py-16 md:px-8 md:py-28 xl:px-12">
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_18%_20%,rgba(0,102,255,0.06),transparent_30%),radial-gradient(circle_at_82%_78%,rgba(0,210,255,0.07),transparent_32%),linear-gradient(180deg,#ffffff_0%,#f7fbff_100%)]" />
+        <div className="relative mx-auto max-w-[1560px]">
+          <div className="mx-auto max-w-4xl text-center">
+            <p className="text-[11px] font-black uppercase tracking-[0.18em] text-primary md:text-sm">The learning journey</p>
+            <h2 className="mt-4 text-3xl font-black leading-[1.08] tracking-tight text-secondary md:text-5xl xl:text-[3.85rem]">
+              A Learning System, Not Just A Lesson
+            </h2>
+            <p className="mx-auto mt-5 max-w-2xl text-base leading-7 text-secondary/62 md:text-xl md:leading-9">
+              Every lesson creates clear next steps so learning continues between sessions and progress becomes visible over time.
+            </p>
+          </div>
+
+          <div className="relative mt-12 md:mt-16">
+            <div className="absolute left-[6%] right-[6%] top-[4.45rem] hidden h-1 overflow-hidden rounded-full bg-primary/8 xl:block">
+              <div className="h-full w-full rounded-full bg-[linear-gradient(90deg,rgba(0,102,255,0.14)_0%,rgba(0,102,255,0.24)_20%,rgba(0,102,255,0.36)_40%,rgba(0,210,255,0.48)_60%,rgba(0,102,255,0.6)_80%,rgba(0,102,255,0.72)_100%)] [mask-image:linear-gradient(90deg,transparent,black_6%,black_94%,transparent)]" />
+            </div>
+            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 xl:gap-4">
+              {learningJourneyStages.map((stage) => (
+                <div
+                  key={stage.title}
+                  className="relative flex min-h-[18rem] flex-col items-center rounded-[1.5rem] border border-secondary/7 bg-white px-4 pb-5 pt-4 text-center shadow-[0_18px_48px_rgba(0,26,68,0.08)] transition-all hover:-translate-y-0.5 hover:border-primary/18 hover:shadow-[0_22px_56px_rgba(0,102,255,0.12)] md:min-h-[18.75rem] md:px-5 xl:min-h-[20rem]"
+                >
+                  <div className="relative z-10 flex h-11 w-11 items-center justify-center rounded-full bg-primary text-sm font-black text-white shadow-[0_8px_18px_rgba(0,102,255,0.18)] ring-[6px] ring-primary/7">
+                    {stage.number}
+                  </div>
+                  <div className="mt-5 flex h-28 w-full items-center justify-center">
+                    <LearningJourneyIllustration icon={stage.icon} />
+                  </div>
+                  <h3 className="mt-4 text-lg font-black leading-tight text-secondary md:text-xl xl:text-lg">{stage.title}</h3>
+                  <div className="mt-4 h-px w-full bg-secondary/8">
+                    <div className="mx-auto h-px w-12 bg-primary/80" />
+                  </div>
+                  <p className="mt-4 max-w-[12rem] text-sm font-medium leading-6 text-secondary/62">{stage.text}</p>
                 </div>
               ))}
             </div>

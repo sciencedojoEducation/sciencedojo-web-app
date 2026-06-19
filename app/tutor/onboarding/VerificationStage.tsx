@@ -11,6 +11,8 @@ interface VerificationStageProps {
   updateData: (fields: any) => void;
   onComplete: () => void;
   onBack: () => void;
+  onSaveDraft: () => void;
+  isSavingDraft: boolean;
   isSubmitting: boolean;
   userId: string;
   idUploaded: boolean;
@@ -24,6 +26,8 @@ export default function VerificationStage({
   updateData,
   onComplete,
   onBack,
+  onSaveDraft,
+  isSavingDraft,
   isSubmitting,
   userId,
   idUploaded,
@@ -51,15 +55,16 @@ export default function VerificationStage({
       initial={{ opacity: 0, x: 20 }}
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: -20 }}
-      className="max-w-4xl mx-auto space-y-12 pb-20"
+      className="rounded-[1.75rem] border border-blue-100 bg-white/92 p-5 shadow-xl shadow-navy/5 backdrop-blur-xl sm:p-7 md:p-10"
     >
-      <div className="space-y-4 text-center">
-        <h2 className="text-5xl font-black text-navy tracking-tight leading-none">Identity & Compliance 🛡️</h2>
-        <p className="text-navy/60 font-medium italic text-lg leading-relaxed max-w-2xl mx-auto">"Trust is the bridge between education and transformation."</p>
+      <div className="space-y-2 text-left">
+        <p className="text-sm font-black text-primary">Step 6 of 6</p>
+        <h2 className="text-2xl font-black tracking-tight text-navy md:text-3xl">Final Review</h2>
+        <p className="text-sm font-medium text-navy/60 md:text-base">Complete the final agreements and identity checks so our team can review your application.</p>
       </div>
 
       {/* Compliance Block */}
-      <div className="bg-white/60 backdrop-blur-3xl border border-white p-12 rounded-[3.5rem] shadow-2xl space-y-12 text-left relative overflow-hidden group">
+      <div className="relative mt-8 space-y-8 overflow-hidden rounded-[1.5rem] border border-navy/8 bg-slate-50/80 p-5 text-left md:p-6">
         <div className="absolute top-0 right-0 p-8 opacity-[0.03] translate-x-1/4 -translate-y-1/4">
            <ShieldCheck size={400} />
         </div>
@@ -69,9 +74,9 @@ export default function VerificationStage({
               <div className="w-12 h-12 rounded-2xl bg-blue-600 text-white flex items-center justify-center shadow-lg shadow-blue-500/20">
                 <ShieldCheck size={24} />
               </div>
-              <h3 className="text-2xl font-black text-navy tracking-tight">Integrity Protocol</h3>
+              <h3 className="text-xl font-black tracking-tight text-navy">Verification & agreements</h3>
            </div>
-           <p className="text-navy/70 text-lg font-bold leading-relaxed">ScienceDojo maintains the highest levels of safety. We require legal consent and background verification for all Senseis.</p>
+           <p className="text-sm font-semibold leading-relaxed text-navy/65">ScienceDojo maintains a high-trust learning environment. We require legal consent and identity verification for all tutors.</p>
         </div>
 
         <div className="w-full h-px bg-navy/5" />
@@ -79,10 +84,10 @@ export default function VerificationStage({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 relative z-10">
            {/* GDPR Card */}
            <div 
-             className={`p-8 rounded-[3rem] border-2 transition-all group cursor-pointer relative overflow-hidden ${
+             className={`relative cursor-pointer overflow-hidden rounded-[1.5rem] border p-5 transition-all ${
                isGdprAccepted 
-                 ? "bg-blue-50/50 border-blue-200" 
-                 : "bg-white border-navy/5 hover:border-blue-500/30 hover:shadow-2xl shadow-navy/5"
+                 ? "border-blue-200 bg-blue-50/50" 
+                 : "border-navy/8 bg-white hover:border-blue-500/30"
              }`}
              onClick={() => setActiveModal("gdpr")}
            >
@@ -97,17 +102,17 @@ export default function VerificationStage({
                  )}
               </div>
               <div className="space-y-1">
-                 <h4 className="text-lg font-black text-navy leading-tight">GDPR Data Processing Consent</h4>
-                 <p className="text-[10px] font-black text-navy/30 uppercase tracking-[0.2em]">{isGdprAccepted ? `Accepted on ${data.gdpr_accepted_at}` : "Sensitive Document Access"}</p>
+                 <h4 className="text-base font-black leading-tight text-navy">GDPR Data Processing Consent</h4>
+                 <p className="text-xs font-bold text-navy/40">{isGdprAccepted ? `Accepted on ${data.gdpr_accepted_at}` : "Sensitive document access"}</p>
               </div>
            </div>
 
            {/* Terms Card */}
            <div 
-             className={`p-8 rounded-[3rem] border-2 transition-all group cursor-pointer relative overflow-hidden ${
+             className={`relative cursor-pointer overflow-hidden rounded-[1.5rem] border p-5 transition-all ${
                isTermsAccepted 
-                 ? "bg-blue-50/50 border-blue-200" 
-                 : "bg-white border-navy/5 hover:border-blue-500/30 hover:shadow-2xl shadow-navy/5"
+                 ? "border-blue-200 bg-blue-50/50" 
+                 : "border-navy/8 bg-white hover:border-blue-500/30"
              }`}
              onClick={() => setActiveModal("terms")}
            >
@@ -122,25 +127,25 @@ export default function VerificationStage({
                  )}
               </div>
               <div className="space-y-1">
-                 <h4 className="text-lg font-black text-navy leading-tight">Accept Sensei Terms & Agreement</h4>
-                 <p className="text-[10px] font-black text-navy/30 uppercase tracking-[0.2em]">{isTermsAccepted ? `Accepted on ${data.terms_accepted_at}` : "The Dojo Code of Conduct"}</p>
+                 <h4 className="text-base font-black leading-tight text-navy">Accept Tutor Terms & Agreement</h4>
+                 <p className="text-xs font-bold text-navy/40">{isTermsAccepted ? `Accepted on ${data.terms_accepted_at}` : "ScienceDojo teaching standards"}</p>
               </div>
            </div>
         </div>
       </div>
 
       {/* Upload Zone */}
-      <div className={`space-y-10 transition-all duration-700 ${isGdprAccepted && isTermsAccepted ? "opacity-100 scale-100" : "opacity-20 scale-95 pointer-events-none grayscale blur-sm"}`}>
+      <div className={`mt-8 space-y-6 transition-all duration-700 ${isGdprAccepted && isTermsAccepted ? "scale-100 opacity-100" : "pointer-events-none scale-95 opacity-25 grayscale"}`}>
         <div className="flex items-center gap-4 pl-8">
            <div className="w-10 h-10 rounded-xl bg-navy/5 flex items-center justify-center text-navy/40">
              <FileCheck size={20} />
            </div>
-           <h3 className="text-xl font-black text-navy uppercase tracking-tight">Identity Verification</h3>
+           <h3 className="text-lg font-black text-navy">Identity Verification</h3>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
           <div className="space-y-4 text-left">
-            <label className="text-[10px] font-black text-navy/30 uppercase tracking-[0.3em] ml-8">Verified Photo ID (Passport/Driving License)</label>
+            <label className="text-xs font-bold text-navy/55">Verified Photo ID (Passport/Driving License)</label>
             <PrivateUploader 
               userId={userId} 
               docType="government_id" 
@@ -153,7 +158,7 @@ export default function VerificationStage({
           </div>
 
           <div className="space-y-4 text-left">
-            <label className="text-[10px] font-black text-navy/30 uppercase tracking-[0.3em] ml-8">Background Check (DBS / Clean Record)</label>
+            <label className="text-xs font-bold text-navy/55">Background Check (DBS / Clean Record)</label>
             <PrivateUploader 
               userId={userId} 
               docType="background_check" 
@@ -166,45 +171,25 @@ export default function VerificationStage({
           </div>
         </div>
 
-        {/* System Notice */}
-        <div className="flex items-start gap-6 p-10 rounded-[3rem] bg-red-50/50 border border-red-100/50 backdrop-blur-sm">
+        {/* Document accuracy notice */}
+        <div className="flex items-start gap-4 rounded-[1.5rem] border border-red-100/70 bg-red-50/50 p-5">
           <AlertTriangle className="text-red-400 shrink-0 mt-1" size={24} />
-          <p className="text-red-900/40 text-[10px] font-black leading-relaxed italic uppercase tracking-[0.2em]">
-            SYSTEM NOTICE: ANY ATTEMPT TO UPLOAD FRAUDULENT OR MISLEADING DOCUMENTATION WILL RESULT IN AN IMMEDIATE TERMINATION AND PERMANENT BAN. ALL FILES ARE VERIFIED BY CERTIFIED AUDITORS.
+          <p className="text-sm font-semibold leading-relaxed text-red-900/55">
+            Please upload accurate documents. Misleading documentation may lead to application rejection or account review.
           </p>
         </div>
       </div>
 
       {/* Navigation Controls */}
-      <div className="flex justify-between items-center pt-10 border-t border-navy/5">
-        <button
-          onClick={onBack}
-          className="px-10 py-6 bg-white border border-navy/5 text-navy/40 hover:text-navy rounded-[2.5rem] font-black text-lg transition-all shadow-sm active:scale-95"
-        >
-          Back
-        </button>
-        <button
-          onClick={onComplete}
-          disabled={isSubmitting || !isReady}
-          className={`px-16 py-6 rounded-[2.5rem] font-black text-xl tracking-tight transition-all transform active:scale-95 flex items-center justify-center gap-4 group relative overflow-hidden shadow-xl ${
-            isReady && !isSubmitting
-              ? "bg-blue-600 text-white hover:bg-blue-500 hover:shadow-2xl hover:shadow-blue-500/20 shadow-blue-900/10" 
-              : "bg-blue-50 text-blue-200 cursor-not-allowed shadow-none grayscale opacity-60"
-          }`}
-        >
-          <span className="relative z-10 flex items-center gap-3">
-             {isSubmitting ? "Encrypting Data..." : "Finalize Sensei Path"}
-             {!isSubmitting && <ShieldCheck size={24} className="group-hover:scale-125 transition-transform" strokeWidth={3} />}
-          </span>
-          {isReady && !isSubmitting && (
-            <motion.div 
-               initial={{ x: "-100%" }}
-               animate={{ x: "100%" }}
-               transition={{ duration: 2, repeat: Infinity, repeatDelay: 1 }}
-               className="absolute top-0 left-0 w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-12"
-            />
-          )}
-        </button>
+      <div className="mt-8 flex flex-col gap-4 border-t border-navy/8 pt-6 md:flex-row md:items-center md:justify-between">
+        <p className="text-sm font-semibold text-navy/55">You can save and continue later</p>
+        <div className="flex flex-col gap-3 sm:flex-row">
+          <button onClick={onBack} className="min-h-11 rounded-xl border border-navy/10 bg-white px-5 py-3 text-sm font-bold text-navy/65 transition-colors hover:border-primary/30 hover:text-navy">Back</button>
+          <button onClick={onSaveDraft} disabled={isSavingDraft} className="min-h-11 rounded-xl border border-navy/10 bg-white px-5 py-3 text-sm font-bold text-navy/65 transition-colors hover:border-primary/30 hover:text-navy disabled:opacity-60">{isSavingDraft ? "Saving..." : "Save Draft"}</button>
+          <button onClick={onComplete} disabled={isSubmitting || !isReady} className={`min-h-11 rounded-xl px-6 py-3 text-sm font-black transition-all active:scale-95 ${isReady && !isSubmitting ? "bg-primary text-white shadow-lg shadow-primary/20 hover:bg-blue-500" : "cursor-not-allowed bg-blue-50 text-blue-200"}`}>
+            {isSubmitting ? "Submitting application..." : "Submit Application →"}
+          </button>
+        </div>
       </div>
 
       {/* Compliance Modals */}
@@ -219,7 +204,7 @@ export default function VerificationStage({
         isOpen={activeModal === "terms"} 
         onClose={() => setActiveModal(null)}
         onAccept={() => handleAccept("terms")}
-        title="ScienceDojo Sensei Agreement"
+        title="ScienceDojo Tutor Agreement"
         type="terms"
       />
     </motion.div>

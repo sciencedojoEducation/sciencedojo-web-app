@@ -74,7 +74,8 @@ export default async function DashboardSidebar({ role }: DashboardSidebarProps) 
 
   const navLinks: Record<string, NavLink[]> = {
     parent: [
-      { name: "My Bookings", href: "/dashboard/parent", icon: "🗓️", exact: true, tourId: "parent-bookings" },
+      { name: "Dashboard", href: "/dashboard/parent", icon: "🗓️", exact: true, tourId: "parent-bookings" },
+      { name: "Learning Guide", href: "/support", icon: "📘" },
       { name: "My Classes", href: "/dashboard/classes", icon: "🎓", tourId: "parent-classes" },
       { name: "Messages", href: "/dashboard/messages", icon: "💬", badge: unreadCount, tourId: "parent-messages" },
       { name: "Browse Tutors", href: "/dashboard/parent/tutors", icon: "🔍", tourId: "parent-browse" },
@@ -83,6 +84,7 @@ export default async function DashboardSidebar({ role }: DashboardSidebarProps) 
     ],
     student: [
       { name: "My Bookings", href: "/dashboard/student", icon: "🗓️", exact: true, tourId: "student-bookings" },
+      { name: "Learning Guide", href: "/support", icon: "📘" },
       { name: "My Classes", href: "/dashboard/classes", icon: "🎓", tourId: "student-classes" },
       { name: "Messages", href: "/dashboard/messages", icon: "💬", badge: unreadCount, tourId: "student-messages" },
       { name: "Missions", href: "/dashboard/student/missions", icon: "🧭", tourId: "student-tasks" },
@@ -92,12 +94,14 @@ export default async function DashboardSidebar({ role }: DashboardSidebarProps) 
       { name: "Support", href: "/dashboard/support", icon: "🆘" },
     ],
     tutor: [
-      { name: "My Schedule", href: "/dashboard/tutor", icon: "🗓️", exact: true, tourId: "tutor-sessions" },
-      { name: "My Classes", href: "/dashboard/classes", icon: "🎓", tourId: "tutor-students" },
+      { name: "Dashboard", href: "/dashboard/tutor", icon: "🏠", exact: true },
+      { name: "Schedule", href: "/dashboard/tutor/schedule", icon: "🗓️", tourId: "tutor-sessions" },
+      { name: "Students & Classes", href: "/dashboard/classes", icon: "🎓", tourId: "tutor-students" },
       { name: "Messages", href: "/dashboard/messages", icon: "💬", badge: unreadCount, tourId: "tutor-messages" },
       { name: "Mission Reviews", href: "/dashboard/tutor/missions", icon: "🧭" },
       { name: "Earnings", href: "/dashboard/tutor/earnings", icon: "💰" },
-      { name: "Profile Settings", href: "/dashboard/tutor/settings", icon: "👤", tourId: "tutor-availability" },
+      { name: "Profile", href: "/dashboard/tutor/settings", icon: "👤", tourId: "tutor-availability" },
+      { name: "Success Center", href: "/support/tutors", icon: "⭐" },
       { name: "Support", href: "/dashboard/support", icon: "🆘" },
     ],
     admin: [

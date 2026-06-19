@@ -3,6 +3,7 @@
 import { createClient } from "@/utils/supabase/server";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { getMeaningfulTutorSubjects } from "@/lib/tutors/subjects";
 
 /**
  * Automated scoring based on tutor input
@@ -28,7 +29,11 @@ function calculateAutomatedScore(data: any): number {
   return score;
 }
 
-export async function saveApplicationStage(stage: number, dataPayload: any) {
+export async function saveApplicationStage(
+  stage: number,
+  dataPayload: any,
+  options: { advance?: boolean } = {}
+) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
@@ -56,8 +61,12 @@ export async function saveApplicationStage(stage: number, dataPayload: any) {
 
   const newData: any = { ...currentData, ...payloadObject };
 
-  // Track progress stage
-  newData.current_stage = stage + 1;
+  const shouldAdvance = options.advance !== false;
+
+  // Track progress stage. Draft saves persist data without moving the applicant forward.
+  newData.current_stage = shouldAdvance
+    ? stage + 1
+    : Math.max(Number(currentData.current_stage || stage), stage);
 
   updateData.data = newData;
 
@@ -65,10 +74,12 @@ export async function saveApplicationStage(stage: number, dataPayload: any) {
   if (newData.full_name) updateData.full_name = newData.full_name;
   if (newData.university) updateData.university = newData.university;
   if (newData.user_type) updateData.user_type = newData.user_type;
+  const meaningfulSubjects = getMeaningfulTutorSubjects(newData.subjects);
+  if (meaningfulSubjects.length > 0) updateData.subjects = meaningfulSubjects;
 
   // Logic based on Stage Completion
   if (stage === 1) {
-    // Knockout Logic: Online tutoring is mandatory
+    // Online tutoring is mandatory for this application flow.
     if (newData.online_available === "false") {
       newData.is_knocked_out = true;
       newData.onboarding_status = 'rejected';
@@ -88,10 +99,10 @@ export async function saveApplicationStage(stage: number, dataPayload: any) {
     newData.onboarding_status = 'demo_submitted';
   }
 
-  if (stage === 6) {
+  if (stage === 6 && shouldAdvance) {
     const gdprAccepted = String(newData.gdpr_accepted) === "true";
     const termsAccepted = String(newData.terms_accepted) === "true";
-    if (!gdprAccepted || !termsAccepted) throw new Error("Both agreements must be accepted to finalize calibration.");
+    if (!gdprAccepted || !termsAccepted) throw new Error("Both agreements must be accepted to submit your application.");
     
     updateData.status = 'pending'; // Ready for final human review
     newData.onboarding_status = 'under_review';
@@ -107,14 +118,20 @@ export async function saveApplicationStage(stage: number, dataPayload: any) {
       .update({ role: 'tutor' })
       .eq('id', user.id);
 
-    // Ensure tutor row exists
-    await supabase.from('tutors').upsert({
+    const tutorUpsert: Record<string, unknown> = {
       id: user.id,
       is_verified: false,
       is_available_now: true,
       bio: '',
       hourly_rate: 0
-    }, { onConflict: 'id' });
+    };
+
+    if (meaningfulSubjects.length > 0) {
+      tutorUpsert.subjects = meaningfulSubjects;
+    }
+
+    // Ensure tutor row exists
+    await supabase.from('tutors').upsert(tutorUpsert, { onConflict: 'id' });
     // We store specific timestamps within the JSONB data object via VerificationStage
   }
 
@@ -155,7 +172,7 @@ export async function submitTutorApplication(formData: FormData) {
   const has_teaching_license = formData.get("has_teaching_license") === "on";
   const cv_url = formData.get("cv_url") as string;
 
-  const subjects = subjectsStr ? subjectsStr.split(",").map(s => s.trim()).filter(Boolean) : [];
+  const subjects = getMeaningfulTutorSubjects(subjectsStr);
 
   const { error } = await supabase
     .from("applications")
@@ -196,4 +213,3 @@ export async function generatePrivateUploadUrl(fileName: string) {
   // No server action needed for the upload itself.
   return { folderPath: `${user.id}` };
 }
-

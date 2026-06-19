@@ -1,9 +1,11 @@
 import { createClient } from "@/utils/supabase/server";
+import { createAdminClient } from "@/utils/supabase/admin";
 
 export type Subject = "Science" | "Math" | "Physics" | "Chemistry" | "Biology" | "Programming";
 
 export interface TutorProfile {
   id: string;
+  slug?: string | null;
   full_name: string;
   avatar_url: string;
   bio: string;
@@ -29,6 +31,7 @@ export interface TutorProfile {
 // Raw shapes returned by Supabase queries before mapping to domain types
 type RawTutorQueryRow = {
   id: string;
+  slug?: string | null;
   bio: string;
   subjects: Subject[];
   hourly_rate: number;
@@ -41,6 +44,7 @@ type RawTutorQueryRow = {
 
 type RawTutorExtendedRow = {
   id: string;
+  slug?: string | null;
   youtube_intro_url: string | null;
   education_level?: string;
   university?: string;
@@ -51,6 +55,7 @@ type RawTutorExtendedRow = {
 
 type RawTutorDetailRow = {
   id: string;
+  slug?: string | null;
   bio: string;
   subjects: Subject[];
   hourly_rate: number;
@@ -119,6 +124,34 @@ type RawEarningsRow = {
   price_at_booking: number;
 };
 
+function isMissingColumnError(error: { code?: string; message?: string } | null | undefined) {
+  return error?.code === '42703' || Boolean(error?.message?.includes('column') && error.message.includes('does not exist'));
+}
+
+async function getTutorSlugMap(tutorIds: string[]) {
+  const supabase = await createClient();
+
+  if (tutorIds.length === 0) {
+    return {} as Record<string, string | null>;
+  }
+
+  const { data, error } = await supabase
+    .from('tutors')
+    .select('id, slug')
+    .in('id', tutorIds);
+
+  if (error) {
+    if (!isMissingColumnError(error)) {
+      console.error("Error fetching tutor slugs:", error.message);
+    }
+    return {} as Record<string, string | null>;
+  }
+
+  return Object.fromEntries(
+    ((data as { id: string; slug: string | null }[] | null) ?? []).map((row) => [row.id, row.slug])
+  ) as Record<string, string | null>;
+}
+
 export async function getTutors(searchTerm: string = "", subject: string = "All", limit?: number): Promise<TutorProfile[]> {
   const supabase = await createClient();
 
@@ -172,9 +205,12 @@ export async function getTutors(searchTerm: string = "", subject: string = "All"
     });
   }
 
+  const slugMap = await getTutorSlugMap(tutorIds);
+
   // Flatten the join results
   return (data as unknown as RawTutorQueryRow[]).map(tutor => ({
     id: tutor.id,
+    slug: slugMap[tutor.id] ?? null,
     full_name: tutor.profiles?.full_name || 'Verified Tutor',
     avatar_url: tutor.profiles?.avatar_url || '',
     bio: tutor.bio,
@@ -240,11 +276,13 @@ export async function getTutorById(id: string): Promise<TutorProfile | null> {
     .select('chat_availability, youtube_intro_url')
     .eq('id', id)
     .maybeSingle();
+  const slugMap = await getTutorSlugMap([id]);
 
   const tutor = data as unknown as RawTutorDetailRow;
   const extendedData = extended as RawTutorChatRow | null;
   return {
     id: tutor.id,
+    slug: slugMap[tutor.id] ?? null,
     full_name: tutor.profiles?.full_name || 'Verified Tutor',
     avatar_url: tutor.profiles?.avatar_url || '',
     bio: tutor.bio,
@@ -258,6 +296,68 @@ export async function getTutorById(id: string): Promise<TutorProfile | null> {
     is_available_now: tutor.is_available_now,
     chat_availability: extendedData?.chat_availability ?? undefined,
     youtube_intro_url: extendedData?.youtube_intro_url,
+  };
+}
+
+export async function getTutorBySlug(slug: string): Promise<TutorProfile | null> {
+  const supabase = await createClient();
+  const normalizedSlug = slug.trim().toLowerCase();
+
+  const { data, error } = await supabase
+    .from('tutors')
+    .select(`
+      id,
+      slug,
+      bio,
+      subjects,
+      hourly_rate,
+      rating,
+      review_count,
+      is_verified,
+      is_available_now,
+      youtube_intro_url,
+      education_level,
+      university,
+      experience_summary,
+      has_teaching_license,
+      cv_url,
+      profiles (
+        full_name,
+        avatar_url
+      )
+    `)
+    .eq('slug', normalizedSlug)
+    .maybeSingle();
+
+  if (error || !data) {
+    if (error && error.code !== 'PGRST116') {
+      console.error("Error fetching tutor by slug:", error?.message || error);
+    }
+    return null;
+  }
+
+  const tutor = data as unknown as RawTutorDetailRow;
+  return {
+    id: tutor.id,
+    slug: tutor.slug ?? normalizedSlug,
+    full_name: tutor.profiles?.full_name || 'Verified Tutor',
+    avatar_url: tutor.profiles?.avatar_url || '',
+    bio: tutor.bio,
+    subjects: tutor.subjects,
+    hourly_rate: tutor.hourly_rate,
+    rating: tutor.rating,
+    review_count: tutor.review_count,
+    average_rating: tutor.review_count > 0 ? (tutor.rating ?? null) : null,
+    is_verified: tutor.is_verified,
+    verified_at: tutor.is_verified ? 'verified' : null,
+    is_available_now: tutor.is_available_now,
+    chat_availability: undefined,
+    youtube_intro_url: tutor.youtube_intro_url,
+    education_level: tutor.education_level,
+    university: tutor.university,
+    experience_summary: tutor.experience_summary,
+    has_teaching_license: tutor.has_teaching_license,
+    cv_url: tutor.cv_url,
   };
 }
 
@@ -322,7 +422,8 @@ export async function getBookingsByUserId(userId: string): Promise<Booking[]> {
   }
 
   // 1.5 Fetch Reviews to flag already-reviewed bookings
-  const { data: reviewsData } = await supabase
+  const adminClient = createAdminClient();
+  const { data: reviewsData } = await adminClient
     .from('reviews')
     .select('booking_id')
     .in('booking_id', bookingIds);

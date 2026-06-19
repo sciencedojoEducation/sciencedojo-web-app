@@ -12,6 +12,7 @@ interface AuthCardProps {
   footer?: React.ReactNode;
   showLogo?: boolean;
   maxWidth?: string;
+  desktopAlign?: "center" | "top";
 }
 
 export default function AuthCard({ 
@@ -20,10 +21,15 @@ export default function AuthCard({
   subtitle, 
   footer, 
   showLogo = true,
-  maxWidth = "max-w-[480px]"
+  maxWidth = "max-w-[480px]",
+  desktopAlign = "center"
 }: AuthCardProps) {
+  const desktopAlignmentClass = desktopAlign === "top"
+    ? "md:items-start md:px-6 md:py-10 lg:py-12"
+    : "md:items-center md:p-6";
+
   return (
-    <div className="relative flex min-h-[calc(100svh-5rem)] w-full items-start justify-center overflow-x-hidden bg-[#F8FAFC] px-4 py-3 sm:px-4 sm:py-6 md:min-h-[calc(100dvh-5rem)] md:items-center md:p-6">
+    <div className={`relative flex min-h-[calc(100svh-5rem)] w-full items-start justify-center overflow-x-hidden bg-[#F8FAFC] px-4 py-3 sm:px-4 sm:py-6 md:min-h-[calc(100dvh-5rem)] ${desktopAlignmentClass}`}>
       {/* Premium Digital Dojo Background */}
       <div className="absolute inset-0 z-0 pointer-events-none">
         

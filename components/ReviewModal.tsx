@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
 
 interface ReviewModalProps {
   bookingId: string;
@@ -17,6 +16,7 @@ export default function ReviewModal({ bookingId, tutorId, tutorName, onClose, on
   const [comment, setComment] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [submitted, setSubmitted] = useState(false);
 
   const handleSubmit = async () => {
     if (rating === 0) {
@@ -40,8 +40,7 @@ export default function ReviewModal({ bookingId, tutorId, tutorName, onClose, on
          throw new Error(data.error || 'Failed to submit review');
       }
 
-      onSuccess();
-      onClose();
+      setSubmitted(true);
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -52,8 +51,34 @@ export default function ReviewModal({ bookingId, tutorId, tutorName, onClose, on
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-secondary/80 backdrop-blur-sm">
       <div className="bg-white rounded-[2rem] p-8 max-w-md w-full shadow-2xl animate-in zoom-in-95 duration-200">
+        {submitted ? (
+          <>
+            <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+              <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+            <h2 className="text-2xl font-black text-secondary mb-3">Thanks for your feedback</h2>
+            <p className="text-sm font-bold leading-6 text-secondary/60">
+              Thanks — your review has been submitted and will appear after admin review.
+            </p>
+            <button
+              onClick={() => {
+                onSuccess();
+                onClose();
+              }}
+              className="mt-8 min-h-11 w-full rounded-2xl bg-primary px-4 py-3 font-black text-white shadow-lg transition-colors hover:bg-primary-hover"
+            >
+              Done
+            </button>
+          </>
+        ) : (
+          <>
         <h2 className="text-2xl font-black text-secondary mb-2">Rate Your Session</h2>
-        <p className="text-sm font-bold text-secondary/60 mb-6">How was your lesson with {tutorName}?</p>
+        <p className="text-sm font-bold text-secondary/60 mb-2">How was your lesson with {tutorName}?</p>
+        <p className="mb-6 rounded-2xl border border-primary/10 bg-primary/5 px-4 py-3 text-xs font-bold leading-5 text-secondary/55">
+          Reviews are checked by ScienceDojo before they appear publicly, so feedback stays fair and helpful.
+        </p>
 
         {error && (
           <div className="mb-6 p-4 rounded-xl bg-red-50 text-red-600 text-xs font-bold border border-red-100">
@@ -111,9 +136,11 @@ export default function ReviewModal({ bookingId, tutorId, tutorName, onClose, on
                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"></circle>
                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                </svg>
-            ) : "Submit Review"}
+            ) : "Submit for Review"}
           </button>
         </div>
+          </>
+        )}
       </div>
     </div>
   );

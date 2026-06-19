@@ -10,9 +10,11 @@ interface AcademicExperienceStageProps {
   updateData: (fields: any) => void;
   onNext: () => void;
   onBack: () => void;
+  onSaveDraft: () => void;
+  isSavingDraft: boolean;
 }
 
-export default function AcademicExperienceStage({ data, userId, updateData, onNext, onBack }: AcademicExperienceStageProps) {
+export default function AcademicExperienceStage({ data, userId, updateData, onNext, onBack, onSaveDraft, isSavingDraft }: AcademicExperienceStageProps) {
   
   const addEducation = () => {
     const edu = Array.isArray(data.education) ? [...data.education] : [];
@@ -44,28 +46,29 @@ export default function AcademicExperienceStage({ data, userId, updateData, onNe
       initial={{ opacity: 0, x: 20 }}
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: -20 }}
-      className="space-y-10"
+      className="rounded-[1.75rem] border border-blue-100 bg-white/92 p-5 shadow-xl shadow-navy/5 backdrop-blur-xl sm:p-7 md:p-10"
     >
-      <div className="space-y-2 text-center md:text-left">
-        <h2 className="text-4xl font-black text-navy tracking-tight">Academic Pedigree 🎓</h2>
-        <p className="text-navy/60 font-medium italic">"A great teacher's foundation is built on their own mastery."</p>
+      <div className="space-y-2 text-left">
+        <p className="text-sm font-black text-primary">Step 2 of 6</p>
+        <h2 className="text-2xl font-black tracking-tight text-navy md:text-3xl">Experience</h2>
+        <p className="text-sm font-medium text-navy/60 md:text-base">Share your education, teaching background, and a short example of student progress.</p>
       </div>
 
-      <div className="grid grid-cols-1 gap-8">
+      <div className="mt-8 grid grid-cols-1 gap-7">
         {/* Years of Experience */}
         <div className="space-y-4 text-left">
-          <label className="flex items-center gap-2 text-[11px] font-black text-navy/30 uppercase tracking-[0.2em] ml-6">
-            <Briefcase size={14} className="text-primary/40" /> Tutoring Tenure
+          <label className="flex items-center gap-2 text-xs font-bold text-navy/55">
+            <Briefcase size={14} className="text-primary/40" /> Years of teaching experience
           </label>
-          <div className="flex flex-wrap gap-6 p-2 w-fit">
+          <div className="flex flex-wrap gap-3">
             {["< 1 Year", "1-2 Years", "3-5 Years", "5+ Years"].map((val) => (
               <button
                 key={val}
                 onClick={() => updateData({ years_experience: val })}
-                className={`px-10 py-4 rounded-[1.5rem] text-sm font-black transition-all transform active:scale-95 ${
+                className={`rounded-xl border px-5 py-3 text-sm font-bold transition-all active:scale-95 ${
                   data.years_experience === val 
-                    ? "bg-white text-navy border-4 border-navy shadow-lg scale-105" 
-                    : "bg-white text-navy/30 shadow-2xl shadow-navy/10 hover:text-navy/50"
+                    ? "border-primary bg-primary text-white shadow-sm" 
+                    : "border-navy/10 bg-white text-navy/55 hover:border-primary/30 hover:text-navy"
                 }`}
               >
                 {val}
@@ -76,51 +79,51 @@ export default function AcademicExperienceStage({ data, userId, updateData, onNe
 
         {/* Education Multi-List */}
         <div className="space-y-6">
-          <div className="flex justify-between items-center px-6">
-            <h3 className="text-[11px] font-black text-navy/30 uppercase tracking-[0.3em] flex items-center gap-2">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <h3 className="flex items-center gap-2 text-xs font-bold text-navy/55">
               <GraduationCap size={16} /> Higher Education
             </h3>
             <button 
               onClick={addEducation}
-              className="px-6 py-2 rounded-full border border-blue-500 bg-blue-500/5 text-[10px] font-black text-blue-600 uppercase tracking-[0.2em] hover:bg-blue-600 hover:text-white transition-all shadow-sm"
+              className="w-fit rounded-xl border border-primary/30 bg-primary/5 px-4 py-2 text-xs font-black text-primary transition-all hover:bg-primary hover:text-white"
             >
               + Add Degree
             </button>
           </div>
-          <div className="space-y-8">
+          <div className="space-y-5">
             {(data.education || []).map((edu: any, index: number) => (
               <motion.div 
                 key={index} 
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="p-10 rounded-[3.5rem] bg-white/40 backdrop-blur-xl border border-white/60 shadow-xl space-y-8 relative group"
+                className="group relative space-y-6 rounded-[1.5rem] border border-navy/8 bg-slate-50/70 p-5 md:p-6"
               >
                 <button 
                   onClick={() => removeEducation(index)}
-                  className="absolute -right-3 -top-3 w-12 h-12 rounded-full bg-white border border-red-50 text-red-100 hover:text-red-500 hover:shadow-lg transition-all flex items-center justify-center -rotate-12 group-hover:rotate-0"
+                  className="absolute -right-2 -top-2 flex h-9 w-9 items-center justify-center rounded-full border border-red-100 bg-white text-red-300 transition-all hover:text-red-500"
                 >
-                  <Trash2 size={20} />
+                  <Trash2 size={16} />
                 </button>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
+                <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
                   <div className="space-y-3 text-left">
-                    <label className="text-[10px] font-black text-navy/30 uppercase tracking-widest ml-6">University / Institution</label>
+                    <label className="text-xs font-bold text-navy/55">University / Institution</label>
                     <input
                       type="text"
                       placeholder="e.g. University of Manchester"
                       value={edu.institution}
                       onChange={(e) => updateEducation(index, "institution", e.target.value)}
-                      className="w-full bg-white/80 border border-white/60 rounded-[2rem] px-8 py-5 text-navy font-bold focus:ring-4 focus:ring-blue-400/10 outline-none transition-all placeholder:text-navy/10 shadow-sm"
+                      className="w-full rounded-2xl border border-navy/10 bg-white px-5 py-4 text-base font-semibold text-navy shadow-sm outline-none transition-all placeholder:text-navy/25 focus:border-primary/40 focus:ring-4 focus:ring-primary/10"
                     />
                   </div>
                   <div className="space-y-3 text-left">
-                    <label className="text-[10px] font-black text-navy/30 uppercase tracking-widest ml-6">Degree / Graduation</label>
+                    <label className="text-xs font-bold text-navy/55">Degree / Graduation</label>
                     <input
                       type="text"
                       placeholder="e.g. BSc Chemistry (1st Class)"
                       value={edu.degree}
                       onChange={(e) => updateEducation(index, "degree", e.target.value)}
-                      className="w-full bg-white/80 border border-white/60 rounded-[2rem] px-8 py-5 text-navy font-bold focus:ring-4 focus:ring-blue-400/10 outline-none transition-all placeholder:text-navy/10 shadow-sm"
+                      className="w-full rounded-2xl border border-navy/10 bg-white px-5 py-4 text-base font-semibold text-navy shadow-sm outline-none transition-all placeholder:text-navy/25 focus:border-primary/40 focus:ring-4 focus:ring-primary/10"
                     />
                   </div>
                 </div>
@@ -135,7 +138,7 @@ export default function AcademicExperienceStage({ data, userId, updateData, onNe
               </motion.div>
             ))}
             {(!data.education || data.education.length === 0) && (
-              <div className="p-16 text-center border-2 border-dashed border-navy/5 rounded-[4rem] text-navy/20 font-black text-xs uppercase tracking-[0.3em] bg-navy/5">
+              <div className="rounded-[1.5rem] border border-dashed border-navy/10 bg-slate-50 p-8 text-center text-sm font-bold text-navy/35">
                  No higher education added yet.
               </div>
             )}
@@ -143,54 +146,29 @@ export default function AcademicExperienceStage({ data, userId, updateData, onNe
         </div>
 
         {/* Success Story */}
-        <div className="space-y-4 text-left bg-blue-500/5 p-12 rounded-[3.5rem] border border-blue-500/10">
-          <label className="flex items-center gap-2 text-[11px] font-black text-blue-600/60 uppercase tracking-[0.2em] ml-2">
+        <div className="space-y-4 rounded-[1.5rem] border border-blue-100 bg-blue-50/50 p-5 text-left md:p-6">
+          <label className="flex items-center gap-2 text-xs font-bold text-blue-700/70">
             <BookCheck size={16} /> Example of Student Improvement
           </label>
-          <p className="text-[10px] font-bold text-navy/30 uppercase tracking-widest ml-2 mb-4">Briefly share a case where you helped a student level up (e.g. Grade C → A)</p>
+          <p className="mb-4 text-sm font-medium text-navy/45">Briefly share a case where you helped a student make meaningful progress.</p>
           <textarea
-            placeholder="Case study: Worked with an A-Level Physics student for 3 months, focusing on Exam Technique. Result: Student improved from a C to a Predicted A*."
+            placeholder="Example: I worked with an A-Level Physics student on exam technique, identifying gaps and building a weekly practice structure."
             value={data.success_story || ""}
             onChange={(e) => updateData({ success_story: e.target.value })}
-            className="w-full bg-white/90 backdrop-blur-md border border-white/40 rounded-[2.5rem] px-10 py-8 text-navy font-bold focus:ring-4 focus:ring-blue-400/10 outline-none transition-all placeholder:text-navy/20 shadow-sm min-h-[160px] resize-none"
+            className="min-h-[140px] w-full resize-none rounded-2xl border border-navy/10 bg-white px-5 py-4 text-base font-semibold text-navy shadow-sm outline-none transition-all placeholder:text-navy/25 focus:border-primary/40 focus:ring-4 focus:ring-primary/10"
           />
         </div>
       </div>
 
-      <div className="flex gap-6 pt-4">
-        <button
-          onClick={onBack}
-          className="px-10 py-6 bg-white/40 backdrop-blur-md border border-white/60 text-navy/40 hover:text-navy hover:bg-white/60 rounded-[2.5rem] font-black text-lg transition-all shadow-sm active:scale-95"
-        >
-          Back
-        </button>
-        <button
-          onClick={onNext}
-          disabled={!isComplete}
-          className={`flex-1 py-6 rounded-[2.5rem] font-black text-xl tracking-tight transition-all transform active:scale-95 flex items-center justify-center gap-4 group relative overflow-hidden shadow-xl ${
-            isComplete 
-              ? "bg-blue-600 text-white hover:bg-blue-500 hover:shadow-2xl hover:shadow-blue-500/20 shadow-blue-900/10" 
-              : "bg-blue-50 text-blue-200 cursor-not-allowed shadow-none grayscale opacity-60"
-          }`}
-        >
-          <span className="relative z-10 flex items-center gap-3">
-            Calibrate Experience
-            <motion.span 
-              animate={isComplete ? { x: [0, 10, 0] } : {}} 
-              transition={{ repeat: Infinity, duration: 1.5 }}
-            >
-              →
-            </motion.span>
-          </span>
-          {isComplete && (
-            <motion.div 
-              initial={{ x: "-100%" }}
-              animate={{ x: "100%" }}
-              transition={{ duration: 2, repeat: Infinity, repeatDelay: 1 }}
-              className="absolute top-0 left-0 w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-12"
-            />
-          )}
-        </button>
+      <div className="mt-8 flex flex-col gap-4 border-t border-navy/8 pt-6 md:flex-row md:items-center md:justify-between">
+        <p className="text-sm font-semibold text-navy/55">You can save and continue later</p>
+        <div className="flex flex-col gap-3 sm:flex-row">
+          <button onClick={onBack} className="min-h-11 rounded-xl border border-navy/10 bg-white px-5 py-3 text-sm font-bold text-navy/65 transition-colors hover:border-primary/30 hover:text-navy">Back</button>
+          <button onClick={onSaveDraft} disabled={isSavingDraft} className="min-h-11 rounded-xl border border-navy/10 bg-white px-5 py-3 text-sm font-bold text-navy/65 transition-colors hover:border-primary/30 hover:text-navy disabled:opacity-60">{isSavingDraft ? "Saving..." : "Save Draft"}</button>
+          <button onClick={onNext} disabled={!isComplete} className={`min-h-11 rounded-xl px-6 py-3 text-sm font-black transition-all active:scale-95 ${isComplete ? "bg-primary text-white shadow-lg shadow-primary/20 hover:bg-blue-500" : "cursor-not-allowed bg-blue-50 text-blue-200"}`}>
+            Next step →
+          </button>
+        </div>
       </div>
     </motion.div>
   );

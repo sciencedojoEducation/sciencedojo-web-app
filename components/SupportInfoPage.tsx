@@ -12,9 +12,24 @@ type SupportInfoPageProps = {
   title: string;
   subtitle: string;
   sections: SupportInfoSection[];
+  ctaEyebrow?: string;
+  ctaTitle?: string;
+  ctaBody?: string;
+  ctaHref?: string;
+  ctaLabel?: string;
 };
 
-export default function SupportInfoPage({ eyebrow, title, subtitle, sections }: SupportInfoPageProps) {
+export default function SupportInfoPage({
+  eyebrow,
+  title,
+  subtitle,
+  sections,
+  ctaEyebrow = "Ready to find your tutor?",
+  ctaTitle = "Book a free session",
+  ctaBody = "Tell us what support you need and we will help you find the right learning path.",
+  ctaHref = "/free-assessment",
+  ctaLabel = "Book Free Assessment",
+}: SupportInfoPageProps) {
   return (
     <div className="bg-[linear-gradient(180deg,#ffffff_0%,#f7fbff_48%,#ffffff_100%)] text-secondary">
       <section className="relative overflow-hidden border-b border-secondary/10 px-4 py-16 md:px-8 md:py-20">
@@ -52,16 +67,16 @@ export default function SupportInfoPage({ eyebrow, title, subtitle, sections }: 
         </div>
 
         <div className="mt-12 rounded-[2rem] bg-[linear-gradient(135deg,#06172f_0%,#0a4d95_58%,#0066ff_100%)] p-8 text-center shadow-2xl shadow-secondary/15 md:p-10">
-          <p className="text-xs font-black uppercase tracking-[0.22em] text-cyan-100/75">Ready to find your tutor?</p>
-          <h2 className="mt-3 text-3xl font-black text-white md:text-4xl">Book a free session</h2>
+          <p className="text-xs font-black uppercase tracking-[0.22em] text-cyan-100/75">{ctaEyebrow}</p>
+          <h2 className="mt-3 text-3xl font-black text-white md:text-4xl">{ctaTitle}</h2>
           <p className="mx-auto mt-4 max-w-2xl leading-7 text-white/65">
-            Tell us what support you need and we will help you find the right learning path.
+            {ctaBody}
           </p>
           <Link
-            href="/free-assessment"
+            href={ctaHref}
             className="mt-7 inline-flex rounded-full bg-white px-7 py-3.5 text-sm font-black text-primary shadow-lg shadow-black/10 transition-transform hover:-translate-y-0.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white"
           >
-            Book Free Assessment
+            {ctaLabel}
           </Link>
         </div>
       </section>

@@ -3,6 +3,7 @@ import JsonLd from "@/components/JsonLd";
 import { faqJsonLd, localBusinessJsonLd, organizationJsonLd, siteUrl } from "@/lib/seo";
 import FreeAssessmentForm from "./FreeAssessmentForm";
 import FreeAssessmentViewTracker from "./FreeAssessmentViewTracker";
+import MentorAttributionTracker from "@/components/MentorAttributionTracker";
 
 const faqs = [
   {
@@ -34,12 +35,20 @@ export const metadata: Metadata = {
   },
 };
 
-export default function FreeAssessmentPage() {
+export default async function FreeAssessmentPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ tutor?: string; r?: string }>;
+}) {
+  const query = searchParams ? await searchParams : {};
   const trustItems = ["No pressure", "Confidence-led intake", "Verified STEM tutors", "Parent-visible support"];
 
   return (
     <main className="bg-background text-secondary">
       <FreeAssessmentViewTracker />
+      {query.tutor && (
+        <MentorAttributionTracker landingSlug={query.tutor} referrerSlug={query.r || query.tutor} />
+      )}
       <JsonLd data={organizationJsonLd()} />
       <JsonLd data={localBusinessJsonLd()} />
       <JsonLd data={faqJsonLd(faqs)} />

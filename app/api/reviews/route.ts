@@ -1,4 +1,5 @@
 import { createClient } from '@/utils/supabase/server';
+import { createAdminClient } from '@/utils/supabase/admin';
 import { NextResponse } from 'next/server';
 
 export async function POST(req: Request) {
@@ -38,8 +39,10 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Cannot review an incomplete session' }, { status: 400 });
     }
 
-    // Check if review already exists
-    const { data: existingReview } = await supabase
+    const adminClient = createAdminClient();
+
+    // Check if review already exists, including pending/rejected reviews hidden by public RLS.
+    const { data: existingReview } = await adminClient
       .from('reviews')
       .select('id')
       .eq('booking_id', bookingId)
@@ -50,22 +53,32 @@ export async function POST(req: Request) {
     }
 
     // Insert the review
-    const { error: insertError } = await supabase
+    const { error: insertError } = await adminClient
       .from('reviews')
       .insert({
         booking_id: bookingId,
         student_id: user.id,
         tutor_id: tutorId,
         rating: rating,
-        comment: comment || null
+        comment: comment || null,
+        status: 'pending',
       });
 
     if (insertError) {
       console.error('Error inserting review:', insertError);
+      if (
+        insertError.code === '42703' ||
+        insertError.message?.includes('reviews.status')
+      ) {
+        return NextResponse.json(
+          { error: 'Review moderation is still being set up. Please try again shortly.' },
+          { status: 503 }
+        );
+      }
       return NextResponse.json({ error: insertError.message || 'Failed to submit review' }, { status: 500 });
     }
 
-    return NextResponse.json({ success: true, message: 'Review submitted successfully' });
+    return NextResponse.json({ success: true, message: 'Review submitted for admin review.' });
     
   } catch (error: any) {
     console.error('Review submission error:', error);
