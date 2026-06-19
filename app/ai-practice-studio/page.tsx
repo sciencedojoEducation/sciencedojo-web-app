@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { CheckCircle2 } from "lucide-react";
 import JsonLd from "@/components/JsonLd";
 import AiPracticeStudioCtaLink from "@/components/analytics/AiPracticeStudioCtaLink";
 import { faqJsonLd, organizationJsonLd, siteUrl } from "@/lib/seo";
@@ -115,19 +116,21 @@ export default function AiPracticeStudioPage() {
           </p>
         </div>
         <div className="rounded-3xl bg-secondary p-7 text-white shadow-xl">
-          <p className="text-xs font-black uppercase tracking-[0.2em] text-cyan-200/70">When practice reveals a gap</p>
-          <h2 className="mt-3 text-2xl font-black">A free assessment can help plan the next step.</h2>
-          <p className="mt-4 leading-7 text-white/70">
-            If a topic feels difficult, ScienceDojo can match the student with tutor support. Enrolled students can also receive personalized Missions built around their lessons and progress.
-          </p>
-          <AiPracticeStudioCtaLink
-            href="/free-assessment"
-            cta="request_free_assessment"
-            source="ai_practice_studio_static"
-            className="mt-6 inline-flex rounded-2xl bg-primary px-6 py-3 text-sm font-black uppercase tracking-[0.14em] text-white"
-          >
-            Book Free Assessment
-          </AiPracticeStudioCtaLink>
+          <p className="text-xs font-black uppercase tracking-[0.2em] text-cyan-200/70">Parent reassurance</p>
+          <h2 className="mt-3 text-2xl font-black">What happens after an assessment?</h2>
+          <div className="mt-5 grid gap-3">
+            {[
+              "Identify knowledge gaps",
+              "Create a learning plan",
+              "Match with the right tutor",
+              "Track progress over time",
+            ].map((item) => (
+              <div key={item} className="flex items-center gap-3 text-sm font-bold leading-6 text-white/75">
+                <CheckCircle2 className="h-5 w-5 shrink-0 text-cyan-200" aria-hidden="true" />
+                <span>{item}</span>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
     </main>

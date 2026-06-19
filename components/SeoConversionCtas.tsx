@@ -20,6 +20,8 @@ export default function SeoConversionCtas() {
     "/reset-password",
     "/forgot-password",
     "/maintenance",
+    "/ai-practice-studio",
+    "/ai-question-generator",
   ];
 
   useEffect(() => {
