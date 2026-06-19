@@ -41,30 +41,41 @@ function findNextDelimiter(text: string, startIndex: number) {
   return { index: displayIndex, open: "\\[", close: "\\]", displayMode: true };
 }
 
+function normalizeMathTextInput(text: string) {
+  return text
+    .replace(/\$begin:math:text\$/g, "\\(")
+    .replace(/\$end:math:text\$/g, "\\)")
+    .replace(/\$begin:math:display\$/g, "\\[")
+    .replace(/\$end:math:display\$/g, "\\]")
+    .replace(/\$\$([\s\S]+?)\$\$/g, (_match, source: string) => `\\[${source.trim()}\\]`)
+    .replace(/(^|[^\\])\$([^$\n]+?)\$/g, (_match, prefix: string, source: string) => `${prefix}\\(${source.trim()}\\)`);
+}
+
 function renderMathFragments(text: string) {
   const parts: ReactNode[] = [];
+  const normalizedText = normalizeMathTextInput(text);
   let cursor = 0;
 
-  while (cursor < text.length) {
-    const delimiter = findNextDelimiter(text, cursor);
+  while (cursor < normalizedText.length) {
+    const delimiter = findNextDelimiter(normalizedText, cursor);
 
     if (!delimiter) {
-      parts.push(text.slice(cursor));
+      parts.push(normalizedText.slice(cursor));
       break;
     }
 
-    const closeIndex = text.indexOf(delimiter.close, delimiter.index + delimiter.open.length);
+    const closeIndex = normalizedText.indexOf(delimiter.close, delimiter.index + delimiter.open.length);
 
     if (closeIndex === -1) {
-      parts.push(text.slice(cursor));
+      parts.push(normalizedText.slice(cursor));
       break;
     }
 
     if (delimiter.index > cursor) {
-      parts.push(text.slice(cursor, delimiter.index));
+      parts.push(normalizedText.slice(cursor, delimiter.index));
     }
 
-    const source = text.slice(delimiter.index + delimiter.open.length, closeIndex);
+    const source = normalizedText.slice(delimiter.index + delimiter.open.length, closeIndex);
     parts.push(
       <span
         key={`${delimiter.index}-${closeIndex}`}

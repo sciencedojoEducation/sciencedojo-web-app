@@ -79,8 +79,138 @@ function transformOutsideMathDelimiters(text: string, transform: (segment: strin
   return output;
 }
 
+function normalizeMathDelimiters(text: string) {
+  return text
+    .replace(/\$begin:math:text\$/g, "\\(")
+    .replace(/\$end:math:text\$/g, "\\)")
+    .replace(/\$begin:math:display\$/g, "\\[")
+    .replace(/\$end:math:display\$/g, "\\]")
+    .replace(/\$\$([\s\S]+?)\$\$/g, (_match, source: string) => `\\[${source.trim()}\\]`)
+    .replace(/(^|[^\\])\$([^$\n]+?)\$/g, (_match, prefix: string, source: string) => `${prefix}\\(${source.trim()}\\)`);
+}
+
+function readBracedGroupEnd(text: string, startIndex: number) {
+  if (text[startIndex] !== "{") return startIndex;
+
+  let depth = 0;
+  for (let index = startIndex; index < text.length; index += 1) {
+    if (text[index] === "{") depth += 1;
+    if (text[index] === "}") depth -= 1;
+    if (depth === 0) return index + 1;
+  }
+
+  return startIndex;
+}
+
+function readScriptEnd(text: string, startIndex: number) {
+  let cursor = startIndex;
+
+  while (text[cursor] === "^" || text[cursor] === "_") {
+    cursor += 1;
+
+    if (text[cursor] === "{") {
+      const groupEnd = readBracedGroupEnd(text, cursor);
+      if (groupEnd === cursor) break;
+      cursor = groupEnd;
+    } else {
+      cursor += 1;
+    }
+  }
+
+  return cursor;
+}
+
+function consumeRawLatexCommand(text: string, startIndex: number) {
+  const commandMatch = text.slice(startIndex).match(/^\\([A-Za-z]+)/);
+  const command = commandMatch?.[1];
+  if (!command) return null;
+
+  const requiredGroups: Record<string, number> = {
+    frac: 2,
+  };
+  const optionalGroupCommands = new Set([
+    "bar",
+    "hat",
+    "mathrm",
+    "overline",
+    "sqrt",
+    "text",
+    "vec",
+  ]);
+  const simpleCommands = new Set([
+    "alpha",
+    "beta",
+    "cdot",
+    "cos",
+    "Delta",
+    "gamma",
+    "ge",
+    "le",
+    "ln",
+    "log",
+    "ne",
+    "Omega",
+    "pi",
+    "pm",
+    "sin",
+    "tan",
+    "theta",
+    "times",
+  ]);
+
+  if (!(command in requiredGroups) && !optionalGroupCommands.has(command) && !simpleCommands.has(command)) {
+    return null;
+  }
+
+  let cursor = startIndex + command.length + 1;
+  const groupsToRead = requiredGroups[command] || 0;
+
+  for (let groupIndex = 0; groupIndex < groupsToRead; groupIndex += 1) {
+    const groupEnd = readBracedGroupEnd(text, cursor);
+    if (groupEnd === cursor) return null;
+    cursor = groupEnd;
+  }
+
+  if (optionalGroupCommands.has(command) && groupsToRead === 0 && text[cursor] === "{") {
+    const groupEnd = readBracedGroupEnd(text, cursor);
+    if (groupEnd !== cursor) cursor = groupEnd;
+  }
+
+  cursor = readScriptEnd(text, cursor);
+  return { end: cursor, source: text.slice(startIndex, cursor) };
+}
+
+function wrapRawLatexCommands(text: string) {
+  return transformOutsideMathDelimiters(text, (segment) => {
+    let output = "";
+    let cursor = 0;
+
+    while (cursor < segment.length) {
+      if (segment[cursor] !== "\\") {
+        output += segment[cursor];
+        cursor += 1;
+        continue;
+      }
+
+      const latexCommand = consumeRawLatexCommand(segment, cursor);
+      if (!latexCommand || latexCommand.end <= cursor) {
+        output += segment[cursor];
+        cursor += 1;
+        continue;
+      }
+
+      output += `\\(${latexCommand.source}\\)`;
+      cursor = latexCommand.end;
+    }
+
+    return output;
+  });
+}
+
 function addMathNotation(text: string) {
-  return transformOutsideMathDelimiters(text, (segment) => segment
+  const normalizedText = wrapRawLatexCommands(normalizeMathDelimiters(text));
+
+  return transformOutsideMathDelimiters(normalizedText, (segment) => segment
     .replace(/\b(\d+(?:\.\d+)?)\s*(m\/s\^2|m\/s|kg|kJ|km|cm|Hz|mol|min|ohms?|Pa|[ACJKNVWKmsg])\b/g, (_match, value: string, unit: string) => {
       const latexUnit = unitLatexByText[unit] || unit;
       const formattedUnit = latexUnit.startsWith("\\") ? latexUnit : `\\mathrm{${latexUnit}}`;
@@ -301,10 +431,13 @@ For sciences, include calculations, data, definitions, explanations, required pr
 For humanities/English, include extract-style, short-answer, essay-planning, evidence, or analysis questions.
 Use professional mathematical notation with KaTeX-compatible LaTeX delimiters. Wrap inline maths in \\(...\\) and display maths in \\[...\\].
 Use LaTeX for powers, roots, fractions, inequalities, Greek letters, logs, trigonometry, integrals, chemical formulae, and units where appropriate. For example: \\(3^2\\), \\(x^2 - 4x + 5\\), \\(\\sin(\\theta)\\), \\(\\sqrt{2x - 5}\\), \\(\\int x^2\\,dx\\), \\(\\log_2(x)\\), \\(\\pi\\), \\(\\le\\), \\(\\ge\\), and \\(\\ne\\).
+Do not use dollar math delimiters. Never output $...$, $$...$$, $begin:math:text$, or $end:math:text$.
+Do not output raw LaTeX commands outside math delimiters. For example, output \\(\\frac{3 + \\sqrt{2}}{5 - \\sqrt{2}}\\), not $\\frac{3 + \\sqrt{2}}{5 - \\sqrt{2}}$ and not \\frac{3 + \\sqrt{2}}{5 - \\sqrt{2}}.
 Do not output programming-style notation such as x^2, sqrt(...), sin(theta), <=, >=, or != when the content is mathematical.
 When a question, answer, or working uses tabular data, output it as a markdown table with one row per line. Keep maths inside table cells wrapped in \\(...\\), for example \\(140 < h \\le 150\\). Do not describe a table unless an actual markdown table is included. Do not output HTML tables.
 Keep working guidance readable. Use line breaks between calculation steps, and keep numbered steps on separate lines.
 Every item must include a concise answer and working/marking guidance.
+Every question must be mathematically coherent, unambiguous, and solvable from the information given. Avoid malformed symbolic names such as "S" appended to variables, unexplained vector notation, missing diagrams, or table labels that do not match the question.
 Keep questions age-appropriate for the selected level and curriculum.`,
     });
 

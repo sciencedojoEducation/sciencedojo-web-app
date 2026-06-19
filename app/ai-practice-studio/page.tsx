@@ -131,6 +131,14 @@ export default function AiPracticeStudioPage() {
               </div>
             ))}
           </div>
+          <AiPracticeStudioCtaLink
+            href="/free-assessment"
+            cta="request_free_assessment"
+            source="ai_practice_studio_parent_reassurance"
+            className="mt-6 inline-flex justify-center rounded-2xl bg-primary px-6 py-3 text-sm font-black uppercase tracking-[0.14em] text-white transition-all hover:bg-primary-hover"
+          >
+            Book Free Assessment
+          </AiPracticeStudioCtaLink>
         </div>
       </section>
     </main>
