@@ -240,6 +240,23 @@ input::placeholder, textarea::placeholder {
   box-shadow: 0 24px 80px rgba(0, 26, 68, 0.08);
 }
 
+.sd-math-text .katex {
+  max-width: 100%;
+}
+
+.sd-math-text .katex-display {
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-bottom: 0.125rem;
+}
+
+.sd-math-text .katex-html {
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .sd-fade-up,
   .sd-float-soft,

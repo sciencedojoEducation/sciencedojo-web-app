@@ -79,7 +79,7 @@ function renderMathFragments(text: string) {
     parts.push(
       <span
         key={`${delimiter.index}-${closeIndex}`}
-        className={delimiter.displayMode ? "my-3 block overflow-x-auto" : "inline-block align-baseline"}
+        className={delimiter.displayMode ? "my-3 block max-w-full overflow-x-auto" : "inline-block max-w-full overflow-x-auto align-middle"}
         dangerouslySetInnerHTML={{
           __html: renderMath(source, delimiter.displayMode),
         }}
@@ -89,7 +89,7 @@ function renderMathFragments(text: string) {
     cursor = closeIndex + delimiter.close.length;
   }
 
-  return parts.length ? parts : text;
+  return parts.length ? parts : normalizedText;
 }
 
 function splitTableRow(line: string) {
@@ -161,18 +161,18 @@ export default function MathText({ text, className }: MathTextProps) {
   const blocks = parseBlocks(text);
 
   return (
-    <div className={className}>
+    <div className={`${className || ""} sd-math-text min-w-0 max-w-full overflow-hidden break-words`}>
       {blocks.map((block, blockIndex) => {
         if (block.type === "table") {
           return (
-            <div key={`table-${blockIndex}`} className="my-4 overflow-x-auto rounded-xl border border-secondary/10 bg-white">
-              <table className="min-w-full border-collapse text-sm">
+            <div key={`table-${blockIndex}`} className="my-4 max-w-full overflow-x-auto rounded-xl border border-secondary/10 bg-white">
+              <table className="w-max min-w-full max-w-none table-auto border-collapse text-sm">
                 <thead className="bg-secondary/[0.04]">
                   <tr>
                     {block.headers.map((header, cellIndex) => (
                       <th
                         key={`${header}-${cellIndex}`}
-                        className={`border-b border-secondary/10 px-4 py-3 font-black text-secondary ${alignmentClass(block.alignments[cellIndex] || "left")}`}
+                        className={`max-w-[18rem] whitespace-normal break-words border-b border-secondary/10 px-4 py-3 align-top font-black text-secondary ${alignmentClass(block.alignments[cellIndex] || "left")}`}
                       >
                         {renderMathFragments(header)}
                       </th>
@@ -185,7 +185,7 @@ export default function MathText({ text, className }: MathTextProps) {
                       {block.headers.map((_, cellIndex) => (
                         <td
                           key={`cell-${rowIndex}-${cellIndex}`}
-                          className={`px-4 py-3 text-secondary/75 ${alignmentClass(block.alignments[cellIndex] || "left")}`}
+                          className={`max-w-[18rem] whitespace-normal break-words px-4 py-3 align-top text-secondary/75 ${alignmentClass(block.alignments[cellIndex] || "left")}`}
                         >
                           {renderMathFragments(row[cellIndex] || "")}
                         </td>
@@ -199,9 +199,9 @@ export default function MathText({ text, className }: MathTextProps) {
         }
 
         return (
-          <div key={`text-${blockIndex}`} className={blockIndex > 0 ? "mt-3" : undefined}>
+          <div key={`text-${blockIndex}`} className={`${blockIndex > 0 ? "mt-3 " : ""}min-w-0 max-w-full overflow-hidden break-words`}>
             {block.lines.map((line, lineIndex) => (
-              <div key={`${line}-${lineIndex}`} className={lineIndex > 0 ? "mt-2" : undefined}>
+              <div key={`${line}-${lineIndex}`} className={`${lineIndex > 0 ? "mt-2 " : ""}min-w-0 max-w-full overflow-hidden break-words`}>
                 {renderMathFragments(line)}
               </div>
             ))}

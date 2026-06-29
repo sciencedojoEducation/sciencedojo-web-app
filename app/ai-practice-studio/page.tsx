@@ -38,7 +38,7 @@ export const metadata: Metadata = {
 
 export default function AiPracticeStudioPage() {
   return (
-    <main className="bg-background text-secondary">
+    <main className="overflow-x-hidden bg-background text-secondary">
       <AiPracticeStudioViewTracker />
       <JsonLd data={organizationJsonLd()} />
       <JsonLd data={faqJsonLd(faqs)} />
@@ -75,7 +75,7 @@ export default function AiPracticeStudioPage() {
         </div>
       </section>
 
-      <section className="mx-auto max-w-5xl px-4 pt-14 md:px-8 md:pt-16">
+      <section className="mx-auto w-full max-w-5xl min-w-0 px-4 pt-14 md:px-8 md:pt-16">
         <div className="grid gap-4 md:grid-cols-3">
           {[
             {
@@ -103,11 +103,11 @@ export default function AiPracticeStudioPage() {
         </div>
       </section>
 
-      <section id="studio" className="mx-auto max-w-5xl px-4 py-12 md:px-8">
+      <section id="studio" className="mx-auto w-full max-w-5xl min-w-0 px-4 py-12 md:px-8">
         <QuestionGenerator />
       </section>
 
-      <section className="mx-auto grid max-w-5xl gap-6 px-4 pb-20 md:grid-cols-2 md:px-8">
+      <section className="mx-auto grid w-full max-w-5xl min-w-0 gap-6 px-4 pb-20 md:grid-cols-2 md:px-8">
         <div className="rounded-3xl border border-secondary/10 bg-white p-7 shadow-sm">
           <p className="text-xs font-black uppercase tracking-[0.2em] text-primary">Public learning gateway</p>
           <h2 className="mt-3 text-2xl font-black">Free curriculum-aligned knowledge checks</h2>
