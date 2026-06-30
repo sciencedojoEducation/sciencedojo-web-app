@@ -8,6 +8,8 @@ import YouTubeLite from "@/components/YouTubeLite";
 import MessageTutorButton from "@/components/MessageTutorButton";
 import AdminReviewCard, { type AdminTutorReview } from "@/components/AdminReviewCard";
 import { getRatingSummary, RatingTrustTooltip, StarRating, type ReviewStatus } from "@/components/ReviewTrustUI";
+import FeatureUnavailable from "@/components/FeatureUnavailable";
+import { isFeatureEnabled } from "@/lib/feature-flags";
 
 export default async function TutorProfilePage({
   params,
@@ -43,6 +45,20 @@ async function TutorProfileServer({ id }: { id: string }) {
   }
   const isTutor = viewerRole === "tutor";
   const isAdmin = viewerRole === "admin";
+  const [profilesEnabled, bookingEnabled] = await Promise.all([
+    isFeatureEnabled("tutor_profiles_enabled"),
+    isFeatureEnabled("booking_enabled"),
+  ]);
+
+  if (!profilesEnabled && !isAdmin) {
+    return (
+      <FeatureUnavailable
+        eyebrow="Tutor discovery"
+        title="Tutor discovery is coming soon."
+        message="We are preparing tutor profiles carefully before opening them to families."
+      />
+    );
+  }
 
   const reviewSelect = "id, tutor_id, rating, comment, status, admin_note, created_at, reviewed_at, profiles(full_name, avatar_url)";
   const legacyReviewSelect = "id, tutor_id, rating, comment, created_at, profiles(full_name, avatar_url)";
@@ -376,6 +392,13 @@ async function TutorProfileServer({ id }: { id: string }) {
                     <p className="text-white/60 text-sm font-medium mb-2">You are viewing a fellow tutor's profile.</p>
                     <p className="text-white/40 text-xs">Tutors cannot book sessions on ScienceDojo.</p>
                   </div>
+                ) : !bookingEnabled ? (
+                  <div className="rounded-2xl border border-white/10 bg-white/10 p-5 text-center">
+                    <p className="text-sm font-black text-white">Booking opens soon</p>
+                    <p className="mt-2 text-xs font-medium leading-6 text-white/55">
+                      Booking is currently being prepared. Please contact ScienceDojo if you need help arranging support.
+                    </p>
+                  </div>
                 ) : (
                   <>
                     <Link
@@ -405,6 +428,7 @@ async function TutorProfileServer({ id }: { id: string }) {
       </main>
 
       {/* Floating CTA for Mobile/Desktop */}
+      {bookingEnabled && !isTutor && (
       <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 w-full max-w-md px-4 lg:hidden">
          <Link
             href={`/tutor/${tutor.id}/book`}
@@ -414,6 +438,7 @@ async function TutorProfileServer({ id }: { id: string }) {
             <span className="bg-white/20 px-3 py-1 rounded-lg">£{tutor.hourly_rate}</span>
          </Link>
       </div>
+      )}
     </div>
   );
 }

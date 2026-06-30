@@ -5,6 +5,8 @@ import AiPracticeStudioCtaLink from "@/components/analytics/AiPracticeStudioCtaL
 import { faqJsonLd, organizationJsonLd, siteUrl } from "@/lib/seo";
 import AiPracticeStudioViewTracker from "./AiPracticeStudioViewTracker";
 import QuestionGenerator from "./QuestionGenerator";
+import FeatureUnavailable from "@/components/FeatureUnavailable";
+import { isFeatureEnabled } from "@/lib/feature-flags";
 
 const faqs = [
   {
@@ -36,7 +38,18 @@ export const metadata: Metadata = {
   },
 };
 
-export default function AiPracticeStudioPage() {
+export default async function AiPracticeStudioPage() {
+  const enabled = await isFeatureEnabled("practice_dojo_enabled");
+  if (!enabled) {
+    return (
+      <FeatureUnavailable
+        eyebrow="Practice Dojo"
+        title="Practice Dojo is almost ready."
+        message="We are preparing this learning tool carefully before opening it to students and families."
+      />
+    );
+  }
+
   return (
     <main className="overflow-x-hidden bg-background text-secondary">
       <AiPracticeStudioViewTracker />

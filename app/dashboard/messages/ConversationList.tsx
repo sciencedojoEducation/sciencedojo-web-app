@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation";
 interface ConversationListProps {
   conversations: Conversation[];
   activeId: string | null;
+  isInternal?: boolean;
 }
 
 function getMessagePreview(message?: string) {
@@ -21,7 +22,7 @@ function getMessagePreview(message?: string) {
   return message || "No messages yet";
 }
 
-export default function ConversationList({ conversations, activeId }: ConversationListProps) {
+export default function ConversationList({ conversations, activeId, isInternal = false }: ConversationListProps) {
   const router = useRouter();
 
   const handleSelect = (id: string) => {
@@ -33,7 +34,9 @@ export default function ConversationList({ conversations, activeId }: Conversati
       <div className="border-b border-secondary/10 p-5 sm:p-6">
         <h2 className="text-xl font-black text-secondary">Messages</h2>
         <p className="mt-2 text-sm font-medium leading-6 text-secondary/45">
-          Conversations with tutors, students, and families stay connected here.
+          {isInternal
+            ? "Private conversations with internal teammates and admins stay connected here."
+            : "Conversations with tutors, students, and families stay connected here."}
         </p>
       </div>
       
@@ -47,7 +50,9 @@ export default function ConversationList({ conversations, activeId }: Conversati
             </div>
             <h3 className="text-lg font-black text-secondary">No messages yet</h3>
             <p className="mt-2 max-w-xs text-sm font-medium leading-6 text-secondary/45">
-              Your conversations with tutors, students, or parents will appear here once support begins.
+              {isInternal
+                ? "Choose an internal contact above to start a staff conversation."
+                : "Your conversations with tutors, students, or parents will appear here once support begins."}
             </p>
           </div>
         ) : (

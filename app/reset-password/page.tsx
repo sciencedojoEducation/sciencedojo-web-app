@@ -2,11 +2,12 @@
 
 import { use, useState } from "react";
 import { updatePassword } from "@/app/login/actions";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 export default function ResetPasswordPage({ searchParams }: { searchParams: Promise<{ [key: string]: string | string[] | undefined }> }) {
   const resolvedParams = use(searchParams);
   const errorMsg = resolvedParams?.error as string | undefined;
+  const router = useRouter();
 
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -35,6 +36,7 @@ export default function ResetPasswordPage({ searchParams }: { searchParams: Prom
         setClientError(result.error);
      } else {
         setIsSuccess(true);
+        router.replace(result?.redirectTo || "/login");
      }
   };
 
@@ -47,9 +49,9 @@ export default function ResetPasswordPage({ searchParams }: { searchParams: Prom
               </div>
               <h1 className="text-3xl font-bold text-secondary mb-2">Password Updated!</h1>
               <p className="text-secondary/60 mb-8">Your password has been successfully reset. You can now log securely into your dashboard.</p>
-              <Link href="/login" className="px-8 py-3 bg-primary text-white font-bold rounded-xl hover:bg-primary-hover transition-colors shadow-sm w-full block">
-                 Go to Login
-              </Link>
+              <p className="px-8 py-3 bg-primary text-white font-bold rounded-xl shadow-sm w-full block">
+                 Redirecting...
+              </p>
            </div>
         </div>
      );

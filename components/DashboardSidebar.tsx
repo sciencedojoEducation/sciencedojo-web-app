@@ -5,6 +5,7 @@ import SidebarLink from "./SidebarLink";
 import DashboardTourReplayButton from "./DashboardTourReplayButton";
 import DashboardMobileDrawer from "./DashboardMobileDrawer";
 import { signOut } from "@/app/login/actions";
+import { isFeatureEnabled } from "@/lib/feature-flags";
 import { 
   Calendar, 
   GraduationCap, 
@@ -32,7 +33,7 @@ interface NavLink {
 }
 
 interface DashboardSidebarProps {
-  role: "admin" | "tutor" | "parent" | "student";
+  role: "admin" | "tutor" | "parent" | "student" | "internal";
 }
 
 export default async function DashboardSidebar({ role }: DashboardSidebarProps) {
@@ -41,7 +42,7 @@ export default async function DashboardSidebar({ role }: DashboardSidebarProps) 
   const metadata = user?.user_metadata;
   const subRole = metadata?.sub_role; // 'student' or 'parent'
   
-  const displayRole = (role === 'admin' || role === 'tutor') ? role : (subRole || role);
+  const displayRole = (role === 'admin' || role === 'tutor' || role === 'internal') ? role : (subRole || role);
   
   // ScienceDojo Aesthetic Pulse: Light-Modern Evolution 🌬️✨
   const variant = 'light'; 
@@ -72,13 +73,15 @@ export default async function DashboardSidebar({ role }: DashboardSidebarProps) 
     flaggedCount = new Set(flaggedConvs?.map(m => m.conversation_id)).size;
   }
 
+  const tutorMarketplaceEnabled = role === "internal" ? false : await isFeatureEnabled("tutor_marketplace_enabled");
+
   const navLinks: Record<string, NavLink[]> = {
     parent: [
       { name: "Dashboard", href: "/dashboard/parent", icon: "🗓️", exact: true, tourId: "parent-bookings" },
       { name: "Learning Guide", href: "/support", icon: "📘" },
       { name: "My Classes", href: "/dashboard/classes", icon: "🎓", tourId: "parent-classes" },
       { name: "Messages", href: "/dashboard/messages", icon: "💬", badge: unreadCount, tourId: "parent-messages" },
-      { name: "Browse Tutors", href: "/dashboard/parent/tutors", icon: "🔍", tourId: "parent-browse" },
+      ...(tutorMarketplaceEnabled ? [{ name: "Browse Tutors", href: "/dashboard/parent/tutors", icon: "🔍", tourId: "parent-browse" }] : []),
       { name: "Settings", href: "/dashboard/parent/settings", icon: "⚙️" },
       { name: "Support", href: "/dashboard/support", icon: "🆘", tourId: "parent-support" },
     ],
@@ -88,7 +91,7 @@ export default async function DashboardSidebar({ role }: DashboardSidebarProps) 
       { name: "My Classes", href: "/dashboard/classes", icon: "🎓", tourId: "student-classes" },
       { name: "Messages", href: "/dashboard/messages", icon: "💬", badge: unreadCount, tourId: "student-messages" },
       { name: "Missions", href: "/dashboard/student/missions", icon: "🧭", tourId: "student-tasks" },
-      { name: "Browse Tutors", href: "/dashboard/student/tutors", icon: "🔍" },
+      ...(tutorMarketplaceEnabled ? [{ name: "Browse Tutors", href: "/dashboard/student/tutors", icon: "🔍" }] : []),
       { name: "Focus Timers", href: "/dashboard/student/timers", icon: "⏱️" },
       { name: "Settings", href: "/dashboard/student/settings", icon: "⚙️" },
       { name: "Support", href: "/dashboard/support", icon: "🆘" },
@@ -115,6 +118,12 @@ export default async function DashboardSidebar({ role }: DashboardSidebarProps) 
       { name: "User Directory", href: "/dashboard/admin/users", icon: "👤" },
       { name: "Tutor Payouts", href: "/dashboard/admin/payouts", icon: "💰" },
       { name: "Platform Settings", href: "/dashboard/admin/settings", icon: "⚙️" },
+      { name: "Feature Flags", href: "/dashboard/admin/feature-flags", icon: "🚦" },
+    ],
+    internal: [
+      { name: "Internal Dashboard", href: "/dashboard/internal", icon: "🛠️", exact: true },
+      { name: "Messages", href: "/dashboard/messages", icon: "💬", badge: unreadCount },
+      { name: "Settings", href: "/dashboard/internal/settings", icon: "⚙️" },
     ],
   };
 
@@ -196,7 +205,7 @@ export default async function DashboardSidebar({ role }: DashboardSidebarProps) 
            </div>
         </div>
 
-        {role !== "admin" && (
+        {role !== "admin" && role !== "internal" && (
           <div className="mb-3">
             <DashboardTourReplayButton />
           </div>

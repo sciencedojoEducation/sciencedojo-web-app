@@ -28,6 +28,11 @@ export default async function AdminDashboard() {
     .select("*", { count: 'exact', head: true })
     .eq("is_flagged", true);
 
+  const { count: activeTeamMembers } = await supabase
+    .from("internal_team_members")
+    .select("*", { count: 'exact', head: true })
+    .eq("status", "active");
+
   // 4. Platform Fee Configuration
   const { data: settings } = await supabase.from("platform_settings").select("platform_fee_percent").limit(1).single();
   const platformFeeRaw = settings?.platform_fee_percent ?? 25;
@@ -179,6 +184,14 @@ export default async function AdminDashboard() {
       labelTone: "text-cyan-800",
       detailTone: "text-cyan-700/55",
     },
+    {
+      label: "Internal team",
+      detail: `${activeTeamMembers || 0} active collaborator${activeTeamMembers === 1 ? "" : "s"}`,
+      href: "/dashboard/admin/team",
+      tone: "border-slate-200 bg-slate-50/90 hover:border-slate-300",
+      labelTone: "text-slate-800",
+      detailTone: "text-slate-500",
+    },
   ];
 
   return (
@@ -240,7 +253,7 @@ export default async function AdminDashboard() {
             <h2 className="mt-1 text-lg font-black text-secondary">Operational next checks</h2>
           </div>
         </div>
-        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
           {attentionLinks.map((item) => (
             <Link
               key={item.href}

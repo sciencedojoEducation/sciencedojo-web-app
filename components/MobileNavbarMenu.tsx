@@ -15,11 +15,19 @@ const utilityLinkClass =
 type MobileNavbarMenuProps = {
   isLoggedIn?: boolean;
   dashboardHref?: string;
+  showTutorMarketplace?: boolean;
+  showLearningHub?: boolean;
+  showPracticeDojo?: boolean;
+  showFreeAssessment?: boolean;
 };
 
 export default function MobileNavbarMenu({
   isLoggedIn = false,
   dashboardHref = "/dashboard/parent",
+  showTutorMarketplace = true,
+  showLearningHub = true,
+  showPracticeDojo = true,
+  showFreeAssessment = true,
 }: MobileNavbarMenuProps) {
   const pathname = usePathname();
   const menuId = useId();
@@ -135,28 +143,33 @@ export default function MobileNavbarMenu({
           aria-label="Mobile navigation"
           className="mr-auto flex h-full min-h-full w-[min(82vw,24rem)] flex-col border-r border-secondary/10 bg-white px-4 pb-8 pt-6 shadow-2xl"
         >
-          {isLoggedIn ? (
-            <nav className="grid gap-1.5" aria-label="Mobile primary navigation">
-              <Link href={dashboardHref} onClick={closeMenu} className={navLinkClass}>
-                Dashboard
-              </Link>
-            </nav>
-          ) : (
-            <nav className="grid gap-1.5" aria-label="Mobile primary navigation">
+          <nav className="grid gap-1.5" aria-label="Mobile primary navigation">
+            {showTutorMarketplace && (
               <Link href="/#directory" onClick={closeMenu} className={navLinkClass}>
                 Find Tutors
               </Link>
+            )}
+            {showLearningHub && (
               <Link href="/learning-hub" onClick={closeMenu} className={navLinkClass}>
                 Learning Hub
               </Link>
+            )}
+            {showPracticeDojo && (
               <Link href="/ai-practice-studio" onClick={closeMenu} className={navLinkClass}>
                 Practice Dojo
               </Link>
+            )}
+            {showFreeAssessment && (
               <BookAssessmentLink source="navbar_mobile" onClick={closeMenu} className={navLinkClass}>
                 Request Free Assessment
               </BookAssessmentLink>
-            </nav>
-          )}
+            )}
+            {isLoggedIn && (
+              <Link href={dashboardHref} onClick={closeMenu} className={navLinkClass}>
+                Dashboard
+              </Link>
+            )}
+          </nav>
 
           <div className="mt-auto grid gap-2.5 border-t border-secondary/10 pt-5">
             {isLoggedIn ? (

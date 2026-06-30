@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import UserAvatar from "@/components/UserAvatar";
 import { adminCreateUser, adminDeleteUser } from "./actions";
@@ -95,12 +96,20 @@ export default function UserManagementUI({ users, currentUserId }: { users: User
              Manage platform users quickly, clearly, and safely. Delete actions permanently remove related account history.
            </p>
         </div>
-        <button 
-          onClick={() => setIsCreating(true)}
-          className="inline-flex min-h-10 w-fit items-center justify-center rounded-2xl bg-slate-900 px-4 py-2.5 text-[10px] font-black uppercase tracking-[0.14em] text-white shadow-sm shadow-slate-200 transition-all hover:bg-black md:px-6 md:py-3"
-        >
-          + Add New User
-        </button>
+        <div className="flex flex-wrap gap-2">
+          <Link
+            href="/dashboard/admin/team"
+            className="inline-flex min-h-10 w-fit items-center justify-center rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-[10px] font-black uppercase tracking-[0.14em] text-slate-700 shadow-sm shadow-slate-100 transition-all hover:border-slate-300 hover:bg-slate-50 md:px-6 md:py-3"
+          >
+            Internal Team
+          </Link>
+          <button 
+            onClick={() => setIsCreating(true)}
+            className="inline-flex min-h-10 w-fit items-center justify-center rounded-2xl bg-slate-900 px-4 py-2.5 text-[10px] font-black uppercase tracking-[0.14em] text-white shadow-sm shadow-slate-200 transition-all hover:bg-black md:px-6 md:py-3"
+          >
+            + Add New User
+          </button>
+        </div>
       </div>
 
       {/* METRICS & FILTERS */}

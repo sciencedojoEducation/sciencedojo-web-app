@@ -4,6 +4,8 @@ import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { cookies } from 'next/headers'
 import { createClient } from '@/utils/supabase/server'
+import { getSitePath } from '@/lib/site-url'
+import { getActiveInternalMemberByUserId, repairLinkedInternalUserRole } from '@/lib/internal-auth'
 
 function getSafeNextPath(nextPath?: FormDataEntryValue | string | null) {
   const path = String(nextPath || '').trim();
@@ -50,6 +52,18 @@ export async function login(formData: FormData) {
     redirect(`/login?error=${encodeURIComponent(error?.message || "Authentication failed.")}${nextPath ? `&next=${encodeURIComponent(nextPath)}` : ''}`)
   }
 
+  const activeInternalMember = await getActiveInternalMemberByUserId(supabase, user.id);
+  if (activeInternalMember) {
+    try {
+      await repairLinkedInternalUserRole(user.id);
+    } catch (repairError) {
+      console.error("[login] Internal role repair failed:", repairError);
+    }
+
+    revalidatePath('/', 'layout')
+    redirect('/dashboard/internal')
+  }
+
   // PRIORITIZE Database Profile Role over Metadata
   const { data: profile } = await supabase
     .from('profiles')
@@ -58,6 +72,11 @@ export async function login(formData: FormData) {
     .single();
 
   const role = profile?.role || user?.user_metadata?.role || 'parent';
+
+  if (role === 'internal') {
+    await supabase.auth.signOut();
+    redirect(`/login/internal?error=${encodeURIComponent("Your internal access is inactive or has not been linked yet.")}`)
+  }
   
   revalidatePath('/', 'layout')
   redirect(nextPath ? withAuthReturnFlag(nextPath) : `/dashboard/${role}`)
@@ -88,12 +107,11 @@ export async function signInWithGoogle(role?: string, subRole?: string, nextPath
     cookieStore.set('pending_next', safeNextPath, { maxAge: 60 * 10, path: '/' });
   }
 
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
   const roleParam = role ? `role=${encodeURIComponent(role)}` : '';
   const subRoleParam = subRole ? `subRole=${encodeURIComponent(subRole)}` : '';
   const nextParam = safeNextPath ? `next=${encodeURIComponent(safeNextPath)}` : '';
   const queryParams = [roleParam, subRoleParam, nextParam].filter(Boolean).join('&');
-  const redirectTo = `${baseUrl}/auth/callback${queryParams ? `?${queryParams}` : ''}`;
+  const redirectTo = `${getSitePath('/auth/callback')}${queryParams ? `?${queryParams}` : ''}`;
 
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
@@ -222,7 +240,7 @@ export async function signup(formData: FormData) {
       email: data.email,
     password: data.password,
     options: {
-      emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/auth/callback?next=${encodeURIComponent(nextPath || '/login')}`,
+      emailRedirectTo: `${getSitePath('/auth/callback')}?next=${encodeURIComponent(nextPath || '/login')}`,
       data: {
         role: role,
         sub_role: (formData.get('sub_role') as string) || '',
@@ -371,22 +389,25 @@ export async function completeGoogleParentOnboarding(
 
 export async function requestPasswordReset(formData: FormData) {
   const supabase = await createClient();
-  const email = formData.get('email') as string;
+  const email = String(formData.get('email') || '').trim();
+  const isInternal = String(formData.get('internal') || '') === '1';
+  const internalParam = isInternal ? '&internal=1' : '';
 
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/auth/callback?next=/reset-password`,
+    redirectTo: `${getSitePath('/auth/callback')}?next=/reset-password`,
   });
 
   if (error) {
     console.error("Password reset request error:", error.message);
-    redirect(`/forgot-password?error=${encodeURIComponent(error.message)}`);
+    redirect(`/forgot-password?error=${encodeURIComponent('We could not send that reset link. Please check the email address and try again.')}${internalParam}`);
   }
 
-  redirect('/forgot-password?message=Check your email for a secure reset link!');
+  redirect(`/forgot-password?message=${encodeURIComponent('Check your email for a secure reset link!')}${internalParam}`);
 }
 
 export async function updatePassword(password: string) {
   const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
 
   const { error } = await supabase.auth.updateUser({
     password: password 
@@ -397,7 +418,30 @@ export async function updatePassword(password: string) {
     return { error: error.message };
   }
 
-  return { success: true };
+  if (!user) {
+    return { success: true, redirectTo: '/login' };
+  }
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .maybeSingle();
+
+  const activeInternalMember = await getActiveInternalMemberByUserId(supabase, user.id);
+  if (activeInternalMember) {
+    try {
+      await repairLinkedInternalUserRole(user.id);
+    } catch (repairError) {
+      console.error("[updatePassword] Internal role repair failed:", repairError);
+    }
+
+    return { success: true, redirectTo: '/dashboard/internal' };
+  }
+
+  const role = profile?.role || user.user_metadata?.role;
+
+  return { success: true, redirectTo: role === 'internal' ? '/dashboard/internal' : '/login' };
 }
 
 export async function updateAccount(formData: FormData) {

@@ -4,6 +4,8 @@ import ArticleCard from "@/components/learning-hub/ArticleCard";
 import AiPracticeStudioCtaLink from "@/components/analytics/AiPracticeStudioCtaLink";
 import LearningHubCtas from "@/components/learning-hub/LearningHubCtas";
 import { learningArticles, learningHubCategories, learningHubUrl } from "@/lib/learning-hub";
+import FeatureUnavailable from "@/components/FeatureUnavailable";
+import { isFeatureEnabled } from "@/lib/feature-flags";
 
 export const metadata: Metadata = {
   title: "Learning Hub | ScienceDojo",
@@ -24,6 +26,17 @@ type PageProps = {
 };
 
 export default async function LearningHubPage({ searchParams }: PageProps) {
+  const enabled = await isFeatureEnabled("learning_hub_enabled");
+  if (!enabled) {
+    return (
+      <FeatureUnavailable
+        eyebrow="Learning Hub"
+        title="The Learning Hub is almost ready."
+        message="We are preparing these guides carefully before opening them to families."
+      />
+    );
+  }
+
   const params = await searchParams;
   const selectedCategory = learningHubCategories.find((category) => category === params.category);
   const query = (params.q || "").trim().toLowerCase();

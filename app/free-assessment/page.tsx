@@ -4,6 +4,8 @@ import { faqJsonLd, localBusinessJsonLd, organizationJsonLd, siteUrl } from "@/l
 import FreeAssessmentForm from "./FreeAssessmentForm";
 import FreeAssessmentViewTracker from "./FreeAssessmentViewTracker";
 import MentorAttributionTracker from "@/components/MentorAttributionTracker";
+import FeatureUnavailable from "@/components/FeatureUnavailable";
+import { isFeatureEnabled } from "@/lib/feature-flags";
 
 const faqs = [
   {
@@ -40,6 +42,19 @@ export default async function FreeAssessmentPage({
 }: {
   searchParams?: Promise<{ tutor?: string; r?: string }>;
 }) {
+  const enabled = await isFeatureEnabled("free_assessment_enabled");
+  if (!enabled) {
+    return (
+      <FeatureUnavailable
+        eyebrow="Assessment opening soon"
+        title="Free assessments are being prepared."
+        message="We are preparing this intake carefully before opening it to more families. Please contact ScienceDojo if you need help choosing the next step."
+        ctaHref="/contact"
+        ctaLabel="Contact ScienceDojo"
+      />
+    );
+  }
+
   const query = searchParams ? await searchParams : {};
   const trustItems = ["No pressure", "Confidence-led intake", "Verified STEM tutors", "Parent-visible support"];
 

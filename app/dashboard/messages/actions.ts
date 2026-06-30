@@ -1,7 +1,9 @@
 "use server"
 
 import { createClient } from "@/utils/supabase/server";
+import { createAdminClient } from "@/utils/supabase/admin";
 import { revalidatePath } from "next/cache";
+import { getActiveInternalMemberByUserId } from "@/lib/internal-auth";
 
 const SAFETY_KEYWORDS = [
   "whatsapp", "phone", "paypal", "email", "contact", "pay me", "transfer",
@@ -16,11 +18,76 @@ const PROFANITY_KEYWORDS = [
 ];
 const CONTACT_INFO_REGEX = /([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6})|(\+?[0-9\s-]{10,})/g;
 
+async function getProfileRole(supabase: Awaited<ReturnType<typeof createClient>>, userId: string) {
+  const { data } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", userId)
+    .maybeSingle();
+
+  return data?.role || null;
+}
+
+async function isAdminProfile(supabase: Awaited<ReturnType<typeof createClient>>, userId: string) {
+  return (await getProfileRole(supabase, userId)) === "admin";
+}
+
+async function isInternalMessagingParticipant(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  userId: string
+) {
+  if (await getActiveInternalMemberByUserId(supabase, userId)) {
+    return true;
+  }
+
+  return isAdminProfile(supabase, userId);
+}
+
+async function getConversationOtherParticipantId(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  conversationId: string,
+  currentUserId: string
+) {
+  const { data: conversation, error } = await supabase
+    .from("conversations")
+    .select("participant_1_id, participant_2_id")
+    .eq("id", conversationId)
+    .maybeSingle();
+
+  if (error) {
+    console.error("Conversation lookup error:", error.message);
+    return null;
+  }
+
+  if (!conversation) return null;
+
+  if (conversation.participant_1_id === currentUserId) return conversation.participant_2_id as string;
+  if (conversation.participant_2_id === currentUserId) return conversation.participant_1_id as string;
+
+  return null;
+}
+
+async function canInternalUseConversation(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  conversationId: string,
+  currentUserId: string
+) {
+  const otherParticipantId = await getConversationOtherParticipantId(supabase, conversationId, currentUserId);
+  if (!otherParticipantId) return false;
+  return isInternalMessagingParticipant(supabase, otherParticipantId);
+}
+
 export async function sendMessage(conversationId: string, content: string) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) return { error: "Unauthorized" };
+
+  const adminClient = createAdminClient();
+  const isInternal = Boolean(await getActiveInternalMemberByUserId(adminClient, user.id));
+  if (isInternal && !(await canInternalUseConversation(adminClient as any, conversationId, user.id))) {
+    return { error: "Internal team members can only message admins and active internal team members." };
+  }
 
   // 1. Safety Flagging (Keywords & Contact Info)
   const lowerContent = content.toLowerCase();
@@ -68,6 +135,12 @@ export async function createConversation(otherParticipantId: string, bookingId?:
   const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) return { error: "Unauthorized" };
+
+  const adminClient = createAdminClient();
+  const isInternal = Boolean(await getActiveInternalMemberByUserId(adminClient, user.id));
+  if (isInternal && !(await isInternalMessagingParticipant(adminClient as any, otherParticipantId))) {
+    return { error: "Internal team members can only message admins and active internal team members." };
+  }
 
   // Check if conversation already exists between these two users for this specific context
   let query = supabase
@@ -144,6 +217,12 @@ export async function markAsRead(conversationId: string) {
   const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) return { error: "Unauthorized" };
+
+  const adminClient = createAdminClient();
+  const isInternal = Boolean(await getActiveInternalMemberByUserId(adminClient, user.id));
+  if (isInternal && !(await canInternalUseConversation(adminClient as any, conversationId, user.id))) {
+    return { error: "Internal team members can only read admin and internal team conversations." };
+  }
 
   const { error } = await supabase
     .from("messages")

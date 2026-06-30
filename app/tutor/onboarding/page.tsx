@@ -7,6 +7,8 @@ import { signOut } from "@/app/login/actions";
 import { Clock, HelpCircle, LogOut } from "lucide-react";
 import Logo from "@/components/Logo";
 import SDLogoBadge from "@/components/brand/SDLogoBadge";
+import FeatureUnavailable from "@/components/FeatureUnavailable";
+import { isFeatureEnabled } from "@/lib/feature-flags";
 
 export default async function OnboardingPage() {
   const supabase = await createClient();
@@ -45,6 +47,19 @@ export default async function OnboardingPage() {
     .select("*")
     .eq("user_id", user.id)
     .maybeSingle();
+
+  const applicationsEnabled = await isFeatureEnabled("tutor_applications_enabled");
+  if (!applicationsEnabled && !application) {
+    return (
+      <FeatureUnavailable
+        eyebrow="Tutor applications"
+        title="Tutor applications are opening soon."
+        message="We are preparing the tutor application experience carefully before inviting more educators."
+        ctaHref="/support/tutors"
+        ctaLabel="Tutor support"
+      />
+    );
+  }
 
   if (application?.status === 'pending' || application?.status === 'approved') {
     redirect("/dashboard/tutor");

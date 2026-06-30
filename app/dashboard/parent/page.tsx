@@ -10,6 +10,8 @@ import LessonHistoryTable from "@/components/LessonHistoryTable";
 import HomeworkFeed from "@/components/HomeworkFeed";
 import StudentProgressStats from "@/components/StudentProgressStats";
 import AnnouncementFeed from "@/components/AnnouncementFeed";
+import FeatureUnavailable from "@/components/FeatureUnavailable";
+import { isFeatureEnabled } from "@/lib/feature-flags";
 
 function sortByDateAsc(bookings: Booking[]) {
   return [...bookings].sort((a, b) => new Date(a.requested_date).getTime() - new Date(b.requested_date).getTime());
@@ -113,6 +115,19 @@ export default async function ParentDashboard() {
 
   if (application || user.user_metadata.role === 'tutor') {
     redirect("/dashboard/tutor");
+  }
+
+  const parentDashboardEnabled = await isFeatureEnabled("parent_dashboard_enabled");
+  if (!parentDashboardEnabled) {
+    return (
+      <FeatureUnavailable
+        eyebrow="Dashboard preparing"
+        title="Your dashboard is being prepared."
+        message="Your parent dashboard is being prepared. Please contact ScienceDojo support if you need help."
+        ctaHref="/dashboard/support"
+        ctaLabel="Contact support"
+      />
+    );
   }
 
   const meta = user?.user_metadata;

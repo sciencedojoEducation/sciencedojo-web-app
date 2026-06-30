@@ -13,6 +13,7 @@ import HeroIntroMedia from "@/components/HeroIntroMedia";
 import { AchievementStoryCard, FeaturedTestimonialCard, REAL_TESTIMONIALS, TestimonialCard } from "@/components/Testimonials";
 import { homeImages } from "@/lib/homeImages";
 import { localBusinessJsonLd, organizationJsonLd } from "@/lib/seo";
+import { getFeatureFlagMap } from "@/lib/feature-flags";
 
 const heroPills = ["GCSE", "IGCSE", "IB", "A-Level", "STEM confidence"] as const;
 
@@ -318,7 +319,8 @@ export default async function Home({
     redirect(`/dashboard/${finalRole}`);
   }
 
-  const tutors = await getTutors(searchTerm, selectedSubject);
+  const flags = await getFeatureFlagMap();
+  const tutors = flags.tutor_marketplace_enabled ? await getTutors(searchTerm, selectedSubject) : [];
 
   return (
     <div className="flex flex-col flex-1 items-center bg-background">
@@ -343,20 +345,26 @@ export default async function Home({
               ScienceDojo helps GCSE, IGCSE, IB, and A-Level students build science confidence through expert tutoring, structured practice, and personalized learning Missions.
             </p>
 
-            <div className="mt-8 hidden items-center gap-4 lg:flex">
-              <BookAssessmentLink
-                source="homepage_hero"
-                className="rounded-2xl bg-white px-10 py-4 font-black text-primary shadow-xl shadow-white/10 transition-all hover:-translate-y-0.5 hover:bg-slate-50 hover:shadow-2xl"
-              >
-                Book Free Learning Assessment
-              </BookAssessmentLink>
-              <Link
-                href="/ai-practice-studio"
-                className="rounded-2xl border border-white/15 bg-white/5 px-10 py-4 font-black text-white backdrop-blur-md transition-all hover:-translate-y-0.5 hover:bg-white/10"
-              >
-                Try Practice Dojo
-              </Link>
-            </div>
+            {(flags.free_assessment_enabled || flags.practice_dojo_enabled) && (
+              <div className="mt-8 hidden items-center gap-4 lg:flex">
+                {flags.free_assessment_enabled && (
+                  <BookAssessmentLink
+                    source="homepage_hero"
+                    className="rounded-2xl bg-white px-10 py-4 font-black text-primary shadow-xl shadow-white/10 transition-all hover:-translate-y-0.5 hover:bg-slate-50 hover:shadow-2xl"
+                  >
+                    Book Free Learning Assessment
+                  </BookAssessmentLink>
+                )}
+                {flags.practice_dojo_enabled && (
+                  <Link
+                    href="/ai-practice-studio"
+                    className="rounded-2xl border border-white/15 bg-white/5 px-10 py-4 font-black text-white backdrop-blur-md transition-all hover:-translate-y-0.5 hover:bg-white/10"
+                  >
+                    Try Practice Dojo
+                  </Link>
+                )}
+              </div>
+            )}
 
             <div className="mt-8 hidden flex-wrap gap-2 lg:flex">
               {heroPills.map((pill) => (
@@ -398,20 +406,26 @@ export default async function Home({
           </div>
 
           <div className="relative z-10 grid w-full gap-5 lg:hidden">
-            <div className="flex flex-col gap-3">
-              <BookAssessmentLink
-                source="homepage_hero_mobile"
-                className="w-full rounded-2xl border border-white/80 bg-white px-6 py-3.5 text-center text-sm font-black text-primary shadow-xl shadow-white/20 transition-all active:scale-95"
-              >
-                Book Free Learning Assessment
-              </BookAssessmentLink>
-              <Link
-                href="/ai-practice-studio"
-                className="w-full rounded-2xl border border-white/20 bg-secondary/35 px-6 py-3.5 text-center text-sm font-black text-white shadow-lg shadow-secondary/15 backdrop-blur-md transition-all hover:bg-secondary/45"
-              >
-                Try Practice Dojo
-              </Link>
-            </div>
+            {(flags.free_assessment_enabled || flags.practice_dojo_enabled) && (
+              <div className="flex flex-col gap-3">
+                {flags.free_assessment_enabled && (
+                  <BookAssessmentLink
+                    source="homepage_hero_mobile"
+                    className="w-full rounded-2xl border border-white/80 bg-white px-6 py-3.5 text-center text-sm font-black text-primary shadow-xl shadow-white/20 transition-all active:scale-95"
+                  >
+                    Book Free Learning Assessment
+                  </BookAssessmentLink>
+                )}
+                {flags.practice_dojo_enabled && (
+                  <Link
+                    href="/ai-practice-studio"
+                    className="w-full rounded-2xl border border-white/20 bg-secondary/35 px-6 py-3.5 text-center text-sm font-black text-white shadow-lg shadow-secondary/15 backdrop-blur-md transition-all hover:bg-secondary/45"
+                  >
+                    Try Practice Dojo
+                  </Link>
+                )}
+              </div>
+            )}
             <div className="flex flex-wrap justify-center gap-2 text-center">
               {heroPills.map((pill) => (
                 <span key={pill} className="rounded-full border border-white/15 bg-white/[0.07] px-3 py-1.5 text-[9px] font-black uppercase tracking-[0.08em] text-white/60 backdrop-blur">
@@ -537,6 +551,7 @@ export default async function Home({
         </div>
       </section>
 
+      {flags.practice_dojo_enabled && (
       <section id="classroom" aria-label="Practice Dojo" className="w-full border-b border-secondary/10 bg-[linear-gradient(180deg,#ffffff_0%,#f7fbff_100%)] px-4 py-16 md:px-10 md:py-36">
         <HomepageSectionTracker eventName="homepage_practice_dojo_visible" />
         <div className="group relative mx-auto grid max-w-[1360px] gap-8 overflow-hidden rounded-[2rem] border border-primary/10 bg-white p-5 shadow-xl shadow-secondary/5 transition-all hover:-translate-y-0.5 hover:shadow-primary/10 md:gap-14 md:rounded-[2.5rem] md:p-8 md:shadow-2xl lg:grid-cols-[0.82fr_1.18fr] lg:items-center lg:p-14">
@@ -569,12 +584,14 @@ export default async function Home({
               >
                 Try Practice Dojo
               </AiPracticeStudioCtaLink>
-              <BookAssessmentLink
-                source="homepage_practice_dojo"
-                className="inline-flex justify-center whitespace-nowrap rounded-2xl border border-secondary/10 bg-white px-7 py-4 text-sm font-black uppercase tracking-[0.14em] text-secondary transition-colors hover:border-primary/30 hover:text-primary"
-              >
-                Book Free Assessment
-              </BookAssessmentLink>
+              {flags.free_assessment_enabled && (
+                <BookAssessmentLink
+                  source="homepage_practice_dojo"
+                  className="inline-flex justify-center whitespace-nowrap rounded-2xl border border-secondary/10 bg-white px-7 py-4 text-sm font-black uppercase tracking-[0.14em] text-secondary transition-colors hover:border-primary/30 hover:text-primary"
+                >
+                  Book Free Assessment
+                </BookAssessmentLink>
+              )}
             </div>
           </div>
           <div className="relative z-10 overflow-hidden rounded-[1.75rem] border border-secondary/10 bg-[#f8fbff] p-3 shadow-xl shadow-secondary/10 transition-all group-hover:border-primary/20 md:rounded-[2.25rem] md:p-5 lg:p-6">
@@ -625,6 +642,7 @@ export default async function Home({
           </div>
         </div>
       </section>
+      )}
 
       <section aria-label="Personalized Missions" className="relative w-full overflow-hidden bg-[linear-gradient(135deg,#071a35_0%,#082d5a_48%,#064c91_100%)] px-4 py-16 text-white md:px-10 md:py-36">
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_24%_22%,rgba(0,245,212,0.15),transparent_32%),radial-gradient(circle_at_78%_72%,rgba(255,255,255,0.1),transparent_28%)]" />
@@ -696,6 +714,7 @@ export default async function Home({
         </div>
       </section>
 
+      {flags.tutor_marketplace_enabled && (
       <section id="directory" aria-label="Verified expert tutors" className="relative z-20 w-full bg-white px-4 py-16 md:px-10 md:py-36">
         <HomepageSectionTracker eventName="homepage_tutor_marketplace_visible" />
         <div className="mx-auto max-w-[1360px]">
@@ -745,6 +764,7 @@ export default async function Home({
           )}
         </div>
       </section>
+      )}
 
       <section aria-label="Founder trust" className="w-full bg-[linear-gradient(180deg,#f8fbff_0%,#ffffff_100%)] px-4 py-16 md:px-10 md:py-36">
         <div className="mx-auto grid max-w-[1160px] gap-8 rounded-[2rem] border border-secondary/8 bg-white p-5 shadow-[0_24px_80px_rgba(0,26,68,0.06)] md:gap-12 md:rounded-[2.5rem] md:p-14 lg:grid-cols-[0.78fr_1.22fr] lg:items-center">
@@ -820,22 +840,28 @@ export default async function Home({
             <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-white/70 md:mt-6 md:text-lg md:leading-8">
               Start with a calm conversation about your child&apos;s subject, confidence, goals, and the kind of support that would help most.
             </p>
-            <div className="mt-9 flex flex-col justify-center gap-4 sm:flex-row">
-              <BookAssessmentLink
-                source="homepage_final_cta"
-                className="rounded-2xl bg-white px-8 py-4 text-sm font-black uppercase tracking-[0.14em] text-primary shadow-xl shadow-white/10 transition-all hover:-translate-y-0.5 hover:bg-slate-50 hover:shadow-2xl"
-              >
-                Book Free Learning Assessment
-              </BookAssessmentLink>
-              <AiPracticeStudioCtaLink
-                href="/ai-practice-studio"
-                cta="final_cta_try_practice_dojo"
-                source="homepage_final_cta"
-                className="rounded-2xl border border-white/15 bg-white/5 px-8 py-4 text-sm font-black uppercase tracking-[0.14em] text-white backdrop-blur transition-all hover:bg-white/10"
-              >
-                Try Practice Dojo
-              </AiPracticeStudioCtaLink>
-            </div>
+            {(flags.free_assessment_enabled || flags.practice_dojo_enabled) && (
+              <div className="mt-9 flex flex-col justify-center gap-4 sm:flex-row">
+                {flags.free_assessment_enabled && (
+                  <BookAssessmentLink
+                    source="homepage_final_cta"
+                    className="rounded-2xl bg-white px-8 py-4 text-sm font-black uppercase tracking-[0.14em] text-primary shadow-xl shadow-white/10 transition-all hover:-translate-y-0.5 hover:bg-slate-50 hover:shadow-2xl"
+                  >
+                    Book Free Learning Assessment
+                  </BookAssessmentLink>
+                )}
+                {flags.practice_dojo_enabled && (
+                  <AiPracticeStudioCtaLink
+                    href="/ai-practice-studio"
+                    cta="final_cta_try_practice_dojo"
+                    source="homepage_final_cta"
+                    className="rounded-2xl border border-white/15 bg-white/5 px-8 py-4 text-sm font-black uppercase tracking-[0.14em] text-white backdrop-blur transition-all hover:bg-white/10"
+                  >
+                    Try Practice Dojo
+                  </AiPracticeStudioCtaLink>
+                )}
+              </div>
+            )}
             <div className="mt-10 grid gap-3 sm:grid-cols-4">
               {["Free assessment", "Expert tutoring", "Personalized Missions", "Parent updates"].map((item) => (
                 <div key={item} className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-white/65">

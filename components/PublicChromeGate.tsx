@@ -7,7 +7,7 @@ export default function PublicChromeGate({ children }: { children: React.ReactNo
   const isTutorOnboarding =
     pathname === "/tutor/onboarding" || pathname.startsWith("/tutor/onboarding/");
 
-  if (pathname.startsWith("/dashboard") || isTutorOnboarding) {
+  if (pathname.startsWith("/dashboard") || pathname === "/maintenance" || isTutorOnboarding) {
     return null;
   }
 

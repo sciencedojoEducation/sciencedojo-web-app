@@ -1,4 +1,6 @@
 import { createClient } from "@/utils/supabase/server";
+import { createAdminClient } from "@/utils/supabase/admin";
+import { getActiveInternalMemberByUserId } from "@/lib/internal-auth";
 
 export interface Message {
   id: string;
@@ -39,6 +41,14 @@ export async function getConversations() {
 
   if (!user) return [];
 
+  const adminClient = createAdminClient();
+  const isInternalUser = Boolean(await getActiveInternalMemberByUserId(adminClient, user.id));
+  const { data: currentProfile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .maybeSingle();
+
   const { data: rawConversations, error } = await supabase
     .from("conversations")
     .select(`
@@ -53,6 +63,42 @@ export async function getConversations() {
   if (error) {
     console.error("Error fetching conversations:", error.message);
     return [];
+  }
+
+  const participantIds = Array.from(new Set(
+    (rawConversations || [])
+      .flatMap((conversation) => [conversation.participant_1_id, conversation.participant_2_id])
+      .filter(Boolean)
+  ));
+
+  const profileMap: Record<string, { id: string; full_name: string; avatar_url: string; role?: string | null }> = {};
+  if (participantIds.length > 0) {
+    const { data: participantProfiles } = await adminClient
+      .from("profiles")
+      .select("id, full_name, avatar_url, role")
+      .in("id", participantIds);
+
+    for (const profile of participantProfiles || []) {
+      profileMap[profile.id] = profile;
+    }
+  }
+
+  let internalStaffIds = new Set<string>();
+  let adminIds = new Set<string>();
+
+  if (isInternalUser) {
+    const { data: internalMembers } = await adminClient
+      .from("internal_team_members")
+      .select("user_id")
+      .eq("status", "active")
+      .not("user_id", "is", null);
+
+    internalStaffIds = new Set((internalMembers || []).map((member) => member.user_id).filter(Boolean) as string[]);
+    adminIds = new Set(
+      Object.values(profileMap)
+        .filter((profile) => profile.role === "admin")
+        .map((profile) => profile.id)
+    );
   }
 
   // 1. Collect all booking IDs to fetch them separately
@@ -77,7 +123,8 @@ export async function getConversations() {
 
   return (rawConversations as any[]).map(conv => {
     const isP1 = conv.participant_1_id === user.id;
-    const other = isP1 ? conv.participant_2 : conv.participant_1;
+    const otherId = isP1 ? conv.participant_2_id : conv.participant_1_id;
+    const other = profileMap[otherId] || (isP1 ? conv.participant_2 : conv.participant_1);
     
     // Join booking data in memory
     const booking = conv.booking_id ? bookingsMap[conv.booking_id] : null;
@@ -96,6 +143,11 @@ export async function getConversations() {
       last_message: sortedMessages[0]?.content || "No messages yet",
       unread_count: unreadCount
     };
+  }).filter((conv) => {
+    if (!isInternalUser && currentProfile?.role !== "internal") return true;
+
+    const otherId = conv.other_participant?.id;
+    return Boolean(otherId && (adminIds.has(otherId) || internalStaffIds.has(otherId)));
   });
 }
 
@@ -122,15 +174,43 @@ export async function getUnreadMessageCount() {
 
   if (!user) return 0;
 
+  const adminClient = createAdminClient();
+  const isInternalUser = Boolean(await getActiveInternalMemberByUserId(adminClient, user.id));
+
   // First, get conversations where the user is an actual participant
   const { data: conversations } = await supabase
     .from("conversations")
-    .select("id")
+    .select("id, participant_1_id, participant_2_id")
     .or(`participant_1_id.eq.${user.id},participant_2_id.eq.${user.id}`);
 
   if (!conversations || conversations.length === 0) return 0;
 
-  const conversationIds = conversations.map(c => c.id);
+  let conversationIds = conversations.map(c => c.id);
+
+  if (isInternalUser) {
+    const { data: internalMembers } = await adminClient
+      .from("internal_team_members")
+      .select("user_id")
+      .eq("status", "active")
+      .not("user_id", "is", null);
+    const { data: admins } = await adminClient
+      .from("profiles")
+      .select("id")
+      .eq("role", "admin");
+    const allowedIds = new Set([
+      ...((internalMembers || []).map((member) => member.user_id).filter(Boolean) as string[]),
+      ...((admins || []).map((profile) => profile.id) as string[]),
+    ]);
+
+    conversationIds = conversations
+      .filter((conversation) => {
+        const otherId = conversation.participant_1_id === user.id ? conversation.participant_2_id : conversation.participant_1_id;
+        return allowedIds.has(otherId);
+      })
+      .map((conversation) => conversation.id);
+  }
+
+  if (conversationIds.length === 0) return 0;
 
   // Then, count unread messages only within those conversations
   const { count, error } = await supabase

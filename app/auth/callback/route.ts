@@ -2,9 +2,10 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@/utils/supabase/server'
 import { createAdminClient } from '@/utils/supabase/admin'
 import { cookies } from 'next/headers'
+import { getActiveInternalMemberByUserId, repairLinkedInternalUserRole } from '@/lib/internal-auth'
 
 type PublicSignupRole = 'parent' | 'student' | 'tutor';
-type DashboardRole = PublicSignupRole | 'admin';
+type DashboardRole = PublicSignupRole | 'admin' | 'internal';
 
 function getSafeNextPath(nextPath?: string | null) {
   const path = String(nextPath || '').trim();
@@ -38,7 +39,7 @@ function normalizePublicSignupRole(role?: string | null): PublicSignupRole | nul
 }
 
 function normalizeDashboardRole(role?: unknown): DashboardRole | null {
-  return role === 'parent' || role === 'student' || role === 'tutor' || role === 'admin' ? role : null;
+  return role === 'parent' || role === 'student' || role === 'tutor' || role === 'admin' || role === 'internal' ? role : null;
 }
 
 function isFreshOAuthUser(createdAt?: string) {
@@ -61,11 +62,20 @@ export async function GET(request: Request) {
   const code = searchParams.get('code')
   const next = searchParams.get('next') ?? '/'
   const oauthError = searchParams.get('error') || searchParams.get('error_description')
+  const safeNextForNoCode = getSafeNextPath(next);
 
   if (oauthError) {
     const cookieStore = await cookies();
     clearPendingSignupCookies(cookieStore);
     return NextResponse.redirect(`${origin}/signup?error=${encodeURIComponent('Google sign-up was cancelled or could not be completed. Please try again.')}`)
+  }
+
+  if (!code) {
+    if (safeNextForNoCode === '/reset-password') {
+      return NextResponse.redirect(`${origin}/forgot-password?internal=1&message=reset-link-invalid`);
+    }
+
+    return NextResponse.redirect(`${origin}/login?error=${encodeURIComponent('The confirmation link was invalid or has expired. Please request a new link.')}`)
   }
 
   if (code) {
@@ -181,6 +191,19 @@ export async function GET(request: Request) {
       // Check their existing profile to redirect correctly.
       const { data: { user: existingUser } } = await supabase.auth.getUser();
       if (existingUser) {
+        const safeNext = getSafeNextPath(next);
+        const activeInternalMember = await getActiveInternalMemberByUserId(supabase, existingUser.id);
+
+        if (activeInternalMember) {
+          try {
+            await repairLinkedInternalUserRole(existingUser.id);
+          } catch (repairError) {
+            console.error("[auth-callback] Internal role repair failed:", repairError);
+          }
+
+          return NextResponse.redirect(`${origin}${safeNext || '/dashboard/internal'}`);
+        }
+
         const { data: existingProfile } = await supabase
           .from('profiles')
           .select('role, student_name')
@@ -188,6 +211,11 @@ export async function GET(request: Request) {
           .maybeSingle();
 
         const existingRole = normalizeDashboardRole(existingProfile?.role) || normalizeDashboardRole(existingUser.user_metadata?.role) || 'parent';
+        if (existingRole === 'internal') {
+          await supabase.auth.signOut();
+          return NextResponse.redirect(`${origin}/login/internal?error=${encodeURIComponent('Your internal access is inactive or has not been linked yet.')}`);
+        }
+
         if (!existingProfile && existingRole !== 'admin') {
           const adminClient = createAdminClient();
           await adminClient.from('profiles').upsert({
@@ -202,8 +230,6 @@ export async function GET(request: Request) {
 
         const onboardingCompleted = existingUser.user_metadata?.onboarding_completed;
         const hasStudentName = Boolean(existingProfile?.student_name || existingUser.user_metadata?.student_name);
-        const safeNext = getSafeNextPath(next);
-
         if (existingRole === 'parent' && (onboardingCompleted === false || !hasStudentName)) {
           return NextResponse.redirect(`${origin}/signup/child-details${safeNext ? `?next=${encodeURIComponent(safeNext)}` : ''}`);
         }
@@ -223,6 +249,5 @@ export async function GET(request: Request) {
     console.error("Auth callback error:", error.message)
     return NextResponse.redirect(`${origin}/login?error=${encodeURIComponent('The confirmation link was invalid or has expired. Please try logging in or requesting a new password.')}`)
   }
-
-  return NextResponse.redirect(`${origin}/login?error=${encodeURIComponent('No confirmation code found in the link.')}`)
+  return NextResponse.redirect(`${origin}/login?error=${encodeURIComponent('The confirmation link was invalid or has expired. Please request a new link.')}`)
 }

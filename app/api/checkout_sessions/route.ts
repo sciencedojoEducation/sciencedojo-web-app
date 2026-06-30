@@ -2,12 +2,21 @@ import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import { getBookingById } from "@/lib/supabase-queries";
 import { createClient } from "@/utils/supabase/server";
+import { isFeatureEnabled } from "@/lib/feature-flags";
 
 const stripeSecretKey = process.env.STRIPE_SECRET_KEY || "sk_test_dummy_key_do_not_use";
 const stripe = new Stripe(stripeSecretKey);
 
 export async function POST(req: Request) {
   try {
+    const paymentsEnabled = await isFeatureEnabled("stripe_payments_enabled");
+    if (!paymentsEnabled) {
+      return NextResponse.json(
+        { error: "Online payments are being prepared. Please contact ScienceDojo support for help." },
+        { status: 503 },
+      );
+    }
+
     const { bookingId, returnUrl } = await req.json();
 
     if (!bookingId) {
@@ -40,7 +49,6 @@ export async function POST(req: Request) {
       .maybeSingle();
 
     const tutorStripeAccountId = tutor?.stripe_account_id;
-    const tutorOnboarded = tutor?.stripe_onboarding_complete;
 
     // Check if it's part of a recurrence group
     let bookingsToPayFor = [booking];
@@ -98,8 +106,9 @@ export async function POST(req: Request) {
     });
 
     return NextResponse.json({ url: session.url });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("[Stripe] Error creating checkout session:", err);
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    const message = err instanceof Error ? err.message : "Unable to create checkout session.";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

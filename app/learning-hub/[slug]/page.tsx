@@ -13,6 +13,8 @@ import {
   learningArticles,
   type LearningArticle,
 } from "@/lib/learning-hub";
+import FeatureUnavailable from "@/components/FeatureUnavailable";
+import { isFeatureEnabled } from "@/lib/feature-flags";
 
 type PageProps = {
   params: Promise<{ slug: string }>;
@@ -45,6 +47,17 @@ function ArticleMeta({ article }: { article: LearningArticle }) {
 }
 
 export default async function LearningArticlePage({ params }: PageProps) {
+  const enabled = await isFeatureEnabled("learning_hub_enabled");
+  if (!enabled) {
+    return (
+      <FeatureUnavailable
+        eyebrow="Learning Hub"
+        title="This guide is being prepared."
+        message="We are preparing the Learning Hub carefully before opening it to families."
+      />
+    );
+  }
+
   const { slug } = await params;
   const article = learningArticleMap.get(slug);
 

@@ -11,7 +11,7 @@ import { tutorTour } from "@/src/tours/tutorTour";
 import type { DashboardTourRole } from "@/src/tours/types";
 
 type DashboardGuidedTourProps = {
-  role: DashboardTourRole | "admin";
+  role: DashboardTourRole | "admin" | "internal";
   completedTours?: Partial<Record<DashboardTourRole, boolean>>;
 };
 

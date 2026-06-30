@@ -1,7 +1,62 @@
 import { getConversations, getMessages } from "@/lib/messaging-queries";
 import ConversationList from "./ConversationList";
 import ChatWindow from "./ChatWindow";
+import StaffContactList, { type StaffContact } from "./StaffContactList";
 import { createClient } from "@/utils/supabase/server";
+import { createAdminClient } from "@/utils/supabase/admin";
+import { redirect } from "next/navigation";
+import { getActiveInternalMemberByUserId } from "@/lib/internal-auth";
+
+function formatRole(value: string | null | undefined) {
+  return String(value || "internal").replace(/_/g, " ");
+}
+
+async function getInternalStaffContacts(currentUserId: string): Promise<StaffContact[]> {
+  const adminClient = createAdminClient();
+  const { data: internalMembers } = await adminClient
+    .from("internal_team_members")
+    .select("user_id, name, role, title")
+    .eq("status", "active")
+    .not("user_id", "is", null);
+  const internalUserIds = (internalMembers || [])
+    .map((member) => member.user_id)
+    .filter((id): id is string => Boolean(id) && id !== currentUserId);
+
+  const { data: admins } = await adminClient
+    .from("profiles")
+    .select("id, full_name, avatar_url")
+    .eq("role", "admin");
+  const adminIds = (admins || [])
+    .map((admin) => admin.id)
+    .filter((id): id is string => Boolean(id) && id !== currentUserId);
+  const profileIds = Array.from(new Set([...internalUserIds, ...adminIds]));
+
+  if (profileIds.length === 0) {
+    return [];
+  }
+
+  const { data: profiles } = await adminClient
+    .from("profiles")
+    .select("id, full_name, avatar_url, role")
+    .in("id", profileIds);
+  const profileMap = new Map((profiles || []).map((profile) => [profile.id, profile]));
+  const internalMemberMap = new Map((internalMembers || []).map((member) => [member.user_id, member]));
+  const contacts: StaffContact[] = [];
+
+  for (const userId of profileIds) {
+    const profile = profileMap.get(userId);
+    const member = internalMemberMap.get(userId);
+    contacts.push({
+      id: userId,
+      name: profile?.full_name || member?.name || "ScienceDojo teammate",
+      role: profile?.role === "admin" ? "admin" : formatRole(member?.role),
+      title: profile?.role === "admin" ? "Platform admin" : member?.title || formatRole(member?.role),
+      avatar_url: profile?.avatar_url || null,
+    });
+  }
+
+  return contacts.sort((a, b) => a.name.localeCompare(b.name));
+}
 
 export default async function MessagesPage({
   searchParams,
@@ -9,11 +64,26 @@ export default async function MessagesPage({
   searchParams: Promise<{ id?: string }>;
 }) {
   const { id: activeId } = await searchParams;
-  const conversations = await getConversations();
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) return null;
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  const adminClient = createAdminClient();
+  const isInternal = Boolean(await getActiveInternalMemberByUserId(adminClient, user.id));
+
+  if (profile?.role === "internal" && !isInternal) {
+    redirect(`/login/internal/denied?error=${encodeURIComponent("Your internal access is inactive or has not been linked yet.")}`);
+  }
+
+  const conversations = await getConversations();
+  const staffContacts = isInternal ? await getInternalStaffContacts(user.id) : [];
 
   const activeConversation = activeId
     ? conversations.find(c => c.id === activeId) 
@@ -23,11 +93,15 @@ export default async function MessagesPage({
 
   return (
     <div className="h-full min-h-0 overflow-hidden bg-slate-50 lg:grid lg:grid-cols-[360px_1fr]">
-      <div className={`${activeConversation ? "hidden lg:block" : "block"} h-full min-h-0 lg:block`}>
-        <ConversationList 
-          conversations={conversations} 
-          activeId={activeId || null}
-        />
+      <div className={`${activeConversation ? "hidden lg:flex" : "flex"} h-full min-h-0 flex-col lg:flex`}>
+        {isInternal && <StaffContactList contacts={staffContacts} />}
+        <div className="min-h-0 flex-1">
+          <ConversationList
+            conversations={conversations}
+            activeId={activeId || null}
+            isInternal={isInternal}
+          />
+        </div>
       </div>
 
       <div className={`${activeConversation ? "block" : "hidden lg:block"} h-full min-w-0`}>
@@ -40,6 +114,7 @@ export default async function MessagesPage({
             currentUserId={user.id}
             booking={activeConversation.booking}
             showMobileBack
+            allowFileUploads={!isInternal}
           />
         ) : (
           <div className="hidden h-full flex-col items-center justify-center bg-slate-50 p-8 text-center lg:flex">
@@ -50,7 +125,7 @@ export default async function MessagesPage({
              </div>
              <h2 className="text-xl font-black text-secondary mb-2">Your Conversations</h2>
              <p className="text-sm text-secondary/40 font-medium max-w-xs leading-relaxed">
-                Select a chat from the sidebar to start messaging your tutors or students.
+                {isInternal ? "Select a teammate or admin to continue the conversation." : "Select a chat from the sidebar to start messaging your tutors or students."}
              </p>
           </div>
         )}

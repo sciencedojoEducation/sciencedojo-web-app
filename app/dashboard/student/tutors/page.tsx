@@ -1,12 +1,25 @@
 import { getTutors } from "@/lib/supabase-queries";
 import SearchFilterBar from "@/components/SearchFilterBar";
 import TutorCard from "@/components/TutorCard";
+import FeatureUnavailable from "@/components/FeatureUnavailable";
+import { isFeatureEnabled } from "@/lib/feature-flags";
 
 export default async function StudentTutorsPage({
   searchParams,
 }: {
   searchParams: Promise<{ query?: string; subject?: string }>;
 }) {
+  const enabled = await isFeatureEnabled("tutor_marketplace_enabled");
+  if (!enabled) {
+    return (
+      <FeatureUnavailable
+        eyebrow="Tutor support"
+        title="Tutor discovery is coming soon."
+        message="We are preparing tutor discovery carefully before opening it to students and families."
+      />
+    );
+  }
+
   const params = await searchParams;
   const searchTerm = params.query || "";
   const selectedSubject = params.subject || "All";

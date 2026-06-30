@@ -10,6 +10,8 @@ import MentorActionLink from "@/components/MentorActionLink";
 import MessageTutorButton from "@/components/MessageTutorButton";
 import YouTubeLite from "@/components/YouTubeLite";
 import { getRatingSummary, RatingTrustTooltip, StarRating } from "@/components/ReviewTrustUI";
+import FeatureUnavailable from "@/components/FeatureUnavailable";
+import { getFeatureFlagMap } from "@/lib/feature-flags";
 
 type MentorProfilePageProps = {
   params: Promise<{ slug: string }>;
@@ -170,6 +172,19 @@ export default async function MentorProfilePage({ params, searchParams }: Mentor
     viewerRole = profile?.role ?? null;
   }
 
+  const flags = await getFeatureFlagMap();
+  const isAdmin = viewerRole === "admin";
+
+  if (!flags.tutor_profiles_enabled && !isAdmin) {
+    return (
+      <FeatureUnavailable
+        eyebrow="Tutor discovery"
+        title="Tutor discovery is coming soon."
+        message="We are preparing tutor profiles carefully before opening them to families."
+      />
+    );
+  }
+
   const reviews = await getApprovedReviews(tutor.id);
   const ratingSummary = getRatingSummary(Number(tutor.rating || 0), tutor.review_count || 0);
   const firstName = getFirstName(tutor.full_name);
@@ -197,14 +212,20 @@ export default async function MentorProfilePage({ params, searchParams }: Mentor
               </p>
             </div>
             <div className="flex flex-col gap-3 sm:flex-row">
-              <MentorActionLink
-                href={`/tutor/${tutor.id}/book`}
-                eventName="trial_lesson_clicked"
-                eventParams={{ tutor_id: tutor.id, source: "mentor_profile_hero", subject: primarySubject }}
-                className="inline-flex min-h-12 items-center justify-center rounded-full bg-primary px-6 text-sm font-black text-white shadow-lg shadow-primary/15 transition-all hover:-translate-y-0.5 hover:bg-primary-hover"
-              >
-                Book a Trial Lesson
-              </MentorActionLink>
+              {flags.booking_enabled ? (
+                <MentorActionLink
+                  href={`/tutor/${tutor.id}/book`}
+                  eventName="trial_lesson_clicked"
+                  eventParams={{ tutor_id: tutor.id, source: "mentor_profile_hero", subject: primarySubject }}
+                  className="inline-flex min-h-12 items-center justify-center rounded-full bg-primary px-6 text-sm font-black text-white shadow-lg shadow-primary/15 transition-all hover:-translate-y-0.5 hover:bg-primary-hover"
+                >
+                  Book a Trial Lesson
+                </MentorActionLink>
+              ) : (
+                <span className="inline-flex min-h-12 items-center justify-center rounded-full bg-primary/10 px-6 text-sm font-black text-primary">
+                  Booking opens soon
+                </span>
+              )}
               <MessageTutorButton
                 tutorId={tutor.id}
                 tutorName={firstName}
@@ -215,14 +236,16 @@ export default async function MentorProfilePage({ params, searchParams }: Mentor
                 label="Ask Before You Book"
                 className="inline-flex min-h-12 items-center justify-center rounded-full border border-secondary/10 bg-white px-6 text-sm font-black text-secondary shadow-sm transition-all hover:-translate-y-0.5 hover:border-primary/20 hover:text-primary"
               />
-              <MentorActionLink
-                href={`/free-assessment?source=mentor_profile&tutor=${encodeURIComponent(tutor.slug || slug)}`}
-                eventName="learning_check_started"
-                eventParams={{ tutor_id: tutor.id, source: "mentor_profile_hero", subject: primarySubject }}
-                className="inline-flex min-h-12 items-center justify-center rounded-full border border-secondary/10 bg-white px-6 text-sm font-black text-secondary/60 shadow-sm transition-all hover:-translate-y-0.5 hover:text-primary"
-              >
-                Take Learning Check
-              </MentorActionLink>
+              {flags.free_assessment_enabled && (
+                <MentorActionLink
+                  href={`/free-assessment?source=mentor_profile&tutor=${encodeURIComponent(tutor.slug || slug)}`}
+                  eventName="learning_check_started"
+                  eventParams={{ tutor_id: tutor.id, source: "mentor_profile_hero", subject: primarySubject }}
+                  className="inline-flex min-h-12 items-center justify-center rounded-full border border-secondary/10 bg-white px-6 text-sm font-black text-secondary/60 shadow-sm transition-all hover:-translate-y-0.5 hover:text-primary"
+                >
+                  Take Learning Check
+                </MentorActionLink>
+              )}
             </div>
             <p className="max-w-xl text-sm font-semibold leading-6 text-secondary/50">
               Meet your mentor, discuss learning goals, and see if ScienceDojo is the right fit.

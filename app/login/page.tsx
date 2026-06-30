@@ -103,6 +103,12 @@ export default function LoginPage({ searchParams }: { searchParams: Promise<{ [k
                 className="absolute top-0 left-0 w-full h-full bg-gradient-to-r from-transparent via-white/10 to-transparent skew-x-12"
               />
             </button>
+            <Link
+              href="/login/internal"
+              className="mt-3 block text-center text-[11px] font-black text-primary/55 transition-colors hover:text-primary"
+            >
+              Internal team? Log in here
+            </Link>
           </div>
         </form>
 

@@ -24,6 +24,7 @@ interface ChatWindowProps {
     status: string;
   };
   showMobileBack?: boolean;
+  allowFileUploads?: boolean;
 }
 
 export default function ChatWindow({ 
@@ -33,6 +34,7 @@ export default function ChatWindow({
   currentUserId,
   booking,
   showMobileBack = false,
+  allowFileUploads = true,
 }: ChatWindowProps) {
   const [messages, setMessages] = useState<Message[]>(initialMessages);
   const [content, setContent] = useState("");
@@ -285,27 +287,31 @@ export default function ChatWindow({
       {/* Input */}
       <div className="border-t border-secondary/10 bg-white p-3 sm:p-4">
         <form onSubmit={handleSend} className="flex min-w-0 items-center gap-2 sm:gap-4">
-          <input 
-            type="file" 
-            ref={fileInputRef}
-            onChange={handleFileUpload}
-            className="hidden"
-            accept=".pdf,.png,.jpg,.jpeg,.doc,.docx"
-          />
-          <button 
-            type="button"
-            disabled={isUploading}
-            onClick={() => fileInputRef.current?.click()}
-            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-secondary/10 bg-slate-50 text-secondary/40 transition-all hover:bg-slate-100 disabled:opacity-50 sm:h-12 sm:w-12"
-            title="Attach File"
-            aria-label="Attach file"
-          >
-            {isUploading ? (
-              <div className="w-5 h-5 border-2 border-primary/30 border-t-primary rounded-full animate-spin"></div>
-            ) : (
-              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" /></svg>
-            )}
-          </button>
+          {allowFileUploads && (
+            <>
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileUpload}
+                className="hidden"
+                accept=".pdf,.png,.jpg,.jpeg,.doc,.docx"
+              />
+              <button
+                type="button"
+                disabled={isUploading}
+                onClick={() => fileInputRef.current?.click()}
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-secondary/10 bg-slate-50 text-secondary/40 transition-all hover:bg-slate-100 disabled:opacity-50 sm:h-12 sm:w-12"
+                title="Attach File"
+                aria-label="Attach file"
+              >
+                {isUploading ? (
+                  <div className="w-5 h-5 border-2 border-primary/30 border-t-primary rounded-full animate-spin"></div>
+                ) : (
+                  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" /></svg>
+                )}
+              </button>
+            </>
+          )}
           <input
             type="text"
             value={content}

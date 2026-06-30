@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export default function MaintenancePage() {
   return (
     <div className="fixed inset-0 z-[100000] bg-[#020617] text-white overflow-hidden flex items-center justify-center px-6 py-16">
@@ -39,6 +41,13 @@ export default function MaintenancePage() {
             </div>
           </div>
         </div>
+
+        <Link
+          href="/login"
+          className="inline-flex text-[10px] font-black uppercase tracking-[0.22em] text-slate-500 transition-colors hover:text-slate-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#6FE3D6] focus-visible:ring-offset-2 focus-visible:ring-offset-[#020617]"
+        >
+          Admin access
+        </Link>
       </main>
     </div>
   );

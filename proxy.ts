@@ -1,25 +1,77 @@
-import { type NextRequest } from 'next/server'
-import { NextResponse } from 'next/server'
-import { updateSession } from '@/utils/supabase/middleware'
+import { createClient } from "@supabase/supabase-js";
+import { NextResponse, type NextRequest } from "next/server";
+
+const PUBLIC_FILE = /\.(.*)$/;
+
+const maintenanceAllowedPrefixes = [
+  "/api",
+  "/auth",
+  "/dashboard/admin",
+  "/login",
+  "/forgot-password",
+  "/reset-password",
+  "/maintenance",
+  "/_next",
+];
+
+async function isMaintenanceEnabled() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  if (!supabaseUrl || !anonKey) {
+    return process.env.MAINTENANCE_MODE === "true";
+  }
+
+  try {
+    const supabase = createClient(supabaseUrl, anonKey, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false,
+      },
+    });
+    const { data, error } = await supabase
+      .from("feature_flags")
+      .select("enabled")
+      .eq("key", "maintenance_mode_enabled")
+      .maybeSingle();
+
+    if (error) {
+      return process.env.MAINTENANCE_MODE === "true";
+    }
+
+    return Boolean(data?.enabled);
+  } catch {
+    return process.env.MAINTENANCE_MODE === "true";
+  }
+}
 
 export async function proxy(request: NextRequest) {
-  if (request.nextUrl.pathname.startsWith('/_next/webpack-hmr')) {
-    return NextResponse.next()
+  const { pathname } = request.nextUrl;
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set("x-next-pathname", pathname);
+  const continueResponse = () => NextResponse.next({
+    request: {
+      headers: requestHeaders,
+    },
+  });
+
+  if (
+    PUBLIC_FILE.test(pathname) ||
+    maintenanceAllowedPrefixes.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`))
+  ) {
+    return continueResponse();
   }
 
-  const isMaintenanceMode = process.env.MAINTENANCE_MODE === 'true'
-  const isMaintenancePage = request.nextUrl.pathname === '/maintenance'
-  const isApiRoute = request.nextUrl.pathname.startsWith('/api/')
-
-  if (isMaintenanceMode && !isMaintenancePage && !isApiRoute) {
-    return NextResponse.rewrite(new URL('/maintenance', request.url))
+  if (!(await isMaintenanceEnabled())) {
+    return continueResponse();
   }
 
-  return await updateSession(request)
+  const maintenanceUrl = request.nextUrl.clone();
+  maintenanceUrl.pathname = "/maintenance";
+  maintenanceUrl.search = "";
+  return NextResponse.rewrite(maintenanceUrl);
 }
 
 export const config = {
-  matcher: [
-    '/((?!_next/static|_next/image|_next/webpack-hmr|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
-  ],
-}
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|icon.png|apple-icon.png|opengraph-image.png|robots.txt|sitemap.xml).*)"],
+};

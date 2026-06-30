@@ -10,6 +10,8 @@ import HomeworkFeed from "@/components/HomeworkFeed";
 import StudentProgressStats from "@/components/StudentProgressStats";
 import AnnouncementFeed from "@/components/AnnouncementFeed";
 import { getHomeworkForStudent } from "@/lib/class-queries";
+import FeatureUnavailable from "@/components/FeatureUnavailable";
+import { isFeatureEnabled } from "@/lib/feature-flags";
 
 export default async function StudentDashboard() {
   const supabase = await createClient();
@@ -21,6 +23,19 @@ export default async function StudentDashboard() {
         <p className="text-secondary/60">Please log in to view your dashboard.</p>
         <Link href="/login" className="text-primary font-bold hover:underline mt-4 inline-block">Log in</Link>
       </div>
+    );
+  }
+
+  const studentDashboardEnabled = await isFeatureEnabled("student_dashboard_enabled");
+  if (!studentDashboardEnabled) {
+    return (
+      <FeatureUnavailable
+        eyebrow="Dashboard preparing"
+        title="Your dashboard is being prepared."
+        message="Your student dashboard is being prepared. Please contact ScienceDojo support if you need help."
+        ctaHref="/dashboard/support"
+        ctaLabel="Contact support"
+      />
     );
   }
 
