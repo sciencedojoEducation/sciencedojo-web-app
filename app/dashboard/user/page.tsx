@@ -29,12 +29,14 @@ type UserDashboardPageProps = {
 };
 
 type FocusDojoSubscription = {
+  id?: string;
   plan: string | null;
   status: string;
   current_period_end: string | null;
   cancel_at_period_end: boolean;
   stripe_customer_id: string | null;
   stripe_subscription_id: string | null;
+  updated_at?: string | null;
 };
 
 function singleParam(value?: string | string[]) {
@@ -115,14 +117,50 @@ async function getFocusDojoSubscription(
   supabase: Awaited<ReturnType<typeof createClient>>,
   userId: string,
 ) {
-  return supabase
+  const result = await supabase
     .from("subscriptions")
     .select(
-      "plan, status, current_period_end, cancel_at_period_end, stripe_customer_id, stripe_subscription_id",
+      "id, plan, status, current_period_end, cancel_at_period_end, stripe_customer_id, stripe_subscription_id, updated_at",
     )
     .eq("user_id", userId)
     .eq("product_key", FOCUSDOJO_PRO_PRODUCT_KEY)
-    .maybeSingle();
+    .order("updated_at", { ascending: false })
+    .limit(10);
+
+  if (result.error) {
+    return { data: null, error: result.error };
+  }
+
+  const rows = (result.data || []) as FocusDojoSubscription[];
+  if (rows.length > 1) {
+    console.warn("[dashboard-user] duplicate FocusDojo subscriptions found", {
+      userId,
+      count: rows.length,
+      rows: rows.map((row) => ({
+        id: row.id,
+        status: row.status,
+        cancelAtPeriodEnd: row.cancel_at_period_end,
+        subscriptionId: row.stripe_subscription_id,
+        updatedAt: row.updated_at,
+      })),
+    });
+  }
+
+  const preferred =
+    rows.find(
+      (row) =>
+        Boolean(row.stripe_subscription_id) &&
+        ["active", "trialing"].includes(row.status),
+    ) ||
+    rows.find(
+      (row) =>
+        Boolean(row.stripe_subscription_id) &&
+        ["past_due", "unpaid"].includes(row.status),
+    ) ||
+    rows[0] ||
+    null;
+
+  return { data: preferred, error: null };
 }
 
 export default async function UserDashboardPage({
@@ -138,15 +176,23 @@ export default async function UserDashboardPage({
   const params = searchParams ? await searchParams : {};
   const billingReturned = singleParam(params.billing) === "returned";
   const initialSubscription = await getFocusDojoSubscription(supabase, user.id);
+  const shouldRefreshSubscription = Boolean(
+    initialSubscription.data?.stripe_subscription_id &&
+      ["active", "trialing", "past_due", "unpaid"].includes(
+        initialSubscription.data.status,
+      ),
+  );
 
-  if (
-    billingReturned &&
-    initialSubscription.data?.stripe_subscription_id
-  ) {
+  if (shouldRefreshSubscription && initialSubscription.data?.stripe_subscription_id) {
     try {
-      await syncFocusDojoSubscriptionFromStripeSubscriptionId(
+      const syncResult = await syncFocusDojoSubscriptionFromStripeSubscriptionId(
         initialSubscription.data.stripe_subscription_id,
       );
+      console.log("[dashboard-user] FocusDojo subscription refresh result", {
+        userId: user.id,
+        subscriptionId: initialSubscription.data.stripe_subscription_id,
+        ...syncResult,
+      });
     } catch (error) {
       console.error("[dashboard-user] billing return sync failed", {
         userId: user.id,
@@ -156,7 +202,7 @@ export default async function UserDashboardPage({
     }
   }
 
-  const subscriptionPromise = billingReturned
+  const subscriptionPromise = shouldRefreshSubscription
     ? getFocusDojoSubscription(supabase, user.id)
     : Promise.resolve(initialSubscription);
 
@@ -178,6 +224,12 @@ export default async function UserDashboardPage({
   );
   const accessLabel = subscriptionCopy.label;
   const periodEnd = formatDate(subscription?.current_period_end);
+  const billingReturnedMessage =
+    billingReturned && subscription?.cancel_at_period_end && periodEnd
+      ? `Your FocusDojo Pro plan is set to cancel. You can keep using Pro until ${periodEnd}.`
+      : billingReturned
+        ? "Your billing details were refreshed."
+        : null;
   const canManageSubscription = Boolean(
     subscription?.stripe_customer_id &&
       ["active", "trialing", "past_due", "unpaid"].includes(
@@ -200,6 +252,12 @@ export default async function UserDashboardPage({
           account keeps your subscription and access history.
         </p>
       </section>
+
+      {billingReturnedMessage ? (
+        <div className="rounded-2xl border border-primary/15 bg-primary/5 px-5 py-4 text-sm font-bold leading-6 text-secondary">
+          {billingReturnedMessage}
+        </div>
+      ) : null}
 
       <section className="grid gap-4 md:grid-cols-2">
         <div className="rounded-2xl border border-secondary/10 bg-white p-5 shadow-sm">

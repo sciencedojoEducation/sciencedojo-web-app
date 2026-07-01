@@ -40,6 +40,25 @@ type FocusDojoSubscriptionPayload = {
   cancel_at_period_end: boolean;
 };
 
+type ExistingFocusDojoSubscriptionRow = {
+  user_id: string | null;
+  product_key: string | null;
+};
+
+type PersistedFocusDojoSubscriptionRow = {
+  id: string;
+  user_id: string;
+  product_key: string;
+  status: string;
+  cancel_at_period_end: boolean;
+  current_period_end: string | null;
+  stripe_subscription_id: string;
+  updated_at: string;
+};
+
+const PERSISTED_SUBSCRIPTION_SELECT =
+  "id, user_id, product_key, status, cancel_at_period_end, current_period_end, stripe_subscription_id, updated_at";
+
 function unixToIso(value: number | null | undefined) {
   return value ? new Date(value * 1000).toISOString() : null;
 }
@@ -63,6 +82,31 @@ function inferFocusDojoPlan(
     return "yearly";
   }
   return null;
+}
+
+function isActiveLikeStripeStatus(status: Stripe.Subscription.Status) {
+  return status === "active" || status === "trialing";
+}
+
+function getEffectiveCancelAtPeriodEnd(
+  subscription: Stripe.Subscription,
+  subscriptionWithPeriods: StripeSubscriptionWithPeriods,
+) {
+  if (subscription.cancel_at_period_end) return true;
+
+  const cancelAt = subscription.cancel_at ?? null;
+  const currentPeriodEnd = subscriptionWithPeriods.current_period_end ?? null;
+  if (!cancelAt || !isActiveLikeStripeStatus(subscription.status)) {
+    return false;
+  }
+
+  if (!currentPeriodEnd) {
+    return cancelAt * 1000 > Date.now();
+  }
+
+  // Stripe Portal can surface "Cancels <date>" from cancel_at even when the
+  // SDK field is not the source we were previously persisting.
+  return Math.abs(cancelAt - currentPeriodEnd) <= 60 * 60 * 24;
 }
 
 function getSupabaseErrorDetails(error: unknown) {
@@ -164,68 +208,131 @@ async function saveFocusDojoSubscription(
   supabase: ReturnType<typeof createAdminClient>,
   payload: FocusDojoSubscriptionPayload,
 ) {
-  const upsertByStripeId = await supabase.from("subscriptions").upsert(payload, {
-    onConflict: "stripe_subscription_id",
+  console.log("[focusdojo-sync] upserting subscription payload", {
+    subscriptionId: payload.stripe_subscription_id,
+    userId: payload.user_id,
+    productKey: payload.product_key,
+    status: payload.status,
+    cancelAtPeriodEnd: payload.cancel_at_period_end,
+    currentPeriodEnd: payload.current_period_end,
   });
 
-  if (!upsertByStripeId.error) {
-    return;
-  }
-
-  if (isMissingSubscriptionsTableError(upsertByStripeId.error)) {
-    console.warn(
-      `[focusdojo-sync] subscriptions table missing; apply sql/044_focusdojo_subscriptions.sql: ${formatSupabaseError(
-        upsertByStripeId.error,
-      )}`,
-    );
-    return "subscriptions_table_missing" as const;
-  }
-
-  console.error(
-    `[focusdojo-sync] subscription upsert by Stripe id failed: ${formatSupabaseError(
-      upsertByStripeId.error,
-    )}`,
-  );
-
-  const duplicateProductRow =
-    upsertByStripeId.error.code === "23505" ||
-    upsertByStripeId.error.message.includes("subscriptions_user_product_key");
-
-  if (!duplicateProductRow) {
-    throw new Error(
-      `FocusDojo subscription upsert failed: ${formatSupabaseError(
-        upsertByStripeId.error,
-      )}`,
-    );
-  }
-
-  const updateByProduct = await supabase
+  const updateByStripeId = await supabase
     .from("subscriptions")
     .update(payload)
-    .eq("user_id", payload.user_id)
-    .eq("product_key", payload.product_key)
-    .select("id");
+    .eq("stripe_subscription_id", payload.stripe_subscription_id)
+    .select(PERSISTED_SUBSCRIPTION_SELECT);
 
-  if (updateByProduct.error) {
+  if (updateByStripeId.error) {
+    if (isMissingSubscriptionsTableError(updateByStripeId.error)) {
+      console.warn(
+        `[focusdojo-sync] subscriptions table missing; apply sql/044_focusdojo_subscriptions.sql: ${formatSupabaseError(
+          updateByStripeId.error,
+        )}`,
+      );
+      return { saved: false as const, reason: "subscriptions_table_missing" };
+    }
+
     console.error(
-      `[focusdojo-sync] subscription update by product failed: ${formatSupabaseError(
-        updateByProduct.error,
+      `[focusdojo-sync] subscription update by Stripe id failed: ${formatSupabaseError(
+        updateByStripeId.error,
       )}`,
     );
     throw new Error(
       `FocusDojo subscription update failed: ${formatSupabaseError(
-        updateByProduct.error,
+        updateByStripeId.error,
       )}`,
     );
   }
 
-  if (updateByProduct.data && updateByProduct.data.length > 0) {
-    return;
+  let persisted = (updateByStripeId.data?.[0] ??
+    null) as PersistedFocusDojoSubscriptionRow | null;
+  let saveMethod: "stripe_subscription_id" | "insert" | "user_product_key" =
+    "stripe_subscription_id";
+
+  if (!persisted) {
+    const insertResult = await supabase
+      .from("subscriptions")
+      .insert(payload)
+      .select(PERSISTED_SUBSCRIPTION_SELECT)
+      .single();
+
+    if (!insertResult.error) {
+      persisted = insertResult.data as PersistedFocusDojoSubscriptionRow;
+      saveMethod = "insert";
+    } else {
+      const duplicateProductRow =
+        insertResult.error.code === "23505" ||
+        insertResult.error.message.includes("subscriptions_user_product_key");
+
+      if (!duplicateProductRow) {
+        console.error(
+          `[focusdojo-sync] subscription insert failed: ${formatSupabaseError(
+            insertResult.error,
+          )}`,
+        );
+        throw new Error(
+          `FocusDojo subscription insert failed: ${formatSupabaseError(
+            insertResult.error,
+          )}`,
+        );
+      }
+
+      const updateByProduct = await supabase
+        .from("subscriptions")
+        .update(payload)
+        .eq("user_id", payload.user_id)
+        .eq("product_key", payload.product_key)
+        .select(PERSISTED_SUBSCRIPTION_SELECT);
+
+      if (updateByProduct.error) {
+        console.error(
+          `[focusdojo-sync] subscription update by product failed: ${formatSupabaseError(
+            updateByProduct.error,
+          )}`,
+        );
+        throw new Error(
+          `FocusDojo subscription update failed: ${formatSupabaseError(
+            updateByProduct.error,
+          )}`,
+        );
+      }
+
+      persisted = (updateByProduct.data?.[0] ??
+        null) as PersistedFocusDojoSubscriptionRow | null;
+      saveMethod = "user_product_key";
+    }
   }
 
-  throw new Error(
-    "FocusDojo subscription update found a duplicate product row but could not update it.",
-  );
+  if (!persisted) {
+    throw new Error("FocusDojo subscription save did not persist a row.");
+  }
+
+  console.log("[focusdojo-sync] persisted subscription row", {
+    saveMethod,
+    id: persisted.id,
+    userId: persisted.user_id,
+    productKey: persisted.product_key,
+    status: persisted.status,
+    cancelAtPeriodEnd: persisted.cancel_at_period_end,
+    currentPeriodEnd: persisted.current_period_end,
+    subscriptionId: persisted.stripe_subscription_id,
+    updatedAt: persisted.updated_at,
+  });
+
+  if (persisted.cancel_at_period_end !== payload.cancel_at_period_end) {
+    const message =
+      "Persisted cancel_at_period_end does not match Stripe payload.";
+    console.error("[focusdojo-sync] persisted subscription mismatch", {
+      subscriptionId: payload.stripe_subscription_id,
+      payloadCancelAtPeriodEnd: payload.cancel_at_period_end,
+      persistedCancelAtPeriodEnd: persisted.cancel_at_period_end,
+      saveMethod,
+    });
+    throw new Error(message);
+  }
+
+  return { saved: true as const, saveMethod, persisted };
 }
 
 export function getStripeSubscriptionIdFromInvoice(invoice: Stripe.Invoice) {
@@ -248,27 +355,53 @@ export async function upsertFocusDojoSubscriptionFromStripeSubscription(
     ...(subscription.metadata || {}),
     ...(sessionMetadata || {}),
   };
-  const productKey = metadata.product_key || null;
+  const effectiveCancelAtPeriodEnd = getEffectiveCancelAtPeriodEnd(
+    subscription,
+    subscriptionWithPeriods,
+  );
+  console.log("[focusdojo-sync] raw stripe subscription cancellation state", {
+    subscriptionId: subscription.id,
+    status: subscription.status,
+    cancel_at_period_end: subscription.cancel_at_period_end,
+    effective_cancel_at_period_end: effectiveCancelAtPeriodEnd,
+    current_period_end: subscriptionWithPeriods.current_period_end,
+    cancel_at: subscription.cancel_at,
+    canceled_at: subscription.canceled_at,
+    metadata: subscription.metadata,
+  });
 
-  if (productKey !== FOCUSDOJO_PRO_PRODUCT_KEY) {
+  const metadataProductKey = metadata.product_key || null;
+  const { data: existingSubscription, error: existingSubscriptionError } =
+    await supabase
+      .from("subscriptions")
+      .select("user_id, product_key")
+      .eq("stripe_subscription_id", subscription.id)
+      .maybeSingle<ExistingFocusDojoSubscriptionRow>();
+
+  if (existingSubscriptionError) {
+    console.error("[focusdojo-sync] existing subscription lookup failed", {
+      subscriptionId: subscription.id,
+      error: getSupabaseErrorDetails(existingSubscriptionError),
+    });
+  }
+
+  const localProductKey = existingSubscription?.product_key || null;
+  const productKey = metadataProductKey || localProductKey;
+  const isFocusDojoSubscription =
+    metadataProductKey === FOCUSDOJO_PRO_PRODUCT_KEY ||
+    localProductKey === FOCUSDOJO_PRO_PRODUCT_KEY;
+
+  if (!isFocusDojoSubscription) {
     console.log("[focusdojo-sync] skipped non-FocusDojo subscription", {
       subscriptionId: subscription.id,
       customerId: stripeId(subscription.customer),
-      productKey,
+      metadataProductKey,
+      localProductKey,
     });
     return { synced: false as const, reason: "not_focusdojo_pro" };
   }
 
-  let userId = metadata.user_id || null;
-
-  if (!userId) {
-    const { data: existing } = await supabase
-      .from("subscriptions")
-      .select("user_id")
-      .eq("stripe_subscription_id", subscription.id)
-      .maybeSingle();
-    userId = existing?.user_id ?? null;
-  }
+  const userId = metadata.user_id || existingSubscription?.user_id || null;
 
   if (!userId) {
     console.error("[focusdojo-sync] subscription missing user_id", {
@@ -293,8 +426,12 @@ export async function upsertFocusDojoSubscriptionFromStripeSubscription(
     customerId,
     userId,
     productKey,
+    metadataProductKey,
+    localProductKey,
     status: subscription.status,
     plan,
+    cancelAtPeriodEnd: subscription.cancel_at_period_end,
+    effectiveCancelAtPeriodEnd,
   });
 
   await ensureProfileForSubscription(supabase, userId, customerEmail);
@@ -308,10 +445,10 @@ export async function upsertFocusDojoSubscriptionFromStripeSubscription(
     plan,
     current_period_start: unixToIso(currentPeriodStart),
     current_period_end: unixToIso(currentPeriodEnd),
-    cancel_at_period_end: subscription.cancel_at_period_end,
+    cancel_at_period_end: effectiveCancelAtPeriodEnd,
   });
 
-  if (saveResult === "subscriptions_table_missing") {
+  if (!saveResult.saved && saveResult.reason === "subscriptions_table_missing") {
     return {
       synced: false as const,
       reason: "subscriptions_table_missing",
@@ -331,6 +468,8 @@ export async function upsertFocusDojoSubscriptionFromStripeSubscription(
     userId,
     status: subscription.status,
     plan,
+    cancelAtPeriodEnd: effectiveCancelAtPeriodEnd,
+    saveMethod: saveResult.saveMethod,
   };
 }
 
@@ -338,6 +477,9 @@ export async function syncFocusDojoSubscriptionFromStripeSubscriptionId(
   subscriptionId: string,
   sessionMetadata?: Stripe.Metadata | null,
 ) {
+  console.log("[focusdojo-sync] retrieving Stripe subscription", {
+    subscriptionId,
+  });
   const subscription = await retrieveStripeSubscription(subscriptionId);
   return upsertFocusDojoSubscriptionFromStripeSubscription(
     subscription,
