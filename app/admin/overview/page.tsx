@@ -96,7 +96,7 @@ export default async function AdminOverviewPage({
     .single();
 
   if (profile?.role !== "admin") {
-    redirect(`/dashboard/${profile?.role || "parent"}`);
+    redirect(`/dashboard/${profile?.role || "user"}`);
   }
 
   const startDate = getFilterStart(period);

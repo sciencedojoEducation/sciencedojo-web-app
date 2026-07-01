@@ -33,7 +33,7 @@ interface NavLink {
 }
 
 interface DashboardSidebarProps {
-  role: "admin" | "tutor" | "parent" | "student" | "internal";
+  role: "user" | "admin" | "tutor" | "parent" | "student" | "internal";
 }
 
 export default async function DashboardSidebar({ role }: DashboardSidebarProps) {
@@ -42,7 +42,7 @@ export default async function DashboardSidebar({ role }: DashboardSidebarProps) 
   const metadata = user?.user_metadata;
   const subRole = metadata?.sub_role; // 'student' or 'parent'
   
-  const displayRole = (role === 'admin' || role === 'tutor' || role === 'internal') ? role : (subRole || role);
+  const displayRole = (role === 'admin' || role === 'tutor' || role === 'internal' || role === 'user') ? role : (subRole || role);
   
   // ScienceDojo Aesthetic Pulse: Light-Modern Evolution 🌬️✨
   const variant = 'light'; 
@@ -76,6 +76,14 @@ export default async function DashboardSidebar({ role }: DashboardSidebarProps) 
   const tutorMarketplaceEnabled = role === "internal" ? false : await isFeatureEnabled("tutor_marketplace_enabled");
 
   const navLinks: Record<string, NavLink[]> = {
+    user: [
+      { name: "My Dojo", href: "/dashboard/user", icon: "🏠", exact: true },
+      { name: "FocusDojo", href: "/focus-dojo", icon: "⏱️" },
+      { name: "Subscription", href: "/focus-dojo/pricing", icon: "💳" },
+      { name: "PracticeDojo", href: "/ai-practice-studio", icon: "✍️" },
+      { name: "Account", href: "/dashboard/user#account", icon: "⚙️" },
+      { name: "Support", href: "/dashboard/support", icon: "🆘" },
+    ],
     parent: [
       { name: "Dashboard", href: "/dashboard/parent", icon: "🗓️", exact: true, tourId: "parent-bookings" },
       { name: "Learning Guide", href: "/support", icon: "📘" },

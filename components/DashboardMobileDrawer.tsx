@@ -18,7 +18,7 @@ type DashboardMobileNavLink = {
 };
 
 type DashboardMobileDrawerProps = {
-  role: "admin" | "tutor" | "parent" | "student" | "internal";
+  role: "user" | "admin" | "tutor" | "parent" | "student" | "internal";
   displayRole: string;
   userName: string;
   avatarUrl?: string;
@@ -48,7 +48,7 @@ export default function DashboardMobileDrawer({
   const drawerRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const touchOpenLockRef = useRef(false);
-  const dashboardHref = role === "admin" ? "/dashboard/admin" : role === "internal" ? "/dashboard/internal" : role === "tutor" ? "/dashboard/tutor" : role === "student" ? "/dashboard/student" : "/dashboard/parent";
+  const dashboardHref = role === "admin" ? "/dashboard/admin" : role === "internal" ? "/dashboard/internal" : role === "tutor" ? "/dashboard/tutor" : role === "student" ? "/dashboard/student" : role === "user" ? "/dashboard/user" : "/dashboard/parent";
 
   const openDrawer = useCallback(() => {
     setIsOpen(true);

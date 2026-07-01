@@ -6,7 +6,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { getActiveInternalMemberByUserId, repairLinkedInternalUserRole } from "@/lib/internal-auth";
 
-type DashboardRole = "admin" | "tutor" | "parent" | "student" | "internal";
+type DashboardRole = "user" | "admin" | "tutor" | "parent" | "student" | "internal";
 
 export const metadata: Metadata = {
   robots: {
@@ -16,7 +16,7 @@ export const metadata: Metadata = {
 };
 
 function normalizeDashboardRole(role?: unknown): DashboardRole | null {
-  return role === "admin" || role === "tutor" || role === "parent" || role === "student" || role === "internal" ? role : null;
+  return role === "user" || role === "admin" || role === "tutor" || role === "parent" || role === "student" || role === "internal" ? role : null;
 }
 
 export default async function DashboardLayout({ 
@@ -34,7 +34,7 @@ export default async function DashboardLayout({
     
   const profileRole = normalizeDashboardRole(profile?.role);
   const metadataRole = normalizeDashboardRole(user?.user_metadata?.role);
-  let role: DashboardRole = profileRole || metadataRole || "parent";
+  let role: DashboardRole = profileRole || metadataRole || "user";
   const activeInternalMember = await getActiveInternalMemberByUserId(supabase, user?.id);
 
   // ROUTE-BASED ROLE INFERENCE: If the URL is /dashboard/tutor but the profile says 'parent',
@@ -62,6 +62,18 @@ export default async function DashboardLayout({
   }
 
   if (role !== "internal" && pathname.startsWith("/dashboard/internal")) {
+    redirect(`/dashboard/${role}`);
+  }
+
+  const isUserAllowedRoute =
+    pathname === "/dashboard/user" ||
+    pathname.startsWith("/dashboard/support");
+
+  if (role === "user" && pathname.startsWith("/dashboard") && !isUserAllowedRoute) {
+    redirect("/dashboard/user");
+  }
+
+  if (role !== "user" && pathname.startsWith("/dashboard/user")) {
     redirect(`/dashboard/${role}`);
   }
 

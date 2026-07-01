@@ -315,7 +315,7 @@ export default async function Home({
       }
     }
 
-    const finalRole = role || "parent";
+    const finalRole = role || "user";
     redirect(`/dashboard/${finalRole}`);
   }
 

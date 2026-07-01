@@ -49,7 +49,7 @@ export default async function AdminLeadsPage() {
     .single();
 
   if (profile?.role !== "admin") {
-    redirect(`/dashboard/${profile?.role || "parent"}`);
+    redirect(`/dashboard/${profile?.role || "user"}`);
   }
 
   const adminClient = await createAdminClient();

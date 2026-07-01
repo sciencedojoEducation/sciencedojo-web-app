@@ -8,7 +8,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { User, Mail, Lock, Users } from "lucide-react";
 import { trackEvent } from "@/lib/analytics";
 
-type SignupRole = "student" | "parent" | "tutor";
+type SignupRole = "user" | "student" | "parent" | "tutor";
 type SignupStep = "account-type" | "student-parent-type" | "form";
 
 export default function SignupPage({ searchParams }: { searchParams: Promise<{ [key: string]: string | string[] | undefined }> }) {
@@ -18,7 +18,7 @@ export default function SignupPage({ searchParams }: { searchParams: Promise<{ [
   const nextParam = typeof resolvedParams?.next === "string" && resolvedParams.next.startsWith("/") && !resolvedParams.next.startsWith("//")
     ? resolvedParams.next
     : "";
-  const restoredRole = initialRole === "student" || initialRole === "parent" || initialRole === "tutor"
+  const restoredRole = initialRole === "user" || initialRole === "student" || initialRole === "parent" || initialRole === "tutor"
     ? initialRole
     : null;
 
@@ -38,9 +38,11 @@ export default function SignupPage({ searchParams }: { searchParams: Promise<{ [
     setStep("account-type");
   };
 
-  const roleLabel = role === "tutor" ? "Tutor" : role === "parent" ? "Parent" : "Student";
+  const roleLabel = role === "tutor" ? "Tutor" : role === "parent" ? "Parent" : role === "student" ? "Student" : "User";
   const googleHelperText = role === "parent"
     ? "Sign up faster with Google, then add your child’s details."
+    : role === "user"
+      ? "Create a simple account for FocusDojo and ScienceDojo tools."
     : "Sign up faster with Google.";
 
   const handleGoogleSignup = () => {
@@ -78,6 +80,14 @@ export default function SignupPage({ searchParams }: { searchParams: Promise<{ [
             exit={{ opacity: 0, x: 20 }}
             className="space-y-4"
           >
+            <RoleCard 
+              title="I want to use FocusDojo"
+              description="Create a general account for ScienceDojo tools."
+              onClick={() => {
+                setRole("user");
+                setStep("form");
+              }}
+            />
             <RoleCard 
               title="I am a Student / Parent"
               description="I want to find tutors and book sessions."

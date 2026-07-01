@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
 
 function normalizeDashboardRole(role?: unknown) {
-  return role === "admin" || role === "tutor" || role === "parent" || role === "student" || role === "internal" ? role : null;
+  return role === "user" || role === "admin" || role === "tutor" || role === "parent" || role === "student" || role === "internal" ? role : null;
 }
 
 export default async function AdminDashboardLayout({
@@ -27,7 +27,7 @@ export default async function AdminDashboardLayout({
   const metadataRole = normalizeDashboardRole(user.user_metadata?.role);
 
   if (profileRole !== "admin" && metadataRole !== "admin") {
-    redirect(`/dashboard/${profileRole || metadataRole || "parent"}`);
+    redirect(`/dashboard/${profileRole || metadataRole || "user"}`);
   }
 
   return <>{children}</>;

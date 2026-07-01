@@ -3,8 +3,9 @@ import { createClient } from '@/utils/supabase/server'
 import { createAdminClient } from '@/utils/supabase/admin'
 import { cookies } from 'next/headers'
 import { getActiveInternalMemberByUserId, repairLinkedInternalUserRole } from '@/lib/internal-auth'
+import { upsertMembershipForRole } from '@/lib/account-memberships'
 
-type PublicSignupRole = 'parent' | 'student' | 'tutor';
+type PublicSignupRole = 'user' | 'parent' | 'student' | 'tutor';
 type DashboardRole = PublicSignupRole | 'admin' | 'internal';
 
 function getSafeNextPath(nextPath?: string | null) {
@@ -35,11 +36,11 @@ function withAuthReturnFlag(path: string) {
 }
 
 function normalizePublicSignupRole(role?: string | null): PublicSignupRole | null {
-  return role === 'parent' || role === 'student' || role === 'tutor' ? role : null;
+  return role === 'user' || role === 'parent' || role === 'student' || role === 'tutor' ? role : null;
 }
 
 function normalizeDashboardRole(role?: unknown): DashboardRole | null {
-  return role === 'parent' || role === 'student' || role === 'tutor' || role === 'admin' || role === 'internal' ? role : null;
+  return role === 'user' || role === 'parent' || role === 'student' || role === 'tutor' || role === 'admin' || role === 'internal' ? role : null;
 }
 
 function isFreshOAuthUser(createdAt?: string) {
@@ -155,6 +156,8 @@ export async function GET(request: Request) {
             role: pendingRole,
           }, { onConflict: 'id' });
 
+          await upsertMembershipForRole(adminClient, user.id, pendingRole);
+
           // 3. Provision Tutor Row if applicable
           if (pendingRole === 'tutor') {
             await adminClient.from('tutors').upsert({
@@ -210,7 +213,7 @@ export async function GET(request: Request) {
           .eq('id', existingUser.id)
           .maybeSingle();
 
-        const existingRole = normalizeDashboardRole(existingProfile?.role) || normalizeDashboardRole(existingUser.user_metadata?.role) || 'parent';
+        const existingRole = normalizeDashboardRole(existingProfile?.role) || normalizeDashboardRole(existingUser.user_metadata?.role) || 'user';
         if (existingRole === 'internal') {
           await supabase.auth.signOut();
           return NextResponse.redirect(`${origin}/login/internal?error=${encodeURIComponent('Your internal access is inactive or has not been linked yet.')}`);

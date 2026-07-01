@@ -3,6 +3,7 @@ import {
   FOCUSDOJO_PRO_PRODUCT_KEY,
   type FocusDojoAccessLevel,
 } from "@/lib/focusdojo/access-levels";
+import { hasActiveMembership } from "@/lib/account-memberships";
 export type {
   FocusDojoAccessLevel,
   FocusDojoLockedReason,
@@ -32,6 +33,10 @@ export async function isActiveFocusDojoProSubscriber(userId: string) {
 
 export async function isActiveScienceDojoStudent(userId: string) {
   const supabase = await createClient();
+
+  if (await hasActiveMembership(supabase, userId, "sciencedojo_student")) {
+    return true;
+  }
 
   const { data: activeClass } = await supabase
     .from("classes")

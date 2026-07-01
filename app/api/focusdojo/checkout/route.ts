@@ -42,7 +42,7 @@ export async function POST(req: Request) {
     if (!user) {
       const next = encodeURIComponent("/focus-dojo/pricing");
       return NextResponse.json(
-        { loginUrl: `/login?next=${next}`, error: "Please log in to upgrade." },
+        { loginUrl: `/signup?role=user&next=${next}`, error: "Please log in to upgrade." },
         { status: 401 },
       );
     }

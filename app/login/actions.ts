@@ -6,6 +6,15 @@ import { cookies } from 'next/headers'
 import { createClient } from '@/utils/supabase/server'
 import { getSitePath } from '@/lib/site-url'
 import { getActiveInternalMemberByUserId, repairLinkedInternalUserRole } from '@/lib/internal-auth'
+import { upsertMembershipForRole } from '@/lib/account-memberships'
+
+type PublicSignupRole = 'user' | 'parent' | 'student' | 'tutor';
+
+function normalizePublicSignupRole(role?: string | null): PublicSignupRole {
+  return role === 'parent' || role === 'student' || role === 'tutor' || role === 'user'
+    ? role
+    : 'parent';
+}
 
 function getSafeNextPath(nextPath?: FormDataEntryValue | string | null) {
   const path = String(nextPath || '').trim();
@@ -71,7 +80,7 @@ export async function login(formData: FormData) {
     .eq('id', user.id)
     .single();
 
-  const role = profile?.role || user?.user_metadata?.role || 'parent';
+  const role = profile?.role || user?.user_metadata?.role || 'user';
 
   if (role === 'internal') {
     await supabase.auth.signOut();
@@ -140,14 +149,9 @@ export async function signup(formData: FormData) {
     password: formData.get('password') as string,
   }
   
-  let role = (formData.get('role') as string) || 'parent';
+  const role = normalizePublicSignupRole(formData.get('role') as string | null);
   const subRole = (formData.get('sub_role') as string) || '';
   const nextPath = getSafeNextPath(formData.get('next'));
-
-  // Security: Prevent unauthorized admin signup
-  if (role === 'admin') {
-    role = 'parent';
-  }
 
   const signupParams = `role=${encodeURIComponent(role)}&sub_role=${encodeURIComponent(subRole)}${nextPath ? `&next=${encodeURIComponent(nextPath)}` : ''}`;
 
@@ -217,6 +221,10 @@ export async function signup(formData: FormData) {
       }
     }
 
+    if (adminData?.user) {
+      await upsertMembershipForRole(adminClient, adminData.user.id, role);
+    }
+
     console.log(`[SILENT MODE] Created/Verified user: ${data.email}`);
     
     // 2. Establish Session (Silent Login)
@@ -275,6 +283,8 @@ export async function signup(formData: FormData) {
       role: role,
       student_name: role === 'student' ? fullName : studentName,
     }, { onConflict: 'id' });
+
+    await upsertMembershipForRole(supabase, authData.user.id, role);
 
     if (role === 'tutor') {
       // Create a skeleton application row immediately to lock in the tutor path
@@ -383,6 +393,8 @@ export async function completeGoogleParentOnboarding(
     return { error: "We could not save your child details. Please try again." };
   }
 
+  await upsertMembershipForRole(supabase, user.id, role);
+
   revalidatePath('/', 'layout');
   return { success: true, redirectTo: nextPath ? withAuthReturnFlag(nextPath) : `/dashboard/${role}` };
 }
@@ -453,7 +465,11 @@ export async function updateAccount(formData: FormData) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect('/login');
 
-  const updateData: any = { full_name };
+  const updateData: {
+    full_name: string;
+    student_name?: string;
+    avatar_url?: string;
+  } = { full_name };
   if (student_name) updateData.student_name = student_name;
 
   // Handle Avatar Upload if file is provided
@@ -490,11 +506,11 @@ export async function updateAccount(formData: FormData) {
 
   if (error) {
     console.error("Update account error:", error.message);
-    const role = user?.user_metadata?.role || 'parent';
+    const role = user?.user_metadata?.role || 'user';
     redirect(`/dashboard/${role}/settings?error=${encodeURIComponent(error.message)}`);
   }
 
-  const role = user?.user_metadata?.role || 'parent';
+  const role = user?.user_metadata?.role || 'user';
   revalidatePath('/', 'layout');
   redirect(`/dashboard/${role}/settings?message=Profile updated successfully!`);
 }

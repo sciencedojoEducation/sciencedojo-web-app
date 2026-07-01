@@ -9,7 +9,7 @@ import { getFeatureFlagMap } from "@/lib/feature-flags";
 export default async function Navbar() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  const rawRole = user?.user_metadata?.role || 'parent';
+  const rawRole = user?.user_metadata?.role || 'user';
   const role = rawRole === 'student' ? 'parent' : rawRole;
   const flags = await getFeatureFlagMap();
 
