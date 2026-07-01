@@ -348,30 +348,39 @@ export default async function Home({
             {(flags.free_assessment_enabled ||
               flags.practice_dojo_enabled ||
               flags.focus_dojo_enabled) && (
-              <div className="mt-8 hidden items-center gap-4 lg:flex">
+              <div className="mt-8 hidden space-y-5 lg:block">
                 {flags.free_assessment_enabled && (
                   <BookAssessmentLink
                     source="homepage_hero"
-                    className="rounded-2xl bg-white px-10 py-4 font-black text-primary shadow-xl shadow-white/10 transition-all hover:-translate-y-0.5 hover:bg-slate-50 hover:shadow-2xl"
+                    className="inline-flex min-h-[76px] items-center justify-center rounded-3xl bg-white px-10 py-5 text-lg font-black text-primary shadow-xl shadow-white/10 transition-all hover:-translate-y-0.5 hover:bg-slate-50 hover:shadow-2xl"
                   >
-                    Book Free Learning Assessment
+                    Book a Free Learning Assessment
                   </BookAssessmentLink>
                 )}
-                {flags.practice_dojo_enabled && (
-                  <Link
-                    href="/ai-practice-studio"
-                    className="rounded-2xl border border-white/15 bg-white/5 px-10 py-4 font-black text-white backdrop-blur-md transition-all hover:-translate-y-0.5 hover:bg-white/10"
-                  >
-                    Try Practice Dojo
-                  </Link>
-                )}
-                {flags.focus_dojo_enabled && (
-                  <Link
-                    href="/focus-dojo"
-                    className="rounded-2xl border border-white/15 bg-white/5 px-10 py-4 font-black text-white backdrop-blur-md transition-all hover:-translate-y-0.5 hover:bg-white/10"
-                  >
-                    Try FocusDojo
-                  </Link>
+                {(flags.practice_dojo_enabled || flags.focus_dojo_enabled) && (
+                  <div className="space-y-3">
+                    <p className="text-xs font-black uppercase tracking-[0.18em] text-white/55">
+                      Explore our learning tools
+                    </p>
+                    <div className="flex flex-wrap items-center gap-3">
+                      {flags.practice_dojo_enabled && (
+                        <Link
+                          href="/ai-practice-studio"
+                          className="inline-flex min-h-[58px] items-center justify-center rounded-2xl border border-white/20 bg-white/5 px-7 py-4 text-base font-black text-white backdrop-blur-md transition-all hover:-translate-y-0.5 hover:bg-white/10"
+                        >
+                          Try PracticeDojo
+                        </Link>
+                      )}
+                      {flags.focus_dojo_enabled && (
+                        <Link
+                          href="/focus-dojo"
+                          className="inline-flex min-h-[58px] items-center justify-center rounded-2xl border border-white/20 bg-white/5 px-7 py-4 text-base font-black text-white backdrop-blur-md transition-all hover:-translate-y-0.5 hover:bg-white/10"
+                        >
+                          Try FocusDojo
+                        </Link>
+                      )}
+                    </div>
+                  </div>
                 )}
               </div>
             )}
@@ -423,26 +432,33 @@ export default async function Home({
                 {flags.free_assessment_enabled && (
                   <BookAssessmentLink
                     source="homepage_hero_mobile"
-                    className="w-full rounded-2xl border border-white/80 bg-white px-6 py-3.5 text-center text-sm font-black text-primary shadow-xl shadow-white/20 transition-all active:scale-95"
+                    className="w-full rounded-3xl border border-white/80 bg-white px-6 py-4 text-center text-base font-black text-primary shadow-xl shadow-white/20 transition-all active:scale-95"
                   >
-                    Book Free Learning Assessment
+                    Book a Free Learning Assessment
                   </BookAssessmentLink>
                 )}
-                {flags.practice_dojo_enabled && (
-                  <Link
-                    href="/ai-practice-studio"
-                    className="w-full rounded-2xl border border-white/20 bg-secondary/35 px-6 py-3.5 text-center text-sm font-black text-white shadow-lg shadow-secondary/15 backdrop-blur-md transition-all hover:bg-secondary/45"
-                  >
-                    Try Practice Dojo
-                  </Link>
-                )}
-                {flags.focus_dojo_enabled && (
-                  <Link
-                    href="/focus-dojo"
-                    className="w-full rounded-2xl border border-white/20 bg-secondary/35 px-6 py-3.5 text-center text-sm font-black text-white shadow-lg shadow-secondary/15 backdrop-blur-md transition-all hover:bg-secondary/45"
-                  >
-                    Try FocusDojo
-                  </Link>
+                {(flags.practice_dojo_enabled || flags.focus_dojo_enabled) && (
+                  <div className="grid gap-3">
+                    <p className="text-center text-[10px] font-black uppercase tracking-[0.18em] text-white/55">
+                      Explore our learning tools
+                    </p>
+                    {flags.practice_dojo_enabled && (
+                      <Link
+                        href="/ai-practice-studio"
+                        className="w-full rounded-2xl border border-white/20 bg-white/5 px-6 py-3.5 text-center text-sm font-black text-white backdrop-blur-md transition-all hover:bg-white/10"
+                      >
+                        Try PracticeDojo
+                      </Link>
+                    )}
+                    {flags.focus_dojo_enabled && (
+                      <Link
+                        href="/focus-dojo"
+                        className="w-full rounded-2xl border border-white/20 bg-white/5 px-6 py-3.5 text-center text-sm font-black text-white backdrop-blur-md transition-all hover:bg-white/10"
+                      >
+                        Try FocusDojo
+                      </Link>
+                    )}
+                  </div>
                 )}
               </div>
             )}
@@ -572,16 +588,16 @@ export default async function Home({
       </section>
 
       {flags.practice_dojo_enabled && (
-      <section id="classroom" aria-label="Practice Dojo" className="w-full border-b border-secondary/10 bg-[linear-gradient(180deg,#ffffff_0%,#f7fbff_100%)] px-4 py-16 md:px-10 md:py-36">
+      <section id="classroom" aria-label="PracticeDojo" className="w-full border-b border-secondary/10 bg-[linear-gradient(180deg,#ffffff_0%,#f7fbff_100%)] px-4 py-16 md:px-10 md:py-36">
         <HomepageSectionTracker eventName="homepage_practice_dojo_visible" />
         <div className="group relative mx-auto grid max-w-[1360px] gap-8 overflow-hidden rounded-[2rem] border border-primary/10 bg-white p-5 shadow-xl shadow-secondary/5 transition-all hover:-translate-y-0.5 hover:shadow-primary/10 md:gap-14 md:rounded-[2.5rem] md:p-8 md:shadow-2xl lg:grid-cols-[0.82fr_1.18fr] lg:items-center lg:p-14">
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_78%_20%,rgba(0,102,255,0.08),transparent_32%),linear-gradient(135deg,rgba(255,255,255,0.9),rgba(242,248,255,0.72))]" />
           <div className="relative z-10">
             <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary md:text-xs md:tracking-[0.28em]">Free structured practice</p>
-            <h2 className="mt-3 text-3xl font-black tracking-tight text-secondary md:mt-4 md:text-5xl">Practice Dojo</h2>
+            <h2 className="mt-3 text-3xl font-black tracking-tight text-secondary md:mt-4 md:text-5xl">PracticeDojo</h2>
             <p className="mt-3 text-lg font-black text-secondary md:mt-4 md:text-xl">Test understanding before the stress builds.</p>
             <p className="mt-4 max-w-xl text-sm leading-7 text-secondary/65 md:mt-5 md:text-base">
-              Practice Dojo is open to anyone. Students can create curriculum-aligned practice, check what they know, and spot the topics that may need tutor support.
+              PracticeDojo is open to anyone. Students can create curriculum-aligned practice, check what they know, and spot the topics that may need tutor support.
             </p>
             <div className="mt-5 grid gap-3 text-sm font-bold text-secondary/65 sm:grid-cols-2 md:mt-7">
               {["Open access knowledge checks", "Curriculum-aligned practice", "Topic gap discovery", "Free assessment next step"].map((item) => (
@@ -602,7 +618,7 @@ export default async function Home({
                 source="homepage_practice_dojo"
                 className="inline-flex justify-center rounded-2xl bg-primary px-7 py-4 text-sm font-black uppercase tracking-[0.14em] text-white transition-colors hover:bg-primary-hover"
               >
-                Try Practice Dojo
+                Try PracticeDojo
               </AiPracticeStudioCtaLink>
               {flags.free_assessment_enabled && (
                 <BookAssessmentLink
@@ -620,7 +636,7 @@ export default async function Home({
             <div className="relative rounded-[1.75rem] border border-secondary/10 bg-white p-5 shadow-xl shadow-secondary/5">
               <div className="mb-5 flex items-center justify-between">
                 <div>
-                  <p className="text-[10px] font-black uppercase tracking-[0.22em] text-primary">Practice Dojo</p>
+                  <p className="text-[10px] font-black uppercase tracking-[0.22em] text-primary">PracticeDojo</p>
                   <p className="mt-2 text-2xl font-black text-secondary">Knowledge check</p>
                 </div>
                 <div className="rounded-full bg-primary/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-primary">Open Tool</div>
@@ -867,7 +883,7 @@ export default async function Home({
                     source="homepage_final_cta"
                     className="rounded-2xl bg-white px-8 py-4 text-sm font-black uppercase tracking-[0.14em] text-primary shadow-xl shadow-white/10 transition-all hover:-translate-y-0.5 hover:bg-slate-50 hover:shadow-2xl"
                   >
-                    Book Free Learning Assessment
+                    Book a Free Learning Assessment
                   </BookAssessmentLink>
                 )}
                 {flags.practice_dojo_enabled && (
@@ -877,7 +893,7 @@ export default async function Home({
                     source="homepage_final_cta"
                     className="rounded-2xl border border-white/15 bg-white/5 px-8 py-4 text-sm font-black uppercase tracking-[0.14em] text-white backdrop-blur transition-all hover:bg-white/10"
                   >
-                    Try Practice Dojo
+                    Try PracticeDojo
                   </AiPracticeStudioCtaLink>
                 )}
               </div>

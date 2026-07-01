@@ -409,7 +409,7 @@ export async function generatePracticeQuestions(
     return {
       status: "success",
       source: "fallback",
-      message: "Practice Dojo is using a built-in question set in this environment.",
+      message: "PracticeDojo is using a built-in question set in this environment.",
       questions: buildFallbackQuestions(subject, level, topic, count),
     };
   }
@@ -484,7 +484,7 @@ If any question needs data in rows or columns, include a markdown table with one
     return {
       status: "success",
       source: "fallback",
-      message: "Practice Dojo could not prepare a fresh set, so it used built-in practice questions instead.",
+      message: "PracticeDojo could not prepare a fresh set, so it used built-in practice questions instead.",
       questions: buildFallbackQuestions(subject, level, topic, count),
     };
   }

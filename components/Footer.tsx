@@ -7,7 +7,7 @@ const footerGroups = [
     title: "Learning",
     links: [
       ["Find Tutors", "/#directory"],
-      ["Practice Dojo", "/ai-practice-studio"],
+      ["PracticeDojo", "/ai-practice-studio"],
       ["FocusDojo", "/focus-dojo"],
       ["Free Assessment", "/free-assessment"],
     ],

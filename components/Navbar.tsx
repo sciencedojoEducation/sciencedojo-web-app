@@ -54,7 +54,7 @@ export default async function Navbar() {
           )}
           {flags.practice_dojo_enabled && (
             <Link href="/ai-practice-studio" className="text-sm font-medium text-secondary/70 hover:text-primary transition-colors">
-              Practice Dojo
+              PracticeDojo
             </Link>
           )}
           {flags.focus_dojo_enabled && (

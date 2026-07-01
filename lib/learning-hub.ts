@@ -82,7 +82,7 @@ export const learningArticles: LearningArticle[] = [
     internalLinks: [
       { label: "GCSE Physics Tutor", href: "/gcse-physics-tutor" },
       { label: "Online Physics Tutor", href: "/online-physics-tutor" },
-      { label: "Practice Dojo", href: "/ai-practice-studio" },
+      { label: "PracticeDojo", href: "/ai-practice-studio" },
     ],
     ctas: ["assessment", "questions"],
   },
@@ -251,7 +251,7 @@ export const learningArticles: LearningArticle[] = [
       },
     ],
     internalLinks: [
-      { label: "Practice Dojo", href: "/ai-practice-studio" },
+      { label: "PracticeDojo", href: "/ai-practice-studio" },
       { label: "How AI Improves Learning", href: "/how-ai-improves-learning" },
       { label: "Online Chemistry Tutor", href: "/online-chemistry-tutor" },
     ],

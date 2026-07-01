@@ -103,7 +103,7 @@ export function generateEmailFollowUp(lead: AssessmentLeadForFollowUp): EmailFol
       "- identify the key learning gaps",
       "- understand what is affecting confidence",
       "- recommend the most suitable support pathway",
-      "- explain how ScienceDojo tutoring, Practice Dojo, and personalized Missions can support progress",
+      "- explain how ScienceDojo tutoring, PracticeDojo, and personalized Missions can support progress",
       "",
       context.timeQuestion,
       "",

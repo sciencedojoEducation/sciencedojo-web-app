@@ -158,7 +158,7 @@ export default function MobileNavbarMenu({
             )}
             {showPracticeDojo && (
               <Link href="/ai-practice-studio" onClick={closeMenu} className={navLinkClass}>
-                Practice Dojo
+                PracticeDojo
               </Link>
             )}
             {showFocusDojo && (

@@ -238,7 +238,7 @@ export default function QuestionGenerator() {
         {questions.length === 0 ? (
           <div className="mt-5 rounded-2xl border border-secondary/10 bg-surface p-6">
             <p className="font-bold leading-7 text-secondary/65">
-              Practice Dojo creates structured practice questions by stage, curriculum, level, subject, and topic.
+              PracticeDojo creates structured practice questions by stage, curriculum, level, subject, and topic.
             </p>
           </div>
         ) : (

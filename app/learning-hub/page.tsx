@@ -119,7 +119,7 @@ export default async function LearningHubPage({ searchParams }: PageProps) {
         <div className="rounded-3xl bg-secondary p-7 text-white shadow-xl md:flex md:items-center md:justify-between md:gap-8">
           <div>
             <p className="text-xs font-black uppercase tracking-[0.25em] text-cyan-100/70">Featured free tool</p>
-            <h2 className="mt-3 text-3xl font-black tracking-tight">Practice Dojo</h2>
+            <h2 className="mt-3 text-3xl font-black tracking-tight">PracticeDojo</h2>
             <p className="mt-3 max-w-2xl leading-7 text-white/70">
               Generate targeted practice questions by curriculum, subject, and topic.
             </p>

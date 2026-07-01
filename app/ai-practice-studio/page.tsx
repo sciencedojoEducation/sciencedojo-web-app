@@ -10,11 +10,11 @@ import { isFeatureEnabled } from "@/lib/feature-flags";
 
 const faqs = [
   {
-    question: "What is Practice Dojo?",
-    answer: "Practice Dojo is a free ScienceDojo knowledge-check system for structured curriculum-aligned practice by educational stage, curriculum, level, subject, and topic.",
+    question: "What is PracticeDojo?",
+    answer: "PracticeDojo is a free ScienceDojo knowledge-check system for structured curriculum-aligned practice by educational stage, curriculum, level, subject, and topic.",
   },
   {
-    question: "Which curricula does Practice Dojo support?",
+    question: "Which curricula does PracticeDojo support?",
     answer: "It supports major pathways including UK National Curriculum, Cambridge, Edexcel, AQA, SQA, IB, GCSE, IGCSE, A-Level, and primary or lower secondary routes.",
   },
   {
@@ -24,14 +24,14 @@ const faqs = [
 ];
 
 export const metadata: Metadata = {
-  title: "Practice Dojo | Free Curriculum-Aligned Practice Questions | ScienceDojo",
+  title: "PracticeDojo | Free Curriculum-Aligned Practice Questions | ScienceDojo",
   description: "Free structured STEM practice and curriculum-aligned knowledge checks for KS1, KS2, KS3, GCSE, IGCSE, A-Level, IB, Cambridge, Edexcel, AQA, SQA, and more.",
   alternates: {
     canonical: `${siteUrl}/ai-practice-studio`,
   },
   openGraph: {
-    title: "Practice Dojo | ScienceDojo",
-    description: "Try free curriculum-aligned knowledge checks with Practice Dojo.",
+    title: "PracticeDojo | ScienceDojo",
+    description: "Try free curriculum-aligned knowledge checks with PracticeDojo.",
     url: `${siteUrl}/ai-practice-studio`,
     siteName: "ScienceDojo",
     type: "website",
@@ -43,8 +43,8 @@ export default async function AiPracticeStudioPage() {
   if (!enabled) {
     return (
       <FeatureUnavailable
-        eyebrow="Practice Dojo"
-        title="Practice Dojo is almost ready."
+        eyebrow="PracticeDojo"
+        title="PracticeDojo is almost ready."
         message="We are preparing this learning tool carefully before opening it to students and families."
       />
     );
@@ -62,7 +62,7 @@ export default async function AiPracticeStudioPage() {
           <p className="text-xs font-black uppercase tracking-[0.3em] text-cyan-100/80">Free structured practice</p>
           <h1 className="mt-5 text-4xl font-black tracking-tight md:text-6xl">Test what you know. Discover what needs support.</h1>
           <p className="mx-auto mt-6 max-w-3xl text-xl font-black leading-8 text-white">
-            Practice Dojo gives students structured STEM practice aligned with GCSE, IGCSE, IB, and A-Level learning.
+            PracticeDojo gives students structured STEM practice aligned with GCSE, IGCSE, IB, and A-Level learning.
           </p>
           <p className="mx-auto mt-4 max-w-3xl text-lg leading-8 text-white/75">
             Use it to practise concepts, spot weak areas, and build confidence before small gaps become exam stress.
@@ -125,7 +125,7 @@ export default async function AiPracticeStudioPage() {
           <p className="text-xs font-black uppercase tracking-[0.2em] text-primary">Public learning gateway</p>
           <h2 className="mt-3 text-2xl font-black">Free curriculum-aligned knowledge checks</h2>
           <p className="mt-4 leading-7 text-secondary/65">
-            Practice Dojo is open access. It helps students understand where they feel secure, where they feel uncertain, and what might need clearer explanation.
+            PracticeDojo is open access. It helps students understand where they feel secure, where they feel uncertain, and what might need clearer explanation.
           </p>
         </div>
         <div className="rounded-3xl bg-secondary p-7 text-white shadow-xl">

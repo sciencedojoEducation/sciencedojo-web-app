@@ -43,8 +43,8 @@ export const FEATURE_FLAG_DEFINITIONS = [
   },
   {
     key: "practice_dojo_enabled",
-    label: "Practice Dojo",
-    description: "Show Practice Dojo public learning tools and CTAs.",
+    label: "PracticeDojo",
+    description: "Show PracticeDojo public learning tools and CTAs.",
     category: "AI / Practice Tools",
     defaultEnabled: false,
   },
