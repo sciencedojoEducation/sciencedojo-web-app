@@ -2,7 +2,9 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getFocusDojoAccessLevel } from "@/lib/focusdojo/access";
 import { FOCUSDOJO_PRO_PRODUCT_KEY } from "@/lib/focusdojo/access-levels";
+import { syncFocusDojoSubscriptionFromStripeSubscriptionId } from "@/lib/focusdojo/subscription-sync";
 import { createClient } from "@/utils/supabase/server";
+import ManageFocusDojoSubscriptionButton from "./ManageFocusDojoSubscriptionButton";
 
 export const metadata = {
   title: "My Dojo | ScienceDojo",
@@ -22,13 +24,141 @@ function formatDate(value?: string | null) {
   }).format(new Date(value));
 }
 
-export default async function UserDashboardPage() {
+type UserDashboardPageProps = {
+  searchParams?: Promise<{ billing?: string | string[] }>;
+};
+
+type FocusDojoSubscription = {
+  plan: string | null;
+  status: string;
+  current_period_end: string | null;
+  cancel_at_period_end: boolean;
+  stripe_customer_id: string | null;
+  stripe_subscription_id: string | null;
+};
+
+function singleParam(value?: string | string[]) {
+  return Array.isArray(value) ? value[0] : value;
+}
+
+function getSubscriptionStatusCopy(
+  accessLevel: "free" | "basic" | "pro",
+  subscription?: FocusDojoSubscription | null,
+) {
+  if (!subscription) {
+    return accessLevel === "basic"
+      ? {
+          label: "FocusDojo Basic",
+          status: "Basic included",
+          dateLabel: null,
+          description:
+            "Included with your ScienceDojo learning. You have 3 themes and all background music.",
+        }
+      : {
+          label: "FocusDojo Free",
+          status: "Free",
+          dateLabel: null,
+          description: "Selected themes and music are available.",
+        };
+  }
+
+  if (
+    (subscription.status === "active" || subscription.status === "trialing") &&
+    subscription.cancel_at_period_end
+  ) {
+    return {
+      label: "FocusDojo Pro",
+      status: "Cancels soon",
+      dateLabel: "Access until",
+      description:
+        "Your FocusDojo Pro plan is set to cancel. You can keep using Pro until the end of this billing period.",
+    };
+  }
+
+  if (subscription.status === "active") {
+    return {
+      label: "FocusDojo Pro",
+      status: "Active",
+      dateLabel: "Renews",
+      description: "Your full FocusDojo environment is unlocked.",
+    };
+  }
+
+  if (subscription.status === "trialing") {
+    return {
+      label: "FocusDojo Pro",
+      status: "Trialing",
+      dateLabel: "Trial ends",
+      description: "Your full FocusDojo environment is unlocked during your trial.",
+    };
+  }
+
+  if (subscription.status === "past_due") {
+    return {
+      label: accessLevel === "pro" ? "FocusDojo Pro" : "FocusDojo Free",
+      status: "Payment issue",
+      dateLabel: "Access review",
+      description:
+        "Please manage your billing details to keep FocusDojo Pro active.",
+    };
+  }
+
+  return {
+    label: accessLevel === "basic" ? "FocusDojo Basic" : "FocusDojo Free",
+    status: "Ended",
+    dateLabel: "Ended",
+    description: "Your FocusDojo Pro plan has ended.",
+  };
+}
+
+async function getFocusDojoSubscription(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  userId: string,
+) {
+  return supabase
+    .from("subscriptions")
+    .select(
+      "plan, status, current_period_end, cancel_at_period_end, stripe_customer_id, stripe_subscription_id",
+    )
+    .eq("user_id", userId)
+    .eq("product_key", FOCUSDOJO_PRO_PRODUCT_KEY)
+    .maybeSingle();
+}
+
+export default async function UserDashboardPage({
+  searchParams,
+}: UserDashboardPageProps) {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
   if (!user) redirect("/login");
+
+  const params = searchParams ? await searchParams : {};
+  const billingReturned = singleParam(params.billing) === "returned";
+  const initialSubscription = await getFocusDojoSubscription(supabase, user.id);
+
+  if (
+    billingReturned &&
+    initialSubscription.data?.stripe_subscription_id
+  ) {
+    try {
+      await syncFocusDojoSubscriptionFromStripeSubscriptionId(
+        initialSubscription.data.stripe_subscription_id,
+      );
+    } catch (error) {
+      console.error("[dashboard-user] billing return sync failed", {
+        userId: user.id,
+        subscriptionId: initialSubscription.data.stripe_subscription_id,
+        error: error instanceof Error ? error.message : error,
+      });
+    }
+  }
+
+  const subscriptionPromise = billingReturned
+    ? getFocusDojoSubscription(supabase, user.id)
+    : Promise.resolve(initialSubscription);
 
   const [{ data: profile }, { data: subscription }, accessLevelResult] =
     await Promise.all([
@@ -37,29 +167,23 @@ export default async function UserDashboardPage() {
         .select("full_name, email")
         .eq("id", user.id)
         .maybeSingle(),
-      supabase
-        .from("subscriptions")
-        .select("plan, status, current_period_end, cancel_at_period_end")
-        .eq("user_id", user.id)
-        .eq("product_key", FOCUSDOJO_PRO_PRODUCT_KEY)
-        .maybeSingle(),
+      subscriptionPromise,
       getFocusDojoAccessLevel(user.id),
     ]);
 
   const name = profile?.full_name || user.user_metadata?.full_name;
-  const accessLabel =
-    accessLevelResult === "pro"
-      ? "FocusDojo Pro"
-      : accessLevelResult === "basic"
-        ? "FocusDojo Basic"
-        : "FocusDojo Free";
+  const subscriptionCopy = getSubscriptionStatusCopy(
+    accessLevelResult,
+    subscription,
+  );
+  const accessLabel = subscriptionCopy.label;
   const periodEnd = formatDate(subscription?.current_period_end);
-  const subscriptionDescription =
-    accessLevelResult === "pro"
-      ? "Your full FocusDojo environment is unlocked."
-      : accessLevelResult === "basic"
-        ? "Included with your ScienceDojo learning. You have 3 themes and all background music."
-        : "Selected themes and music are available.";
+  const canManageSubscription = Boolean(
+    subscription?.stripe_customer_id &&
+      ["active", "trialing", "past_due", "unpaid"].includes(
+        subscription.status,
+      ),
+  );
 
   return (
     <div className="mx-auto max-w-5xl space-y-6 px-4 py-6 md:p-8">
@@ -104,7 +228,7 @@ export default async function UserDashboardPage() {
             {accessLabel}
           </h2>
           <p className="mt-3 text-sm font-semibold leading-6 text-secondary/55">
-            {subscriptionDescription}
+            {subscriptionCopy.description}
           </p>
           {subscription ? (
             <dl className="mt-4 grid gap-2 text-sm font-bold text-secondary/60">
@@ -117,25 +241,33 @@ export default async function UserDashboardPage() {
               <div className="flex items-center justify-between gap-3 rounded-xl bg-secondary/[0.03] px-3 py-2">
                 <dt>Status</dt>
                 <dd className="capitalize text-secondary">
-                  {subscription.status.replace(/_/g, " ")}
+                  {subscriptionCopy.status}
                 </dd>
               </div>
               {periodEnd ? (
                 <div className="flex items-center justify-between gap-3 rounded-xl bg-secondary/[0.03] px-3 py-2">
-                  <dt>
-                    {subscription.cancel_at_period_end ? "Ends" : "Renews"}
-                  </dt>
+                  <dt>{subscriptionCopy.dateLabel}</dt>
                   <dd className="text-secondary">{periodEnd}</dd>
                 </div>
               ) : null}
             </dl>
           ) : null}
-          <Link
-            href="/focus-dojo/pricing"
-            className="mt-5 inline-flex min-h-11 items-center justify-center rounded-2xl border border-secondary/10 bg-white px-5 text-sm font-black text-secondary transition hover:border-primary/30 hover:text-primary"
-          >
-            View pricing
-          </Link>
+          {canManageSubscription ? (
+            <>
+              <p className="mt-4 text-sm font-semibold leading-6 text-secondary/55">
+                You can update payment details, view invoices, or cancel your
+                subscription securely through Stripe.
+              </p>
+              <ManageFocusDojoSubscriptionButton />
+            </>
+          ) : (
+            <Link
+              href="/focus-dojo/pricing"
+              className="mt-5 inline-flex min-h-11 items-center justify-center rounded-2xl border border-secondary/10 bg-white px-5 text-sm font-black text-secondary transition hover:border-primary/30 hover:text-primary"
+            >
+              View pricing
+            </Link>
+          )}
         </div>
 
         <div className="rounded-2xl border border-secondary/10 bg-white p-5 shadow-sm">
