@@ -7,7 +7,14 @@ import { trackFocusDojoEvent } from "@/lib/focusAnalytics";
 import {
   focusEnvironments,
   type FocusEnvironment,
+  type FocusTrack,
 } from "@/lib/focusEnvironments";
+import {
+  canAccessFocusDojoItem,
+  getLockedReason,
+  type FocusDojoAccessLevel,
+  type FocusDojoLockedReason,
+} from "@/lib/focusdojo/access-levels";
 import {
   DEFAULT_THEME,
   EXAM_THEME,
@@ -35,6 +42,7 @@ import {
 import FocusRing from "./FocusRing";
 import FocusAtmospherePicker from "./FocusAtmospherePicker";
 import FocusTransition from "./FocusTransition";
+import FocusDojoUpgradeModal from "./FocusDojoUpgradeModal";
 
 type TimerSegment = "focus" | "break" | "exam";
 
@@ -179,6 +187,32 @@ function validSoundEnvironmentId(
     : null;
 }
 
+function accessibleTrackForEnvironment(
+  environment: FocusEnvironment | undefined,
+  accessLevel: FocusDojoAccessLevel,
+): FocusTrack | null {
+  return (
+    environment?.tracks.find((track) =>
+      canAccessFocusDojoItem(accessLevel, track.minimumAccess),
+    ) ?? null
+  );
+}
+
+function accessibleEnvironmentsFor(accessLevel: FocusDojoAccessLevel) {
+  return focusEnvironments
+    .map((environment) => ({
+      ...environment,
+      tracks: environment.tracks.filter((track) =>
+        canAccessFocusDojoItem(accessLevel, track.minimumAccess),
+      ),
+    }))
+    .filter(
+      (environment) =>
+        canAccessFocusDojoItem(accessLevel, environment.minimumAccess) &&
+        environment.tracks.length > 0,
+    );
+}
+
 function sessionEnvironmentId(
   config: SessionConfig,
   environments: FocusEnvironment[] = focusEnvironments,
@@ -219,18 +253,23 @@ function chooseBreakRitualMessages(
 
 function EnvironmentButtons({
   environments,
+  accessLevel,
   selectedId,
   onSelect,
+  onLocked,
 }: {
   environments: FocusEnvironment[];
+  accessLevel: FocusDojoAccessLevel;
   selectedId: string | null;
   onSelect: (id: string | null) => void;
+  onLocked: (reason: FocusDojoLockedReason, title: string) => void;
 }) {
   const options = [
-    { id: null, title: "Silent Focus" },
+    { id: null, title: "Silent Focus", minimumAccess: "free" as const },
     ...environments.map((environment) => ({
       id: environment.id,
       title: environment.title,
+      minimumAccess: environment.minimumAccess,
     })),
   ];
 
@@ -239,19 +278,34 @@ function EnvironmentButtons({
       {options.map((option) => {
         const active =
           option.id === validSoundEnvironmentId(selectedId, environments);
+        const lockedReason = getLockedReason(
+          accessLevel,
+          option.minimumAccess,
+        );
         return (
           <button
             key={option.id ?? SILENCE_ID}
             type="button"
-            onClick={() => onSelect(option.id)}
+            onClick={() =>
+              lockedReason
+                ? onLocked(lockedReason, option.title)
+                : onSelect(option.id)
+            }
             aria-pressed={active}
             className={`rounded-full px-3 py-2 text-xs font-medium transition ${
               active
                 ? "bg-[var(--fd-accent)] text-[var(--fd-bg-to)] shadow-sm"
-                : "bg-[var(--fd-bg-tertiary)] text-[var(--fd-text-secondary)] ring-1 ring-[var(--fd-border-primary)] hover:brightness-110 hover:text-[var(--fd-text-primary)]"
+                : lockedReason
+                  ? "bg-[var(--fd-bg-tertiary)] text-[var(--fd-text-tertiary)] opacity-70 ring-1 ring-[var(--fd-border-primary)] hover:opacity-100"
+                  : "bg-[var(--fd-bg-tertiary)] text-[var(--fd-text-secondary)] ring-1 ring-[var(--fd-border-primary)] hover:brightness-110 hover:text-[var(--fd-text-primary)]"
             }`}
           >
             {option.title}
+            {lockedReason && (
+              <span className="ml-1 text-[0.62rem] uppercase tracking-[0.12em]">
+                {option.minimumAccess === "pro" ? "Pro" : "Basic"}
+              </span>
+            )}
           </button>
         );
       })}
@@ -288,7 +342,7 @@ function ModePill({
 type FocusZoneProps = {
   standalone?: boolean;
   initialDisplayName?: string;
-  accessLevel?: "member" | "guest";
+  accessLevel?: FocusDojoAccessLevel;
   shellMode?: "default" | "framed";
 };
 
@@ -299,7 +353,7 @@ function sanitizeDisplayName(name?: string | null) {
 export default function FocusZone({
   standalone = false,
   initialDisplayName,
-  accessLevel = "member",
+  accessLevel = "free",
   shellMode = "default",
 }: FocusZoneProps) {
   const {
@@ -309,19 +363,10 @@ export default function FocusZone({
     enterExamMode,
     exitExamMode,
   } = useTheme();
-  const allowedEnvironments = useMemo<FocusEnvironment[]>(() => {
-    if (accessLevel === "member") return focusEnvironments;
-    const deepFocus = focusEnvironments.find(
-      (environment) => environment.id === "deep-focus",
-    );
-    if (!deepFocus) return [];
-    return [
-      {
-        ...deepFocus,
-        tracks: deepFocus.tracks.slice(0, 1),
-      },
-    ];
-  }, [accessLevel]);
+  const allowedEnvironments = useMemo<FocusEnvironment[]>(
+    () => accessibleEnvironmentsFor(accessLevel),
+    [accessLevel],
+  );
   const defaultSoundEnvironmentId = allowedEnvironments[0]?.id ?? null;
   const [phase, setPhase] = useState<SessionPhase>("name");
   const [hasLoaded, setHasLoaded] = useState(false);
@@ -355,6 +400,10 @@ export default function FocusZone({
   const [startedAt, setStartedAt] = useState<string | null>(null);
   const [pendingResume, setPendingResume] = useState<SavedActiveSession | null>(null);
   const [proGateTheme, setProGateTheme] = useState<Theme | null>(null);
+  const [upgradePrompt, setUpgradePrompt] = useState<{
+    reason: FocusDojoLockedReason;
+    itemName?: string;
+  } | null>(null);
   const [themePreviewing, setThemePreviewing] = useState(false);
   const [atmospheresOpen, setAtmospheresOpen] = useState(false);
   const [breakRitualMessages, setBreakRitualMessages] =
@@ -468,8 +517,8 @@ export default function FocusZone({
       300,
     );
 
-    const rememberedName = accessLevel === "member" ? storedName : "";
-    const shouldSkipNameScreen = accessLevel === "guest" || skipped;
+    const rememberedName = accessLevel !== "free" ? storedName : "";
+    const shouldSkipNameScreen = accessLevel === "free" || skipped;
 
     if (providedName || rememberedName) {
       const name = providedName || rememberedName || "";
@@ -485,8 +534,11 @@ export default function FocusZone({
     setExamHours(String(Math.floor(rememberedExamDuration / 60)));
     setExamMinutes(String(rememberedExamDuration % 60));
     const rememberedTheme = getSelectableTheme(storedTheme);
-    if (rememberedTheme.tier === "free") {
+    if (canAccessFocusDojoItem(accessLevel, rememberedTheme.minimumAccess)) {
       setThemeId(rememberedTheme.id);
+    } else {
+      setThemeId(DEFAULT_THEME);
+      setTheme(DEFAULT_THEME);
     }
 
     if (isSessionMode(storedMode)) {
@@ -774,7 +826,12 @@ export default function FocusZone({
     setSessionGoal(pendingResume.sessionGoal);
     setNextSessionGoal(pendingResume.nextSessionGoal);
     setSessionTitle(pendingResume.sessionTitle ?? pendingResume.sessionGoal ?? "");
-    setThemeId(getSelectableTheme(pendingResume.themeId).id);
+    const resumedTheme = getSelectableTheme(pendingResume.themeId);
+    setThemeId(
+      canAccessFocusDojoItem(accessLevel, resumedTheme.minimumAccess)
+        ? resumedTheme.id
+        : DEFAULT_THEME,
+    );
     setGoals(pendingResume.goals);
     setStartedAt(pendingResume.startedAt);
     endAtRef.current =
@@ -872,10 +929,17 @@ export default function FocusZone({
   const continueFromSessionWelcome = () => {
     const cleanTitle = sessionTitle.trim().slice(0, 100);
     const theme = getSelectableTheme(themeId);
+    const accessibleTheme = canAccessFocusDojoItem(
+      accessLevel,
+      theme.minimumAccess,
+    )
+      ? theme
+      : getSelectableTheme(DEFAULT_THEME);
     setSessionTitle(cleanTitle);
     setSessionGoal(cleanTitle);
     setAtmospheresOpen(false);
-    setTheme(theme.id);
+    setTheme(accessibleTheme.id);
+    setThemeId(accessibleTheme.id);
     setConfig((current) => ({
       ...current,
       soundEnvironmentId:
@@ -889,7 +953,7 @@ export default function FocusZone({
     setPhase("mode-select");
   };
 
-  const selectFreeTheme = (id: string) => {
+  const selectTheme = (id: string) => {
     const theme = getSelectableTheme(id);
     setProGateTheme(null);
     setThemePreviewing(false);
@@ -898,19 +962,37 @@ export default function FocusZone({
   };
 
   const showThemePaywall = (theme: Theme) => {
+    const reason = getLockedReason(accessLevel, theme.minimumAccess);
+    if (!reason) {
+      selectTheme(theme.id);
+      return;
+    }
     setProGateTheme(theme);
     setThemePreviewing(true);
     previewTheme(theme.id);
+    setUpgradePrompt({ reason, itemName: theme.name });
   };
 
   const dismissThemePaywall = () => {
     setThemePreviewing(false);
     setProGateTheme(null);
+    setUpgradePrompt(null);
     restoreTheme();
   };
 
   const updateEnvironment = (id: string | null) => {
     if (config.mode === "exam") return;
+    const environment = focusEnvironments.find((item) => item.id === id);
+    if (environment) {
+      const reason = getLockedReason(accessLevel, environment.minimumAccess);
+      if (reason || !accessibleTrackForEnvironment(environment, accessLevel)) {
+        setUpgradePrompt({
+          reason: reason ?? "basic_required",
+          itemName: environment.title,
+        });
+        return;
+      }
+    }
     setConfig((current) => ({
       ...current,
       soundEnvironmentId: validSoundEnvironmentId(id, allowedEnvironments),
@@ -1262,6 +1344,18 @@ export default function FocusZone({
     />
   );
   const isFramed = shellMode === "framed";
+  const accessBadge =
+    accessLevel === "pro"
+      ? "FocusDojo Pro"
+      : accessLevel === "basic"
+        ? "FocusDojo Basic included with ScienceDojo"
+        : "FocusDojo Free";
+  const accessLine =
+    accessLevel === "pro"
+      ? "Your full FocusDojo environment is unlocked."
+      : accessLevel === "basic"
+        ? "You have 3 themes and all current background music included."
+        : "Selected themes and music are available.";
   const loadingShellClass = isFramed
     ? "relative min-h-[560px] w-full rounded-[1.5rem] px-4 sm:px-6 md:min-h-[620px] md:rounded-[2rem] md:px-8"
     : standalone
@@ -1302,6 +1396,15 @@ export default function FocusZone({
       <audio ref={chimeRef} preload="auto">
         <source src={CHIME_SRC} type="audio/mpeg" />
       </audio>
+
+      {upgradePrompt && (
+        <FocusDojoUpgradeModal
+          reason={upgradePrompt.reason}
+          currentAccess={accessLevel}
+          itemName={upgradePrompt.itemName}
+          onClose={dismissThemePaywall}
+        />
+      )}
 
       {phase !== "name" && phase !== "mode-select" && (
         <>
@@ -1412,6 +1515,12 @@ export default function FocusZone({
             <p className="mt-6 text-base font-medium text-white/58">
               Choose your study atmosphere.
             </p>
+            <p className="mx-auto mt-3 max-w-sm text-xs font-semibold uppercase tracking-[0.14em] text-white/36">
+              {accessBadge}
+            </p>
+            <p className="mx-auto mt-2 max-w-sm text-sm font-medium leading-6 text-white/45">
+              {accessLine}
+            </p>
 
             <label className="mx-auto mt-8 block w-full max-w-sm">
               <span className="sr-only">What are you studying today?</span>
@@ -1427,9 +1536,9 @@ export default function FocusZone({
 
             <FocusAtmospherePicker
               currentTheme={themeId}
-              isProUser={false}
+              accessLevel={accessLevel}
               expanded={atmospheresOpen}
-              onSelect={selectFreeTheme}
+              onSelect={selectTheme}
               onProGate={showThemePaywall}
               onToggleExpanded={() => setAtmospheresOpen((open) => !open)}
             />
@@ -1437,38 +1546,6 @@ export default function FocusZone({
             {proGateTheme && themePreviewing && (
               <div className="mx-auto mt-5 max-w-sm rounded-full bg-[var(--fd-bg-secondary)] px-4 py-2 text-center text-xs font-semibold uppercase tracking-[0.18em] text-[var(--fd-text-secondary)] ring-1 ring-[var(--fd-border-primary)]">
                 Preview
-              </div>
-            )}
-
-            {proGateTheme && !themePreviewing && (
-              <div className="mx-auto mt-5 max-w-sm rounded-3xl bg-[var(--fd-bg-secondary)] p-5 text-center ring-1 ring-[var(--fd-border-primary)]">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--fd-text-tertiary)]">
-                  Focus Pro
-                </p>
-                <h2 className="mt-3 text-xl font-semibold tracking-tight text-[var(--fd-text-primary)]">
-                  Unlock {proGateTheme.name} and 4 more study atmospheres with Focus Pro
-                </h2>
-                <div className="mt-5 grid gap-2">
-                  <button
-                    type="button"
-                    className="rounded-full bg-[var(--fd-accent-primary)] px-5 py-3 text-sm font-semibold text-[var(--fd-bg-primary)] transition hover:brightness-110"
-                  >
-                    Start free trial
-                  </button>
-                  <button
-                    type="button"
-                    className="rounded-full bg-[var(--fd-bg-tertiary)] px-5 py-3 text-sm font-semibold text-[var(--fd-text-primary)]"
-                  >
-                    €10/year placeholder
-                  </button>
-                  <button
-                    type="button"
-                    onClick={dismissThemePaywall}
-                    className="pt-2 text-sm font-medium text-[var(--fd-text-secondary)] transition hover:text-[var(--fd-text-primary)]"
-                  >
-                    Continue with free atmospheres
-                  </button>
-                </div>
               </div>
             )}
 
@@ -1619,12 +1696,16 @@ export default function FocusZone({
                   Sound Environment
                 </p>
                 <EnvironmentButtons
-                  environments={allowedEnvironments}
+                  environments={focusEnvironments}
+                  accessLevel={accessLevel}
                   selectedId={validSoundEnvironmentId(
                     config.soundEnvironmentId,
                     allowedEnvironments,
                   )}
                   onSelect={updateEnvironment}
+                  onLocked={(reason, title) =>
+                    setUpgradePrompt({ reason, itemName: title })
+                  }
                 />
               </div>
               <p className="mt-5 text-center text-xs leading-relaxed text-white/40">

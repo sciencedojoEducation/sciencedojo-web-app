@@ -1,3 +1,5 @@
+import type { FocusDojoAccessLevel } from "@/lib/focusdojo/access-levels";
+
 export const DEFAULT_THEME = "midnight-focus" as const;
 export const EXAM_THEME = "exam-silence" as const;
 export const THEME_STORAGE_KEY = "focusdojo-theme";
@@ -14,8 +16,6 @@ export type SelectableThemeId =
   | "daylight";
 
 export type ThemeId = SelectableThemeId | typeof EXAM_THEME;
-export type ThemeTier = "free" | "pro";
-
 export interface Theme {
   id: SelectableThemeId;
   name: string;
@@ -23,7 +23,7 @@ export interface Theme {
   aesthetic: string;
   emotionalState: string;
   description: string;
-  tier: ThemeTier;
+  minimumAccess: FocusDojoAccessLevel;
   isDark: boolean;
   soundEnvironmentId: string | null;
   tags: string[];
@@ -42,7 +42,7 @@ export interface ExamTheme {
   aesthetic: string;
   emotionalState: string;
   description: string;
-  tier: "free";
+  minimumAccess: "free";
   isDark: true;
   soundEnvironmentId: null;
   tags: string[];
@@ -57,7 +57,7 @@ export const THEMES: Theme[] = [
     aesthetic: "Default",
     emotionalState: "clarity",
     description: "Deep navy with blue-to-teal accents",
-    tier: "free",
+    minimumAccess: "free",
     isDark: true,
     soundEnvironmentId: "deep-focus",
     tags: ["default", "clarity", "free"],
@@ -75,7 +75,7 @@ export const THEMES: Theme[] = [
     aesthetic: "Soft Rose",
     emotionalState: "soft pastel focus",
     description: "Dark plum with pastel pink and rose",
-    tier: "pro",
+    minimumAccess: "pro",
     isDark: true,
     soundEnvironmentId: "reading-atmosphere",
     tags: ["soft", "rose", "Pro"],
@@ -92,7 +92,7 @@ export const THEMES: Theme[] = [
     aesthetic: "Dark Academia",
     emotionalState: "scholarly",
     description: "Espresso and walnut with warm amber",
-    tier: "pro",
+    minimumAccess: "pro",
     isDark: true,
     soundEnvironmentId: "reading-atmosphere",
     tags: ["scholarly", "warm", "Pro"],
@@ -109,7 +109,7 @@ export const THEMES: Theme[] = [
     aesthetic: "Nature Calm",
     emotionalState: "grounding",
     description: "Deep forest with sage and mint",
-    tier: "free",
+    minimumAccess: "free",
     isDark: true,
     soundEnvironmentId: "reflection-space",
     tags: ["nature", "grounding", "free"],
@@ -126,7 +126,7 @@ export const THEMES: Theme[] = [
     aesthetic: "Ethereal",
     emotionalState: "dreamy calm",
     description: "Deep violet-grey with lilac accents",
-    tier: "pro",
+    minimumAccess: "pro",
     isDark: true,
     soundEnvironmentId: "creative-flow",
     tags: ["dreamy", "calm", "Pro"],
@@ -143,7 +143,7 @@ export const THEMES: Theme[] = [
     aesthetic: "Minimal",
     emotionalState: "minimal",
     description: "True black for maximum battery saving",
-    tier: "pro",
+    minimumAccess: "pro",
     isDark: true,
     soundEnvironmentId: null,
     tags: ["minimal", "quiet", "Pro"],
@@ -160,7 +160,7 @@ export const THEMES: Theme[] = [
     aesthetic: "Coastal",
     emotionalState: "coastal chill",
     description: "Deep ocean with sky blue accents",
-    tier: "pro",
+    minimumAccess: "pro",
     isDark: true,
     soundEnvironmentId: "calm-revision",
     tags: ["coastal", "calm", "Pro"],
@@ -177,7 +177,7 @@ export const THEMES: Theme[] = [
     aesthetic: "Light Academia",
     emotionalState: "daytime calm",
     description: "Warm off-white for daytime study",
-    tier: "free",
+    minimumAccess: "basic",
     isDark: false,
     soundEnvironmentId: "calm-revision",
     tags: ["daytime", "light", "free"],
@@ -198,7 +198,7 @@ export const examSilenceTheme: ExamTheme = {
   aesthetic: "Exam",
   emotionalState: "controlled pressure",
   description: "A quiet exam-practice atmosphere with no ambience.",
-  tier: "free",
+  minimumAccess: "free",
   isDark: true,
   soundEnvironmentId: null,
   tags: ["exam", "silent", "pressure"],
@@ -210,8 +210,15 @@ export const examSilenceTheme: ExamTheme = {
 };
 
 export const SELECTABLE_THEMES = THEMES;
-export const FREE_THEMES = THEMES.filter((theme) => theme.tier === "free");
-export const PRO_THEMES = THEMES.filter((theme) => theme.tier === "pro");
+export const FREE_THEMES = THEMES.filter(
+  (theme) => theme.minimumAccess === "free",
+);
+export const BASIC_THEMES = THEMES.filter(
+  (theme) => theme.minimumAccess === "free" || theme.minimumAccess === "basic",
+);
+export const PRO_THEMES = THEMES.filter(
+  (theme) => theme.minimumAccess === "pro",
+);
 export const FEATURED_ATMOSPHERE_IDS: SelectableThemeId[] = [
   "midnight-focus",
   "forest-floor",

@@ -65,7 +65,7 @@ function firstVisitTheme() {
 
 function freeSafeTheme(themeId: SelectableThemeId) {
   const theme = getSelectableTheme(themeId);
-  return theme.tier === "pro" ? DEFAULT_THEME : theme.id;
+  return theme.minimumAccess === "pro" ? DEFAULT_THEME : theme.id;
 }
 
 export function ThemeProvider({ children }: { children: ReactNode }) {

@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
 import FeatureUnavailable from "@/components/FeatureUnavailable";
 import FocusZone from "@/components/focus/FocusZone";
+import { getFocusDojoAccessLevel } from "@/lib/focusdojo/access";
 import { isFeatureEnabled } from "@/lib/feature-flags";
 import { siteUrl } from "@/lib/seo";
 import { ThemeProvider } from "@/lib/themeProvider";
+import { createClient } from "@/utils/supabase/server";
 
 export const metadata: Metadata = {
   title: "FocusDojo | Free Study Timer | ScienceDojo",
@@ -24,7 +26,6 @@ export const metadata: Metadata = {
 
 export default async function FocusDojoPage() {
   const enabled = await isFeatureEnabled("focus_dojo_enabled");
-
   if (!enabled) {
     return (
       <FeatureUnavailable
@@ -34,6 +35,12 @@ export default async function FocusDojoPage() {
       />
     );
   }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const accessLevel = await getFocusDojoAccessLevel(user?.id);
 
   return (
     <main className="min-h-screen bg-background text-secondary">
@@ -62,14 +69,14 @@ export default async function FocusDojoPage() {
             mocks, or homework under pressure.
           </p>
           <p>
-            Guests get one Deep Focus soundtrack. ScienceDojo students unlock
-            the full focus environment in their dashboard.
+            Start with selected themes and soundtracks. ScienceDojo students
+            get FocusDojo Basic included with their learning.
           </p>
         </div>
 
         <div className="mt-10 rounded-[1.75rem] border border-secondary/10 bg-white p-2 shadow-xl shadow-secondary/5 md:rounded-[2.25rem] md:p-3">
           <ThemeProvider>
-            <FocusZone accessLevel="guest" shellMode="framed" />
+            <FocusZone accessLevel={accessLevel} shellMode="framed" />
           </ThemeProvider>
         </div>
       </section>

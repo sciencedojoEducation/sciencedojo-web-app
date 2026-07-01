@@ -1,4 +1,5 @@
 import FocusZone from "@/components/focus/FocusZone";
+import { getFocusDojoAccessLevel } from "@/lib/focusdojo/access";
 import { ThemeProvider } from "@/lib/themeProvider";
 import { createClient } from "@/utils/supabase/server";
 
@@ -28,11 +29,12 @@ export default async function TimersPage() {
   const initialDisplayName = getFirstName(
     profile?.full_name || user?.user_metadata?.full_name,
   );
+  const accessLevel = await getFocusDojoAccessLevel(user?.id);
 
   return (
     <ThemeProvider>
       <div className="min-h-full bg-[var(--fd-bg-primary)] p-3 sm:p-4 md:p-6">
-        <FocusZone accessLevel="member" initialDisplayName={initialDisplayName} />
+        <FocusZone accessLevel={accessLevel} initialDisplayName={initialDisplayName} />
       </div>
     </ThemeProvider>
   );

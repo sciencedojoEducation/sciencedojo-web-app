@@ -1,9 +1,13 @@
+import {
+  canAccessFocusDojoItem,
+  type FocusDojoAccessLevel,
+} from "@/lib/focusdojo/access-levels";
 import type { Theme } from "@/lib/themes";
 
 type AtmosphereCardProps = {
   theme: Theme;
   isActive: boolean;
-  isProUser: boolean;
+  accessLevel: FocusDojoAccessLevel;
   onSelect: (themeId: string) => void;
   onProGate: (theme: Theme) => void;
 };
@@ -11,11 +15,21 @@ type AtmosphereCardProps = {
 export default function AtmosphereCard({
   theme,
   isActive,
-  isProUser,
+  accessLevel,
   onSelect,
   onProGate,
 }: AtmosphereCardProps) {
-  const locked = theme.tier === "pro" && !isProUser;
+  const locked = !canAccessFocusDojoItem(accessLevel, theme.minimumAccess);
+  const badge =
+    theme.minimumAccess === "pro"
+      ? locked
+        ? "Pro"
+        : "Pro unlocked"
+      : theme.minimumAccess === "basic"
+        ? locked
+          ? "ScienceDojo"
+          : "Basic"
+        : "Free";
 
   return (
     <button
@@ -70,7 +84,7 @@ export default function AtmosphereCard({
 
       <span className="mt-3 flex flex-wrap gap-1.5">
         <span className="rounded-full bg-[var(--fd-bg-tertiary)] px-2 py-0.5 text-[0.64rem] font-bold uppercase tracking-[0.14em] text-[var(--fd-text-secondary)]">
-          {locked ? "○ Pro" : theme.tier === "pro" ? "✓ Pro" : "Free"}
+          {badge}
         </span>
         {theme.tags.slice(0, 2).map((tag) => (
           <span

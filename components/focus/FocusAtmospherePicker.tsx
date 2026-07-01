@@ -3,11 +3,12 @@ import {
   THEMES,
   type Theme,
 } from "@/lib/themes";
+import type { FocusDojoAccessLevel } from "@/lib/focusdojo/access-levels";
 import AtmosphereCard from "./AtmosphereCard";
 
 type FocusAtmospherePickerProps = {
   currentTheme: string;
-  isProUser: boolean;
+  accessLevel: FocusDojoAccessLevel;
   expanded: boolean;
   onSelect: (themeId: string) => void;
   onProGate: (theme: Theme) => void;
@@ -16,7 +17,7 @@ type FocusAtmospherePickerProps = {
 
 export default function FocusAtmospherePicker({
   currentTheme,
-  isProUser,
+  accessLevel,
   expanded,
   onSelect,
   onProGate,
@@ -38,7 +39,7 @@ export default function FocusAtmospherePicker({
             key={theme.id}
             theme={theme}
             isActive={theme.id === currentTheme}
-            isProUser={isProUser}
+            accessLevel={accessLevel}
             onSelect={onSelect}
             onProGate={onProGate}
           />
