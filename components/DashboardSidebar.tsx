@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/utils/supabase/server";
 import { getUnreadMessageCount } from "@/lib/messaging-queries";
+import DashboardAvatar from "./DashboardAvatar";
 import SidebarLink from "./SidebarLink";
 import DashboardTourReplayButton from "./DashboardTourReplayButton";
 import DashboardMobileDrawer from "./DashboardMobileDrawer";
@@ -193,11 +194,13 @@ export default async function DashboardSidebar({ role }: DashboardSidebarProps) 
               <div className={`w-full h-full rounded-[14px] flex items-center justify-center font-bold overflow-hidden border border-white/5 ${
                 isLight ? "bg-white text-[#1E5AA8]" : "bg-slate-900 text-white"
               }`}>
-                {avatarUrl ? (
-                  <img src={avatarUrl} alt="Profile" className="w-full h-full object-cover" />
-                ) : (
-                  <span className="text-sm font-black tracking-tighter">{userName.charAt(0).toUpperCase()}</span>
-                )}
+                <DashboardAvatar
+                  src={avatarUrl}
+                  name={userName}
+                  fallbackLabel={displayRole}
+                  imgClassName="w-full h-full object-cover"
+                  fallbackClassName="flex h-full w-full items-center justify-center text-sm font-black tracking-tighter"
+                />
               </div>
            </div>
            <div className="overflow-hidden">

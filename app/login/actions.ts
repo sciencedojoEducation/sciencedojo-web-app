@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
-import { cookies } from 'next/headers'
+import { cookies, headers } from 'next/headers'
 import { createClient } from '@/utils/supabase/server'
 import { getSitePath } from '@/lib/site-url'
 import { getActiveInternalMemberByUserId, repairLinkedInternalUserRole } from '@/lib/internal-auth'
@@ -101,6 +101,7 @@ export async function signOut() {
 export async function signInWithGoogle(role?: string, subRole?: string, nextPath?: string) {
   const supabase = await createClient();
   const cookieStore = await cookies();
+  const headersList = await headers();
   const safeNextPath = getSafeNextPath(nextPath);
 
   // If a role is provided (signup flow), store it in a temporary cookie
@@ -116,11 +117,22 @@ export async function signInWithGoogle(role?: string, subRole?: string, nextPath
     cookieStore.set('pending_next', safeNextPath, { maxAge: 60 * 10, path: '/' });
   }
 
-  const roleParam = role ? `role=${encodeURIComponent(role)}` : '';
-  const subRoleParam = subRole ? `subRole=${encodeURIComponent(subRole)}` : '';
-  const nextParam = safeNextPath ? `next=${encodeURIComponent(safeNextPath)}` : '';
-  const queryParams = [roleParam, subRoleParam, nextParam].filter(Boolean).join('&');
-  const redirectTo = `${getSitePath('/auth/callback')}${queryParams ? `?${queryParams}` : ''}`;
+  const queryParams = new URLSearchParams();
+
+  if (role) {
+    queryParams.set('role', role);
+  }
+
+  if (subRole) {
+    queryParams.set('subRole', subRole);
+  }
+
+  if (safeNextPath) {
+    queryParams.set('next', safeNextPath);
+  }
+
+  const queryString = queryParams.toString();
+  const redirectTo = `${getSitePath('/auth/callback', { headers: headersList })}${queryString ? `?${queryString}` : ''}`;
 
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',

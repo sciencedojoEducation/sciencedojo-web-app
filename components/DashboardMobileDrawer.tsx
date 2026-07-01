@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import type { PointerEvent } from "react";
+import DashboardAvatar from "./DashboardAvatar";
 import DashboardTourReplayButton from "./DashboardTourReplayButton";
 import { signOut } from "@/app/login/actions";
 
@@ -193,13 +194,11 @@ export default function DashboardMobileDrawer({
             <div className="min-h-0 flex-1 overflow-y-auto px-4 py-3.5">
               <div className="mb-3 flex items-center gap-3 rounded-[1.35rem] border border-slate-200/80 bg-white/88 p-3 shadow-sm">
                 <div className="h-10 w-10 shrink-0 overflow-hidden rounded-2xl border border-white bg-[#1E5AA8]/10 text-[#1E5AA8] shadow-sm">
-                  {avatarUrl ? (
-                    <img src={avatarUrl} alt="Profile" className="h-full w-full object-cover" />
-                  ) : (
-                    <div className="flex h-full w-full items-center justify-center text-sm font-black">
-                      {userName.charAt(0).toUpperCase()}
-                    </div>
-                  )}
+                  <DashboardAvatar
+                    src={avatarUrl}
+                    name={userName}
+                    fallbackLabel={displayRole}
+                  />
                 </div>
                 <div className="min-w-0">
                   <p className="truncate text-sm font-black leading-tight text-[#001A3D]">{userName}</p>

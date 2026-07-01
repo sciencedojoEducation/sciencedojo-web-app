@@ -244,7 +244,7 @@ export async function GET(request: Request) {
         return NextResponse.redirect(`${origin}${safeNext ? withAuthReturnFlag(safeNext) : `/dashboard/${existingRole}`}`);
       }
 
-      return NextResponse.redirect(`${origin}${next}`);
+      return NextResponse.redirect(`${origin}/login?error=${encodeURIComponent('Google login completed but no user session was found. Please try again.')}`);
     }
     
     const cookieStore = await cookies();
