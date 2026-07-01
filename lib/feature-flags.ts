@@ -49,6 +49,13 @@ export const FEATURE_FLAG_DEFINITIONS = [
     defaultEnabled: false,
   },
   {
+    key: "focus_dojo_enabled",
+    label: "FocusDojo",
+    description: "Show the public FocusDojo timer and study atmosphere tool.",
+    category: "AI / Practice Tools",
+    defaultEnabled: true,
+  },
+  {
     key: "ai_practice_generator_enabled",
     label: "AI practice generator",
     description: "Allow AI-backed practice question generation routes.",

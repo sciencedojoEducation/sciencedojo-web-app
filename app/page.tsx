@@ -345,7 +345,9 @@ export default async function Home({
               ScienceDojo helps GCSE, IGCSE, IB, and A-Level students build science confidence through expert tutoring, structured practice, and personalized learning Missions.
             </p>
 
-            {(flags.free_assessment_enabled || flags.practice_dojo_enabled) && (
+            {(flags.free_assessment_enabled ||
+              flags.practice_dojo_enabled ||
+              flags.focus_dojo_enabled) && (
               <div className="mt-8 hidden items-center gap-4 lg:flex">
                 {flags.free_assessment_enabled && (
                   <BookAssessmentLink
@@ -361,6 +363,14 @@ export default async function Home({
                     className="rounded-2xl border border-white/15 bg-white/5 px-10 py-4 font-black text-white backdrop-blur-md transition-all hover:-translate-y-0.5 hover:bg-white/10"
                   >
                     Try Practice Dojo
+                  </Link>
+                )}
+                {flags.focus_dojo_enabled && (
+                  <Link
+                    href="/focus-dojo"
+                    className="rounded-2xl border border-white/15 bg-white/5 px-10 py-4 font-black text-white backdrop-blur-md transition-all hover:-translate-y-0.5 hover:bg-white/10"
+                  >
+                    Try FocusDojo
                   </Link>
                 )}
               </div>
@@ -406,7 +416,9 @@ export default async function Home({
           </div>
 
           <div className="relative z-10 grid w-full gap-5 lg:hidden">
-            {(flags.free_assessment_enabled || flags.practice_dojo_enabled) && (
+            {(flags.free_assessment_enabled ||
+              flags.practice_dojo_enabled ||
+              flags.focus_dojo_enabled) && (
               <div className="flex flex-col gap-3">
                 {flags.free_assessment_enabled && (
                   <BookAssessmentLink
@@ -422,6 +434,14 @@ export default async function Home({
                     className="w-full rounded-2xl border border-white/20 bg-secondary/35 px-6 py-3.5 text-center text-sm font-black text-white shadow-lg shadow-secondary/15 backdrop-blur-md transition-all hover:bg-secondary/45"
                   >
                     Try Practice Dojo
+                  </Link>
+                )}
+                {flags.focus_dojo_enabled && (
+                  <Link
+                    href="/focus-dojo"
+                    className="w-full rounded-2xl border border-white/20 bg-secondary/35 px-6 py-3.5 text-center text-sm font-black text-white shadow-lg shadow-secondary/15 backdrop-blur-md transition-all hover:bg-secondary/45"
+                  >
+                    Try FocusDojo
                   </Link>
                 )}
               </div>

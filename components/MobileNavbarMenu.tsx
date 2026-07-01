@@ -18,6 +18,7 @@ type MobileNavbarMenuProps = {
   showTutorMarketplace?: boolean;
   showLearningHub?: boolean;
   showPracticeDojo?: boolean;
+  showFocusDojo?: boolean;
   showFreeAssessment?: boolean;
 };
 
@@ -27,6 +28,7 @@ export default function MobileNavbarMenu({
   showTutorMarketplace = true,
   showLearningHub = true,
   showPracticeDojo = true,
+  showFocusDojo = true,
   showFreeAssessment = true,
 }: MobileNavbarMenuProps) {
   const pathname = usePathname();
@@ -157,6 +159,11 @@ export default function MobileNavbarMenu({
             {showPracticeDojo && (
               <Link href="/ai-practice-studio" onClick={closeMenu} className={navLinkClass}>
                 Practice Dojo
+              </Link>
+            )}
+            {showFocusDojo && (
+              <Link href="/focus-dojo" onClick={closeMenu} className={navLinkClass}>
+                FocusDojo
               </Link>
             )}
             {showFreeAssessment && (

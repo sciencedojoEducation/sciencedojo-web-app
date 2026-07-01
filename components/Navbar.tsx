@@ -33,6 +33,7 @@ export default async function Navbar() {
             showTutorMarketplace={flags.tutor_marketplace_enabled}
             showLearningHub={flags.learning_hub_enabled}
             showPracticeDojo={flags.practice_dojo_enabled}
+            showFocusDojo={flags.focus_dojo_enabled}
             showFreeAssessment={flags.free_assessment_enabled}
           />
           <Link href="/" className="hover:opacity-80 transition-opacity">
@@ -54,6 +55,11 @@ export default async function Navbar() {
           {flags.practice_dojo_enabled && (
             <Link href="/ai-practice-studio" className="text-sm font-medium text-secondary/70 hover:text-primary transition-colors">
               Practice Dojo
+            </Link>
+          )}
+          {flags.focus_dojo_enabled && (
+            <Link href="/focus-dojo" className="text-sm font-medium text-secondary/70 hover:text-primary transition-colors">
+              FocusDojo
             </Link>
           )}
           {flags.free_assessment_enabled && (

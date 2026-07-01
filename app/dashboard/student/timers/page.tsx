@@ -1,22 +1,39 @@
-import StudentTimer from "./StudentTimer";
+import FocusZone from "@/components/focus/FocusZone";
+import { ThemeProvider } from "@/lib/themeProvider";
+import { createClient } from "@/utils/supabase/server";
 
 export const metadata = {
   title: "Focus Zone | ScienceDojo",
   description: "A calm academic study environment for focused practice and exam timing.",
 };
 
-export default function TimersPage() {
-  return (
-    <div className="mx-auto max-w-6xl space-y-5 px-3 py-5 sm:px-4 md:space-y-8 md:p-8">
-      <div className="rounded-[1.5rem] border border-secondary/5 bg-white p-4 shadow-sm md:rounded-[2rem] md:p-6">
-         <p className="mb-2 text-[10px] font-black uppercase tracking-[0.16em] text-primary/60">Study environment</p>
-         <h1 className="mb-2 text-3xl font-black tracking-tight text-navy">Focus Zone</h1>
-         <p className="max-w-2xl text-sm font-medium leading-relaxed text-navy/55 md:text-base">
-           Enter a calm study space for focused revision, structured breaks, or exam-style timing.
-         </p>
-      </div>
+function getFirstName(name?: string | null) {
+  return name?.trim().split(/\s+/)[0]?.slice(0, 32) ?? "";
+}
 
-      <StudentTimer />
-    </div>
+export default async function TimersPage() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const { data: profile } = user
+    ? await supabase
+        .from("profiles")
+        .select("full_name")
+        .eq("id", user.id)
+        .maybeSingle()
+    : { data: null };
+
+  const initialDisplayName = getFirstName(
+    profile?.full_name || user?.user_metadata?.full_name,
+  );
+
+  return (
+    <ThemeProvider>
+      <div className="min-h-full bg-[var(--fd-bg-primary)] p-3 sm:p-4 md:p-6">
+        <FocusZone accessLevel="member" initialDisplayName={initialDisplayName} />
+      </div>
+    </ThemeProvider>
   );
 }
