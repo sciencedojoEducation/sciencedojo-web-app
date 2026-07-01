@@ -69,8 +69,8 @@ export async function POST(req: Request) {
           plan,
         },
       },
-      success_url: `${origin}/focus-dojo?upgraded=focusdojo_pro`,
-      cancel_url: `${origin}/focus-dojo/pricing?canceled=true`,
+      success_url: `${origin}/focus-dojo?checkout=success&session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${origin}/focus-dojo/pricing?checkout=cancelled`,
     });
 
     return NextResponse.json({ url: session.url });

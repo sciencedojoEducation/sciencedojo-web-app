@@ -3,6 +3,11 @@ import Stripe from 'stripe';
 import { createMeetingUrl } from '@/lib/meetings';
 import { createCalendarEvent } from '@/lib/calendar';
 import { FOCUSDOJO_PRO_PRODUCT_KEY } from '@/lib/focusdojo/access-levels';
+import {
+  getStripeSubscriptionIdFromInvoice,
+  syncFocusDojoSubscriptionFromStripeSubscriptionId,
+  upsertFocusDojoSubscriptionFromStripeSubscription,
+} from '@/lib/focusdojo/subscription-sync';
 import { findOrCreateClass } from '@/lib/class-queries';
 import { createAdminClient } from '@/utils/supabase/admin';
 
@@ -10,112 +15,15 @@ const stripeSecretKey = process.env.STRIPE_SECRET_KEY || "sk_test_dummy";
 const stripe = new Stripe(stripeSecretKey);
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET || "whsec_dummy";
 
-type FocusDojoPlan = "monthly" | "yearly";
-type StripeSubscriptionWithPeriods = Stripe.Subscription & {
-  current_period_start?: number | null;
-  current_period_end?: number | null;
-  items?: {
-    data?: Array<{
-      current_period_start?: number | null;
-      current_period_end?: number | null;
-      price?: {
-        id?: string | null;
-      };
-    }>;
-  };
-};
-type StripeInvoiceWithSubscription = Stripe.Invoice & {
-  subscription?: string | Stripe.Subscription | null;
-};
-
-function unixToIso(value: number | null | undefined) {
-  return value ? new Date(value * 1000).toISOString() : null;
-}
-
 function stripeId(value: string | { id: string } | null | undefined) {
   if (!value) return null;
   return typeof value === "string" ? value : value.id;
 }
 
-function inferFocusDojoPlan(
-  metadataPlan?: string | null,
-  priceId?: string | null,
-): FocusDojoPlan | null {
-  if (metadataPlan === "monthly" || metadataPlan === "yearly") {
-    return metadataPlan;
-  }
-  if (priceId && priceId === process.env.FOCUSDOJO_PRO_MONTHLY_PRICE_ID) {
-    return "monthly";
-  }
-  if (priceId && priceId === process.env.FOCUSDOJO_PRO_YEARLY_PRICE_ID) {
-    return "yearly";
-  }
-  return null;
-}
-
-async function upsertFocusDojoSubscription(
-  subscription: Stripe.Subscription,
-  sessionMetadata?: Stripe.Metadata | null,
-) {
-  const supabase = createAdminClient();
-  const subscriptionWithPeriods = subscription as StripeSubscriptionWithPeriods;
-  const item = subscriptionWithPeriods.items?.data?.[0];
-  const metadata = {
-    ...(subscription.metadata || {}),
-    ...(sessionMetadata || {}),
-  };
-  let userId = metadata.user_id || null;
-
-  if (!userId) {
-    const { data: existing } = await supabase
-      .from("subscriptions")
-      .select("user_id")
-      .eq("stripe_subscription_id", subscription.id)
-      .maybeSingle();
-    userId = existing?.user_id ?? null;
-  }
-
-  if (!userId) {
-    console.error("[Stripe Webhook] FocusDojo subscription missing user_id", subscription.id);
-    return;
-  }
-
-  const currentPeriodStart =
-    subscriptionWithPeriods.current_period_start ?? item?.current_period_start;
-  const currentPeriodEnd =
-    subscriptionWithPeriods.current_period_end ?? item?.current_period_end;
-  const priceId = item?.price?.id ?? null;
-  const plan = inferFocusDojoPlan(metadata.plan, priceId);
-
-  const { error } = await supabase.from("subscriptions").upsert(
-    {
-      user_id: userId,
-      stripe_customer_id: stripeId(subscription.customer),
-      stripe_subscription_id: subscription.id,
-      product_key: FOCUSDOJO_PRO_PRODUCT_KEY,
-      status: subscription.status,
-      plan,
-      current_period_start: unixToIso(currentPeriodStart),
-      current_period_end: unixToIso(currentPeriodEnd),
-      cancel_at_period_end: subscription.cancel_at_period_end,
-    },
-    { onConflict: "user_id,product_key" },
-  );
-
-  if (error) {
-    console.error("[Stripe Webhook] FocusDojo subscription upsert failed:", error.message);
-  }
-}
-
 async function handleFocusDojoInvoice(invoice: Stripe.Invoice) {
-  const invoiceWithSubscription = invoice as StripeInvoiceWithSubscription;
-  const subscriptionId = stripeId(invoiceWithSubscription.subscription);
+  const subscriptionId = getStripeSubscriptionIdFromInvoice(invoice);
   if (!subscriptionId) return;
-  const subscription = await stripe.subscriptions.retrieve(subscriptionId);
-  if (subscription.metadata?.product_key !== FOCUSDOJO_PRO_PRODUCT_KEY) {
-    return;
-  }
-  await upsertFocusDojoSubscription(subscription);
+  await syncFocusDojoSubscriptionFromStripeSubscriptionId(subscriptionId);
 }
 
 export async function POST(req: Request) {
@@ -143,6 +51,8 @@ export async function POST(req: Request) {
     }
   }
 
+  console.log("[stripe-webhook] received", { type: event.type });
+
   if (event.type === 'checkout.session.completed') {
     const session = event.data.object as Stripe.Checkout.Session;
     const { bookingId, product_key } = session.metadata || {};
@@ -150,11 +60,23 @@ export async function POST(req: Request) {
     const sessionSubscriptionId = stripeId(
       session.subscription as string | Stripe.Subscription | null,
     );
-    if (product_key === FOCUSDOJO_PRO_PRODUCT_KEY && sessionSubscriptionId) {
-      const subscription = await stripe.subscriptions.retrieve(
+    console.log("[stripe-webhook] checkout session completed", {
+      productKey: product_key,
+      focusDojoProductDetected: product_key === FOCUSDOJO_PRO_PRODUCT_KEY,
+      subscriptionId: sessionSubscriptionId,
+      userId: session.metadata?.user_id,
+      bookingId,
+    });
+
+    if (
+      session.mode === "subscription" &&
+      product_key === FOCUSDOJO_PRO_PRODUCT_KEY &&
+      sessionSubscriptionId
+    ) {
+      await syncFocusDojoSubscriptionFromStripeSubscriptionId(
         sessionSubscriptionId,
+        session.metadata,
       );
-      await upsertFocusDojoSubscription(subscription, session.metadata);
       return NextResponse.json({ received: true });
     }
     
@@ -221,14 +143,29 @@ export async function POST(req: Request) {
     event.type === 'customer.subscription.deleted'
   ) {
     const subscription = event.data.object as Stripe.Subscription;
+    console.log("[stripe-webhook] subscription event", {
+      type: event.type,
+      productKey: subscription.metadata?.product_key,
+      focusDojoProductDetected:
+        subscription.metadata?.product_key === FOCUSDOJO_PRO_PRODUCT_KEY,
+      subscriptionId: subscription.id,
+      customerId: stripeId(subscription.customer),
+      userId: subscription.metadata?.user_id,
+      status: subscription.status,
+    });
     if (subscription.metadata?.product_key === FOCUSDOJO_PRO_PRODUCT_KEY) {
-      await upsertFocusDojoSubscription(subscription);
+      await upsertFocusDojoSubscriptionFromStripeSubscription(subscription);
     }
   } else if (
+    event.type === 'invoice.paid' ||
     event.type === 'invoice.payment_succeeded' ||
     event.type === 'invoice.payment_failed'
   ) {
     const invoice = event.data.object as Stripe.Invoice;
+    console.log("[stripe-webhook] invoice event", {
+      type: event.type,
+      subscriptionId: getStripeSubscriptionIdFromInvoice(invoice),
+    });
     await handleFocusDojoInvoice(invoice);
   }
 

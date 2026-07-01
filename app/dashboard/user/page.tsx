@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getFocusDojoAccessLevel } from "@/lib/focusdojo/access";
+import { FOCUSDOJO_PRO_PRODUCT_KEY } from "@/lib/focusdojo/access-levels";
 import { createClient } from "@/utils/supabase/server";
 
 export const metadata = {
@@ -12,6 +13,15 @@ function firstName(name?: string | null) {
   return name?.trim().split(/\s+/)[0] || "there";
 }
 
+function formatDate(value?: string | null) {
+  if (!value) return null;
+  return new Intl.DateTimeFormat("en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  }).format(new Date(value));
+}
+
 export default async function UserDashboardPage() {
   const supabase = await createClient();
   const {
@@ -20,14 +30,21 @@ export default async function UserDashboardPage() {
 
   if (!user) redirect("/login");
 
-  const [{ data: profile }, accessLevelResult] = await Promise.all([
-    supabase
-      .from("profiles")
-      .select("full_name, email")
-      .eq("id", user.id)
-      .maybeSingle(),
-    getFocusDojoAccessLevel(user.id),
-  ]);
+  const [{ data: profile }, { data: subscription }, accessLevelResult] =
+    await Promise.all([
+      supabase
+        .from("profiles")
+        .select("full_name, email")
+        .eq("id", user.id)
+        .maybeSingle(),
+      supabase
+        .from("subscriptions")
+        .select("plan, status, current_period_end, cancel_at_period_end")
+        .eq("user_id", user.id)
+        .eq("product_key", FOCUSDOJO_PRO_PRODUCT_KEY)
+        .maybeSingle(),
+      getFocusDojoAccessLevel(user.id),
+    ]);
 
   const name = profile?.full_name || user.user_metadata?.full_name;
   const accessLabel =
@@ -36,6 +53,13 @@ export default async function UserDashboardPage() {
       : accessLevelResult === "basic"
         ? "FocusDojo Basic"
         : "FocusDojo Free";
+  const periodEnd = formatDate(subscription?.current_period_end);
+  const subscriptionDescription =
+    accessLevelResult === "pro"
+      ? "Your full FocusDojo environment is unlocked."
+      : accessLevelResult === "basic"
+        ? "Included with your ScienceDojo learning. You have 3 themes and all background music."
+        : "Selected themes and music are available.";
 
   return (
     <div className="mx-auto max-w-5xl space-y-6 px-4 py-6 md:p-8">
@@ -77,11 +101,35 @@ export default async function UserDashboardPage() {
             Subscription
           </p>
           <h2 className="mt-2 text-xl font-black text-secondary">
-            Manage access
+            {accessLabel}
           </h2>
           <p className="mt-3 text-sm font-semibold leading-6 text-secondary/55">
-            Upgrade to Pro or review the FocusDojo access tiers.
+            {subscriptionDescription}
           </p>
+          {subscription ? (
+            <dl className="mt-4 grid gap-2 text-sm font-bold text-secondary/60">
+              {subscription.plan ? (
+                <div className="flex items-center justify-between gap-3 rounded-xl bg-secondary/[0.03] px-3 py-2">
+                  <dt>Plan</dt>
+                  <dd className="capitalize text-secondary">{subscription.plan}</dd>
+                </div>
+              ) : null}
+              <div className="flex items-center justify-between gap-3 rounded-xl bg-secondary/[0.03] px-3 py-2">
+                <dt>Status</dt>
+                <dd className="capitalize text-secondary">
+                  {subscription.status.replace(/_/g, " ")}
+                </dd>
+              </div>
+              {periodEnd ? (
+                <div className="flex items-center justify-between gap-3 rounded-xl bg-secondary/[0.03] px-3 py-2">
+                  <dt>
+                    {subscription.cancel_at_period_end ? "Ends" : "Renews"}
+                  </dt>
+                  <dd className="text-secondary">{periodEnd}</dd>
+                </div>
+              ) : null}
+            </dl>
+          ) : null}
           <Link
             href="/focus-dojo/pricing"
             className="mt-5 inline-flex min-h-11 items-center justify-center rounded-2xl border border-secondary/10 bg-white px-5 text-sm font-black text-secondary transition hover:border-primary/30 hover:text-primary"
