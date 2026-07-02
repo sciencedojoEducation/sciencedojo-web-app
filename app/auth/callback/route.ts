@@ -101,9 +101,15 @@ export async function GET(request: Request) {
           const adminClient = createAdminClient();
           const { data: currentProfile } = await supabase
             .from('profiles')
-            .select('role, student_name')
+            .select('role, student_name, is_suspended')
             .eq('id', user.id)
             .maybeSingle();
+
+          if (currentProfile?.is_suspended || user.user_metadata?.is_suspended) {
+            clearPendingSignupCookies(cookieStore);
+            await supabase.auth.signOut();
+            return NextResponse.redirect(`${origin}/login?error=${encodeURIComponent('This account has been deactivated. Please contact ScienceDojo support if you believe this is a mistake.')}`);
+          }
 
           const profileRole = normalizeDashboardRole(currentProfile?.role);
           const metadataRole = normalizeDashboardRole(user.user_metadata?.role);
@@ -209,9 +215,14 @@ export async function GET(request: Request) {
 
         const { data: existingProfile } = await supabase
           .from('profiles')
-          .select('role, student_name')
+          .select('role, student_name, is_suspended')
           .eq('id', existingUser.id)
           .maybeSingle();
+
+        if (existingProfile?.is_suspended || existingUser.user_metadata?.is_suspended) {
+          await supabase.auth.signOut();
+          return NextResponse.redirect(`${origin}/login?error=${encodeURIComponent('This account has been deactivated. Please contact ScienceDojo support if you believe this is a mistake.')}`);
+        }
 
         const existingRole = normalizeDashboardRole(existingProfile?.role) || normalizeDashboardRole(existingUser.user_metadata?.role) || 'user';
         if (existingRole === 'internal') {

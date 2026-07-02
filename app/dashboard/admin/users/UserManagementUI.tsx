@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import UserAvatar from "@/components/UserAvatar";
-import { adminCreateUser, adminDeleteUser } from "./actions";
+import { adminCreateUser, adminDeactivateUser, adminPermanentlyDeleteTestUser } from "./actions";
 
 interface UserProfile {
   id: string;
@@ -13,6 +13,7 @@ interface UserProfile {
   role: string;
   avatar_url: string;
   created_at: string;
+  is_suspended?: boolean | null;
 }
 
 export default function UserManagementUI({ users, currentUserId }: { users: UserProfile[], currentUserId: string }) {
@@ -22,7 +23,9 @@ export default function UserManagementUI({ users, currentUserId }: { users: User
   
   // Modals
   const [isCreating, setIsCreating] = useState(false);
-  const [deletingUser, setDeletingUser] = useState<UserProfile | null>(null);
+  const [deactivatingUser, setDeactivatingUser] = useState<UserProfile | null>(null);
+  const [permanentDeleteUser, setPermanentDeleteUser] = useState<UserProfile | null>(null);
+  const [permanentDeleteConfirmation, setPermanentDeleteConfirmation] = useState("");
 
   // Loaders
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -61,25 +64,42 @@ export default function UserManagementUI({ users, currentUserId }: { users: User
       const formData = new FormData(e.currentTarget);
       await adminCreateUser(formData);
       setIsCreating(false);
-    } catch (err: any) {
-      setError(err.message || "Failed to create user.");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Failed to create user.");
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleDelete = async () => {
-    if (!deletingUser) return;
+  const handleDeactivate = async () => {
+    if (!deactivatingUser) return;
     setIsSubmitting(true);
     setError(null);
     
     try {
-      await adminDeleteUser(deletingUser.id);
-      setDeletingUser(null);
+      await adminDeactivateUser(deactivatingUser.id);
+      setDeactivatingUser(null);
       // Force RSC to re-fetch the latest database state
       router.refresh();
-    } catch (err: any) {
-      setError(err.message || "Failed to delete user.");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Failed to deactivate user.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handlePermanentDelete = async () => {
+    if (!permanentDeleteUser) return;
+    setIsSubmitting(true);
+    setError(null);
+
+    try {
+      await adminPermanentlyDeleteTestUser(permanentDeleteUser.id, permanentDeleteConfirmation);
+      setPermanentDeleteUser(null);
+      setPermanentDeleteConfirmation("");
+      router.refresh();
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Failed to permanently delete test user.");
     } finally {
       setIsSubmitting(false);
     }
@@ -93,7 +113,7 @@ export default function UserManagementUI({ users, currentUserId }: { users: User
            <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.18em] text-slate-400">User operations</p>
            <h1 className="mb-2 text-2xl font-black tracking-tight text-slate-900 md:text-3xl">User Directory</h1>
            <p className="max-w-2xl text-sm font-medium leading-relaxed text-slate-500 md:text-base">
-             Manage platform users quickly, clearly, and safely. Delete actions permanently remove related account history.
+             Manage platform users quickly, clearly, and safely. Deactivate real users; permanently delete only test accounts that must sign up again.
            </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -181,7 +201,7 @@ export default function UserManagementUI({ users, currentUserId }: { users: User
                 </div>
                 <div className="rounded-2xl bg-slate-50 p-3">
                   <p className="text-[9px] font-bold uppercase tracking-widest text-slate-400">Account</p>
-                  <p className="mt-1 text-xs font-black capitalize text-slate-700">{u.id === currentUserId ? "Current admin" : "Managed user"}</p>
+                  <p className="mt-1 text-xs font-black capitalize text-slate-700">{u.is_suspended ? "Deactivated" : u.id === currentUserId ? "Current admin" : "Active"}</p>
                 </div>
               </div>
 
@@ -193,12 +213,23 @@ export default function UserManagementUI({ users, currentUserId }: { users: User
                   Email
                 </a>
                 {u.id !== currentUserId ? (
-                  <button
-                    onClick={() => setDeletingUser(u)}
-                    className="inline-flex min-h-10 items-center rounded-xl px-3 py-2 text-xs font-black text-red-500 transition-colors hover:bg-red-50"
-                  >
-                    Delete user
-                  </button>
+                  <div className="flex flex-wrap justify-end gap-2">
+                    <button
+                      onClick={() => setDeactivatingUser(u)}
+                      className="inline-flex min-h-10 items-center rounded-xl px-3 py-2 text-xs font-black text-amber-600 transition-colors hover:bg-amber-50"
+                    >
+                      Deactivate
+                    </button>
+                    <button
+                      onClick={() => {
+                        setPermanentDeleteUser(u);
+                        setPermanentDeleteConfirmation("");
+                      }}
+                      className="inline-flex min-h-10 items-center rounded-xl px-3 py-2 text-xs font-black text-red-500 transition-colors hover:bg-red-50"
+                    >
+                      Delete test
+                    </button>
+                  </div>
                 ) : (
                   <span className="inline-flex min-h-10 items-center rounded-xl px-3 py-2 text-xs font-black text-slate-300">
                     Protected
@@ -243,18 +274,34 @@ export default function UserManagementUI({ users, currentUserId }: { users: User
                     <span className={`inline-flex whitespace-nowrap rounded-full border px-3 py-1 text-[10px] font-black uppercase tracking-widest ${roleTone(u.role)}`}>
                       {u.role}
                     </span>
+                    {u.is_suspended && (
+                      <span className="ml-2 inline-flex whitespace-nowrap rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-amber-700">
+                        inactive
+                      </span>
+                    )}
                   </td>
                   <td className="p-6 text-sm text-slate-500">
                     {joinedDate(u.created_at)}
                   </td>
                   <td className="p-6 text-right">
                     {u.id !== currentUserId ? (
-                      <button 
-                         onClick={() => setDeletingUser(u)}
-                         className="px-4 py-2 text-[10px] font-black uppercase tracking-wider text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                      >
-                         Delete
-                      </button>
+                      <div className="flex justify-end gap-2">
+                        <button
+                           onClick={() => setDeactivatingUser(u)}
+                           className="rounded-lg px-3 py-2 text-[10px] font-black uppercase tracking-wider text-amber-600 transition-colors hover:bg-amber-50"
+                        >
+                           Deactivate
+                        </button>
+                        <button 
+                           onClick={() => {
+                             setPermanentDeleteUser(u);
+                             setPermanentDeleteConfirmation("");
+                           }}
+                           className="rounded-lg px-3 py-2 text-[10px] font-black uppercase tracking-wider text-red-500 transition-colors hover:bg-red-50"
+                        >
+                           Delete test
+                        </button>
+                      </div>
                     ) : (
                       <span className="text-[10px] font-black uppercase tracking-wider text-slate-300 px-4">You</span>
                     )}
@@ -274,22 +321,51 @@ export default function UserManagementUI({ users, currentUserId }: { users: User
         </table>
       </div>
 
-      {/* DELETE SAFEGUARD MODAL */}
-      {deletingUser && (
+      {/* DEACTIVATE SAFEGUARD MODAL */}
+      {deactivatingUser && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => !isSubmitting && setDeletingUser(null)}></div>
+          <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => !isSubmitting && setDeactivatingUser(null)}></div>
           <div className="bg-white rounded-[2rem] shadow-2xl p-8 w-full max-w-md relative animate-in fade-in zoom-in-95 duration-200">
-             <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center text-red-500 mb-6 mx-auto">
-                <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+             <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center text-amber-600 mb-6 mx-auto">
+                <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 0 0 5.636 5.636m12.728 12.728A9 9 0 0 1 5.636 5.636m12.728 12.728L5.636 5.636" /></svg>
              </div>
-             <h3 className="text-xl font-black text-center text-slate-900 mb-2">Delete this Account?</h3>
+             <h3 className="text-xl font-black text-center text-slate-900 mb-2">Deactivate this account?</h3>
              <p className="text-slate-500 text-sm text-center mb-8 px-4 font-medium leading-relaxed">
-               You are about to permanently delete <strong className="text-slate-800">{deletingUser.full_name} ({deletingUser.email})</strong>. This action is irreversible and will cascade-delete all of their history.
+               <strong className="text-slate-800">{deactivatingUser.full_name} ({deactivatingUser.email})</strong> will be suspended and memberships will be marked inactive. Their email remains reserved.
              </p>
              <div className="flex gap-3">
-               <button onClick={() => setDeletingUser(null)} disabled={isSubmitting} className="flex-1 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl transition-colors disabled:opacity-50">Cancel</button>
-               <button onClick={handleDelete} disabled={isSubmitting} className="flex-1 py-3 bg-red-500 hover:bg-red-600 text-white font-black tracking-tight rounded-xl shadow-lg shadow-red-200 transition-all disabled:opacity-50">
-                 {isSubmitting ? 'Deleting...' : 'Yes, Delete Permanently'}
+               <button onClick={() => setDeactivatingUser(null)} disabled={isSubmitting} className="flex-1 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl transition-colors disabled:opacity-50">Cancel</button>
+               <button onClick={handleDeactivate} disabled={isSubmitting} className="flex-1 py-3 bg-amber-500 hover:bg-amber-600 text-white font-black tracking-tight rounded-xl shadow-lg shadow-amber-200 transition-all disabled:opacity-50">
+                 {isSubmitting ? 'Deactivating...' : 'Deactivate'}
+               </button>
+             </div>
+          </div>
+        </div>
+      )}
+
+      {/* PERMANENT TEST DELETE SAFEGUARD MODAL */}
+      {permanentDeleteUser && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" onClick={() => !isSubmitting && setPermanentDeleteUser(null)}></div>
+          <div className="bg-white rounded-[2rem] shadow-2xl p-8 w-full max-w-md relative animate-in fade-in zoom-in-95 duration-200">
+             <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center text-red-500 mb-6 mx-auto">
+                <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0 1 16.138 21H7.862a2 2 0 0 1-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v3M4 7h16" /></svg>
+             </div>
+             <h3 className="text-xl font-black text-center text-slate-900 mb-2">Permanently delete test user?</h3>
+             <p className="text-slate-500 text-sm text-center mb-5 px-4 font-medium leading-relaxed">
+               This removes app records, memberships, linked role rows, local storage files, and the Supabase Auth identity for <strong className="text-slate-800">{permanentDeleteUser.full_name} ({permanentDeleteUser.email})</strong>. Use only for test accounts that need to sign up fresh.
+             </p>
+             <label className="mb-2 block text-[10px] font-black uppercase tracking-widest text-slate-400">Type the email to confirm</label>
+             <input
+               value={permanentDeleteConfirmation}
+               onChange={(event) => setPermanentDeleteConfirmation(event.target.value)}
+               placeholder={permanentDeleteUser.email}
+               className="mb-6 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-700 outline-none transition-colors focus:border-red-400 focus:ring-4 focus:ring-red-100"
+             />
+             <div className="flex gap-3">
+               <button onClick={() => setPermanentDeleteUser(null)} disabled={isSubmitting} className="flex-1 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl transition-colors disabled:opacity-50">Cancel</button>
+               <button onClick={handlePermanentDelete} disabled={isSubmitting || permanentDeleteConfirmation.trim().toLowerCase() !== permanentDeleteUser.email.toLowerCase()} className="flex-1 py-3 bg-red-500 hover:bg-red-600 text-white font-black tracking-tight rounded-xl shadow-lg shadow-red-200 transition-all disabled:opacity-50">
+                 {isSubmitting ? 'Deleting...' : 'Delete Test User'}
                </button>
              </div>
           </div>

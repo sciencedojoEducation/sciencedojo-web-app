@@ -69,6 +69,15 @@ function getRequestOrigin(headersList?: Headers | null) {
   return getSafeOrigin(`${protocol}://${host}`);
 }
 
+function isLocalOrigin(origin: string) {
+  if (!origin) {
+    return false;
+  }
+
+  const { hostname } = new URL(origin);
+  return hostname === "localhost" || hostname === "127.0.0.1" || hostname === "[::1]";
+}
+
 function getDeploymentOrigin() {
   return (
     getSafeOrigin(process.env.VERCEL_PROJECT_PRODUCTION_URL) ||
@@ -77,6 +86,12 @@ function getDeploymentOrigin() {
 }
 
 export function getSiteUrl(options: SiteUrlOptions = {}) {
+  const requestOrigin = getRequestOrigin(options.headers);
+
+  if (process.env.NODE_ENV !== "production" && isLocalOrigin(requestOrigin)) {
+    return requestOrigin;
+  }
+
   const configuredOrigin =
     getSafeOrigin(process.env.NEXT_PUBLIC_SITE_URL) ||
     getSafeOrigin(process.env.NEXT_PUBLIC_APP_URL) ||
@@ -86,8 +101,6 @@ export function getSiteUrl(options: SiteUrlOptions = {}) {
   if (configuredOrigin) {
     return configuredOrigin;
   }
-
-  const requestOrigin = getRequestOrigin(options.headers);
 
   if (requestOrigin) {
     return requestOrigin;

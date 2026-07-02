@@ -2,6 +2,10 @@
 
 import { createClient } from "@/utils/supabase/server";
 import { createAdminClient } from "@/utils/supabase/admin";
+import {
+  deactivateUserAccount,
+  permanentlyDeleteTestUserAccount,
+} from "@/lib/admin-user-lifecycle";
 import { revalidatePath } from "next/cache";
 
 export async function adminCreateUser(formData: FormData) {
@@ -63,44 +67,10 @@ export async function adminCreateUser(formData: FormData) {
 }
 
 
-export async function adminDeleteUser(targetUserId: string) {
-  // Verify execution permission
-  const supabase = await createClient();
-  const { data: { user: currentUser } } = await supabase.auth.getUser();
+export async function adminDeactivateUser(targetUserId: string) {
+  return deactivateUserAccount(targetUserId);
+}
 
-  if (!currentUser) throw new Error("Unauthorized");
-  if (currentUser.id === targetUserId) throw new Error("You cannot permanently delete yourself.");
-
-  const { data: profile } = await supabase.from("profiles").select("role").eq("id", currentUser.id).single();
-  if (profile?.role !== "admin") throw new Error("Permission Denied.");
-
-  // Engage Admin API
-  const adminClient = createAdminClient();
-
-  // Wipes the record from public.profiles FIRST
-  const { error: profileError } = await adminClient
-    .from("profiles")
-    .delete()
-    .eq("id", targetUserId);
-
-  if (profileError) {
-    console.error(`Failed to delete profile for user ${targetUserId}:`, profileError.message);
-    // Continue anyway to try and wipe the auth user
-  }
-
-  // Wipes the user from auth.users (Cascading deletes across entire database natively)
-  const { error } = await adminClient.auth.admin.deleteUser(targetUserId);
-
-  if (error) {
-    // If the user is already gone from Auth, it's a success for us
-    if (error.message?.includes("User not found")) {
-      console.log(`User ${targetUserId} already removed from Auth.`);
-    } else {
-      console.error(`Failed to wipe user ${targetUserId}:`, error);
-      throw new Error(`Failed to completely delete the user: ${error.message}`);
-    }
-  }
-
-  revalidatePath("/dashboard/admin/users");
-  return { success: true };
+export async function adminPermanentlyDeleteTestUser(targetUserId: string, confirmationEmail: string) {
+  return permanentlyDeleteTestUserAccount(targetUserId, confirmationEmail);
 }

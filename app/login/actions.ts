@@ -10,6 +10,8 @@ import { upsertMembershipForRole } from '@/lib/account-memberships'
 
 type PublicSignupRole = 'user' | 'parent' | 'student' | 'tutor';
 
+type SupabaseAdminClient = Awaited<ReturnType<typeof import('@/utils/supabase/server').createAdminClient>>;
+
 function normalizePublicSignupRole(role?: string | null): PublicSignupRole {
   return role === 'parent' || role === 'student' || role === 'tutor' || role === 'user'
     ? role
@@ -41,6 +43,61 @@ function withAuthReturnFlag(path: string) {
 
   const separator = path.includes('?') ? '&' : '?';
   return `${path}${separator}auth_return=1`;
+}
+
+async function listAuthUsersByEmail(adminClient: SupabaseAdminClient, email: string) {
+  const normalizedEmail = email.toLowerCase();
+  const matches = [];
+  let page = 1;
+  const perPage = 1000;
+
+  while (true) {
+    const { data, error } = await adminClient.auth.admin.listUsers({ page, perPage });
+
+    if (error) {
+      console.error("Auth duplicate lookup failed:", error.message);
+      return { users: matches, error };
+    }
+
+    matches.push(
+      ...data.users.filter(user => user.email?.toLowerCase() === normalizedEmail)
+    );
+
+    if (data.users.length < perPage) {
+      return { users: matches, error: null };
+    }
+
+    page += 1;
+  }
+}
+
+async function deleteAuthOnlyUsersByEmail(adminClient: SupabaseAdminClient, email: string) {
+  const { users, error } = await listAuthUsersByEmail(adminClient, email);
+
+  if (error) {
+    return false;
+  }
+
+  for (const authUser of users) {
+    const { data: profile } = await adminClient
+      .from('profiles')
+      .select('id')
+      .eq('id', authUser.id)
+      .maybeSingle();
+
+    if (profile) {
+      return false;
+    }
+
+    const { error: deleteError } = await adminClient.auth.admin.deleteUser(authUser.id);
+
+    if (deleteError && !deleteError.message?.includes("User not found")) {
+      console.error("Failed to remove orphaned auth user during signup:", deleteError.message);
+      return false;
+    }
+  }
+
+  return true;
 }
 
 export async function login(formData: FormData) {
@@ -76,9 +133,14 @@ export async function login(formData: FormData) {
   // PRIORITIZE Database Profile Role over Metadata
   const { data: profile } = await supabase
     .from('profiles')
-    .select('role')
+    .select('role, is_suspended')
     .eq('id', user.id)
     .single();
+
+  if (profile?.is_suspended || user.user_metadata?.is_suspended) {
+    await supabase.auth.signOut();
+    redirect(`/login?error=${encodeURIComponent("This account has been deactivated. Please contact ScienceDojo support if you believe this is a mistake.")}`)
+  }
 
   const role = profile?.role || user?.user_metadata?.role || 'user';
 
@@ -199,13 +261,14 @@ export async function signup(formData: FormData) {
     redirect(duplicateEmailRedirect)
   }
 
-  const { data: authUsers, error: authUsersError } = await adminClient.auth.admin.listUsers({
-    page: 1,
-    perPage: 1000,
-  });
+  const { users: matchingAuthUsers, error: authUsersError } = await listAuthUsersByEmail(adminClient, data.email);
 
-  if (!authUsersError && authUsers.users.some(user => user.email?.toLowerCase() === data.email)) {
-    redirect(duplicateEmailRedirect)
+  if (!authUsersError && matchingAuthUsers.length > 0) {
+    const removedOrphans = await deleteAuthOnlyUsersByEmail(adminClient, data.email);
+
+    if (!removedOrphans) {
+      redirect(duplicateEmailRedirect)
+    }
   }
 
   // --- START SILENT TESTING PATH (PREVENTS BOUNCES) ---

@@ -28,9 +28,14 @@ export default async function DashboardLayout({
   const { data: { user } } = await supabase.auth.getUser();
   const { data: profile } = await supabase
     .from("profiles")
-    .select("role")
+    .select("role, is_suspended")
     .eq("id", user?.id)
     .maybeSingle();
+
+  if (profile?.is_suspended || user?.user_metadata?.is_suspended) {
+    await supabase.auth.signOut();
+    redirect("/login?error=This%20account%20has%20been%20deactivated.");
+  }
     
   const profileRole = normalizeDashboardRole(profile?.role);
   const metadataRole = normalizeDashboardRole(user?.user_metadata?.role);
