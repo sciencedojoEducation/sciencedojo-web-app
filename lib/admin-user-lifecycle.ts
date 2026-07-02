@@ -21,6 +21,14 @@ type StorageTarget = {
   path: string;
 };
 
+type PermanentDeleteSummary = {
+  success: true;
+  deletedProfileIds: string[];
+  deletedAuthIds: string[];
+  deletedStorageObjectCount: number;
+  storageFailures: string[];
+};
+
 const USER_RELATED_REVALIDATION_PATHS = [
   "/dashboard/admin/users",
   "/dashboard/admin/tutors",
@@ -149,6 +157,26 @@ async function getTargetContext(adminClient: AdminClient, userId: string) {
   }
 
   return { profile, authUser, email };
+}
+
+async function listProfilesByEmail(adminClient: AdminClient, email: string) {
+  const normalizedEmail = normalizeEmail(email);
+
+  if (!normalizedEmail) {
+    return [];
+  }
+
+  const { data, error } = await adminClient
+    .from("profiles")
+    .select("id, email, full_name, role, avatar_url, is_suspended")
+    .ilike("email", normalizedEmail)
+    .returns<UserProfile[]>();
+
+  if (error) {
+    throw new Error(`Failed to inspect matching profiles: ${error.message}`);
+  }
+
+  return data || [];
 }
 
 async function listStorageObjectsRecursive(adminClient: AdminClient, bucket: string, prefix: string) {
@@ -438,18 +466,70 @@ export async function permanentlyDeleteTestUserAccount(targetUserId: string, con
     throw new Error("Admin accounts cannot be permanently deleted here.");
   }
 
-  const storageTargets = await collectStorageTargets(adminClient, targetUserId, profile);
-  const storageFailures = await removeStorageTargets(adminClient, storageTargets);
+  return permanentlyDeleteTestUserByEmail(email, confirmationEmail);
+}
 
-  await deleteAppRecordsForUser(adminClient, targetUserId, email);
+export async function permanentlyDeleteTestUserByEmail(
+  targetEmail: string,
+  confirmationEmail: string,
+): Promise<PermanentDeleteSummary> {
+  const currentUser = await requireAdminUser();
+  const email = normalizeEmail(targetEmail);
 
-  const { error: profileIdError } = await adminClient
-    .from("profiles")
-    .delete()
-    .eq("id", targetUserId);
+  if (!email) {
+    throw new Error("Enter the test user's email address.");
+  }
 
-  if (profileIdError) {
-    throw new Error(`Failed to delete profile: ${profileIdError.message}`);
+  if (normalizeEmail(confirmationEmail) !== email) {
+    throw new Error("Type the exact email address to permanently delete this test account.");
+  }
+
+  const adminClient = createAdminClient();
+  const matchingProfiles = await listProfilesByEmail(adminClient, email);
+  const matchingAuthUsers = await listAuthUsersByEmail(adminClient, email);
+  const profileIds = uniqueValues(matchingProfiles.map((profile) => profile.id));
+  const authIds = uniqueValues([...matchingAuthUsers.map((authUser) => authUser.id), ...profileIds]);
+  const userIds = uniqueValues([...profileIds, ...authIds]);
+
+  if (userIds.length === 0) {
+    throw new Error("No matching profile or Supabase Auth user was found for that email.");
+  }
+
+  if (userIds.includes(currentUser.id)) {
+    throw new Error("You cannot permanently delete yourself.");
+  }
+
+  if (
+    matchingProfiles.some((profile) => isAdminRole(profile.role)) ||
+    matchingAuthUsers.some((authUser) => isAdminRole(authUser.user_metadata?.role))
+  ) {
+    throw new Error("Admin accounts cannot be permanently deleted here.");
+  }
+
+  const profileById = new Map(matchingProfiles.map((profile) => [profile.id, profile]));
+  const storageTargets: StorageTarget[] = [];
+
+  for (const userId of userIds) {
+    const profile = profileById.get(userId) || null;
+    storageTargets.push(...await collectStorageTargets(adminClient, userId, profile));
+  }
+
+  const uniqueTargets = uniqueStorageTargets(storageTargets);
+  const storageFailures = await removeStorageTargets(adminClient, uniqueTargets);
+
+  for (const userId of userIds) {
+    await deleteAppRecordsForUser(adminClient, userId, email);
+  }
+
+  if (profileIds.length > 0) {
+    const { error: profileIdError } = await adminClient
+      .from("profiles")
+      .delete()
+      .in("id", profileIds);
+
+    if (profileIdError) {
+      throw new Error(`Failed to delete matching profile rows: ${profileIdError.message}`);
+    }
   }
 
   const { error: profileEmailError } = await adminClient
@@ -461,9 +541,6 @@ export async function permanentlyDeleteTestUserAccount(targetUserId: string, con
     throw new Error(`Failed to delete matching profile email rows: ${profileEmailError.message}`);
   }
 
-  const authUsers = await listAuthUsersByEmail(adminClient, email);
-  const authIds = uniqueValues([targetUserId, ...authUsers.map((user) => user.id)]);
-
   for (const authId of authIds) {
     await deleteAuthUserIfPresent(adminClient, authId);
   }
@@ -473,23 +550,17 @@ export async function permanentlyDeleteTestUserAccount(targetUserId: string, con
     throw new Error("A matching Supabase Auth user still exists after permanent deletion.");
   }
 
-  const { data: remainingProfiles, error: remainingProfileError } = await adminClient
-    .from("profiles")
-    .select("id")
-    .or(`id.eq.${targetUserId},email.ilike.${email}`);
-
-  if (remainingProfileError) {
-    throw new Error(remainingProfileError.message);
-  }
-
-  if ((remainingProfiles || []).length > 0) {
+  const remainingProfiles = await listProfilesByEmail(adminClient, email);
+  if (remainingProfiles.length > 0) {
     throw new Error("A matching profile row still exists after permanent deletion.");
   }
 
   revalidateUserLifecyclePaths();
   return {
     success: true,
+    deletedProfileIds: profileIds,
+    deletedAuthIds: authIds,
     storageFailures,
-    deletedStorageObjectCount: storageTargets.length,
+    deletedStorageObjectCount: uniqueTargets.length,
   };
 }

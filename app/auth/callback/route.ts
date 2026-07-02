@@ -4,6 +4,7 @@ import { createAdminClient } from '@/utils/supabase/admin'
 import { cookies } from 'next/headers'
 import { getActiveInternalMemberByUserId, repairLinkedInternalUserRole } from '@/lib/internal-auth'
 import { upsertMembershipForRole } from '@/lib/account-memberships'
+import { deleteAuthUserIfPresent } from '@/lib/admin-user-lifecycle'
 
 type PublicSignupRole = 'user' | 'parent' | 'student' | 'tutor';
 type DashboardRole = PublicSignupRole | 'admin' | 'internal';
@@ -50,6 +51,22 @@ function isFreshOAuthUser(createdAt?: string) {
   if (Number.isNaN(createdTime)) return false;
 
   return Date.now() - createdTime < 10 * 60 * 1000;
+}
+
+function isFreshIncompleteOAuthProfile(
+  isGoogleUser: boolean,
+  authCreatedAt: string | undefined,
+  profileRole: DashboardRole | null,
+  metadataRole: DashboardRole | null,
+  studentName?: string | null,
+) {
+  return (
+    isGoogleUser &&
+    isFreshOAuthUser(authCreatedAt) &&
+    !metadataRole &&
+    !studentName &&
+    (profileRole === null || profileRole === 'parent' || profileRole === 'user')
+  );
 }
 
 function clearPendingSignupCookies(cookieStore: Awaited<ReturnType<typeof cookies>>) {
@@ -114,12 +131,13 @@ export async function GET(request: Request) {
           const profileRole = normalizeDashboardRole(currentProfile?.role);
           const metadataRole = normalizeDashboardRole(user.user_metadata?.role);
           const isGoogleUser = Boolean(user.identities?.some(identity => identity.provider === 'google'));
-          const isPlaceholderProfile =
-            isGoogleUser &&
-            isFreshOAuthUser(user.created_at) &&
-            profileRole === 'parent' &&
-            !metadataRole &&
-            !currentProfile?.student_name;
+          const isPlaceholderProfile = isFreshIncompleteOAuthProfile(
+            isGoogleUser,
+            user.created_at,
+            profileRole,
+            metadataRole,
+            currentProfile?.student_name,
+          );
           const establishedRole = metadataRole || (isPlaceholderProfile ? null : profileRole);
 
           if (metadataRole === 'admin' || profileRole === 'admin') {
@@ -224,22 +242,34 @@ export async function GET(request: Request) {
           return NextResponse.redirect(`${origin}/login?error=${encodeURIComponent('This account has been deactivated. Please contact ScienceDojo support if you believe this is a mistake.')}`);
         }
 
-        const existingRole = normalizeDashboardRole(existingProfile?.role) || normalizeDashboardRole(existingUser.user_metadata?.role) || 'user';
+        const existingProfileRole = normalizeDashboardRole(existingProfile?.role);
+        const existingMetadataRole = normalizeDashboardRole(existingUser.user_metadata?.role);
+        const existingIsGoogleUser = Boolean(existingUser.identities?.some(identity => identity.provider === 'google'));
+        const isIncompleteOAuthProfile = isFreshIncompleteOAuthProfile(
+          existingIsGoogleUser,
+          existingUser.created_at,
+          existingProfileRole,
+          existingMetadataRole,
+          existingProfile?.student_name,
+        );
+
+        if (!existingProfile || isIncompleteOAuthProfile) {
+          const adminClient = createAdminClient();
+
+          try {
+            await deleteAuthUserIfPresent(adminClient, existingUser.id);
+          } catch (deleteError) {
+            console.error("[auth-callback] Failed to clean auth-only OAuth user:", deleteError);
+          }
+
+          await supabase.auth.signOut();
+          return NextResponse.redirect(`${origin}/signup?error=${encodeURIComponent('Please choose an account type before continuing with Google.')}`);
+        }
+
+        const existingRole = existingProfileRole || existingMetadataRole || 'user';
         if (existingRole === 'internal') {
           await supabase.auth.signOut();
           return NextResponse.redirect(`${origin}/login/internal?error=${encodeURIComponent('Your internal access is inactive or has not been linked yet.')}`);
-        }
-
-        if (!existingProfile && existingRole !== 'admin') {
-          const adminClient = createAdminClient();
-          await adminClient.from('profiles').upsert({
-            id: existingUser.id,
-            email: existingUser.email?.toLowerCase() || '',
-            full_name: existingUser.user_metadata?.full_name || existingUser.user_metadata?.name || '',
-            avatar_url: existingUser.user_metadata?.avatar_url || existingUser.user_metadata?.picture || '',
-            role: existingRole,
-            student_name: existingUser.user_metadata?.student_name || null,
-          }, { onConflict: 'id' });
         }
 
         const onboardingCompleted = existingUser.user_metadata?.onboarding_completed;

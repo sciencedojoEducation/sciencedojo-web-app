@@ -4,7 +4,12 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import UserAvatar from "@/components/UserAvatar";
-import { adminCreateUser, adminDeactivateUser, adminPermanentlyDeleteTestUser } from "./actions";
+import {
+  adminCreateUser,
+  adminDeactivateUser,
+  adminPermanentlyDeleteTestUser,
+  adminPermanentlyDeleteTestUserByEmail,
+} from "./actions";
 
 interface UserProfile {
   id: string;
@@ -26,6 +31,9 @@ export default function UserManagementUI({ users, currentUserId }: { users: User
   const [deactivatingUser, setDeactivatingUser] = useState<UserProfile | null>(null);
   const [permanentDeleteUser, setPermanentDeleteUser] = useState<UserProfile | null>(null);
   const [permanentDeleteConfirmation, setPermanentDeleteConfirmation] = useState("");
+  const [isDeletingByEmail, setIsDeletingByEmail] = useState(false);
+  const [deleteByEmailValue, setDeleteByEmailValue] = useState("");
+  const [deleteByEmailConfirmation, setDeleteByEmailConfirmation] = useState("");
 
   // Loaders
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -54,6 +62,8 @@ export default function UserManagementUI({ users, currentUserId }: { users: User
     day: "numeric",
     year: "numeric",
   });
+  const normalizedDeleteByEmail = deleteByEmailValue.trim().toLowerCase();
+  const normalizedDeleteByEmailConfirmation = deleteByEmailConfirmation.trim().toLowerCase();
 
   const handleCreate = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -105,6 +115,23 @@ export default function UserManagementUI({ users, currentUserId }: { users: User
     }
   };
 
+  const handlePermanentDeleteByEmail = async () => {
+    setIsSubmitting(true);
+    setError(null);
+
+    try {
+      await adminPermanentlyDeleteTestUserByEmail(deleteByEmailValue, deleteByEmailConfirmation);
+      setIsDeletingByEmail(false);
+      setDeleteByEmailValue("");
+      setDeleteByEmailConfirmation("");
+      router.refresh();
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Failed to permanently delete test user by email.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <div className="mx-auto min-h-screen max-w-6xl px-3 py-5 sm:px-4 md:p-8">
       {/* HEADER SECTION */}
@@ -123,6 +150,16 @@ export default function UserManagementUI({ users, currentUserId }: { users: User
           >
             Internal Team
           </Link>
+          <button
+            onClick={() => {
+              setIsDeletingByEmail(true);
+              setDeleteByEmailValue("");
+              setDeleteByEmailConfirmation("");
+            }}
+            className="inline-flex min-h-10 w-fit items-center justify-center rounded-2xl border border-red-200 bg-red-50 px-4 py-2.5 text-[10px] font-black uppercase tracking-[0.14em] text-red-600 shadow-sm shadow-red-100 transition-all hover:border-red-300 hover:bg-red-100 md:px-6 md:py-3"
+          >
+            Delete test by email
+          </button>
           <button 
             onClick={() => setIsCreating(true)}
             className="inline-flex min-h-10 w-fit items-center justify-center rounded-2xl bg-slate-900 px-4 py-2.5 text-[10px] font-black uppercase tracking-[0.14em] text-white shadow-sm shadow-slate-200 transition-all hover:bg-black md:px-6 md:py-3"
@@ -337,6 +374,48 @@ export default function UserManagementUI({ users, currentUserId }: { users: User
                <button onClick={() => setDeactivatingUser(null)} disabled={isSubmitting} className="flex-1 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl transition-colors disabled:opacity-50">Cancel</button>
                <button onClick={handleDeactivate} disabled={isSubmitting} className="flex-1 py-3 bg-amber-500 hover:bg-amber-600 text-white font-black tracking-tight rounded-xl shadow-lg shadow-amber-200 transition-all disabled:opacity-50">
                  {isSubmitting ? 'Deactivating...' : 'Deactivate'}
+               </button>
+             </div>
+          </div>
+        </div>
+      )}
+
+      {/* PERMANENT TEST DELETE BY EMAIL MODAL */}
+      {isDeletingByEmail && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" onClick={() => !isSubmitting && setIsDeletingByEmail(false)}></div>
+          <div className="bg-white rounded-[2rem] shadow-2xl p-8 w-full max-w-md relative animate-in fade-in zoom-in-95 duration-200">
+             <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center text-red-500 mb-6 mx-auto">
+                <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0 1 16.138 21H7.862a2 2 0 0 1-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v3M4 7h16" /></svg>
+             </div>
+             <h3 className="text-xl font-black text-center text-slate-900 mb-2">Delete test account by email?</h3>
+             <p className="text-slate-500 text-sm text-center mb-5 px-4 font-medium leading-relaxed">
+               This purges matching app records, role rows, memberships, storage files, profile rows, and Supabase Auth users. Use only for test accounts that must sign up again.
+             </p>
+             <label className="mb-2 block text-[10px] font-black uppercase tracking-widest text-slate-400">Test account email</label>
+             <input
+               value={deleteByEmailValue}
+               onChange={(event) => setDeleteByEmailValue(event.target.value)}
+               placeholder="test@example.com"
+               type="email"
+               className="mb-4 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-700 outline-none transition-colors focus:border-red-400 focus:ring-4 focus:ring-red-100"
+             />
+             <label className="mb-2 block text-[10px] font-black uppercase tracking-widest text-slate-400">Type the same email to confirm</label>
+             <input
+               value={deleteByEmailConfirmation}
+               onChange={(event) => setDeleteByEmailConfirmation(event.target.value)}
+               placeholder={deleteByEmailValue || "test@example.com"}
+               type="email"
+               className="mb-6 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-700 outline-none transition-colors focus:border-red-400 focus:ring-4 focus:ring-red-100"
+             />
+             <div className="flex gap-3">
+               <button onClick={() => setIsDeletingByEmail(false)} disabled={isSubmitting} className="flex-1 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl transition-colors disabled:opacity-50">Cancel</button>
+               <button
+                 onClick={handlePermanentDeleteByEmail}
+                 disabled={isSubmitting || !normalizedDeleteByEmail || normalizedDeleteByEmail !== normalizedDeleteByEmailConfirmation}
+                 className="flex-1 py-3 bg-red-500 hover:bg-red-600 text-white font-black tracking-tight rounded-xl shadow-lg shadow-red-200 transition-all disabled:opacity-50"
+               >
+                 {isSubmitting ? 'Deleting...' : 'Delete Test Email'}
                </button>
              </div>
           </div>

@@ -25,14 +25,20 @@ function normalizeOrigin(value?: string | null) {
   }
 }
 
+function isLocalHostname(hostname: string) {
+  const normalizedHostname = hostname.toLowerCase();
+  return (
+    normalizedHostname === "localhost" ||
+    normalizedHostname === "127.0.0.1" ||
+    normalizedHostname === "[::1]" ||
+    normalizedHostname === "::1"
+  );
+}
+
 function isAllowedHostname(hostname: string) {
   const normalizedHostname = hostname.toLowerCase();
 
-  if (
-    normalizedHostname === "localhost" ||
-    normalizedHostname === "127.0.0.1" ||
-    normalizedHostname === "[::1]"
-  ) {
+  if (isLocalHostname(normalizedHostname)) {
     return process.env.NODE_ENV !== "production";
   }
 
@@ -66,6 +72,16 @@ function getRequestOrigin(headersList?: Headers | null) {
     return "";
   }
 
+  try {
+    const requestUrl = new URL(`${protocol}://${host}`);
+    if (process.env.NODE_ENV !== "production" && isLocalHostname(requestUrl.hostname)) {
+      requestUrl.protocol = "http:";
+      return getSafeOrigin(requestUrl.origin);
+    }
+  } catch {
+    return "";
+  }
+
   return getSafeOrigin(`${protocol}://${host}`);
 }
 
@@ -75,7 +91,16 @@ function isLocalOrigin(origin: string) {
   }
 
   const { hostname } = new URL(origin);
-  return hostname === "localhost" || hostname === "127.0.0.1" || hostname === "[::1]";
+  return isLocalHostname(hostname);
+}
+
+function forceLocalHttp(origin: string) {
+  const url = new URL(origin);
+  if (process.env.NODE_ENV !== "production" && isLocalHostname(url.hostname)) {
+    url.protocol = "http:";
+  }
+
+  return url.origin;
 }
 
 function getDeploymentOrigin() {
@@ -89,7 +114,7 @@ export function getSiteUrl(options: SiteUrlOptions = {}) {
   const requestOrigin = getRequestOrigin(options.headers);
 
   if (process.env.NODE_ENV !== "production" && isLocalOrigin(requestOrigin)) {
-    return requestOrigin;
+    return forceLocalHttp(requestOrigin);
   }
 
   const configuredOrigin =
@@ -99,11 +124,11 @@ export function getSiteUrl(options: SiteUrlOptions = {}) {
     getSafeOrigin(process.env.APP_URL);
 
   if (configuredOrigin) {
-    return configuredOrigin;
+    return isLocalOrigin(configuredOrigin) ? forceLocalHttp(configuredOrigin) : configuredOrigin;
   }
 
   if (requestOrigin) {
-    return requestOrigin;
+    return isLocalOrigin(requestOrigin) ? forceLocalHttp(requestOrigin) : requestOrigin;
   }
 
   const deploymentOrigin = getDeploymentOrigin();

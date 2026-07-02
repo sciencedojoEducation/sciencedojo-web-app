@@ -56,6 +56,8 @@ type PersistedFocusDojoSubscriptionRow = {
   updated_at: string;
 };
 
+type ProfileRole = "user" | "parent" | "student" | "tutor" | "admin" | "internal";
+
 const PERSISTED_SUBSCRIPTION_SELECT =
   "id, user_id, product_key, status, cancel_at_period_end, current_period_end, stripe_subscription_id, updated_at";
 
@@ -86,6 +88,17 @@ function inferFocusDojoPlan(
 
 function isActiveLikeStripeStatus(status: Stripe.Subscription.Status) {
   return status === "active" || status === "trialing";
+}
+
+function normalizeProfileRole(role?: unknown): ProfileRole | null {
+  return role === "user" ||
+    role === "parent" ||
+    role === "student" ||
+    role === "tutor" ||
+    role === "admin" ||
+    role === "internal"
+    ? role
+    : null;
 }
 
 function getEffectiveCancelAtPeriodEnd(
@@ -175,10 +188,25 @@ async function ensureProfileForSubscription(
 
   if (profile) return;
 
+  const { data: authData, error: authError } = await supabase.auth.admin.getUserById(userId);
+  const authUser = authData?.user || null;
+
+  if (authError || !authUser) {
+    console.error("[focusdojo-sync] auth user missing before profile creation", {
+      userId,
+      error: authError ? getSupabaseErrorDetails(authError) : null,
+    });
+    return { created: false as const, reason: "auth_user_missing" };
+  }
+
+  const role = normalizeProfileRole(authUser.user_metadata?.role) || "user";
   const profilePayload = {
     id: userId,
-    email,
-    role: "user",
+    email: authUser.email?.toLowerCase() || email,
+    full_name: authUser.user_metadata?.full_name || authUser.user_metadata?.name || null,
+    avatar_url: authUser.user_metadata?.avatar_url || authUser.user_metadata?.picture || null,
+    role,
+    student_name: authUser.user_metadata?.student_name || null,
   };
   const { error: insertError } = await supabase
     .from("profiles")
@@ -187,9 +215,10 @@ async function ensureProfileForSubscription(
   if (!insertError) {
     console.log("[focusdojo-sync] missing profile created for subscription", {
       userId,
-      emailPresent: Boolean(email),
+      emailPresent: Boolean(profilePayload.email),
+      role,
     });
-    return;
+    return { created: true as const, role };
   }
 
   console.error(
@@ -434,7 +463,11 @@ export async function upsertFocusDojoSubscriptionFromStripeSubscription(
     effectiveCancelAtPeriodEnd,
   });
 
-  await ensureProfileForSubscription(supabase, userId, customerEmail);
+  const profileResult = await ensureProfileForSubscription(supabase, userId, customerEmail);
+
+  if (profileResult?.created === false && profileResult.reason === "auth_user_missing") {
+    return { synced: false as const, reason: "auth_user_missing" };
+  }
 
   const saveResult = await saveFocusDojoSubscription(supabase, {
     user_id: userId,

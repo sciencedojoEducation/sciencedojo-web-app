@@ -46,7 +46,7 @@ async function isMaintenanceEnabled() {
 }
 
 export async function proxy(request: NextRequest) {
-  const { pathname } = request.nextUrl;
+  const { pathname, searchParams } = request.nextUrl;
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set("x-next-pathname", pathname);
   const continueResponse = () => NextResponse.next({
@@ -54,6 +54,19 @@ export async function proxy(request: NextRequest) {
       headers: requestHeaders,
     },
   });
+
+  if (
+    pathname === "/" &&
+    (
+      searchParams.has("code") ||
+      searchParams.has("error") ||
+      searchParams.has("error_description")
+    )
+  ) {
+    const callbackUrl = request.nextUrl.clone();
+    callbackUrl.pathname = "/auth/callback";
+    return NextResponse.redirect(callbackUrl);
+  }
 
   if (
     PUBLIC_FILE.test(pathname) ||

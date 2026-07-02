@@ -5,6 +5,7 @@ import { createAdminClient } from "@/utils/supabase/admin";
 import {
   deactivateUserAccount,
   permanentlyDeleteTestUserAccount,
+  permanentlyDeleteTestUserByEmail,
 } from "@/lib/admin-user-lifecycle";
 import { revalidatePath } from "next/cache";
 
@@ -73,4 +74,8 @@ export async function adminDeactivateUser(targetUserId: string) {
 
 export async function adminPermanentlyDeleteTestUser(targetUserId: string, confirmationEmail: string) {
   return permanentlyDeleteTestUserAccount(targetUserId, confirmationEmail);
+}
+
+export async function adminPermanentlyDeleteTestUserByEmail(email: string, confirmationEmail: string) {
+  return permanentlyDeleteTestUserByEmail(email, confirmationEmail);
 }
