@@ -39,7 +39,7 @@ export default function VerificationStage({
 
   const isGdprAccepted = data.gdpr_accepted === "true";
   const isTermsAccepted = data.terms_accepted === "true";
-  const isReady = isGdprAccepted && isTermsAccepted && idUploaded && bgUploaded;
+  const isReady = isGdprAccepted && isTermsAccepted && idUploaded;
 
   const handleAccept = (type: "gdpr" | "terms") => {
     const timestamp = new Date().toLocaleString();
@@ -60,7 +60,7 @@ export default function VerificationStage({
       <div className="space-y-2 text-left">
         <p className="text-sm font-black text-primary">Step 6 of 6</p>
         <h2 className="text-2xl font-black tracking-tight text-navy md:text-3xl">Final Review</h2>
-        <p className="text-sm font-medium text-navy/60 md:text-base">Complete the final agreements and identity checks so our team can review your application.</p>
+        <p className="text-sm font-medium text-navy/60 md:text-base">Complete the final agreements and photo ID check so our team can review your application.</p>
       </div>
 
       {/* Compliance Block */}
@@ -158,11 +158,16 @@ export default function VerificationStage({
           </div>
 
           <div className="space-y-4 text-left">
-            <label className="text-xs font-bold text-navy/55">Background Check (DBS / Clean Record)</label>
+            <label className="text-xs font-bold text-navy/55">DBS / Police Clearance (for verified badge)</label>
+            <p className="text-xs font-semibold leading-relaxed text-navy/45">
+              {bgUploaded
+                ? "Background clearance uploaded. Admin will review it before awarding the Verified Tutor badge."
+                : "You can submit this now or later. UK tutors may use DBS; non-UK tutors can provide an equivalent police or background clearance."}
+            </p>
             <PrivateUploader 
               userId={userId} 
               docType="background_check" 
-              label="DBS / Background Check"
+              label="DBS / Police Clearance"
               onUploadSuccess={(url: string) => {
                 setBgUploaded(true);
                 updateData({ background_check_url: url });
@@ -175,7 +180,7 @@ export default function VerificationStage({
         <div className="flex items-start gap-4 rounded-[1.5rem] border border-red-100/70 bg-red-50/50 p-5">
           <AlertTriangle className="text-red-400 shrink-0 mt-1" size={24} />
           <p className="text-sm font-semibold leading-relaxed text-red-900/55">
-            Please upload accurate documents. Misleading documentation may lead to application rejection or account review.
+            Please upload accurate documents. Misleading documentation may lead to application rejection, loss of verified status, or account review.
           </p>
         </div>
       </div>

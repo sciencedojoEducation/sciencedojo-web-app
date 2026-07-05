@@ -4,24 +4,34 @@ import { createClient } from "@/utils/supabase/server";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getMeaningfulTutorSubjects } from "@/lib/tutors/subjects";
+import { sendTrackedEmail } from "@/lib/communications";
+
+type ApplicationStageData = Record<string, unknown>;
+
+function isRecord(value: unknown): value is ApplicationStageData {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
 
 /**
  * Automated scoring based on tutor input
  */
-function calculateAutomatedScore(data: any): number {
+function calculateAutomatedScore(data: ApplicationStageData): number {
   let score = 0;
+  const yearsExperience = String(data.years_experience || "");
+  const levels = String(data.levels || "");
+  const successStory = String(data.success_story || "");
   
   // Experience points
-  if (data.years_experience === "5+ Years") score += 20;
-  else if (data.years_experience === "3-5 Years") score += 15;
-  else if (data.years_experience === "1-2 Years") score += 10;
+  if (yearsExperience === "5+ Years") score += 20;
+  else if (yearsExperience === "3-5 Years") score += 15;
+  else if (yearsExperience === "1-2 Years") score += 10;
 
   // Level of instruction
-  if (data.levels?.includes("University")) score += 15;
-  if (data.levels?.includes("A-Level") || data.levels?.includes("IB")) score += 10;
+  if (levels.includes("University")) score += 15;
+  if (levels.includes("A-Level") || levels.includes("IB")) score += 10;
 
   // Success story points (length based heuristic for MVP)
-  if (data.success_story?.length > 100) score += 10;
+  if (successStory.length > 100) score += 10;
 
   // Tech points
   if (data.has_mic === "true" && data.has_camera === "true") score += 10;
@@ -31,7 +41,7 @@ function calculateAutomatedScore(data: any): number {
 
 export async function saveApplicationStage(
   stage: number,
-  dataPayload: any,
+  dataPayload: unknown,
   options: { advance?: boolean } = {}
 ) {
   const supabase = await createClient();
@@ -42,7 +52,7 @@ export async function saveApplicationStage(
   }
 
   // UPSERT the application record incrementally
-  const updateData: any = {};
+  const updateData: ApplicationStageData = {};
   
   // Get existing data if any
   const { data: existingApp } = await supabase
@@ -51,15 +61,15 @@ export async function saveApplicationStage(
     .eq("user_id", user.id)
     .single();
     
-  const currentData = existingApp?.data || {};
+  const currentData = isRecord(existingApp?.data) ? existingApp.data : {};
   
   // Check if dataPayload is a FormData object, if so parse it to object (for fallback)
-  let payloadObject = dataPayload;
+  let payloadObject: ApplicationStageData = isRecord(dataPayload) ? dataPayload : {};
   if (dataPayload instanceof FormData) {
     payloadObject = Object.fromEntries(dataPayload.entries());
   }
 
-  const newData: any = { ...currentData, ...payloadObject };
+  const newData: ApplicationStageData = { ...currentData, ...payloadObject };
 
   const shouldAdvance = options.advance !== false;
 
@@ -96,7 +106,7 @@ export async function saveApplicationStage(
   }
 
   if (stage === 4) {
-    newData.onboarding_status = 'demo_submitted';
+    newData.onboarding_status = newData.demo_video_url ? 'demo_submitted' : 'demo_skipped';
   }
 
   if (stage === 6 && shouldAdvance) {
@@ -121,6 +131,26 @@ export async function saveApplicationStage(
     const tutorUpsert: Record<string, unknown> = {
       id: user.id,
       is_verified: false,
+      tutor_status: 'under_review',
+      is_publicly_listed: false,
+      is_featured: false,
+      background_check_status: newData.background_check_url ? 'submitted' : 'not_started',
+      verification_checklist: {
+        identity_verified: Boolean(newData.government_id_url),
+        qualifications_uploaded: Array.isArray(newData.education)
+          ? newData.education.some((entry) => isRecord(entry) && Boolean(entry.transcript_url))
+          : false,
+        qualifications_reviewed: false,
+        references_submitted: false,
+        references_checked: false,
+        background_check_submitted: Boolean(newData.background_check_url),
+        background_check_approved: false,
+        safeguarding_accepted: termsAccepted,
+        safeguarding_training_completed: false,
+        interview_completed: false,
+        teaching_demo_reviewed: false,
+        profile_completed: true,
+      },
       is_available_now: true,
       bio: '',
       hourly_rate: 0
@@ -132,6 +162,17 @@ export async function saveApplicationStage(
 
     // Ensure tutor row exists
     await supabase.from('tutors').upsert(tutorUpsert, { onConflict: 'id' });
+    if (user.email) {
+      await sendTrackedEmail({
+        userId: user.id,
+        recipientEmail: user.email.toLowerCase(),
+        recipientName: String(newData.full_name || user.user_metadata?.full_name || "Tutor"),
+        category: "onboarding",
+        audience: "tutor",
+        templateKey: "application_submitted",
+        dedupeHours: 720,
+      });
+    }
     // We store specific timestamps within the JSONB data object via VerificationStage
   }
 
@@ -201,7 +242,7 @@ export async function submitTutorApplication(formData: FormData) {
   redirect("/dashboard/tutor");
 }
 
-export async function generatePrivateUploadUrl(fileName: string) {
+export async function generatePrivateUploadUrl() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 

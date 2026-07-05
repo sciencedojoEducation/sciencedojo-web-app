@@ -5,6 +5,7 @@ import { cookies } from 'next/headers'
 import { getActiveInternalMemberByUserId, repairLinkedInternalUserRole } from '@/lib/internal-auth'
 import { upsertMembershipForRole } from '@/lib/account-memberships'
 import { deleteAuthUserIfPresent } from '@/lib/admin-user-lifecycle'
+import { sendTrackedEmail } from '@/lib/communications'
 
 type PublicSignupRole = 'user' | 'parent' | 'student' | 'tutor';
 type DashboardRole = PublicSignupRole | 'admin' | 'internal';
@@ -187,6 +188,9 @@ export async function GET(request: Request) {
             await adminClient.from('tutors').upsert({
               id: user.id,
               is_verified: false,
+              is_publicly_listed: false,
+              is_featured: false,
+              tutor_status: 'application_submitted',
               is_available_now: true,
               bio: '',
               hourly_rate: 0
@@ -198,6 +202,18 @@ export async function GET(request: Request) {
               full_name: googleName,
               data: { onboarding_status: 'screening', current_stage: 1 }
             }, { onConflict: 'user_id' });
+
+            if (user.email) {
+              await sendTrackedEmail({
+                userId: user.id,
+                recipientEmail: user.email.toLowerCase(),
+                recipientName: googleName,
+                category: 'onboarding',
+                audience: 'tutor',
+                templateKey: 'tutor_welcome',
+                dedupeHours: 168,
+              });
+            }
           }
         }
 

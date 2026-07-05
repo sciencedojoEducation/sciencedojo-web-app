@@ -1,13 +1,17 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Video, FileText, Info, AlertTriangle, ExternalLink, Scissors, ShieldCheck, User, ChevronDown, ChevronUp, Sparkles } from "lucide-react";
+import { Video, ShieldCheck, ChevronDown, ChevronUp, Sparkles } from "lucide-react";
 import PrivateUploader from "./PrivateUploader";
 import YouTubeLite from "@/components/YouTubeLite";
 
+interface DemoSkillStageData {
+  demo_video_url?: string;
+}
+
 interface DemoSkillStageProps {
-  data: any;
+  data: DemoSkillStageData;
   userId: string;
-  updateData: (fields: any) => void;
+  updateData: (fields: Partial<DemoSkillStageData>) => void;
   onNext: () => void;
   onBack: () => void;
   onSaveDraft: () => void;
@@ -16,8 +20,6 @@ interface DemoSkillStageProps {
 
 export default function DemoSkillStage({ data, userId, updateData, onNext, onBack, onSaveDraft, isSavingDraft }: DemoSkillStageProps) {
   const [showInstructions, setShowInstructions] = useState(false);
-  
-  const isComplete = !!data.demo_video_url;
 
   return (
     <motion.div
@@ -29,7 +31,7 @@ export default function DemoSkillStage({ data, userId, updateData, onNext, onBac
       <div className="space-y-2 text-left">
         <p className="text-sm font-black text-primary">Step 4 of 6</p>
         <h2 className="text-2xl font-black tracking-tight text-navy md:text-3xl">Demo Lesson</h2>
-        <p className="text-sm font-medium text-navy/60 md:text-base">Share a short teaching demo so we can understand how you explain ideas.</p>
+        <p className="text-sm font-medium text-navy/60 md:text-base">Add a short teaching demo now, or continue and share it later.</p>
       </div>
 
       <div className="mt-8 space-y-8">
@@ -75,7 +77,7 @@ export default function DemoSkillStage({ data, userId, updateData, onNext, onBac
                         </div>
                         <h3 className="text-xl font-black tracking-tight text-navy">Introduction & teaching demo</h3>
                      </div>
-                     <p className="text-sm font-semibold leading-relaxed text-navy/65">Combine a brief introduction with your teaching demo. Record a 3-6 minute video where you introduce yourself and explain a concept clearly.</p>
+                     <p className="text-sm font-semibold leading-relaxed text-navy/65">Combine a brief introduction with your teaching demo. Record a 3-6 minute video where you introduce yourself and explain a concept clearly. Upload it to YouTube as an unlisted video if you do not want it suggested publicly; only people with the link will be able to view it.</p>
                   </div>
 
                   <div className="w-full h-px bg-navy/5" />
@@ -173,7 +175,7 @@ export default function DemoSkillStage({ data, userId, updateData, onNext, onBac
                <div className="space-y-6">
                   <div className="space-y-2">
                      <h4 className="text-lg font-black tracking-tight text-navy">Sharing Link</h4>
-                     <p className="text-xs font-bold text-navy/40">YouTube or Vimeo link with introduction and demo</p>
+                     <p className="text-xs font-bold text-navy/40">Optional YouTube or Vimeo link with introduction and demo</p>
                   </div>
                   
                   <div className="space-y-6">
@@ -191,7 +193,7 @@ export default function DemoSkillStage({ data, userId, updateData, onNext, onBac
                     </div>
 
                     <div className="space-y-4">
-                       <YouTubeLite url={data.demo_video_url} label="Preview Teaching Demo" />
+                       <YouTubeLite url={data.demo_video_url || ""} label="Preview Teaching Demo" />
                     </div>
                   </div>
                </div>
@@ -233,8 +235,8 @@ export default function DemoSkillStage({ data, userId, updateData, onNext, onBac
         <div className="flex flex-col gap-3 sm:flex-row">
           <button onClick={onBack} className="min-h-11 rounded-xl border border-navy/10 bg-white px-5 py-3 text-sm font-bold text-navy/65 transition-colors hover:border-primary/30 hover:text-navy">Back</button>
           <button onClick={onSaveDraft} disabled={isSavingDraft} className="min-h-11 rounded-xl border border-navy/10 bg-white px-5 py-3 text-sm font-bold text-navy/65 transition-colors hover:border-primary/30 hover:text-navy disabled:opacity-60">{isSavingDraft ? "Saving..." : "Save Draft"}</button>
-          <button onClick={onNext} disabled={!isComplete} className={`min-h-11 rounded-xl px-6 py-3 text-sm font-black transition-all active:scale-95 ${isComplete ? "bg-primary text-white shadow-lg shadow-primary/20 hover:bg-blue-500" : "cursor-not-allowed bg-blue-50 text-blue-200"}`}>
-            Next step →
+          <button onClick={onNext} className="min-h-11 rounded-xl bg-primary px-6 py-3 text-sm font-black text-white shadow-lg shadow-primary/20 transition-all hover:bg-blue-500 active:scale-95">
+            {data.demo_video_url ? "Next step →" : "Skip for now →"}
           </button>
         </div>
       </div>

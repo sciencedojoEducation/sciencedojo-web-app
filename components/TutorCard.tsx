@@ -84,8 +84,13 @@ export default function TutorCard({ tutor, currentUserRole, variant = "default" 
   const tutorTags = buildTutorTags(tutor);
   const matchInsight = getTutorMatchInsight(tutor);
   const hasReviews = tutor.review_count > 0;
+  const publicTutorLabel = tutor.is_featured
+    ? "Featured Tutor"
+    : tutor.verified_at !== null
+      ? "Verified Tutor"
+      : "ScienceDojo Tutor";
   const trustSignals = [
-    tutor.verified_at !== null ? "Verified" : null,
+    publicTutorLabel,
     tutor.has_teaching_license ? "Teaching license" : null,
     hasReviews ? `${tutor.average_rating?.toFixed(1)} verified reviews` : "No verified reviews yet",
   ].filter(Boolean);
@@ -117,13 +122,11 @@ export default function TutorCard({ tutor, currentUserRole, variant = "default" 
                 >
                   {tutor.full_name}
                 </h3>
-                {tutor.verified_at !== null && (
-                  <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary" title="Verified Tutor">
+                <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary" title={publicTutorLabel}>
                     <svg className="h-3 w-3" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                     </svg>
-                  </div>
-                )}
+                </div>
               </div>
               <div className="mt-3 flex flex-wrap gap-1.5 md:mt-4">
                 {tutor.subjects.slice(0, 2).map((subject) => (

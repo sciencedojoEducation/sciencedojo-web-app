@@ -244,3 +244,146 @@ export async function sendLessonNotesEmail(studentEmail: string, tutorName: stri
   `;
   return sendEmail({ to: studentEmail, subject: `Lesson Recap from ${tutorName}`, html });
 }
+
+type ScienceDojoTemplateKey =
+  | "tutor_welcome"
+  | "incomplete_tutor_application"
+  | "dbs_clarification"
+  | "application_submitted"
+  | "tutor_profile_approved_listed"
+  | "profile_improvement"
+  | "parent_student_product_update"
+  | "policy_update";
+
+type ScienceDojoTemplateInput = {
+  templateKey: ScienceDojoTemplateKey;
+  name?: string | null;
+  title?: string;
+  message?: string;
+  ctaLabel?: string | null;
+  ctaUrl?: string | null;
+  missingSteps?: string[];
+};
+
+function baseScienceDojoEmail({
+  eyebrow,
+  title,
+  body,
+  ctaLabel,
+  ctaUrl,
+  note,
+}: {
+  eyebrow: string;
+  title: string;
+  body: string;
+  ctaLabel?: string | null;
+  ctaUrl?: string | null;
+  note?: string;
+}) {
+  const safeCtaUrl = ctaUrl ? escapeHtml(ctaUrl) : "";
+  return `
+    <div style="font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 640px; margin: 0 auto; color: #06172f; background: #ffffff;">
+      <div style="padding: 32px 28px; border: 1px solid #e5eaf2; border-radius: 24px; background: linear-gradient(180deg, #ffffff 0%, #f7fbff 100%);">
+        <p style="margin: 0 0 14px; color: #0066ff; font-size: 12px; font-weight: 800; letter-spacing: 0.16em; text-transform: uppercase;">${escapeHtml(eyebrow)}</p>
+        <h1 style="margin: 0; font-size: 30px; line-height: 1.15; letter-spacing: -0.03em; color: #06172f;">${escapeHtml(title)}</h1>
+        <div style="margin: 18px 0 0; color: #42526b; font-size: 16px; line-height: 1.7;">${body}</div>
+        ${ctaLabel && ctaUrl ? `<div style="margin: 28px 0 18px;"><a href="${safeCtaUrl}" style="display: inline-block; background: #0066ff; color: #ffffff; padding: 14px 22px; border-radius: 999px; font-weight: 800; text-decoration: none;">${escapeHtml(ctaLabel)}</a></div>` : ""}
+        ${note ? `<p style="margin: 22px 0 0; color: #64748b; font-size: 13px; line-height: 1.7;">${note}</p>` : ""}
+      </div>
+    </div>
+  `;
+}
+
+export function buildScienceDojoEmailTemplate(input: ScienceDojoTemplateInput) {
+  const siteUrl = getSiteUrl();
+  const name = input.name || "there";
+  const missingSteps = input.missingSteps?.length
+    ? `<ul style="margin: 14px 0 0; padding-left: 20px;">${input.missingSteps.map((step) => `<li>${escapeHtml(step)}</li>`).join("")}</ul>`
+    : "";
+
+  const templates: Record<ScienceDojoTemplateKey, { subject: string; html: string }> = {
+    tutor_welcome: {
+      subject: "Welcome to ScienceDojo tutor onboarding",
+      html: baseScienceDojoEmail({
+        eyebrow: "ScienceDojo Tutor Onboarding",
+        title: `Welcome, ${name}.`,
+        body: `<p style="margin:0;">Your tutor profile has been started. You can complete the application in a few calm steps, save progress, and return whenever you are ready.</p>`,
+        ctaLabel: "Continue tutor application",
+        ctaUrl: `${siteUrl}/tutor/onboarding`,
+      }),
+    },
+    incomplete_tutor_application: {
+      subject: "Continue your ScienceDojo tutor application",
+      html: baseScienceDojoEmail({
+        eyebrow: "Tutor application",
+        title: "A gentle nudge to finish your tutor profile.",
+        body: `<p style="margin:0;">You are part-way through your ScienceDojo tutor application. The next useful items are:</p>${missingSteps}`,
+        ctaLabel: "Continue application",
+        ctaUrl: `${siteUrl}/tutor/onboarding`,
+      }),
+    },
+    dbs_clarification: {
+      subject: "About DBS/background checks and the Verified Tutor badge",
+      html: baseScienceDojoEmail({
+        eyebrow: "Verified Tutor badge",
+        title: "A quick note on DBS/background checks.",
+        body: `<p style="margin:0;">DBS/background check is not mandatory to complete your tutor signup. It is recommended if you want to become eligible for the Verified Tutor badge.</p>`,
+        ctaLabel: "Review verification steps",
+        ctaUrl: `${siteUrl}/dashboard/tutor`,
+      }),
+    },
+    application_submitted: {
+      subject: "Your ScienceDojo tutor application has been submitted",
+      html: baseScienceDojoEmail({
+        eyebrow: "Application submitted",
+        title: "Your application is with the ScienceDojo team.",
+        body: `<p style="margin:0;">Thanks for completing your tutor application. We will review your profile and follow up if anything needs clarification.</p>`,
+        ctaLabel: "Open tutor dashboard",
+        ctaUrl: `${siteUrl}/dashboard/tutor`,
+      }),
+    },
+    tutor_profile_approved_listed: {
+      subject: "Your ScienceDojo tutor profile is live",
+      html: baseScienceDojoEmail({
+        eyebrow: "Tutor profile live",
+        title: "Your profile has been approved for listing.",
+        body: `<p style="margin:0;">Your tutor profile can now appear on ScienceDojo. Completing verification steps can help families trust you faster and may improve visibility.</p>`,
+        ctaLabel: "Improve your profile",
+        ctaUrl: `${siteUrl}/dashboard/tutor/settings`,
+      }),
+    },
+    profile_improvement: {
+      subject: "Small improvements for your ScienceDojo tutor profile",
+      html: baseScienceDojoEmail({
+        eyebrow: "Tutor profile",
+        title: "A few refinements can make your profile stronger.",
+        body: `<p style="margin:0;">Families make faster decisions when profiles are clear, complete, and specific. Add availability, a strong bio, subjects, and any helpful verification evidence.</p>`,
+        ctaLabel: "Update profile",
+        ctaUrl: `${siteUrl}/dashboard/tutor/settings`,
+      }),
+    },
+    parent_student_product_update: {
+      subject: input.title || "ScienceDojo update",
+      html: baseScienceDojoEmail({
+        eyebrow: "ScienceDojo update",
+        title: input.title || "A ScienceDojo update",
+        body: `<p style="margin:0;">${escapeHtml(input.message || "We have made a small improvement to ScienceDojo.")}</p>`,
+        ctaLabel: input.ctaLabel,
+        ctaUrl: input.ctaUrl,
+      }),
+    },
+    policy_update: {
+      subject: input.title || "Important ScienceDojo policy update",
+      html: baseScienceDojoEmail({
+        eyebrow: "Policy update",
+        title: input.title || "Important ScienceDojo update",
+        body: `<p style="margin:0;">${escapeHtml(input.message || "Please review this ScienceDojo policy update.")}</p>`,
+        ctaLabel: input.ctaLabel,
+        ctaUrl: input.ctaUrl,
+        note: "Service, account, and policy emails are sent separately from optional product updates.",
+      }),
+    },
+  };
+
+  return templates[input.templateKey];
+}

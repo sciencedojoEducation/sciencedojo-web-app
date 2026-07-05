@@ -99,7 +99,7 @@ export default function PendingTutorsTable({ tutors }: { tutors: TutorWithApplic
                     <AlertCircle size={12} /> No application
                   </span>
                 )}
-                <VerifyButton tutorId={tutor.id} isVerified={false} />
+                <VerifyButton tutorId={tutor.id} action="approve" label="Approve Tutor" />
               </div>
             </article>
           );
@@ -204,7 +204,7 @@ export default function PendingTutorsTable({ tutors }: { tutors: TutorWithApplic
                           <AlertCircle size={12} /> No Application
                         </span>
                       )}
-                      <VerifyButton tutorId={tutor.id} isVerified={false} />
+                      <VerifyButton tutorId={tutor.id} action="approve" label="Approve Tutor" />
                     </div>
                   </td>
                 </tr>

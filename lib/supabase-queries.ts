@@ -16,6 +16,9 @@ export interface TutorProfile {
   average_rating: number | null;
   is_verified: boolean;
   verified_at: string | null;
+  is_publicly_listed?: boolean;
+  is_featured?: boolean;
+  tutor_status?: string;
   is_available_now: boolean;
   chat_availability?: Record<string, unknown>;
   youtube_intro_url?: string | null;
@@ -38,6 +41,10 @@ type RawTutorQueryRow = {
   rating: number;
   review_count: number;
   is_verified: boolean;
+  is_publicly_listed?: boolean;
+  is_featured?: boolean;
+  tutor_status?: string;
+  verified_at?: string | null;
   is_available_now: boolean;
   profiles: { full_name: string; avatar_url: string } | null;
 };
@@ -62,6 +69,10 @@ type RawTutorDetailRow = {
   rating: number;
   review_count: number;
   is_verified: boolean;
+  is_publicly_listed?: boolean;
+  is_featured?: boolean;
+  tutor_status?: string;
+  verified_at?: string | null;
   is_available_now: boolean;
   youtube_intro_url?: string | null;
   education_level?: string;
@@ -166,13 +177,18 @@ export async function getTutors(searchTerm: string = "", subject: string = "All"
       rating,
       review_count,
       is_verified,
+      is_publicly_listed,
+      is_featured,
+      tutor_status,
+      verified_at,
       is_available_now,
-      profiles (
+      profiles!tutors_id_fkey (
         full_name,
         avatar_url
       )
     `)
-    .eq('is_verified', true);
+    .eq('is_publicly_listed', true)
+    .not('tutor_status', 'in', '("rejected","suspended")');
 
   if (subject !== "All") {
     query = query.contains('subjects', [subject]);
@@ -220,7 +236,10 @@ export async function getTutors(searchTerm: string = "", subject: string = "All"
     review_count: tutor.review_count,
     average_rating: tutor.review_count > 0 ? (tutor.rating ?? null) : null,
     is_verified: tutor.is_verified,
-    verified_at: tutor.is_verified ? 'verified' : null,
+    is_publicly_listed: tutor.is_publicly_listed,
+    is_featured: tutor.is_featured,
+    tutor_status: tutor.tutor_status,
+    verified_at: tutor.is_verified ? (tutor.verified_at || 'verified') : null,
     is_available_now: tutor.is_available_now,
     youtube_intro_url: newFieldsMap[tutor.id]?.youtube_intro_url || null,
     education_level: newFieldsMap[tutor.id]?.education_level,
@@ -248,6 +267,10 @@ export async function getTutorById(id: string): Promise<TutorProfile | null> {
       rating,
       review_count,
       is_verified,
+      is_publicly_listed,
+      is_featured,
+      tutor_status,
+      verified_at,
       is_available_now,
       youtube_intro_url,
       education_level,
@@ -255,7 +278,7 @@ export async function getTutorById(id: string): Promise<TutorProfile | null> {
       experience_summary,
       has_teaching_license,
       cv_url,
-      profiles (
+      profiles!tutors_id_fkey (
         full_name,
         avatar_url
       )
@@ -292,7 +315,10 @@ export async function getTutorById(id: string): Promise<TutorProfile | null> {
     review_count: tutor.review_count,
     average_rating: tutor.review_count > 0 ? (tutor.rating ?? null) : null,
     is_verified: tutor.is_verified,
-    verified_at: tutor.is_verified ? 'verified' : null,
+    is_publicly_listed: tutor.is_publicly_listed,
+    is_featured: tutor.is_featured,
+    tutor_status: tutor.tutor_status,
+    verified_at: tutor.is_verified ? (tutor.verified_at || 'verified') : null,
     is_available_now: tutor.is_available_now,
     chat_availability: extendedData?.chat_availability ?? undefined,
     youtube_intro_url: extendedData?.youtube_intro_url,
@@ -314,6 +340,10 @@ export async function getTutorBySlug(slug: string): Promise<TutorProfile | null>
       rating,
       review_count,
       is_verified,
+      is_publicly_listed,
+      is_featured,
+      tutor_status,
+      verified_at,
       is_available_now,
       youtube_intro_url,
       education_level,
@@ -321,7 +351,7 @@ export async function getTutorBySlug(slug: string): Promise<TutorProfile | null>
       experience_summary,
       has_teaching_license,
       cv_url,
-      profiles (
+      profiles!tutors_id_fkey (
         full_name,
         avatar_url
       )
@@ -349,7 +379,10 @@ export async function getTutorBySlug(slug: string): Promise<TutorProfile | null>
     review_count: tutor.review_count,
     average_rating: tutor.review_count > 0 ? (tutor.rating ?? null) : null,
     is_verified: tutor.is_verified,
-    verified_at: tutor.is_verified ? 'verified' : null,
+    is_publicly_listed: tutor.is_publicly_listed,
+    is_featured: tutor.is_featured,
+    tutor_status: tutor.tutor_status,
+    verified_at: tutor.is_verified ? (tutor.verified_at || 'verified') : null,
     is_available_now: tutor.is_available_now,
     chat_availability: undefined,
     youtube_intro_url: tutor.youtube_intro_url,
@@ -436,7 +469,7 @@ export async function getBookingsByUserId(userId: string): Promise<Booking[]> {
   const tutorIds = [...new Set(bookings.map(b => b.tutor_id))];
   const { data: tutorRows } = await supabase
     .from('tutors')
-    .select('id, profiles(full_name, avatar_url)')
+    .select('id, profiles!tutors_id_fkey(full_name, avatar_url)')
     .in('id', tutorIds);
 
   const tutorMap: Record<string, { full_name: string; avatar_url: string }> = {};
@@ -493,7 +526,7 @@ export async function getBookingById(bookingId: string) {
   // Resolve tutor display info via tutors→profiles join
   const { data: tutorRow } = await supabase
     .from('tutors')
-    .select('id, profiles(full_name, avatar_url)')
+    .select('id, profiles!tutors_id_fkey(full_name, avatar_url)')
     .eq('id', booking.tutor_id)
     .maybeSingle();
 

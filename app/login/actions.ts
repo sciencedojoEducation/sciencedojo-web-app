@@ -7,6 +7,7 @@ import { createClient } from '@/utils/supabase/server'
 import { getSitePath } from '@/lib/site-url'
 import { getActiveInternalMemberByUserId, repairLinkedInternalUserRole } from '@/lib/internal-auth'
 import { upsertMembershipForRole } from '@/lib/account-memberships'
+import { sendTrackedEmail } from '@/lib/communications'
 
 type PublicSignupRole = 'user' | 'parent' | 'student' | 'tutor';
 
@@ -373,10 +374,23 @@ export async function signup(formData: FormData) {
       await supabase.from('tutors').upsert({
         id: authData.user.id,
         is_verified: false,
+        is_publicly_listed: false,
+        is_featured: false,
+        tutor_status: 'application_submitted',
         is_available_now: true,
         bio: '',
         hourly_rate: 0
       }, { onConflict: 'id' });
+
+      await sendTrackedEmail({
+        userId: authData.user.id,
+        recipientEmail: data.email,
+        recipientName: fullName,
+        category: 'onboarding',
+        audience: 'tutor',
+        templateKey: 'tutor_welcome',
+        dedupeHours: 168,
+      });
     }
   }
 

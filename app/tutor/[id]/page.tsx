@@ -27,6 +27,10 @@ async function TutorProfileServer({ id }: { id: string }) {
     notFound();
   }
 
+  if (!tutor.is_publicly_listed || tutor.tutor_status === "rejected" || tutor.tutor_status === "suspended") {
+    notFound();
+  }
+
   if (!tutor) {
     notFound();
   }
@@ -178,12 +182,12 @@ async function TutorProfileServer({ id }: { id: string }) {
                   <h1 className="text-4xl md:text-5xl font-black text-secondary tracking-tight">
                     {tutor.full_name}
                   </h1>
-                  {tutor.is_verified && (
+                  {(tutor.is_publicly_listed || tutor.is_verified) && (
                     <div className="flex items-center gap-1.5 bg-primary/10 text-primary px-3 py-1 rounded-full text-xs font-black uppercase tracking-widest mt-1">
                       <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                       </svg>
-                      Verified Expert
+                      {tutor.is_featured ? "Featured Tutor" : tutor.is_verified ? "Verified Tutor" : "ScienceDojo Tutor"}
                     </div>
                   )}
                 </div>

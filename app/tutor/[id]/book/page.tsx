@@ -36,6 +36,10 @@ export default async function BookTutorPage({
     notFound();
   }
 
+  if (!tutor.is_publicly_listed || tutor.tutor_status === "rejected" || tutor.tutor_status === "suspended") {
+    notFound();
+  }
+
   if (!user) {
     redirect(`/login?next=${encodeURIComponent(`/tutor/${id}/book`)}`);
   }

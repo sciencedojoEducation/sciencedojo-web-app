@@ -14,7 +14,7 @@ export default async function AdminDashboard() {
   const { count: activeTutors } = await supabase
     .from("tutors")
     .select("*", { count: 'exact', head: true })
-    .eq("is_verified", true);
+    .eq("is_publicly_listed", true);
 
   // 2. Students Count
   const { count: totalStudents } = await supabase

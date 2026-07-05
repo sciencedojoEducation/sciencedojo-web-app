@@ -20,12 +20,12 @@ export default async function ContractPage() {
   // Load existing tutor data
   const { data: tutor } = await supabase
     .from("tutors")
-    .select("is_verified")
+    .select("is_publicly_listed")
     .eq("id", user.id)
     .single();
 
-  // If already verified, go to dashboard
-  if (tutor?.is_verified) {
+  // If already listed, go to dashboard
+  if (tutor?.is_publicly_listed) {
     redirect("/dashboard/tutor");
   }
 

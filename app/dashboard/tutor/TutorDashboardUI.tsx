@@ -2,6 +2,7 @@
 
 import { Booking, TutorProfile, AvailabilitySlot } from "@/lib/supabase-queries";
 import { Announcement } from "@/lib/announcement-queries";
+import type { PlatformAnnouncement } from "@/lib/platform-announcements";
 import { useState, useTransition } from "react";
 import Link from "next/link";
 import { updateBookingStatus, updateTutorProfile, completeSessionAction } from "@/app/tutor/actions";
@@ -73,6 +74,7 @@ interface TutorDashboardUIProps {
   tutorData: TutorProfile | null;
   slots: AvailabilitySlot[];
   announcements: Announcement[];
+  platformAnnouncements?: PlatformAnnouncement[];
   reviewVisibility: {
     approved: number;
     pending: number;
@@ -107,6 +109,7 @@ export default function TutorDashboardUI({
   tutorData,
   slots,
   announcements,
+  platformAnnouncements = [],
   reviewVisibility,
   showAcceptedWelcome,
   showLaunchChecklist,
@@ -302,8 +305,8 @@ export default function TutorDashboardUI({
       )}
 
       {/* Platform Announcements Hub */}
-      {announcements.length > 0 && (
-         <AnnouncementFeed announcements={announcements} />
+      {(announcements.length > 0 || platformAnnouncements.length > 0) && (
+         <AnnouncementFeed announcements={announcements} platformAnnouncements={platformAnnouncements} />
       )}
 
       {workspaceOnly && (

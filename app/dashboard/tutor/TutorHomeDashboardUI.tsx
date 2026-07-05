@@ -1,6 +1,7 @@
 "use client";
 
 import type { Announcement } from "@/lib/announcement-queries";
+import type { PlatformAnnouncement } from "@/lib/platform-announcements";
 import type { AvailabilitySlot, Booking, TutorProfile } from "@/lib/supabase-queries";
 import type { TutorReadinessResult } from "@/lib/tutor-readiness";
 import { useState, useTransition } from "react";
@@ -25,6 +26,7 @@ interface TutorHomeDashboardUIProps {
   tutorData: TutorProfile | null;
   slots: AvailabilitySlot[];
   announcements: Announcement[];
+  platformAnnouncements?: PlatformAnnouncement[];
   reviewVisibility: {
     approved: number;
     pending: number;
@@ -75,6 +77,7 @@ export default function TutorHomeDashboardUI({
   tutorData,
   slots,
   announcements,
+  platformAnnouncements = [],
   reviewVisibility,
   showAcceptedWelcome,
   profileReadiness,
@@ -157,7 +160,9 @@ export default function TutorHomeDashboardUI({
         </div>
       )}
 
-      {announcements.length > 0 && <AnnouncementFeed announcements={announcements} />}
+      {(announcements.length > 0 || platformAnnouncements.length > 0) && (
+        <AnnouncementFeed announcements={announcements} platformAnnouncements={platformAnnouncements} />
+      )}
 
       {isWelcomeVisible && (
         <section className="rounded-[1.5rem] border border-primary/10 bg-[linear-gradient(135deg,#ffffff_0%,#f5fbff_58%,#ecfeff_100%)] p-4 shadow-sm shadow-primary/5 md:p-5">

@@ -1,19 +1,22 @@
 "use client";
 
 import { Announcement } from "@/lib/announcement-queries";
+import { PlatformAnnouncement } from "@/lib/platform-announcements";
 import { formatDistanceToNow } from "date-fns";
 import { useState } from "react";
 
 interface AnnouncementFeedProps {
   announcements: Announcement[];
+  platformAnnouncements?: PlatformAnnouncement[];
 }
 
-export default function AnnouncementFeed({ announcements }: AnnouncementFeedProps) {
+export default function AnnouncementFeed({ announcements, platformAnnouncements = [] }: AnnouncementFeedProps) {
   const [dismissed, setDismissed] = useState<string[]>([]);
 
   const active = announcements.filter(a => !dismissed.includes(a.id));
+  const platformActive = platformAnnouncements.filter(a => !dismissed.includes(a.id));
 
-  if (active.length === 0) return null;
+  if (active.length === 0 && platformActive.length === 0) return null;
 
   return (
     <div className="space-y-4 animate-in fade-in slide-in-from-top-4 duration-700">
@@ -28,6 +31,37 @@ export default function AnnouncementFeed({ announcements }: AnnouncementFeedProp
       </div>
 
       <div className="grid gap-4">
+        {platformActive.map((ann) => (
+          <div
+            key={ann.id}
+            className="relative overflow-hidden rounded-[2rem] border border-primary/15 bg-gradient-to-br from-white to-blue-50/60 p-6 shadow-md shadow-primary/5"
+          >
+            <div className="pr-12">
+              <div className="mb-2 flex flex-wrap items-center gap-2">
+                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">{ann.category.replace(/_/g, " ")}</span>
+                <span className="text-[10px] font-bold tracking-tight text-secondary/30">• {formatDistanceToNow(new Date(ann.starts_at), { addSuffix: true })}</span>
+              </div>
+              <h3 className="mb-2 text-lg font-black tracking-tight text-secondary">
+                {ann.title}
+              </h3>
+              <p className="whitespace-pre-wrap text-sm font-medium leading-relaxed text-secondary/70">
+                {ann.message}
+              </p>
+              {ann.cta_label && ann.cta_url && (
+                <a href={ann.cta_url} className="mt-4 inline-flex rounded-full bg-primary px-4 py-2 text-xs font-black uppercase tracking-widest text-white">
+                  {ann.cta_label}
+                </a>
+              )}
+            </div>
+            <button
+              onClick={() => setDismissed([...dismissed, ann.id])}
+              className="absolute right-6 top-6 rounded-full p-2 text-secondary/20 transition-all hover:bg-secondary/5 hover:text-secondary"
+              aria-label={`Dismiss ${ann.title}`}
+            >
+              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l18 18" /></svg>
+            </button>
+          </div>
+        ))}
         {active.map((ann) => (
           <div 
             key={ann.id} 

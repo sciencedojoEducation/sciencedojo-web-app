@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { toggleTutorVerification, getSignedDocumentUrl } from "./actions";
+import { approveTutorForListing, getSignedDocumentUrl } from "./actions";
 import YouTubeLite from "@/components/YouTubeLite";
 import {
   X, User, Phone, MapPin, GraduationCap, Briefcase, Video,
@@ -163,9 +163,9 @@ export default function ApplicationReviewModal({ application, tutorProfile, onCl
   const currentStage = d.current_stage || 0;
   const completedStages = Math.min(currentStage, 7);
 
-  const handleVerify = () => {
+  const handleApprove = () => {
     startTransition(async () => {
-      const result = await toggleTutorVerification(application.user_id, false);
+      const result = await approveTutorForListing(application.user_id);
       if (result?.error) {
         alert(`Error: ${result.error}`);
       } else {
@@ -447,12 +447,12 @@ export default function ApplicationReviewModal({ application, tutorProfile, onCl
           <div className="flex min-w-0 items-center gap-4">
             {d.onboarding_status === "under_review" && (
               <button
-                onClick={handleVerify}
+                onClick={handleApprove}
                 disabled={isPending}
                 className="flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-3 text-[10px] font-black uppercase tracking-widest text-white shadow-lg shadow-emerald-200 transition-all hover:bg-emerald-700 disabled:opacity-50 md:px-8 md:py-4"
               >
                 <CheckCircle2 size={14} />
-                {isPending ? "Processing..." : "Approve & Verify"}
+                {isPending ? "Processing..." : "Approve Tutor"}
               </button>
             )}
           </div>

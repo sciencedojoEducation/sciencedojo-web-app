@@ -1,5 +1,6 @@
 import { getBookingsByUserId, getTutors } from "@/lib/supabase-queries";
 import { getActiveAnnouncementsForUser } from "@/lib/announcement-queries";
+import { getActivePlatformAnnouncementsForUser } from "@/lib/platform-announcements";
 import Link from "next/link";
 import Image from "next/image";
 import { createClient } from "@/utils/supabase/server";
@@ -46,6 +47,7 @@ export default async function StudentDashboard() {
     bookings,
     availableTutors,
     announcements,
+    platformAnnouncements,
     assignments,
   ] = await Promise.all([
     supabase
@@ -56,6 +58,7 @@ export default async function StudentDashboard() {
     getBookingsByUserId(user.id),
     getTutors("", "All", 6),
     getActiveAnnouncementsForUser(),
+    getActivePlatformAnnouncementsForUser(),
     getHomeworkForStudent(user.id),
   ]);
   const { data: missionMomentum } = await supabase
@@ -104,8 +107,8 @@ export default async function StudentDashboard() {
   return (
     <div className="mx-auto max-w-5xl space-y-5 px-3.5 py-4 sm:px-4 sm:py-5 md:space-y-12 md:p-8">
       {/* Platform Announcements Hub */}
-      {announcements.length > 0 && (
-         <AnnouncementFeed announcements={announcements} />
+      {(announcements.length > 0 || platformAnnouncements.length > 0) && (
+         <AnnouncementFeed announcements={announcements} platformAnnouncements={platformAnnouncements} />
       )}
 
       <div data-tour="student-welcome" className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between md:gap-4">

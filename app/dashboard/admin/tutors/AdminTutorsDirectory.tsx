@@ -28,7 +28,7 @@ function matchesTutorSearch(tutor: AdminTutor, query: string) {
     appData.subjects,
     appData.levels,
     appData.onboarding_status,
-    tutor.tutorDetail?.is_verified ? "verified" : "pending",
+    tutor.tutorDetail?.is_verified ? "verified" : tutor.tutorDetail?.tutor_status || "pending",
     tutor.application?.status,
   ]
     .filter(Boolean)
@@ -76,7 +76,7 @@ export default function AdminTutorsDirectory({
             </div>
             <div className="flex items-center gap-2 border-l border-slate-200 pl-4 md:pl-6">
                <div className="h-2 w-2 rounded-full bg-green-500"></div>
-               Verified: {verifiedTutors.length}
+               Live: {verifiedTutors.length}
             </div>
             <div className="flex items-center gap-2 border-l border-slate-200 pl-4 md:pl-6">
                <div className="h-2 w-2 rounded-full bg-cyan-500"></div>
@@ -152,7 +152,7 @@ export default function AdminTutorsDirectory({
                   <p className="mt-1 truncate text-xs font-bold text-slate-400">{tutor.email}</p>
                 </div>
                 <span className="shrink-0 rounded-full border border-blue-100 bg-blue-50 px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.1em] text-blue-600">
-                  Verified
+                  {tutor.tutorDetail?.is_featured ? "Featured" : tutor.tutorDetail?.is_verified ? "Verified" : "Listed"}
                 </span>
               </div>
 
@@ -171,7 +171,13 @@ export default function AdminTutorsDirectory({
                 <a href={`/tutor/${tutor.id}`} target="_blank" className="inline-flex min-h-11 w-full items-center justify-center rounded-2xl bg-slate-100 px-4 py-3 text-[10px] font-black uppercase tracking-[0.12em] text-slate-600 transition-colors hover:bg-slate-200">
                   View profile
                 </a>
-                <VerifyButton tutorId={tutor.id} isVerified={true} />
+                {tutor.tutorDetail?.is_verified ? (
+                  <VerifyButton tutorId={tutor.id} action="remove_verified" label="Remove Badge" />
+                ) : (
+                  <VerifyButton tutorId={tutor.id} action="verify" label="Award Badge" />
+                )}
+                <VerifyButton tutorId={tutor.id} action={tutor.tutorDetail?.is_featured ? "unfeature" : "feature"} label={tutor.tutorDetail?.is_featured ? "Unfeature" : "Feature"} variant="muted" />
+                <VerifyButton tutorId={tutor.id} action="suspend" label="Suspend" variant="danger" />
               </div>
             </article>
           ))}
@@ -200,7 +206,7 @@ export default function AdminTutorsDirectory({
                         <div className="relative h-14 w-14 overflow-hidden rounded-full border-2 border-white bg-slate-100 shadow-md ring-2 ring-slate-100">
                           <Image src={tutor.avatar_url || "/tutor_placeholder.webp"} alt={tutor.full_name} fill className="object-cover" />
                         </div>
-                        <div className="absolute -bottom-0.5 -right-0.5 z-10 flex items-center justify-center rounded-full border-2 border-white bg-blue-500 p-1 text-white shadow-sm">
+                        <div className={`absolute -bottom-0.5 -right-0.5 z-10 flex items-center justify-center rounded-full border-2 border-white p-1 text-white shadow-sm ${tutor.tutorDetail?.is_verified ? "bg-blue-500" : "bg-slate-400"}`}>
                           <svg className="h-2.5 w-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
                         </div>
                       </div>
@@ -226,7 +232,13 @@ export default function AdminTutorsDirectory({
                     <a href={`/tutor/${tutor.id}`} target="_blank" className="inline-block rounded-xl bg-slate-100 px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-600 transition-all hover:bg-slate-200">
                       View profile
                     </a>
-                    <VerifyButton tutorId={tutor.id} isVerified={true} />
+                    {tutor.tutorDetail?.is_verified ? (
+                      <VerifyButton tutorId={tutor.id} action="remove_verified" label="Remove Badge" />
+                    ) : (
+                      <VerifyButton tutorId={tutor.id} action="verify" label="Award Badge" />
+                    )}
+                    <VerifyButton tutorId={tutor.id} action={tutor.tutorDetail?.is_featured ? "unfeature" : "feature"} label={tutor.tutorDetail?.is_featured ? "Unfeature" : "Feature"} variant="muted" />
+                    <VerifyButton tutorId={tutor.id} action="suspend" label="Suspend" variant="danger" />
                   </td>
                 </tr>
               ))}

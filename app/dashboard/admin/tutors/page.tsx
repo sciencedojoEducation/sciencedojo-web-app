@@ -60,6 +60,9 @@ export default async function AdminTutorsPage() {
         subjects: [],
         hourly_rate: 30,
         is_verified: false,
+        is_publicly_listed: false,
+        is_featured: false,
+        tutor_status: applicationMap[p.id]?.status === "pending" ? "under_review" : "application_submitted",
         rating: 0
       }))
     );
@@ -79,8 +82,11 @@ export default async function AdminTutorsPage() {
     })) || [];
   }
 
-  const pendingTutors = mergedTutors.filter(t => !t.tutorDetail?.is_verified);
-  const verifiedTutors = mergedTutors.filter(t => t.tutorDetail?.is_verified);
+  const pendingTutors = mergedTutors.filter(t =>
+    !t.tutorDetail?.is_publicly_listed &&
+    !["rejected", "suspended"].includes(t.tutorDetail?.tutor_status || "")
+  );
+  const verifiedTutors = mergedTutors.filter(t => t.tutorDetail?.is_publicly_listed);
 
   let { data: reviewRows, error: reviewError } = await adminClient
     .from("reviews")

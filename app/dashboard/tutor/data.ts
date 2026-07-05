@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { getActiveAnnouncementsForUser } from "@/lib/announcement-queries";
+import { getActivePlatformAnnouncementsForUser } from "@/lib/platform-announcements";
 import { getAvailabilityByTutorId, getBookingsByUserId, getTutorById } from "@/lib/supabase-queries";
 import { buildTutorLaunchChecklist, buildTutorReadiness } from "@/lib/tutor-readiness";
 import { getTutorMentorReach } from "@/lib/tutor-mentor-reach";
@@ -28,7 +29,7 @@ export async function getTutorDashboardData() {
     .eq("user_id", user.id)
     .maybeSingle();
 
-  if (!tutorData || !tutorData.is_verified) {
+  if (!tutorData || !tutorData.is_publicly_listed) {
     if (!application || application.status === "draft") {
       redirect("/tutor/onboarding");
     } else if (application.status === "approved") {
@@ -38,6 +39,7 @@ export async function getTutorDashboardData() {
 
   const slots = await getAvailabilityByTutorId(user.id);
   const announcements = await getActiveAnnouncementsForUser();
+  const platformAnnouncements = await getActivePlatformAnnouncementsForUser();
   const applicationData = asRecord(application?.data);
   const { data: tutorStripe } = await supabase
     .from("tutors")
@@ -88,13 +90,14 @@ export async function getTutorDashboardData() {
     tutorData,
     slots,
     announcements,
+    platformAnnouncements,
     reviewVisibility,
     showAcceptedWelcome: Boolean(
-      tutorData?.is_verified &&
+      tutorData?.is_publicly_listed &&
       application?.status === "approved" &&
       !applicationData.tutor_welcome_seen_at
     ),
-    showLaunchChecklist: Boolean(tutorData?.is_verified),
+    showLaunchChecklist: Boolean(tutorData?.is_publicly_listed),
     profileReadiness,
     launchChecklist: buildTutorLaunchChecklist(profileReadiness, user.id),
     mentorReach,

@@ -1,5 +1,6 @@
 import { getBookingsByUserId, getTutors, type Booking } from "@/lib/supabase-queries";
 import { getActiveAnnouncementsForUser } from "@/lib/announcement-queries";
+import { getActivePlatformAnnouncementsForUser } from "@/lib/platform-announcements";
 import Link from "next/link";
 import Image from "next/image";
 import { createClient } from "@/utils/supabase/server";
@@ -186,7 +187,10 @@ export default async function ParentDashboard() {
   const recentLessonNotes = recentCompleted.filter(booking => booking.lesson_notes?.summary).slice(0, 3);
   const nextSession = sortByDateAsc(upcoming)[0];
 
-  const announcements = await getActiveAnnouncementsForUser();
+  const [announcements, platformAnnouncements] = await Promise.all([
+    getActiveAnnouncementsForUser(),
+    getActivePlatformAnnouncementsForUser(),
+  ]);
 
   const { getHomeworkForStudent } = await import("@/lib/class-queries");
   const assignments = await getHomeworkForStudent(learnerContext.learnerId);
@@ -346,8 +350,8 @@ export default async function ParentDashboard() {
   return (
     <div className="px-3 py-5 sm:p-6 md:p-8 max-w-5xl mx-auto space-y-5 md:space-y-10">
       {/* Platform Announcements Hub */}
-      {announcements.length > 0 && (
-         <AnnouncementFeed announcements={announcements} />
+      {(announcements.length > 0 || platformAnnouncements.length > 0) && (
+         <AnnouncementFeed announcements={announcements} platformAnnouncements={platformAnnouncements} />
       )}
 
       <section data-tour="parent-welcome" className="rounded-[1.5rem] border border-primary/[0.07] bg-gradient-to-br from-white via-[#fbfdff] to-[#f4f9ff] p-4 sm:p-5 md:rounded-[2.25rem] md:p-7">

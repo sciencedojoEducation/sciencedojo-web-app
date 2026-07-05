@@ -123,6 +123,7 @@ export default async function DashboardSidebar({ role }: DashboardSidebarProps) 
       { name: "Messages", href: "/dashboard/messages", icon: "💬", badge: unreadCount },
       { name: "Dojo Safeguards", href: "/dashboard/admin/safeguards", icon: "🛡️", badge: flaggedCount || 0, badgeColor: "bg-red-500 shadow-red-500/20" },
       { name: "Broadcast Center", href: "/dashboard/admin/broadcast", icon: "📣" },
+      { name: "Communications", href: "/dashboard/admin/communications", icon: "✉️" },
       { name: "Manage Tutors", href: "/dashboard/admin/tutors", icon: "👥" },
       { name: "User Directory", href: "/dashboard/admin/users", icon: "👤" },
       { name: "Tutor Payouts", href: "/dashboard/admin/payouts", icon: "💰" },
