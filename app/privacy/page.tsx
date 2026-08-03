@@ -19,6 +19,7 @@ const sections = [
       "Tutor profile, application, availability, subject, qualification, payout, and teaching information.",
       "Booking, lesson, classroom, message, homework, review, support, dispute, and admin status information.",
       "Basic analytics events such as page views, free assessment actions, CTA clicks, role selection, and tutor connect clicks when analytics is configured.",
+      "Community pseudonyms, questions, replies, reactions, bookmarks, reports, moderation decisions, and account trust or restriction status.",
     ],
   },
   {
@@ -33,7 +34,11 @@ const sections = [
   },
   {
     title: "Student privacy",
-    body: "Student information should be treated carefully. Parents, students, tutors, and admins should avoid sharing unnecessary personal details in public areas. Tutors should use student information only for teaching, preparation, feedback, and agreed support.",
+    body: "Student information should be treated carefully. The Exam Community is for users aged 13 and over and displays pseudonyms rather than legal account names. Users must not post real names, schools, exact locations, contact details, candidate information, private messages, or another person's information. ScienceDojo keeps the account connection privately for moderation, safety, misuse prevention, and safeguarding response.",
+  },
+  {
+    title: "Community moderation records",
+    body: "ScienceDojo may retain reports, moderation decisions, restriction history, and related content where needed for student safety, safeguarding, abuse prevention, legal obligations, or dispute handling. Publicly hidden content may therefore remain available to authorized moderators.",
   },
   {
     title: "Third-party services",

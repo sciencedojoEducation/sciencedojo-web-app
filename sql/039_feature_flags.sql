@@ -50,6 +50,7 @@ VALUES
   ('practice_dojo_enabled', 'Practice Dojo', 'Show Practice Dojo public learning tools and CTAs.', false, 'AI / Practice Tools'),
   ('ai_practice_generator_enabled', 'AI practice generator', 'Allow AI-backed practice question generation routes.', false, 'AI / Practice Tools'),
   ('learning_hub_enabled', 'Learning Hub', 'Show public Learning Hub articles and index pages.', false, 'Public Website'),
+  ('community_enabled', 'Exam community', 'Show the moderated GCSE and A-Level community and contribution links.', true, 'Growth / Beta'),
   ('parent_dashboard_enabled', 'Parent dashboard', 'Allow parent users to access the parent dashboard experience.', false, 'Dashboards'),
   ('student_dashboard_enabled', 'Student dashboard', 'Allow student users to access the student dashboard experience.', false, 'Dashboards'),
   ('tutor_dashboard_enabled', 'Tutor dashboard', 'Allow tutors to access the tutor dashboard experience.', false, 'Dashboards'),

@@ -37,6 +37,10 @@ const sections = [
     ],
   },
   {
+    title: "Exam Community safeguarding",
+    body: "The Exam Community is for users aged 13 and over. Public contributions use pseudonyms, new content may be reviewed before publication, and private student-to-student messaging is not provided. Users should report personal information, unsafe contact attempts, harassment, exam leaks, or anything that suggests a student may be at risk. Urgent community reports are escalated to authorized staff.",
+  },
+  {
     title: "Safeguarding lead contact",
     body: "For safeguarding questions or concerns, contact safeguarding@sciencedojo.com.",
   },

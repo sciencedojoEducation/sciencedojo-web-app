@@ -1,8 +1,9 @@
 "use client";
 
 import { AvailabilitySlot } from "@/lib/supabase-queries";
-import { addAvailabilitySlot, deleteAvailabilitySlot } from "@/app/tutor/actions";
+import { addAvailabilitySlot, addMonthlyWeeklyAvailability, deleteAvailabilitySlot } from "@/app/tutor/actions";
 import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 
 interface Props {
   slots: AvailabilitySlot[];
@@ -13,6 +14,7 @@ const MONTH_NAMES = [
   "July", "August", "September", "October", "November", "December"
 ];
 const DAY_LABELS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
+const WEEKDAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
 // Helper: Format '09:00:00' to '9am'
 function formatTime(timeStr: string) {
@@ -22,10 +24,19 @@ function formatTime(timeStr: string) {
   return d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }).toLowerCase().replace(':00', '');
 }
 
+function getErrorMessage(error: unknown, fallback: string) {
+  return error instanceof Error ? error.message : fallback;
+}
+
 export default function TutorAvailabilityCalendar({ slots }: Props) {
+  const router = useRouter();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [isPending, startTransition] = useTransition();
+  const [editorMode, setEditorMode] = useState<"single" | "weekly">("single");
+  const [weekdays, setWeekdays] = useState<number[]>([]);
+  const [weeklyRanges, setWeeklyRanges] = useState([{ startTime: "09:00", endTime: "10:00" }]);
+  const [weeklyResult, setWeeklyResult] = useState<{ message: string; createdCount: number } | null>(null);
 
   // For the time range inputs
   const [startTime, setStartTime] = useState("09:00");
@@ -38,10 +49,27 @@ export default function TutorAvailabilityCalendar({ slots }: Props) {
   const lastDateOfMonth = new Date(year, month + 1, 0);
   const startingDayOfWeek = firstDayOfMonth.getDay(); 
   const totalDays = lastDateOfMonth.getDate();
+  const weeklyRangesValid = weeklyRanges.every(range => range.startTime < range.endTime);
+
+  const todayString = new Date().toISOString().slice(0, 10);
+  let weeklyOccurrenceCount = 0;
+  let excludedPastDates = 0;
+  for (let day = 1; day <= totalDays; day++) {
+    const date = new Date(year, month, day);
+    if (!weekdays.includes(date.getDay())) continue;
+    const dateString = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+    if (dateString < todayString) excludedPastDates++;
+    else weeklyOccurrenceCount += weeklyRanges.length;
+  }
 
   // Navigation
-  const handlePrevMonth = () => setCurrentDate(new Date(year, month - 1, 1));
-  const handleNextMonth = () => setCurrentDate(new Date(year, month + 1, 1));
+  const changeMonth = (nextDate: Date) => {
+    setCurrentDate(nextDate);
+    setSelectedDate(null);
+    setWeeklyResult(null);
+  };
+  const handlePrevMonth = () => changeMonth(new Date(year, month - 1, 1));
+  const handleNextMonth = () => changeMonth(new Date(year, month + 1, 1));
   const handleToday = () => {
     setCurrentDate(new Date());
     setSelectedDate(new Date());
@@ -76,8 +104,9 @@ export default function TutorAvailabilityCalendar({ slots }: Props) {
         formData.append("endTime", endTime);
 
         await addAvailabilitySlot(formData);
-      } catch (err: any) {
-        alert(err.message || "Failed to save slot. It may overlap with an existing slot.");
+        router.refresh();
+      } catch (error: unknown) {
+        alert(getErrorMessage(error, "Failed to save slot. It may overlap with an existing slot."));
       }
     });
   };
@@ -88,16 +117,41 @@ export default function TutorAvailabilityCalendar({ slots }: Props) {
         const formData = new FormData();
         formData.append("id", id);
         await deleteAvailabilitySlot(formData);
-      } catch (err: any) {
+        router.refresh();
+      } catch {
         alert("Failed to delete slot.");
       }
     });
   };
 
-  // Convert "2026-04-15" string to local Date obj (ignoring timezone shift)
-  const toLocalDate = (ymdStr: string) => {
-    const [y, m, d] = ymdStr.split('-').map(Number);
-    return new Date(y, m - 1, d);
+  const toggleWeekday = (day: number) => {
+    setWeeklyResult(null);
+    setWeekdays(current => current.includes(day) ? current.filter(value => value !== day) : [...current, day]);
+  };
+
+  const updateWeeklyRange = (index: number, field: "startTime" | "endTime", value: string) => {
+    setWeeklyResult(null);
+    setWeeklyRanges(current => current.map((range, rangeIndex) =>
+      rangeIndex === index ? { ...range, [field]: value } : range
+    ));
+  };
+
+  const handlePublishWeekly = () => {
+    setWeeklyResult(null);
+    startTransition(async () => {
+      try {
+        const result = await addMonthlyWeeklyAvailability({
+          year,
+          month: month + 1,
+          weekdays,
+          timeRanges: weeklyRanges,
+        });
+        setWeeklyResult({ message: result.message, createdCount: result.createdCount });
+        router.refresh();
+      } catch (error: unknown) {
+        setWeeklyResult({ message: getErrorMessage(error, "Failed to publish weekly availability."), createdCount: 0 });
+      }
+    });
   };
 
   // Build grid
@@ -141,13 +195,32 @@ export default function TutorAvailabilityCalendar({ slots }: Props) {
         formData.append("endTime", end);
 
         await addAvailabilitySlot(formData);
-      } catch (err: any) {
+        router.refresh();
+      } catch {
         alert("Failed to save slot. Time may overlap.");
       }
     });
   };
 
   return (
+    <div className="space-y-4">
+      <div className="inline-flex w-full rounded-2xl border border-secondary/10 bg-white p-1 shadow-sm sm:w-auto" aria-label="Availability editor mode">
+        <button
+          type="button"
+          onClick={() => setEditorMode("single")}
+          className={`flex-1 rounded-xl px-4 py-2.5 text-xs font-black transition-colors sm:flex-none ${editorMode === "single" ? "bg-primary text-white shadow-sm" : "text-secondary/50 hover:text-secondary"}`}
+        >
+          Single day
+        </button>
+        <button
+          type="button"
+          onClick={() => setEditorMode("weekly")}
+          className={`flex-1 rounded-xl px-4 py-2.5 text-xs font-black transition-colors sm:flex-none ${editorMode === "weekly" ? "bg-primary text-white shadow-sm" : "text-secondary/50 hover:text-secondary"}`}
+        >
+          Weekly for this month
+        </button>
+      </div>
+
     <div className="flex min-w-0 flex-col overflow-hidden rounded-[1.5rem] border border-secondary/10 bg-white shadow-sm lg:flex-row lg:rounded-[2rem]">
       {/* LEFT: Calendar Grid */}
       <div className="w-full min-w-0 border-b border-secondary/5 p-4 sm:p-6 lg:w-1/2 lg:border-b-0 lg:border-r lg:p-8">
@@ -224,7 +297,89 @@ export default function TutorAvailabilityCalendar({ slots }: Props) {
 
       {/* RIGHT: Slot Editor */}
       <div className="flex w-full min-w-0 flex-col bg-slate-50/50 p-4 text-left sm:p-6 lg:w-1/2 lg:p-8">
-        {!selectedDate ? (
+        {editorMode === "weekly" ? (
+          <div className="flex h-full min-w-0 flex-col">
+            <div className="mb-5 border-b border-secondary/10 pb-5">
+              <span className="mb-1 block text-[10px] font-black uppercase tracking-[0.16em] text-primary">Monthly pattern</span>
+              <h3 className="text-xl font-black text-secondary md:text-2xl">{MONTH_NAMES[month]} {year}</h3>
+              <p className="mt-2 text-sm font-medium leading-relaxed text-secondary/50">Choose the days and times you are usually available. These slots apply only to this month.</p>
+            </div>
+
+            <div>
+              <h4 className="mb-3 text-[10px] font-black uppercase tracking-widest text-secondary/40">Teaching days</h4>
+              <div className="grid grid-cols-4 gap-2 sm:grid-cols-7 lg:grid-cols-4 xl:grid-cols-7">
+                {DAY_LABELS.map((label, day) => (
+                  <button
+                    key={label}
+                    type="button"
+                    aria-label={WEEKDAY_NAMES[day]}
+                    aria-pressed={weekdays.includes(day)}
+                    onClick={() => toggleWeekday(day)}
+                    disabled={isPending}
+                    className={`rounded-xl border py-2.5 text-xs font-black transition-colors ${weekdays.includes(day) ? "border-primary bg-primary text-white" : "border-secondary/10 bg-white text-secondary/50 hover:border-primary/40 hover:text-primary"}`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="mt-6">
+              <div className="mb-3 flex items-center justify-between gap-3">
+                <h4 className="text-[10px] font-black uppercase tracking-widest text-secondary/40">Time ranges</h4>
+                <button
+                  type="button"
+                  disabled={isPending || weeklyRanges.length >= 12}
+                  onClick={() => { setWeeklyResult(null); setWeeklyRanges(current => [...current, { startTime: "09:00", endTime: "10:00" }]); }}
+                  className="text-xs font-black text-primary hover:text-primary-hover disabled:opacity-40"
+                >
+                  + Add range
+                </button>
+              </div>
+              <div className="space-y-2">
+                {weeklyRanges.map((range, index) => (
+                  <div key={index} className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)_auto] items-center gap-2 rounded-xl border border-secondary/10 bg-white p-2">
+                    <input type="time" value={range.startTime} onChange={event => updateWeeklyRange(index, "startTime", event.target.value)} disabled={isPending} className="min-w-0 rounded-lg bg-slate-50 p-2 text-sm font-bold text-secondary outline-none focus:ring-1 focus:ring-primary" />
+                    <span className="text-secondary/30">—</span>
+                    <input type="time" value={range.endTime} onChange={event => updateWeeklyRange(index, "endTime", event.target.value)} disabled={isPending} className="min-w-0 rounded-lg bg-slate-50 p-2 text-sm font-bold text-secondary outline-none focus:ring-1 focus:ring-primary" />
+                    <button
+                      type="button"
+                      aria-label={`Remove time range ${index + 1}`}
+                      disabled={isPending || weeklyRanges.length === 1}
+                      onClick={() => { setWeeklyResult(null); setWeeklyRanges(current => current.filter((_, rangeIndex) => rangeIndex !== index)); }}
+                      className="flex h-8 w-8 items-center justify-center rounded-lg text-red-400 hover:bg-red-50 disabled:opacity-25"
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="mt-6 rounded-2xl border border-primary/15 bg-primary/5 p-4">
+              <p className="text-sm font-black text-secondary">{weeklyOccurrenceCount} slot{weeklyOccurrenceCount === 1 ? "" : "s"} ready to publish</p>
+              <p className="mt-1 text-xs font-medium text-secondary/50">
+                {weekdays.length === 0 ? "Select at least one teaching day." : `${weekdays.map(day => WEEKDAY_NAMES[day]).join(", ")} in ${MONTH_NAMES[month]}.`}
+                {excludedPastDates > 0 ? ` ${excludedPastDates} past date${excludedPastDates === 1 ? " is" : "s are"} excluded.` : ""}
+              </p>
+            </div>
+
+            {weeklyResult && (
+              <div role="status" className={`mt-3 rounded-xl border p-3 text-sm font-bold ${weeklyResult.createdCount > 0 ? "border-emerald-200 bg-emerald-50 text-emerald-700" : "border-amber-200 bg-amber-50 text-amber-700"}`}>
+                {weeklyResult.message}
+              </div>
+            )}
+
+            <button
+              type="button"
+              onClick={handlePublishWeekly}
+              disabled={isPending || weekdays.length === 0 || weeklyOccurrenceCount === 0 || !weeklyRangesValid}
+              className="mt-4 flex w-full items-center justify-center rounded-xl bg-primary py-3 text-sm font-black text-white shadow-md transition-colors hover:bg-primary-hover disabled:pointer-events-none disabled:opacity-50"
+            >
+              {isPending ? "Publishing…" : `Publish ${MONTH_NAMES[month]} pattern`}
+            </button>
+          </div>
+        ) : !selectedDate ? (
           <div className="flex min-h-[220px] flex-col items-center justify-center text-center text-secondary/40">
             <svg className="mx-auto mb-4 h-12 w-12 opacity-50 md:h-16 md:w-16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -345,6 +500,7 @@ export default function TutorAvailabilityCalendar({ slots }: Props) {
           </div>
         )}
       </div>
+    </div>
     </div>
   );
 }

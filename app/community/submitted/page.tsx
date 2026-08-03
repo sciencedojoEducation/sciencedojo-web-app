@@ -1,0 +1,3 @@
+import Link from "next/link";
+export default function SubmittedPage() { return <main className="min-h-[70vh] bg-[#f7fbff] px-4 py-20 text-center text-secondary"><div className="mx-auto max-w-xl rounded-[2rem] border border-secondary/10 bg-white p-10 shadow-sm"><div className="text-5xl">✓</div><h1 className="mt-5 text-3xl font-black">Your question is in the review queue</h1><p className="mt-4 font-semibold leading-7 text-secondary/55">A moderator will check it for safety, privacy, and usefulness before publication. Our target is to review valid questions within one working day.</p><Link href="/community" className="mt-7 inline-flex rounded-full bg-primary px-6 py-3 text-sm font-black text-white">Back to community</Link></div></main>; }
+

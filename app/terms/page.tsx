@@ -46,6 +46,15 @@ const sections = [
     body: "ScienceDojo aims to support learning through structured online tutoring, practice, and feedback. We cannot promise specific grades, exam results, admissions outcomes, or learning outcomes.",
   },
   {
+    title: "Exam Community",
+    items: [
+      "Community participants must be at least 13 years old, use a non-identifying pseudonym, and follow the published Community Guidelines.",
+      "Users must not share personal contact details, exact schools or locations, candidate information, leaked or live exam content, cheating methods, harassment, or misleading claims of official authority.",
+      "Questions and replies may be reviewed before publication. ScienceDojo may reject, hide, lock, preserve, or remove content and may restrict accounts for safety or integrity reasons.",
+      "Community answers may be incomplete or mistaken. Official arrangements should be confirmed with the relevant school, college, exam board, regulator, or primary source.",
+    ],
+  },
+  {
     title: "Changes and contact",
     body: "ScienceDojo may update these terms as the platform grows. For questions about these terms, free assessments, privacy, or support, contact ScienceDojo through the website or the published WhatsApp contact option.",
   },

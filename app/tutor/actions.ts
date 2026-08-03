@@ -270,6 +270,125 @@ export async function updateTutorAvailability(formData: FormData) {
 // Availability Management
 // ─────────────────────────────────────────────────────────────────────────────
 
+export interface BulkAvailabilityInput {
+  year: number;
+  month: number; // 1-12
+  weekdays: number[]; // Sunday = 0
+  timeRanges: Array<{ startTime: string; endTime: string }>;
+}
+
+export interface BulkAvailabilityResult {
+  createdCount: number;
+  skippedCount: number;
+  message: string;
+}
+
+const TIME_INPUT_PATTERN = /^(?:[01]\d|2[0-3]):[0-5]\d$/;
+
+function availabilityPathsChanged() {
+  revalidatePath("/dashboard/tutor");
+  revalidatePath("/dashboard/tutor/schedule");
+}
+
+export async function addMonthlyWeeklyAvailability(
+  input: BulkAvailabilityInput,
+): Promise<BulkAvailabilityResult> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) throw new Error("Unauthorized");
+
+  if (!input || !Array.isArray(input.weekdays) || !Array.isArray(input.timeRanges)) {
+    throw new Error("Invalid weekly availability request.");
+  }
+
+  const { year, month, weekdays, timeRanges } = input;
+  if (!Number.isInteger(year) || year < 2000 || year > 2100 || !Number.isInteger(month) || month < 1 || month > 12) {
+    throw new Error("Choose a valid calendar month.");
+  }
+
+  const uniqueWeekdays = [...new Set(weekdays)];
+  if (uniqueWeekdays.length === 0 || uniqueWeekdays.some(day => !Number.isInteger(day) || day < 0 || day > 6)) {
+    throw new Error("Choose at least one valid weekday.");
+  }
+  if (timeRanges.length === 0 || timeRanges.length > 12) {
+    throw new Error("Add between 1 and 12 time ranges.");
+  }
+
+  const normalizedRanges = timeRanges.map(({ startTime, endTime }) => {
+    if (!TIME_INPUT_PATTERN.test(startTime) || !TIME_INPUT_PATTERN.test(endTime) || startTime >= endTime) {
+      throw new Error("Every time range must have a valid end time after its start time.");
+    }
+    return { startTime: `${startTime}:00`, endTime: `${endTime}:00` };
+  });
+
+  const monthStart = `${year}-${String(month).padStart(2, "0")}-01`;
+  const lastDay = new Date(year, month, 0).getDate();
+  const monthEnd = `${year}-${String(month).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`;
+  const today = new Date().toISOString().slice(0, 10);
+
+  const { data: existing, error: fetchError } = await supabase
+    .from("tutor_availability")
+    .select("date, start_time, end_time")
+    .eq("tutor_id", user.id)
+    .gte("date", monthStart)
+    .lte("date", monthEnd);
+
+  if (fetchError) throw new Error(`Failed to check existing availability: ${fetchError.message}`);
+
+  const occupied = new Map<string, Array<{ startTime: string; endTime: string }>>();
+  for (const slot of existing ?? []) {
+    const ranges = occupied.get(slot.date) ?? [];
+    ranges.push({ startTime: slot.start_time, endTime: slot.end_time });
+    occupied.set(slot.date, ranges);
+  }
+
+  const rows: Array<{ tutor_id: string; date: string; start_time: string; end_time: string }> = [];
+  let skippedCount = 0;
+
+  for (let day = 1; day <= lastDay; day++) {
+    const date = new Date(year, month - 1, day);
+    if (!uniqueWeekdays.includes(date.getDay())) continue;
+    const dateString = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+    if (dateString < today) {
+      skippedCount += normalizedRanges.length;
+      continue;
+    }
+
+    const rangesForDate = occupied.get(dateString) ?? [];
+    for (const range of normalizedRanges) {
+      const overlaps = rangesForDate.some(existingRange =>
+        range.startTime < existingRange.endTime && range.endTime > existingRange.startTime
+      );
+      if (overlaps) {
+        skippedCount++;
+        continue;
+      }
+      rows.push({
+        tutor_id: user.id,
+        date: dateString,
+        start_time: range.startTime,
+        end_time: range.endTime,
+      });
+      rangesForDate.push(range);
+    }
+    occupied.set(dateString, rangesForDate);
+  }
+
+  if (rows.length > 0) {
+    const { error: insertError } = await supabase.from("tutor_availability").insert(rows);
+    if (insertError) throw new Error(`Failed to publish weekly availability: ${insertError.message}`);
+  }
+
+  availabilityPathsChanged();
+  const createdCount = rows.length;
+  const message = createdCount === 0
+    ? `No new slots were published; ${skippedCount} conflicted or were in the past.`
+    : `Published ${createdCount} slot${createdCount === 1 ? "" : "s"}${skippedCount ? ` and skipped ${skippedCount}` : ""}.`;
+
+  return { createdCount, skippedCount, message };
+}
+
 export async function addAvailabilitySlot(formData: FormData) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -300,7 +419,7 @@ export async function addAvailabilitySlot(formData: FormData) {
     throw new Error("Failed to add slot: " + error.message);
   }
 
-  revalidatePath("/dashboard/tutor");
+  availabilityPathsChanged();
   return { success: true };
 }
 
@@ -329,7 +448,7 @@ export async function deleteAvailabilitySlot(formData: FormData) {
     throw new Error("Failed to delete slot: " + error.message);
   }
 
-  revalidatePath("/dashboard/tutor");
+  availabilityPathsChanged();
   return { success: true };
 }
 

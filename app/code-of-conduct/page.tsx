@@ -39,6 +39,8 @@ const sections = [
       "Ask for help when confused and treat tutors and classmates respectfully.",
       "Do not share inappropriate content, private contact details, or another person's work as your own.",
       "Tell a parent, tutor, or ScienceDojo support if something feels unsafe or uncomfortable.",
+      "In the Exam Community, use a pseudonym and do not share your real name, school, location, contact details, candidate information, private messages, or another person's details.",
+      "Do not request or share leaked or live exam content, cheating methods, or copyrighted exam-paper scans.",
     ],
   },
   {
@@ -54,7 +56,7 @@ const sections = [
   },
   {
     title: "Safety and enforcement",
-    body: "ScienceDojo may review messages, bookings, reports, tutor applications, support tickets, and classroom activity where needed for safety, dispute resolution, or platform integrity. Serious or repeated breaches may lead to account restrictions, tutor removal, cancelled bookings, or further action.",
+    body: "ScienceDojo may review messages, community contributions, reports, moderation history, bookings, tutor applications, support tickets, and classroom activity where needed for safety, safeguarding, dispute resolution, exam integrity, or platform integrity. Serious or repeated breaches may lead to content removal, account restrictions, tutor removal, cancelled bookings, or further action.",
   },
 ];
 

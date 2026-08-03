@@ -70,6 +70,13 @@ export const FEATURE_FLAG_DEFINITIONS = [
     defaultEnabled: false,
   },
   {
+    key: "community_enabled",
+    label: "Exam community",
+    description: "Show the moderated GCSE and A-Level community and contribution links.",
+    category: "Growth / Beta",
+    defaultEnabled: true,
+  },
+  {
     key: "parent_dashboard_enabled",
     label: "Parent dashboard",
     description: "Allow parent users to access the parent dashboard experience.",

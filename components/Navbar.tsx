@@ -32,6 +32,7 @@ export default async function Navbar() {
             dashboardHref={user ? `/dashboard/${role}` : undefined}
             showTutorMarketplace={flags.tutor_marketplace_enabled}
             showLearningHub={flags.learning_hub_enabled}
+            showCommunity={flags.community_enabled}
             showPracticeDojo={flags.practice_dojo_enabled}
             showFocusDojo={flags.focus_dojo_enabled}
             showFreeAssessment={flags.free_assessment_enabled}
@@ -50,6 +51,11 @@ export default async function Navbar() {
           {flags.learning_hub_enabled && (
             <Link href="/learning-hub" className="text-sm font-medium text-secondary/70 hover:text-primary transition-colors">
               Learning Hub
+            </Link>
+          )}
+          {flags.community_enabled && (
+            <Link href="/community" className="text-sm font-medium text-secondary/70 hover:text-primary transition-colors">
+              Exam Community
             </Link>
           )}
           {flags.practice_dojo_enabled && (

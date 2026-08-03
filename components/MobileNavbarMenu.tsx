@@ -17,6 +17,7 @@ type MobileNavbarMenuProps = {
   dashboardHref?: string;
   showTutorMarketplace?: boolean;
   showLearningHub?: boolean;
+  showCommunity?: boolean;
   showPracticeDojo?: boolean;
   showFocusDojo?: boolean;
   showFreeAssessment?: boolean;
@@ -27,6 +28,7 @@ export default function MobileNavbarMenu({
   dashboardHref = "/dashboard/parent",
   showTutorMarketplace = true,
   showLearningHub = true,
+  showCommunity = true,
   showPracticeDojo = true,
   showFocusDojo = true,
   showFreeAssessment = true,
@@ -154,6 +156,11 @@ export default function MobileNavbarMenu({
             {showLearningHub && (
               <Link href="/learning-hub" onClick={closeMenu} className={navLinkClass}>
                 Learning Hub
+              </Link>
+            )}
+            {showCommunity && (
+              <Link href="/community" onClick={closeMenu} className={navLinkClass}>
+                Exam Community
               </Link>
             )}
             {showPracticeDojo && (

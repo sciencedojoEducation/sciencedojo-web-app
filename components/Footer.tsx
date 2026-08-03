@@ -16,6 +16,8 @@ const footerGroups = [
     title: "Resources",
     links: [
       ["Learning Hub", "/learning-hub"],
+      ["Exam Community", "/community"],
+      ["Official Exam Updates", "/community/news"],
       ["Online Math Tutor", "/online-math-tutor"],
       ["GCSE Math Tutor", "/gcse-math-tutor"],
     ],
@@ -25,6 +27,7 @@ const footerGroups = [
     links: [
       ["Dashboard", "/login"],
       ["Code of Conduct", "/code-of-conduct"],
+      ["Community Guidelines", "/community/guidelines"],
     ],
   },
   {

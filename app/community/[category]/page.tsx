@@ -1,0 +1,10 @@
+import type { Metadata } from "next";
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { CommunityNotice, TopicCard } from "@/components/community/CommunityCards";
+import { getCommunityCategories, getCommunityTopics } from "@/lib/community";
+import { siteUrl } from "@/lib/seo";
+
+export async function generateMetadata({ params }: { params: Promise<{ category: string }> }): Promise<Metadata> { const { category: slug } = await params; const category = (await getCommunityCategories()).find((item) => item.slug === slug); if (!category) return {}; return { title: `${category.name} Exam Discussion | ScienceDojo`, description: category.description, alternates: { canonical: `${siteUrl}/community/${slug}` } }; }
+export default async function CategoryPage({ params }: { params: Promise<{ category: string }> }) { const { category: slug } = await params; const [categories, topics] = await Promise.all([getCommunityCategories(), getCommunityTopics({ category: slug, limit: 50 })]); const category = categories.find((item) => item.slug === slug); if (!category) notFound(); return <main className="min-h-screen bg-[#f7fbff] px-4 py-12 text-secondary md:px-8"><div className="mx-auto max-w-5xl"><Link href="/community" className="text-sm font-black text-primary">← Exam Community</Link><div className="mt-7 rounded-[2rem] bg-secondary p-8 text-white md:p-10"><span className="text-xs font-black uppercase tracking-widest text-cyan-200">{category.stage}</span><h1 className="mt-3 text-4xl font-black tracking-tight">{category.name} exam discussion</h1><p className="mt-4 max-w-2xl font-semibold leading-7 text-white/65">{category.description}</p><Link href={`/community/new?category=${category.slug}`} className="mt-7 inline-flex rounded-full bg-primary px-6 py-3 text-sm font-black">Ask a question</Link></div><div className="mt-6"><CommunityNotice/></div><div className="mt-8 space-y-4">{topics.map((topic) => <TopicCard key={topic.id} topic={topic}/>)}{topics.length === 0 && <div className="rounded-3xl bg-white p-10 text-center font-bold text-secondary/40">No published discussions yet. Start the first one.</div>}</div></div></main>; }
+
