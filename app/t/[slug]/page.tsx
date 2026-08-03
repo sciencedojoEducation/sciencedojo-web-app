@@ -120,21 +120,23 @@ export async function generateMetadata({ params }: MentorProfilePageProps): Prom
   const primarySubject = getPrimarySubject(tutor.subjects);
   const title = `${tutor.full_name} | ScienceDojo Mentor Profile`;
   const description = `Helping students gain confidence in ${primarySubject}. Meet ${tutor.full_name}, a verified ScienceDojo mentor.`;
+  const mentorPath = `/t/${tutor.slug || slug}`;
+  const previewImageUrl = `${mentorPath}/opengraph-image?v=2`;
 
   return {
     title,
     description,
     alternates: {
-      canonical: `${siteUrl}/t/${tutor.slug || slug}`,
+      canonical: `${siteUrl}${mentorPath}`,
     },
     openGraph: {
       title: `Helping students gain confidence in ${primarySubject}.`,
       description,
-      url: `${siteUrl}/t/${tutor.slug || slug}`,
+      url: `${siteUrl}${mentorPath}`,
       type: "profile",
       images: [
         {
-          url: `/t/${tutor.slug || slug}/opengraph-image`,
+          url: previewImageUrl,
           width: 1200,
           height: 630,
           alt: `ScienceDojo mentor profile for ${tutor.full_name}`,
@@ -145,7 +147,7 @@ export async function generateMetadata({ params }: MentorProfilePageProps): Prom
       card: "summary_large_image",
       title: `Need support with ${primarySubject}?`,
       description,
-      images: [`/t/${tutor.slug || slug}/opengraph-image`],
+      images: [previewImageUrl],
     },
   };
 }

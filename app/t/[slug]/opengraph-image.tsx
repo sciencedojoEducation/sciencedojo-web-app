@@ -73,7 +73,15 @@ function PlaceholderPortrait({ name }: { name: string }) {
           fontWeight: 950,
         }}
       >
-        ✓
+        <div
+          style={{
+            width: 14,
+            height: 25,
+            borderBottom: "6px solid #071B3C",
+            borderRight: "6px solid #071B3C",
+            transform: "rotate(45deg)",
+          }}
+        />
       </div>
     </div>
   );
@@ -123,7 +131,15 @@ export default async function Image({ params }: { params: Promise<{ slug: string
           }}
         />
 
-        <div style={{ display: "flex", flexDirection: "column", justifyContent: "space-between", zIndex: 1, width: "100%" }}>
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "space-between",
+            position: "relative",
+            width: "100%",
+          }}
+        >
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 30 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 18 }}>
               <div
@@ -142,7 +158,7 @@ export default async function Image({ params }: { params: Promise<{ slug: string
               >
                 s
               </div>
-              <div style={{ fontSize: 38, fontWeight: 900, letterSpacing: -1 }}>
+              <div style={{ display: "flex", fontSize: 38, fontWeight: 900, letterSpacing: -1 }}>
                 science<span style={{ color: "#1175FF" }}>dojo</span><span style={{ color: "#06C8D9" }}>.</span>
               </div>
             </div>
@@ -163,16 +179,16 @@ export default async function Image({ params }: { params: Promise<{ slug: string
           </div>
 
           <div style={{ display: "flex", alignItems: "center", gap: 54 }}>
-            <div style={{ maxWidth: 760 }}>
+            <div style={{ display: "flex", flexDirection: "column", maxWidth: 760 }}>
               <div style={{ fontSize: 68, lineHeight: 1.02, fontWeight: 950, letterSpacing: -3 }}>
                 Your child understands more than their grades show.
               </div>
               <div style={{ marginTop: 24, fontSize: 32, color: "#334B6F", fontWeight: 800 }}>
-                Personalised support for {primarySubject} students.
+                {`Personalised support for ${primarySubject} students.`}
               </div>
               <div style={{ marginTop: 36, display: "flex", flexDirection: "column", gap: 10 }}>
                 <div style={{ fontSize: 30, color: "#071B3C", fontWeight: 950 }}>
-                  Meet {tutorName}
+                  {`Meet ${tutorName}`}
                 </div>
                 <div style={{ fontSize: 24, color: "#1E5AA8", fontWeight: 900, textTransform: "uppercase", letterSpacing: 1.6 }}>
                   ScienceDojo Verified Tutor
