@@ -490,7 +490,7 @@ export async function completeGoogleParentOnboarding(
 
 export async function requestPasswordReset(formData: FormData) {
   const supabase = await createClient();
-  const email = String(formData.get('email') || '').trim();
+  const email = String(formData.get('email') || '').trim().toLowerCase();
   const isInternal = String(formData.get('internal') || '') === '1';
   const internalParam = isInternal ? '&internal=1' : '';
 
@@ -499,8 +499,21 @@ export async function requestPasswordReset(formData: FormData) {
   });
 
   if (error) {
-    console.error("Password reset request error:", error.message);
-    redirect(`/forgot-password?error=${encodeURIComponent('We could not send that reset link. Please check the email address and try again.')}${internalParam}`);
+    console.error("Password reset request error:", {
+      code: error.code,
+      status: error.status,
+      message: error.message,
+    });
+
+    const isEmailRateLimit =
+      error.status === 429 ||
+      error.code === 'over_email_send_rate_limit' ||
+      error.message.toLowerCase().includes('email rate limit');
+    const message = isEmailRateLimit
+      ? 'Too many recovery emails have been requested. Please wait a while before trying again, then use only the newest reset link.'
+      : 'We could not send a recovery email right now. Please try again later or contact ScienceDojo support.';
+
+    redirect(`/forgot-password?error=${encodeURIComponent(message)}${internalParam}`);
   }
 
   redirect(`/forgot-password?message=${encodeURIComponent('Check your email for a secure reset link!')}${internalParam}`);
