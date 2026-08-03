@@ -80,6 +80,13 @@ export async function POST(req: Request) {
     // No automatic transfer_data split at checkout.
     console.log(`[Stripe Checkout] Collecting £${(totalAmountInPence / 100).toFixed(2)} to platform account. Tutor payout scheduled monthly.`);
 
+    await supabase
+      .from("bookings")
+      .update({
+        payment_method: "stripe",
+        payment_status: "unpaid",
+      })
+      .in("id", bookingsToPayFor.map(b => b.id));
 
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],

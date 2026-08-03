@@ -46,6 +46,9 @@ export async function createCalendarEvent(bookingId: string) {
         requested_date,
         meeting_url,
         duration_hours,
+        lesson_mode,
+        location_details,
+        arrival_notes,
         student:profiles!bookings_student_id_fkey(full_name, email),
         tutor_profile:profiles!bookings_tutor_id_fkey(full_name, email)
       `)
@@ -56,9 +59,21 @@ export async function createCalendarEvent(bookingId: string) {
       throw new Error(`Booking not found: ${bookingError?.message}`);
     }
 
-    const { student, tutor_profile, subject, description, requested_date, meeting_url, duration_hours } = booking as any;
+    const {
+      student,
+      tutor_profile,
+      subject,
+      description,
+      requested_date,
+      meeting_url,
+      duration_hours,
+      lesson_mode,
+      location_details,
+      arrival_notes,
+    } = booking as any;
     const joinUrl = getMeetingJoinUrl(meeting_url);
     const password = getMeetingPassword(meeting_url);
+    const isPhysical = lesson_mode === "physical";
     
     if (!student?.email || !tutor_profile?.email) {
       throw new Error("Missing student or tutor email for calendar invite.");
@@ -79,16 +94,18 @@ export async function createCalendarEvent(bookingId: string) {
 
     const event = {
       summary: `ScienceDojo: ${subject} with ${tutor_profile.full_name}`,
-      location: joinUrl || "Online Class",
+      location: isPhysical ? (location_details || "Physical class location to be confirmed") : (joinUrl || "Online Class"),
       description: `
 Tutoring Session: ${subject}
 Student: ${student.full_name}
 Tutor: ${tutor_profile.full_name}
+Format: ${isPhysical ? "In-person class" : "Online class"}
 
 Topic: ${description || 'N/A'}
 
-CLASSROOM LINK: ${joinUrl || 'To be provided'}
-Password: ${password || 'N/A'}
+${isPhysical
+  ? `Location: ${location_details || 'To be confirmed'}\nArrival notes: ${arrival_notes || 'N/A'}`
+  : `CLASSROOM LINK: ${joinUrl || 'To be provided'}\nPassword: ${password || 'N/A'}`}
 
 Managed by ScienceDojo Platform.
       `.trim(),
@@ -109,7 +126,7 @@ Managed by ScienceDojo Platform.
           { method: "popup", minutes: 30 },
         ],
       },
-      conferenceData: joinUrl ? {
+      conferenceData: !isPhysical && joinUrl ? {
         createRequest: {
           requestId: `sd-${bookingId}`,
           conferenceSolutionKey: { type: "hangoutsMeet" } // Just a fallback if Zoom link isn't used as primary location

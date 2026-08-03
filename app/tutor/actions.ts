@@ -23,9 +23,18 @@ export async function createBookingRequest(formData: FormData) {
   const requestedDate = formData.get("requestedDate") as string;
   const durationHours = Number(formData.get("durationHours") || 1);
   const recurrenceCount = Number(formData.get("recurrenceCount") || 1);
+  const lessonMode = formData.get("lessonMode") === "physical" ? "physical" : "online";
+  const locationDetails = String(formData.get("locationDetails") || "").trim();
+  const arrivalNotes = String(formData.get("arrivalNotes") || "").trim();
+  const travelFee = Math.max(0, Number(formData.get("travelFee") || 0));
   const isRecurring = recurrenceCount > 1;
   const recurrenceGroupId = isRecurring ? crypto.randomUUID() : null;
   const attribution = await getMentorAttributionFromCookies();
+  const pricePerBooking = (hourlyRate * durationHours) + (lessonMode === "physical" ? travelFee : 0);
+
+  if (lessonMode === "physical" && !locationDetails) {
+    redirect(`/tutor/${tutorId}/book?error=${encodeURIComponent("Please add the in-person class location before requesting.")}`);
+  }
 
   const baseDate = new Date(requestedDate || new Date().toISOString());
   const bookingsToInsert = [];
@@ -39,10 +48,15 @@ export async function createBookingRequest(formData: FormData) {
       tutor_id: tutorId,
       subject: subject,
       description: description,
-      price_at_booking: hourlyRate,
+      price_at_booking: pricePerBooking,
       status: "requested",
       requested_date: bookingDate.toISOString(),
       duration_hours: durationHours,
+      lesson_mode: lessonMode,
+      location_details: lessonMode === "physical" ? locationDetails : null,
+      arrival_notes: lessonMode === "physical" ? arrivalNotes || null : null,
+      travel_fee: lessonMode === "physical" ? travelFee : 0,
+      payment_status: "unpaid",
       recurrence_group_id: recurrenceGroupId,
       is_recurring: isRecurring,
       recurrence_count: recurrenceCount,

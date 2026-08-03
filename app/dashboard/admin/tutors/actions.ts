@@ -261,6 +261,39 @@ export async function suspendTutor(tutorId: string) {
   return { success: true };
 }
 
+export async function reactivateTutor(tutorId: string) {
+  const context = await requireAdminContext();
+  if ("error" in context) return { error: context.error };
+
+  const { data: tutor, error: fetchError } = await context.adminClient
+    .from("tutors")
+    .select("id, tutor_status, is_verified")
+    .eq("id", tutorId)
+    .maybeSingle();
+
+  if (fetchError || !tutor) return { error: fetchError?.message || "Tutor not found" };
+  if (tutor.tutor_status !== "suspended") {
+    return { error: "Only suspended tutors can be reactivated." };
+  }
+
+  const { data: updatedTutor, error } = await context.adminClient
+    .from("tutors")
+    .update({
+      tutor_status: tutor.is_verified ? "verified" : "approved_listed",
+      is_publicly_listed: true,
+      is_featured: false,
+    })
+    .eq("id", tutorId)
+    .eq("tutor_status", "suspended")
+    .select("id")
+    .maybeSingle();
+
+  if (error) return { error: error.message };
+  if (!updatedTutor) return { error: "Tutor status changed before reactivation. Refresh and try again." };
+  revalidateTutorAdminPaths(tutorId);
+  return { success: true };
+}
+
 export async function toggleTutorFeature(tutorId: string, isFeatured: boolean) {
   const context = await requireAdminContext();
   if ("error" in context) return { error: context.error };
@@ -311,12 +344,13 @@ export async function toggleTutorVerification(tutorId: string, currentStatus: bo
   return currentStatus ? removeVerifiedBadge(tutorId) : awardVerifiedBadge(tutorId);
 }
 
-export async function updateTutorStatus(tutorId: string, action: "approve" | "verify" | "remove_verified" | "reject" | "suspend" | "feature" | "unfeature") {
+export async function updateTutorStatus(tutorId: string, action: "approve" | "verify" | "remove_verified" | "reject" | "suspend" | "reactivate" | "feature" | "unfeature") {
   if (action === "approve") return approveTutorForListing(tutorId);
   if (action === "verify") return awardVerifiedBadge(tutorId);
   if (action === "remove_verified") return removeVerifiedBadge(tutorId);
   if (action === "reject") return rejectTutor(tutorId);
   if (action === "suspend") return suspendTutor(tutorId);
+  if (action === "reactivate") return reactivateTutor(tutorId);
   if (action === "feature") return toggleTutorFeature(tutorId, false);
   if (action === "unfeature") return toggleTutorFeature(tutorId, true);
   return { success: true };

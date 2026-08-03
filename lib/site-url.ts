@@ -1,5 +1,5 @@
 const LOCAL_SITE_URL = "http://localhost:3000";
-const PRODUCTION_SITE_URL = "https://www.sciencedojo.co.uk";
+const PRODUCTION_SITE_URL = "https://sciencedojo.co.uk";
 
 type SiteUrlOptions = {
   headers?: Headers | null;
@@ -39,7 +39,7 @@ function isAllowedHostname(hostname: string) {
   const normalizedHostname = hostname.toLowerCase();
 
   if (isLocalHostname(normalizedHostname)) {
-    return process.env.NODE_ENV !== "production";
+    return process.env.NODE_ENV === "development";
   }
 
   return (
@@ -110,18 +110,52 @@ function getDeploymentOrigin() {
   );
 }
 
-export function getSiteUrl(options: SiteUrlOptions = {}) {
-  const requestOrigin = getRequestOrigin(options.headers);
+function isProduction() {
+  return process.env.NODE_ENV === "production";
+}
 
-  if (process.env.NODE_ENV !== "production" && isLocalOrigin(requestOrigin)) {
-    return forceLocalHttp(requestOrigin);
-  }
-
-  const configuredOrigin =
+function getConfiguredOrigin() {
+  return (
     getSafeOrigin(process.env.NEXT_PUBLIC_SITE_URL) ||
     getSafeOrigin(process.env.NEXT_PUBLIC_APP_URL) ||
     getSafeOrigin(process.env.SITE_URL) ||
-    getSafeOrigin(process.env.APP_URL);
+    getSafeOrigin(process.env.APP_URL) ||
+    getSafeOrigin(process.env.BASE_URL)
+  );
+}
+
+function enforceProductionOrigin(origin: string) {
+  if (!isProduction()) {
+    return origin;
+  }
+
+  const safeOrigin = getSafeOrigin(origin);
+
+  if (!safeOrigin) {
+    return PRODUCTION_SITE_URL;
+  }
+
+  const { hostname } = new URL(safeOrigin);
+
+  if (isLocalHostname(hostname)) {
+    return PRODUCTION_SITE_URL;
+  }
+
+  return PRODUCTION_SITE_URL;
+}
+
+export function getSiteUrl(options: SiteUrlOptions = {}) {
+  const requestOrigin = getRequestOrigin(options.headers);
+
+  if (isProduction()) {
+    return enforceProductionOrigin(getConfiguredOrigin() || requestOrigin || getDeploymentOrigin() || PRODUCTION_SITE_URL);
+  }
+
+  if (process.env.NODE_ENV === "development" && isLocalOrigin(requestOrigin)) {
+    return forceLocalHttp(requestOrigin);
+  }
+
+  const configuredOrigin = getConfiguredOrigin();
 
   if (configuredOrigin) {
     return isLocalOrigin(configuredOrigin) ? forceLocalHttp(configuredOrigin) : configuredOrigin;
@@ -137,10 +171,38 @@ export function getSiteUrl(options: SiteUrlOptions = {}) {
     return deploymentOrigin;
   }
 
-  return process.env.NODE_ENV === "production" ? PRODUCTION_SITE_URL : LOCAL_SITE_URL;
+  return process.env.NODE_ENV === "development" ? LOCAL_SITE_URL : PRODUCTION_SITE_URL;
 }
 
 export function getSitePath(path = "/", options: SiteUrlOptions = {}) {
   const normalizedPath = path.startsWith("/") ? path : `/${path}`;
   return `${getSiteUrl(options)}${normalizedPath}`;
+}
+
+export function getSiteUrlFromPathOrUrl(pathOrUrl = "/", options: SiteUrlOptions = {}) {
+  const trimmedValue = pathOrUrl.trim();
+
+  if (!trimmedValue) {
+    return getSiteUrl(options);
+  }
+
+  if (trimmedValue.startsWith("/") || !trimmedValue.includes("://")) {
+    return getSitePath(trimmedValue, options);
+  }
+
+  const normalizedOrigin = getSafeOrigin(trimmedValue);
+
+  if (!normalizedOrigin) {
+    return getSitePath(trimmedValue, options);
+  }
+
+  const url = new URL(trimmedValue.includes("://") ? trimmedValue : `https://${trimmedValue}`);
+  const path = `${url.pathname}${url.search}${url.hash}`;
+  const origin = enforceProductionOrigin(normalizedOrigin);
+
+  if (isProduction()) {
+    return `${origin}${path === "/" ? "" : path}`;
+  }
+
+  return url.toString().replace(/\/$/, "");
 }

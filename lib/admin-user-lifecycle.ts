@@ -444,6 +444,72 @@ export async function deactivateUserAccount(targetUserId: string) {
   return { success: true };
 }
 
+export async function reactivateUserAccount(targetUserId: string, restoreMemberships: boolean) {
+  const currentUser = await requireAdminUser();
+
+  if (currentUser.id === targetUserId) {
+    throw new Error("You cannot reactivate yourself.");
+  }
+
+  const adminClient = createAdminClient();
+  const { profile, authUser } = await getTargetContext(adminClient, targetUserId);
+
+  if (!profile || !authUser) {
+    throw new Error("The account must exist in both profiles and Supabase Auth before it can be reactivated.");
+  }
+
+  if (isAdminRole(profile.role || authUser.user_metadata?.role)) {
+    throw new Error("Admin accounts cannot be reactivated here.");
+  }
+
+  const profileSuspended = profile.is_suspended === true;
+  const authSuspended = authUser.user_metadata?.is_suspended === true;
+  if (!profileSuspended && !authSuspended) {
+    throw new Error("This account is already active.");
+  }
+
+  const originalMetadata = authUser.user_metadata || {};
+  const { error: authError } = await adminClient.auth.admin.updateUserById(targetUserId, {
+    user_metadata: {
+      ...originalMetadata,
+      is_suspended: false,
+    },
+  });
+
+  if (authError) {
+    throw new Error(`Failed to clear the Auth suspension: ${authError.message}`);
+  }
+
+  const { error: profileError } = await adminClient
+    .from("profiles")
+    .update({ is_suspended: false })
+    .eq("id", targetUserId);
+
+  if (profileError) {
+    const { error: rollbackError } = await adminClient.auth.admin.updateUserById(targetUserId, {
+      user_metadata: originalMetadata,
+    });
+    const rollbackMessage = rollbackError ? ` Auth rollback also failed: ${rollbackError.message}` : "";
+    throw new Error(`Failed to clear the profile suspension: ${profileError.message}.${rollbackMessage}`);
+  }
+
+  if (restoreMemberships) {
+    const { error: membershipError } = await adminClient
+      .from("account_memberships")
+      .update({ status: "active" })
+      .eq("user_id", targetUserId)
+      .eq("status", "inactive");
+
+    if (membershipError) {
+      revalidateUserLifecyclePaths();
+      throw new Error(`Account was reactivated, but memberships could not be restored: ${membershipError.message}`);
+    }
+  }
+
+  revalidateUserLifecyclePaths();
+  return { success: true };
+}
+
 export async function permanentlyDeleteTestUserAccount(targetUserId: string, confirmationEmail: string) {
   const currentUser = await requireAdminUser();
 

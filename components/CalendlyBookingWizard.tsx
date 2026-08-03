@@ -79,6 +79,8 @@ export default function CalendlyBookingWizard({ tutor, initialSlots }: Props) {
 
   const [duration, setDuration] = useState<1 | 2>(1);
   const [recurrenceCount, setRecurrenceCount] = useState<number>(1);
+  const [lessonMode, setLessonMode] = useState<"online" | "physical">("online");
+  const [travelFee, setTravelFee] = useState<number>(0);
 
   // If we pick a new slot that doesn't allow 2 hours, reset it
   useEffect(() => {
@@ -109,7 +111,7 @@ export default function CalendlyBookingWizard({ tutor, initialSlots }: Props) {
           </div>
           <div className="flex items-center gap-3">
             <svg className="w-5 h-5 text-secondary/30" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
-            Video Meeting
+            {lessonMode === "physical" ? "In-person class" : "Video Meeting"}
           </div>
           <div className="flex items-center gap-3">
             <svg className="w-5 h-5 text-secondary/30" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
@@ -127,9 +129,15 @@ export default function CalendlyBookingWizard({ tutor, initialSlots }: Props) {
                </div>
                <div className="space-y-2 text-xs font-bold text-secondary/60">
                  <div className="flex justify-between">
-                    <span>Duration</span>
-                    <span className="font-medium text-secondary">{duration} Hour{duration > 1 ? 's' : ''}</span>
+                      <span>Duration</span>
+                      <span className="font-medium text-secondary">{duration} Hour{duration > 1 ? 's' : ''}</span>
                  </div>
+                 {lessonMode === "physical" && travelFee > 0 && (
+                   <div className="flex justify-between">
+                      <span>Travel</span>
+                      <span className="font-medium text-secondary">£{travelFee}</span>
+                   </div>
+                 )}
                  {recurrenceCount > 1 && (
                    <div className="flex justify-between text-yellow-600">
                       <span>Recurring</span>
@@ -141,11 +149,11 @@ export default function CalendlyBookingWizard({ tutor, initialSlots }: Props) {
                 <div className="p-4 mt-4 bg-primary/10 rounded-xl">
                    <div className="flex justify-between font-bold text-lg text-primary">
                       <span>Total</span>
-                      <span>£{tutor.hourly_rate * duration * recurrenceCount}</span>
+                      <span>£{((tutor.hourly_rate * duration) + (lessonMode === "physical" ? travelFee : 0)) * recurrenceCount}</span>
                    </div>
                    {recurrenceCount > 1 && (
                      <p className="text-[10px] text-primary/60 mt-1 uppercase font-black tracking-widest text-right">
-                       £{tutor.hourly_rate * duration} × {recurrenceCount} weeks
+                       £{(tutor.hourly_rate * duration) + (lessonMode === "physical" ? travelFee : 0)} × {recurrenceCount} weeks
                      </p>
                    )}
                 </div>
@@ -287,6 +295,8 @@ export default function CalendlyBookingWizard({ tutor, initialSlots }: Props) {
             <input type="hidden" name="requestedDate" value={`${selectedDateStr}T${selectedTimeSlot.start_time.substring(0, 5)}`} />
             <input type="hidden" name="durationHours" value={duration} />
             <input type="hidden" name="recurrenceCount" value={recurrenceCount} />
+            <input type="hidden" name="lessonMode" value={lessonMode} />
+            <input type="hidden" name="travelFee" value={lessonMode === "physical" ? travelFee : 0} />
 
             <div className="flex items-center gap-4 mb-8">
               <button 
@@ -300,6 +310,26 @@ export default function CalendlyBookingWizard({ tutor, initialSlots }: Props) {
             </div>
 
             <div className="space-y-6 flex-1">
+              <div>
+                <label className="block text-xs font-black uppercase tracking-widest text-secondary/60 mb-2">Class format</label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setLessonMode("online")}
+                    className={`rounded-xl border px-4 py-3 text-sm font-black transition-colors ${lessonMode === "online" ? "border-primary bg-primary text-white" : "border-secondary/10 bg-white text-secondary hover:border-primary/40"}`}
+                  >
+                    Online
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setLessonMode("physical")}
+                    className={`rounded-xl border px-4 py-3 text-sm font-black transition-colors ${lessonMode === "physical" ? "border-primary bg-primary text-white" : "border-secondary/10 bg-white text-secondary hover:border-primary/40"}`}
+                  >
+                    In-person
+                  </button>
+                </div>
+              </div>
+
               {/* Duration Toggle */}
               {canBookTwoHours && (
                 <div>
@@ -342,6 +372,37 @@ export default function CalendlyBookingWizard({ tutor, initialSlots }: Props) {
                   </div>
                 </div>
               </div>
+
+              {lessonMode === "physical" && (
+                <div className="rounded-2xl border border-primary/10 bg-primary/5 p-4">
+                  <label className="block text-xs font-black uppercase tracking-widest text-secondary/60 mb-2">Class location</label>
+                  <textarea
+                    name="locationDetails"
+                    required
+                    rows={3}
+                    placeholder="Full address, venue name, or area for the in-person class"
+                    className="mb-4 w-full resize-none rounded-xl border border-secondary/10 bg-white px-5 py-4 text-sm font-medium text-secondary outline-none transition-all focus:border-primary"
+                  />
+
+                  <label className="block text-xs font-black uppercase tracking-widest text-secondary/60 mb-2">Arrival notes</label>
+                  <textarea
+                    name="arrivalNotes"
+                    rows={2}
+                    placeholder="Parking, reception, who to ask for, or safeguarding notes"
+                    className="mb-4 w-full resize-none rounded-xl border border-secondary/10 bg-white px-5 py-4 text-sm font-medium text-secondary outline-none transition-all focus:border-primary"
+                  />
+
+                  <label className="block text-xs font-black uppercase tracking-widest text-secondary/60 mb-2">Travel fee</label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="1"
+                    value={travelFee}
+                    onChange={(e) => setTravelFee(Math.max(0, Number(e.target.value || 0)))}
+                    className="w-full rounded-xl border border-secondary/10 bg-white px-5 py-3 text-sm font-bold text-secondary outline-none transition-all focus:border-primary"
+                  />
+                </div>
+              )}
 
               {/* Subject */}
               <div>

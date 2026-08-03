@@ -210,6 +210,9 @@ export default async function StudentDashboard() {
                       <div>
                         <div className="flex items-center gap-2 mb-1">
                           <span className="inline-block px-3 py-1 bg-primary/10 text-primary text-[10px] font-black rounded-lg uppercase tracking-widest">{booking.subject}</span>
+                          <span className={`px-2 py-0.5 text-[9px] font-black uppercase tracking-widest rounded ${booking.lesson_mode === "physical" ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-500"}`}>
+                            {booking.lesson_mode === "physical" ? "In-person" : "Online"}
+                          </span>
                           {group.isGroup && (
                             <span className="px-2 py-0.5 bg-yellow-100 text-yellow-800 text-[9px] font-black uppercase tracking-widest rounded">{group.count}-Week Series</span>
                           )}
@@ -229,8 +232,16 @@ export default async function StudentDashboard() {
                            {group.isGroup && <div className="text-[8px] opacity-50">£{booking.price_at_booking} × {group.count} sessions</div>}
                          </div>
                       </div>
+                      {booking.lesson_mode === "physical" && (
+                        <p className="rounded-xl bg-emerald-50 p-3 text-xs font-bold leading-5 text-emerald-900">
+                          {booking.location_details || "In-person location pending"}
+                        </p>
+                      )}
                       
-                      <CheckoutButton bookingId={booking.id} />
+                      <CheckoutButton
+                        bookingId={booking.id}
+                        paymentStatus={booking.payment_status}
+                      />
                    </div>
                 </div>
              )})}
@@ -259,6 +270,9 @@ export default async function StudentDashboard() {
                         <div>
                           <div className="flex items-center gap-1.5 mb-1">
                             <span className="inline-block px-2 py-0.5 bg-secondary/5 text-secondary/40 text-[9px] font-black rounded-md uppercase tracking-wider">{booking.subject}</span>
+                            <span className={`px-1.5 py-0.5 text-[8px] font-black uppercase tracking-widest rounded ${booking.lesson_mode === "physical" ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-500"}`}>
+                              {booking.lesson_mode === "physical" ? "In-person" : "Online"}
+                            </span>
                             {group.isGroup && (
                               <span className="px-1.5 py-0.5 bg-yellow-50 text-yellow-600 text-[8px] font-black uppercase tracking-widest rounded">{group.count} Weeks</span>
                             )}
@@ -310,6 +324,9 @@ export default async function StudentDashboard() {
                       </div>
                       <div>
                         <span className="inline-block px-2.5 py-0.5 bg-primary/10 text-primary text-[10px] font-black rounded-lg mb-1 uppercase tracking-wider">{booking.subject}</span>
+                        <span className={`ml-2 inline-block rounded-lg px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider ${booking.lesson_mode === "physical" ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-500"}`}>
+                          {booking.lesson_mode === "physical" ? "In-person" : "Online"}
+                        </span>
                         <h3 className="font-black text-secondary text-lg">{booking.tutor_name}</h3>
                       </div>
                     </div>
@@ -322,10 +339,24 @@ export default async function StudentDashboard() {
                     </div>
                  </div>
 
+                 {booking.lesson_mode === "physical" && (
+                   <div className="mb-4 rounded-2xl border border-emerald-100 bg-emerald-50 p-3 text-xs font-bold leading-5 text-emerald-900">
+                     <p className="text-[10px] font-black uppercase tracking-[0.14em] text-emerald-700">Location</p>
+                     <p className="mt-1">{booking.location_details || "Physical class location pending"}</p>
+                     {booking.arrival_notes && <p className="mt-1 text-emerald-800/75">{booking.arrival_notes}</p>}
+                   </div>
+                 )}
+
                  <div className="mt-auto">
-                    <a href={booking.meeting_url || "#"} target="_blank" rel="noreferrer" className="block min-h-11 w-full rounded-2xl bg-secondary px-4 py-3 text-center font-black text-white shadow-md transition-all hover:-translate-y-1 hover:bg-secondary/90 md:py-4 md:shadow-xl">
-                       Join classroom
-                    </a>
+                    {booking.lesson_mode === "physical" ? (
+                      <div className="block min-h-11 w-full rounded-2xl bg-emerald-600 px-4 py-3 text-center font-black text-white shadow-md md:py-4">
+                         Attend in person
+                      </div>
+                    ) : (
+                      <a href={booking.meeting_url || "#"} target="_blank" rel="noreferrer" className="block min-h-11 w-full rounded-2xl bg-secondary px-4 py-3 text-center font-black text-white shadow-md transition-all hover:-translate-y-1 hover:bg-secondary/90 md:py-4 md:shadow-xl">
+                         Join classroom
+                      </a>
+                    )}
                  </div>
               </div>
            ))}

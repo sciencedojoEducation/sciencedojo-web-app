@@ -1,5 +1,5 @@
 import { Resend } from 'resend';
-import { getSitePath, getSiteUrl } from './site-url';
+import { getSitePath, getSiteUrl, getSiteUrlFromPathOrUrl } from './site-url';
 
 const resendApiKey = process.env.RESEND_API_KEY;
 const resend = resendApiKey ? new Resend(resendApiKey) : null;
@@ -280,7 +280,8 @@ function baseScienceDojoEmail({
   ctaUrl?: string | null;
   note?: string;
 }) {
-  const safeCtaUrl = ctaUrl ? escapeHtml(ctaUrl) : "";
+  const normalizedCtaUrl = ctaUrl ? getSiteUrlFromPathOrUrl(ctaUrl) : "";
+  const safeCtaUrl = normalizedCtaUrl ? escapeHtml(normalizedCtaUrl) : "";
   return `
     <div style="font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 640px; margin: 0 auto; color: #06172f; background: #ffffff;">
       <div style="padding: 32px 28px; border: 1px solid #e5eaf2; border-radius: 24px; background: linear-gradient(180deg, #ffffff 0%, #f7fbff 100%);">

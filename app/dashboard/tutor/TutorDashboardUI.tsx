@@ -591,6 +591,9 @@ export default function TutorDashboardUI({
                             <div className="flex flex-col gap-2">
                                <div className="flex items-center gap-4">
                                  <span className="px-3 py-1 bg-white border border-secondary/10 text-secondary text-[10px] font-black rounded-lg uppercase tracking-wider">{booking.subject}</span>
+                                 <span className={`px-3 py-1 text-[10px] font-black rounded-lg uppercase tracking-wider ${booking.lesson_mode === "physical" ? "bg-emerald-50 text-emerald-700" : "bg-primary/10 text-primary"}`}>
+                                   {booking.lesson_mode === "physical" ? "In-person" : "Online"}
+                                 </span>
                                  <div className="flex items-center gap-1.5 text-xs font-black text-accent uppercase tracking-tight">
                                     <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2-2v12a2 2 0 002 2z" /></svg>
                                     {new Date(booking.requested_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
@@ -618,6 +621,13 @@ export default function TutorDashboardUI({
                          <p className="text-secondary/70 text-sm font-medium leading-relaxed italic">
                             "{booking.description}"
                          </p>
+                         {booking.lesson_mode === "physical" && (
+                           <div className="rounded-2xl border border-emerald-100 bg-emerald-50 p-4 text-sm font-bold text-emerald-950">
+                             <p className="text-[10px] font-black uppercase tracking-[0.14em] text-emerald-700">Physical class location</p>
+                             <p className="mt-2">{booking.location_details || "Location details pending"}</p>
+                             {booking.arrival_notes && <p className="mt-2 text-xs leading-5 text-emerald-800/75">{booking.arrival_notes}</p>}
+                           </div>
+                         )}
 
                          <div className="flex flex-col gap-2 pt-2 sm:flex-row">
                             <form action={updateBookingStatus} className="flex-1">
@@ -658,6 +668,9 @@ export default function TutorDashboardUI({
                     <div key={booking.id} className="bg-white p-4 rounded-2xl border-l-4 border-l-primary border border-secondary/10 shadow-sm flex flex-col sm:flex-row justify-between sm:items-center gap-4 hover:shadow-md transition-shadow md:p-6 md:rounded-3xl md:border-l-8">
                        <div>
                           <div className="text-xs font-black text-primary mb-1 uppercase tracking-[0.2em]">{booking.subject}</div>
+                          <span className={`mb-2 inline-flex rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-[0.14em] ${booking.lesson_mode === "physical" ? "bg-emerald-50 text-emerald-700" : "bg-primary/10 text-primary"}`}>
+                            {booking.lesson_mode === "physical" ? "In-person class" : "Online class"}
+                          </span>
                           <h3 className="font-black text-secondary text-xl">
                              {new Date(booking.requested_date).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}
                           </h3>
@@ -665,11 +678,22 @@ export default function TutorDashboardUI({
                            <StudentAvatar name={booking.student_name || "Student"} avatarUrl={booking.student_avatar} sizePx={32} />
                            <p className="text-secondary/60 text-sm font-bold">{booking.student_name}</p>
                         </div>
+                        {booking.lesson_mode === "physical" && (
+                          <p className="mt-3 max-w-md rounded-2xl bg-emerald-50 p-3 text-xs font-bold leading-5 text-emerald-900">
+                            {booking.location_details || "Physical class location pending"}
+                          </p>
+                        )}
                        </div>
                        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 shrink-0">
-                          <a href={booking.meeting_url || "#"} target="_blank" rel="noreferrer" className="px-6 py-3 bg-primary text-center text-white font-black rounded-2xl hover:bg-primary-hover transition-all shadow-xl text-sm md:px-8">
-                             Launch Dojo
-                          </a>
+                          {booking.lesson_mode === "physical" ? (
+                            <span className="px-6 py-3 text-center text-sm font-black text-emerald-700">
+                              Attend in person
+                            </span>
+                          ) : (
+                            <a href={booking.meeting_url || "#"} target="_blank" rel="noreferrer" className="px-6 py-3 bg-primary text-center text-white font-black rounded-2xl hover:bg-primary-hover transition-all shadow-xl text-sm md:px-8">
+                               Launch Dojo
+                            </a>
+                          )}
                           <button 
                              onClick={() => {
                                setSelectedBookingId(booking.id);

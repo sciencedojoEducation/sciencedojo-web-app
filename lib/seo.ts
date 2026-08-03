@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
+import { getSiteUrl } from "@/lib/site-url";
 
-export const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || "https://sciencedojo.co.uk").replace(/\/$/, "");
+export const siteUrl = getSiteUrl();
 
 export type Faq = {
   question: string;

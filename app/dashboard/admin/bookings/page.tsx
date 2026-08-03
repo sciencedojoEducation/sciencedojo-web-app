@@ -68,6 +68,7 @@ export default async function AdminBookingsPage() {
                   <th className="p-6">Student</th>
                   <th className="p-6">Tutor</th>
                   <th className="p-6">Subject & Price</th>
+                  <th className="p-6">Payment</th>
                   <th className="p-6 text-right">Status</th>
                </tr>
             </thead>
@@ -92,7 +93,30 @@ export default async function AdminBookingsPage() {
                           <span className="text-[9px] uppercase font-black bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded-full tracking-widest block w-fit mb-1">
                             {booking.subject}
                           </span>
+                          <span className={`mb-1 block w-fit rounded-full px-2 py-0.5 text-[9px] font-black uppercase tracking-widest ${
+                            booking.lesson_mode === "physical" ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-500"
+                          }`}>
+                            {booking.lesson_mode === "physical" ? "In-person" : "Online"}
+                          </span>
                           <div className="text-sm font-black text-slate-600">£{booking.price_at_booking}</div>
+                          {booking.lesson_mode === "physical" && (
+                            <div className="mt-2 max-w-[12rem] text-[10px] font-bold leading-4 text-slate-400">
+                              {booking.location_details || "Location pending"}
+                            </div>
+                          )}
+                       </td>
+                       <td className="p-6 align-top">
+                          <span className={`rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-widest ${
+                            booking.payment_status === "paid" ? "bg-green-100 text-green-700" :
+                            "bg-slate-100 text-slate-500"
+                          }`}>
+                            {booking.payment_status || "unpaid"}
+                          </span>
+                          {booking.payment_method && (
+                            <p className="mt-2 text-[10px] font-black uppercase tracking-[0.14em] text-slate-400">
+                              {String(booking.payment_method).replace("_", " ")}
+                            </p>
+                          )}
                        </td>
                        <td className="p-6 text-right">
                           <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${
@@ -110,7 +134,7 @@ export default async function AdminBookingsPage() {
                
                {(!bookings || bookings.length === 0) && (
                  <tr>
-                   <td colSpan={5} className="p-12 text-center text-slate-400 font-bold">No bookings found.</td>
+                   <td colSpan={6} className="p-12 text-center text-slate-400 font-bold">No bookings found.</td>
                  </tr>
                )}
             </tbody>

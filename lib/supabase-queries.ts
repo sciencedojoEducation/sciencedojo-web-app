@@ -108,6 +108,13 @@ type RawBookingRow = {
   recurrence_count?: number;
   recurrence_index?: number;
   duration_hours?: number;
+  lesson_mode?: "online" | "physical";
+  location_details?: string | null;
+  arrival_notes?: string | null;
+  travel_fee?: number | null;
+  payment_method?: "stripe" | null;
+  payment_status?: "unpaid" | "paid" | "failed" | "refunded";
+  payment_confirmed_at?: string | null;
 };
 
 type RawNoteRow = {
@@ -418,6 +425,13 @@ export interface Booking {
   recurrence_count?: number;
   recurrence_index?: number;
   duration_hours?: number;
+  lesson_mode?: "online" | "physical";
+  location_details?: string | null;
+  arrival_notes?: string | null;
+  travel_fee?: number | null;
+  payment_method?: "stripe" | null;
+  payment_status?: "unpaid" | "paid" | "failed" | "refunded";
+  payment_confirmed_at?: string | null;
 }
 
 export async function getBookingsByUserId(userId: string): Promise<Booking[]> {

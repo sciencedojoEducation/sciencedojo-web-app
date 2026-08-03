@@ -87,6 +87,7 @@ export default async function AdminTutorsPage() {
     !["rejected", "suspended"].includes(t.tutorDetail?.tutor_status || "")
   );
   const verifiedTutors = mergedTutors.filter(t => t.tutorDetail?.is_publicly_listed);
+  const suspendedTutors = mergedTutors.filter(t => t.tutorDetail?.tutor_status === "suspended");
 
   let { data: reviewRows, error: reviewError } = await adminClient
     .from("reviews")
@@ -157,6 +158,7 @@ export default async function AdminTutorsPage() {
     <AdminTutorsDirectory
       pendingTutors={pendingTutors}
       verifiedTutors={verifiedTutors}
+      suspendedTutors={suspendedTutors}
       pendingReviews={pendingReviews}
       moderatedReviews={moderatedReviews}
     />

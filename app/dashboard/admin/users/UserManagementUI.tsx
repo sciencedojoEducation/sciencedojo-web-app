@@ -7,6 +7,7 @@ import UserAvatar from "@/components/UserAvatar";
 import {
   adminCreateUser,
   adminDeactivateUser,
+  adminReactivateUser,
   adminPermanentlyDeleteTestUser,
   adminPermanentlyDeleteTestUserByEmail,
 } from "./actions";
@@ -29,6 +30,8 @@ export default function UserManagementUI({ users, currentUserId }: { users: User
   // Modals
   const [isCreating, setIsCreating] = useState(false);
   const [deactivatingUser, setDeactivatingUser] = useState<UserProfile | null>(null);
+  const [reactivatingUser, setReactivatingUser] = useState<UserProfile | null>(null);
+  const [restoreMemberships, setRestoreMemberships] = useState(true);
   const [permanentDeleteUser, setPermanentDeleteUser] = useState<UserProfile | null>(null);
   const [permanentDeleteConfirmation, setPermanentDeleteConfirmation] = useState("");
   const [isDeletingByEmail, setIsDeletingByEmail] = useState(false);
@@ -93,6 +96,23 @@ export default function UserManagementUI({ users, currentUserId }: { users: User
       router.refresh();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Failed to deactivate user.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleReactivate = async () => {
+    if (!reactivatingUser) return;
+    setIsSubmitting(true);
+    setError(null);
+
+    try {
+      await adminReactivateUser(reactivatingUser.id, restoreMemberships);
+      setReactivatingUser(null);
+      setRestoreMemberships(true);
+      router.refresh();
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Failed to reactivate user.");
     } finally {
       setIsSubmitting(false);
     }
@@ -251,12 +271,21 @@ export default function UserManagementUI({ users, currentUserId }: { users: User
                 </a>
                 {u.id !== currentUserId ? (
                   <div className="flex flex-wrap justify-end gap-2">
-                    <button
-                      onClick={() => setDeactivatingUser(u)}
-                      className="inline-flex min-h-10 items-center rounded-xl px-3 py-2 text-xs font-black text-amber-600 transition-colors hover:bg-amber-50"
-                    >
-                      Deactivate
-                    </button>
+                    {u.is_suspended ? (
+                      <button
+                        onClick={() => { setReactivatingUser(u); setRestoreMemberships(true); }}
+                        className="inline-flex min-h-10 items-center rounded-xl px-3 py-2 text-xs font-black text-emerald-600 transition-colors hover:bg-emerald-50"
+                      >
+                        Reactivate
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => setDeactivatingUser(u)}
+                        className="inline-flex min-h-10 items-center rounded-xl px-3 py-2 text-xs font-black text-amber-600 transition-colors hover:bg-amber-50"
+                      >
+                        Deactivate
+                      </button>
+                    )}
                     <button
                       onClick={() => {
                         setPermanentDeleteUser(u);
@@ -323,12 +352,21 @@ export default function UserManagementUI({ users, currentUserId }: { users: User
                   <td className="p-6 text-right">
                     {u.id !== currentUserId ? (
                       <div className="flex justify-end gap-2">
-                        <button
-                           onClick={() => setDeactivatingUser(u)}
-                           className="rounded-lg px-3 py-2 text-[10px] font-black uppercase tracking-wider text-amber-600 transition-colors hover:bg-amber-50"
-                        >
-                           Deactivate
-                        </button>
+                        {u.is_suspended ? (
+                          <button
+                            onClick={() => { setReactivatingUser(u); setRestoreMemberships(true); }}
+                            className="rounded-lg px-3 py-2 text-[10px] font-black uppercase tracking-wider text-emerald-600 transition-colors hover:bg-emerald-50"
+                          >
+                            Reactivate
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => setDeactivatingUser(u)}
+                            className="rounded-lg px-3 py-2 text-[10px] font-black uppercase tracking-wider text-amber-600 transition-colors hover:bg-amber-50"
+                          >
+                            Deactivate
+                          </button>
+                        )}
                         <button 
                            onClick={() => {
                              setPermanentDeleteUser(u);
@@ -376,6 +414,41 @@ export default function UserManagementUI({ users, currentUserId }: { users: User
                  {isSubmitting ? 'Deactivating...' : 'Deactivate'}
                </button>
              </div>
+          </div>
+        </div>
+      )}
+
+      {/* REACTIVATE ACCOUNT MODAL */}
+      {reactivatingUser && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => !isSubmitting && setReactivatingUser(null)} />
+          <div className="relative w-full max-w-md rounded-[2rem] bg-white p-8 shadow-2xl">
+            <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
+              <svg className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+            </div>
+            <h3 className="mb-2 text-center text-xl font-black text-slate-900">Reactivate this account?</h3>
+            <p className="mb-6 px-4 text-center text-sm font-medium leading-relaxed text-slate-500">
+              <strong className="text-slate-800">{reactivatingUser.full_name} ({reactivatingUser.email})</strong> will be able to sign in again.
+            </p>
+            <label className="mb-6 flex cursor-pointer items-start gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+              <input
+                type="checkbox"
+                checked={restoreMemberships}
+                onChange={(event) => setRestoreMemberships(event.target.checked)}
+                disabled={isSubmitting}
+                className="mt-0.5 h-4 w-4 rounded border-slate-300 text-emerald-600"
+              />
+              <span>
+                <span className="block text-sm font-black text-slate-800">Restore memberships</span>
+                <span className="mt-1 block text-xs font-medium leading-relaxed text-slate-500">Mark this user’s existing inactive account memberships as active.</span>
+              </span>
+            </label>
+            <div className="flex gap-3">
+              <button onClick={() => setReactivatingUser(null)} disabled={isSubmitting} className="flex-1 rounded-xl bg-slate-100 py-3 font-bold text-slate-700 transition-colors hover:bg-slate-200 disabled:opacity-50">Cancel</button>
+              <button onClick={handleReactivate} disabled={isSubmitting} className="flex-1 rounded-xl bg-emerald-600 py-3 font-black text-white shadow-lg shadow-emerald-200 transition-colors hover:bg-emerald-700 disabled:opacity-50">
+                {isSubmitting ? "Reactivating..." : "Reactivate"}
+              </button>
+            </div>
           </div>
         </div>
       )}

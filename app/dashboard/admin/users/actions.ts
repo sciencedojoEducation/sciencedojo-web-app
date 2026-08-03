@@ -4,6 +4,7 @@ import { createClient } from "@/utils/supabase/server";
 import { createAdminClient } from "@/utils/supabase/admin";
 import {
   deactivateUserAccount,
+  reactivateUserAccount,
   permanentlyDeleteTestUserAccount,
   permanentlyDeleteTestUserByEmail,
 } from "@/lib/admin-user-lifecycle";
@@ -70,6 +71,10 @@ export async function adminCreateUser(formData: FormData) {
 
 export async function adminDeactivateUser(targetUserId: string) {
   return deactivateUserAccount(targetUserId);
+}
+
+export async function adminReactivateUser(targetUserId: string, restoreMemberships: boolean) {
+  return reactivateUserAccount(targetUserId, restoreMemberships);
 }
 
 export async function adminPermanentlyDeleteTestUser(targetUserId: string, confirmationEmail: string) {

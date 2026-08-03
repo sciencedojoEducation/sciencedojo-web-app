@@ -595,6 +595,9 @@ export default async function ParentDashboard() {
                       <div>
                         <div className="flex items-center gap-2 mb-1">
                           <span className="inline-block px-3 py-1 bg-primary/10 text-primary text-[10px] font-black rounded-lg uppercase tracking-widest">{booking.subject}</span>
+                          <span className={`px-2 py-0.5 text-[9px] font-black uppercase tracking-widest rounded ${booking.lesson_mode === "physical" ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-500"}`}>
+                            {booking.lesson_mode === "physical" ? "In-person" : "Online"}
+                          </span>
                           {group.isGroup && (
                             <span className="px-2 py-0.5 bg-yellow-100 text-yellow-800 text-[9px] font-black uppercase tracking-widest rounded">{group.count}-Week Series</span>
                           )}
@@ -614,8 +617,16 @@ export default async function ParentDashboard() {
                            {group.isGroup && <div className="text-[8px] opacity-50">£{booking.price_at_booking} × {group.count} sessions</div>}
                          </div>
                       </div>
+                      {booking.lesson_mode === "physical" && (
+                        <p className="rounded-xl bg-emerald-50 p-3 text-xs font-bold leading-5 text-emerald-900">
+                          {booking.location_details || "In-person location pending"}
+                        </p>
+                      )}
                       
-                      <CheckoutButton bookingId={booking.id} />
+                      <CheckoutButton
+                        bookingId={booking.id}
+                        paymentStatus={booking.payment_status}
+                      />
                    </div>
                 </div>
              )})}
@@ -643,6 +654,9 @@ export default async function ParentDashboard() {
                         <div>
                           <div className="flex items-center gap-1.5 mb-1">
                             <span className="inline-block px-2 py-0.5 bg-secondary/5 text-secondary/40 text-[9px] font-black rounded-md uppercase tracking-wider">{booking.subject}</span>
+                            <span className={`px-1.5 py-0.5 text-[8px] font-black uppercase tracking-widest rounded ${booking.lesson_mode === "physical" ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-500"}`}>
+                              {booking.lesson_mode === "physical" ? "In-person" : "Online"}
+                            </span>
                             {group.isGroup && (
                               <span className="px-1.5 py-0.5 bg-yellow-50 text-yellow-600 text-[8px] font-black uppercase tracking-widest rounded">{group.count} Weeks</span>
                             )}

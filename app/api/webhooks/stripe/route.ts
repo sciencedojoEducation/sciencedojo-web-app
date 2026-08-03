@@ -1,15 +1,12 @@
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
-import { createMeetingUrl } from '@/lib/meetings';
-import { createCalendarEvent } from '@/lib/calendar';
 import { FOCUSDOJO_PRO_PRODUCT_KEY } from '@/lib/focusdojo/access-levels';
 import {
   getStripeSubscriptionIdFromInvoice,
   syncFocusDojoSubscriptionFromStripeSubscriptionId,
   upsertFocusDojoSubscriptionFromStripeSubscription,
 } from '@/lib/focusdojo/subscription-sync';
-import { findOrCreateClass } from '@/lib/class-queries';
-import { createAdminClient } from '@/utils/supabase/admin';
+import { confirmPaidBooking } from '@/lib/booking-confirmation';
 
 const stripeSecretKey = process.env.STRIPE_SECRET_KEY || "sk_test_dummy";
 const stripe = new Stripe(stripeSecretKey);
@@ -81,59 +78,18 @@ export async function POST(req: Request) {
     }
     
     if (bookingId) {
-      const supabase = createAdminClient();
-      
       const ids = bookingId.split(',');
 
-      // For multiple bookings, we can loop over them or update them in bulk
       for (const id of ids) {
-        // 1. Generate meeting link
-        const meetingUrl = await createMeetingUrl(id);
-        
-        // 2. Update Booking record
-        const { error } = await supabase
-          .from("bookings")
-          .update({ 
-            status: "confirmed",
-            meeting_url: meetingUrl.joinUrl,
-            payment_intent_id: session.payment_intent as string
-          })
-          .eq("id", id);
-
-        if (error) console.error(`[Stripe Webhook] Supabase update failed for ${id}:`, error.message);
-        else {
+        try {
+          await confirmPaidBooking({
+            bookingId: id,
+            paymentMethod: "stripe",
+            paymentIntentId: session.payment_intent as string | null,
+          });
           console.log(`[Stripe Webhook] Booking ${id} confirmed.`);
-          
-          // 3. Create Google Calendar invite (Automated invite if configured)
-          await createCalendarEvent(id);
-
-          // 4. Auto-create class for this booking
-          try {
-            const { data: bookingData } = await supabase
-              .from("bookings")
-              .select("student_id, tutor_id, subject")
-              .eq("id", id)
-              .single();
-
-            if (bookingData) {
-              const classId = await findOrCreateClass(
-                bookingData.student_id,
-                bookingData.tutor_id,
-                bookingData.subject
-              );
-
-              // Link booking to class
-              await supabase
-                .from("bookings")
-                .update({ class_id: classId })
-                .eq("id", id);
-
-              console.log(`[Stripe Webhook] Booking ${id} linked to class ${classId}`);
-            }
-          } catch (classErr) {
-            console.error(`[Stripe Webhook] Class creation failed for ${id}:`, classErr);
-            // Non-blocking — booking is still confirmed
-          }
+        } catch (err) {
+          console.error(`[Stripe Webhook] Booking confirmation failed for ${id}:`, err);
         }
       }
     }

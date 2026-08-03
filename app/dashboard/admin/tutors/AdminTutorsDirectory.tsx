@@ -41,11 +41,13 @@ function matchesTutorSearch(tutor: AdminTutor, query: string) {
 export default function AdminTutorsDirectory({
   pendingTutors,
   verifiedTutors,
+  suspendedTutors,
   pendingReviews,
   moderatedReviews,
 }: {
   pendingTutors: AdminTutor[];
   verifiedTutors: AdminTutor[];
+  suspendedTutors: AdminTutor[];
   pendingReviews: AdminTutorReview[];
   moderatedReviews: AdminTutorReview[];
 }) {
@@ -58,7 +60,11 @@ export default function AdminTutorsDirectory({
     () => verifiedTutors.filter((tutor) => matchesTutorSearch(tutor, searchQuery)),
     [verifiedTutors, searchQuery],
   );
-  const hasResults = filteredPendingTutors.length > 0 || filteredVerifiedTutors.length > 0;
+  const filteredSuspendedTutors = useMemo(
+    () => suspendedTutors.filter((tutor) => matchesTutorSearch(tutor, searchQuery)),
+    [suspendedTutors, searchQuery],
+  );
+  const hasResults = filteredPendingTutors.length > 0 || filteredVerifiedTutors.length > 0 || filteredSuspendedTutors.length > 0;
 
   return (
     <div className="mx-auto min-h-screen max-w-6xl space-y-6 px-3 py-5 sm:px-4 md:p-8 md:space-y-12">
@@ -129,6 +135,35 @@ export default function AdminTutorsDirectory({
           </div>
 
           <PendingTutorsTable tutors={filteredPendingTutors} />
+        </section>
+      )}
+
+      {filteredSuspendedTutors.length > 0 && (
+        <section className="space-y-4 md:space-y-6">
+          <div className="flex items-center gap-4">
+            <h2 className="rounded-full border border-red-100 bg-red-50 px-4 py-2 text-xs font-black uppercase tracking-tight text-red-600">
+              Suspended Tutors ({filteredSuspendedTutors.length})
+            </h2>
+            <div className="h-px flex-1 bg-gradient-to-r from-red-200 to-transparent" />
+          </div>
+
+          <div className="grid gap-3 md:grid-cols-2">
+            {filteredSuspendedTutors.map((tutor) => (
+              <article key={tutor.id} className="flex flex-col gap-4 rounded-[1.5rem] border border-red-100 bg-white p-4 shadow-sm sm:flex-row sm:items-center">
+                <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-2xl border-2 border-white bg-slate-100 shadow-sm ring-2 ring-red-50">
+                  <Image src={tutor.avatar_url || "/tutor_placeholder.webp"} alt={tutor.full_name} fill className="object-cover" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <h3 className="truncate text-base font-black text-slate-800">{tutor.full_name}</h3>
+                  <p className="mt-1 truncate text-xs font-bold text-slate-400">{tutor.email}</p>
+                  <span className="mt-2 inline-flex rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[9px] font-black uppercase tracking-widest text-slate-500">
+                    {tutor.tutorDetail?.is_verified ? "Previously verified" : "Previously listed"}
+                  </span>
+                </div>
+                <VerifyButton tutorId={tutor.id} action="reactivate" label="Reactivate" variant="success" />
+              </article>
+            ))}
+          </div>
         </section>
       )}
 

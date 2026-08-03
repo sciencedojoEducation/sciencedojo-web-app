@@ -6,7 +6,7 @@ import { updateTutorStatus } from "./actions";
 interface Props {
   tutorId: string;
   isVerified?: boolean;
-  action?: "approve" | "verify" | "remove_verified" | "reject" | "suspend" | "feature" | "unfeature";
+  action?: "approve" | "verify" | "remove_verified" | "reject" | "suspend" | "reactivate" | "feature" | "unfeature";
   label?: string;
   variant?: "primary" | "success" | "danger" | "muted";
 }
@@ -28,12 +28,13 @@ export default function VerifyButton({ tutorId, isVerified = false, action, labe
       resolvedAction === "remove_verified" ? "Remove Verified Badge" :
       resolvedAction === "reject" ? "Reject" :
       resolvedAction === "suspend" ? "Suspend" :
+      resolvedAction === "reactivate" ? "Reactivate" :
       resolvedAction === "feature" ? "Feature" :
       "Unfeature");
   const resolvedVariant =
     variant ||
     (resolvedAction === "approve" ? "primary" :
-      resolvedAction === "verify" ? "success" :
+      resolvedAction === "verify" || resolvedAction === "reactivate" ? "success" :
       resolvedAction === "reject" || resolvedAction === "suspend" || resolvedAction === "remove_verified" ? "danger" :
       "muted");
 
