@@ -79,6 +79,8 @@ function clearPendingSignupCookies(cookieStore: Awaited<ReturnType<typeof cookie
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url)
   const code = searchParams.get('code')
+  const tokenHash = searchParams.get('token_hash')
+  const authType = searchParams.get('type')
   const next = searchParams.get('next') ?? '/'
   const oauthError = searchParams.get('error') || searchParams.get('error_description')
   const safeNextForNoCode = getSafeNextPath(next);
@@ -86,10 +88,15 @@ export async function GET(request: Request) {
   if (oauthError) {
     const cookieStore = await cookies();
     clearPendingSignupCookies(cookieStore);
+    if (safeNextForNoCode === '/reset-password' || authType === 'recovery') {
+      return NextResponse.redirect(`${origin}/forgot-password?message=reset-link-invalid`)
+    }
     return NextResponse.redirect(`${origin}/signup?error=${encodeURIComponent('Google sign-up was cancelled or could not be completed. Please try again.')}`)
   }
 
-  if (!code) {
+  const isTokenHashRecovery = Boolean(tokenHash && authType === 'recovery');
+
+  if (!code && !isTokenHashRecovery) {
     if (safeNextForNoCode === '/reset-password') {
       return NextResponse.redirect(`${origin}/forgot-password?internal=1&message=reset-link-invalid`);
     }
@@ -97,11 +104,25 @@ export async function GET(request: Request) {
     return NextResponse.redirect(`${origin}/login?error=${encodeURIComponent('The confirmation link was invalid or has expired. Please request a new link.')}`)
   }
 
-  if (code) {
+  if (code || isTokenHashRecovery) {
     const supabase = await createClient()
-    const { error } = await supabase.auth.exchangeCodeForSession(code)
+    const { error } = code
+      ? await supabase.auth.exchangeCodeForSession(code)
+      : await supabase.auth.verifyOtp({
+          token_hash: tokenHash!,
+          type: 'recovery',
+        })
     
     if (!error) {
+      // Recovery must bypass all OAuth/profile onboarding redirects. At this point
+      // Supabase has established the short-lived recovery session in cookies, so
+      // the password update page can safely call auth.updateUser().
+      if (safeNextForNoCode === '/reset-password' || authType === 'recovery') {
+        const cookieStore = await cookies();
+        clearPendingSignupCookies(cookieStore);
+        return NextResponse.redirect(`${origin}/reset-password`);
+      }
+
       // Check for pending role selection from signup (URL params first, then cookies)
       const cookieStore = await cookies();
       const rawPendingRole = searchParams.get('role') || cookieStore.get('pending_role')?.value;
@@ -307,6 +328,9 @@ export async function GET(request: Request) {
     const cookieStore = await cookies();
     clearPendingSignupCookies(cookieStore);
     console.error("Auth callback error:", error.message)
+    if (safeNextForNoCode === '/reset-password' || authType === 'recovery') {
+      return NextResponse.redirect(`${origin}/forgot-password?message=reset-link-invalid`)
+    }
     return NextResponse.redirect(`${origin}/login?error=${encodeURIComponent('The confirmation link was invalid or has expired. Please try logging in or requesting a new password.')}`)
   }
   return NextResponse.redirect(`${origin}/login?error=${encodeURIComponent('The confirmation link was invalid or has expired. Please request a new link.')}`)
