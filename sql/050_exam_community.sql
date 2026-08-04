@@ -158,7 +158,11 @@ RETURNS TRIGGER LANGUAGE plpgsql AS $$ BEGIN NEW.updated_at = now(); RETURN NEW;
 CREATE OR REPLACE FUNCTION public.community_lock_moderation_fields()
 RETURNS TRIGGER LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
 BEGIN
-  IF NOT public.is_community_moderator(auth.uid()) THEN
+  -- The service-role backend (admin moderation panel) is trusted: it has no
+  -- auth.uid(), so recognise it by its JWT role or the trigger would revert
+  -- every publish/reject action back to its previous status.
+  IF NOT public.is_community_moderator(auth.uid())
+     AND coalesce(current_setting('request.jwt.claims', true)::jsonb ->> 'role', '') <> 'service_role' THEN
     NEW.status := OLD.status;
     IF TG_TABLE_NAME = 'community_topics' THEN
       NEW.is_pinned := OLD.is_pinned;
@@ -279,61 +283,5 @@ INSERT INTO public.community_categories (slug, name, description, stage, icon, d
   ('official-exam-updates', 'Official Exam Updates', 'Sourced updates from UK exam boards and official education bodies.', 'Official', 'BadgeCheck', 90)
 ON CONFLICT (slug) DO UPDATE SET name = EXCLUDED.name, description = EXCLUDED.description, display_order = EXCLUDED.display_order;
 
--- Foundational prompts give the private seed a useful shape without pretending
--- they are organic student activity. seeded_author_name is always shown clearly.
-WITH prompts(category_slug, slug, title, body) AS (VALUES
-  ('gcse-maths','how-to-use-a-maths-error-log','How should I use an error log for GCSE Maths?','Record the question topic, the mistake you made, the correct method, and one similar question to retry later. What format has helped you revisit mistakes consistently?'),
-  ('gcse-maths','calculator-paper-time-management','How do you manage time on a GCSE Maths calculator paper?','I want a reliable way to avoid spending too long on one difficult question while still showing enough working. What timing strategy works best?'),
-  ('gcse-maths','foundation-to-higher-tier-decision','What should students consider before moving from Foundation to Higher tier?','Which evidence from mocks, topic tests, and teacher feedback should guide a tier decision without focusing on one result alone?'),
-  ('gcse-maths','aqa-maths-mock-review-routine','A practical routine for reviewing an AQA Maths mock','Instead of checking only the grade, sort lost marks into knowledge, method, accuracy, and timing. Which category tends to create the biggest improvement?'),
-  ('gcse-maths','remembering-circle-theorems','How can I remember and apply circle theorems?','Knowing the theorem statement is not always enough when the diagram changes. How do you connect each theorem to visual clues?'),
-  ('gcse-biology','six-mark-biology-answers','How do you structure a six-mark GCSE Biology answer?','How much planning should you do, and how can you make sure the answer includes linked scientific reasoning instead of disconnected facts?'),
-  ('gcse-biology','required-practicals-revision','Best way to revise GCSE Biology required practicals','Is it better to memorise methods or practise variables, improvements, graphs, and conclusions using exam questions?'),
-  ('gcse-biology','food-tests-common-errors','What are the most common mistakes in food-test questions?','Students often mix up reagents, conditions, and positive results. What is an efficient way to practise all three together?'),
-  ('gcse-biology','inheritance-crosses-checking','How can I check a genetic cross answer?','What checks can catch errors with alleles, parent genotypes, gametes, ratios, and probabilities before moving on?'),
-  ('gcse-biology','ecology-sampling-questions','How should I approach ecology sampling questions?','How do you decide whether a question needs a quadrat, transect, random sample, or calculation of abundance?'),
-  ('gcse-chemistry','moles-question-starting-point','How do you find the starting point in a moles question?','Moles problems can look very different. Which quantities and unit conversions should you identify before choosing an equation?'),
-  ('gcse-chemistry','bonding-comparison-answers','How do you improve answers comparing bonding and properties?','How can students build a complete chain from structure and bonding to forces, energy, and the observed property?'),
-  ('gcse-chemistry','electrolysis-rules','A simple way to apply electrolysis rules','What decision process helps identify products at each electrode for molten and aqueous compounds?'),
-  ('gcse-chemistry','titration-calculation-checks','What checks help with titration calculations?','How do you keep concentration units, reacting ratios, transferred volumes, and significant figures under control?'),
-  ('gcse-chemistry','chemistry-practical-evaluation','How do I evaluate a chemistry practical properly?','What makes an improvement specific, realistic, and clearly connected to the source of uncertainty?'),
-  ('gcse-physics','choosing-the-right-equation','How do you choose the right GCSE Physics equation?','Instead of scanning the equation sheet randomly, how can you connect the quantities in the question to the physical model?'),
-  ('gcse-physics','required-practical-graphs','What makes a strong required-practical graph answer?','Which details about axes, units, scale, best-fit lines, gradients, and anomalies are most often missed?'),
-  ('gcse-physics','electricity-circuit-reasoning','How do you reason through unfamiliar circuit questions?','What should you establish about current, potential difference, resistance, series paths, and parallel branches before calculating?'),
-  ('gcse-physics','radiation-explanation-questions','How detailed should radiation explanation answers be?','How can students connect type, penetration, ionisation, half-life, exposure, and risk without adding irrelevant facts?'),
-  ('gcse-physics','physics-unit-conversions','Best way to prevent unit-conversion mistakes in Physics','Which conversions should students write explicitly before substitution, and what final checks reveal an unreasonable answer?'),
-  ('gcse-english','english-language-question-timing','How should I divide time in GCSE English Language?','How do you balance reading, planning, analytical questions, and the longer writing task without rushing the final section?'),
-  ('gcse-english','using-short-quotations','Why are short quotations often stronger in analysis?','How can a short quotation make it easier to analyse a precise word, method, effect, and alternative interpretation?'),
-  ('gcse-english','literature-theme-revision','How do you revise themes without memorising whole essays?','What is a good way to connect a small quotation bank with characters, themes, context, and flexible arguments?'),
-  ('gcse-english','creative-writing-opening','What makes an effective creative-writing opening?','How can an opening establish voice, setting, tension, and control without using an overly dramatic list of techniques?'),
-  ('gcse-english','comparison-question-plan','How should I plan a comparison answer?','What planning structure keeps similarities and differences connected to a clear argument throughout the response?'),
-  ('a-level-stem','a-level-chemistry-mechanisms','How should I revise A-Level Chemistry mechanisms?','How can students connect reagents, conditions, curly arrows, intermediates, products, and mechanism names rather than memorising isolated diagrams?'),
-  ('a-level-stem','a-level-physics-multi-step-problems','Approaching multi-step A-Level Physics problems','What should you write down when the final quantity is several equations away from the information provided?'),
-  ('a-level-stem','a-level-biology-essay-planning','How do you plan an A-Level Biology essay?','How can a plan select broad, relevant biological ideas while keeping every paragraph accurate and connected to the title?'),
-  ('a-level-stem','a-level-maths-proof-practice','How can I get better at A-Level Maths proofs?','What clues distinguish proof by deduction, exhaustion, contradiction, and counterexample, and how should practice be organised?'),
-  ('a-level-stem','moving-from-gcse-to-a-level','What feels most different when moving from GCSE to A-Level STEM?','Which study habits need to change when topics become deeper, lessons move faster, and independent practice matters more?'),
-  ('revision-exam-technique','two-week-mock-plan','How should I build a realistic two-week mock plan?','How do you prioritise subjects and weak topics while leaving time for retrieval practice, exam questions, rest, and adjustment?'),
-  ('revision-exam-technique','active-recall-vs-past-papers','When should I use active recall versus past papers?','At what stage should revision move from learning and retrieval into timed application and complete papers?'),
-  ('revision-exam-technique','exam-anxiety-first-five-minutes','What can help during the first five minutes of an exam?','Which simple routines help settle breathing, read instructions, scan the paper, and begin without losing useful time?'),
-  ('revision-exam-technique','revision-session-length','How long should a focused revision session be?','Is there a best session length, or should it change with the task, attention level, and distance from the exam?'),
-  ('revision-exam-technique','recovering-after-bad-mock','How should you respond to a disappointing mock result?','How can students turn a result into specific next actions without treating one paper as a prediction of the final grade?'),
-  ('revision-exam-technique','using-mark-schemes-well','How do you use a mark scheme without just copying it?','What process helps compare reasoning, identify missing ideas, and retry the question from memory?'),
-  ('revision-exam-technique','weekly-revision-review','What should be included in a weekly revision review?','Which questions help decide what improved, what remains weak, and what should change in next week’s plan?'),
-  ('revision-exam-technique','sleep-before-exams','How should revision and sleep be balanced before exams?','What routine protects sleep while still giving enough time for review, preparation, and a calm start the next day?'),
-  ('results-next-steps','results-day-preparation','What should students prepare before results day?','Which documents, contact details, course requirements, and backup options are useful to have ready?'),
-  ('results-next-steps','when-to-consider-a-retake','When might an exam retake be worth considering?','What should students discuss with their school or college about requirements, timing, workload, cost, and alternative routes?'),
-  ('results-next-steps','choosing-a-level-subjects','How should students choose A-Level subjects?','How can interest, current evidence, course combinations, future requirements, and workload be weighed together?'),
-  ('results-next-steps','missing-a-course-offer','What should you do if results miss a course offer?','What calm sequence of checks and conversations should happen before making a rushed decision?'),
-  ('results-next-steps','interpreting-grade-boundaries','What do grade boundaries actually tell you?','Why can boundaries change between papers and years, and why should unofficial predictions be treated cautiously?'),
-  ('official-exam-updates','how-official-updates-are-checked','How ScienceDojo checks official exam updates','ScienceDojo links every exam update to a primary source such as an exam board, JCQ, Ofqual, GOV.UK, or UCAS. We separate the sourced facts from our own practical explanation.'),
-  ('official-exam-updates','avoiding-exam-rumours','How to check an exam rumour before sharing it','Look for the claim on the relevant exam board or regulator website, check the publication date, and avoid screenshots without a verifiable source link.'),
-  ('official-exam-updates','where-exam-timetables-come-from','Where should students check official exam timetables?','Use the timetable published by your exam board and confirm individual arrangements with your school or college. Social posts and revision apps should not be the final authority.'),
-  ('official-exam-updates','results-day-official-sources','Which official sources are useful around results day?','Exam boards explain results and reviews of marking, while UCAS and GOV.UK publish guidance for next steps. Always check dates and eligibility on the linked official page.'),
-  ('official-exam-updates','source-date-matters','Why does the date on exam guidance matter?','Rules, deadlines, specifications, and processes can change. Check that guidance applies to your qualification, exam series, board, and current year.'),
-  ('revision-exam-technique','asking-a-useful-community-question','How to ask a question that gets a useful answer','Include the subject, qualification, exam board when relevant, what you have tried, and the exact point of confusion. Never include your full name, school, contact details, or candidate information.'),
-  ('revision-exam-technique','community-safety-basics','Community safety basics for students','Use a pseudonym, keep personal details private, report anything worrying, and remember that community guidance cannot replace help from a parent, teacher, school, or safeguarding professional.')
-)
-INSERT INTO public.community_topics (category_id, slug, title, body, status, seeded_author_name, published_at)
-SELECT c.id, p.slug, p.title, p.body, 'published', 'ScienceDojo Editorial Team', now()
-FROM prompts p JOIN public.community_categories c ON c.slug = p.category_slug
-ON CONFLICT (slug) DO NOTHING;
+-- Editorial seed topics are intentionally kept out of this required schema
+-- migration so long-form copy cannot interfere with SQL-editor execution.

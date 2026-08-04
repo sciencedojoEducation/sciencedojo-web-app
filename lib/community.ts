@@ -28,18 +28,18 @@ export async function getCommunityCategories() {
 }
 
 const topicSelect = `id, slug, title, body, status, is_pinned, is_sensitive, seeded_author_name, view_count, reply_count, last_activity_at, published_at, created_at,
-  category:community_categories!community_topics_category_id_fkey(id, slug, name, description, stage, icon, display_order),
+  category:community_categories!community_topics_category_id_fkey!inner(id, slug, name, description, stage, icon, display_order),
   author:community_profiles!community_topics_author_profile_fkey(pseudonym, badge, is_verified)`;
 
 export async function getCommunityTopics(options: { category?: string; q?: string; limit?: number } = {}) {
   const supabase = await createClient();
-  let query = supabase.from("community_topics").select(topicSelect).in("status", ["published", "locked"])
-    .order("is_pinned", { ascending: false }).order("last_activity_at", { ascending: false }).limit(options.limit || 30);
+  let query = supabase.from("community_topics").select(topicSelect).in("status", ["published", "locked"]);
+  if (options.category) query = query.eq("category.slug", options.category);
   if (options.q) query = query.or(`title.ilike.%${options.q.replace(/[%_,()]/g, "")}%,body.ilike.%${options.q.replace(/[%_,()]/g, "")}%`);
+  query = query.order("is_pinned", { ascending: false }).order("last_activity_at", { ascending: false }).limit(options.limit || 30);
   const { data, error } = await query;
   if (error) { console.error("[community] topics:", error.message); return []; }
-  const topics = (data || []) as unknown as CommunityTopic[];
-  return options.category ? topics.filter((topic) => topic.category?.slug === options.category) : topics;
+  return (data || []) as unknown as CommunityTopic[];
 }
 
 export async function getCommunityTopic(slug: string) {
