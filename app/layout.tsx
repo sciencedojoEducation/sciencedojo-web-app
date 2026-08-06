@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import Analytics from "@/components/Analytics";
+import MetaPixel from "@/components/MetaPixel";
 import SeoConversionCtas from "@/components/SeoConversionCtas";
 import PublicChromeGate from "@/components/PublicChromeGate";
 import { siteUrl } from "@/lib/seo";
@@ -65,6 +66,7 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col font-sans" suppressHydrationWarning>
         <Analytics />
+        <MetaPixel />
         {!isMaintenanceMode && (
           <PublicChromeGate>
             <Navbar />
