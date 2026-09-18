@@ -42,7 +42,7 @@ export default async function Navbar() {
           </Link>
         </div>
 
-        <nav className="hidden md:flex items-center gap-7">
+        <nav className="hidden items-center gap-5 xl:flex">
           {flags.tutor_marketplace_enabled && (
             <Link href="/#directory" className="text-sm font-medium text-secondary/70 hover:text-primary transition-colors">
               Find Tutors
@@ -68,14 +68,9 @@ export default async function Navbar() {
               FocusDojo
             </Link>
           )}
-          {flags.free_assessment_enabled && (
-            <BookAssessmentLink source="navbar" className="text-sm font-medium text-secondary/70 hover:text-primary transition-colors">
-              Request Free Assessment
-            </BookAssessmentLink>
-          )}
         </nav>
 
-        <div className="hidden items-center gap-4 md:flex">
+        <div className="hidden items-center gap-4 xl:flex">
           {user ? (
             <>
               <Link href={`/dashboard/${role}`} className="relative text-sm font-medium text-secondary hover:text-primary transition-colors flex items-center gap-2">
@@ -103,10 +98,18 @@ export default async function Navbar() {
               </Link>
               <Link
                 href="/signup"
-                className="inline-flex h-9 items-center justify-center rounded-md bg-accent px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-accent/90 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring transition-colors"
+                className="text-sm font-medium text-secondary hover:text-primary transition-colors"
               >
                 Sign up
               </Link>
+              {flags.free_assessment_enabled && (
+                <BookAssessmentLink
+                  source="navbar"
+                  className="inline-flex min-h-11 items-center justify-center rounded-full bg-primary px-5 py-3 text-center text-xs font-black text-white shadow-lg shadow-primary/15 transition-all hover:-translate-y-0.5 hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                >
+                  Book a Free Learning Assessment
+                </BookAssessmentLink>
+              )}
             </>
           )}
         </div>

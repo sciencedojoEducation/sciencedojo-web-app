@@ -1,0 +1,899 @@
+{
+  "schema": "openai.presentation.layout/v4",
+  "unit": "px",
+  "slide": {
+    "aid": "sl/d7u5fq",
+    "id": "d7u5fq",
+    "slide": 6,
+    "layoutId": "e2a9cc33-4ce2-4d8c-b586-a40d28677b6e",
+    "layoutName": "Title Slide",
+    "layoutType": "title",
+    "masterLayoutId": "fa29f615-a3ac-4378-a841-8902127f3a70",
+    "masterLayoutName": "Master",
+    "backgroundColor": "#FFFFFF",
+    "frame": {
+      "left": 0,
+      "top": 0,
+      "width": 1280,
+      "height": 720
+    }
+  },
+  "theme": {
+    "colorSchemeName": "ChatGPT",
+    "colors": {
+      "accent1": "#156082",
+      "accent2": "#E97132",
+      "accent3": "#196B24",
+      "accent4": "#0F9ED5",
+      "accent5": "#A02B93",
+      "accent6": "#4EA72E",
+      "bg1": "#FFFFFF",
+      "bg2": "#000000",
+      "tx1": "#1F1F1F",
+      "tx2": "#FFFFFF",
+      "dk1": "#000000",
+      "lt1": "#FFFFFF",
+      "dk2": "#0E2841",
+      "lt2": "#E8E8E8",
+      "hlink": "#467886",
+      "folHlink": "#96607D"
+    },
+    "typefaces": [
+      "Helvetica Neue"
+    ]
+  },
+  "inheritedLayers": [
+    {
+      "scope": "layout",
+      "id": "e2a9cc33-4ce2-4d8c-b586-a40d28677b6e",
+      "name": "Title Slide",
+      "type": "title",
+      "parentLayoutId": "fa29f615-a3ac-4378-a841-8902127f3a70",
+      "elements": []
+    },
+    {
+      "scope": "master",
+      "id": "fa29f615-a3ac-4378-a841-8902127f3a70",
+      "name": "Master",
+      "type": "master",
+      "elements": []
+    }
+  ],
+  "elements": [
+    {
+      "order": 1,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/kbm98v2p",
+      "id": "1",
+      "name": "eyebrow",
+      "bbox": [
+        56,
+        34,
+        500,
+        22
+      ],
+      "geometry": "rect",
+      "text": "SCIENCEDOJO",
+      "textPreview": "SCIENCEDOJO",
+      "resolvedFontSize": 13,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 13,
+        "typeface": "Helvetica Neue",
+        "color": "#3973E6",
+        "bold": true,
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "wrap": "square",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "SCIENCEDOJO"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "SCIENCEDOJO",
+          "lineSpacingPercent": 100000,
+          "resolvedTextStyle": {
+            "fontSize": 13,
+            "typeface": "Helvetica Neue",
+            "color": "#3973E6",
+            "bold": true,
+            "alignment": "left",
+            "lineSpacing": 1
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "SCIENCEDOJO",
+              "fontSize": 13,
+              "typeface": "Helvetica Neue",
+              "color": "#3973E6",
+              "bold": true,
+              "alignment": "left",
+              "lineSpacing": 1
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 2,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/jad8zal4",
+      "id": "2",
+      "name": "slide-title",
+      "bbox": [
+        56,
+        72,
+        1130,
+        110
+      ],
+      "geometry": "rect",
+      "text": "Tutoring drives the core model; software expands lifetime value",
+      "textPreview": "Tutoring drives the core model; software expands lifetime value",
+      "resolvedFontSize": 35,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 35,
+        "typeface": "Helvetica Neue",
+        "color": "#11243E",
+        "bold": true,
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "wrap": "square",
+        "autoFit": "none",
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Tutoring drives the core model; software expands lifetime value"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Tutoring drives the core model; software expands lifetime value",
+          "lineSpacingPercent": 95000,
+          "resolvedTextStyle": {
+            "fontSize": 35,
+            "typeface": "Helvetica Neue",
+            "color": "#11243E",
+            "bold": true,
+            "alignment": "left",
+            "lineSpacing": 0.95
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Tutoring drives the core model; software expands lifetime value",
+              "fontSize": 35,
+              "typeface": "Helvetica Neue",
+              "color": "#11243E",
+              "bold": true,
+              "alignment": "left",
+              "lineSpacing": 0.95
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 3,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/y94r654j",
+      "id": "3",
+      "name": "accent-rule",
+      "bbox": [
+        56,
+        186,
+        72,
+        5
+      ],
+      "geometry": "rect",
+      "fillColor": "#2FC4C9",
+      "lineWidth": 0
+    },
+    {
+      "order": 4,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/x8bqx03e",
+      "id": "4",
+      "name": "slide-number",
+      "bbox": [
+        1170,
+        666,
+        54,
+        18
+      ],
+      "geometry": "rect",
+      "text": "06",
+      "textPreview": "06",
+      "resolvedFontSize": 13,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 13,
+        "typeface": "Helvetica Neue",
+        "color": "#637086",
+        "alignment": "right",
+        "verticalAlignment": "top",
+        "wrap": "square",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "06"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "06",
+          "lineSpacingPercent": 100000,
+          "resolvedTextStyle": {
+            "fontSize": 13,
+            "typeface": "Helvetica Neue",
+            "color": "#637086",
+            "alignment": "right",
+            "lineSpacing": 1
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "06",
+              "fontSize": 13,
+              "typeface": "Helvetica Neue",
+              "color": "#637086",
+              "alignment": "right",
+              "lineSpacing": 1
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 5,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/w7294vmt",
+      "id": "5",
+      "name": "Core: tutoring-panel",
+      "bbox": [
+        56,
+        226,
+        350,
+        334
+      ],
+      "geometry": "rect",
+      "fillColor": "#EEF4FF",
+      "lineColor": "#C8D3E2",
+      "lineWidth": 1
+    },
+    {
+      "order": 6,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/b6t8vql8",
+      "id": "6",
+      "name": "Core: tutoring-label",
+      "bbox": [
+        76,
+        244,
+        310,
+        30
+      ],
+      "geometry": "rect",
+      "text": "Core: tutoring",
+      "textPreview": "Core: tutoring",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 24,
+        "typeface": "Helvetica Neue",
+        "color": "#11243E",
+        "bold": true,
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "wrap": "square",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Core: tutoring"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Core: tutoring",
+          "lineSpacingPercent": 100000,
+          "resolvedTextStyle": {
+            "fontSize": 24,
+            "typeface": "Helvetica Neue",
+            "color": "#11243E",
+            "bold": true,
+            "alignment": "left",
+            "lineSpacing": 1
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Core: tutoring",
+              "fontSize": 24,
+              "typeface": "Helvetica Neue",
+              "color": "#11243E",
+              "bold": true,
+              "alignment": "left",
+              "lineSpacing": 1
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 7,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/a5kr2l4n",
+      "id": "7",
+      "name": "Core: tutoring-body",
+      "bbox": [
+        76,
+        288,
+        310,
+        256
+      ],
+      "geometry": "rect",
+      "text": "Commission on completed tutoring bookings. The current platform setting defaults to 25%, with tutors setting their hourly rates.",
+      "textPreview": "Commission on completed tutoring bookings. The current platform setting defaults to 25%, with tutors setting their hourly rates.",
+      "resolvedFontSize": 18,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 18,
+        "typeface": "Helvetica Neue",
+        "color": "#182233",
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "wrap": "square",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 4,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Commission on completed tutoring"
+          },
+          {
+            "index": 2,
+            "text": "bookings. The current platform setting"
+          },
+          {
+            "index": 3,
+            "text": "defaults to 25%, with tutors setting"
+          },
+          {
+            "index": 4,
+            "text": "their hourly rates."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Commission on completed tutoring bookings. The current platform setting defaults to 25%, with tutors setting their hourly rates.",
+          "lineSpacingPercent": 112000,
+          "resolvedTextStyle": {
+            "fontSize": 18,
+            "typeface": "Helvetica Neue",
+            "color": "#182233",
+            "alignment": "left",
+            "lineSpacing": 1.12
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Commission on completed tutoring bookings. The current platform setting defaults to 25%, with tutors setting their hourly rates.",
+              "fontSize": 18,
+              "typeface": "Helvetica Neue",
+              "color": "#182233",
+              "alignment": "left",
+              "lineSpacing": 1.12
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 8,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/h4fa9k3i",
+      "id": "8",
+      "name": "Adjacent: FocusDojo-panel",
+      "bbox": [
+        465,
+        226,
+        350,
+        334
+      ],
+      "geometry": "rect",
+      "fillColor": "#EAFBFB",
+      "lineColor": "#C8D3E2",
+      "lineWidth": 1
+    },
+    {
+      "order": 9,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/g369gf2x",
+      "id": "9",
+      "name": "Adjacent: FocusDojo-label",
+      "bbox": [
+        485,
+        244,
+        310,
+        30
+      ],
+      "geometry": "rect",
+      "text": "Adjacent: FocusDojo",
+      "textPreview": "Adjacent: FocusDojo",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 24,
+        "typeface": "Helvetica Neue",
+        "color": "#11243E",
+        "bold": true,
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "wrap": "square",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Adjacent: FocusDojo"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Adjacent: FocusDojo",
+          "lineSpacingPercent": 100000,
+          "resolvedTextStyle": {
+            "fontSize": 24,
+            "typeface": "Helvetica Neue",
+            "color": "#11243E",
+            "bold": true,
+            "alignment": "left",
+            "lineSpacing": 1
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Adjacent: FocusDojo",
+              "fontSize": 24,
+              "typeface": "Helvetica Neue",
+              "color": "#11243E",
+              "bold": true,
+              "alignment": "left",
+              "lineSpacing": 1
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 10,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/650vuton",
+      "id": "10",
+      "name": "Adjacent: FocusDojo-body",
+      "bbox": [
+        485,
+        288,
+        310,
+        256
+      ],
+      "geometry": "rect",
+      "text": "Free and included access support acquisition and retention. FocusDojo Pro is listed at €4.99/month or €39/year.",
+      "textPreview": "Free and included access support acquisition and retention. FocusDojo Pro is listed at €4.99/month or €39/year.",
+      "resolvedFontSize": 18,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 18,
+        "typeface": "Helvetica Neue",
+        "color": "#182233",
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "wrap": "square",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 4,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Free and included access support"
+          },
+          {
+            "index": 2,
+            "text": "acquisition and retention. FocusDojo"
+          },
+          {
+            "index": 3,
+            "text": "Pro is listed at €4.99/month or"
+          },
+          {
+            "index": 4,
+            "text": "€39/year."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Free and included access support acquisition and retention. FocusDojo Pro is listed at €4.99/month or €39/year.",
+          "lineSpacingPercent": 112000,
+          "resolvedTextStyle": {
+            "fontSize": 18,
+            "typeface": "Helvetica Neue",
+            "color": "#182233",
+            "alignment": "left",
+            "lineSpacing": 1.12
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Free and included access support acquisition and retention. FocusDojo Pro is listed at €4.99/month or €39/year.",
+              "fontSize": 18,
+              "typeface": "Helvetica Neue",
+              "color": "#182233",
+              "alignment": "left",
+              "lineSpacing": 1.12
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 11,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/769w3ep8",
+      "id": "11",
+      "name": "Future: partnerships-panel",
+      "bbox": [
+        874,
+        226,
+        330,
+        334
+      ],
+      "geometry": "rect",
+      "fillColor": "#F3F5F8",
+      "lineColor": "#C8D3E2",
+      "lineWidth": 1
+    },
+    {
+      "order": 12,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/s7idwj6t",
+      "id": "12",
+      "name": "Future: partnerships-label",
+      "bbox": [
+        894,
+        244,
+        290,
+        30
+      ],
+      "geometry": "rect",
+      "text": "Future: partnerships",
+      "textPreview": "Future: partnerships",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 24,
+        "typeface": "Helvetica Neue",
+        "color": "#11243E",
+        "bold": true,
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "wrap": "square",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Future: partnerships"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Future: partnerships",
+          "lineSpacingPercent": 100000,
+          "resolvedTextStyle": {
+            "fontSize": 24,
+            "typeface": "Helvetica Neue",
+            "color": "#11243E",
+            "bold": true,
+            "alignment": "left",
+            "lineSpacing": 1
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Future: partnerships",
+              "fontSize": 24,
+              "typeface": "Helvetica Neue",
+              "color": "#11243E",
+              "bold": true,
+              "alignment": "left",
+              "lineSpacing": 1
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 13,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/tsbe5o7e",
+      "id": "13",
+      "name": "Future: partnerships-body",
+      "bbox": [
+        894,
+        288,
+        290,
+        256
+      ],
+      "geometry": "rect",
+      "text": "Potential school, university, or regional programme pilots can package tutoring, structured practice, and measurable support.",
+      "textPreview": "Potential school, university, or regional programme pilots can package tutoring, structured practice, and measurable support.",
+      "resolvedFontSize": 18,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 18,
+        "typeface": "Helvetica Neue",
+        "color": "#182233",
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "wrap": "square",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 4,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Potential school, university, or"
+          },
+          {
+            "index": 2,
+            "text": "regional programme pilots can"
+          },
+          {
+            "index": 3,
+            "text": "package tutoring, structured"
+          },
+          {
+            "index": 4,
+            "text": "practice, and measurable support."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Potential school, university, or regional programme pilots can package tutoring, structured practice, and measurable support.",
+          "lineSpacingPercent": 112000,
+          "resolvedTextStyle": {
+            "fontSize": 18,
+            "typeface": "Helvetica Neue",
+            "color": "#182233",
+            "alignment": "left",
+            "lineSpacing": 1.12
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Potential school, university, or regional programme pilots can package tutoring, structured practice, and measurable support.",
+              "fontSize": 18,
+              "typeface": "Helvetica Neue",
+              "color": "#182233",
+              "alignment": "left",
+              "lineSpacing": 1.12
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 14,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/y10vq9or",
+      "id": "14",
+      "name": "business-principle",
+      "bbox": [
+        84,
+        592,
+        1092,
+        34
+      ],
+      "geometry": "rect",
+      "text": "Commercial principle: keep the trusted tutor relationship central and layer recurring software revenue around it.",
+      "textPreview": "Commercial principle: keep the trusted tutor relationship central and layer recurring software revenue around it.",
+      "resolvedFontSize": 20,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 20,
+        "typeface": "Helvetica Neue",
+        "color": "#11243E",
+        "bold": true,
+        "alignment": "center",
+        "verticalAlignment": "top",
+        "wrap": "square",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Commercial principle: keep the trusted tutor relationship central and layer recurring software revenue around it."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Commercial principle: keep the trusted tutor relationship central and layer recurring software revenue around it.",
+          "lineSpacingPercent": 100000,
+          "resolvedTextStyle": {
+            "fontSize": 20,
+            "typeface": "Helvetica Neue",
+            "color": "#11243E",
+            "bold": true,
+            "alignment": "center",
+            "lineSpacing": 1
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Commercial principle: keep the trusted tutor relationship central and layer recurring software revenue around it.",
+              "fontSize": 20,
+              "typeface": "Helvetica Neue",
+              "color": "#11243E",
+              "bold": true,
+              "alignment": "center",
+              "lineSpacing": 1
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    }
+  ],
+  "composeRuns": []
+}

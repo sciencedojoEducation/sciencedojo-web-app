@@ -373,10 +373,10 @@ export default async function MentorProfilePage({ params, searchParams }: Mentor
             </section>
 
             <section className="rounded-[2rem] border border-primary/10 bg-white p-6 shadow-lg shadow-primary/5">
-              <div className="flex items-baseline gap-1">
-                <span className="text-4xl font-black text-secondary">£{tutor.hourly_rate}</span>
-                <span className="text-sm font-black uppercase tracking-[0.12em] text-secondary/35">/hr</span>
-              </div>
+              <p className="text-[10px] font-black uppercase tracking-[0.16em] text-primary/55">Tutoring options</p>
+              <p className="mt-2 text-lg font-black leading-7 text-secondary">
+                Tutoring options are discussed after your free assessment.
+              </p>
               <div className="mt-5 grid gap-2">
                 {reassurance.map((item) => (
                   <div key={item} className="flex items-center gap-2 text-sm font-bold text-secondary/60">

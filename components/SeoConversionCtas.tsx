@@ -5,9 +5,8 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { getPublicSource, trackEvent } from "@/lib/analytics";
 
-export default function SeoConversionCtas() {
+export default function SeoConversionCtas({ enabled }: { enabled: boolean }) {
   const pathname = usePathname();
-  const [isMounted, setIsMounted] = useState(false);
   // Assume hero is visible on first render to avoid a flash on the homepage.
   const [heroVisible, setHeroVisible] = useState(true);
   const hiddenPrefixes = [
@@ -25,15 +24,11 @@ export default function SeoConversionCtas() {
   ];
 
   useEffect(() => {
-    setIsMounted(true);
-  }, []);
-
-  useEffect(() => {
     const hero = document.getElementById("hero");
     if (!hero) {
       // No hero on this page — show CTAs immediately.
-      setHeroVisible(false);
-      return;
+      const frame = window.requestAnimationFrame(() => setHeroVisible(false));
+      return () => window.cancelAnimationFrame(frame);
     }
     // Fire as soon as the last pixel of the hero leaves the viewport (threshold 0).
     const observer = new IntersectionObserver(
@@ -44,18 +39,13 @@ export default function SeoConversionCtas() {
     return () => observer.disconnect();
   }, [pathname]);
 
-  if (!isMounted || hiddenPrefixes.some((prefix) => pathname.startsWith(prefix))) {
+  if (!enabled || hiddenPrefixes.some((prefix) => pathname.startsWith(prefix))) {
     return null;
   }
 
-  const whatsappNumber = (process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "+94773850821").replace(/[^\d]/g, "");
-  const whatsappHref = whatsappNumber
-    ? `https://wa.me/${whatsappNumber}?text=${encodeURIComponent("Hi ScienceDojo, I'd like to book a free assessment.")}`
-    : "/contact";
-
   return (
     <div
-      className={`fixed bottom-5 left-5 right-5 z-40 flex items-center justify-center gap-3 transition-all duration-300 sm:left-auto sm:right-7 sm:bottom-7 sm:flex-col sm:items-end${
+      className={`fixed bottom-4 left-4 right-4 z-40 flex items-center justify-center transition-all duration-300 xl:hidden${
         heroVisible ? " max-sm:opacity-0 max-sm:pointer-events-none max-sm:translate-y-2" : ""
       }`}
     >
@@ -67,16 +57,9 @@ export default function SeoConversionCtas() {
             page_slug: getPublicSource(pathname),
           });
         }}
-        className="rounded-full bg-primary/95 px-5 py-3 text-xs font-black uppercase tracking-[0.14em] text-white shadow-lg shadow-primary/15 transition-all hover:-translate-y-0.5 hover:bg-primary"
+        className="flex min-h-14 w-full items-center justify-center rounded-full bg-primary px-5 py-3 text-center text-sm font-black text-white shadow-[0_18px_48px_rgba(0,102,255,0.3)] transition-all hover:-translate-y-0.5 hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
       >
-        Book Free Assessment
-      </Link>
-      <Link
-        href={whatsappHref}
-        target={whatsappHref.startsWith("http") ? "_blank" : undefined}
-        className="max-[480px]:hidden rounded-full bg-emerald-500/95 px-5 py-3 text-xs font-black uppercase tracking-[0.14em] text-white shadow-lg shadow-emerald-500/15 transition-all hover:-translate-y-0.5 hover:bg-emerald-500"
-      >
-        WhatsApp
+        Book a Free Learning Assessment
       </Link>
     </div>
   );
