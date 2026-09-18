@@ -15,6 +15,14 @@ export interface Message {
   created_at: string;
 }
 
+export type MessagingUserResult = {
+  id: string;
+  name: string;
+  email: string | null;
+  role: string;
+  avatar_url: string | null;
+};
+
 export interface Conversation {
   id: string;
   participant_1_id: string;
@@ -144,6 +152,8 @@ export async function getConversations() {
       unread_count: unreadCount
     };
   }).filter((conv) => {
+    // Admins see every conversation they are part of, with any user.
+    if (currentProfile?.role === "admin") return true;
     if (!isInternalUser && currentProfile?.role !== "internal") return true;
 
     const otherId = conv.other_participant?.id;
@@ -176,6 +186,12 @@ export async function getUnreadMessageCount() {
 
   const adminClient = createAdminClient();
   const isInternalUser = Boolean(await getActiveInternalMemberByUserId(adminClient, user.id));
+  const { data: currentProfile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .maybeSingle();
+  const isAdmin = currentProfile?.role === "admin";
 
   // First, get conversations where the user is an actual participant
   const { data: conversations } = await supabase
@@ -187,7 +203,7 @@ export async function getUnreadMessageCount() {
 
   let conversationIds = conversations.map(c => c.id);
 
-  if (isInternalUser) {
+  if (isInternalUser && !isAdmin) {
     const { data: internalMembers } = await adminClient
       .from("internal_team_members")
       .select("user_id")

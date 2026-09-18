@@ -4,6 +4,7 @@ import { createClient } from "@/utils/supabase/server";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { revalidatePath } from "next/cache";
 import { getActiveInternalMemberByUserId } from "@/lib/internal-auth";
+import type { MessagingUserResult } from "@/lib/messaging-queries";
 
 const SAFETY_KEYWORDS = [
   "whatsapp", "phone", "paypal", "email", "contact", "pay me", "transfer",
@@ -77,6 +78,64 @@ async function canInternalUseConversation(
   return isInternalMessagingParticipant(supabase, otherParticipantId);
 }
 
+// Admins may search and message any user on the platform, across every role.
+export async function searchMessagingUsers(
+  query: string
+): Promise<{ users?: MessagingUserResult[]; error?: string }> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) return { error: "Unauthorized" };
+  if (!(await isAdminProfile(supabase, user.id))) {
+    return { error: "Only admins can search all users." };
+  }
+
+  const term = query.trim();
+  if (term.length < 2) return { users: [] };
+
+  const adminClient = createAdminClient();
+  // Strip characters that would break the PostgREST or() filter string.
+  const safe = term.replace(/[%,()]/g, " ").trim();
+  const { data: profiles, error } = await adminClient
+    .from("profiles")
+    .select("id, full_name, email, role, avatar_url")
+    .or(`full_name.ilike.%${safe}%,email.ilike.%${safe}%`)
+    .neq("id", user.id)
+    .limit(20);
+
+  if (error) {
+    console.error("User search error:", error.message);
+    return { error: error.message };
+  }
+
+  // Label internal teammates with their internal role/title for clarity.
+  const ids = (profiles || []).map((profile) => profile.id);
+  const internalMap = new Map<string, { role: string | null; title: string | null }>();
+  if (ids.length > 0) {
+    const { data: members } = await adminClient
+      .from("internal_team_members")
+      .select("user_id, role, title")
+      .in("user_id", ids)
+      .eq("status", "active");
+    for (const member of members || []) {
+      if (member.user_id) internalMap.set(member.user_id, { role: member.role, title: member.title });
+    }
+  }
+
+  const users: MessagingUserResult[] = (profiles || []).map((profile) => {
+    const internal = internalMap.get(profile.id);
+    return {
+      id: profile.id,
+      name: profile.full_name || profile.email || "ScienceDojo user",
+      email: profile.email ?? null,
+      role: internal ? internal.title || internal.role || "internal" : profile.role || "user",
+      avatar_url: profile.avatar_url ?? null,
+    };
+  });
+
+  return { users };
+}
+
 export async function sendMessage(conversationId: string, content: string) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -84,8 +143,9 @@ export async function sendMessage(conversationId: string, content: string) {
   if (!user) return { error: "Unauthorized" };
 
   const adminClient = createAdminClient();
+  const isAdmin = await isAdminProfile(supabase, user.id);
   const isInternal = Boolean(await getActiveInternalMemberByUserId(adminClient, user.id));
-  if (isInternal && !(await canInternalUseConversation(adminClient as any, conversationId, user.id))) {
+  if (isInternal && !isAdmin && !(await canInternalUseConversation(adminClient as any, conversationId, user.id))) {
     return { error: "Internal team members can only message admins and active internal team members." };
   }
 
@@ -137,8 +197,9 @@ export async function createConversation(otherParticipantId: string, bookingId?:
   if (!user) return { error: "Unauthorized" };
 
   const adminClient = createAdminClient();
+  const isAdmin = await isAdminProfile(supabase, user.id);
   const isInternal = Boolean(await getActiveInternalMemberByUserId(adminClient, user.id));
-  if (isInternal && !(await isInternalMessagingParticipant(adminClient as any, otherParticipantId))) {
+  if (isInternal && !isAdmin && !(await isInternalMessagingParticipant(adminClient as any, otherParticipantId))) {
     return { error: "Internal team members can only message admins and active internal team members." };
   }
 
@@ -219,8 +280,9 @@ export async function markAsRead(conversationId: string) {
   if (!user) return { error: "Unauthorized" };
 
   const adminClient = createAdminClient();
+  const isAdmin = await isAdminProfile(supabase, user.id);
   const isInternal = Boolean(await getActiveInternalMemberByUserId(adminClient, user.id));
-  if (isInternal && !(await canInternalUseConversation(adminClient as any, conversationId, user.id))) {
+  if (isInternal && !isAdmin && !(await canInternalUseConversation(adminClient as any, conversationId, user.id))) {
     return { error: "Internal team members can only read admin and internal team conversations." };
   }
 

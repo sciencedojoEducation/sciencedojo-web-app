@@ -252,9 +252,11 @@ DROP POLICY IF EXISTS "Moderators manage exam updates" ON public.community_exam_
 CREATE POLICY "Moderators manage exam updates" ON public.community_exam_updates FOR ALL USING (public.is_community_moderator()) WITH CHECK (public.is_community_moderator());
 
 -- The public API exposes only deliberate community identity fields, never the
--- private auth-user link or moderation flags.
+-- moderation flags (is_trusted, is_restricted). user_id is included because a
+-- foreign-key embed (author:community_profiles) must read the join column, and
+-- an opaque auth UUID is not itself sensitive.
 REVOKE SELECT ON public.community_profiles FROM anon, authenticated;
-GRANT SELECT (pseudonym, badge, is_verified, reputation, contribution_count, created_at)
+GRANT SELECT (user_id, pseudonym, badge, is_verified, reputation, contribution_count, created_at)
   ON public.community_profiles TO anon, authenticated;
 
 CREATE OR REPLACE FUNCTION public.community_refresh_reply_count()

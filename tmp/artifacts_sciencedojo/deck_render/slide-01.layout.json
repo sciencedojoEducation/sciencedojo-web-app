@@ -1,0 +1,419 @@
+{
+  "schema": "openai.presentation.layout/v4",
+  "unit": "px",
+  "slide": {
+    "aid": "sl/gy9eo2",
+    "id": "gy9eo2",
+    "slide": 1,
+    "layoutId": "e2a9cc33-4ce2-4d8c-b586-a40d28677b6e",
+    "layoutName": "Title Slide",
+    "layoutType": "title",
+    "masterLayoutId": "fa29f615-a3ac-4378-a841-8902127f3a70",
+    "masterLayoutName": "Master",
+    "backgroundColor": "#FFFFFF",
+    "frame": {
+      "left": 0,
+      "top": 0,
+      "width": 1280,
+      "height": 720
+    }
+  },
+  "theme": {
+    "colorSchemeName": "ChatGPT",
+    "colors": {
+      "accent1": "#156082",
+      "accent2": "#E97132",
+      "accent3": "#196B24",
+      "accent4": "#0F9ED5",
+      "accent5": "#A02B93",
+      "accent6": "#4EA72E",
+      "bg1": "#FFFFFF",
+      "bg2": "#000000",
+      "tx1": "#1F1F1F",
+      "tx2": "#FFFFFF",
+      "dk1": "#000000",
+      "lt1": "#FFFFFF",
+      "dk2": "#0E2841",
+      "lt2": "#E8E8E8",
+      "hlink": "#467886",
+      "folHlink": "#96607D"
+    },
+    "typefaces": [
+      "Helvetica Neue"
+    ]
+  },
+  "inheritedLayers": [
+    {
+      "scope": "layout",
+      "id": "e2a9cc33-4ce2-4d8c-b586-a40d28677b6e",
+      "name": "Title Slide",
+      "type": "title",
+      "parentLayoutId": "fa29f615-a3ac-4378-a841-8902127f3a70",
+      "elements": []
+    },
+    {
+      "scope": "master",
+      "id": "fa29f615-a3ac-4378-a841-8902127f3a70",
+      "name": "Master",
+      "type": "master",
+      "elements": []
+    }
+  ],
+  "elements": [
+    {
+      "order": 1,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/3upgr6xg",
+      "id": "1",
+      "name": "cover-eyebrow",
+      "bbox": [
+        56,
+        48,
+        360,
+        26
+      ],
+      "geometry": "rect",
+      "text": "SCIENCEDOJO",
+      "textPreview": "SCIENCEDOJO",
+      "resolvedFontSize": 14,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 14,
+        "typeface": "Helvetica Neue",
+        "color": "#3973E6",
+        "bold": true,
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "wrap": "square",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "SCIENCEDOJO"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "SCIENCEDOJO",
+          "lineSpacingPercent": 100000,
+          "resolvedTextStyle": {
+            "fontSize": 14,
+            "typeface": "Helvetica Neue",
+            "color": "#3973E6",
+            "bold": true,
+            "alignment": "left",
+            "lineSpacing": 1
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "SCIENCEDOJO",
+              "fontSize": 14,
+              "typeface": "Helvetica Neue",
+              "color": "#3973E6",
+              "bold": true,
+              "alignment": "left",
+              "lineSpacing": 1
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 2,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/4vix0by1",
+      "id": "2",
+      "name": "cover-title",
+      "bbox": [
+        56,
+        148,
+        545,
+        238
+      ],
+      "geometry": "rect",
+      "text": "Human-first STEM tutoring that continues between lessons",
+      "textPreview": "Human-first STEM tutoring that continues between lessons",
+      "resolvedFontSize": 53.89,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 54,
+        "typeface": "Helvetica Neue",
+        "color": "#11243E",
+        "bold": true,
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "wrap": "square",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 4,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Human-first STEM"
+          },
+          {
+            "index": 2,
+            "text": "tutoring that"
+          },
+          {
+            "index": 3,
+            "text": "continues between"
+          },
+          {
+            "index": 4,
+            "text": "lessons"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Human-first STEM tutoring that continues between lessons",
+          "lineSpacingPercent": 92000,
+          "resolvedTextStyle": {
+            "fontSize": 54,
+            "typeface": "Helvetica Neue",
+            "color": "#11243E",
+            "bold": true,
+            "alignment": "left",
+            "lineSpacing": 0.92
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Human-first STEM tutoring that continues between lessons",
+              "fontSize": 54,
+              "typeface": "Helvetica Neue",
+              "color": "#11243E",
+              "bold": true,
+              "alignment": "left",
+              "lineSpacing": 0.92
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 3,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/5wrytgfm",
+      "id": "3",
+      "name": "cover-subtitle",
+      "bbox": [
+        56,
+        420,
+        510,
+        94
+      ],
+      "geometry": "rect",
+      "text": "A structured learning system for students, parents, tutors, and education partners.",
+      "textPreview": "A structured learning system for students, parents, tutors, and education partners.",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 24,
+        "typeface": "Helvetica Neue",
+        "color": "#637086",
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "wrap": "square",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 2,
+        "lines": [
+          {
+            "index": 1,
+            "text": "A structured learning system for students,"
+          },
+          {
+            "index": 2,
+            "text": "parents, tutors, and education partners."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "A structured learning system for students, parents, tutors, and education partners.",
+          "lineSpacingPercent": 112000,
+          "resolvedTextStyle": {
+            "fontSize": 24,
+            "typeface": "Helvetica Neue",
+            "color": "#637086",
+            "alignment": "left",
+            "lineSpacing": 1.12
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "A structured learning system for students, parents, tutors, and education partners.",
+              "fontSize": 24,
+              "typeface": "Helvetica Neue",
+              "color": "#637086",
+              "alignment": "left",
+              "lineSpacing": 1.12
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 4,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/u5gfu1gz",
+      "id": "4",
+      "name": "accent-rule",
+      "bbox": [
+        56,
+        552,
+        110,
+        6
+      ],
+      "geometry": "rect",
+      "fillColor": "#2FC4C9",
+      "lineWidth": 0
+    },
+    {
+      "order": 5,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/v6pgnmxk",
+      "id": "5",
+      "name": "cover-date",
+      "bbox": [
+        56,
+        582,
+        440,
+        24
+      ],
+      "geometry": "rect",
+      "text": "General pitch deck  |  September 2026",
+      "textPreview": "General pitch deck  |  September 2026",
+      "resolvedFontSize": 16,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 16,
+        "typeface": "Helvetica Neue",
+        "color": "#637086",
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "wrap": "square",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "General pitch deck  |  September 2026"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "General pitch deck  |  September 2026",
+          "lineSpacingPercent": 100000,
+          "resolvedTextStyle": {
+            "fontSize": 16,
+            "typeface": "Helvetica Neue",
+            "color": "#637086",
+            "alignment": "left",
+            "lineSpacing": 1
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "General pitch deck  |  September 2026",
+              "fontSize": 16,
+              "typeface": "Helvetica Neue",
+              "color": "#637086",
+              "alignment": "left",
+              "lineSpacing": 1
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 6,
+      "kind": "image",
+      "scope": "slide",
+      "aid": "im/1kzqxoj2",
+      "id": "6",
+      "bbox": [
+        650,
+        42,
+        574,
+        596
+      ],
+      "geometry": "roundRect",
+      "alt": "Stylised STEM formulas and scientific symbols on a dark background",
+      "contentType": "image/jpeg",
+      "imageFit": "cover",
+      "imageMask": {
+        "geometry": "roundRect",
+        "adjustmentList": [
+          {
+            "name": "adj",
+            "formula": "val 2439"
+          }
+        ]
+      },
+      "asset": {
+        "assetId": "7fd579f9-7680-4c2a-9848-f85c4a6fa80d",
+        "contentType": "image/jpeg",
+        "byteLength": 641354
+      }
+    }
+  ],
+  "composeRuns": []
+}

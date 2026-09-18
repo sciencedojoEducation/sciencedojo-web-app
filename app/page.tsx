@@ -358,15 +358,12 @@ export default async function Home({
                   </BookAssessmentLink>
                 )}
                 {(flags.practice_dojo_enabled || flags.focus_dojo_enabled) && (
-                  <div className="space-y-3">
-                    <p className="text-xs font-black uppercase tracking-[0.18em] text-white/55">
-                      Explore our learning tools
-                    </p>
-                    <div className="flex flex-wrap items-center gap-3">
+                  <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
+                    <span className="text-xs font-black uppercase tracking-[0.18em] text-white/55">Explore:</span>
                       {flags.practice_dojo_enabled && (
                         <Link
                           href="/ai-practice-studio"
-                          className="inline-flex min-h-[58px] items-center justify-center rounded-2xl border border-white/20 bg-white/5 px-7 py-4 text-base font-black text-white backdrop-blur-md transition-all hover:-translate-y-0.5 hover:bg-white/10"
+                          className="text-sm font-black text-white underline decoration-white/30 underline-offset-4 transition-colors hover:decoration-white"
                         >
                           Try PracticeDojo
                         </Link>
@@ -374,12 +371,11 @@ export default async function Home({
                       {flags.focus_dojo_enabled && (
                         <Link
                           href="/focus-dojo"
-                          className="inline-flex min-h-[58px] items-center justify-center rounded-2xl border border-white/20 bg-white/5 px-7 py-4 text-base font-black text-white backdrop-blur-md transition-all hover:-translate-y-0.5 hover:bg-white/10"
+                          className="text-sm font-black text-white underline decoration-white/30 underline-offset-4 transition-colors hover:decoration-white"
                         >
                           Try FocusDojo
                         </Link>
                       )}
-                    </div>
                   </div>
                 )}
               </div>
@@ -438,14 +434,12 @@ export default async function Home({
                   </BookAssessmentLink>
                 )}
                 {(flags.practice_dojo_enabled || flags.focus_dojo_enabled) && (
-                  <div className="grid gap-3">
-                    <p className="text-center text-[10px] font-black uppercase tracking-[0.18em] text-white/55">
-                      Explore our learning tools
-                    </p>
+                  <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2">
+                    <span className="text-[10px] font-black uppercase tracking-[0.18em] text-white/55">Explore:</span>
                     {flags.practice_dojo_enabled && (
                       <Link
                         href="/ai-practice-studio"
-                        className="w-full rounded-2xl border border-white/20 bg-white/5 px-6 py-3.5 text-center text-sm font-black text-white backdrop-blur-md transition-all hover:bg-white/10"
+                        className="text-sm font-black text-white underline decoration-white/30 underline-offset-4"
                       >
                         Try PracticeDojo
                       </Link>
@@ -453,7 +447,7 @@ export default async function Home({
                     {flags.focus_dojo_enabled && (
                       <Link
                         href="/focus-dojo"
-                        className="w-full rounded-2xl border border-white/20 bg-white/5 px-6 py-3.5 text-center text-sm font-black text-white backdrop-blur-md transition-all hover:bg-white/10"
+                        className="text-sm font-black text-white underline decoration-white/30 underline-offset-4"
                       >
                         Try FocusDojo
                       </Link>
@@ -546,6 +540,23 @@ export default async function Home({
         </div>
       </section>
 
+      {flags.free_assessment_enabled && (
+        <section aria-label="Free learning assessment" className="w-full border-y border-primary/10 bg-white px-4 py-10 md:px-10 md:py-14">
+          <div className="mx-auto flex max-w-[1120px] flex-col items-center justify-between gap-5 text-center md:flex-row md:text-left">
+            <div>
+              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">Your child&apos;s next step</p>
+              <h2 className="mt-2 text-2xl font-black text-secondary md:text-3xl">Turn the method into a clear learning plan.</h2>
+            </div>
+            <BookAssessmentLink
+              source="homepage_method"
+              className="inline-flex min-h-14 shrink-0 items-center justify-center rounded-full bg-primary px-7 py-4 text-center text-sm font-black text-white shadow-lg shadow-primary/20 transition-all hover:-translate-y-0.5 hover:bg-primary-hover"
+            >
+              Book a Free Learning Assessment
+            </BookAssessmentLink>
+          </div>
+        </section>
+      )}
+
       <section aria-label="The ScienceDojo Learning Journey" className="relative w-full overflow-hidden bg-white px-4 py-16 md:px-8 md:py-28 xl:px-12">
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_18%_20%,rgba(0,102,255,0.06),transparent_30%),radial-gradient(circle_at_82%_78%,rgba(0,210,255,0.07),transparent_32%),linear-gradient(180deg,#ffffff_0%,#f7fbff_100%)]" />
         <div className="relative mx-auto max-w-[1560px]">
@@ -612,22 +623,22 @@ export default async function Home({
               ))}
             </div>
             <div className="mt-6 flex flex-col gap-3 sm:flex-row md:mt-7">
+              {flags.free_assessment_enabled && (
+                <BookAssessmentLink
+                  source="homepage_practice_dojo"
+                  className="inline-flex justify-center whitespace-nowrap rounded-2xl bg-primary px-7 py-4 text-sm font-black text-white shadow-lg shadow-primary/15 transition-colors hover:bg-primary-hover"
+                >
+                  Book a Free Learning Assessment
+                </BookAssessmentLink>
+              )}
               <AiPracticeStudioCtaLink
                 href="/ai-practice-studio"
                 cta="try_practice_dojo"
                 source="homepage_practice_dojo"
-                className="inline-flex justify-center rounded-2xl bg-primary px-7 py-4 text-sm font-black uppercase tracking-[0.14em] text-white transition-colors hover:bg-primary-hover"
+                className="inline-flex justify-center rounded-2xl border border-primary/20 bg-white px-7 py-4 text-sm font-black text-primary transition-colors hover:border-primary/40 hover:bg-primary/5"
               >
                 Try PracticeDojo
               </AiPracticeStudioCtaLink>
-              {flags.free_assessment_enabled && (
-                <BookAssessmentLink
-                  source="homepage_practice_dojo"
-                  className="inline-flex justify-center whitespace-nowrap rounded-2xl border border-secondary/10 bg-white px-7 py-4 text-sm font-black uppercase tracking-[0.14em] text-secondary transition-colors hover:border-primary/30 hover:text-primary"
-                >
-                  Book Free Assessment
-                </BookAssessmentLink>
-              )}
             </div>
           </div>
           <div className="relative z-10 overflow-hidden rounded-[1.75rem] border border-secondary/10 bg-[#f8fbff] p-3 shadow-xl shadow-secondary/10 transition-all group-hover:border-primary/20 md:rounded-[2.25rem] md:p-5 lg:p-6">

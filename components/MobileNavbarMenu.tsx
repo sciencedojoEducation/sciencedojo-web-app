@@ -107,7 +107,7 @@ export default function MobileNavbarMenu({
   return (
     <details
       ref={detailsRef}
-      className="group pointer-events-auto md:hidden"
+      className="group pointer-events-auto xl:hidden"
       onToggle={(event) => setIsOpen(event.currentTarget.open)}
     >
       <summary
@@ -116,7 +116,7 @@ export default function MobileNavbarMenu({
         aria-controls={menuId}
         aria-expanded={isOpen}
         style={{ WebkitTapHighlightColor: "transparent" }}
-        className="pointer-events-auto relative z-[100] inline-flex h-12 w-12 shrink-0 cursor-pointer touch-manipulation list-none items-center justify-center rounded-2xl border border-secondary/10 bg-white text-secondary shadow-sm transition-colors hover:bg-primary/5 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 md:hidden [&::-webkit-details-marker]:hidden"
+        className="pointer-events-auto relative z-[100] inline-flex h-12 w-12 shrink-0 cursor-pointer touch-manipulation list-none items-center justify-center rounded-2xl border border-secondary/10 bg-white text-secondary shadow-sm transition-colors hover:bg-primary/5 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 xl:hidden [&::-webkit-details-marker]:hidden"
       >
         <span className="sr-only">{isOpen ? "Close menu" : "Open menu"}</span>
         <span className="relative flex h-3.5 w-5 flex-col justify-between" aria-hidden="true">
@@ -174,8 +174,12 @@ export default function MobileNavbarMenu({
               </Link>
             )}
             {showFreeAssessment && (
-              <BookAssessmentLink source="navbar_mobile" onClick={closeMenu} className={navLinkClass}>
-                Request Free Assessment
+              <BookAssessmentLink
+                source="navbar_mobile"
+                onClick={closeMenu}
+                className="rounded-2xl bg-primary px-4 py-3 text-center text-sm font-black text-white shadow-lg shadow-primary/15 transition-colors hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+              >
+                Book a Free Learning Assessment
               </BookAssessmentLink>
             )}
             {isLoggedIn && (
@@ -203,7 +207,7 @@ export default function MobileNavbarMenu({
                 <Link
                   href="/signup"
                   onClick={closeMenu}
-                  className="rounded-2xl bg-accent px-4 py-3 text-center text-sm font-bold text-white shadow-lg shadow-accent/15 transition-colors hover:bg-accent-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2"
+                  className={utilityLinkClass}
                 >
                   Sign up
                 </Link>

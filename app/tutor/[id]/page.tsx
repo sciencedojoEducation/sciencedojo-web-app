@@ -371,9 +371,11 @@ async function TutorProfileServer({ id }: { id: string }) {
               <div className="absolute -top-12 -right-12 h-24 w-24 bg-primary/20 rounded-full blur-3xl"></div>
               
               <div className="relative z-10">
-                <div className="flex items-baseline gap-1 mb-8">
-                  <span className="text-5xl font-black">£{tutor.hourly_rate}</span>
-                  <span className="text-lg text-white/50 font-medium tracking-widest uppercase">/hr</span>
+                <div className="mb-8">
+                  <p className="text-xs font-black uppercase tracking-[0.16em] text-white/45">Tutoring options</p>
+                  <p className="mt-2 text-xl font-black leading-7 text-white">
+                    Tutoring options are discussed after your free assessment.
+                  </p>
                 </div>
 
                 <div className="space-y-4 mb-10">
@@ -436,10 +438,12 @@ async function TutorProfileServer({ id }: { id: string }) {
       <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 w-full max-w-md px-4 lg:hidden">
          <Link
             href={`/tutor/${tutor.id}/book`}
-            className="flex items-center justify-between w-full h-16 px-8 bg-primary text-white font-black rounded-2xl shadow-[0_20px_50px_rgba(255,107,107,0.3)] hover:scale-[1.02] active:scale-95 transition-all uppercase tracking-widest text-xs"
+            className="flex w-full items-center justify-between gap-4 rounded-2xl bg-primary px-6 py-4 text-white shadow-[0_20px_50px_rgba(255,107,107,0.3)] transition-all hover:scale-[1.02] active:scale-95"
          >
-            <span>Book Expert Session</span>
-            <span className="bg-white/20 px-3 py-1 rounded-lg">£{tutor.hourly_rate}</span>
+            <span className="shrink-0 text-xs font-black uppercase tracking-widest">Book Expert Session</span>
+            <span className="max-w-44 text-right text-[10px] font-bold leading-4 text-white/75">
+              Tutoring options are discussed after your free assessment.
+            </span>
          </Link>
       </div>
       )}

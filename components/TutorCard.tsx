@@ -159,11 +159,22 @@ export default function TutorCard({ tutor, currentUserRole, variant = "default" 
 
         <div className="mt-auto flex min-w-0 items-center justify-between gap-3 border-t border-secondary/5 pt-4">
           <div className="min-w-0">
-            <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.10em] text-secondary/35">Session</p>
-            <div className="flex flex-wrap items-baseline gap-1">
-              <span className="text-xl font-black text-secondary md:text-2xl">£{tutor.hourly_rate}</span>
-              <span className="text-xs text-secondary/40 font-bold ml-1 uppercase tracking-widest">/hr</span>
-            </div>
+            {isDashboard ? (
+              <>
+                <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.10em] text-secondary/35">Session</p>
+                <div className="flex flex-wrap items-baseline gap-1">
+                  <span className="text-xl font-black text-secondary md:text-2xl">£{tutor.hourly_rate}</span>
+                  <span className="ml-1 text-xs font-bold uppercase tracking-widest text-secondary/40">/hr</span>
+                </div>
+              </>
+            ) : (
+              <>
+                <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.10em] text-secondary/35">Tutoring options</p>
+                <p className="max-w-[15rem] text-sm font-bold leading-5 text-secondary/70">
+                  Discussed after your free assessment
+                </p>
+              </>
+            )}
           </div>
           <div className="min-w-0 text-right">
             <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.10em] text-secondary/35">Next step</p>
@@ -182,7 +193,11 @@ export default function TutorCard({ tutor, currentUserRole, variant = "default" 
             href={connectHref}
             isGuest={!currentUserRole}
             subjects={tutor.subjects}
-            className="w-full inline-flex justify-center items-center rounded-xl bg-primary px-4 py-3 text-sm font-black text-white hover:bg-primary-hover transition-all shadow-lg shadow-primary/20 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+            className={`w-full inline-flex justify-center items-center rounded-xl px-4 py-3 text-sm font-black transition-all active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${
+              isDashboard
+                ? "bg-primary text-white shadow-lg shadow-primary/20 hover:bg-primary-hover"
+                : "border border-primary/20 bg-white text-primary hover:border-primary/40 hover:bg-primary/5"
+            }`}
           >
             Meet this tutor
           </TutorConnectLink>

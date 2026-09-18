@@ -2,6 +2,7 @@ import { getConversations, getMessages } from "@/lib/messaging-queries";
 import ConversationList from "./ConversationList";
 import ChatWindow from "./ChatWindow";
 import StaffContactList, { type StaffContact } from "./StaffContactList";
+import UserSearch from "./UserSearch";
 import { createClient } from "@/utils/supabase/server";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { redirect } from "next/navigation";
@@ -82,8 +83,9 @@ export default async function MessagesPage({
     redirect(`/login/internal/denied?error=${encodeURIComponent("Your internal access is inactive or has not been linked yet.")}`);
   }
 
+  const isAdmin = profile?.role === "admin";
   const conversations = await getConversations();
-  const staffContacts = isInternal ? await getInternalStaffContacts(user.id) : [];
+  const staffContacts = isInternal && !isAdmin ? await getInternalStaffContacts(user.id) : [];
 
   const activeConversation = activeId
     ? conversations.find(c => c.id === activeId) 
@@ -94,7 +96,7 @@ export default async function MessagesPage({
   return (
     <div className="h-full min-h-0 overflow-hidden bg-slate-50 lg:grid lg:grid-cols-[360px_1fr]">
       <div className={`${activeConversation ? "hidden lg:flex" : "flex"} h-full min-h-0 flex-col lg:flex`}>
-        {isInternal && <StaffContactList contacts={staffContacts} />}
+        {isAdmin ? <UserSearch /> : isInternal ? <StaffContactList contacts={staffContacts} /> : null}
         <div className="min-h-0 flex-1">
           <ConversationList
             conversations={conversations}

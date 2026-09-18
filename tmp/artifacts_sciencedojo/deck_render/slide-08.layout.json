@@ -1,0 +1,543 @@
+{
+  "schema": "openai.presentation.layout/v4",
+  "unit": "px",
+  "slide": {
+    "aid": "sl/z39uyt",
+    "id": "z39uyt",
+    "slide": 8,
+    "layoutId": "e2a9cc33-4ce2-4d8c-b586-a40d28677b6e",
+    "layoutName": "Title Slide",
+    "layoutType": "title",
+    "masterLayoutId": "fa29f615-a3ac-4378-a841-8902127f3a70",
+    "masterLayoutName": "Master",
+    "backgroundColor": "#FFFFFF",
+    "frame": {
+      "left": 0,
+      "top": 0,
+      "width": 1280,
+      "height": 720
+    }
+  },
+  "theme": {
+    "colorSchemeName": "ChatGPT",
+    "colors": {
+      "accent1": "#156082",
+      "accent2": "#E97132",
+      "accent3": "#196B24",
+      "accent4": "#0F9ED5",
+      "accent5": "#A02B93",
+      "accent6": "#4EA72E",
+      "bg1": "#FFFFFF",
+      "bg2": "#000000",
+      "tx1": "#1F1F1F",
+      "tx2": "#FFFFFF",
+      "dk1": "#000000",
+      "lt1": "#FFFFFF",
+      "dk2": "#0E2841",
+      "lt2": "#E8E8E8",
+      "hlink": "#467886",
+      "folHlink": "#96607D"
+    },
+    "typefaces": [
+      "Helvetica Neue"
+    ]
+  },
+  "inheritedLayers": [
+    {
+      "scope": "layout",
+      "id": "e2a9cc33-4ce2-4d8c-b586-a40d28677b6e",
+      "name": "Title Slide",
+      "type": "title",
+      "parentLayoutId": "fa29f615-a3ac-4378-a841-8902127f3a70",
+      "elements": []
+    },
+    {
+      "scope": "master",
+      "id": "fa29f615-a3ac-4378-a841-8902127f3a70",
+      "name": "Master",
+      "type": "master",
+      "elements": []
+    }
+  ],
+  "elements": [
+    {
+      "order": 1,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/i9snytsv",
+      "id": "1",
+      "name": "eyebrow",
+      "bbox": [
+        56,
+        34,
+        500,
+        22
+      ],
+      "geometry": "rect",
+      "text": "SCIENCEDOJO",
+      "textPreview": "SCIENCEDOJO",
+      "resolvedFontSize": 13,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 13,
+        "typeface": "Helvetica Neue",
+        "color": "#3973E6",
+        "bold": true,
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "wrap": "square",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "SCIENCEDOJO"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "SCIENCEDOJO",
+          "lineSpacingPercent": 100000,
+          "resolvedTextStyle": {
+            "fontSize": 13,
+            "typeface": "Helvetica Neue",
+            "color": "#3973E6",
+            "bold": true,
+            "alignment": "left",
+            "lineSpacing": 1
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "SCIENCEDOJO",
+              "fontSize": 13,
+              "typeface": "Helvetica Neue",
+              "color": "#3973E6",
+              "bold": true,
+              "alignment": "left",
+              "lineSpacing": 1
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 2,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/5w36tobm",
+      "id": "2",
+      "name": "slide-title",
+      "bbox": [
+        56,
+        72,
+        1130,
+        110
+      ],
+      "geometry": "rect",
+      "text": "The moat is the connected learning record around a trusted tutor",
+      "textPreview": "The moat is the connected learning record around a trusted tutor",
+      "resolvedFontSize": 35,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 35,
+        "typeface": "Helvetica Neue",
+        "color": "#11243E",
+        "bold": true,
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "wrap": "square",
+        "autoFit": "none",
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "The moat is the connected learning record around a trusted tutor"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "The moat is the connected learning record around a trusted tutor",
+          "lineSpacingPercent": 95000,
+          "resolvedTextStyle": {
+            "fontSize": 35,
+            "typeface": "Helvetica Neue",
+            "color": "#11243E",
+            "bold": true,
+            "alignment": "left",
+            "lineSpacing": 0.95
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "The moat is the connected learning record around a trusted tutor",
+              "fontSize": 35,
+              "typeface": "Helvetica Neue",
+              "color": "#11243E",
+              "bold": true,
+              "alignment": "left",
+              "lineSpacing": 0.95
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 3,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/kbu50ja1",
+      "id": "3",
+      "name": "accent-rule",
+      "bbox": [
+        56,
+        186,
+        72,
+        5
+      ],
+      "geometry": "rect",
+      "fillColor": "#2FC4C9",
+      "lineWidth": 0
+    },
+    {
+      "order": 4,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/7ylovytc",
+      "id": "4",
+      "name": "slide-number",
+      "bbox": [
+        1170,
+        666,
+        54,
+        18
+      ],
+      "geometry": "rect",
+      "text": "08",
+      "textPreview": "08",
+      "resolvedFontSize": 13,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 13,
+        "typeface": "Helvetica Neue",
+        "color": "#637086",
+        "alignment": "right",
+        "verticalAlignment": "top",
+        "wrap": "square",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "08"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "08",
+          "lineSpacingPercent": 100000,
+          "resolvedTextStyle": {
+            "fontSize": 13,
+            "typeface": "Helvetica Neue",
+            "color": "#637086",
+            "alignment": "right",
+            "lineSpacing": 1
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "08",
+              "fontSize": 13,
+              "typeface": "Helvetica Neue",
+              "color": "#637086",
+              "alignment": "right",
+              "lineSpacing": 1
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 5,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/6xcn2ts7",
+      "id": "5",
+      "name": "moat-points",
+      "bbox": [
+        56,
+        214,
+        610,
+        402
+      ],
+      "geometry": "rect",
+      "text": "Relationship context\nTutor knowledge accumulates across sessions instead of resetting.\nStructured learning data\nAssessment, lesson, homework, practice, and progress signals can inform the next action.\nOperational trust\nVerification, safeguarding, payments, and support create a stronger service layer.\nHuman-first AI\nAI supports practice and follow-through without becoming the brand or replacing the tutor.",
+      "textPreview": "Relationship context | Tutor knowledge accumulates across sessions instead of resetting. | Structured learning data | Assessment, lesson,...",
+      "resolvedFontSize": 20,
+      "resolvedTextStyle": {
+        "fontSize": 20,
+        "typeface": "Helvetica Neue",
+        "color": "#182233",
+        "alignment": "left",
+        "wrap": "square",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 11,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Relationship context"
+          },
+          {
+            "index": 2,
+            "text": "Tutor knowledge accumulates across sessions instead of resetting."
+          },
+          {
+            "index": 3,
+            "text": "Structured learning data"
+          },
+          {
+            "index": 4,
+            "text": "Assessment, lesson, homework, practice, and progress signals can"
+          },
+          {
+            "index": 5,
+            "text": "inform the next action."
+          },
+          {
+            "index": 6,
+            "text": "Operational trust"
+          },
+          {
+            "index": 7,
+            "text": "Verification, safeguarding, payments, and support create a stronger"
+          },
+          {
+            "index": 8,
+            "text": "service layer."
+          },
+          {
+            "index": 9,
+            "text": "Human-first AI"
+          },
+          {
+            "index": 10,
+            "text": "AI supports practice and follow-through without becoming the"
+          },
+          {
+            "index": 11,
+            "text": "brand or replacing the tutor."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Relationship context\nTutor knowledge accumulates across sessions instead of resetting.",
+          "lineSpacingPercent": 108000,
+          "spaceAfter": 18,
+          "resolvedTextStyle": {
+            "fontSize": 20,
+            "typeface": "Helvetica Neue",
+            "color": "#182233",
+            "lineSpacing": 1.08
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Relationship context",
+              "fontSize": 20,
+              "typeface": "Helvetica Neue",
+              "color": "#182233",
+              "bold": true,
+              "lineSpacing": 1.08
+            },
+            {
+              "index": 2,
+              "text": "\nTutor knowledge accumulates across sessions instead of resetting.",
+              "fontSize": 20,
+              "typeface": "Helvetica Neue",
+              "color": "#182233",
+              "lineSpacing": 1.08
+            }
+          ],
+          "marginLeft": 0
+        },
+        {
+          "index": 2,
+          "text": "Structured learning data\nAssessment, lesson, homework, practice, and progress signals can inform the next action.",
+          "lineSpacingPercent": 108000,
+          "spaceAfter": 18,
+          "resolvedTextStyle": {
+            "fontSize": 20,
+            "typeface": "Helvetica Neue",
+            "color": "#182233",
+            "lineSpacing": 1.08
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Structured learning data",
+              "fontSize": 20,
+              "typeface": "Helvetica Neue",
+              "color": "#182233",
+              "bold": true,
+              "lineSpacing": 1.08
+            },
+            {
+              "index": 2,
+              "text": "\nAssessment, lesson, homework, practice, and progress signals can inform the next action.",
+              "fontSize": 20,
+              "typeface": "Helvetica Neue",
+              "color": "#182233",
+              "lineSpacing": 1.08
+            }
+          ],
+          "marginLeft": 0
+        },
+        {
+          "index": 3,
+          "text": "Operational trust\nVerification, safeguarding, payments, and support create a stronger service layer.",
+          "lineSpacingPercent": 108000,
+          "spaceAfter": 18,
+          "resolvedTextStyle": {
+            "fontSize": 20,
+            "typeface": "Helvetica Neue",
+            "color": "#182233",
+            "lineSpacing": 1.08
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Operational trust",
+              "fontSize": 20,
+              "typeface": "Helvetica Neue",
+              "color": "#182233",
+              "bold": true,
+              "lineSpacing": 1.08
+            },
+            {
+              "index": 2,
+              "text": "\nVerification, safeguarding, payments, and support create a stronger service layer.",
+              "fontSize": 20,
+              "typeface": "Helvetica Neue",
+              "color": "#182233",
+              "lineSpacing": 1.08
+            }
+          ],
+          "marginLeft": 0
+        },
+        {
+          "index": 4,
+          "text": "Human-first AI\nAI supports practice and follow-through without becoming the brand or replacing the tutor.",
+          "lineSpacingPercent": 108000,
+          "resolvedTextStyle": {
+            "fontSize": 20,
+            "typeface": "Helvetica Neue",
+            "color": "#182233",
+            "lineSpacing": 1.08
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Human-first AI",
+              "fontSize": 20,
+              "typeface": "Helvetica Neue",
+              "color": "#182233",
+              "bold": true,
+              "lineSpacing": 1.08
+            },
+            {
+              "index": 2,
+              "text": "\nAI supports practice and follow-through without becoming the brand or replacing the tutor.",
+              "fontSize": 20,
+              "typeface": "Helvetica Neue",
+              "color": "#182233",
+              "lineSpacing": 1.08
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 6,
+      "kind": "image",
+      "scope": "slide",
+      "aid": "im/wj2hkzyh",
+      "id": "6",
+      "bbox": [
+        730,
+        214,
+        474,
+        402
+      ],
+      "geometry": "roundRect",
+      "alt": "Abstract blue and teal nebula suggesting a connected learning system",
+      "contentType": "image/jpeg",
+      "imageFit": "cover",
+      "imageMask": {
+        "geometry": "roundRect",
+        "adjustmentList": [
+          {
+            "name": "adj",
+            "formula": "val 3483"
+          }
+        ]
+      },
+      "asset": {
+        "assetId": "ad055b28-e8b6-4843-8d7f-4d97f7e46774",
+        "contentType": "image/jpeg",
+        "byteLength": 854472
+      }
+    }
+  ],
+  "composeRuns": []
+}

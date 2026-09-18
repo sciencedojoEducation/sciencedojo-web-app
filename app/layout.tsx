@@ -3,9 +3,11 @@ import { Inter } from "next/font/google";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import Analytics from "@/components/Analytics";
+import MetaPixel from "@/components/MetaPixel";
 import SeoConversionCtas from "@/components/SeoConversionCtas";
 import PublicChromeGate from "@/components/PublicChromeGate";
 import { siteUrl } from "@/lib/seo";
+import { getFeatureFlagMap } from "@/lib/feature-flags";
 import "./globals.css";
 
 const inter = Inter({
@@ -50,12 +52,13 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   const isMaintenanceMode = process.env.MAINTENANCE_MODE === "true";
+  const flags = await getFeatureFlagMap();
 
   return (
     <html
@@ -65,6 +68,7 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col font-sans" suppressHydrationWarning>
         <Analytics />
+        <MetaPixel />
         {!isMaintenanceMode && (
           <PublicChromeGate>
             <Navbar />
@@ -74,7 +78,7 @@ export default function RootLayout({
         {!isMaintenanceMode && (
           <PublicChromeGate>
             <Footer />
-            <SeoConversionCtas />
+            <SeoConversionCtas enabled={flags.free_assessment_enabled} />
           </PublicChromeGate>
         )}
       </body>
