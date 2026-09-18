@@ -1,5 +1,6 @@
 import { createClient } from "@/utils/supabase/server";
 import { createAdminClient } from "@/utils/supabase/admin";
+import type { LearnerProfile, LessonRequestLearningContext, LessonRequestMaterial } from "@/lib/lesson-request-intake";
 
 export type Subject = "Science" | "Math" | "Physics" | "Chemistry" | "Biology" | "Programming";
 
@@ -115,6 +116,8 @@ type RawBookingRow = {
   payment_method?: "stripe" | null;
   payment_status?: "unpaid" | "paid" | "failed" | "refunded";
   payment_confirmed_at?: string | null;
+  learner_id?: string | null;
+  learning_context?: LessonRequestLearningContext | null;
 };
 
 type RawNoteRow = {
@@ -432,6 +435,40 @@ export interface Booking {
   payment_method?: "stripe" | null;
   payment_status?: "unpaid" | "paid" | "failed" | "refunded";
   payment_confirmed_at?: string | null;
+  learner_id?: string | null;
+  learning_context?: LessonRequestLearningContext | null;
+  lesson_request_materials?: LessonRequestMaterial[];
+}
+
+export async function getLearnerProfilesForOwner(ownerId: string): Promise<LearnerProfile[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("learner_profiles")
+    .select("id, owner_id, linked_profile_id, name, school_year, stage, curriculum_key, curriculum_version_id, level, support_preferences, accommodations")
+    .eq("owner_id", ownerId)
+    .order("created_at", { ascending: true });
+
+  if (error) {
+    // Keep the booking page usable before the migration reaches an environment.
+    if (error.code !== "42P01" && error.code !== "PGRST205") {
+      console.error("Error fetching learner profiles:", error.message);
+    }
+    return [];
+  }
+
+  return (data || []).map((learner) => ({
+    id: learner.id,
+    ownerId: learner.owner_id,
+    linkedProfileId: learner.linked_profile_id,
+    name: learner.name,
+    schoolYear: learner.school_year,
+    stage: learner.stage,
+    curriculumKey: learner.curriculum_key,
+    curriculumVersionId: learner.curriculum_version_id,
+    level: learner.level,
+    supportPreferences: learner.support_preferences || [],
+    accommodations: learner.accommodations,
+  }));
 }
 
 export async function getBookingsByUserId(userId: string): Promise<Booking[]> {
@@ -455,6 +492,19 @@ export async function getBookingsByUserId(userId: string): Promise<Booking[]> {
 
   // 1. Fetch Lesson Notes separately
   const bookingIds = bookings.map(b => b.id);
+  const materialIds = [...new Set(bookings.flatMap((booking) => booking.learning_context?.materialIds || []))];
+  const { data: materialRows } = materialIds.length
+    ? await supabase
+      .from("lesson_request_materials")
+      .select("id, original_filename, mime_type, size_bytes")
+      .in("id", materialIds)
+    : { data: [] };
+  const materialsById = Object.fromEntries((materialRows || []).map((material) => [material.id, {
+    id: material.id,
+    name: material.original_filename,
+    mimeType: material.mime_type,
+    sizeBytes: Number(material.size_bytes),
+  }])) as Record<string, LessonRequestMaterial>;
   const { data: notesData } = await supabase
     .from('lesson_notes')
     .select('*')
@@ -517,6 +567,7 @@ export async function getBookingsByUserId(userId: string): Promise<Booking[]> {
     student_avatar: studentMap[booking.student_id]?.avatar_url,
     lesson_notes: notesMap[booking.id] || null,
     has_review: reviewedBookingIds.has(booking.id),
+    lesson_request_materials: (booking.learning_context?.materialIds || []).map((id) => materialsById[id]).filter(Boolean),
   }));
 }
 

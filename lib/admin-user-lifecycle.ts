@@ -229,6 +229,15 @@ async function collectStorageTargets(adminClient: AdminClient, userId: string, p
     targets.push({ bucket: "private_docs", path });
   }
 
+  const { data: lessonMaterials } = await adminClient
+    .from("lesson_request_materials")
+    .select("storage_path")
+    .or(`owner_id.eq.${userId},tutor_id.eq.${userId}`);
+  for (const material of lessonMaterials || []) {
+    const path = String(material.storage_path || "");
+    if (path) targets.push({ bucket: "lesson-request-materials", path });
+  }
+
   const { data: classRows } = await adminClient
     .from("classes")
     .select("id")

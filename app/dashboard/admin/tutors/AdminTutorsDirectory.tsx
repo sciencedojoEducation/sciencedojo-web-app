@@ -44,12 +44,14 @@ export default function AdminTutorsDirectory({
   suspendedTutors,
   pendingReviews,
   moderatedReviews,
+  loadError,
 }: {
   pendingTutors: AdminTutor[];
   verifiedTutors: AdminTutor[];
   suspendedTutors: AdminTutor[];
   pendingReviews: AdminTutorReview[];
   moderatedReviews: AdminTutorReview[];
+  loadError?: string;
 }) {
   const [searchQuery, setSearchQuery] = useState("");
   const filteredPendingTutors = useMemo(
@@ -116,14 +118,29 @@ export default function AdminTutorsDirectory({
         )}
       </div>
 
-      {!hasResults && (
+      {loadError && (
+        <div role="alert" className="rounded-[1.5rem] border border-red-200 bg-red-50 p-6 shadow-sm">
+          <p className="text-[10px] font-black uppercase tracking-[0.16em] text-red-500">Database connection failed</p>
+          <h2 className="mt-2 text-lg font-black text-slate-800">Tutor information is temporarily unavailable</h2>
+          <p className="mt-2 text-sm font-bold leading-6 text-slate-600">{loadError}</p>
+          <button
+            type="button"
+            onClick={() => window.location.reload()}
+            className="mt-4 inline-flex min-h-11 items-center justify-center rounded-2xl bg-red-600 px-5 py-3 text-[10px] font-black uppercase tracking-[0.12em] text-white transition-colors hover:bg-red-700"
+          >
+            Try again
+          </button>
+        </div>
+      )}
+
+      {!loadError && !hasResults && (
         <div className="rounded-[1.5rem] border border-slate-200 bg-white p-8 text-center shadow-sm">
           <h2 className="text-lg font-black text-slate-800">No tutors found</h2>
           <p className="mt-2 text-sm font-bold leading-6 text-slate-500">Try searching by another name, email, or subject.</p>
         </div>
       )}
 
-      <ReviewModerationPanel pendingReviews={pendingReviews} moderatedReviews={moderatedReviews} />
+      {!loadError && <ReviewModerationPanel pendingReviews={pendingReviews} moderatedReviews={moderatedReviews} />}
 
       {filteredPendingTutors.length > 0 && (
         <section className="space-y-4 md:space-y-6">
@@ -167,7 +184,7 @@ export default function AdminTutorsDirectory({
         </section>
       )}
 
-      <section className="space-y-4 md:space-y-6">
+      {!loadError && <section className="space-y-4 md:space-y-6">
         <div className="flex items-center gap-4">
           <h2 className="rounded-full border border-slate-200 bg-slate-100 px-4 py-2 text-xs font-black uppercase tracking-tight text-slate-800">
             Live Marketplace ({filteredVerifiedTutors.length})
@@ -285,7 +302,7 @@ export default function AdminTutorsDirectory({
             </tbody>
           </table>
         </div>
-      </section>
+      </section>}
     </div>
   );
 }

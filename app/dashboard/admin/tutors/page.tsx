@@ -21,14 +21,14 @@ export default async function AdminTutorsPage() {
 
   // --- ZERO-JOIN AUTO-REPAIR ARCHITECTURE ---
   // 1. Fetch all profiles with role = 'tutor'
-  const { data: tutorProfiles } = await adminClient
+  const { data: tutorProfiles, error: tutorProfilesError } = await adminClient
     .from("profiles")
     .select("id, full_name, email, avatar_url, created_at")
     .eq("role", "tutor")
     .order("created_at", { ascending: false });
 
   // 2. Fetch all entries from the tutors table
-  const { data: rawTutorData } = await adminClient
+  const { data: rawTutorData, error: tutorDataError } = await adminClient
     .from("tutors")
     .select("*");
 
@@ -37,8 +37,28 @@ export default async function AdminTutorsPage() {
     .from("applications")
     .select("*");
 
-  if (appError) {
-    console.error("❌ Failed to fetch applications:", appError.message);
+  const coreQueryErrors = [
+    { source: "profiles", error: tutorProfilesError },
+    { source: "tutors", error: tutorDataError },
+    { source: "applications", error: appError },
+  ].filter((entry): entry is { source: string; error: NonNullable<typeof appError> } => Boolean(entry.error));
+
+  if (coreQueryErrors.length > 0) {
+    console.error(
+      "❌ Failed to load the tutor admin directory:",
+      coreQueryErrors.map(({ source, error }) => ({ source, code: error.code, message: error.message })),
+    );
+
+    return (
+      <AdminTutorsDirectory
+        pendingTutors={[]}
+        verifiedTutors={[]}
+        suspendedTutors={[]}
+        pendingReviews={[]}
+        moderatedReviews={[]}
+        loadError="Tutor information could not be loaded from the database. Check the server credentials, then try again."
+      />
+    );
   }
 
   console.log(`📊 Admin fetch: ${tutorProfiles?.length} tutor profiles, ${applications?.length} applications`);

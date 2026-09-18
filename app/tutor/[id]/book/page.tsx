@@ -1,4 +1,4 @@
-import { getTutorById, getAvailabilityByTutorIdForMonth } from "@/lib/supabase-queries";
+import { getTutorById, getAvailabilityByTutorIdForMonth, getLearnerProfilesForOwner } from "@/lib/supabase-queries";
 import { createClient } from "@/utils/supabase/server";
 import { notFound, redirect } from "next/navigation";
 import CalendlyBookingWizard from "@/components/CalendlyBookingWizard";
@@ -11,7 +11,7 @@ export default async function BookTutorPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ auth_return?: string }>;
+  searchParams: Promise<{ auth_return?: string; error?: string }>;
 }) {
   const { id } = await params;
   const query = await searchParams;
@@ -51,12 +51,13 @@ export default async function BookTutorPage({
     now.getFullYear(), 
     now.getMonth() + 1
   );
+  const initialLearners = await getLearnerProfilesForOwner(user.id);
 
   return (
     <div className="bg-slate-50/50 min-h-screen py-12">
       <AuthReturnTracker enabled={query.auth_return === "1"} source="tutor_booking" />
       <main className="max-w-5xl mx-auto w-full px-4 md:px-8">
-        <CalendlyBookingWizard tutor={tutor} initialSlots={initialSlots} />
+        <CalendlyBookingWizard tutor={tutor} initialSlots={initialSlots} initialLearners={initialLearners} initialError={query.error} />
       </main>
     </div>
   );

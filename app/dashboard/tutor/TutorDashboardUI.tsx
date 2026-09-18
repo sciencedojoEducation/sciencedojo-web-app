@@ -11,6 +11,7 @@ import TutorSchedule from "@/components/TutorSchedule";
 import TutorAvailabilityCalendar from "@/components/TutorAvailabilityCalendar";
 import ImageCropper from "@/components/ImageCropper";
 import AnnouncementFeed from "@/components/AnnouncementFeed";
+import { confidenceLabels, lessonPurposeLabels } from "@/lib/lesson-request-intake";
 
 export type TutorWorkspaceTab = "schedule" | "requests" | "sessions" | "availability" | "students";
 
@@ -618,9 +619,52 @@ export default function TutorDashboardUI({
                             </div>
                          </div>
                          
-                         <p className="text-secondary/70 text-sm font-medium leading-relaxed italic">
-                            "{booking.description}"
-                         </p>
+                         {booking.learning_context ? (
+                           <div className="rounded-2xl border border-primary/10 bg-white p-4">
+                             <div className="flex flex-wrap items-center justify-between gap-2">
+                               <p className="text-[10px] font-black uppercase tracking-[0.14em] text-primary/60">Learning brief</p>
+                               <span className={`rounded-full px-3 py-1 text-[9px] font-black uppercase tracking-widest ${booking.learning_context.intakeStatus === "complete" ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"}`}>
+                                 {booking.learning_context.intakeStatus === "complete" ? "Plan-ready" : "Needs clarification"}
+                               </span>
+                             </div>
+                             <div className="mt-3 grid gap-2 text-xs sm:grid-cols-2">
+                               <p><span className="font-black text-secondary/40">Learner:</span> <span className="font-bold text-secondary">{booking.learning_context.learnerName} · {booking.learning_context.schoolYear}</span></p>
+                               <p><span className="font-black text-secondary/40">Path:</span> <span className="font-bold text-secondary">{[booking.learning_context.curriculumKey || "Curriculum unclear", booking.learning_context.level || "Level unclear"].join(" · ")}</span></p>
+                               <p><span className="font-black text-secondary/40">Focus:</span> <span className="font-bold text-secondary">{booking.learning_context.topic}{booking.learning_context.subtopic ? ` · ${booking.learning_context.subtopic}` : ""}</span></p>
+                               <p><span className="font-black text-secondary/40">Purpose:</span> <span className="font-bold text-secondary">{lessonPurposeLabels[booking.learning_context.lessonPurpose]}</span></p>
+                               <p><span className="font-black text-secondary/40">Confidence:</span> <span className="font-bold text-secondary">{confidenceLabels[booking.learning_context.confidence]}</span></p>
+                               <p><span className="font-black text-secondary/40">Materials:</span> <span className="font-bold text-secondary">{booking.lesson_request_materials?.length || 0}</span></p>
+                             </div>
+                             <div className="mt-3 space-y-2 border-t border-secondary/5 pt-3 text-sm leading-6 text-secondary/70">
+                               <p><span className="font-black text-secondary">Outcome:</span> {booking.learning_context.lessonGoal}</p>
+                               <p><span className="font-black text-secondary">Difficulty:</span> {booking.learning_context.difficultyDetails}</p>
+                               {(booking.learning_context.currentAttainment || booking.learning_context.targetAttainment) && <p><span className="font-black text-secondary">Attainment:</span> {booking.learning_context.currentAttainment || "Not shared"} → {booking.learning_context.targetAttainment || "No target shared"}</p>}
+                               {(booking.learning_context.assessmentDate || booking.learning_context.assessmentDetails) && <p><span className="font-black text-secondary">Assessment:</span> {[booking.learning_context.assessmentDate, booking.learning_context.assessmentDetails].filter(Boolean).join(" · ")}</p>}
+                               {booking.learning_context.homeworkInstructions && <p><span className="font-black text-secondary">Assignment:</span> {booking.learning_context.homeworkInstructions}</p>}
+                               {booking.learning_context.teacherFeedback && <p><span className="font-black text-secondary">Teacher feedback:</span> {booking.learning_context.teacherFeedback}</p>}
+                               {booking.learning_context.longerTermGoal && <p><span className="font-black text-secondary">Longer-term goal:</span> {booking.learning_context.longerTermGoal}</p>}
+                               {Boolean(booking.learning_context.supportPreferences?.length) && <p><span className="font-black text-secondary">Preferred support:</span> {booking.learning_context.supportPreferences?.join(", ")}</p>}
+                               {booking.learning_context.accommodations && <p><span className="font-black text-secondary">Accommodations:</span> {booking.learning_context.accommodations}</p>}
+                               {booking.learning_context.additionalContext && <p className="italic">“{booking.learning_context.additionalContext}”</p>}
+                             </div>
+                             {booking.learning_context.missingFields.length > 0 && (
+                               <p className="mt-3 rounded-xl bg-amber-50 px-3 py-2 text-xs font-bold text-amber-800">Clarify: {booking.learning_context.missingFields.join(", ")}</p>
+                             )}
+                             {Boolean(booking.lesson_request_materials?.length) && (
+                               <div className="mt-3 flex flex-wrap gap-2 border-t border-secondary/5 pt-3">
+                                 {booking.lesson_request_materials?.map((material) => (
+                                   <a key={material.id} href={`/api/lesson-request-materials/${material.id}`} target="_blank" rel="noreferrer" className="rounded-full bg-primary/5 px-3 py-2 text-[10px] font-black text-primary hover:bg-primary/10">
+                                     {material.name}
+                                   </a>
+                                 ))}
+                               </div>
+                             )}
+                           </div>
+                         ) : (
+                           <p className="text-secondary/70 text-sm font-medium leading-relaxed italic">
+                              "{booking.description}"
+                           </p>
+                         )}
                          {booking.lesson_mode === "physical" && (
                            <div className="rounded-2xl border border-emerald-100 bg-emerald-50 p-4 text-sm font-bold text-emerald-950">
                              <p className="text-[10px] font-black uppercase tracking-[0.14em] text-emerald-700">Physical class location</p>

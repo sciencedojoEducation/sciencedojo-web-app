@@ -1,12 +1,40 @@
 "use server"
 
-import { createClient } from "@/utils/supabase/server";
+import { createAdminClient, createClient } from "@/utils/supabase/server";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { sendBookingRequestedEmail, sendBookingAcceptedEmail, sendLessonNotesEmail } from "@/lib/email";
 import { getMentorAttributionFromCookies, isAttributionSchemaError, markMentorLeadConverted } from "@/lib/mentor-attribution";
 import { getMeaningfulTutorSubjects } from "@/lib/tutors/subjects";
+import {
+  acceptedLessonMaterialTypes,
+  buildLessonRequestLearningContext,
+  maxLessonMaterialBytes,
+  maxLessonMaterialCount,
+} from "@/lib/lesson-request-intake";
+import { canonicalizeEducationSubject, getActiveCurriculumVersionId, uncertainEducationOption } from "@/lib/educationTaxonomy";
 import crypto from 'crypto';
+
+function bookingErrorRedirect(tutorId: string, message: string): never {
+  redirect(`/tutor/${tutorId}/book?error=${encodeURIComponent(message)}`);
+}
+
+function cleanFormValue(formData: FormData, name: string) {
+  return String(formData.get(name) || "").trim();
+}
+
+function safeStorageFilename(filename: string) {
+  const cleaned = filename.normalize("NFKD").replace(/[^a-zA-Z0-9._-]+/g, "-").replace(/^-+|-+$/g, "");
+  return (cleaned || "material").slice(-120);
+}
+
+async function hasValidLessonMaterialSignature(file: File) {
+  const bytes = new Uint8Array(await file.slice(0, 8).arrayBuffer());
+  if (file.type === "application/pdf") return bytes[0] === 0x25 && bytes[1] === 0x50 && bytes[2] === 0x44 && bytes[3] === 0x46;
+  if (file.type === "image/jpeg") return bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff;
+  if (file.type === "image/png") return [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a].every((byte, index) => bytes[index] === byte);
+  return false;
+}
 
 export async function createBookingRequest(formData: FormData) {
   const supabase = await createClient();
@@ -17,10 +45,9 @@ export async function createBookingRequest(formData: FormData) {
   }
 
   const tutorId = formData.get("tutorId") as string;
-  const subject = formData.get("subject") as string;
-  const description = formData.get("description") as string;
-  const hourlyRate = Number(formData.get("hourlyRate"));
-  const requestedDate = formData.get("requestedDate") as string;
+  const subject = cleanFormValue(formData, "subject");
+  const description = cleanFormValue(formData, "description");
+  const requestedDate = cleanFormValue(formData, "requestedDate");
   const durationHours = Number(formData.get("durationHours") || 1);
   const recurrenceCount = Number(formData.get("recurrenceCount") || 1);
   const lessonMode = formData.get("lessonMode") === "physical" ? "physical" : "online";
@@ -30,13 +57,151 @@ export async function createBookingRequest(formData: FormData) {
   const isRecurring = recurrenceCount > 1;
   const recurrenceGroupId = isRecurring ? crypto.randomUUID() : null;
   const attribution = await getMentorAttributionFromCookies();
+
+  if (![1, 2].includes(durationHours) || ![1, 4, 8].includes(recurrenceCount)) {
+    bookingErrorRedirect(tutorId, "Choose a valid lesson duration and schedule.");
+  }
+
+  const baseDate = new Date(requestedDate);
+  if (!requestedDate || Number.isNaN(baseDate.getTime()) || baseDate.getTime() <= Date.now()) {
+    bookingErrorRedirect(tutorId, "Choose a valid future lesson time.");
+  }
+
+  const { data: tutor, error: tutorError } = await supabase
+    .from("tutors")
+    .select("hourly_rate, subjects")
+    .eq("id", tutorId)
+    .maybeSingle();
+  if (tutorError || !tutor) bookingErrorRedirect(tutorId, "This tutor is not available for booking.");
+
+  const canonicalSubject = canonicalizeEducationSubject(subject);
+  const tutorSubjects = ((tutor.subjects || []) as string[]).map(canonicalizeEducationSubject);
+  if (!subject || !tutorSubjects.includes(canonicalSubject)) {
+    bookingErrorRedirect(tutorId, "Choose a subject offered by this tutor.");
+  }
+
+  const hourlyRate = Number(tutor.hourly_rate);
   const pricePerBooking = (hourlyRate * durationHours) + (lessonMode === "physical" ? travelFee : 0);
 
   if (lessonMode === "physical" && !locationDetails) {
-    redirect(`/tutor/${tutorId}/book?error=${encodeURIComponent("Please add the in-person class location before requesting.")}`);
+    bookingErrorRedirect(tutorId, "Please add the in-person class location before requesting.");
   }
 
-  const baseDate = new Date(requestedDate || new Date().toISOString());
+  const files = formData.getAll("materials").filter((value): value is File => value instanceof File && value.size > 0);
+  if (files.length > maxLessonMaterialCount) {
+    bookingErrorRedirect(tutorId, `Upload no more than ${maxLessonMaterialCount} supporting files.`);
+  }
+  for (const file of files) {
+    if (!(acceptedLessonMaterialTypes as readonly string[]).includes(file.type)) {
+      bookingErrorRedirect(tutorId, "Supporting files must be PDF, JPG, or PNG.");
+    }
+    if (file.size > maxLessonMaterialBytes) {
+      bookingErrorRedirect(tutorId, `${file.name} is larger than 10 MB.`);
+    }
+    if (!(await hasValidLessonMaterialSignature(file))) {
+      bookingErrorRedirect(tutorId, `${file.name} does not match its declared file type.`);
+    }
+  }
+
+  const learnerName = cleanFormValue(formData, "learnerName");
+  const schoolYear = cleanFormValue(formData, "schoolYear");
+  const stage = cleanFormValue(formData, "stage");
+  const curriculumKey = cleanFormValue(formData, "curriculumKey") || uncertainEducationOption;
+  const level = cleanFormValue(formData, "level") || uncertainEducationOption;
+  const supportPreferencesRaw = cleanFormValue(formData, "supportPreferences");
+  let supportPreferences: string[] = [];
+  try {
+    const parsed = supportPreferencesRaw ? JSON.parse(supportPreferencesRaw) : [];
+    supportPreferences = Array.isArray(parsed) ? parsed.filter((value): value is string => typeof value === "string").slice(0, 8) : [];
+  } catch {
+    bookingErrorRedirect(tutorId, "The teaching preference selection is invalid.");
+  }
+
+  const learnerId = cleanFormValue(formData, "learnerId") || crypto.randomUUID();
+  const isNewLearner = !cleanFormValue(formData, "learnerId");
+  const learnerPayload = {
+    owner_id: user.id,
+    name: learnerName,
+    school_year: schoolYear,
+    stage,
+    curriculum_key: curriculumKey === uncertainEducationOption ? null : curriculumKey,
+    curriculum_version_id: getActiveCurriculumVersionId(curriculumKey),
+    level: level === uncertainEducationOption ? null : level,
+    support_preferences: supportPreferences,
+    accommodations: cleanFormValue(formData, "accommodations") || null,
+    updated_at: new Date().toISOString(),
+  };
+
+  const materialIds = files.map(() => crypto.randomUUID());
+  const intakeResult = buildLessonRequestLearningContext({
+    learnerId,
+    learnerName,
+    schoolYear,
+    stage,
+    curriculumKey,
+    level,
+    subject: canonicalSubject,
+    topic: cleanFormValue(formData, "topic"),
+    subtopic: cleanFormValue(formData, "subtopic"),
+    lessonPurpose: cleanFormValue(formData, "lessonPurpose"),
+    lessonGoal: cleanFormValue(formData, "lessonGoal"),
+    confidence: cleanFormValue(formData, "confidence"),
+    difficultyDetails: cleanFormValue(formData, "difficultyDetails"),
+    currentAttainment: cleanFormValue(formData, "currentAttainment"),
+    targetAttainment: cleanFormValue(formData, "targetAttainment"),
+    assessmentDate: cleanFormValue(formData, "assessmentDate"),
+    assessmentDetails: cleanFormValue(formData, "assessmentDetails"),
+    homeworkInstructions: cleanFormValue(formData, "homeworkInstructions"),
+    recentScore: cleanFormValue(formData, "recentScore"),
+    teacherFeedback: cleanFormValue(formData, "teacherFeedback"),
+    lostMarksOn: cleanFormValue(formData, "lostMarksOn"),
+    longerTermGoal: cleanFormValue(formData, "longerTermGoal"),
+    priorityTopics: cleanFormValue(formData, "priorityTopics"),
+    importantDeadline: cleanFormValue(formData, "importantDeadline"),
+    supportPreferences,
+    accommodations: cleanFormValue(formData, "accommodations"),
+    previousApproaches: cleanFormValue(formData, "previousApproaches"),
+    additionalContext: description,
+    materialIds,
+  });
+  if (!intakeResult.context) bookingErrorRedirect(tutorId, intakeResult.error || "Complete the learning details.");
+
+  if (isNewLearner) {
+    const { data: requesterProfile } = await supabase.from("profiles").select("role").eq("id", user.id).maybeSingle();
+    const { error: learnerInsertError } = await supabase.from("learner_profiles").insert({
+      id: learnerId,
+      ...learnerPayload,
+      linked_profile_id: requesterProfile?.role === "student" ? user.id : null,
+    });
+    if (learnerInsertError) bookingErrorRedirect(tutorId, learnerInsertError.message);
+  } else {
+    const { data: ownedLearner } = await supabase
+      .from("learner_profiles")
+      .select("id")
+      .eq("id", learnerId)
+      .eq("owner_id", user.id)
+      .maybeSingle();
+    if (!ownedLearner) bookingErrorRedirect(tutorId, "Choose a learner profile that belongs to your account.");
+    const { error: learnerUpdateError } = await supabase.from("learner_profiles").update(learnerPayload).eq("id", learnerId).eq("owner_id", user.id);
+    if (learnerUpdateError) bookingErrorRedirect(tutorId, learnerUpdateError.message);
+  }
+
+  const bookingIds = Array.from({ length: recurrenceCount }, () => crypto.randomUUID());
+  const uploadedMaterials: Array<{ id: string; path: string; file: File }> = [];
+  for (let index = 0; index < files.length; index++) {
+    const file = files[index];
+    const path = `${user.id}/${bookingIds[0]}/${materialIds[index]}-${safeStorageFilename(file.name)}`;
+    const { error: uploadError } = await supabase.storage.from("lesson-request-materials").upload(path, file, {
+      contentType: file.type,
+      upsert: false,
+    });
+    if (uploadError) {
+      if (uploadedMaterials.length) await supabase.storage.from("lesson-request-materials").remove(uploadedMaterials.map((item) => item.path));
+      bookingErrorRedirect(tutorId, `Could not upload ${file.name}: ${uploadError.message}`);
+    }
+    uploadedMaterials.push({ id: materialIds[index], path, file });
+  }
+
   const bookingsToInsert = [];
 
   for (let i = 0; i < recurrenceCount; i++) {
@@ -44,9 +209,12 @@ export async function createBookingRequest(formData: FormData) {
     bookingDate.setDate(bookingDate.getDate() + (i * 7));
 
     bookingsToInsert.push({
+      id: bookingIds[i],
       student_id: user.id,
       tutor_id: tutorId,
-      subject: subject,
+      learner_id: learnerId,
+      learning_context: intakeResult.context,
+      subject: canonicalSubject,
       description: description,
       price_at_booking: pricePerBooking,
       status: "requested",
@@ -82,6 +250,10 @@ export async function createBookingRequest(formData: FormData) {
         lead_source_id: _leadSourceId,
         ...baseBooking
       } = booking;
+      void _acquisitionSource;
+      void _referrerTutorId;
+      void _landingTutorId;
+      void _leadSourceId;
       return baseBooking;
     });
 
@@ -95,9 +267,35 @@ export async function createBookingRequest(formData: FormData) {
   }
 
   if (error) {
+    if (uploadedMaterials.length) await supabase.storage.from("lesson-request-materials").remove(uploadedMaterials.map((item) => item.path));
     console.error("Booking Error:", error.message);
-    // In a real app, we'd redirect to an error page or use useActionState
-    redirect(`/tutor/${tutorId}/book?error=${encodeURIComponent(error.message)}`);
+    bookingErrorRedirect(tutorId, error.message);
+  }
+
+  if (uploadedMaterials.length) {
+    const { error: materialsError } = await supabase.from("lesson_request_materials").insert(
+      uploadedMaterials.map((item) => ({
+        id: item.id,
+        owner_id: user.id,
+        tutor_id: tutorId,
+        learner_id: learnerId,
+        booking_id: bookingIds[0],
+        storage_path: item.path,
+        original_filename: item.file.name,
+        mime_type: item.file.type,
+        size_bytes: item.file.size,
+      })),
+    );
+    if (materialsError) {
+      await supabase.storage.from("lesson-request-materials").remove(uploadedMaterials.map((item) => item.path));
+      try {
+        const adminClient = await createAdminClient();
+        await adminClient.from("bookings").delete().in("id", bookingIds);
+      } catch (cleanupError) {
+        console.error("Could not roll back booking after material metadata failure:", cleanupError);
+      }
+      bookingErrorRedirect(tutorId, `Could not save supporting materials: ${materialsError.message}`);
+    }
   }
 
   await markMentorLeadConverted({
@@ -117,12 +315,13 @@ export async function createBookingRequest(formData: FormData) {
       tutorProfile.email,
       user.user_metadata?.full_name || "A student",
       new Date(requestedDate || new Date()),
-      subject
+      canonicalSubject
     );
   }
 
   revalidatePath("/dashboard/parent");
-  redirect(`/tutor/${tutorId}/book/success?subject=${encodeURIComponent(subject)}&date=${encodeURIComponent(requestedDate || new Date().toISOString())}`);
+  revalidatePath("/dashboard/student");
+  redirect(`/tutor/${tutorId}/book/success?subject=${encodeURIComponent(canonicalSubject)}&date=${encodeURIComponent(requestedDate)}`);
 }
 
 export async function updateBookingStatus(formData: FormData) {

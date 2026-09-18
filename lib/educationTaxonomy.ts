@@ -78,6 +78,13 @@ const sqaHigherSubjects = [
 ] as const;
 
 export const mixedTopicsOption = "Mixed Topics";
+export const uncertainEducationOption = "Not sure";
+
+const subjectAliases: Record<string, string> = {
+  Math: "Mathematics",
+  Maths: "Mathematics",
+  Programming: "Computer Science",
+};
 
 const computingTopics = [
   mixedTopicsOption,
@@ -275,8 +282,32 @@ export function getSubjectsForSelection(stage: string, curriculum: string, level
 export const getSubjectsForLevel = getSubjectsForSelection;
 
 export function getTopicsForSubject(subject: string) {
-  const topics = (topicTaxonomy as Record<string, readonly string[]>)[subject];
+  const topics = (topicTaxonomy as Record<string, readonly string[]>)[canonicalizeEducationSubject(subject)];
   return topics ? [...topics] : [];
+}
+
+export function canonicalizeEducationSubject(subject: string) {
+  return subjectAliases[subject] || subject;
+}
+
+const curriculumVersionIds: Record<string, string> = {
+  "UK National Curriculum": "uk-national-curriculum@taxonomy-v1",
+  "Cambridge Primary": "cambridge-primary@taxonomy-v1",
+  "Cambridge Lower Secondary": "cambridge-lower-secondary@taxonomy-v1",
+  "Edexcel GCSE": "edexcel-gcse@taxonomy-v1",
+  "AQA GCSE": "aqa-gcse@taxonomy-v1",
+  "Cambridge IGCSE": "cambridge-igcse@taxonomy-v1",
+  "SQA National 5": "sqa-national-5@taxonomy-v1",
+  "Edexcel A-Level": "edexcel-a-level@taxonomy-v1",
+  "AQA A-Level": "aqa-a-level@taxonomy-v1",
+  "Cambridge International A-Level": "cambridge-international-a-level@taxonomy-v1",
+  "IB Diploma Programme": "ib-diploma-programme@taxonomy-v1",
+  "SQA Higher": "sqa-higher@taxonomy-v1",
+};
+
+export function getActiveCurriculumVersionId(curriculum: string) {
+  if (!curriculum || curriculum === uncertainEducationOption) return null;
+  return curriculumVersionIds[curriculum] || null;
 }
 
 export function isEducationalStage(stage: string): stage is EducationalStage {
@@ -295,6 +326,46 @@ export type QuizSelection = {
   topic: string;
   count: number;
 };
+
+export type LessonRequestEducationSelection = Omit<QuizSelection, "count">;
+
+export function validateLessonRequestEducationSelection(selection: LessonRequestEducationSelection) {
+  if (!isEducationalStage(selection.stage)) {
+    return { valid: false, needsClarification: false, missingFields: [] as string[], error: "Please choose a valid educational stage." };
+  }
+
+  const missingFields: string[] = [];
+  if (!selection.curriculum || selection.curriculum === uncertainEducationOption) missingFields.push("curriculum");
+  if (!selection.level || selection.level === uncertainEducationOption) missingFields.push("level");
+
+  const canonicalSubject = canonicalizeEducationSubject(selection.subject);
+  const topics = getTopicsForSubject(canonicalSubject);
+  if (!canonicalSubject || topics.length === 0 || !topics.includes(selection.topic)) {
+    return {
+      valid: false,
+      needsClarification: missingFields.length > 0,
+      missingFields,
+      error: "Please choose a valid subject and topic.",
+    };
+  }
+
+  if (missingFields.length > 0) {
+    return { valid: true, needsClarification: true, missingFields, error: null };
+  }
+
+  const curricula = educationTaxonomy[selection.stage] as Record<string, Record<string, readonly string[]>>;
+  if (!Object.prototype.hasOwnProperty.call(curricula, selection.curriculum)) {
+    return { valid: false, needsClarification: false, missingFields, error: "That curriculum is not available for the selected educational stage." };
+  }
+  if (!Object.prototype.hasOwnProperty.call(curricula[selection.curriculum], selection.level)) {
+    return { valid: false, needsClarification: false, missingFields, error: "That level is not available for the selected curriculum." };
+  }
+  if (!curricula[selection.curriculum][selection.level].includes(canonicalSubject)) {
+    return { valid: false, needsClarification: false, missingFields, error: "That subject is not available for the selected curriculum and level." };
+  }
+
+  return { valid: true, needsClarification: false, missingFields, error: null };
+}
 
 export function isValidEducationSelection(selection: QuizSelection) {
   if (!isEducationalStage(selection.stage)) {

@@ -1,15 +1,27 @@
 "use client";
 
 import { AvailabilitySlot, TutorProfile } from "@/lib/supabase-queries";
+import type { LearnerProfile, LessonPurpose, LearnerConfidence } from "@/lib/lesson-request-intake";
+import { confidenceLabels, lessonPurposeLabels } from "@/lib/lesson-request-intake";
+import {
+  canonicalizeEducationSubject,
+  educationalStages,
+  getCurriculaForStage,
+  getLevelsForCurriculum,
+  getSubjectsForSelection,
+  getTopicsForSubject,
+  uncertainEducationOption,
+} from "@/lib/educationTaxonomy";
 import { useState, useTransition, useEffect } from "react";
 import Image from "next/image";
-import Link from "next/link";
 import { fetchTutorSlots } from "@/app/tutor/actions";
 import { createBookingRequest } from "@/app/tutor/actions";
 
 interface Props {
   tutor: TutorProfile;
   initialSlots: AvailabilitySlot[];
+  initialLearners: LearnerProfile[];
+  initialError?: string;
 }
 
 const MONTH_NAMES = [
@@ -25,7 +37,7 @@ function formatTime(timeStr: string) {
   return d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }).toLowerCase().replace(':00', '');
 }
 
-export default function CalendlyBookingWizard({ tutor, initialSlots }: Props) {
+export default function CalendlyBookingWizard({ tutor, initialSlots, initialLearners, initialError }: Props) {
   const [slots, setSlots] = useState<AvailabilitySlot[]>(initialSlots);
   const [currentMonthDate, setCurrentMonthDate] = useState(new Date());
   const [isPending, startTransition] = useTransition();
@@ -81,11 +93,61 @@ export default function CalendlyBookingWizard({ tutor, initialSlots }: Props) {
   const [recurrenceCount, setRecurrenceCount] = useState<number>(1);
   const [lessonMode, setLessonMode] = useState<"online" | "physical">("online");
   const [travelFee, setTravelFee] = useState<number>(0);
+  const firstLearner = initialLearners[0];
+  const [selectedLearnerId, setSelectedLearnerId] = useState(firstLearner?.id || "");
+  const [learnerName, setLearnerName] = useState(firstLearner?.name || "");
+  const [schoolYear, setSchoolYear] = useState(firstLearner?.schoolYear || "");
+  const [stage, setStage] = useState(firstLearner?.stage || "");
+  const [curriculumKey, setCurriculumKey] = useState(firstLearner?.curriculumKey || uncertainEducationOption);
+  const [level, setLevel] = useState(firstLearner?.level || uncertainEducationOption);
+  const [subject, setSubject] = useState(canonicalizeEducationSubject(tutor.subjects[0] || ""));
+  const [topic, setTopic] = useState("");
+  const [lessonPurpose, setLessonPurpose] = useState<LessonPurpose>("new_topic");
+  const [confidence, setConfidence] = useState<LearnerConfidence>("some_understanding");
+  const [supportPreferences, setSupportPreferences] = useState<string[]>(firstLearner?.supportPreferences || []);
+  const [accommodations, setAccommodations] = useState(firstLearner?.accommodations || "");
 
-  // If we pick a new slot that doesn't allow 2 hours, reset it
-  useEffect(() => {
-    if (!canBookTwoHours) setDuration(1);
-  }, [selectedTimeSlot, canBookTwoHours]);
+  const curricula = stage ? getCurriculaForStage(stage) : [];
+  const levels = stage && curriculumKey !== uncertainEducationOption
+    ? getLevelsForCurriculum(stage, curriculumKey)
+    : [];
+  const curriculumSubjects = stage && curriculumKey !== uncertainEducationOption && level !== uncertainEducationOption
+    ? getSubjectsForSelection(stage, curriculumKey, level)
+    : [];
+  const tutorSubjects = [...new Set(tutor.subjects.map(canonicalizeEducationSubject))];
+  const availableSubjects = curriculumSubjects.length
+    ? tutorSubjects.filter((item) => (curriculumSubjects as string[]).includes(item))
+    : tutorSubjects;
+  const effectiveSubject = availableSubjects.includes(subject) ? subject : (availableSubjects[0] || subject);
+  const topics = getTopicsForSubject(effectiveSubject);
+
+  const selectLearner = (learnerId: string) => {
+    setSelectedLearnerId(learnerId);
+    const learner = initialLearners.find((item) => item.id === learnerId);
+    if (!learner) {
+      setLearnerName("");
+      setSchoolYear("");
+      setStage("");
+      setCurriculumKey(uncertainEducationOption);
+      setLevel(uncertainEducationOption);
+      setSupportPreferences([]);
+      setAccommodations("");
+      return;
+    }
+    setLearnerName(learner.name);
+    setSchoolYear(learner.schoolYear);
+    setStage(learner.stage);
+    setCurriculumKey(learner.curriculumKey || uncertainEducationOption);
+    setLevel(learner.level || uncertainEducationOption);
+    setSupportPreferences(learner.supportPreferences || []);
+    setAccommodations(learner.accommodations || "");
+  };
+
+  const toggleSupportPreference = (preference: string) => {
+    setSupportPreferences((current) => current.includes(preference)
+      ? current.filter((item) => item !== preference)
+      : [...current, preference]);
+  };
 
   return (
     <div className="bg-white rounded-[2.5rem] shadow-xl border border-secondary/5 overflow-hidden flex flex-col md:flex-row relative min-h-[600px]">
@@ -165,6 +227,11 @@ export default function CalendlyBookingWizard({ tutor, initialSlots }: Props) {
 
       {/* Right Content Area */}
       <div className="w-full md:w-[65%] p-8 md:p-12 relative h-full">
+        {initialError && (
+          <div role="alert" className="mb-6 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm font-bold text-red-700">
+            {initialError}
+          </div>
+        )}
         {step === "calendar" && (
           <div className="flex flex-col md:flex-row gap-10 animate-in fade-in h-full">
             
@@ -216,6 +283,7 @@ export default function CalendlyBookingWizard({ tutor, initialSlots }: Props) {
                       onClick={() => {
                         setSelectedDateStr(dayStr);
                         setSelectedTimeSlot(null);
+                        setDuration(1);
                       }}
                       className={`
                         relative aspect-square p-1 rounded-full flex items-center justify-center text-sm font-bold transition-all
@@ -252,7 +320,10 @@ export default function CalendlyBookingWizard({ tutor, initialSlots }: Props) {
                     return (
                       <div key={slot.id} className="relative">
                         <button
-                          onClick={() => setSelectedTimeSlot(slot)}
+                          onClick={() => {
+                            setSelectedTimeSlot(slot);
+                            setDuration(1);
+                          }}
                           className={`
                             w-full py-3.5 rounded-xl font-bold text-sm transition-all border
                             ${isSelected 
@@ -287,9 +358,8 @@ export default function CalendlyBookingWizard({ tutor, initialSlots }: Props) {
 
         {/* DETAILS STEP */}
         {step === "details" && selectedTimeSlot && selectedDateStr && (
-          <form action={createBookingRequest} className="animate-in fade-in slide-in-from-right-4 duration-300 h-full flex flex-col">
+          <form action={createBookingRequest} encType="multipart/form-data" className="animate-in fade-in slide-in-from-right-4 duration-300 h-full flex flex-col">
             <input type="hidden" name="tutorId" value={tutor.id} />
-            <input type="hidden" name="hourlyRate" value={tutor.hourly_rate} />
             
             {/* We must construct the true datetime local format for requestedDate: YYYY-MM-DDTHH:MM */}
             <input type="hidden" name="requestedDate" value={`${selectedDateStr}T${selectedTimeSlot.start_time.substring(0, 5)}`} />
@@ -297,6 +367,8 @@ export default function CalendlyBookingWizard({ tutor, initialSlots }: Props) {
             <input type="hidden" name="recurrenceCount" value={recurrenceCount} />
             <input type="hidden" name="lessonMode" value={lessonMode} />
             <input type="hidden" name="travelFee" value={lessonMode === "physical" ? travelFee : 0} />
+            <input type="hidden" name="learnerId" value={selectedLearnerId} />
+            <input type="hidden" name="supportPreferences" value={JSON.stringify(supportPreferences)} />
 
             <div className="flex items-center gap-4 mb-8">
               <button 
@@ -404,37 +476,155 @@ export default function CalendlyBookingWizard({ tutor, initialSlots }: Props) {
                 </div>
               )}
 
-              {/* Subject */}
-              <div>
-                <label className="block text-xs font-black uppercase tracking-widest text-secondary/60 mb-2">Select Subject</label>
-                <div className="relative">
-                  <select 
-                    name="subject" 
-                    required
-                    className="w-full px-5 py-3 pr-12 rounded-xl bg-slate-50 border border-secondary/10 focus:border-primary outline-none transition-all font-bold text-secondary text-sm appearance-none cursor-pointer"
-                  >
-                    {tutor.subjects.map(subject => (
-                      <option key={subject} value={subject}>{subject}</option>
-                    ))}
-                  </select>
-                  <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none text-secondary/40">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+              <div className="rounded-2xl border border-primary/10 bg-primary/[0.035] p-4 md:p-5">
+                <p className="text-[10px] font-black uppercase tracking-[0.16em] text-primary/60">1 · Learner profile</p>
+                <div className="mt-4 space-y-4">
+                  {initialLearners.length > 0 && (
+                    <label className="block text-xs font-black uppercase tracking-widest text-secondary/60">
+                      Learner
+                      <select
+                        value={selectedLearnerId}
+                        onChange={(event) => selectLearner(event.target.value)}
+                        className="mt-2 w-full rounded-xl border border-secondary/10 bg-white px-4 py-3 text-sm font-bold text-secondary outline-none focus:border-primary"
+                      >
+                        {initialLearners.map((learner) => <option key={learner.id} value={learner.id}>{learner.name}</option>)}
+                        <option value="">Add another learner</option>
+                      </select>
+                    </label>
+                  )}
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <label className="text-xs font-black uppercase tracking-widest text-secondary/60">
+                      Learner name
+                      <input name="learnerName" required value={learnerName} onChange={(event) => setLearnerName(event.target.value)} className="mt-2 w-full rounded-xl border border-secondary/10 bg-white px-4 py-3 text-sm font-bold normal-case tracking-normal text-secondary outline-none focus:border-primary" />
+                    </label>
+                    <label className="text-xs font-black uppercase tracking-widest text-secondary/60">
+                      School year or grade
+                      <input name="schoolYear" required value={schoolYear} onChange={(event) => setSchoolYear(event.target.value)} placeholder="Year 10, Grade 11…" className="mt-2 w-full rounded-xl border border-secondary/10 bg-white px-4 py-3 text-sm font-bold normal-case tracking-normal text-secondary outline-none focus:border-primary" />
+                    </label>
+                    <label className="text-xs font-black uppercase tracking-widest text-secondary/60">
+                      Educational stage
+                      <select name="stage" required value={stage} onChange={(event) => { setStage(event.target.value); setCurriculumKey(uncertainEducationOption); setLevel(uncertainEducationOption); setTopic(""); }} className="mt-2 w-full rounded-xl border border-secondary/10 bg-white px-4 py-3 text-sm font-bold normal-case tracking-normal text-secondary outline-none focus:border-primary">
+                        <option value="" disabled>Select stage</option>
+                        {educationalStages.map((item) => <option key={item} value={item}>{item}</option>)}
+                      </select>
+                    </label>
+                    <label className="text-xs font-black uppercase tracking-widest text-secondary/60">
+                      Curriculum / exam board
+                      <select name="curriculumKey" required value={curriculumKey} onChange={(event) => { setCurriculumKey(event.target.value); setLevel(uncertainEducationOption); setTopic(""); }} className="mt-2 w-full rounded-xl border border-secondary/10 bg-white px-4 py-3 text-sm font-bold normal-case tracking-normal text-secondary outline-none focus:border-primary">
+                        <option value={uncertainEducationOption}>I’m not sure</option>
+                        {curricula.map((item) => <option key={item} value={item}>{item}</option>)}
+                      </select>
+                    </label>
+                    <label className="text-xs font-black uppercase tracking-widest text-secondary/60 sm:col-span-2">
+                      Level or tier
+                      <select name="level" required value={level} onChange={(event) => { setLevel(event.target.value); setTopic(""); }} className="mt-2 w-full rounded-xl border border-secondary/10 bg-white px-4 py-3 text-sm font-bold normal-case tracking-normal text-secondary outline-none focus:border-primary">
+                        <option value={uncertainEducationOption}>I’m not sure</option>
+                        {levels.map((item) => <option key={item} value={item}>{item}</option>)}
+                      </select>
+                    </label>
                   </div>
+                  {(curriculumKey === uncertainEducationOption || level === uncertainEducationOption) && (
+                    <p className="rounded-xl bg-amber-50 px-3 py-2 text-xs font-bold leading-5 text-amber-800">You can still request the lesson, but the tutor will need to clarify the curriculum or level before an exact plan can be prepared.</p>
+                  )}
                 </div>
               </div>
 
-              {/* Description */}
-              <div>
-                <label className="block text-xs font-black uppercase tracking-widest text-secondary/60 mb-2">What do you need help with?</label>
-                <textarea 
-                  name="description" 
-                  required
-                  rows={4}
-                  placeholder={`Hi ${tutor.full_name.split(' ')[0]}, I need help with...`}
-                  className="w-full px-5 py-4 rounded-xl bg-slate-50 border border-secondary/10 focus:border-primary outline-none transition-all font-medium text-secondary text-sm resize-none"
-                ></textarea>
-                <p className="mt-2 text-[10px] font-black uppercase text-secondary/30 italic">Not charged until tutor confirms.</p>
+              <div className="rounded-2xl border border-secondary/10 bg-slate-50 p-4 md:p-5">
+                <p className="text-[10px] font-black uppercase tracking-[0.16em] text-primary/60">2 · Lesson focus</p>
+                <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                  <label className="text-xs font-black uppercase tracking-widest text-secondary/60">
+                    Subject
+                    <select name="subject" required value={effectiveSubject} onChange={(event) => { setSubject(event.target.value); setTopic(""); }} className="mt-2 w-full rounded-xl border border-secondary/10 bg-white px-4 py-3 text-sm font-bold normal-case tracking-normal text-secondary outline-none focus:border-primary">
+                      {availableSubjects.map((item) => <option key={item} value={item}>{item}</option>)}
+                    </select>
+                  </label>
+                  <label className="text-xs font-black uppercase tracking-widest text-secondary/60">
+                    Topic
+                    <select name="topic" required value={topic} onChange={(event) => setTopic(event.target.value)} className="mt-2 w-full rounded-xl border border-secondary/10 bg-white px-4 py-3 text-sm font-bold normal-case tracking-normal text-secondary outline-none focus:border-primary">
+                      <option value="" disabled>Select topic</option>
+                      {topics.map((item) => <option key={item} value={item}>{item}</option>)}
+                    </select>
+                  </label>
+                  <label className="text-xs font-black uppercase tracking-widest text-secondary/60 sm:col-span-2">
+                    Specific subtopic (optional)
+                    <input name="subtopic" placeholder="Quadratic factorisation, six-mark questions…" className="mt-2 w-full rounded-xl border border-secondary/10 bg-white px-4 py-3 text-sm font-bold normal-case tracking-normal text-secondary outline-none focus:border-primary" />
+                  </label>
+                  <label className="text-xs font-black uppercase tracking-widest text-secondary/60">
+                    Lesson purpose
+                    <select name="lessonPurpose" required value={lessonPurpose} onChange={(event) => setLessonPurpose(event.target.value as LessonPurpose)} className="mt-2 w-full rounded-xl border border-secondary/10 bg-white px-4 py-3 text-sm font-bold normal-case tracking-normal text-secondary outline-none focus:border-primary">
+                      {(Object.entries(lessonPurposeLabels) as Array<[LessonPurpose, string]>).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+                    </select>
+                  </label>
+                  <label className="text-xs font-black uppercase tracking-widest text-secondary/60">
+                    Current confidence
+                    <select name="confidence" required value={confidence} onChange={(event) => setConfidence(event.target.value as LearnerConfidence)} className="mt-2 w-full rounded-xl border border-secondary/10 bg-white px-4 py-3 text-sm font-bold normal-case tracking-normal text-secondary outline-none focus:border-primary">
+                      {(Object.entries(confidenceLabels) as Array<[LearnerConfidence, string]>).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+                    </select>
+                  </label>
+                  <label className="text-xs font-black uppercase tracking-widest text-secondary/60 sm:col-span-2">
+                    Desired outcome
+                    <textarea name="lessonGoal" required rows={3} placeholder="What should the student be able to do by the end?" className="mt-2 w-full resize-none rounded-xl border border-secondary/10 bg-white px-4 py-3 text-sm font-medium normal-case tracking-normal text-secondary outline-none focus:border-primary" />
+                  </label>
+                  <label className="text-xs font-black uppercase tracking-widest text-secondary/60 sm:col-span-2">
+                    Where exactly do they get stuck?
+                    <textarea name="difficultyDetails" required rows={3} placeholder="Describe the step, question type, or idea that is causing difficulty." className="mt-2 w-full resize-none rounded-xl border border-secondary/10 bg-white px-4 py-3 text-sm font-medium normal-case tracking-normal text-secondary outline-none focus:border-primary" />
+                  </label>
+                </div>
               </div>
+
+              {(lessonPurpose === "exam_practice" || lessonPurpose === "revision") && (
+                <div className="rounded-2xl border border-violet-100 bg-violet-50/60 p-4">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-violet-700">Exam context</p>
+                  <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                    <input name="currentAttainment" placeholder="Current grade or recent result" className="rounded-xl border border-violet-100 bg-white px-4 py-3 text-sm font-bold text-secondary outline-none focus:border-violet-400" />
+                    <input name="targetAttainment" placeholder="Target grade" className="rounded-xl border border-violet-100 bg-white px-4 py-3 text-sm font-bold text-secondary outline-none focus:border-violet-400" />
+                    <label className="text-xs font-black text-violet-800">Exam or mock date<input name="assessmentDate" type="date" className="mt-2 w-full rounded-xl border border-violet-100 bg-white px-4 py-3 text-sm font-bold text-secondary outline-none focus:border-violet-400" /></label>
+                    <input name="assessmentDetails" placeholder="Paper, unit, or specification section" className="self-end rounded-xl border border-violet-100 bg-white px-4 py-3 text-sm font-bold text-secondary outline-none focus:border-violet-400" />
+                  </div>
+                </div>
+              )}
+
+              {lessonPurpose === "homework_help" && (
+                <label className="block text-xs font-black uppercase tracking-widest text-secondary/60">
+                  Assignment instructions or question references
+                  <textarea name="homeworkInstructions" rows={3} placeholder="Describe the assignment, or attach it below." className="mt-2 w-full resize-none rounded-xl border border-secondary/10 bg-white px-4 py-3 text-sm font-medium normal-case tracking-normal text-secondary outline-none focus:border-primary" />
+                </label>
+              )}
+
+              {lessonPurpose === "assessment_review" && (
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <input name="recentScore" placeholder="Recent score" className="rounded-xl border border-secondary/10 bg-white px-4 py-3 text-sm font-bold text-secondary outline-none focus:border-primary" />
+                  <input name="lostMarksOn" placeholder="Topics or questions that lost marks" className="rounded-xl border border-secondary/10 bg-white px-4 py-3 text-sm font-bold text-secondary outline-none focus:border-primary" />
+                  <textarea name="teacherFeedback" rows={3} placeholder="Teacher feedback" className="resize-none rounded-xl border border-secondary/10 bg-white px-4 py-3 text-sm font-medium text-secondary outline-none focus:border-primary sm:col-span-2" />
+                </div>
+              )}
+
+              {recurrenceCount > 1 && (
+                <div className="grid gap-3 rounded-2xl border border-amber-100 bg-amber-50/60 p-4 sm:grid-cols-2">
+                  <textarea name="longerTermGoal" rows={3} placeholder="Longer-term goal" className="resize-none rounded-xl border border-amber-100 bg-white px-4 py-3 text-sm font-medium text-secondary outline-none focus:border-amber-400 sm:col-span-2" />
+                  <input name="priorityTopics" placeholder="Priority topics" className="rounded-xl border border-amber-100 bg-white px-4 py-3 text-sm font-bold text-secondary outline-none focus:border-amber-400" />
+                  <label className="text-xs font-black text-amber-800">Important deadline<input name="importantDeadline" type="date" className="mt-2 w-full rounded-xl border border-amber-100 bg-white px-4 py-3 text-sm font-bold text-secondary outline-none focus:border-amber-400" /></label>
+                </div>
+              )}
+
+              <div className="rounded-2xl border border-secondary/10 bg-white p-4">
+                <p className="text-xs font-black uppercase tracking-widest text-secondary/60">Optional teaching context</p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {["Calm pace", "Step-by-step explanations", "Visual examples", "Exam-focused practice", "Frequent checks", "Stretch questions"].map((preference) => (
+                    <button key={preference} type="button" onClick={() => toggleSupportPreference(preference)} className={`rounded-full border px-3 py-2 text-xs font-black transition-colors ${supportPreferences.includes(preference) ? "border-primary bg-primary text-white" : "border-secondary/10 bg-slate-50 text-secondary/55"}`}>{preference}</button>
+                  ))}
+                </div>
+                <textarea name="accommodations" rows={2} value={accommodations} onChange={(event) => setAccommodations(event.target.value)} placeholder="Relevant learning accommodations (optional — no diagnosis needed)" className="mt-3 w-full resize-none rounded-xl border border-secondary/10 bg-slate-50 px-4 py-3 text-sm font-medium text-secondary outline-none focus:border-primary" />
+                <textarea name="previousApproaches" rows={2} placeholder="Previous tutoring or approaches that did not work" className="mt-3 w-full resize-none rounded-xl border border-secondary/10 bg-slate-50 px-4 py-3 text-sm font-medium text-secondary outline-none focus:border-primary" />
+                <textarea name="description" rows={3} placeholder={`Any other context for ${tutor.full_name.split(' ')[0]}?`} className="mt-3 w-full resize-none rounded-xl border border-secondary/10 bg-slate-50 px-4 py-3 text-sm font-medium text-secondary outline-none focus:border-primary" />
+              </div>
+
+              <label className="block rounded-2xl border border-dashed border-primary/20 bg-primary/[0.025] p-4 text-xs font-black uppercase tracking-widest text-secondary/60">
+                Supporting materials (optional)
+                <input name="materials" type="file" multiple accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png" className="mt-3 block w-full text-sm font-semibold normal-case tracking-normal text-secondary/60 file:mr-4 file:rounded-full file:border-0 file:bg-primary file:px-4 file:py-2 file:text-xs file:font-black file:text-white" />
+                <span className="mt-2 block text-[10px] font-bold normal-case tracking-normal text-secondary/40">Up to 5 private PDF, JPG, or PNG files · 10 MB each</span>
+              </label>
+              <p className="text-[10px] font-black uppercase text-secondary/30 italic">Not charged until tutor confirms.</p>
             </div>
 
             <div className="pt-6 border-t border-secondary/10 mt-auto flex justify-end">
