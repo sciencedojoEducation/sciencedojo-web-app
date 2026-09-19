@@ -6,7 +6,10 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "lint:cron": "eslint app/api/cron/daily-community-post/route.ts app/api/cron/tutor-followups/route.ts lib/cronAuth.ts tests/cron-auth.test.mjs",
+    "test": "node --experimental-strip-types --test tests/cron-auth.test.mjs",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",

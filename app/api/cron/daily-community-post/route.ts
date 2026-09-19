@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
 import { generateAndQueueDailyPost } from "@/lib/communityContent";
+import { checkCronAuthorization } from "@/lib/cronAuth";
 
 export async function GET(request: Request) {
-  const configuredSecret = process.env.CRON_SECRET;
-  const authHeader = request.headers.get("authorization");
-
-  if (configuredSecret && authHeader !== `Bearer ${configuredSecret}`) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const authorizationFailure = checkCronAuthorization(request.headers.get("authorization"));
+  if (authorizationFailure) {
+    const { status, ...body } = authorizationFailure;
+    return NextResponse.json(body, { status });
   }
 
   try {
