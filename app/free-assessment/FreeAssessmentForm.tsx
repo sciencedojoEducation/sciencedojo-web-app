@@ -112,7 +112,7 @@ function TextField({
         onChange={(event) => onChange(event.target.value)}
         type={type}
         placeholder={placeholder}
-        className="rounded-2xl border border-secondary/10 bg-surface px-4 py-3.5 font-bold outline-none transition-colors placeholder:text-secondary/25 focus:border-primary focus:bg-white focus:ring-4 focus:ring-primary/10"
+        className="min-h-13 rounded-2xl border border-secondary/15 bg-[#f4f7fb] px-4 py-3.5 font-bold outline-none transition-colors placeholder:text-secondary/40 hover:border-secondary/25 focus:border-primary focus:bg-white focus:ring-4 focus:ring-primary/15"
       />
     </label>
   );
@@ -137,7 +137,7 @@ function TextAreaField({
         onChange={(event) => onChange(event.target.value)}
         rows={4}
         placeholder={placeholder}
-        className="resize-none rounded-2xl border border-secondary/10 bg-surface px-4 py-3.5 font-bold leading-7 outline-none transition-colors placeholder:text-secondary/25 focus:border-primary focus:bg-white focus:ring-4 focus:ring-primary/10"
+        className="resize-none rounded-2xl border border-secondary/15 bg-[#f4f7fb] px-4 py-3.5 font-bold leading-7 outline-none transition-colors placeholder:text-secondary/40 hover:border-secondary/25 focus:border-primary focus:bg-white focus:ring-4 focus:ring-primary/15"
       />
     </label>
   );
@@ -155,26 +155,36 @@ function OptionGrid({
   multi?: boolean;
 }) {
   return (
-    <div className="grid gap-3 sm:grid-cols-2">
-      {options.map((option) => {
-        const isSelected = Array.isArray(selected) ? selected.includes(option) : selected === option;
-        return (
-          <button
-            key={option}
-            type="button"
-            aria-pressed={isSelected}
-            onClick={() => onToggle(option)}
-            className={`rounded-2xl border px-4 py-3 text-left text-sm font-black leading-6 transition-all focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15 ${
-              isSelected
-                ? "border-primary/35 bg-primary/10 text-primary shadow-sm"
-                : "border-secondary/10 bg-white text-secondary/65 hover:border-primary/20 hover:text-secondary"
-            }`}
-          >
-            {multi && <span className="mr-2 text-primary">{isSelected ? "✓" : "+"}</span>}
-            {option}
-          </button>
-        );
-      })}
+    <div>
+      {multi && <p className="mb-3 text-xs font-bold text-secondary/55">Select all that apply</p>}
+      <div className="grid gap-3 sm:grid-cols-2">
+        {options.map((option) => {
+          const isSelected = Array.isArray(selected) ? selected.includes(option) : selected === option;
+          return (
+            <button
+              key={option}
+              type="button"
+              aria-pressed={isSelected}
+              onClick={() => onToggle(option)}
+              className={`flex min-h-14 items-center rounded-2xl border px-4 py-3 text-left text-sm font-black leading-6 transition-all focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20 focus-visible:ring-offset-2 ${
+                isSelected
+                  ? "border-primary bg-primary text-white shadow-md shadow-primary/20 hover:bg-primary-hover"
+                  : "border-secondary/15 bg-[#f4f7fb] text-secondary/80 shadow-sm hover:border-primary/40 hover:bg-primary/5 hover:text-secondary"
+              }`}
+            >
+              <span
+                aria-hidden="true"
+                className={`mr-3 flex size-5 shrink-0 items-center justify-center rounded-full border text-[0.7rem] leading-none ${
+                  isSelected ? "border-white/80 bg-white/15 text-white" : "border-primary/45 bg-white text-transparent"
+                }`}
+              >
+                ✓
+              </span>
+              <span>{option}</span>
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }
@@ -392,7 +402,7 @@ export default function FreeAssessmentForm() {
           type="button"
           onClick={() => setStep((current) => Math.max(0, current - 1))}
           disabled={step === 0 || isPending}
-          className="rounded-2xl border border-secondary/10 bg-white px-5 py-3 text-sm font-black text-secondary/60 transition-colors hover:border-secondary/20 disabled:cursor-not-allowed disabled:opacity-35"
+          className="min-h-13 rounded-2xl border border-secondary/15 bg-[#f4f7fb] px-5 py-3 text-sm font-black text-secondary/70 transition-colors hover:border-secondary/30 hover:bg-white hover:text-secondary focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-35"
         >
           Back
         </button>
@@ -404,7 +414,7 @@ export default function FreeAssessmentForm() {
               handleStart();
               setStep((current) => Math.min(steps.length - 1, current + 1));
             }}
-            className="rounded-2xl bg-secondary px-7 py-3.5 text-sm font-black uppercase tracking-[0.14em] text-white shadow-lg shadow-secondary/10 transition-all hover:-translate-y-0.5 hover:bg-secondary/90"
+            className="min-h-13 rounded-2xl bg-primary px-7 py-3.5 text-sm font-black uppercase tracking-[0.14em] text-white shadow-lg shadow-primary/20 transition-all hover:-translate-y-0.5 hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/25 focus-visible:ring-offset-2 active:translate-y-0"
           >
             Continue
           </button>
@@ -412,7 +422,7 @@ export default function FreeAssessmentForm() {
           <button
             type="submit"
             disabled={isPending}
-            className="rounded-2xl bg-primary px-7 py-3.5 text-sm font-black uppercase tracking-[0.14em] text-white shadow-lg shadow-primary/20 transition-all hover:-translate-y-0.5 hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-60"
+            className="min-h-13 rounded-2xl bg-primary px-7 py-3.5 text-sm font-black uppercase tracking-[0.14em] text-white shadow-lg shadow-primary/20 transition-all hover:-translate-y-0.5 hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/25 focus-visible:ring-offset-2 active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {isPending ? "Sending Intake..." : "Request Assessment"}
           </button>

@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
 import InternalClock from "./InternalClock";
 import { getActiveInternalMemberByUserId, repairLinkedInternalUserRole } from "@/lib/internal-auth";
+import { formatProjectStatus, type InternalProjectStatus } from "@/lib/internal-projects";
 
 export const metadata = {
   title: "Internal Dashboard | ScienceDojo",
@@ -103,6 +104,17 @@ export default async function InternalDashboardPage() {
     redirect(`/login/internal/denied?error=${encodeURIComponent("Your internal access is inactive or has not been linked yet.")}`);
   }
 
+  const { data: projectData, error: projectsError } = await supabase
+    .from("internal_projects")
+    .select("id, title, status, priority, target_date, updated_at")
+    .eq("assigned_to", activeMember.id)
+    .is("archived_at", null)
+    .order("updated_at", { ascending: false });
+
+  if (projectsError) {
+    throw new Error(projectsError.message);
+  }
+
   const internalMember = member as InternalTeamMember;
   const internalProfile = (profile || {
     full_name: null,
@@ -115,8 +127,11 @@ export default async function InternalDashboardPage() {
   const today = new Date();
   const calendarDays = buildCalendarDays(today);
   const todayDate = today.getDate();
-  const weeklyPlan = ["Review open edits", "Check team messages", "Ship one small improvement", "Capture blockers"];
-  const todoItems = ["Reply to admin notes", "Update responsibility area", "Plan next FocusDojo session"];
+  const projects = projectData || [];
+  const newProjectCount = projects.filter((project) => project.status === "idea").length;
+  const activeProjectCount = projects.filter((project) => !["live", "discontinued"].includes(project.status)).length;
+  const pausedProjectCount = projects.filter((project) => project.status === "paused").length;
+  const recentProjects = projects.slice(0, 3);
 
   return (
     <div className="mx-auto max-w-7xl space-y-6 px-3 py-5 sm:px-4 md:p-8">
@@ -150,18 +165,15 @@ export default async function InternalDashboardPage() {
         <section className="rounded-[1.5rem] border border-emerald-100 bg-white p-5 shadow-sm md:rounded-[2rem]">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-[10px] font-black uppercase tracking-[0.16em] text-emerald-700/50">Weekly plan</p>
-              <h2 className="mt-2 text-xl font-black text-emerald-950">This week</h2>
+              <p className="text-[10px] font-black uppercase tracking-[0.16em] text-emerald-700/50">Assigned projects</p>
+              <h2 className="mt-2 text-xl font-black text-emerald-950">Delivery pulse</h2>
             </div>
-            <span className="rounded-full bg-lime-50 px-3 py-1 text-[10px] font-black uppercase tracking-[0.12em] text-lime-700">Static v1</span>
+            <Link href="/dashboard/internal/projects" className="rounded-full bg-lime-50 px-3 py-1 text-[10px] font-black uppercase tracking-[0.12em] text-lime-700 hover:bg-lime-100">Open board</Link>
           </div>
-          <div className="mt-4 grid gap-2">
-            {weeklyPlan.map((item, index) => (
-              <div key={item} className="flex items-center gap-3 rounded-2xl bg-emerald-50/70 p-3">
-                <span className="flex h-7 w-7 items-center justify-center rounded-xl bg-white text-xs font-black text-emerald-700">{index + 1}</span>
-                <p className="text-sm font-bold text-emerald-950/70">{item}</p>
-              </div>
-            ))}
+          <div className="mt-5 grid grid-cols-3 gap-2">
+            <div className="rounded-2xl bg-sky-50 p-3 text-center"><p className="text-2xl font-black text-sky-800">{newProjectCount}</p><p className="mt-1 text-[9px] font-black uppercase tracking-wider text-sky-700/60">New</p></div>
+            <div className="rounded-2xl bg-emerald-50 p-3 text-center"><p className="text-2xl font-black text-emerald-800">{activeProjectCount}</p><p className="mt-1 text-[9px] font-black uppercase tracking-wider text-emerald-700/60">Active</p></div>
+            <div className="rounded-2xl bg-slate-100 p-3 text-center"><p className="text-2xl font-black text-slate-800">{pausedProjectCount}</p><p className="mt-1 text-[9px] font-black uppercase tracking-wider text-slate-500">Paused</p></div>
           </div>
         </section>
 
@@ -204,15 +216,16 @@ export default async function InternalDashboardPage() {
         </section>
 
         <section className="rounded-[1.5rem] border border-emerald-100 bg-white p-5 shadow-sm md:rounded-[2rem]">
-          <p className="text-[10px] font-black uppercase tracking-[0.16em] text-emerald-700/50">To-do list</p>
-          <h2 className="mt-2 text-xl font-black text-emerald-950">Today&apos;s quick wins</h2>
+          <p className="text-[10px] font-black uppercase tracking-[0.16em] text-emerald-700/50">Recently updated</p>
+          <h2 className="mt-2 text-xl font-black text-emerald-950">My project queue</h2>
           <div className="mt-4 grid gap-2">
-            {todoItems.map((item) => (
-              <label key={item} className="flex items-center gap-3 rounded-2xl bg-lime-50/70 p-3">
-                <input type="checkbox" className="h-4 w-4 rounded border-emerald-200 text-emerald-600" />
-                <span className="text-sm font-bold text-emerald-950/70">{item}</span>
-              </label>
+            {recentProjects.map((project) => (
+              <Link key={project.id} href={`/dashboard/projects/${project.id}`} className="flex items-center justify-between gap-3 rounded-2xl bg-lime-50/70 p-3 transition-colors hover:bg-lime-100">
+                <span className="min-w-0 truncate text-sm font-bold text-emerald-950/70">{project.title}</span>
+                <span className="shrink-0 rounded-full bg-white px-2 py-1 text-[9px] font-black uppercase text-emerald-700">{formatProjectStatus(project.status as InternalProjectStatus)}</span>
+              </Link>
             ))}
+            {recentProjects.length === 0 && <p className="rounded-2xl bg-lime-50/70 p-4 text-sm font-bold text-emerald-950/50">No projects are assigned yet.</p>}
           </div>
           <Link href={focusDojoUrl} target="_blank" rel="noopener noreferrer" className="mt-5 flex items-center justify-between rounded-2xl bg-gradient-to-br from-emerald-600 to-lime-500 p-4 text-white shadow-lg shadow-emerald-200 transition-transform hover:-translate-y-0.5">
             <div>

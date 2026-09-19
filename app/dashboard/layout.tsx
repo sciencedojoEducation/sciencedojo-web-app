@@ -50,7 +50,8 @@ export default async function DashboardLayout({
 
   const isInternalAllowedRoute =
     pathname === "/dashboard/internal" ||
-    pathname.startsWith("/dashboard/internal/settings") ||
+    pathname.startsWith("/dashboard/internal/") ||
+    pathname.startsWith("/dashboard/projects/") ||
     pathname.startsWith("/dashboard/messages");
 
   if (activeInternalMember && user) {

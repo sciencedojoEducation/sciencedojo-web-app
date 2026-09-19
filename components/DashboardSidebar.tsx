@@ -65,6 +65,7 @@ export default async function DashboardSidebar({ role }: DashboardSidebarProps) 
 
   const unreadCount = await getUnreadMessageCount();
   let flaggedCount = 0;
+  let newProjectCount = 0;
 
   if (role === "admin") {
     const { data: flaggedConvs } = await supabase
@@ -72,6 +73,15 @@ export default async function DashboardSidebar({ role }: DashboardSidebarProps) 
       .select("conversation_id")
       .eq("is_flagged", true);
     flaggedCount = new Set(flaggedConvs?.map(m => m.conversation_id)).size;
+  }
+
+  if (role === "internal" && user) {
+    const { count } = await supabase
+      .from("internal_projects")
+      .select("id", { count: "exact", head: true })
+      .eq("status", "idea")
+      .is("archived_at", null);
+    newProjectCount = count || 0;
   }
 
   const tutorMarketplaceEnabled = role === "internal" ? false : await isFeatureEnabled("tutor_marketplace_enabled");
@@ -118,6 +128,7 @@ export default async function DashboardSidebar({ role }: DashboardSidebarProps) 
     ],
     admin: [
       { name: "Overview", href: "/dashboard/admin", icon: "📊", exact: true },
+      { name: "Project Ideas", href: "/dashboard/admin/projects", icon: "💡" },
       { name: "Funnel Overview", href: "/dashboard/admin/overview", icon: "📈" },
       { name: "Assessment Leads", href: "/dashboard/admin/leads", icon: "🧲" },
       { name: "Messages", href: "/dashboard/messages", icon: "💬", badge: unreadCount },
@@ -132,6 +143,7 @@ export default async function DashboardSidebar({ role }: DashboardSidebarProps) 
     ],
     internal: [
       { name: "Internal Dashboard", href: "/dashboard/internal", icon: "🛠️", exact: true },
+      { name: "My Projects", href: "/dashboard/internal/projects", icon: "💡", badge: newProjectCount, badgeColor: "bg-sky-500 shadow-sky-500/20" },
       { name: "Messages", href: "/dashboard/messages", icon: "💬", badge: unreadCount },
       { name: "Settings", href: "/dashboard/internal/settings", icon: "⚙️" },
     ],

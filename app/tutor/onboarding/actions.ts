@@ -53,6 +53,7 @@ export async function saveApplicationStage(
 
   // UPSERT the application record incrementally
   const updateData: ApplicationStageData = {};
+  updateData.updated_at = new Date().toISOString();
   
   // Get existing data if any
   const { data: existingApp } = await supabase
@@ -228,7 +229,8 @@ export async function submitTutorApplication(formData: FormData) {
         experience_summary,
         has_teaching_license,
         cv_url,
-        status: "pending"
+        status: "pending",
+        updated_at: new Date().toISOString()
       },
       { onConflict: 'user_id' }
     );

@@ -1,5 +1,6 @@
 import { createAdminClient } from "@/utils/supabase/admin";
 import { buildScienceDojoEmailTemplate, getEmailProviderStatus, sendEmail } from "@/lib/email";
+import { hasMeaningfulTutorSubjects } from "@/lib/tutors/subjects";
 
 export type CommunicationAudience = "all" | "tutor" | "parent" | "student" | "user";
 export type CommunicationCategory = "account" | "onboarding" | "service" | "product" | "tutor_growth" | "policy";
@@ -205,11 +206,74 @@ export function getTutorMissingSteps(applicationData: Record<string, unknown>) {
   const missing: string[] = [];
   if (!applicationData.full_name) missing.push("Add your full name");
   if (!applicationData.phone) missing.push("Add a phone number");
-  if (!applicationData.subjects) missing.push("Add the subjects you want to teach");
+  if (!hasMeaningfulTutorSubjects(applicationData.subjects)) missing.push("Add the subjects you want to teach");
   if (!Array.isArray(applicationData.education) || applicationData.education.length === 0) missing.push("Add education or qualifications");
   if (!applicationData.government_id_url) missing.push("Upload photo ID");
   if (applicationData.gdpr_accepted !== "true" || applicationData.terms_accepted !== "true") missing.push("Accept the tutor agreements");
+  if (missing.length === 0) missing.push("Review and submit your application");
   return missing;
+}
+
+function isClosedTutorApplication(applicationData: Record<string, unknown>) {
+  return applicationData.is_knocked_out === true || applicationData.onboarding_status === "rejected";
+}
+
+export async function runIncompleteTutorApplicationReminders() {
+  const adminClient = createAdminClient();
+  const { data: tutors, error } = await adminClient
+    .from("profiles")
+    .select("id, email, full_name, is_suspended, applications(status, data, created_at, updated_at)")
+    .eq("role", "tutor")
+    .eq("is_suspended", false)
+    .not("email", "is", null);
+
+  if (error) {
+    console.error("Incomplete tutor reminder fetch failed:", error.message);
+    throw new Error(`Unable to fetch incomplete tutor applications: ${error.message}`);
+  }
+
+  let sent = 0;
+  let skipped = 0;
+  let failed = 0;
+
+  for (const tutor of tutors || []) {
+    const application = Array.isArray(tutor.applications) ? tutor.applications[0] : tutor.applications;
+    if (!application || application.status !== "draft") continue;
+
+    const applicationData = application.data && typeof application.data === "object"
+      ? application.data as Record<string, unknown>
+      : {};
+    if (isClosedTutorApplication(applicationData)) continue;
+
+    const lastActivityAt = new Date(application.updated_at || application.created_at).getTime();
+    if (!Number.isFinite(lastActivityAt)) {
+      console.error("Incomplete tutor reminder skipped invalid application timestamp:", {
+        userId: tutor.id,
+      });
+      skipped += 1;
+      continue;
+    }
+
+    const inactiveHours = (Date.now() - lastActivityAt) / (1000 * 60 * 60);
+    if (inactiveHours < 72) continue;
+
+    const response = await sendTrackedEmail({
+      userId: tutor.id,
+      recipientEmail: tutor.email!,
+      recipientName: tutor.full_name,
+      category: "onboarding",
+      audience: "tutor",
+      templateKey: "incomplete_tutor_application",
+      missingSteps: getTutorMissingSteps(applicationData),
+      dedupeHours: 72,
+    });
+
+    if ("sent" in response) sent += 1;
+    else if ("skipped" in response) skipped += 1;
+    else failed += 1;
+  }
+
+  return { sent, skipped, failed };
 }
 
 function hasWeakListedTutorProfile(applicationData: Record<string, unknown>) {
