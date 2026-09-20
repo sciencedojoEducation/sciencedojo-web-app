@@ -107,6 +107,7 @@ export default async function DashboardSidebar({ role }: DashboardSidebarProps) 
       { name: "Assessment Leads", href: "/dashboard/admin/leads", icon: "🧲", badgeKey: "assessmentLeads" },
       { name: "Messages", href: "/dashboard/messages", icon: "💬", badgeKey: "messages" },
       { name: "Dojo Safeguards", href: "/dashboard/admin/safeguards", icon: "🛡️", badgeKey: "safeguards" },
+      { name: "Exam Community", href: "/dashboard/admin/community", icon: "💬" },
       { name: "Broadcast Center", href: "/dashboard/admin/broadcast", icon: "📣" },
       { name: "Communications", href: "/dashboard/admin/communications", icon: "✉️" },
       { name: "Manage Tutors", href: "/dashboard/admin/tutors", icon: "👥", badgeKey: "manageTutors" },
