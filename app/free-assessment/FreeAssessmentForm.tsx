@@ -1,7 +1,9 @@
 "use client";
 
-import { type FormEvent, useActionState, useEffect, useMemo, useRef, useState } from "react";
+import { useActionState, useEffect, useMemo, useRef, useState } from "react";
 import { trackEvent } from "@/lib/analytics";
+import EducationPathwayFields, { type EducationPathwayValue } from "@/components/EducationPathwayFields";
+import { uncertainEducationOption } from "@/lib/educationTaxonomy";
 import { requestFreeAssessment, type AssessmentFormState } from "./actions";
 
 const initialState: AssessmentFormState = {
@@ -42,15 +44,14 @@ const steps = [
   },
 ] as const;
 
-type IntakeValues = {
+type IntakeValues = EducationPathwayValue & {
   parentName: string;
   email: string;
   whatsapp: string;
   studentName: string;
   studentYear: string;
-  curriculum: string;
-  subject: string;
   weakTopics: string;
+  subtopic: string;
   targetGrade: string;
   upcomingExams: string;
   hardestAreas: string[];
@@ -68,9 +69,16 @@ const defaultValues: IntakeValues = {
   whatsapp: "",
   studentName: "",
   studentYear: "",
-  curriculum: "",
+  curriculumKey: uncertainEducationOption,
+  stage: uncertainEducationOption,
+  awardingBodyKey: "",
   subject: "",
+  subjectVariant: "",
+  level: "",
+  topic: "",
+  specificationCode: "",
   weakTopics: "",
+  subtopic: "",
   targetGrade: "",
   upcomingExams: "",
   hardestAreas: [],
@@ -82,7 +90,6 @@ const defaultValues: IntakeValues = {
   message: "",
 };
 
-const curriculumOptions = ["GCSE", "IGCSE", "IB", "A-Level", "KS3", "Other international curriculum"];
 const hardestAreaOptions = ["Understanding concepts", "Applying ideas in exam questions", "Remembering content", "Exam timing", "Explaining answers clearly", "Staying consistent"];
 const studyConcernOptions = ["Loses motivation", "Revises but forgets", "Avoids difficult topics", "Panics before tests", "Lacks structure", "Needs accountability"];
 const supportStyleOptions = ["Calm explanation and confidence rebuilding", "Exam-focused practice", "Structured weekly accountability", "Topic-by-topic catch-up", "Stretch and challenge", "Not sure yet"];
@@ -208,9 +215,9 @@ export default function FreeAssessmentForm() {
     trackEvent(state.status === "success" ? "free_assessment_submit_success" : "free_assessment_submit_error", {
       source: "free_assessment_page",
       subject: values.subject,
-      curriculum: values.curriculum,
+      curriculum: values.curriculumKey,
     });
-  }, [state.message, state.status, values.curriculum, values.subject]);
+  }, [state.message, state.status, values.curriculumKey, values.subject]);
 
   const updateValue = <K extends keyof IntakeValues>(key: K, value: IntakeValues[K]) => {
     setValues((current) => ({ ...current, [key]: value }));
@@ -228,11 +235,11 @@ export default function FreeAssessmentForm() {
     });
   };
 
-  const handleSubmitCapture = (_event: FormEvent<HTMLFormElement>) => {
+  const handleSubmitCapture = () => {
     trackEvent("free_assessment_submit_attempt", {
       source: "free_assessment_page",
       subject: values.subject,
-      curriculum: values.curriculum,
+      curriculum: values.curriculumKey,
     });
   };
 
@@ -304,8 +311,15 @@ export default function FreeAssessmentForm() {
       <input type="hidden" name="whatsapp" value={values.whatsapp} />
       <input type="hidden" name="studentName" value={values.studentName} />
       <input type="hidden" name="studentYear" value={values.studentYear} />
-      <input type="hidden" name="curriculum" value={values.curriculum} />
+      <input type="hidden" name="curriculumKey" value={values.curriculumKey} />
+      <input type="hidden" name="stage" value={values.stage} />
+      <input type="hidden" name="awardingBodyKey" value={values.awardingBodyKey} />
       <input type="hidden" name="subject" value={values.subject} />
+      <input type="hidden" name="subjectVariant" value={values.subjectVariant} />
+      <input type="hidden" name="level" value={values.level} />
+      <input type="hidden" name="topic" value={values.topic} />
+      <input type="hidden" name="subtopic" value={values.subtopic} />
+      <input type="hidden" name="specificationCode" value={values.specificationCode} />
       <input type="hidden" name="weakTopics" value={values.weakTopics} />
       <input type="hidden" name="targetGrade" value={values.targetGrade} />
       <input type="hidden" name="upcomingExams" value={values.upcomingExams} />
@@ -328,18 +342,15 @@ export default function FreeAssessmentForm() {
           <div className="grid gap-6">
             <TextField label="Student name" value={values.studentName} onChange={(value) => updateValue("studentName", value)} />
             <TextField label="Student year/grade" value={values.studentYear} onChange={(value) => updateValue("studentYear", value)} placeholder="Year 10, Grade 11, IB Year 1..." />
-            <div>
-              <p className="mb-3 text-sm font-black text-secondary">Curriculum</p>
-              <OptionGrid options={curriculumOptions} selected={values.curriculum} multi={false} onToggle={(value) => updateValue("curriculum", value)} />
-            </div>
+            <EducationPathwayFields value={values} onChange={(education) => setValues((current) => ({ ...current, ...education }))} topicRequired />
           </div>
         )}
 
         {step === 1 && (
           <div className="grid gap-6">
             <div className="grid gap-5 md:grid-cols-2">
-              <TextField label="Subject support needed" value={values.subject} onChange={(value) => updateValue("subject", value)} placeholder="Physics, Chemistry, Maths..." />
               <TextField label="Target grade or goal" value={values.targetGrade} onChange={(value) => updateValue("targetGrade", value)} placeholder="A*, 7, improve confidence..." />
+              <TextField label="Specific subtopic (optional)" value={values.subtopic} onChange={(value) => updateValue("subtopic", value)} placeholder="Quadratic factorisation, six-mark questions..." />
             </div>
             <TextAreaField label="Weak topics or recent difficulty" value={values.weakTopics} onChange={(value) => updateValue("weakTopics", value)} placeholder="Forces, organic chemistry, exam questions, practical writeups..." />
             <TextField label="Upcoming exams or important dates" value={values.upcomingExams} onChange={(value) => updateValue("upcomingExams", value)} placeholder="Mocks in March, IB exams, GCSE summer..." />

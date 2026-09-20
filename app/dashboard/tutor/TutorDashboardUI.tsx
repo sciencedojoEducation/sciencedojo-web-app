@@ -12,6 +12,7 @@ import TutorAvailabilityCalendar from "@/components/TutorAvailabilityCalendar";
 import ImageCropper from "@/components/ImageCropper";
 import AnnouncementFeed from "@/components/AnnouncementFeed";
 import { confidenceLabels, lessonPurposeLabels } from "@/lib/lesson-request-intake";
+import { getEducationLabel } from "@/lib/educationTaxonomy";
 
 export type TutorWorkspaceTab = "schedule" | "requests" | "sessions" | "availability" | "students";
 
@@ -629,7 +630,17 @@ export default function TutorDashboardUI({
                              </div>
                              <div className="mt-3 grid gap-2 text-xs sm:grid-cols-2">
                                <p><span className="font-black text-secondary/40">Learner:</span> <span className="font-bold text-secondary">{booking.learning_context.learnerName} · {booking.learning_context.schoolYear}</span></p>
-                               <p><span className="font-black text-secondary/40">Path:</span> <span className="font-bold text-secondary">{[booking.learning_context.curriculumKey || "Curriculum unclear", booking.learning_context.level || "Level unclear"].join(" · ")}</span></p>
+                               <p><span className="font-black text-secondary/40">Route:</span> <span className="font-bold text-secondary">{[
+                                 getEducationLabel("curriculum", booking.learning_context.curriculumKey),
+                                 getEducationLabel("stage", booking.learning_context.stage, { curriculumKey: booking.learning_context.curriculumKey || undefined }),
+                                 booking.learning_context.awardingBodyKey ? getEducationLabel("awardingBody", booking.learning_context.awardingBodyKey) : null,
+                               ].filter(Boolean).join(" · ")}</span></p>
+                               <p><span className="font-black text-secondary/40">Course:</span> <span className="font-bold text-secondary">{[
+                                 booking.learning_context.subject,
+                                 booking.learning_context.subjectVariant ? getEducationLabel("subjectVariant", booking.learning_context.subjectVariant, { subject: booking.learning_context.subject, curriculumKey: booking.learning_context.curriculumKey || undefined, stage: booking.learning_context.stage || undefined }) : null,
+                                 booking.learning_context.level ? getEducationLabel("level", booking.learning_context.level, { subject: booking.learning_context.subject, curriculumKey: booking.learning_context.curriculumKey || undefined, stage: booking.learning_context.stage || undefined }) : null,
+                                 booking.learning_context.specificationCode,
+                               ].filter(Boolean).join(" · ")}</span></p>
                                <p><span className="font-black text-secondary/40">Focus:</span> <span className="font-bold text-secondary">{booking.learning_context.topic}{booking.learning_context.subtopic ? ` · ${booking.learning_context.subtopic}` : ""}</span></p>
                                <p><span className="font-black text-secondary/40">Purpose:</span> <span className="font-bold text-secondary">{lessonPurposeLabels[booking.learning_context.lessonPurpose]}</span></p>
                                <p><span className="font-black text-secondary/40">Confidence:</span> <span className="font-bold text-secondary">{confidenceLabels[booking.learning_context.confidence]}</span></p>

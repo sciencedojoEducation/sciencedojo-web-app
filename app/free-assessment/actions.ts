@@ -3,6 +3,7 @@
 import { sendEmail } from "@/lib/email";
 import { getMentorAttributionFromCookies, isAttributionSchemaError, markMentorLeadConverted } from "@/lib/mentor-attribution";
 import { createAdminClient } from "@/utils/supabase/server";
+import { buildEducationSelectionSnapshot, getEducationLabel } from "@/lib/educationTaxonomy";
 
 export type AssessmentFormState = {
   status: "idle" | "success" | "error";
@@ -41,8 +42,12 @@ function buildFallbackMessage(fields: Record<string, string>) {
     `WhatsApp: ${fields.whatsapp}`,
     `Student name: ${fields.studentName}`,
     `Student year/grade: ${fields.studentYear}`,
-    `Curriculum: ${fields.curriculum}`,
+    `Curriculum pathway: ${fields.curriculum}`,
+    `Stage or qualification: ${fields.stageLabel}`,
+    `Exam board / awarding body: ${fields.boardLabel}`,
     `Subject help needed: ${fields.subject}`,
+    `Topic: ${fields.topic}`,
+    `Subtopic: ${fields.subtopic}`,
     `Weak topics: ${fields.weakTopics}`,
     `Target grade or goal: ${fields.targetGrade}`,
     `Upcoming exams: ${fields.upcomingExams}`,
@@ -62,10 +67,14 @@ function buildStructuredLeadNotes(fields: Record<string, string>) {
     "",
     "Student Profile",
     `Student: ${fields.studentName || "Not specified"} (${fields.studentYear || "Not specified"})`,
-    `Curriculum: ${fields.curriculum || "Not specified"}`,
+    `Curriculum pathway: ${fields.curriculum || "Not specified"}`,
+    `Stage or qualification: ${fields.stageLabel || "Not specified"}`,
+    `Exam board / awarding body: ${fields.boardLabel || "Not applicable"}`,
     "",
     "Subject & Goals",
     `Subject: ${fields.subject || "Not specified"}`,
+    `Topic: ${fields.topic || "Not specified"}`,
+    `Subtopic: ${fields.subtopic || "Not specified"}`,
     `Weak topics: ${fields.weakTopics || "Not specified"}`,
     `Target grade or goal: ${fields.targetGrade || "Not specified"}`,
     `Upcoming exams: ${fields.upcomingExams || "Not specified"}`,
@@ -128,8 +137,15 @@ export async function requestFreeAssessment(
     whatsapp: clean(formData.get("whatsapp")),
     studentName: clean(formData.get("studentName")),
     studentYear: clean(formData.get("studentYear")),
-    curriculum: clean(formData.get("curriculum")),
+    curriculumKey: clean(formData.get("curriculumKey")),
+    stage: clean(formData.get("stage")),
+    awardingBodyKey: clean(formData.get("awardingBodyKey")),
+    level: clean(formData.get("level")),
     subject: clean(formData.get("subject")),
+    subjectVariant: clean(formData.get("subjectVariant")),
+    specificationCode: clean(formData.get("specificationCode")),
+    topic: clean(formData.get("topic")),
+    subtopic: clean(formData.get("subtopic")),
     weakTopics: clean(formData.get("weakTopics")),
     targetGrade: clean(formData.get("targetGrade")),
     upcomingExams: clean(formData.get("upcomingExams")),
@@ -142,14 +158,35 @@ export async function requestFreeAssessment(
     message: clean(formData.get("message")),
   };
 
+  const educationResult = buildEducationSelectionSnapshot({
+    curriculumKey: fields.curriculumKey,
+    stage: fields.stage,
+    awardingBodyKey: fields.awardingBodyKey,
+    level: fields.level,
+    subject: fields.subject,
+    subjectVariant: fields.subjectVariant,
+    specificationCode: fields.specificationCode,
+    topic: fields.topic,
+    subtopic: fields.subtopic,
+    assessmentDate: fields.upcomingExams,
+  }, { topicRequired: true });
+  if (!educationResult.snapshot) return { status: "error", message: educationResult.error || "Choose a valid education route." };
+
+  const curriculum = getEducationLabel("curriculum", fields.curriculumKey);
+  const stageLabel = getEducationLabel("stage", fields.stage, { curriculumKey: fields.curriculumKey });
+  const boardLabel = fields.awardingBodyKey ? getEducationLabel("awardingBody", fields.awardingBodyKey) : "Not applicable";
+  const displayFields: Record<string, string> = { ...fields, curriculum, stageLabel, boardLabel };
+
   const requiredFields = [
     fields.parentName,
     fields.email,
     fields.whatsapp,
     fields.studentName,
     fields.studentYear,
-    fields.curriculum,
+    fields.curriculumKey,
+    fields.stage,
     fields.subject,
+    fields.topic,
     fields.preferredTime,
   ];
 
@@ -167,9 +204,9 @@ export async function requestFreeAssessment(
     };
   }
 
-  const fallbackText = buildFallbackMessage(fields);
-  const structuredLeadNotes = buildStructuredLeadNotes(fields);
-  const assessmentSummary = buildAssessmentSummary(fields);
+  const fallbackText = buildFallbackMessage(displayFields);
+  const structuredLeadNotes = buildStructuredLeadNotes(displayFields);
+  const assessmentSummary = buildAssessmentSummary(displayFields);
   const mailtoHref = `mailto:${recipientEmail}?subject=${encodeURIComponent("Free assessment request")}&body=${encodeURIComponent(fallbackText)}`;
   const whatsappNumber = (process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "+94773850821").replace(/[^\d]/g, "");
   const whatsappHref = whatsappNumber ? `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(fallbackText)}` : undefined;
@@ -185,8 +222,12 @@ export async function requestFreeAssessment(
           "WhatsApp number": fields.whatsapp,
           "Student name": fields.studentName,
           "Student year/grade": fields.studentYear,
-          Curriculum: fields.curriculum,
+          "Curriculum pathway": curriculum,
+          "Stage or qualification": stageLabel,
+          "Exam board / awarding body": boardLabel,
           "Subject help needed": fields.subject,
+          Topic: fields.topic,
+          Subtopic: fields.subtopic || "Not specified.",
           "Weak topics": fields.weakTopics || "Not specified.",
           "Target grade or goal": fields.targetGrade || "Not specified.",
           "Upcoming exams": fields.upcomingExams || "Not specified.",
@@ -221,8 +262,9 @@ export async function requestFreeAssessment(
       whatsapp_number: fields.whatsapp,
       student_name: fields.studentName,
       student_grade: fields.studentYear,
-      curriculum: fields.curriculum,
+      curriculum,
       subject_needed: fields.subject,
+      learning_context: educationResult.snapshot,
       main_challenge: fields.challenge || fields.hardestAreas || "Assessment intake completed",
       preferred_time: fields.preferredTime,
       message: structuredLeadNotes,
@@ -248,6 +290,10 @@ export async function requestFreeAssessment(
         lead_source_id: _leadSourceId,
         ...baseLeadPayload
       } = leadPayload;
+      void _acquisitionSource;
+      void _referrerTutorId;
+      void _landingTutorId;
+      void _leadSourceId;
 
       const fallbackResult = await adminClient
         .from("assessment_leads")

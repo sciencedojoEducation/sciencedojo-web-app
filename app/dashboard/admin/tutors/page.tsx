@@ -36,6 +36,13 @@ export default async function AdminTutorsPage() {
   const { data: applications, error: appError } = await adminClient
     .from("applications")
     .select("*");
+  const { data: academyProgressRows, error: academyProgressError } = await adminClient
+    .from("tutor_academy_progress")
+    .select("user_id, completed_lessons, best_score, completed_at");
+
+  if (academyProgressError) {
+    console.error("❌ Failed to load Tutor Academy progress:", academyProgressError.message);
+  }
 
   const coreQueryErrors = [
     { source: "profiles", error: tutorProfilesError },
@@ -67,6 +74,7 @@ export default async function AdminTutorsPage() {
   });
 
   const applicationMap = Object.fromEntries(applications?.map(a => [a.user_id, a]) || []);
+  const academyProgressMap = Object.fromEntries(academyProgressRows?.map(row => [row.user_id, row]) || []);
 
   // 4. AUTO-REPAIR: If any profile is missing a detailed 'tutors' record, create it now.
   const tutorMap = Object.fromEntries(rawTutorData?.map(t => [t.id, t]) || []);
@@ -93,12 +101,14 @@ export default async function AdminTutorsPage() {
       ...p,
       tutorDetail: finalMap[p.id] || null,
       application: applicationMap[p.id] || null,
+      academyProgress: academyProgressMap[p.id] || null,
     })) || [];
   } else {
     var mergedTutors = tutorProfiles?.map(p => ({
       ...p,
       tutorDetail: tutorMap[p.id] || null,
       application: applicationMap[p.id] || null,
+      academyProgress: academyProgressMap[p.id] || null,
     })) || [];
   }
 

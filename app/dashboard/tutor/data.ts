@@ -6,6 +6,9 @@ import { getActivePlatformAnnouncementsForUser } from "@/lib/platform-announceme
 import { getAvailabilityByTutorId, getBookingsByUserId, getTutorById } from "@/lib/supabase-queries";
 import { buildTutorLaunchChecklist, buildTutorReadiness } from "@/lib/tutor-readiness";
 import { getTutorMentorReach } from "@/lib/tutor-mentor-reach";
+import { emptyAcademyProgress, TUTOR_ACADEMY_COURSE_KEY } from "@/lib/tutor-academy";
+import { normalizeAcademyProgress } from "@/lib/tutor-academy-progress";
+import { isFeatureEnabled } from "@/lib/feature-flags";
 
 function asRecord(value: unknown): Record<string, any> {
   return value && typeof value === "object" && !Array.isArray(value)
@@ -46,6 +49,18 @@ export async function getTutorDashboardData() {
     .select("stripe_onboarding_complete")
     .eq("id", user.id)
     .maybeSingle();
+  const tutorAcademyEnabled = await isFeatureEnabled("tutor_academy_enabled");
+  const { data: academyProgressRow } = tutorAcademyEnabled
+    ? await supabase
+      .from("tutor_academy_progress")
+      .select("completed_lessons, current_lesson, quiz_attempts, best_score, completed_at")
+      .eq("user_id", user.id)
+      .eq("course_key", TUTOR_ACADEMY_COURSE_KEY)
+      .maybeSingle()
+    : { data: null };
+  const academyProgress = academyProgressRow
+    ? normalizeAcademyProgress(academyProgressRow)
+    : emptyAcademyProgress;
 
   const adminClient = createAdminClient();
   let { data: reviewRows, error: reviewError } = await adminClient
@@ -101,5 +116,7 @@ export async function getTutorDashboardData() {
     profileReadiness,
     launchChecklist: buildTutorLaunchChecklist(profileReadiness, user.id),
     mentorReach,
+    academyProgress,
+    tutorAcademyEnabled,
   };
 }

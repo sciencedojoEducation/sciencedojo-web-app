@@ -59,6 +59,7 @@ export default async function DashboardSidebar({ role }: DashboardSidebarProps) 
     : createEmptyDashboardBadgeCounts();
 
   const tutorMarketplaceEnabled = role === "internal" ? false : await isFeatureEnabled("tutor_marketplace_enabled");
+  const tutorAcademyEnabled = role === "tutor" ? await isFeatureEnabled("tutor_academy_enabled") : false;
 
   const navLinks: Record<string, NavLink[]> = {
     user: [
@@ -91,6 +92,7 @@ export default async function DashboardSidebar({ role }: DashboardSidebarProps) 
     ],
     tutor: [
       { name: "Dashboard", href: "/dashboard/tutor", icon: "🏠", exact: true },
+      ...(tutorAcademyEnabled ? [{ name: "Tutor Academy", href: "/dashboard/tutor/academy", icon: "🥋" }] : []),
       { name: "Schedule", href: "/dashboard/tutor/schedule", icon: "🗓️", badgeKey: "tutorRequests", tourId: "tutor-sessions" },
       { name: "Students & Classes", href: "/dashboard/classes", icon: "🎓", tourId: "tutor-students" },
       { name: "Messages", href: "/dashboard/messages", icon: "💬", badgeKey: "messages", tourId: "tutor-messages" },

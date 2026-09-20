@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import FollowUpDrafts from "./FollowUpDrafts";
 import LeadStatusForm from "./LeadStatusForm";
+import { getEducationLabel, type EducationSelectionSnapshot } from "@/lib/educationTaxonomy";
 
 export type AssessmentLeadTableRow = {
   id: string;
@@ -20,6 +21,7 @@ export type AssessmentLeadTableRow = {
   status: string;
   source: string;
   created_at: string;
+  learning_context?: EducationSelectionSnapshot | null;
   whatsappDraft: string;
   emailSubject: string;
   emailBody: string;
@@ -178,7 +180,15 @@ function LeadDetailDrawer({
               <IntakeSection title="Student profile">
                 <DetailBlock label="Student" value={lead.student_name} />
                 <DetailBlock label="Year / grade" value={lead.student_grade} />
-                <DetailBlock label="Curriculum" value={lead.curriculum} />
+                <DetailBlock label="Curriculum" value={lead.learning_context ? getEducationLabel("curriculum", lead.learning_context.curriculumKey) : lead.curriculum} />
+                {lead.learning_context && <>
+                  <DetailBlock label="Stage or qualification" value={getEducationLabel("stage", lead.learning_context.stage, { curriculumKey: lead.learning_context.curriculumKey || undefined })} />
+                  <DetailBlock label="Exam board / awarding body" value={lead.learning_context.awardingBodyKey ? getEducationLabel("awardingBody", lead.learning_context.awardingBodyKey) : "Not applicable"} />
+                  <DetailBlock label="Subject route" value={lead.learning_context.subjectVariant ? getEducationLabel("subjectVariant", lead.learning_context.subjectVariant, { subject: lead.learning_context.subject, curriculumKey: lead.learning_context.curriculumKey || undefined, stage: lead.learning_context.stage || undefined }) : undefined} />
+                  <DetailBlock label="Tier / level" value={lead.learning_context.level ? getEducationLabel("level", lead.learning_context.level, { subject: lead.learning_context.subject, curriculumKey: lead.learning_context.curriculumKey || undefined, stage: lead.learning_context.stage || undefined }) : undefined} />
+                  <DetailBlock label="Specification" value={lead.learning_context.specificationCode || lead.learning_context.specificationVersionId} />
+                  <DetailBlock label="Intake status" value={lead.learning_context.intakeStatus === "complete" ? "Plan-ready" : `Needs clarification: ${lead.learning_context.missingFields.join(", ")}`} />
+                </>}
               </IntakeSection>
 
               <IntakeSection title="Subject & goals">

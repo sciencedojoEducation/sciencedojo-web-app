@@ -5,13 +5,9 @@ import type { LearnerProfile, LessonPurpose, LearnerConfidence } from "@/lib/les
 import { confidenceLabels, lessonPurposeLabels } from "@/lib/lesson-request-intake";
 import {
   canonicalizeEducationSubject,
-  educationalStages,
-  getCurriculaForStage,
-  getLevelsForCurriculum,
-  getSubjectsForSelection,
-  getTopicsForSubject,
   uncertainEducationOption,
 } from "@/lib/educationTaxonomy";
+import EducationPathwayFields, { type EducationPathwayValue } from "@/components/EducationPathwayFields";
 import { useState, useTransition, useEffect } from "react";
 import Image from "next/image";
 import { fetchTutorSlots } from "@/app/tutor/actions";
@@ -97,29 +93,22 @@ export default function CalendlyBookingWizard({ tutor, initialSlots, initialLear
   const [selectedLearnerId, setSelectedLearnerId] = useState(firstLearner?.id || "");
   const [learnerName, setLearnerName] = useState(firstLearner?.name || "");
   const [schoolYear, setSchoolYear] = useState(firstLearner?.schoolYear || "");
-  const [stage, setStage] = useState(firstLearner?.stage || "");
-  const [curriculumKey, setCurriculumKey] = useState(firstLearner?.curriculumKey || uncertainEducationOption);
-  const [level, setLevel] = useState(firstLearner?.level || uncertainEducationOption);
-  const [subject, setSubject] = useState(canonicalizeEducationSubject(tutor.subjects[0] || ""));
-  const [topic, setTopic] = useState("");
+  const [education, setEducation] = useState<EducationPathwayValue>({
+    curriculumKey: firstLearner?.curriculumKey || uncertainEducationOption,
+    stage: firstLearner?.stage || uncertainEducationOption,
+    awardingBodyKey: "",
+    subject: "",
+    subjectVariant: "",
+    level: "",
+    topic: "",
+    specificationCode: "",
+  });
   const [lessonPurpose, setLessonPurpose] = useState<LessonPurpose>("new_topic");
   const [confidence, setConfidence] = useState<LearnerConfidence>("some_understanding");
   const [supportPreferences, setSupportPreferences] = useState<string[]>(firstLearner?.supportPreferences || []);
   const [accommodations, setAccommodations] = useState(firstLearner?.accommodations || "");
 
-  const curricula = stage ? getCurriculaForStage(stage) : [];
-  const levels = stage && curriculumKey !== uncertainEducationOption
-    ? getLevelsForCurriculum(stage, curriculumKey)
-    : [];
-  const curriculumSubjects = stage && curriculumKey !== uncertainEducationOption && level !== uncertainEducationOption
-    ? getSubjectsForSelection(stage, curriculumKey, level)
-    : [];
   const tutorSubjects = [...new Set(tutor.subjects.map(canonicalizeEducationSubject))];
-  const availableSubjects = curriculumSubjects.length
-    ? tutorSubjects.filter((item) => (curriculumSubjects as string[]).includes(item))
-    : tutorSubjects;
-  const effectiveSubject = availableSubjects.includes(subject) ? subject : (availableSubjects[0] || subject);
-  const topics = getTopicsForSubject(effectiveSubject);
 
   const selectLearner = (learnerId: string) => {
     setSelectedLearnerId(learnerId);
@@ -127,18 +116,14 @@ export default function CalendlyBookingWizard({ tutor, initialSlots, initialLear
     if (!learner) {
       setLearnerName("");
       setSchoolYear("");
-      setStage("");
-      setCurriculumKey(uncertainEducationOption);
-      setLevel(uncertainEducationOption);
+      setEducation((current) => ({ ...current, curriculumKey: uncertainEducationOption, stage: uncertainEducationOption, awardingBodyKey: "", level: "", subjectVariant: "", topic: "", specificationCode: "" }));
       setSupportPreferences([]);
       setAccommodations("");
       return;
     }
     setLearnerName(learner.name);
     setSchoolYear(learner.schoolYear);
-    setStage(learner.stage);
-    setCurriculumKey(learner.curriculumKey || uncertainEducationOption);
-    setLevel(learner.level || uncertainEducationOption);
+    setEducation((current) => ({ ...current, curriculumKey: learner.curriculumKey || uncertainEducationOption, stage: learner.stage || uncertainEducationOption, awardingBodyKey: "", level: "", subjectVariant: "", topic: "", specificationCode: "" }));
     setSupportPreferences(learner.supportPreferences || []);
     setAccommodations(learner.accommodations || "");
   };
@@ -501,50 +486,14 @@ export default function CalendlyBookingWizard({ tutor, initialSlots, initialLear
                       School year or grade
                       <input name="schoolYear" required value={schoolYear} onChange={(event) => setSchoolYear(event.target.value)} placeholder="Year 10, Grade 11…" className="mt-2 w-full rounded-xl border border-secondary/10 bg-white px-4 py-3 text-sm font-bold normal-case tracking-normal text-secondary outline-none focus:border-primary" />
                     </label>
-                    <label className="text-xs font-black uppercase tracking-widest text-secondary/60">
-                      Educational stage
-                      <select name="stage" required value={stage} onChange={(event) => { setStage(event.target.value); setCurriculumKey(uncertainEducationOption); setLevel(uncertainEducationOption); setTopic(""); }} className="mt-2 w-full rounded-xl border border-secondary/10 bg-white px-4 py-3 text-sm font-bold normal-case tracking-normal text-secondary outline-none focus:border-primary">
-                        <option value="" disabled>Select stage</option>
-                        {educationalStages.map((item) => <option key={item} value={item}>{item}</option>)}
-                      </select>
-                    </label>
-                    <label className="text-xs font-black uppercase tracking-widest text-secondary/60">
-                      Curriculum / exam board
-                      <select name="curriculumKey" required value={curriculumKey} onChange={(event) => { setCurriculumKey(event.target.value); setLevel(uncertainEducationOption); setTopic(""); }} className="mt-2 w-full rounded-xl border border-secondary/10 bg-white px-4 py-3 text-sm font-bold normal-case tracking-normal text-secondary outline-none focus:border-primary">
-                        <option value={uncertainEducationOption}>I’m not sure</option>
-                        {curricula.map((item) => <option key={item} value={item}>{item}</option>)}
-                      </select>
-                    </label>
-                    <label className="text-xs font-black uppercase tracking-widest text-secondary/60 sm:col-span-2">
-                      Level or tier
-                      <select name="level" required value={level} onChange={(event) => { setLevel(event.target.value); setTopic(""); }} className="mt-2 w-full rounded-xl border border-secondary/10 bg-white px-4 py-3 text-sm font-bold normal-case tracking-normal text-secondary outline-none focus:border-primary">
-                        <option value={uncertainEducationOption}>I’m not sure</option>
-                        {levels.map((item) => <option key={item} value={item}>{item}</option>)}
-                      </select>
-                    </label>
                   </div>
-                  {(curriculumKey === uncertainEducationOption || level === uncertainEducationOption) && (
-                    <p className="rounded-xl bg-amber-50 px-3 py-2 text-xs font-bold leading-5 text-amber-800">You can still request the lesson, but the tutor will need to clarify the curriculum or level before an exact plan can be prepared.</p>
-                  )}
+                  <EducationPathwayFields value={education} onChange={setEducation} allowedSubjects={tutorSubjects} topicRequired />
                 </div>
               </div>
 
               <div className="rounded-2xl border border-secondary/10 bg-slate-50 p-4 md:p-5">
                 <p className="text-[10px] font-black uppercase tracking-[0.16em] text-primary/60">2 · Lesson focus</p>
                 <div className="mt-4 grid gap-4 sm:grid-cols-2">
-                  <label className="text-xs font-black uppercase tracking-widest text-secondary/60">
-                    Subject
-                    <select name="subject" required value={effectiveSubject} onChange={(event) => { setSubject(event.target.value); setTopic(""); }} className="mt-2 w-full rounded-xl border border-secondary/10 bg-white px-4 py-3 text-sm font-bold normal-case tracking-normal text-secondary outline-none focus:border-primary">
-                      {availableSubjects.map((item) => <option key={item} value={item}>{item}</option>)}
-                    </select>
-                  </label>
-                  <label className="text-xs font-black uppercase tracking-widest text-secondary/60">
-                    Topic
-                    <select name="topic" required value={topic} onChange={(event) => setTopic(event.target.value)} className="mt-2 w-full rounded-xl border border-secondary/10 bg-white px-4 py-3 text-sm font-bold normal-case tracking-normal text-secondary outline-none focus:border-primary">
-                      <option value="" disabled>Select topic</option>
-                      {topics.map((item) => <option key={item} value={item}>{item}</option>)}
-                    </select>
-                  </label>
                   <label className="text-xs font-black uppercase tracking-widest text-secondary/60 sm:col-span-2">
                     Specific subtopic (optional)
                     <input name="subtopic" placeholder="Quadratic factorisation, six-mark questions…" className="mt-2 w-full rounded-xl border border-secondary/10 bg-white px-4 py-3 text-sm font-bold normal-case tracking-normal text-secondary outline-none focus:border-primary" />

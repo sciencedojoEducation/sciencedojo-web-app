@@ -5,6 +5,7 @@ import Image from "next/image";
 import ApplicationReviewModal from "./ApplicationReviewModal";
 import VerifyButton from "./VerifyButton";
 import { FileSearch, ChevronRight, Clock, AlertCircle } from "lucide-react";
+import TutorAcademyStatusBadge from "./TutorAcademyStatusBadge";
 
 interface TutorWithApplication {
   id: string;
@@ -21,6 +22,11 @@ interface TutorWithApplication {
     user_type: string;
     data: any;
     created_at: string;
+  } | null;
+  academyProgress?: {
+    completed_lessons?: string[] | null;
+    best_score?: number | null;
+    completed_at?: string | null;
   } | null;
 }
 
@@ -69,6 +75,7 @@ export default function PendingTutorsTable({ tutors }: { tutors: TutorWithApplic
               </div>
 
               <div className="mt-3 flex flex-wrap gap-2">
+                <TutorAcademyStatusBadge progress={tutor.academyProgress} />
                 {appData.user_type && (
                   <span className="rounded-full bg-indigo-50 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.1em] text-indigo-600">
                     {appData.user_type === "undergrad" ? "Undergraduate" : "Industry pro"}
@@ -141,6 +148,7 @@ export default function PendingTutorsTable({ tutors }: { tutors: TutorWithApplic
                     <div className="max-w-md space-y-3">
                       {/* Onboarding Status Tags */}
                       <div className="flex items-center gap-2 flex-wrap">
+                        <TutorAcademyStatusBadge progress={tutor.academyProgress} />
                         {appData.user_type && (
                           <span className="text-[10px] font-black uppercase tracking-widest bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded">
                             {appData.user_type === "undergrad" ? "📚 Undergraduate" : "💼 Industry Pro"}

@@ -391,12 +391,15 @@ export async function generatePracticeQuestions(
   formData: FormData,
 ): Promise<QuestionGeneratorResult> {
   const stage = String(formData.get("stage") || "");
-  const curriculum = String(formData.get("curriculum") || "");
+  const curriculumKey = String(formData.get("curriculumKey") || "");
+  const awardingBodyKey = String(formData.get("awardingBodyKey") || "");
   const level = String(formData.get("level") || "");
   const subject = String(formData.get("subject") || "");
+  const subjectVariant = String(formData.get("subjectVariant") || "");
+  const specificationCode = String(formData.get("specificationCode") || "");
   const topic = String(formData.get("topic") || "");
   const count = cleanCount(formData.get("count"));
-  const validation = validateQuizSelection({ stage, curriculum, level, subject, topic, count });
+  const validation = validateQuizSelection({ stage, curriculumKey, awardingBodyKey, level, subject, subjectVariant, specificationCode, topic, count });
 
   if (!validation.valid) {
     return {
@@ -443,20 +446,26 @@ Keep questions age-appropriate for the selected level and curriculum.`,
 
     const result = await model.generateContent(
       topic === "Mixed Topics"
-        ? `Generate ${count} mixed-topic practice questions for ${stage}, ${curriculum}, ${level}, ${subject}.
+        ? `Generate ${count} mixed-topic practice questions for ${stage}, ${curriculumKey}, ${awardingBodyKey}, ${level}, ${subject}.
 
 Educational stage: ${stage}
-Curriculum / qualification: ${curriculum}
+Curriculum pathway: ${curriculumKey}
+Exam board / awarding body: ${awardingBodyKey || "Not applicable"}
+Subject route: ${subjectVariant || "Standard"}
+Specification code: ${specificationCode || "Active specification"}
 Level: ${level}
 Subject: ${subject}
 Topic: Mixed Topics
 
 Make the questions specific to the selected subject and suitable for independent revision.
 If any question needs data in rows or columns, include a markdown table with one row per line before the question prompt.`
-        : `Generate ${count} practice questions for ${stage}, ${curriculum}, ${level}, ${subject}, topic: ${topic}.
+        : `Generate ${count} practice questions for ${stage}, ${curriculumKey}, ${awardingBodyKey}, ${level}, ${subject}, topic: ${topic}.
 
 Educational stage: ${stage}
-Curriculum / qualification: ${curriculum}
+Curriculum pathway: ${curriculumKey}
+Exam board / awarding body: ${awardingBodyKey || "Not applicable"}
+Subject route: ${subjectVariant || "Standard"}
+Specification code: ${specificationCode || "Active specification"}
 Level: ${level}
 Subject: ${subject}
 Topic: ${topic}

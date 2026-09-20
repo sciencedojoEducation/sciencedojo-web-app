@@ -8,6 +8,12 @@ import { useState, useTransition } from "react";
 import Link from "next/link";
 import AnnouncementFeed from "@/components/AnnouncementFeed";
 import { markTutorWelcomeSeen } from "./actions";
+import {
+  getAcademyProgressPercent,
+  getAcademyResumeHref,
+  tutorAcademyCourse,
+  type AcademyProgress,
+} from "@/lib/tutor-academy";
 
 type LaunchChecklistItem = {
   id: string;
@@ -39,6 +45,8 @@ interface TutorHomeDashboardUIProps {
     learningChecks: number;
     trialLessons: number;
   };
+  academyProgress: AcademyProgress;
+  tutorAcademyEnabled: boolean;
 }
 
 function getFirstName(name: string) {
@@ -83,6 +91,8 @@ export default function TutorHomeDashboardUI({
   profileReadiness,
   launchChecklist,
   mentorReach,
+  academyProgress,
+  tutorAcademyEnabled,
 }: TutorHomeDashboardUIProps) {
   const [isWelcomeVisible, setIsWelcomeVisible] = useState(showAcceptedWelcome);
   const [isDismissingWelcome, startWelcomeDismiss] = useTransition();
@@ -96,6 +106,7 @@ export default function TutorHomeDashboardUI({
   const totalEarnings = completed.reduce((sum, booking) => sum + Number(booking.price_at_booking), 0);
   const nextActionHref = getActionHref(profileReadiness);
   const remainingProfileActions = launchChecklist.filter((item) => !item.completed).length;
+  const academyProgressPercent = getAcademyProgressPercent(academyProgress);
 
   const recentActivity = [
     ...requested.slice(0, 2).map((booking) => ({
@@ -185,6 +196,32 @@ export default function TutorHomeDashboardUI({
           </div>
         </section>
       )}
+
+      {tutorAcademyEnabled && <section className="overflow-hidden rounded-[1.5rem] border border-blue-100 bg-gradient-to-br from-[#001a3d] via-[#063d7a] to-[#0066ff] text-white shadow-lg shadow-blue-950/10 md:rounded-[2rem]">
+        <div className="grid gap-6 p-5 md:grid-cols-[1fr_auto] md:items-center md:p-7">
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-cyan-200/70">ScienceDojo Tutor Academy</p>
+            <h2 className="mt-2 text-2xl font-black tracking-tight">{academyProgress.completedAt ? "Tutor Foundations complete" : "Build your ScienceDojo foundations"}</h2>
+            <p className="mt-2 max-w-2xl text-sm font-semibold leading-6 text-white/65">
+              {academyProgress.completedAt
+                ? `You completed the induction with a best score of ${academyProgress.bestScore}%. You can revisit any lesson at any time.`
+                : `A ${tutorAcademyCourse.estimatedMinutes}-minute induction covering safe teaching, excellent lessons, platform workflows, and family trust.`}
+            </p>
+            <div className="mt-5 max-w-2xl">
+              <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-[0.13em] text-white/55">
+                <span>{academyProgress.completedLessons.length}/{tutorAcademyCourse.lessons.length} lessons</span>
+                <span>{academyProgressPercent}%</span>
+              </div>
+              <div className="mt-2 h-2 overflow-hidden rounded-full bg-white/12">
+                <div className="h-full rounded-full bg-gradient-to-r from-cyan-300 to-teal-300" style={{ width: `${academyProgressPercent}%` }} />
+              </div>
+            </div>
+          </div>
+          <Link href={getAcademyResumeHref(academyProgress)} className="inline-flex min-h-12 items-center justify-center rounded-full bg-white px-6 text-xs font-black uppercase tracking-[0.13em] text-primary shadow-lg transition-transform hover:-translate-y-0.5">
+            {academyProgress.completedAt ? "Review course" : academyProgress.completedLessons.length > 0 ? "Continue course" : "Start course"}
+          </Link>
+        </div>
+      </section>}
 
       <section className="rounded-[1.5rem] border border-secondary/5 bg-white p-4 shadow-sm md:rounded-[2rem] md:p-6">
         <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">

@@ -5,6 +5,7 @@ import Image from "next/image";
 import VerifyButton from "./VerifyButton";
 import PendingTutorsTable from "./PendingTutorsTable";
 import ReviewModerationPanel, { type AdminTutorReview } from "./ReviewModerationPanel";
+import TutorAcademyStatusBadge from "./TutorAcademyStatusBadge";
 
 type AdminTutor = {
   id: string;
@@ -14,6 +15,11 @@ type AdminTutor = {
   created_at: string;
   tutorDetail: any;
   application: any;
+  academyProgress?: {
+    completed_lessons?: string[] | null;
+    best_score?: number | null;
+    completed_at?: string | null;
+  } | null;
 };
 
 function matchesTutorSearch(tutor: AdminTutor, query: string) {
@@ -30,6 +36,7 @@ function matchesTutorSearch(tutor: AdminTutor, query: string) {
     appData.onboarding_status,
     tutor.tutorDetail?.is_verified ? "verified" : tutor.tutorDetail?.tutor_status || "pending",
     tutor.application?.status,
+    tutor.academyProgress?.completed_at ? "academy complete" : tutor.academyProgress?.completed_lessons?.length ? "academy in progress" : "academy not started",
   ]
     .filter(Boolean)
     .join(" ")
@@ -173,6 +180,7 @@ export default function AdminTutorsDirectory({
                 <div className="min-w-0 flex-1">
                   <h3 className="truncate text-base font-black text-slate-800">{tutor.full_name}</h3>
                   <p className="mt-1 truncate text-xs font-bold text-slate-400">{tutor.email}</p>
+                  <div className="mt-2"><TutorAcademyStatusBadge progress={tutor.academyProgress} /></div>
                   <span className="mt-2 inline-flex rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[9px] font-black uppercase tracking-widest text-slate-500">
                     {tutor.tutorDetail?.is_verified ? "Previously verified" : "Previously listed"}
                   </span>
@@ -202,6 +210,7 @@ export default function AdminTutorsDirectory({
                 <div className="min-w-0 flex-1">
                   <h3 className="truncate text-base font-black text-slate-800">{tutor.full_name}</h3>
                   <p className="mt-1 truncate text-xs font-bold text-slate-400">{tutor.email}</p>
+                  <div className="mt-2"><TutorAcademyStatusBadge progress={tutor.academyProgress} /></div>
                 </div>
                 <span className="shrink-0 rounded-full border border-blue-100 bg-blue-50 px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.1em] text-blue-600">
                   {tutor.tutorDetail?.is_featured ? "Featured" : tutor.tutorDetail?.is_verified ? "Verified" : "Listed"}
@@ -265,6 +274,7 @@ export default function AdminTutorsDirectory({
                       <div>
                         <div className="text-lg font-black tracking-tight text-slate-800">{tutor.full_name}</div>
                         <div className="text-xs font-bold text-slate-400">{tutor.email}</div>
+                        <div className="mt-2"><TutorAcademyStatusBadge progress={tutor.academyProgress} /></div>
                       </div>
                     </div>
                   </td>

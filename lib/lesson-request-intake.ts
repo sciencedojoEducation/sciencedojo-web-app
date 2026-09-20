@@ -1,5 +1,7 @@
 import {
-  getActiveCurriculumVersionId,
+  otherEducationOption,
+  resolveSpecificationVersion,
+  uncertainEducationOption,
   validateLessonRequestEducationSelection,
 } from "@/lib/educationTaxonomy";
 
@@ -39,14 +41,19 @@ export interface LearnerProfile {
 }
 
 export interface LessonRequestLearningContext {
+  schemaVersion: 2;
   learnerId: string;
   learnerName: string;
   schoolYear: string;
-  stage: string;
+  stage: string | null;
   curriculumKey: string | null;
+  awardingBodyKey: string | null;
   curriculumVersionId: string | null;
+  specificationVersionId: string | null;
   level: string | null;
   subject: string;
+  subjectVariant?: string;
+  specificationCode?: string;
   topic: string;
   subtopic?: string;
   lessonPurpose: LessonPurpose;
@@ -108,8 +115,11 @@ export function buildLessonRequestLearningContext(input: {
   schoolYear: string;
   stage: string;
   curriculumKey: string;
+  awardingBodyKey?: string;
   level: string;
   subject: string;
+  subjectVariant?: string;
+  specificationCode?: string;
   topic: string;
   subtopic?: string;
   lessonPurpose: string;
@@ -149,11 +159,15 @@ export function buildLessonRequestLearningContext(input: {
 
   const education = validateLessonRequestEducationSelection({
     stage: input.stage,
-    curriculum: input.curriculumKey,
+    curriculumKey: input.curriculumKey,
+    awardingBodyKey: input.awardingBodyKey,
     level: input.level,
     subject: input.subject,
+    subjectVariant: input.subjectVariant,
+    specificationCode: input.specificationCode,
+    assessmentDate: input.assessmentDate,
     topic: input.topic,
-  });
+  }, { topicRequired: true });
   if (!education.valid) {
     return { context: null, error: education.error || "Invalid education selection." };
   }
@@ -164,20 +178,27 @@ export function buildLessonRequestLearningContext(input: {
     missingFields.push("homeworkInstructionsOrMaterial");
   }
 
-  if (missingFields.some((field) => !["curriculum", "level"].includes(field))) {
+  if (missingFields.some((field) => !["curriculum", "stage", "awardingBody", "level"].includes(field))) {
     return { context: null, error: `Please complete: ${[...new Set(missingFields)].join(", ")}.` };
   }
 
   const uniqueMissingFields = [...new Set(missingFields)];
+  const unclearValues = [uncertainEducationOption, otherEducationOption];
+  const specificationVersionId = resolveSpecificationVersion(input);
   const context: LessonRequestLearningContext = {
+    schemaVersion: 2,
     learnerId: input.learnerId,
     learnerName: input.learnerName.trim(),
     schoolYear: input.schoolYear.trim(),
-    stage: input.stage,
-    curriculumKey: input.curriculumKey === "Not sure" ? null : input.curriculumKey,
-    curriculumVersionId: getActiveCurriculumVersionId(input.curriculumKey),
-    level: input.level === "Not sure" ? null : input.level,
+    stage: unclearValues.includes(input.stage) ? null : input.stage,
+    curriculumKey: unclearValues.includes(input.curriculumKey) ? null : input.curriculumKey,
+    awardingBodyKey: !input.awardingBodyKey || unclearValues.includes(input.awardingBodyKey) ? null : input.awardingBodyKey,
+    curriculumVersionId: specificationVersionId,
+    specificationVersionId,
+    level: !input.level || unclearValues.includes(input.level) ? null : input.level,
     subject: input.subject,
+    subjectVariant: input.subjectVariant || undefined,
+    specificationCode: input.specificationCode?.trim() || undefined,
     topic: input.topic,
     subtopic: input.subtopic?.trim() || undefined,
     lessonPurpose: input.lessonPurpose as LessonPurpose,

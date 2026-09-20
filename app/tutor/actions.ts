@@ -107,7 +107,10 @@ export async function createBookingRequest(formData: FormData) {
   const schoolYear = cleanFormValue(formData, "schoolYear");
   const stage = cleanFormValue(formData, "stage");
   const curriculumKey = cleanFormValue(formData, "curriculumKey") || uncertainEducationOption;
-  const level = cleanFormValue(formData, "level") || uncertainEducationOption;
+  const awardingBodyKey = cleanFormValue(formData, "awardingBodyKey");
+  const level = cleanFormValue(formData, "level");
+  const subjectVariant = cleanFormValue(formData, "subjectVariant");
+  const specificationCode = cleanFormValue(formData, "specificationCode");
   const supportPreferencesRaw = cleanFormValue(formData, "supportPreferences");
   let supportPreferences: string[] = [];
   try {
@@ -126,7 +129,7 @@ export async function createBookingRequest(formData: FormData) {
     stage,
     curriculum_key: curriculumKey === uncertainEducationOption ? null : curriculumKey,
     curriculum_version_id: getActiveCurriculumVersionId(curriculumKey),
-    level: level === uncertainEducationOption ? null : level,
+    level: null,
     support_preferences: supportPreferences,
     accommodations: cleanFormValue(formData, "accommodations") || null,
     updated_at: new Date().toISOString(),
@@ -139,8 +142,11 @@ export async function createBookingRequest(formData: FormData) {
     schoolYear,
     stage,
     curriculumKey,
+    awardingBodyKey,
     level,
     subject: canonicalSubject,
+    subjectVariant,
+    specificationCode,
     topic: cleanFormValue(formData, "topic"),
     subtopic: cleanFormValue(formData, "subtopic"),
     lessonPurpose: cleanFormValue(formData, "lessonPurpose"),

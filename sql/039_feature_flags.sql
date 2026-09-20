@@ -54,6 +54,7 @@ VALUES
   ('parent_dashboard_enabled', 'Parent dashboard', 'Allow parent users to access the parent dashboard experience.', false, 'Dashboards'),
   ('student_dashboard_enabled', 'Student dashboard', 'Allow student users to access the student dashboard experience.', false, 'Dashboards'),
   ('tutor_dashboard_enabled', 'Tutor dashboard', 'Allow tutors to access the tutor dashboard experience.', false, 'Dashboards'),
+  ('tutor_academy_enabled', 'Tutor Academy', 'Show the optional Tutor Academy induction course to tutor applicants.', true, 'Dashboards'),
   ('tutor_applications_enabled', 'Tutor applications', 'Allow new tutor onboarding applications.', false, 'Tutor Marketplace'),
   ('stripe_payments_enabled', 'Stripe payments', 'Allow checkout sessions for accepted bookings.', false, 'Booking & Payments'),
   ('reviews_enabled', 'Reviews', 'Show review collection and public review surfaces.', true, 'Growth / Beta'),

@@ -104,6 +104,13 @@ export const FEATURE_FLAG_DEFINITIONS = [
     defaultEnabled: false,
   },
   {
+    key: "tutor_academy_enabled",
+    label: "Tutor Academy",
+    description: "Show the optional Tutor Academy induction course to tutor applicants.",
+    category: "Dashboards",
+    defaultEnabled: true,
+  },
+  {
     key: "tutor_applications_enabled",
     label: "Tutor applications",
     description: "Allow new tutor onboarding applications.",

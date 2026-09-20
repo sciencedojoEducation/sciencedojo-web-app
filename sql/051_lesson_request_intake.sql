@@ -11,6 +11,16 @@ CREATE TABLE IF NOT EXISTS public.curriculum_specifications (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+ALTER TABLE public.curriculum_specifications
+  ADD COLUMN IF NOT EXISTS pathway_key TEXT,
+  ADD COLUMN IF NOT EXISTS stage_key TEXT,
+  ADD COLUMN IF NOT EXISTS awarding_body_key TEXT,
+  ADD COLUMN IF NOT EXISTS subject_key TEXT,
+  ADD COLUMN IF NOT EXISTS subject_variant_key TEXT,
+  ADD COLUMN IF NOT EXISTS specification_code TEXT,
+  ADD COLUMN IF NOT EXISTS effective_from DATE,
+  ADD COLUMN IF NOT EXISTS effective_to DATE;
+
 INSERT INTO public.curriculum_specifications (id, curriculum_key, version_label)
 VALUES
   ('uk-national-curriculum@taxonomy-v1', 'UK National Curriculum', 'ScienceDojo taxonomy v1'),
@@ -26,6 +36,30 @@ VALUES
   ('ib-diploma-programme@taxonomy-v1', 'IB Diploma Programme', 'ScienceDojo taxonomy v1'),
   ('sqa-higher@taxonomy-v1', 'SQA Higher', 'ScienceDojo taxonomy v1')
 ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO public.curriculum_specifications (id, curriculum_key, pathway_key, version_label)
+VALUES
+  ('england.taxonomy-2026', 'england', 'england', 'Curriculum taxonomy 2026'),
+  ('wales.taxonomy-2026', 'wales', 'wales', 'Curriculum taxonomy 2026'),
+  ('northern_ireland.taxonomy-2026', 'northern_ireland', 'northern_ireland', 'Curriculum taxonomy 2026'),
+  ('scotland.taxonomy-2026', 'scotland', 'scotland', 'Curriculum taxonomy 2026'),
+  ('cambridge_international.taxonomy-2026', 'cambridge_international', 'cambridge_international', 'Curriculum taxonomy 2026'),
+  ('pearson_international.taxonomy-2026', 'pearson_international', 'pearson_international', 'Curriculum taxonomy 2026'),
+  ('ib.taxonomy-2026', 'ib', 'ib', 'Curriculum taxonomy 2026')
+ON CONFLICT (id) DO NOTHING;
+
+UPDATE public.curriculum_specifications AS specification
+SET source_url = sources.source_url
+FROM (VALUES
+  ('england.taxonomy-2026', 'https://www.gov.uk/national-curriculum'),
+  ('wales.taxonomy-2026', 'https://hwb.gov.wales/curriculum-for-wales'),
+  ('northern_ireland.taxonomy-2026', 'https://www.education-ni.gov.uk/articles/statutory-curriculum'),
+  ('scotland.taxonomy-2026', 'https://qualifications.gov.scot/'),
+  ('cambridge_international.taxonomy-2026', 'https://www.cambridgeinternational.org/programmes-and-qualifications/'),
+  ('pearson_international.taxonomy-2026', 'https://qualifications.pearson.com/en/qualifications/edexcel-international-gcses.html'),
+  ('ib.taxonomy-2026', 'https://ibo.org/programmes/')
+) AS sources(id, source_url)
+WHERE specification.id = sources.id;
 
 ALTER TABLE public.curriculum_specifications ENABLE ROW LEVEL SECURITY;
 
@@ -66,6 +100,9 @@ ALTER TABLE public.bookings
   ADD COLUMN IF NOT EXISTS learner_id UUID REFERENCES public.learner_profiles(id) ON DELETE SET NULL,
   ADD COLUMN IF NOT EXISTS learning_context JSONB;
 
+ALTER TABLE public.assessment_leads
+  ADD COLUMN IF NOT EXISTS learning_context JSONB;
+
 CREATE INDEX IF NOT EXISTS bookings_learner_idx ON public.bookings(learner_id);
 CREATE INDEX IF NOT EXISTS bookings_intake_status_idx ON public.bookings((learning_context->>'intakeStatus'));
 
@@ -84,6 +121,22 @@ DROP TRIGGER IF EXISTS bookings_learning_context_immutable ON public.bookings;
 CREATE TRIGGER bookings_learning_context_immutable
   BEFORE UPDATE OF learning_context ON public.bookings
   FOR EACH ROW EXECUTE FUNCTION public.prevent_booking_learning_context_rewrite();
+
+CREATE OR REPLACE FUNCTION public.prevent_assessment_learning_context_rewrite()
+RETURNS TRIGGER AS $$
+BEGIN
+  IF OLD.learning_context IS NOT NULL
+     AND NEW.learning_context IS DISTINCT FROM OLD.learning_context THEN
+    RAISE EXCEPTION 'Assessment learning context is an immutable intake snapshot';
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS assessment_learning_context_immutable ON public.assessment_leads;
+CREATE TRIGGER assessment_learning_context_immutable
+  BEFORE UPDATE OF learning_context ON public.assessment_leads
+  FOR EACH ROW EXECUTE FUNCTION public.prevent_assessment_learning_context_rewrite();
 
 CREATE TABLE IF NOT EXISTS public.lesson_request_materials (
   id UUID PRIMARY KEY,

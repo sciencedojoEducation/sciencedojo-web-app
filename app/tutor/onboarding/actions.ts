@@ -3,6 +3,7 @@
 import { createClient } from "@/utils/supabase/server";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { isFeatureEnabled } from "@/lib/feature-flags";
 import { getMeaningfulTutorSubjects } from "@/lib/tutors/subjects";
 import { sendTrackedEmail } from "@/lib/communications";
 
@@ -241,7 +242,8 @@ export async function submitTutorApplication(formData: FormData) {
   }
 
   revalidatePath("/tutor/onboarding");
-  redirect("/dashboard/tutor");
+  const tutorAcademyEnabled = await isFeatureEnabled("tutor_academy_enabled");
+  redirect(tutorAcademyEnabled ? "/dashboard/tutor/academy" : "/dashboard/tutor");
 }
 
 export async function generatePrivateUploadUrl() {

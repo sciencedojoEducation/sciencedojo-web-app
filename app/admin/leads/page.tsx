@@ -4,6 +4,7 @@ import Link from "next/link";
 import { createAdminClient, createClient } from "@/utils/supabase/server";
 import AssessmentLeadsTable, { type AssessmentLeadTableRow } from "./AssessmentLeadsTable";
 import { generateEmailFollowUp, generateWhatsAppFollowUp, getLeadNoteValue } from "./followUpDraftGenerators";
+import type { EducationSelectionSnapshot } from "@/lib/educationTaxonomy";
 
 export const metadata: Metadata = {
   title: "Assessment Leads | ScienceDojo Admin",
@@ -28,6 +29,7 @@ type AssessmentLead = {
   status: string;
   source: string;
   created_at: string;
+  learning_context?: EducationSelectionSnapshot | null;
 };
 
 function isMissingAssessmentLeadsTable(message?: string) {
