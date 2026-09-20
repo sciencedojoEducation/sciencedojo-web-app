@@ -3,19 +3,20 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ReactNode } from "react";
+import { DashboardMenuBadge } from "./DashboardBadgeProvider";
+import type { DashboardBadgeKey } from "@/lib/dashboard-badges";
 
 interface SidebarLinkProps {
   href: string;
   name: string;
   icon: ReactNode;
-  badge?: number;
-  badgeColor?: string;
+  badgeKey?: DashboardBadgeKey;
   variant?: 'light' | 'dark';
   exact?: boolean;
   tourId?: string;
 }
 
-export default function SidebarLink({ href, name, icon, badge, badgeColor, variant = 'dark', exact = false, tourId }: SidebarLinkProps) {
+export default function SidebarLink({ href, name, icon, badgeKey, variant = 'dark', exact = false, tourId }: SidebarLinkProps) {
   const pathname = usePathname();
   // Exact match or prefix match based on the exact prop pulse 🏎️🚀
   const isActive = exact ? pathname === href : (pathname === href || (href !== "/dashboard" && pathname.startsWith(href + "/")));
@@ -55,13 +56,7 @@ export default function SidebarLink({ href, name, icon, badge, badgeColor, varia
         {name}
       </span>
 
-      {badge !== undefined && badge > 0 && (
-        <span className={`text-[10px] font-black px-2 py-0.5 rounded-full min-w-[1.4rem] text-center shadow-lg animate-in zoom-in duration-300 ${
-          badgeColor || 'bg-[#1E5AA8] text-white shadow-[#1E5AA8]/20'
-        }`}>
-          {badge}
-        </span>
-      )}
+      <DashboardMenuBadge badgeKey={badgeKey} label={name} />
     </Link>
   );
 }

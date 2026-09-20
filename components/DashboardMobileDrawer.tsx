@@ -5,21 +5,22 @@ import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import type { PointerEvent } from "react";
 import DashboardAvatar from "./DashboardAvatar";
+import { DashboardMenuBadge } from "./DashboardBadgeProvider";
 import DashboardTourReplayButton from "./DashboardTourReplayButton";
 import { signOut } from "@/app/login/actions";
+import type { DashboardBadgeKey, DashboardRole } from "@/lib/dashboard-badges";
 
 type DashboardMobileNavLink = {
   name: string;
   href: string;
   icon: string;
-  badge?: number;
-  badgeColor?: string;
+  badgeKey?: DashboardBadgeKey;
   exact?: boolean;
   tourId?: string;
 };
 
 type DashboardMobileDrawerProps = {
-  role: "user" | "admin" | "tutor" | "parent" | "student" | "internal";
+  role: DashboardRole;
   displayRole: string;
   userName: string;
   avatarUrl?: string;
@@ -225,11 +226,7 @@ export default function DashboardMobileDrawer({
                       {isActive && <span className="absolute left-0 top-2.5 bottom-2.5 w-1 rounded-full bg-[#6FE3D6]" />}
                       <span className="text-base leading-none" aria-hidden="true">{link.icon}</span>
                       <span className="min-w-0 flex-1">{link.name}</span>
-                      {link.badge !== undefined && link.badge > 0 && (
-                        <span className={`min-w-[1.4rem] rounded-full px-2 py-0.5 text-center text-[10px] font-black ${link.badgeColor || "bg-[#1E5AA8] text-white"}`}>
-                          {link.badge}
-                        </span>
-                      )}
+                      <DashboardMenuBadge badgeKey={link.badgeKey} label={link.name} />
                     </Link>
                   );
                 })}
