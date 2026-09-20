@@ -44,6 +44,7 @@ export type AcademyCourse = {
 
 export type AcademyProgress = {
   completedLessons: string[];
+  startedLessons: string[];
   currentLesson: string | null;
   quizAttempts: number;
   bestScore: number;
@@ -384,11 +385,29 @@ export const tutorAcademyCourse: AcademyCourse = {
 
 export const emptyAcademyProgress: AcademyProgress = {
   completedLessons: [],
+  startedLessons: [],
   currentLesson: null,
   quizAttempts: 0,
   bestScore: 0,
   completedAt: null,
 };
+
+export type AcademyProgressState = "unstarted" | "started" | "completed";
+
+export function getAcademyLessonProgressState(
+  progress: AcademyProgress,
+  lessonSlug: string,
+): AcademyProgressState {
+  if (progress.completedLessons.includes(lessonSlug)) return "completed";
+  if (progress.startedLessons.includes(lessonSlug)) return "started";
+  return "unstarted";
+}
+
+export function getAcademyQuizProgressState(progress: AcademyProgress): AcademyProgressState {
+  if (progress.completedAt) return "completed";
+  if (progress.quizAttempts > 0) return "started";
+  return "unstarted";
+}
 
 export function getAcademyLesson(slug: string) {
   return tutorAcademyCourse.lessons.find((lesson) => lesson.slug === slug) || null;

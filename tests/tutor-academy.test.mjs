@@ -3,7 +3,9 @@ import { describe, test } from "node:test";
 
 import {
   emptyAcademyProgress,
+  getAcademyLessonProgressState,
   getAcademyProgressPercent,
+  getAcademyQuizProgressState,
   getAcademyResumeHref,
   scoreTutorAcademyQuiz,
   tutorAcademyCourse,
@@ -53,6 +55,40 @@ describe("Tutor Academy course", () => {
     assert.equal(
       getAcademyProgressPercent({ ...emptyAcademyProgress, completedLessons, completedAt: new Date().toISOString() }),
       100,
+    );
+  });
+
+  test("distinguishes unstarted, started, and completed lesson rings", () => {
+    assert.equal(getAcademyLessonProgressState(emptyAcademyProgress, "excellent-lessons"), "unstarted");
+    assert.equal(
+      getAcademyLessonProgressState(
+        { ...emptyAcademyProgress, currentLesson: "excellent-lessons" },
+        "excellent-lessons",
+      ),
+      "unstarted",
+    );
+    assert.equal(
+      getAcademyLessonProgressState(
+        { ...emptyAcademyProgress, startedLessons: ["excellent-lessons"] },
+        "excellent-lessons",
+      ),
+      "started",
+    );
+    assert.equal(
+      getAcademyLessonProgressState(
+        { ...emptyAcademyProgress, completedLessons: ["excellent-lessons"] },
+        "excellent-lessons",
+      ),
+      "completed",
+    );
+  });
+
+  test("shows the quiz as partial after a failed attempt and complete after passing", () => {
+    assert.equal(getAcademyQuizProgressState(emptyAcademyProgress), "unstarted");
+    assert.equal(getAcademyQuizProgressState({ ...emptyAcademyProgress, quizAttempts: 1 }), "started");
+    assert.equal(
+      getAcademyQuizProgressState({ ...emptyAcademyProgress, quizAttempts: 1, completedAt: new Date().toISOString() }),
+      "completed",
     );
   });
 });

@@ -26,7 +26,7 @@ export type QuizActionState = {
 async function loadProgressRow(supabase: Awaited<ReturnType<typeof requireTutorAcademyUser>>["supabase"], userId: string) {
   return supabase
     .from("tutor_academy_progress")
-    .select("completed_lessons, current_lesson, quiz_attempts, best_score, completed_at")
+    .select("completed_lessons, started_lessons, current_lesson, quiz_attempts, best_score, completed_at")
     .eq("user_id", userId)
     .eq("course_key", TUTOR_ACADEMY_COURSE_KEY)
     .maybeSingle();
@@ -43,7 +43,9 @@ export async function recordAcademyLessonVisit(lessonSlug: string) {
   }
 
   const now = new Date().toISOString();
+  const startedLessons = Array.from(new Set([...(existing?.started_lessons || []), lessonSlug]));
   const payload = {
+    started_lessons: startedLessons,
     current_lesson: lessonSlug,
     last_viewed_at: now,
     updated_at: now,
@@ -80,6 +82,7 @@ export async function completeAcademyLesson(lessonSlug: string) {
   }
 
   const completedLessons = Array.from(new Set([...(existing?.completed_lessons || []), lessonSlug]));
+  const startedLessons = Array.from(new Set([...(existing?.started_lessons || []), lessonSlug]));
   const nextLesson = tutorAcademyCourse.lessons[lessonIndex + 1];
   const nextHref = nextLesson
     ? `/dashboard/tutor/academy/lessons/${nextLesson.slug}`
@@ -90,6 +93,7 @@ export async function completeAcademyLesson(lessonSlug: string) {
       user_id: user.id,
       course_key: TUTOR_ACADEMY_COURSE_KEY,
       completed_lessons: completedLessons,
+      started_lessons: startedLessons,
       current_lesson: nextLesson?.slug || null,
       quiz_attempts: Number(existing?.quiz_attempts || 0),
       best_score: Number(existing?.best_score || 0),
@@ -142,6 +146,10 @@ export async function submitTutorAcademyQuiz(
       user_id: user.id,
       course_key: TUTOR_ACADEMY_COURSE_KEY,
       completed_lessons: [...completed],
+      started_lessons: Array.from(new Set([
+        ...(existing?.started_lessons || []),
+        ...completed,
+      ])),
       current_lesson: null,
       quiz_attempts: Number(existing?.quiz_attempts || 0) + 1,
       best_score: Math.max(Number(existing?.best_score || 0), result.score),

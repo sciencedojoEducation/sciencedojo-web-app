@@ -1,7 +1,11 @@
+import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, BookOpen, Check, Clock, ShieldCheck, Trophy } from "lucide-react";
+import { ArrowRight, BookOpen, Clock } from "lucide-react";
+import AcademyProgressRing from "@/components/tutor-academy/AcademyProgressRing";
 import {
+  getAcademyLessonProgressState,
   getAcademyProgressPercent,
+  getAcademyQuizProgressState,
   getAcademyResumeHref,
   tutorAcademyCourse,
 } from "@/lib/tutor-academy";
@@ -11,74 +15,82 @@ export default async function TutorAcademyWelcomePage() {
   const progress = await getTutorAcademyProgress();
   const progressPercent = getAcademyProgressPercent(progress);
   const resumeHref = getAcademyResumeHref(progress);
-  const hasStarted = progress.completedLessons.length > 0 || Boolean(progress.currentLesson);
+  const hasStarted = progress.startedLessons.length > 0 || progress.completedLessons.length > 0 || Boolean(progress.currentLesson);
+  const sections = Array.from(new Set(tutorAcademyCourse.lessons.map((lesson) => lesson.section)));
 
   return (
-    <div className="px-4 py-8 sm:px-7 sm:py-10 lg:px-10">
-      <div className="mx-auto max-w-5xl">
-        <section className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-[#001a3d] via-[#063d7a] to-[#0066ff] p-7 text-white shadow-2xl shadow-blue-950/15 sm:p-10 lg:p-12">
-          <div className="absolute -right-24 -top-28 h-72 w-72 rounded-full border-[3rem] border-cyan-300/10" />
-          <div className="relative max-w-3xl">
-            <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-4 py-2 text-[10px] font-black uppercase tracking-[0.18em] text-cyan-100">
-              <ShieldCheck size={15} /> New tutor induction
-            </span>
-            <h2 className="mt-6 text-4xl font-black leading-[1.05] tracking-tight sm:text-5xl lg:text-6xl">Teach with clarity, care, and confidence.</h2>
-            <p className="mt-5 max-w-2xl text-base font-medium leading-8 text-white/72 sm:text-lg">
-              {tutorAcademyCourse.description}
-            </p>
-            <div className="mt-7 flex flex-wrap gap-4 text-sm font-bold text-white/70">
-              <span className="inline-flex items-center gap-2"><BookOpen size={17} /> {tutorAcademyCourse.lessons.length} lessons</span>
-              <span className="inline-flex items-center gap-2"><Clock size={17} /> About {tutorAcademyCourse.estimatedMinutes} minutes</span>
-              <span className="inline-flex items-center gap-2"><Trophy size={17} /> 80% final check</span>
-            </div>
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <Link href={resumeHref} className="inline-flex min-h-13 items-center justify-center gap-2 rounded-full bg-white px-7 text-xs font-black uppercase tracking-[0.14em] text-primary shadow-xl transition-transform hover:-translate-y-0.5">
-                {progress.completedAt ? "Review your course" : hasStarted ? "Continue course" : "Start course"} <ArrowRight size={17} />
-              </Link>
-              <Link href="/dashboard/tutor" className="inline-flex min-h-13 items-center justify-center rounded-full border border-white/15 bg-white/8 px-7 text-xs font-black uppercase tracking-[0.14em] text-white transition-colors hover:bg-white/15">
-                Go to dashboard
-              </Link>
-            </div>
+    <div className="min-h-full bg-white">
+      <section className="relative flex min-h-[460px] items-end overflow-hidden bg-slate-900 sm:min-h-[550px]">
+        <Image src="/images/home/8.professional-online-teacher.jpg" alt="A professional online tutor teaching from her workspace" fill priority sizes="100vw" className="object-cover object-[58%_center]" />
+        <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(0,0,0,0.82)_0%,rgba(0,0,0,0.54)_44%,rgba(0,0,0,0.14)_100%)]" />
+        <div className="relative mx-auto w-full max-w-[1100px] px-6 pb-14 pt-24 sm:px-10 sm:pb-20">
+          <div className="max-w-[650px] text-white">
+            <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-white/75">ScienceDojo Tutor Academy</p>
+            <h1 className="mt-5 max-w-[620px] text-[40px] font-black leading-[1.08] tracking-[-0.025em] sm:text-[50px] sm:leading-[1.04]">{tutorAcademyCourse.title}</h1>
+            <p className="mt-5 max-w-[540px] font-[family-name:var(--font-academy-serif)] text-[16px] leading-8 text-white/82 sm:text-[17px]">Teach with clarity, care, and confidence from your very first lesson.</p>
+            <Link href={resumeHref} className="mt-8 inline-flex min-h-11 items-center justify-center gap-2 rounded-full bg-white px-7 text-[12px] font-black uppercase tracking-[0.12em] text-[#101010] outline-none transition-colors hover:bg-[#F1F2F3] focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-black motion-reduce:transition-none">
+              {progress.completedAt ? "Review course" : hasStarted ? "Continue course" : "Start course"}
+              <ArrowRight size={16} aria-hidden="true" />
+            </Link>
           </div>
-        </section>
+        </div>
+      </section>
 
-        <section className="mt-6 rounded-[1.75rem] border border-secondary/8 bg-white p-6 shadow-sm sm:p-8">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-            <div>
-              <p className="text-[10px] font-black uppercase tracking-[0.18em] text-primary">Your progress</p>
-              <h2 className="mt-2 text-2xl font-black tracking-tight text-secondary">{progress.completedAt ? "Foundations complete" : `${progressPercent}% complete`}</h2>
-            </div>
-            <p className="text-sm font-bold text-secondary/45">Best quiz score: {progress.bestScore || 0}%</p>
+      <main className="px-6 py-14 sm:px-8 sm:py-20">
+        <div className="mx-auto max-w-[600px]">
+          <p className="font-[family-name:var(--font-academy-serif)] text-[16px] leading-[33px] text-[#252629] sm:text-[17px]">
+            {tutorAcademyCourse.description} Work through the course at your own pace while your tutor application is reviewed, then return whenever you need a refresher.
+          </p>
+          <div className="mt-8 flex flex-wrap gap-x-6 gap-y-2 border-y border-[#DEDFE1] py-4 text-[12px] font-bold text-[#717376]">
+            <span className="inline-flex items-center gap-2"><BookOpen size={15} aria-hidden="true" /> {tutorAcademyCourse.lessons.length} lessons</span>
+            <span className="inline-flex items-center gap-2"><Clock size={15} aria-hidden="true" /> About {tutorAcademyCourse.estimatedMinutes} minutes</span>
+            <span>80% final check</span>
           </div>
-          <div className="mt-5 h-3 overflow-hidden rounded-full bg-slate-100" aria-label={`${progressPercent}% course progress`}>
-            <div className="h-full rounded-full bg-gradient-to-r from-primary to-cyan-400 transition-all" style={{ width: `${progressPercent}%` }} />
-          </div>
-        </section>
 
-        <section className="mt-8">
-          <div className="mb-5">
-            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-primary">Course map</p>
-            <h2 className="mt-2 text-3xl font-black tracking-tight text-secondary">What you will learn</h2>
-          </div>
-          <div className="grid gap-4 sm:grid-cols-2">
-            {tutorAcademyCourse.lessons.map((lesson, index) => {
-              const complete = progress.completedLessons.includes(lesson.slug);
-              return (
-                <Link key={lesson.slug} href={`/dashboard/tutor/academy/lessons/${lesson.slug}`} className="group rounded-[1.5rem] border border-secondary/8 bg-white p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:border-primary/20 hover:shadow-lg">
-                  <div className="flex items-start gap-4">
-                    <span className={`inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl text-sm font-black ${complete ? "bg-teal-500 text-white" : "bg-primary/8 text-primary"}`}>{complete ? <Check size={18} strokeWidth={3} /> : index + 1}</span>
-                    <div>
-                      <p className="text-[9px] font-black uppercase tracking-[0.15em] text-secondary/35">{lesson.section} · {lesson.durationMinutes} min</p>
-                      <h3 className="mt-2 text-lg font-black leading-6 text-secondary group-hover:text-primary">{lesson.title}</h3>
-                      <p className="mt-2 text-sm font-medium leading-6 text-secondary/55">{lesson.summary}</p>
-                    </div>
-                  </div>
+          <section className="mt-14" aria-labelledby="course-contents-heading">
+            <div className="flex items-end justify-between gap-4">
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#717376]">Course contents</p>
+                <h2 id="course-contents-heading" className="mt-2 text-[30px] font-bold leading-10 tracking-[-0.02em] text-[#101010]">What you will learn</h2>
+              </div>
+              <span className="pb-1 text-sm font-bold text-[#1E5AA8]">{progressPercent}%</span>
+            </div>
+            <div className="mt-4 h-1 bg-[#E6E7E9]" role="progressbar" aria-label="Course progress" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progressPercent}>
+              <div className="h-full bg-[#1E5AA8]" style={{ width: `${progressPercent}%` }} />
+            </div>
+
+            <div className="mt-10">
+              {sections.map((section) => (
+                <section key={section} className="mb-9">
+                  <h3 className="mb-2 text-[10px] font-bold uppercase tracking-[0.18em] text-[#717376]">{section}</h3>
+                  <ol className="border-b border-[#DEDFE1]">
+                    {tutorAcademyCourse.lessons.filter((lesson) => lesson.section === section).map((lesson) => (
+                      <li key={lesson.slug}>
+                        <Link href={`/dashboard/tutor/academy/lessons/${lesson.slug}`} className="group flex min-h-14 items-center gap-4 border-t border-[#DEDFE1] py-3 outline-none focus-visible:ring-2 focus-visible:ring-[#1E5AA8] focus-visible:ring-offset-2">
+                          <BookOpen size={16} strokeWidth={1.7} className="shrink-0 text-[#717376]" aria-hidden="true" />
+                          <span className="min-w-0 flex-1">
+                            <span className="block text-[14px] font-bold leading-5 text-[#252629] transition-colors group-hover:text-[#1E5AA8]">{lesson.title}</span>
+                            <span className="mt-0.5 block text-[11px] text-[#717376]">{lesson.durationMinutes} minutes</span>
+                          </span>
+                          <AcademyProgressRing state={getAcademyLessonProgressState(progress, lesson.slug)} size={20} />
+                        </Link>
+                      </li>
+                    ))}
+                  </ol>
+                </section>
+              ))}
+              <section>
+                <h3 className="mb-2 text-[10px] font-bold uppercase tracking-[0.18em] text-[#717376]">Complete</h3>
+                <Link href="/dashboard/tutor/academy/quiz" className="group flex min-h-14 items-center gap-4 border-y border-[#DEDFE1] py-3 outline-none focus-visible:ring-2 focus-visible:ring-[#1E5AA8] focus-visible:ring-offset-2">
+                  <BookOpen size={16} strokeWidth={1.7} className="shrink-0 text-[#717376]" aria-hidden="true" />
+                  <span className="min-w-0 flex-1 text-[14px] font-bold text-[#252629] transition-colors group-hover:text-[#1E5AA8]">Final knowledge check</span>
+                  <AcademyProgressRing state={getAcademyQuizProgressState(progress)} size={20} />
                 </Link>
-              );
-            })}
-          </div>
-        </section>
-      </div>
+              </section>
+            </div>
+          </section>
+        </div>
+      </main>
     </div>
   );
 }

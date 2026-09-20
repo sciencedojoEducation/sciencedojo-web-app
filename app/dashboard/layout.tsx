@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import DashboardSidebar from "@/components/DashboardSidebar";
 import DashboardGuidedTour from "@/components/DashboardGuidedTour";
+import DashboardFrame from "@/components/DashboardFrame";
 import { createClient } from "@/utils/supabase/server";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
@@ -109,15 +110,14 @@ export default async function DashboardLayout({
   }
   
   return (
-    <div className="flex h-[100dvh] min-h-0 flex-1 flex-col overflow-hidden bg-background lg:flex-row">
-      <DashboardSidebar role={role} />
-      <main className="min-h-0 min-w-0 flex-1 overflow-y-auto overscroll-contain">
-        {children}
-      </main>
-      <DashboardGuidedTour
+    <DashboardFrame
+      sidebar={<DashboardSidebar role={role} />}
+      guidedTour={<DashboardGuidedTour
         role={role}
         completedTours={user?.user_metadata?.dashboardToursCompleted}
-      />
-    </div>
+      />}
+    >
+      {children}
+    </DashboardFrame>
   );
 }

@@ -15,14 +15,14 @@ export default function AcademyQuiz({ questions, previousBestScore }: { question
 
   if (state.status === "passed") {
     return (
-      <section className="rounded-[2rem] border border-teal-100 bg-gradient-to-br from-white to-teal-50 p-7 text-center shadow-xl shadow-teal-900/5 sm:p-10" aria-live="polite">
-        <span className="mx-auto inline-flex h-20 w-20 items-center justify-center rounded-[1.75rem] bg-teal-500 text-white shadow-lg shadow-teal-500/20"><Trophy size={38} /></span>
-        <p className="mt-6 text-xs font-black uppercase tracking-[0.2em] text-teal-600">Tutor Foundations complete</p>
-        <h2 className="mt-3 text-4xl font-black tracking-tight text-secondary">You scored {state.score}%</h2>
-        <p className="mx-auto mt-4 max-w-xl font-medium leading-7 text-secondary/62">{state.message}</p>
+      <section className="border-y border-[#DEDFE1] py-10 text-center" aria-live="polite">
+        <span className="mx-auto inline-flex h-16 w-16 items-center justify-center rounded-full bg-[#1E5AA8] text-white"><Trophy size={31} /></span>
+        <p className="mt-6 text-[11px] font-bold uppercase tracking-[0.18em] text-[#1E5AA8]">Tutor Foundations complete</p>
+        <h2 className="mt-3 text-3xl font-bold tracking-[-0.02em] text-[#101010]">You scored {state.score}%</h2>
+        <p className="mx-auto mt-4 max-w-xl font-[family-name:var(--font-academy-serif)] text-[16px] leading-8 text-[#4A4B4E]">{state.message}</p>
         <div className="mt-7 flex flex-col justify-center gap-3 sm:flex-row">
-          <Link href="/dashboard/tutor" className="inline-flex min-h-12 items-center justify-center rounded-full bg-primary px-7 text-xs font-black uppercase tracking-[0.13em] text-white">Go to dashboard</Link>
-          <Link href="/dashboard/tutor/academy" className="inline-flex min-h-12 items-center justify-center rounded-full border border-secondary/10 bg-white px-7 text-xs font-black uppercase tracking-[0.13em] text-secondary/60">Review course</Link>
+          <Link href="/dashboard/tutor" className="inline-flex min-h-11 items-center justify-center bg-[#1E5AA8] px-7 text-xs font-bold uppercase tracking-[0.1em] text-white">Go to dashboard</Link>
+          <Link href="/dashboard/tutor/academy" className="inline-flex min-h-11 items-center justify-center border border-[#C9CDD2] bg-white px-7 text-xs font-bold uppercase tracking-[0.1em] text-[#4A4B4E]">Review course</Link>
         </div>
       </section>
     );
@@ -33,10 +33,10 @@ export default function AcademyQuiz({ questions, previousBestScore }: { question
   return (
     <form action={formAction} className="space-y-5">
       {previousBestScore > 0 && (
-        <div className="rounded-2xl border border-blue-100 bg-blue-50 px-5 py-4 text-sm font-bold text-blue-900">Your best score so far is {previousBestScore}%.</div>
+        <div className="border-l-4 border-[#1E5AA8] bg-[#F1F6FC] px-5 py-4 text-sm font-semibold text-[#173A63]">Your best score so far is {previousBestScore}%.</div>
       )}
       {state.message && (
-        <div role="alert" className={`rounded-2xl border px-5 py-4 text-sm font-bold ${state.status === "error" ? "border-red-100 bg-red-50 text-red-800" : "border-amber-100 bg-amber-50 text-amber-900"}`}>
+        <div role="alert" className={`border-l-4 px-5 py-4 text-sm font-semibold ${state.status === "error" ? "border-red-700 bg-red-50 text-red-900" : "border-[#C4943F] bg-[#FBF7EE] text-[#59451F]"}`}>
           {state.message}
         </div>
       )}
@@ -44,20 +44,20 @@ export default function AcademyQuiz({ questions, previousBestScore }: { question
       {questions.map((question, index) => {
         const result = resultMap.get(question.id);
         return (
-          <fieldset key={question.id} className="rounded-[1.5rem] border border-secondary/8 bg-white p-5 shadow-sm sm:p-6">
-            <legend className="w-full px-0 text-lg font-black leading-7 text-secondary">
-              <span className="mr-3 text-primary/50">{String(index + 1).padStart(2, "0")}</span>{question.prompt}
+          <fieldset key={question.id} className="border-t border-[#DEDFE1] bg-white py-7 last:border-b">
+            <legend className="w-full px-0 text-lg font-bold leading-7 text-[#252629]">
+              <span className="mr-3 text-[#1E5AA8]">{String(index + 1).padStart(2, "0")}</span>{question.prompt}
             </legend>
             <div className="mt-5 grid gap-3">
               {question.options.map((option) => (
-                <label key={option.id} className="flex cursor-pointer items-start gap-3 rounded-2xl border border-secondary/10 px-4 py-4 text-sm font-bold text-secondary/68 transition-colors hover:border-primary/30 hover:bg-primary/5 has-[:checked]:border-primary has-[:checked]:bg-primary/5 has-[:checked]:text-primary">
+                <label key={option.id} className="flex cursor-pointer items-start gap-3 border border-[#DEDFE1] px-4 py-4 font-[family-name:var(--font-academy-serif)] text-sm leading-6 text-[#4A4B4E] transition-colors hover:border-[#1E5AA8] has-[:checked]:border-[#1E5AA8] has-[:checked]:bg-[#F1F6FC] has-[:checked]:text-[#173A63] motion-reduce:transition-none">
                   <input type="radio" name={question.id} value={option.id} required className="mt-0.5 h-4 w-4 accent-blue-600" />
                   <span>{option.label}</span>
                 </label>
               ))}
             </div>
             {result && (
-              <div className={`mt-4 flex items-start gap-3 rounded-2xl px-4 py-3 text-sm font-semibold leading-6 ${result.correct ? "bg-teal-50 text-teal-900" : "bg-red-50 text-red-900"}`}>
+              <div className={`mt-4 flex items-start gap-3 border-l-4 px-4 py-3 text-sm font-semibold leading-6 ${result.correct ? "border-[#438A7E] bg-[#F2F8F7] text-[#244743]" : "border-red-700 bg-red-50 text-red-900"}`}>
                 {result.correct ? <CheckCircle2 size={19} className="mt-0.5 shrink-0 text-teal-600" /> : <XCircle size={19} className="mt-0.5 shrink-0 text-red-600" />}
                 <span>{result.explanation}</span>
               </div>
@@ -66,7 +66,7 @@ export default function AcademyQuiz({ questions, previousBestScore }: { question
         );
       })}
 
-      <button type="submit" disabled={pending} className="inline-flex min-h-14 w-full items-center justify-center gap-2 rounded-2xl bg-primary px-7 text-sm font-black uppercase tracking-[0.14em] text-white shadow-lg shadow-primary/20 transition-all hover:-translate-y-0.5 hover:bg-blue-700 disabled:cursor-wait disabled:opacity-60">
+      <button type="submit" disabled={pending} className="inline-flex min-h-12 w-full items-center justify-center gap-2 bg-[#1E5AA8] px-7 text-sm font-bold uppercase tracking-[0.1em] text-white hover:bg-[#174A8B] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1E5AA8] disabled:cursor-wait disabled:opacity-60">
         {state.status === "failed" ? <RotateCcw size={18} /> : <CheckCircle2 size={18} />}
         {pending ? "Checking answers..." : state.status === "failed" ? "Try again" : "Submit knowledge check"}
       </button>

@@ -8,6 +8,7 @@ import {
 
 type ProgressRow = {
   completed_lessons?: string[] | null;
+  started_lessons?: string[] | null;
   current_lesson?: string | null;
   quiz_attempts?: number | null;
   best_score?: number | null;
@@ -17,6 +18,7 @@ type ProgressRow = {
 export function normalizeAcademyProgress(row?: ProgressRow | null): AcademyProgress {
   return {
     completedLessons: Array.isArray(row?.completed_lessons) ? row.completed_lessons : [],
+    startedLessons: Array.isArray(row?.started_lessons) ? row.started_lessons : [],
     currentLesson: row?.current_lesson || null,
     quizAttempts: Number(row?.quiz_attempts || 0),
     bestScore: Number(row?.best_score || 0),
@@ -44,7 +46,7 @@ export async function getTutorAcademyProgress(): Promise<AcademyProgress> {
   const { supabase, user } = await requireTutorAcademyUser();
   const { data, error } = await supabase
     .from("tutor_academy_progress")
-    .select("completed_lessons, current_lesson, quiz_attempts, best_score, completed_at")
+    .select("completed_lessons, started_lessons, current_lesson, quiz_attempts, best_score, completed_at")
     .eq("user_id", user.id)
     .eq("course_key", TUTOR_ACADEMY_COURSE_KEY)
     .maybeSingle();

@@ -10,15 +10,15 @@ export default function AcademyCarousel({ items }: { items: CarouselItem[] }) {
   const item = items[activeIndex];
 
   return (
-    <div className="overflow-hidden rounded-[2rem] border border-blue-100 bg-gradient-to-br from-white to-blue-50 shadow-sm">
-      <div className="min-h-64 p-7 sm:p-9">
-        <p className="text-xs font-black uppercase tracking-[0.22em] text-primary/60">
+    <div className="overflow-hidden border border-[#DEDFE1] bg-white">
+      <div className="min-h-64 border-t-4 border-[#1E5AA8] p-7 sm:p-9">
+        <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-[#1E5AA8]">
           {item.eyebrow || `Step ${activeIndex + 1}`}
         </p>
-        <h3 className="mt-4 text-2xl font-black tracking-tight text-secondary sm:text-3xl">{item.title}</h3>
-        <p className="mt-4 max-w-2xl text-base font-medium leading-8 text-secondary/65">{item.body}</p>
+        <h3 className="mt-4 text-2xl font-bold tracking-[-0.02em] text-[#252629] sm:text-[28px]">{item.title}</h3>
+        <p className="mt-4 max-w-2xl font-[family-name:var(--font-academy-serif)] text-[16px] leading-8 text-[#4A4B4E]">{item.body}</p>
       </div>
-      <div className="flex items-center justify-between border-t border-blue-100 bg-white/80 px-5 py-4">
+      <div className="flex items-center justify-between border-t border-[#DEDFE1] bg-[#FAFAFA] px-5 py-4">
         <div className="flex gap-2" aria-label={`Slide ${activeIndex + 1} of ${items.length}`}>
           {items.map((carouselItem, index) => (
             <button
@@ -27,7 +27,7 @@ export default function AcademyCarousel({ items }: { items: CarouselItem[] }) {
               onClick={() => setActiveIndex(index)}
               aria-label={`Go to slide ${index + 1}`}
               aria-current={index === activeIndex ? "true" : undefined}
-              className={`h-2.5 rounded-full transition-all ${index === activeIndex ? "w-8 bg-primary" : "w-2.5 bg-secondary/15 hover:bg-secondary/30"}`}
+              className={`h-2 rounded-full transition-all motion-reduce:transition-none ${index === activeIndex ? "w-7 bg-[#1E5AA8]" : "w-2 bg-[#C9CDD2] hover:bg-[#717376]"}`}
             />
           ))}
         </div>
@@ -36,7 +36,7 @@ export default function AcademyCarousel({ items }: { items: CarouselItem[] }) {
             type="button"
             onClick={() => setActiveIndex((index) => Math.max(0, index - 1))}
             disabled={activeIndex === 0}
-            className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-secondary/10 bg-white text-secondary transition-colors hover:border-primary/30 hover:text-primary disabled:cursor-not-allowed disabled:opacity-30"
+            className="inline-flex h-10 w-10 items-center justify-center border border-[#C9CDD2] bg-white text-[#4A4B4E] hover:border-[#1E5AA8] hover:text-[#1E5AA8] disabled:cursor-not-allowed disabled:opacity-30"
             aria-label="Previous slide"
           >
             <ChevronLeft size={19} />
@@ -45,7 +45,7 @@ export default function AcademyCarousel({ items }: { items: CarouselItem[] }) {
             type="button"
             onClick={() => setActiveIndex((index) => Math.min(items.length - 1, index + 1))}
             disabled={activeIndex === items.length - 1}
-            className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-primary text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-30"
+            className="inline-flex h-10 w-10 items-center justify-center bg-[#1E5AA8] text-white hover:bg-[#174A8B] disabled:cursor-not-allowed disabled:opacity-30"
             aria-label="Next slide"
           >
             <ChevronRight size={19} />
