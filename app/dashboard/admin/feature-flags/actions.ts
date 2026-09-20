@@ -1,9 +1,13 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { createClient } from "@/utils/supabase/server";
 import { createAdminClient } from "@/utils/supabase/admin";
-import { FEATURE_FLAG_DEFINITIONS, type FeatureFlagKey } from "@/lib/feature-flags";
+import {
+  FEATURE_FLAG_DEFINITIONS,
+  PUBLIC_FEATURE_FLAGS_CACHE_TAG,
+  type FeatureFlagKey,
+} from "@/lib/feature-flags";
 
 const featureFlagKeys = new Set<string>(FEATURE_FLAG_DEFINITIONS.map((definition) => definition.key));
 
@@ -67,6 +71,8 @@ export async function toggleFeatureFlag(formData: FormData) {
     console.error("[feature-flags] Toggle failed:", error.message);
     return;
   }
+
+  revalidateTag(PUBLIC_FEATURE_FLAGS_CACHE_TAG, "max");
 
   [
     "/",

@@ -1,7 +1,8 @@
 "use server"
 
 import { createClient } from "@/utils/supabase/server";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
+import { PUBLIC_TUTORS_CACHE_TAG } from "@/lib/public-tutors";
 import { getMeaningfulTutorSubjects } from "@/lib/tutors/subjects";
 import { sendTrackedEmail } from "@/lib/communications";
 
@@ -60,6 +61,7 @@ function canAwardVerifiedBadge(tutor: Record<string, any>) {
 }
 
 function revalidateTutorAdminPaths(tutorId: string) {
+  revalidateTag(PUBLIC_TUTORS_CACHE_TAG, "max");
   revalidatePath("/dashboard/admin/tutors");
   revalidatePath("/dashboard/tutor");
   revalidatePath("/dashboard/tutor/settings");

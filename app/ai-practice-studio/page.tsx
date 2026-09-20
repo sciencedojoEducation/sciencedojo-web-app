@@ -6,7 +6,7 @@ import { faqJsonLd, organizationJsonLd, siteUrl } from "@/lib/seo";
 import AiPracticeStudioViewTracker from "./AiPracticeStudioViewTracker";
 import QuestionGenerator from "./QuestionGenerator";
 import FeatureUnavailable from "@/components/FeatureUnavailable";
-import { isFeatureEnabled } from "@/lib/feature-flags";
+import { isPublicFeatureEnabled } from "@/lib/feature-flags";
 
 const faqs = [
   {
@@ -39,7 +39,7 @@ export const metadata: Metadata = {
 };
 
 export default async function AiPracticeStudioPage() {
-  const enabled = await isFeatureEnabled("practice_dojo_enabled");
+  const enabled = await isPublicFeatureEnabled("practice_dojo_enabled");
   if (!enabled) {
     return (
       <FeatureUnavailable

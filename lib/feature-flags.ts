@@ -1,4 +1,10 @@
 import { createClient } from "@/utils/supabase/server";
+import { createPublicClient } from "@/utils/supabase/public";
+import { unstable_cache } from "next/cache";
+import { cache } from "react";
+import { traceServerOperation } from "@/lib/server-tracing";
+
+export const PUBLIC_FEATURE_FLAGS_CACHE_TAG = "public-feature-flags";
 
 export const FEATURE_FLAG_CATEGORIES = [
   "Public Website",
@@ -120,8 +126,8 @@ export const FEATURE_FLAG_DEFINITIONS = [
   },
   {
     key: "maintenance_mode_enabled",
-    label: "Maintenance mode",
-    description: "Show a premium maintenance screen for public pages while admin access remains open.",
+    label: "Maintenance mode (deployment controlled)",
+    description: "Status reference only. Public maintenance mode is controlled by the MAINTENANCE_MODE deployment environment variable.",
     category: "System",
     defaultEnabled: false,
   },
@@ -243,4 +249,54 @@ export async function isFeatureEnabled(key: FeatureFlagKey): Promise<boolean> {
 export async function getFeatureFlagMap() {
   const flags = await getFeatureFlags();
   return Object.fromEntries(flags.map((flag) => [flag.key, flag.enabled])) as Record<FeatureFlagKey, boolean>;
+}
+
+const getCachedPublicFeatureFlags = unstable_cache(
+  async (): Promise<FeatureFlag[]> => {
+    return traceServerOperation("public.feature_flags.fetch", async () => {
+      try {
+      const supabase = createPublicClient();
+      const { data, error } = await supabase
+        .from("feature_flags")
+        .select("id, key, label, description, enabled, category, updated_at, updated_by")
+        .order("category", { ascending: true })
+        .order("label", { ascending: true });
+
+      if (error) {
+        console.warn("[public-feature-flags] Falling back to defaults:", error.message);
+        return getDefaultFeatureFlags();
+      }
+
+      const dbFlags = new Map<FeatureFlagKey, FeatureFlag>();
+      for (const row of data || []) {
+        const flag = normalizeFlag(row as Partial<FeatureFlag> & { key: string });
+        if (flag) dbFlags.set(flag.key, flag);
+      }
+
+      return FEATURE_FLAG_DEFINITIONS.map(
+        (definition) => dbFlags.get(definition.key) || fallbackFlag(definition.key),
+      );
+      } catch (error) {
+        console.warn("[public-feature-flags] Falling back to defaults:", error);
+        return getDefaultFeatureFlags();
+      }
+    });
+  },
+  ["public-feature-flags-v1"],
+  {
+    revalidate: 300,
+    tags: [PUBLIC_FEATURE_FLAGS_CACHE_TAG],
+  },
+);
+
+export const getPublicFeatureFlags = cache(async () => getCachedPublicFeatureFlags());
+
+export async function getPublicFeatureFlagMap() {
+  const flags = await getPublicFeatureFlags();
+  return Object.fromEntries(flags.map((flag) => [flag.key, flag.enabled])) as Record<FeatureFlagKey, boolean>;
+}
+
+export async function isPublicFeatureEnabled(key: FeatureFlagKey) {
+  const flags = await getPublicFeatureFlagMap();
+  return flags[key];
 }

@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { Inter } from "next/font/google";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import Analytics from "@/components/Analytics";
 import MetaPixel from "@/components/MetaPixel";
-import SeoConversionCtas from "@/components/SeoConversionCtas";
+import PublicSeoConversionCtas from "@/components/PublicSeoConversionCtas";
 import PublicChromeGate from "@/components/PublicChromeGate";
 import { siteUrl } from "@/lib/seo";
-import { getFeatureFlagMap } from "@/lib/feature-flags";
 import "./globals.css";
 
 const inter = Inter({
@@ -52,13 +52,12 @@ export const metadata: Metadata = {
   },
 };
 
-export default async function RootLayout({
+export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   const isMaintenanceMode = process.env.MAINTENANCE_MODE === "true";
-  const flags = await getFeatureFlagMap();
 
   return (
     <html
@@ -71,14 +70,18 @@ export default async function RootLayout({
         <MetaPixel />
         {!isMaintenanceMode && (
           <PublicChromeGate>
-            <Navbar />
+            <Suspense fallback={<div className="h-20 border-b border-primary/[0.08] bg-white" aria-hidden="true" />}>
+              <Navbar />
+            </Suspense>
           </PublicChromeGate>
         )}
         <main className="flex-1 min-h-0">{children}</main>
         {!isMaintenanceMode && (
           <PublicChromeGate>
             <Footer />
-            <SeoConversionCtas enabled={flags.free_assessment_enabled} />
+            <Suspense fallback={null}>
+              <PublicSeoConversionCtas />
+            </Suspense>
           </PublicChromeGate>
         )}
       </body>

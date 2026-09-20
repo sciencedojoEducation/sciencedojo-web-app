@@ -1,10 +1,8 @@
-import { getTutors } from "@/lib/supabase-queries";
-import { createClient } from "@/utils/supabase/server";
-import { redirect } from "next/navigation";
+import { Suspense } from "react";
 import Image from "next/image";
-import SearchFilterBar from "@/components/SearchFilterBar";
-import TutorCard from "@/components/TutorCard";
 import Link from "next/link";
+import AuthenticatedHomeRedirect from "@/components/AuthenticatedHomeRedirect";
+import HomeTutorDirectory, { HomeTutorDirectorySkeleton } from "@/components/HomeTutorDirectory";
 import JsonLd from "@/components/JsonLd";
 import AiPracticeStudioCtaLink from "@/components/analytics/AiPracticeStudioCtaLink";
 import BookAssessmentLink from "@/components/analytics/BookAssessmentLink";
@@ -13,7 +11,7 @@ import HeroIntroMedia from "@/components/HeroIntroMedia";
 import { AchievementStoryCard, FeaturedTestimonialCard, REAL_TESTIMONIALS, TestimonialCard } from "@/components/Testimonials";
 import { homeImages } from "@/lib/homeImages";
 import { localBusinessJsonLd, organizationJsonLd } from "@/lib/seo";
-import { getFeatureFlagMap } from "@/lib/feature-flags";
+import { getPublicFeatureFlagMap } from "@/lib/feature-flags";
 
 const heroPills = ["GCSE", "IGCSE", "IB", "A-Level", "STEM confidence"] as const;
 
@@ -282,45 +280,12 @@ function LearningJourneyIllustration({ icon }: { icon: string }) {
   );
 }
 
-export default async function Home({
+async function HomeContent({
   searchParams,
 }: {
   searchParams: Promise<{ query?: string; subject?: string }>;
 }) {
-  const params = await searchParams;
-  const searchTerm = params.query || "";
-  const selectedSubject = params.subject || "All";
-
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-
-  if (user) {
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("role")
-      .eq("id", user.id)
-      .single();
-
-    let role = profile?.role || user.user_metadata.role;
-
-    if (!role || role === "parent") {
-      const { data: application } = await supabase
-        .from("applications")
-        .select("status")
-        .eq("user_id", user.id)
-        .maybeSingle();
-
-      if (application) {
-        role = "tutor";
-      }
-    }
-
-    const finalRole = role || "user";
-    redirect(`/dashboard/${finalRole}`);
-  }
-
-  const flags = await getFeatureFlagMap();
-  const tutors = flags.tutor_marketplace_enabled ? await getTutors(searchTerm, selectedSubject) : [];
+  const flags = await getPublicFeatureFlagMap();
 
   return (
     <div className="flex flex-col flex-1 items-center bg-background">
@@ -762,55 +727,9 @@ export default async function Home({
       </section>
 
       {flags.tutor_marketplace_enabled && (
-      <section id="directory" aria-label="Verified expert tutors" className="relative z-20 w-full bg-white px-4 py-16 md:px-10 md:py-36">
-        <HomepageSectionTracker eventName="homepage_tutor_marketplace_visible" />
-        <div className="mx-auto max-w-[1360px]">
-          <div className="mb-11 grid gap-8 lg:grid-cols-[0.78fr_1.22fr] lg:items-end">
-            <div>
-              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary md:text-xs md:tracking-[0.28em]">Verified expert tutors</p>
-              <h2 id="how-we-verify" className="mt-4 text-3xl font-black leading-[1.1] tracking-tight text-secondary md:mt-5 md:text-5xl">Meet tutors who teach like mentors.</h2>
-            </div>
-            <p className="max-w-xl text-base leading-7 text-secondary/65 md:text-lg md:leading-8 lg:justify-self-end">
-              Find educators who understand your child&apos;s curriculum, confidence level, and learning style. ScienceDojo profiles focus on educational fit before booking.
-            </p>
-          </div>
-
-          <SearchFilterBar />
-
-          <div className="mb-6 mt-8 flex items-end justify-between">
-            <h3 className="text-2xl font-bold text-secondary">
-              {selectedSubject === "All" ? "Mentor profiles" : `${selectedSubject} mentors`}
-            </h3>
-            <span className="text-sm font-medium text-secondary/60">
-              Showing {tutors.length} {tutors.length === 1 ? "tutor" : "tutors"}
-            </span>
-          </div>
-
-          {tutors.length > 0 ? (
-            <div className="grid grid-cols-1 gap-10 md:grid-cols-2 lg:grid-cols-3">
-              {tutors.map((tutor) => (
-                <TutorCard key={tutor.id} tutor={tutor} currentUserRole={null} />
-              ))}
-            </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center rounded-2xl border border-secondary/10 bg-white py-20 text-center shadow-sm">
-              <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-secondary/5 text-secondary/30">
-                <svg className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-              </div>
-              <h3 className="mb-2 text-lg font-bold text-secondary">No tutors found</h3>
-              <p className="max-w-sm text-secondary/60">We could not find any tutors matching your search criteria. Try adjusting your filters.</p>
-              <Link
-                href="/"
-                className="mt-6 rounded-lg border border-primary/20 px-4 py-2 font-medium text-primary transition-colors hover:bg-primary/5"
-              >
-                Clear Filters
-              </Link>
-            </div>
-          )}
-        </div>
-      </section>
+        <Suspense fallback={<HomeTutorDirectorySkeleton />}>
+          <HomeTutorDirectory searchParams={searchParams} />
+        </Suspense>
       )}
 
       <section aria-label="Founder trust" className="w-full bg-[linear-gradient(180deg,#f8fbff_0%,#ffffff_100%)] px-4 py-16 md:px-10 md:py-36">
@@ -920,5 +839,35 @@ export default async function Home({
         </div>
       </section>
     </div>
+  );
+}
+
+function HomepageShell() {
+  return (
+    <div className="flex flex-1 flex-col items-center bg-background">
+      <section id="hero" aria-label="Premium STEM tutoring" className="sd-ambient-gradient relative flex min-h-[72vh] w-full items-center overflow-hidden bg-[linear-gradient(135deg,#06172f_0%,#073f7b_42%,#0b64bd_72%,#06376f_100%)] px-4 py-20 text-center md:px-10">
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_80%_26%,rgba(0,245,212,0.14),transparent_33%),radial-gradient(circle_at_18%_78%,rgba(255,255,255,0.1),transparent_28%)]" />
+        <div className="relative mx-auto max-w-4xl">
+          <p className="text-[10px] font-black uppercase tracking-[0.22em] text-white/55">Premium STEM tutoring for international learners</p>
+          <h1 className="mt-6 text-4xl font-black leading-[1.06] tracking-tight text-white md:text-6xl lg:text-[5rem]">
+            Your child understands more than their grades show.
+          </h1>
+          <p className="mx-auto mt-6 max-w-2xl text-base font-medium leading-8 text-white/75 md:text-xl">
+            ScienceDojo helps students build science confidence through expert tutoring, structured practice, and personalized learning Missions.
+          </p>
+        </div>
+      </section>
+    </div>
+  );
+}
+
+export default function Home(props: { searchParams: Promise<{ query?: string; subject?: string }> }) {
+  return (
+    <>
+      <AuthenticatedHomeRedirect />
+      <Suspense fallback={<HomepageShell />}>
+        <HomeContent {...props} />
+      </Suspense>
+    </>
   );
 }

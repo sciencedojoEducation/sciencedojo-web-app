@@ -1,5 +1,5 @@
-import { createClient } from "@supabase/supabase-js";
 import { NextResponse, type NextRequest } from "next/server";
+import { isMaintenanceModeEnabled } from "@/lib/public-render";
 
 const PUBLIC_FILE = /\.(.*)$/;
 
@@ -14,38 +14,7 @@ const maintenanceAllowedPrefixes = [
   "/_next",
 ];
 
-async function isMaintenanceEnabled() {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-  if (!supabaseUrl || !anonKey) {
-    return process.env.MAINTENANCE_MODE === "true";
-  }
-
-  try {
-    const supabase = createClient(supabaseUrl, anonKey, {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false,
-      },
-    });
-    const { data, error } = await supabase
-      .from("feature_flags")
-      .select("enabled")
-      .eq("key", "maintenance_mode_enabled")
-      .maybeSingle();
-
-    if (error) {
-      return process.env.MAINTENANCE_MODE === "true";
-    }
-
-    return Boolean(data?.enabled);
-  } catch {
-    return process.env.MAINTENANCE_MODE === "true";
-  }
-}
-
-export async function proxy(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const { pathname, searchParams } = request.nextUrl;
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set("x-next-pathname", pathname);
@@ -75,7 +44,7 @@ export async function proxy(request: NextRequest) {
     return continueResponse();
   }
 
-  if (!(await isMaintenanceEnabled())) {
+  if (!isMaintenanceModeEnabled()) {
     return continueResponse();
   }
 

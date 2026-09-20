@@ -3,7 +3,7 @@ import FeatureUnavailable from "@/components/FeatureUnavailable";
 import FocusZone from "@/components/focus/FocusZone";
 import { getFocusDojoAccessLevel } from "@/lib/focusdojo/access";
 import { syncFocusDojoCheckoutSessionForUser } from "@/lib/focusdojo/subscription-sync";
-import { isFeatureEnabled } from "@/lib/feature-flags";
+import { isPublicFeatureEnabled } from "@/lib/feature-flags";
 import { siteUrl } from "@/lib/seo";
 import { ThemeProvider } from "@/lib/themeProvider";
 import { createClient } from "@/utils/supabase/server";
@@ -37,7 +37,7 @@ function singleParam(value?: string | string[]) {
 }
 
 export default async function FocusDojoPage({ searchParams }: FocusDojoPageProps) {
-  const enabled = await isFeatureEnabled("focus_dojo_enabled");
+  const enabled = await isPublicFeatureEnabled("focus_dojo_enabled");
   if (!enabled) {
     return (
       <FeatureUnavailable
