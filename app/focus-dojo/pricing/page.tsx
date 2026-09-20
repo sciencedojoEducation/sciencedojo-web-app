@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import FocusDojoPricingActions from "./FocusDojoPricingActions";
 import { siteUrl } from "@/lib/seo";
+import { DashboardBadgeViewMarker } from "@/components/DashboardBadgeProvider";
 
 export const metadata: Metadata = {
   title: "FocusDojo Pricing | ScienceDojo",
@@ -54,6 +55,7 @@ const tiers = [
 export default function FocusDojoPricingPage() {
   return (
     <main className="min-h-screen bg-background text-secondary">
+      <DashboardBadgeViewMarker badgeKey="subscriptionIssues" />
       <section className="mx-auto w-full max-w-6xl px-4 py-12 md:px-8 md:py-16">
         <div className="max-w-3xl">
           <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/70 md:text-xs">

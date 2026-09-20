@@ -12,16 +12,32 @@ export function CategoryCard({ category, topicCount }: { category: CommunityCate
 }
 
 export function TopicCard({ topic }: { topic: CommunityTopic }) {
-  return <article className="rounded-3xl border border-secondary/10 bg-white p-5 shadow-sm transition hover:border-primary/20 md:p-6">
-    <div className="flex flex-wrap items-center gap-2 text-[10px] font-black uppercase tracking-widest"><Link href={`/community/${topic.category.slug}`} className="rounded-full bg-primary/8 px-3 py-1 text-primary">{topic.category.name}</Link>{topic.is_pinned && <span className="flex items-center gap-1 text-amber-600"><Pin size={12}/> Pinned</span>} {topic.status === "locked" && <span className="text-secondary/45">Locked</span>}</div>
-    <Link href={`/community/topic/${topic.slug}`}><h2 className="mt-3 text-xl font-black tracking-tight transition-colors hover:text-primary md:text-2xl">{topic.title}</h2></Link>
-    <p className="mt-3 line-clamp-2 text-sm font-semibold leading-6 text-secondary/55">{topic.body}</p>
-    <div className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs font-bold text-secondary/38">
-      <span className="flex items-center gap-1.5"><ShieldCheck size={14}/>{displayAuthor(topic.author, topic.seeded_author_name)}</span>
-      {topic.author?.is_verified && <span className="flex items-center gap-1 text-primary"><BadgeCheck size={14}/>{topic.author.badge}</span>}
-      <span className="flex items-center gap-1.5"><MessageCircle size={14}/>{topic.reply_count} replies</span>
-      <time className="flex items-center gap-1.5"><Clock3 size={14}/>{new Date(topic.last_activity_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}</time>
-    </div>
+  return <article>
+    <Link
+      href={`/community/topic/${topic.slug}`}
+      aria-label={`Open discussion: ${topic.title}`}
+      className="group block cursor-pointer rounded-3xl border border-secondary/10 bg-white p-5 shadow-sm outline-none transition duration-200 motion-safe:hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-lg focus-visible:border-primary/40 focus-visible:ring-4 focus-visible:ring-primary/20 md:p-6"
+    >
+      <div className="flex flex-wrap items-center gap-2 text-[10px] font-black uppercase tracking-widest">
+        <span className="rounded-full bg-primary/8 px-3 py-1 text-primary">{topic.category.name}</span>
+        {topic.is_pinned && <span className="flex items-center gap-1 text-amber-600"><Pin size={12}/> Pinned</span>}
+        {topic.status === "locked" && <span className="text-secondary/45">Locked</span>}
+      </div>
+      <h2 className="mt-3 text-xl font-black tracking-tight transition-colors group-hover:text-primary group-focus-visible:text-primary md:text-2xl">{topic.title}</h2>
+      <p className="mt-3 line-clamp-2 text-sm font-semibold leading-6 text-secondary/55">{topic.body}</p>
+      <div className="mt-5 flex flex-wrap items-end justify-between gap-3">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs font-bold text-secondary/38">
+          <span className="flex items-center gap-1.5"><ShieldCheck size={14}/>{displayAuthor(topic.author, topic.seeded_author_name)}</span>
+          {topic.author?.is_verified && <span className="flex items-center gap-1 text-primary"><BadgeCheck size={14}/>{topic.author.badge}</span>}
+          <span className="flex items-center gap-1.5"><MessageCircle size={14}/>{topic.reply_count} replies</span>
+          <time className="flex items-center gap-1.5"><Clock3 size={14}/>{new Date(topic.last_activity_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}</time>
+        </div>
+        <span className="flex items-center gap-1 text-xs font-black text-primary">
+          Open discussion
+          <ChevronRight size={16} className="transition-transform group-hover:translate-x-1 group-focus-visible:translate-x-1" />
+        </span>
+      </div>
+    </Link>
   </article>;
 }
 

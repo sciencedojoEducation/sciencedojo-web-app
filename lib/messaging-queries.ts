@@ -178,7 +178,7 @@ export async function getMessages(conversationId: string) {
   return data as Message[];
 }
 
-export async function getUnreadMessageCount() {
+export async function getUnreadMessageCount({ after }: { after?: string } = {}) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
@@ -229,12 +229,16 @@ export async function getUnreadMessageCount() {
   if (conversationIds.length === 0) return 0;
 
   // Then, count unread messages only within those conversations
-  const { count, error } = await supabase
+  let unreadQuery = supabase
     .from("messages")
     .select("*", { count: 'exact', head: true })
     .in("conversation_id", conversationIds)
     .neq("sender_id", user.id)
     .eq("is_read", false);
+
+  if (after) unreadQuery = unreadQuery.gt("created_at", after);
+
+  const { count, error } = await unreadQuery;
 
   if (error) {
     console.error("Error fetching unread count:", error.message);

@@ -20,6 +20,26 @@ export type DashboardBadgeKey =
 
 export type DashboardBadgeCounts = Record<DashboardBadgeKey, number>;
 
+const ROLE_BADGE_KEYS: Record<DashboardRole, readonly DashboardBadgeKey[]> = {
+  user: ["subscriptionIssues"],
+  parent: ["bookingPayments", "messages"],
+  student: ["bookingPayments", "messages", "studentMissions"],
+  tutor: ["tutorRequests", "messages", "missionReviews"],
+  admin: ["projectIdeas", "assessmentLeads", "messages", "safeguards", "manageTutors"],
+  internal: ["projectIdeas", "messages"],
+};
+
+const ALL_BADGE_KEYS = new Set<DashboardBadgeKey>(Object.values(ROLE_BADGE_KEYS).flat());
+const NEVER_VIEWED_AT = "1970-01-01T00:00:00.000Z";
+
+export function isDashboardBadgeKey(value: unknown): value is DashboardBadgeKey {
+  return typeof value === "string" && ALL_BADGE_KEYS.has(value as DashboardBadgeKey);
+}
+
+export function roleCanViewDashboardBadge(role: DashboardRole, badgeKey: DashboardBadgeKey) {
+  return ROLE_BADGE_KEYS[role].includes(badgeKey);
+}
+
 export function createEmptyDashboardBadgeCounts(): DashboardBadgeCounts {
   return {
     subscriptionIssues: 0,
@@ -46,9 +66,21 @@ export async function getDashboardBadgeCounts(
   const counts = createEmptyDashboardBadgeCounts();
   const supabase = await createClient();
 
+  const { data: badgeViews, error: badgeViewsError } = await supabase
+    .from("dashboard_badge_views")
+    .select("badge_key, viewed_at")
+    .eq("user_id", userId);
+  logCountError("badge views", badgeViewsError);
+
+  const viewedAt = new Map<DashboardBadgeKey, string>();
+  for (const view of badgeViews || []) {
+    if (isDashboardBadgeKey(view.badge_key)) viewedAt.set(view.badge_key, view.viewed_at);
+  }
+  const after = (badgeKey: DashboardBadgeKey) => viewedAt.get(badgeKey) || NEVER_VIEWED_AT;
+
   const messagePromise = role === "user"
     ? Promise.resolve(0)
-    : getUnreadMessageCount();
+    : getUnreadMessageCount({ after: after("messages") });
 
   if (role === "user") {
     const { count, error } = await supabase
@@ -56,7 +88,8 @@ export async function getDashboardBadgeCounts(
       .select("id", { count: "exact", head: true })
       .eq("user_id", userId)
       .eq("product_key", FOCUSDOJO_PRO_PRODUCT_KEY)
-      .in("status", ["past_due", "unpaid"]);
+      .in("status", ["past_due", "unpaid"])
+      .gt("updated_at", after("subscriptionIssues"));
     logCountError("subscription issues", error);
     counts.subscriptionIssues = count || 0;
     return counts;
@@ -68,7 +101,8 @@ export async function getDashboardBadgeCounts(
       .select("id", { count: "exact", head: true })
       .eq("student_id", userId)
       .eq("status", "accepted")
-      .or("payment_status.is.null,payment_status.eq.unpaid,payment_status.eq.failed");
+      .or("payment_status.is.null,payment_status.eq.unpaid,payment_status.eq.failed")
+      .gt("updated_at", after("bookingPayments"));
 
     const studentMissionsPromise = role === "student"
       ? supabase
@@ -76,6 +110,7 @@ export async function getDashboardBadgeCounts(
         .select("id", { count: "exact", head: true })
         .eq("student_id", userId)
         .eq("status", "pending_assessment")
+        .gt("created_at", after("studentMissions"))
       : Promise.resolve({ count: 0, error: null });
 
     const [messages, bookingPayments, studentMissions] = await Promise.all([
@@ -99,12 +134,14 @@ export async function getDashboardBadgeCounts(
         .from("bookings")
         .select("id", { count: "exact", head: true })
         .eq("tutor_id", userId)
-        .eq("status", "requested"),
+        .eq("status", "requested")
+        .gt("created_at", after("tutorRequests")),
       supabase
         .from("student_missions")
         .select("id", { count: "exact", head: true })
         .eq("tutor_id", userId)
-        .eq("status", "pending_tutor_approval"),
+        .eq("status", "pending_tutor_approval")
+        .gt("updated_at", after("missionReviews")),
     ]);
 
     logCountError("tutor requests", tutorRequests.error);
@@ -122,7 +159,8 @@ export async function getDashboardBadgeCounts(
         .from("internal_projects")
         .select("id", { count: "exact", head: true })
         .eq("status", "idea")
-        .is("archived_at", null),
+        .is("archived_at", null)
+        .gt("created_at", after("projectIdeas")),
     ]);
 
     logCountError("internal project ideas", projectIdeas.error);
@@ -145,23 +183,28 @@ export async function getDashboardBadgeCounts(
       .from("internal_projects")
       .select("id", { count: "exact", head: true })
       .eq("status", "idea")
-      .is("archived_at", null),
+      .is("archived_at", null)
+      .gt("created_at", after("projectIdeas")),
     admin
       .from("assessment_leads")
       .select("id", { count: "exact", head: true })
-      .in("status", ["new", "new_inquiry", "awaiting_review"]),
+      .in("status", ["new", "new_inquiry", "awaiting_review"])
+      .gt("created_at", after("assessmentLeads")),
     admin
       .from("messages")
       .select("conversation_id")
-      .eq("is_flagged", true),
+      .eq("is_flagged", true)
+      .gt("created_at", after("safeguards")),
     admin
       .from("applications")
-      .select("id", { count: "exact", head: true })
-      .eq("status", "pending"),
+      .select("user_id", { count: "exact", head: true })
+      .eq("status", "pending")
+      .gt("updated_at", after("manageTutors")),
     admin
       .from("reviews")
       .select("id", { count: "exact", head: true })
-      .eq("status", "pending"),
+      .eq("status", "pending")
+      .gt("created_at", after("manageTutors")),
   ]);
 
   logCountError("admin project ideas", projectIdeas.error);
@@ -180,7 +223,7 @@ export async function getDashboardBadgeCounts(
   return counts;
 }
 
-export async function getAuthenticatedDashboardBadgeContext() {
+export async function getAuthenticatedDashboardBadgeIdentity() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null;
@@ -208,8 +251,15 @@ export async function getAuthenticatedDashboardBadgeContext() {
     }
   }
 
+  return { role, userId: user.id };
+}
+
+export async function getAuthenticatedDashboardBadgeContext() {
+  const identity = await getAuthenticatedDashboardBadgeIdentity();
+  if (!identity) return null;
+
   return {
-    role,
-    counts: await getDashboardBadgeCounts(role, user.id),
+    ...identity,
+    counts: await getDashboardBadgeCounts(identity.role, identity.userId),
   };
 }
