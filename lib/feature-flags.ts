@@ -261,7 +261,6 @@ export async function getFeatureFlagMap() {
 const getCachedPublicFeatureFlags = unstable_cache(
   async (): Promise<FeatureFlag[]> => {
     return traceServerOperation("public.feature_flags.fetch", async () => {
-      try {
       const supabase = createPublicClient();
       const { data, error } = await supabase
         .from("feature_flags")
@@ -270,8 +269,7 @@ const getCachedPublicFeatureFlags = unstable_cache(
         .order("label", { ascending: true });
 
       if (error) {
-        console.warn("[public-feature-flags] Falling back to defaults:", error.message);
-        return getDefaultFeatureFlags();
+        throw new Error(`[public-feature-flags] Query failed: ${error.message}`);
       }
 
       const dbFlags = new Map<FeatureFlagKey, FeatureFlag>();
@@ -283,20 +281,26 @@ const getCachedPublicFeatureFlags = unstable_cache(
       return FEATURE_FLAG_DEFINITIONS.map(
         (definition) => dbFlags.get(definition.key) || fallbackFlag(definition.key),
       );
-      } catch (error) {
-        console.warn("[public-feature-flags] Falling back to defaults:", error);
-        return getDefaultFeatureFlags();
-      }
     });
   },
-  ["public-feature-flags-v1"],
+  ["public-feature-flags-v2"],
   {
     revalidate: 300,
     tags: [PUBLIC_FEATURE_FLAGS_CACHE_TAG],
   },
 );
 
-export const getPublicFeatureFlags = cache(async () => getCachedPublicFeatureFlags());
+export const getPublicFeatureFlags = cache(async () => {
+  try {
+    return await getCachedPublicFeatureFlags();
+  } catch (error) {
+    // Keep the safe public fallback request-scoped. Returning it from inside
+    // unstable_cache would turn a transient database failure into a cached
+    // feature outage for every visitor.
+    console.warn("[public-feature-flags] Falling back to defaults for this request:", error);
+    return getDefaultFeatureFlags();
+  }
+});
 
 export async function getPublicFeatureFlagMap() {
   const flags = await getPublicFeatureFlags();
