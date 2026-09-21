@@ -13,6 +13,7 @@ type ProgressRow = {
   quiz_attempts?: number | null;
   best_score?: number | null;
   completed_at?: string | null;
+  passed_quiz_revision?: number | null;
 };
 
 export function normalizeAcademyProgress(row?: ProgressRow | null): AcademyProgress {
@@ -23,10 +24,11 @@ export function normalizeAcademyProgress(row?: ProgressRow | null): AcademyProgr
     quizAttempts: Number(row?.quiz_attempts || 0),
     bestScore: Number(row?.best_score || 0),
     completedAt: row?.completed_at || null,
+    passedQuizRevision: Number(row?.passed_quiz_revision || (row?.completed_at ? 1 : 0)),
   };
 }
 
-export async function requireTutorAcademyUser() {
+export async function requireTutorAcademyUser(courseKey = TUTOR_ACADEMY_COURSE_KEY) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login?next=/dashboard/tutor/academy");
@@ -37,18 +39,23 @@ export async function requireTutorAcademyUser() {
   ]);
 
   const isTutor = profile?.role === "tutor" || user.user_metadata?.role === "tutor" || Boolean(application);
-  if (!isTutor) redirect(`/dashboard/${profile?.role || user.user_metadata?.role || "user"}`);
+  let isEligible = courseKey === TUTOR_ACADEMY_COURSE_KEY && isTutor;
+  if (!isEligible) {
+    const { data: eligibleCourse } = await supabase.from("academy_courses").select("id").eq("course_key", courseKey).eq("status", "published").maybeSingle();
+    isEligible = Boolean(eligibleCourse);
+  }
+  if (!isEligible) redirect(`/dashboard/${profile?.role || user.user_metadata?.role || "user"}`);
 
   return { supabase, user };
 }
 
-export async function getTutorAcademyProgress(): Promise<AcademyProgress> {
-  const { supabase, user } = await requireTutorAcademyUser();
+export async function getTutorAcademyProgress(courseKey = TUTOR_ACADEMY_COURSE_KEY): Promise<AcademyProgress> {
+  const { supabase, user } = await requireTutorAcademyUser(courseKey);
   const { data, error } = await supabase
     .from("tutor_academy_progress")
-    .select("completed_lessons, started_lessons, current_lesson, quiz_attempts, best_score, completed_at")
+    .select("completed_lessons, started_lessons, current_lesson, quiz_attempts, best_score, completed_at, passed_quiz_revision")
     .eq("user_id", user.id)
-    .eq("course_key", TUTOR_ACADEMY_COURSE_KEY)
+    .eq("course_key", courseKey)
     .maybeSingle();
 
   if (error) {

@@ -1,0 +1,2 @@
+import { renderAcademyCourseLessonPage } from "@/app/dashboard/tutor/academy/courses/[courseKey]/lessons/[lessonSlug]/page";
+export default async function AcademyLessonPage({ params, searchParams }: { params: Promise<{ courseKey: string; lessonSlug: string }>; searchParams: Promise<{ error?: string }> }) { const { courseKey, lessonSlug } = await params; const { error } = await searchParams; return renderAcademyCourseLessonPage(courseKey, lessonSlug, error, `/dashboard/academy/${courseKey}`); }

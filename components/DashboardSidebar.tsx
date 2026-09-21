@@ -59,7 +59,7 @@ export default async function DashboardSidebar({ role }: DashboardSidebarProps) 
     : createEmptyDashboardBadgeCounts();
 
   const tutorMarketplaceEnabled = role === "internal" ? false : await isFeatureEnabled("tutor_marketplace_enabled");
-  const tutorAcademyEnabled = role === "tutor" ? await isFeatureEnabled("tutor_academy_enabled") : false;
+  const tutorAcademyEnabled = role === "tutor" || role === "student" || role === "parent" ? await isFeatureEnabled("tutor_academy_enabled") : false;
 
   const navLinks: Record<string, NavLink[]> = {
     user: [
@@ -73,6 +73,7 @@ export default async function DashboardSidebar({ role }: DashboardSidebarProps) 
     parent: [
       { name: "Dashboard", href: "/dashboard/parent", icon: "🗓️", badgeKey: "bookingPayments", exact: true, tourId: "parent-bookings" },
       { name: "Learning Guide", href: "/support", icon: "📘" },
+      ...(tutorAcademyEnabled ? [{ name: "Academy", href: "/dashboard/academy", icon: "📚" }] : []),
       { name: "My Classes", href: "/dashboard/classes", icon: "🎓", tourId: "parent-classes" },
       { name: "Messages", href: "/dashboard/messages", icon: "💬", badgeKey: "messages", tourId: "parent-messages" },
       ...(tutorMarketplaceEnabled ? [{ name: "Browse Tutors", href: "/dashboard/parent/tutors", icon: "🔍", tourId: "parent-browse" }] : []),
@@ -82,6 +83,7 @@ export default async function DashboardSidebar({ role }: DashboardSidebarProps) 
     student: [
       { name: "My Bookings", href: "/dashboard/student", icon: "🗓️", badgeKey: "bookingPayments", exact: true, tourId: "student-bookings" },
       { name: "Learning Guide", href: "/support", icon: "📘" },
+      ...(tutorAcademyEnabled ? [{ name: "Academy", href: "/dashboard/academy", icon: "📚" }] : []),
       { name: "My Classes", href: "/dashboard/classes", icon: "🎓", tourId: "student-classes" },
       { name: "Messages", href: "/dashboard/messages", icon: "💬", badgeKey: "messages", tourId: "student-messages" },
       { name: "Missions", href: "/dashboard/student/missions", icon: "🧭", badgeKey: "studentMissions", tourId: "student-tasks" },
@@ -112,6 +114,7 @@ export default async function DashboardSidebar({ role }: DashboardSidebarProps) 
       { name: "Exam Community", href: "/dashboard/admin/community", icon: "💬" },
       { name: "Broadcast Center", href: "/dashboard/admin/broadcast", icon: "📣" },
       { name: "Communications", href: "/dashboard/admin/communications", icon: "✉️" },
+      { name: "Academy Courses", href: "/dashboard/admin/academy", icon: "📚" },
       { name: "Manage Tutors", href: "/dashboard/admin/tutors", icon: "👥", badgeKey: "manageTutors" },
       { name: "User Directory", href: "/dashboard/admin/users", icon: "👤" },
       { name: "Tutor Payouts", href: "/dashboard/admin/payouts", icon: "💰" },

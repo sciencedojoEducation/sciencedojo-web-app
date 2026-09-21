@@ -3,11 +3,14 @@ import { ArrowLeft, Award, CheckCircle2 } from "lucide-react";
 import AcademyQuiz from "@/components/tutor-academy/AcademyQuiz";
 import { getPublicQuizQuestions, tutorAcademyCourse } from "@/lib/tutor-academy";
 import { getTutorAcademyProgress } from "@/lib/tutor-academy-progress";
+import { getPublishedAcademyCourse } from "@/lib/academy-courses";
 
 export default async function TutorAcademyQuizPage() {
   const progress = await getTutorAcademyProgress();
-  const allLessonsComplete = tutorAcademyCourse.lessons.every((lesson) => progress.completedLessons.includes(lesson.slug));
-  const firstIncomplete = tutorAcademyCourse.lessons.find((lesson) => !progress.completedLessons.includes(lesson.slug));
+  const course = await getPublishedAcademyCourse(tutorAcademyCourse.key) || tutorAcademyCourse;
+  const allLessonsComplete = course.lessons.every((lesson) => progress.completedLessons.includes(lesson.slug));
+  const firstIncomplete = course.lessons.find((lesson) => !progress.completedLessons.includes(lesson.slug));
+  const completed = allLessonsComplete && progress.passedQuizRevision >= (course.quizRevision || 1);
 
   return (
     <div className="px-6 py-12 sm:px-10 sm:py-16">
@@ -26,7 +29,7 @@ export default async function TutorAcademyQuizPage() {
         </header>
 
       <div className="mt-10">
-          {progress.completedAt ? (
+          {completed ? (
             <section className="border-y border-[#DEDFE1] py-10 text-center">
               <span className="mx-auto inline-flex h-16 w-16 items-center justify-center rounded-full bg-[#1E5AA8] text-white"><Award size={31} /></span>
               <p className="mt-6 text-[11px] font-bold uppercase tracking-[0.18em] text-[#1E5AA8]">Tutor Foundations complete</p>
@@ -34,7 +37,7 @@ export default async function TutorAcademyQuizPage() {
               <p className="mx-auto mt-4 max-w-xl font-[family-name:var(--font-academy-serif)] text-[16px] leading-8 text-[#4A4B4E]">Your completion is saved. Revisit the lessons whenever you need a refresher on ScienceDojo teaching and platform standards.</p>
               <div className="mt-7 flex flex-col justify-center gap-3 sm:flex-row">
                 <Link href="/dashboard/tutor" className="inline-flex min-h-11 items-center justify-center bg-[#1E5AA8] px-7 text-xs font-bold uppercase tracking-[0.1em] text-white">Go to dashboard</Link>
-                <Link href={`/dashboard/tutor/academy/lessons/${tutorAcademyCourse.lessons[0].slug}`} className="inline-flex min-h-11 items-center justify-center border border-[#C9CDD2] bg-white px-7 text-xs font-bold uppercase tracking-[0.1em] text-[#4A4B4E]">Review lessons</Link>
+                <Link href={`/dashboard/tutor/academy/lessons/${course.lessons[0].slug}`} className="inline-flex min-h-11 items-center justify-center border border-[#C9CDD2] bg-white px-7 text-xs font-bold uppercase tracking-[0.1em] text-[#4A4B4E]">Review lessons</Link>
               </div>
             </section>
           ) : !allLessonsComplete && firstIncomplete ? (
@@ -44,7 +47,7 @@ export default async function TutorAcademyQuizPage() {
               <Link href={`/dashboard/tutor/academy/lessons/${firstIncomplete.slug}`} className="mt-6 inline-flex min-h-11 items-center justify-center bg-[#59451F] px-7 text-xs font-bold uppercase tracking-[0.1em] text-white">Continue course</Link>
             </section>
           ) : (
-            <AcademyQuiz questions={getPublicQuizQuestions()} previousBestScore={progress.bestScore} />
+            <AcademyQuiz questions={getPublicQuizQuestions(course)} previousBestScore={progress.bestScore} courseKey={course.key} />
           )}
         </div>
 

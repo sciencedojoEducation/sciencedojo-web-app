@@ -10,6 +10,7 @@ import {
   scoreTutorAcademyQuiz,
   tutorAcademyCourse,
 } from "../lib/tutor-academy.ts";
+import { validateAcademyCourse } from "../lib/academy-course-validation.ts";
 
 describe("Tutor Academy course", () => {
   test("contains six unique lessons and ten quiz questions", () => {
@@ -90,5 +91,15 @@ describe("Tutor Academy course", () => {
       getAcademyQuizProgressState({ ...emptyAcademyProgress, quizAttempts: 1, completedAt: new Date().toISOString() }),
       "completed",
     );
+  });
+
+  test("validates the code-managed course for database authoring", () => {
+    assert.deepEqual(validateAcademyCourse(tutorAcademyCourse), { valid: true, errors: [] });
+  });
+
+  test("requires a new pass only when the published quiz revision changes", () => {
+    const progress = { ...emptyAcademyProgress, completedLessons: tutorAcademyCourse.lessons.map((lesson) => lesson.slug), passedQuizRevision: 1 };
+    assert.equal(getAcademyProgressPercent(progress, { ...tutorAcademyCourse, quizRevision: 1 }), 100);
+    assert.equal(getAcademyProgressPercent(progress, { ...tutorAcademyCourse, quizRevision: 2 }), 86);
   });
 });

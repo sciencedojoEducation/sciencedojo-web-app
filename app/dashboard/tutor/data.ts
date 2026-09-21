@@ -53,7 +53,7 @@ export async function getTutorDashboardData() {
   const { data: academyProgressRow } = tutorAcademyEnabled
     ? await supabase
       .from("tutor_academy_progress")
-      .select("completed_lessons, current_lesson, quiz_attempts, best_score, completed_at")
+      .select("completed_lessons, started_lessons, current_lesson, quiz_attempts, best_score, completed_at, passed_quiz_revision")
       .eq("user_id", user.id)
       .eq("course_key", TUTOR_ACADEMY_COURSE_KEY)
       .maybeSingle()

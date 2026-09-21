@@ -10,8 +10,10 @@ type PublicQuizQuestion = { id: string; prompt: string; options: QuizOption[] };
 
 const initialState: QuizActionState = { status: "idle", message: "" };
 
-export default function AcademyQuiz({ questions, previousBestScore }: { questions: PublicQuizQuestion[]; previousBestScore: number }) {
-  const [state, formAction, pending] = useActionState(submitTutorAcademyQuiz, initialState);
+export default function AcademyQuiz({ questions, previousBestScore, courseKey }: { questions: PublicQuizQuestion[]; previousBestScore: number; courseKey: string }) {
+  const submitAction = submitTutorAcademyQuiz.bind(null, courseKey);
+  const [state, formAction, pending] = useActionState(submitAction, initialState);
+  const courseHref = courseKey === "science-dojo-tutor-foundations" ? "/dashboard/tutor/academy" : `/dashboard/tutor/academy/courses/${courseKey}`;
 
   if (state.status === "passed") {
     return (
@@ -22,7 +24,7 @@ export default function AcademyQuiz({ questions, previousBestScore }: { question
         <p className="mx-auto mt-4 max-w-xl font-[family-name:var(--font-academy-serif)] text-[16px] leading-8 text-[#4A4B4E]">{state.message}</p>
         <div className="mt-7 flex flex-col justify-center gap-3 sm:flex-row">
           <Link href="/dashboard/tutor" className="inline-flex min-h-11 items-center justify-center bg-[#1E5AA8] px-7 text-xs font-bold uppercase tracking-[0.1em] text-white">Go to dashboard</Link>
-          <Link href="/dashboard/tutor/academy" className="inline-flex min-h-11 items-center justify-center border border-[#C9CDD2] bg-white px-7 text-xs font-bold uppercase tracking-[0.1em] text-[#4A4B4E]">Review course</Link>
+          <Link href={courseHref} className="inline-flex min-h-11 items-center justify-center border border-[#C9CDD2] bg-white px-7 text-xs font-bold uppercase tracking-[0.1em] text-[#4A4B4E]">Review course</Link>
         </div>
       </section>
     );

@@ -10,11 +10,14 @@ import {
   getAcademyProgressPercent,
   getAcademyQuizProgressState,
   type AcademyLesson,
+  type AcademyCourse,
   type AcademyProgress,
 } from "@/lib/tutor-academy";
 import AcademyProgressRing from "./AcademyProgressRing";
 
-function NavigationContent({ lessons, progress, onNavigate, onLessonNavigate }: { lessons: AcademyLesson[]; progress: AcademyProgress; onNavigate?: () => void; onLessonNavigate?: (lessonSlug: string) => void }) {
+type NavigationCourse = Pick<AcademyCourse, "key" | "shortTitle" | "heroImage" | "lessons" | "quizRevision">;
+
+function NavigationContent({ lessons, progress, course, basePath, onNavigate, onLessonNavigate }: { lessons: AcademyLesson[]; progress: AcademyProgress; course: NavigationCourse; basePath: string; onNavigate?: () => void; onLessonNavigate?: (lessonSlug: string) => void }) {
   const pathname = usePathname();
   const sections = Array.from(new Set(lessons.map((lesson) => lesson.section)));
 
@@ -28,7 +31,7 @@ function NavigationContent({ lessons, progress, onNavigate, onLessonNavigate }: 
           </summary>
           <ol>
             {lessons.filter((lesson) => lesson.section === section).map((lesson) => {
-              const href = `/dashboard/tutor/academy/lessons/${lesson.slug}`;
+              const href = `${basePath}/lessons/${lesson.slug}`;
               const active = pathname === href;
               return (
                 <li key={lesson.slug}>
@@ -45,25 +48,26 @@ function NavigationContent({ lessons, progress, onNavigate, onLessonNavigate }: 
       ))}
       <section>
         <h2 className="flex min-h-11 items-center px-5 text-[10px] font-bold uppercase tracking-[0.16em] text-[#717376]">Complete</h2>
-        <Link href="/dashboard/tutor/academy/quiz" onClick={onNavigate} aria-current={pathname.endsWith("/quiz") ? "page" : undefined} className={`relative flex min-h-[52px] items-center gap-3 border-y border-[#ECEDEF] px-5 py-3 text-[13px] font-bold leading-4 text-[#252629] outline-none hover:bg-[#F7F7F7] focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#1E5AA8] ${pathname.endsWith("/quiz") ? "bg-[#F3F3F3] before:absolute before:inset-y-0 before:left-0 before:w-1 before:bg-[#1E5AA8]" : ""}`}>
+        <Link href={`${basePath}/quiz`} onClick={onNavigate} aria-current={pathname.endsWith("/quiz") ? "page" : undefined} className={`relative flex min-h-[52px] items-center gap-3 border-y border-[#ECEDEF] px-5 py-3 text-[13px] font-bold leading-4 text-[#252629] outline-none hover:bg-[#F7F7F7] focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#1E5AA8] ${pathname.endsWith("/quiz") ? "bg-[#F3F3F3] before:absolute before:inset-y-0 before:left-0 before:w-1 before:bg-[#1E5AA8]" : ""}`}>
           <BookOpen size={15} className="shrink-0 text-[#717376]" strokeWidth={1.8} aria-hidden="true" />
           <span className="min-w-0 flex-1">Final knowledge check</span>
-          <AcademyProgressRing state={getAcademyQuizProgressState(progress)} size={17} />
+          <AcademyProgressRing state={getAcademyQuizProgressState(progress, course)} size={17} />
         </Link>
       </section>
     </nav>
   );
 }
 
-function CourseRail({ lessons, progress, onLessonNavigate }: { lessons: AcademyLesson[]; progress: AcademyProgress; onLessonNavigate: (lessonSlug: string) => void }) {
-  const progressPercent = getAcademyProgressPercent(progress);
+function CourseRail({ course, progress, basePath, onLessonNavigate }: { course: NavigationCourse; progress: AcademyProgress; basePath: string; onLessonNavigate: (lessonSlug: string) => void }) {
+  const progressPercent = getAcademyProgressPercent(progress, course);
+  const lessons = course.lessons;
 
   return (
     <aside className="hidden h-full w-[280px] shrink-0 overflow-y-auto border-r border-[#DEDFE1] bg-white lg:block">
       <div className="relative h-40 overflow-hidden bg-slate-800">
-        <Image src="/images/home/8.professional-online-teacher.jpg" alt="" fill priority sizes="280px" className="object-cover object-center" />
+        <Image src={course.heroImage || "/images/home/8.professional-online-teacher.jpg"} alt="" fill priority sizes="280px" className="object-cover object-center" />
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-black/10" />
-        <Link href="/dashboard/tutor/academy" className="absolute inset-x-5 bottom-4 text-lg font-bold leading-6 text-white outline-none focus-visible:ring-2 focus-visible:ring-white">Tutor Foundations</Link>
+        <Link href={basePath} className="absolute inset-x-5 bottom-4 text-lg font-bold leading-6 text-white outline-none focus-visible:ring-2 focus-visible:ring-white">{course.shortTitle}</Link>
       </div>
       <div className="border-b border-[#DEDFE1] px-5 py-4">
         <div className="flex items-center justify-between text-[11px] font-bold uppercase tracking-[0.12em] text-[#717376]"><span>Course progress</span><span>{progressPercent}%</span></div>
@@ -71,7 +75,7 @@ function CourseRail({ lessons, progress, onLessonNavigate }: { lessons: AcademyL
           <div className="h-full bg-[#1E5AA8]" style={{ width: `${progressPercent}%` }} />
         </div>
       </div>
-      <NavigationContent lessons={lessons} progress={progress} onLessonNavigate={onLessonNavigate} />
+      <NavigationContent lessons={lessons} progress={progress} course={course} basePath={basePath} onLessonNavigate={onLessonNavigate} />
       <div className="p-5">
         <Link href="/dashboard/tutor" className="inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.12em] text-[#717376] hover:text-[#1E5AA8] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#1E5AA8]">Exit to dashboard <ExternalLink size={14} aria-hidden="true" /></Link>
       </div>
@@ -79,13 +83,14 @@ function CourseRail({ lessons, progress, onLessonNavigate }: { lessons: AcademyL
   );
 }
 
-export default function AcademyCourseNavigation({ children, lessons, progress: initialProgress }: { children: React.ReactNode; lessons: AcademyLesson[]; progress: AcademyProgress }) {
+export default function AcademyCourseNavigation({ children, course, basePath, progress: initialProgress }: { children: React.ReactNode; course: NavigationCourse; basePath: string; progress: AcademyProgress }) {
+  const lessons = course.lessons;
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [startedLessons, setStartedLessons] = useState(initialProgress.startedLessons);
   const menuButtonRef = useRef<HTMLButtonElement>(null);
   const drawerRef = useRef<HTMLElement>(null);
-  const isOverview = pathname === "/dashboard/tutor/academy";
+  const isOverview = pathname === basePath;
 
   useEffect(() => {
     if (!open) return;
@@ -116,15 +121,16 @@ export default function AcademyCourseNavigation({ children, lessons, progress: i
   }, [open]);
 
   const progress = useMemo(() => {
-    const currentLesson = pathname.match(/^\/dashboard\/tutor\/academy\/lessons\/([^/]+)$/)?.[1];
+    const lessonPrefix = `${basePath}/lessons/`;
+    const currentLesson = pathname.startsWith(lessonPrefix) ? pathname.slice(lessonPrefix.length).split("/")[0] : undefined;
     return {
       ...initialProgress,
       startedLessons: currentLesson && !startedLessons.includes(currentLesson)
         ? [...startedLessons, currentLesson]
         : startedLessons,
     };
-  }, [initialProgress, pathname, startedLessons]);
-  const progressPercent = getAcademyProgressPercent(progress);
+  }, [basePath, initialProgress, pathname, startedLessons]);
+  const progressPercent = getAcademyProgressPercent(progress, course);
   const markLessonStarted = (lessonSlug: string) => {
     setStartedLessons((current) => current.includes(lessonSlug) ? current : [...current, lessonSlug]);
   };
@@ -140,11 +146,11 @@ export default function AcademyCourseNavigation({ children, lessons, progress: i
 
   return (
     <div className="flex h-full min-h-0 bg-white">
-      <CourseRail lessons={lessons} progress={progress} onLessonNavigate={markLessonStarted} />
+      <CourseRail course={course} progress={progress} basePath={basePath} onLessonNavigate={markLessonStarted} />
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="flex h-14 shrink-0 items-center border-b border-[#DEDFE1] bg-white lg:hidden">
           <button ref={menuButtonRef} type="button" onClick={() => setOpen(true)} className="inline-flex h-14 w-14 items-center justify-center text-[#252629] focus-visible:outline-2 focus-visible:outline-offset-[-3px] focus-visible:outline-[#1E5AA8]" aria-label="Open course contents" aria-expanded={open}><Menu size={21} aria-hidden="true" /></button>
-          <Link href="/dashboard/tutor/academy" className="min-w-0 flex-1 truncate border-l border-[#DEDFE1] px-4 text-sm font-bold text-[#252629]">Tutor Foundations</Link>
+          <Link href={basePath} className="min-w-0 flex-1 truncate border-l border-[#DEDFE1] px-4 text-sm font-bold text-[#252629]">{course.shortTitle}</Link>
           <span className="px-3 text-xs font-bold text-[#717376]" aria-label={`${progressPercent}% complete`}>{progressPercent}%</span>
           <Link href="/dashboard/tutor" aria-label="Exit to dashboard" className="inline-flex h-14 w-12 items-center justify-center border-l border-[#DEDFE1] text-[#717376] focus-visible:outline-2 focus-visible:outline-offset-[-3px] focus-visible:outline-[#1E5AA8]"><ExternalLink size={17} aria-hidden="true" /></Link>
         </header>
@@ -156,16 +162,16 @@ export default function AcademyCourseNavigation({ children, lessons, progress: i
           <button type="button" aria-label="Close course contents" onClick={() => setOpen(false)} className="absolute inset-0 bg-black/45" />
           <aside ref={drawerRef} role="dialog" aria-modal="true" aria-label="Course contents" className="relative h-full w-[min(22rem,calc(100vw-2rem))] overflow-y-auto bg-white shadow-2xl">
             <div className="relative h-36 overflow-hidden bg-slate-800">
-              <Image src="/images/home/8.professional-online-teacher.jpg" alt="" fill sizes="352px" className="object-cover" />
+              <Image src={course.heroImage || "/images/home/8.professional-online-teacher.jpg"} alt="" fill sizes="352px" className="object-cover" />
               <div className="absolute inset-0 bg-gradient-to-t from-black/75 to-black/10" />
-              <div className="absolute inset-x-5 bottom-4 text-lg font-bold text-white">Tutor Foundations</div>
+              <div className="absolute inset-x-5 bottom-4 text-lg font-bold text-white">{course.shortTitle}</div>
               <button type="button" onClick={() => setOpen(false)} className="absolute right-3 top-3 inline-flex h-10 w-10 items-center justify-center rounded-full bg-black/40 text-white focus-visible:outline-2 focus-visible:outline-white" aria-label="Close course contents"><X size={19} aria-hidden="true" /></button>
             </div>
             <div className="border-b border-[#DEDFE1] px-5 py-4">
               <div className="flex justify-between text-[11px] font-bold uppercase tracking-[0.12em] text-[#717376]"><span>Course progress</span><span>{progressPercent}%</span></div>
               <div className="mt-3 h-1 bg-[#E6E7E9]"><div className="h-full bg-[#1E5AA8]" style={{ width: `${progressPercent}%` }} /></div>
             </div>
-            <NavigationContent lessons={lessons} progress={progress} onNavigate={() => setOpen(false)} onLessonNavigate={markLessonStarted} />
+            <NavigationContent lessons={lessons} progress={progress} course={course} basePath={basePath} onNavigate={() => setOpen(false)} onLessonNavigate={markLessonStarted} />
           </aside>
         </div>
       ) : null}

@@ -6,27 +6,29 @@ import AcademyLessonTracker from "@/components/tutor-academy/AcademyLessonTracke
 import { completeAcademyLesson } from "@/app/dashboard/tutor/academy/actions";
 import { getAcademyLesson, getAcademyLessonIndex, tutorAcademyCourse } from "@/lib/tutor-academy";
 import { getTutorAcademyProgress } from "@/lib/tutor-academy-progress";
+import { getPublishedAcademyCourse } from "@/lib/academy-courses";
 
 export default async function TutorAcademyLessonPage({ params, searchParams }: { params: Promise<{ lessonSlug: string }>; searchParams: Promise<{ error?: string }> }) {
   const { lessonSlug } = await params;
   const { error } = await searchParams;
-  const lesson = getAcademyLesson(lessonSlug);
+  const course = await getPublishedAcademyCourse(tutorAcademyCourse.key) || tutorAcademyCourse;
+  const lesson = getAcademyLesson(lessonSlug, course);
   if (!lesson) notFound();
 
   const progress = await getTutorAcademyProgress();
-  const index = getAcademyLessonIndex(lesson.slug);
-  const previousLesson = tutorAcademyCourse.lessons[index - 1];
-  const nextLesson = tutorAcademyCourse.lessons[index + 1];
+  const index = getAcademyLessonIndex(lesson.slug, course);
+  const previousLesson = course.lessons[index - 1];
+  const nextLesson = course.lessons[index + 1];
   const completed = progress.completedLessons.includes(lesson.slug);
-  const completeAction = completeAcademyLesson.bind(null, lesson.slug);
+  const completeAction = completeAcademyLesson.bind(null, course.key, lesson.slug);
 
   return (
     <article>
-      <AcademyLessonTracker lessonSlug={lesson.slug} />
+      <AcademyLessonTracker lessonSlug={lesson.slug} courseKey={course.key} />
       <header className="border-b border-[#DEDFE1] bg-white px-6 pb-10 pt-12 sm:px-10 sm:pb-12 sm:pt-16">
         <div className="mx-auto max-w-[728px]">
           <div className="flex flex-wrap items-center gap-3 text-[13px] font-semibold text-[#717376]">
-            <span>{lesson.section}</span><span aria-hidden="true">·</span><span>Lesson {index + 1} of {tutorAcademyCourse.lessons.length}</span><span aria-hidden="true">·</span><span className="inline-flex items-center gap-1.5"><Clock size={14} aria-hidden="true" /> {lesson.durationMinutes} min</span>
+            <span>{lesson.section}</span><span aria-hidden="true">·</span><span>Lesson {index + 1} of {course.lessons.length}</span><span aria-hidden="true">·</span><span className="inline-flex items-center gap-1.5"><Clock size={14} aria-hidden="true" /> {lesson.durationMinutes} min</span>
           </div>
           <h1 className="mt-5 text-[32px] font-bold leading-[1.2] tracking-[-0.025em] text-[#101010] sm:text-[40px] sm:leading-[48px]">{lesson.title}</h1>
           <div className="mt-5 h-1 w-12 bg-[#1E5AA8]" aria-hidden="true" />

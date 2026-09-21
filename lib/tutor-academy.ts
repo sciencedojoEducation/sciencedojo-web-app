@@ -32,12 +32,20 @@ export type QuizQuestion = {
   explanation: string;
 };
 
+export type AcademyAudienceRole = "tutor_applicant" | "tutor" | "student" | "parent";
+
 export type AcademyCourse = {
+  id?: string;
   key: string;
   title: string;
   shortTitle: string;
   description: string;
   estimatedMinutes: number;
+  heroImage?: string;
+  audienceRoles?: AcademyAudienceRole[];
+  passMark?: number;
+  quizRevision?: number;
+  versionId?: string;
   lessons: AcademyLesson[];
   quiz: QuizQuestion[];
 };
@@ -49,6 +57,7 @@ export type AcademyProgress = {
   quizAttempts: number;
   bestScore: number;
   completedAt: string | null;
+  passedQuizRevision: number;
 };
 
 export const tutorAcademyCourse: AcademyCourse = {
@@ -58,6 +67,10 @@ export const tutorAcademyCourse: AcademyCourse = {
   description:
     "A practical induction to safe, thoughtful teaching and the learning rhythm every ScienceDojo family should experience.",
   estimatedMinutes: 40,
+  heroImage: "/images/home/8.professional-online-teacher.jpg",
+  audienceRoles: ["tutor_applicant", "tutor"],
+  passMark: TUTOR_ACADEMY_PASS_MARK,
+  quizRevision: 1,
   lessons: [
     {
       slug: "welcome-to-sciencedojo",
@@ -390,9 +403,15 @@ export const emptyAcademyProgress: AcademyProgress = {
   quizAttempts: 0,
   bestScore: 0,
   completedAt: null,
+  passedQuizRevision: 0,
 };
 
 export type AcademyProgressState = "unstarted" | "started" | "completed";
+export type AcademyProgressCourse = Pick<AcademyCourse, "lessons" | "quizRevision">;
+
+function getPassedQuizRevision(progress: AcademyProgress) {
+  return Math.max(progress.passedQuizRevision, progress.completedAt ? 1 : 0);
+}
 
 export function getAcademyLessonProgressState(
   progress: AcademyProgress,
@@ -403,56 +422,61 @@ export function getAcademyLessonProgressState(
   return "unstarted";
 }
 
-export function getAcademyQuizProgressState(progress: AcademyProgress): AcademyProgressState {
-  if (progress.completedAt) return "completed";
+export function getAcademyQuizProgressState(progress: AcademyProgress, course: AcademyProgressCourse = tutorAcademyCourse): AcademyProgressState {
+  if (getPassedQuizRevision(progress) >= (course.quizRevision || 1)) return "completed";
   if (progress.quizAttempts > 0) return "started";
   return "unstarted";
 }
 
-export function getAcademyLesson(slug: string) {
-  return tutorAcademyCourse.lessons.find((lesson) => lesson.slug === slug) || null;
+export function getAcademyLesson(slug: string, course: AcademyCourse = tutorAcademyCourse) {
+  return course.lessons.find((lesson) => lesson.slug === slug) || null;
 }
 
-export function getAcademyLessonIndex(slug: string) {
-  return tutorAcademyCourse.lessons.findIndex((lesson) => lesson.slug === slug);
+export function getAcademyLessonIndex(slug: string, course: AcademyCourse = tutorAcademyCourse) {
+  return course.lessons.findIndex((lesson) => lesson.slug === slug);
 }
 
-export function getAcademyResumeHref(progress: AcademyProgress) {
-  if (progress.completedAt) return `/dashboard/tutor/academy/lessons/${tutorAcademyCourse.lessons[0].slug}`;
+export function isAcademyCourseComplete(progress: AcademyProgress, course: AcademyProgressCourse = tutorAcademyCourse) {
+  return course.lessons.every((lesson) => progress.completedLessons.includes(lesson.slug))
+    && getPassedQuizRevision(progress) >= (course.quizRevision || 1);
+}
 
-  const currentLesson = progress.currentLesson && getAcademyLesson(progress.currentLesson);
-  if (currentLesson) return `/dashboard/tutor/academy/lessons/${currentLesson.slug}`;
+export function getAcademyResumeHref(progress: AcademyProgress, course: AcademyCourse = tutorAcademyCourse, basePath = "/dashboard/tutor/academy") {
+  if (isAcademyCourseComplete(progress, course)) return `${basePath}/lessons/${course.lessons[0].slug}`;
 
-  const firstIncomplete = tutorAcademyCourse.lessons.find(
+  const currentLesson = progress.currentLesson && getAcademyLesson(progress.currentLesson, course);
+  if (currentLesson) return `${basePath}/lessons/${currentLesson.slug}`;
+
+  const firstIncomplete = course.lessons.find(
     (lesson) => !progress.completedLessons.includes(lesson.slug),
   );
   return firstIncomplete
-    ? `/dashboard/tutor/academy/lessons/${firstIncomplete.slug}`
-    : "/dashboard/tutor/academy/quiz";
+    ? `${basePath}/lessons/${firstIncomplete.slug}`
+    : `${basePath}/quiz`;
 }
 
-export function getAcademyProgressPercent(progress: AcademyProgress) {
-  const completed = tutorAcademyCourse.lessons.filter((lesson) =>
+export function getAcademyProgressPercent(progress: AcademyProgress, course: AcademyProgressCourse = tutorAcademyCourse) {
+  const completed = course.lessons.filter((lesson) =>
     progress.completedLessons.includes(lesson.slug),
   ).length;
-  const totalSteps = tutorAcademyCourse.lessons.length + 1;
-  return Math.round(((completed + (progress.completedAt ? 1 : 0)) / totalSteps) * 100);
+  const totalSteps = course.lessons.length + 1;
+  return Math.round(((completed + (getPassedQuizRevision(progress) >= (course.quizRevision || 1) ? 1 : 0)) / totalSteps) * 100);
 }
 
-export function scoreTutorAcademyQuiz(answers: Record<string, string>) {
-  const results = tutorAcademyCourse.quiz.map((question) => ({
+export function scoreTutorAcademyQuiz(answers: Record<string, string>, course: AcademyCourse = tutorAcademyCourse) {
+  const results = course.quiz.map((question) => ({
     questionId: question.id,
     correct: answers[question.id] === question.correctOptionId,
     correctOptionId: question.correctOptionId,
     explanation: question.explanation,
   }));
   const correctCount = results.filter((result) => result.correct).length;
-  const score = Math.round((correctCount / tutorAcademyCourse.quiz.length) * 100);
-  return { score, passed: score >= TUTOR_ACADEMY_PASS_MARK, results };
+  const score = Math.round((correctCount / course.quiz.length) * 100);
+  return { score, passed: score >= (course.passMark || TUTOR_ACADEMY_PASS_MARK), results };
 }
 
-export function getPublicQuizQuestions() {
-  return tutorAcademyCourse.quiz.map((question) => ({
+export function getPublicQuizQuestions(course: AcademyCourse = tutorAcademyCourse) {
+  return course.quiz.map((question) => ({
     id: question.id,
     prompt: question.prompt,
     options: question.options,

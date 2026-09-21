@@ -7,9 +7,9 @@ import {
   getAcademyLessonIndex,
   scoreTutorAcademyQuiz,
   TUTOR_ACADEMY_COURSE_KEY,
-  tutorAcademyCourse,
 } from "@/lib/tutor-academy";
 import { requireTutorAcademyUser } from "@/lib/tutor-academy-progress";
+import { getPublishedAcademyCourse } from "@/lib/academy-courses";
 
 export type QuizActionState = {
   status: "idle" | "error" | "failed" | "passed";
@@ -23,20 +23,22 @@ export type QuizActionState = {
   }>;
 };
 
-async function loadProgressRow(supabase: Awaited<ReturnType<typeof requireTutorAcademyUser>>["supabase"], userId: string) {
+async function loadProgressRow(supabase: Awaited<ReturnType<typeof requireTutorAcademyUser>>["supabase"], userId: string, courseKey: string) {
   return supabase
     .from("tutor_academy_progress")
-    .select("completed_lessons, started_lessons, current_lesson, quiz_attempts, best_score, completed_at")
+    .select("completed_lessons, started_lessons, current_lesson, quiz_attempts, best_score, completed_at, passed_quiz_revision")
     .eq("user_id", userId)
-    .eq("course_key", TUTOR_ACADEMY_COURSE_KEY)
+    .eq("course_key", courseKey)
     .maybeSingle();
 }
 
-export async function recordAcademyLessonVisit(lessonSlug: string) {
-  if (!getAcademyLesson(lessonSlug)) return { error: "Lesson not found." };
+export async function recordAcademyLessonVisit(courseKey: string, lessonSlug: string) {
+  const course = await getPublishedAcademyCourse(courseKey);
+  if (!course) return { error: "Course not found." };
+  if (!getAcademyLesson(lessonSlug, course)) return { error: "Lesson not found." };
 
-  const { supabase, user } = await requireTutorAcademyUser();
-  const { data: existing, error: loadError } = await loadProgressRow(supabase, user.id);
+  const { supabase, user } = await requireTutorAcademyUser(courseKey);
+  const { data: existing, error: loadError } = await loadProgressRow(supabase, user.id, courseKey);
   if (loadError) {
     console.error("[tutor-academy] Unable to load progress before lesson visit:", loadError.message);
     return { error: "Progress could not be saved. Please try again." };
@@ -55,10 +57,10 @@ export async function recordAcademyLessonVisit(lessonSlug: string) {
       .from("tutor_academy_progress")
       .update(payload)
       .eq("user_id", user.id)
-      .eq("course_key", TUTOR_ACADEMY_COURSE_KEY)
+      .eq("course_key", courseKey)
     : await supabase.from("tutor_academy_progress").insert({
       user_id: user.id,
-      course_key: TUTOR_ACADEMY_COURSE_KEY,
+      course_key: courseKey,
       ...payload,
     });
 
@@ -70,12 +72,14 @@ export async function recordAcademyLessonVisit(lessonSlug: string) {
   return { ok: true };
 }
 
-export async function completeAcademyLesson(lessonSlug: string) {
-  const lessonIndex = getAcademyLessonIndex(lessonSlug);
+export async function completeAcademyLesson(courseKey: string, lessonSlug: string) {
+  const course = await getPublishedAcademyCourse(courseKey);
+  if (!course) redirect("/dashboard/tutor/academy");
+  const lessonIndex = getAcademyLessonIndex(lessonSlug, course);
   if (lessonIndex < 0) redirect("/dashboard/tutor/academy");
 
-  const { supabase, user } = await requireTutorAcademyUser();
-  const { data: existing, error: loadError } = await loadProgressRow(supabase, user.id);
+  const { supabase, user } = await requireTutorAcademyUser(courseKey);
+  const { data: existing, error: loadError } = await loadProgressRow(supabase, user.id, courseKey);
   if (loadError) {
     console.error("[tutor-academy] Unable to load progress before completion:", loadError.message);
     redirect(`/dashboard/tutor/academy/lessons/${lessonSlug}?error=progress`);
@@ -83,23 +87,28 @@ export async function completeAcademyLesson(lessonSlug: string) {
 
   const completedLessons = Array.from(new Set([...(existing?.completed_lessons || []), lessonSlug]));
   const startedLessons = Array.from(new Set([...(existing?.started_lessons || []), lessonSlug]));
-  const nextLesson = tutorAcademyCourse.lessons[lessonIndex + 1];
+  const nextLesson = course.lessons[lessonIndex + 1];
+  const now = new Date().toISOString();
+  const courseNowComplete = course.lessons.every((item) => completedLessons.includes(item.slug))
+    && Number(existing?.passed_quiz_revision || (existing?.completed_at ? 1 : 0)) >= (course.quizRevision || 1);
+  const basePath = courseKey === TUTOR_ACADEMY_COURSE_KEY ? "/dashboard/tutor/academy" : `/dashboard/tutor/academy/courses/${courseKey}`;
   const nextHref = nextLesson
-    ? `/dashboard/tutor/academy/lessons/${nextLesson.slug}`
-    : "/dashboard/tutor/academy/quiz";
+    ? `${basePath}/lessons/${nextLesson.slug}`
+    : `${basePath}/quiz`;
 
   const { error } = await supabase.from("tutor_academy_progress").upsert(
     {
       user_id: user.id,
-      course_key: TUTOR_ACADEMY_COURSE_KEY,
+      course_key: courseKey,
       completed_lessons: completedLessons,
       started_lessons: startedLessons,
       current_lesson: nextLesson?.slug || null,
       quiz_attempts: Number(existing?.quiz_attempts || 0),
       best_score: Number(existing?.best_score || 0),
-      completed_at: existing?.completed_at || null,
-      last_viewed_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
+      completed_at: courseNowComplete ? existing?.completed_at || now : existing?.completed_at || null,
+      passed_quiz_revision: Number(existing?.passed_quiz_revision || (existing?.completed_at ? 1 : 0)),
+      last_viewed_at: now,
+      updated_at: now,
     },
     { onConflict: "user_id,course_key" },
   );
@@ -111,40 +120,45 @@ export async function completeAcademyLesson(lessonSlug: string) {
 
   revalidatePath("/dashboard/tutor/academy");
   revalidatePath("/dashboard/tutor");
+  revalidatePath("/dashboard/admin/tutors");
   redirect(nextHref);
 }
 
 export async function submitTutorAcademyQuiz(
+  courseKey: string,
   _previousState: QuizActionState,
   formData: FormData,
 ): Promise<QuizActionState> {
-  const { supabase, user } = await requireTutorAcademyUser();
-  const { data: existing, error: loadError } = await loadProgressRow(supabase, user.id);
+  const { supabase, user } = await requireTutorAcademyUser(courseKey);
+  const course = await getPublishedAcademyCourse(courseKey);
+  if (!course) return { status: "error", message: "This course is not available." };
+  const { data: existing, error: loadError } = await loadProgressRow(supabase, user.id, courseKey);
 
   if (loadError) {
     return { status: "error", message: "Your course progress could not be loaded. Please try again." };
   }
 
   const completed = new Set(existing?.completed_lessons || []);
-  const allLessonsComplete = tutorAcademyCourse.lessons.every((lesson) => completed.has(lesson.slug));
+  const allLessonsComplete = course.lessons.every((lesson) => completed.has(lesson.slug));
   if (!allLessonsComplete) {
-    return { status: "error", message: "Complete all six lessons before taking the final knowledge check." };
+    return { status: "error", message: `Complete all ${course.lessons.length} lessons before taking the final knowledge check.` };
   }
 
   const answers = Object.fromEntries(
-    tutorAcademyCourse.quiz.map((question) => [question.id, String(formData.get(question.id) || "")]),
+    course.quiz.map((question) => [question.id, String(formData.get(question.id) || "")]),
   );
   if (Object.values(answers).some((answer) => !answer)) {
     return { status: "error", message: "Choose an answer for every question before submitting." };
   }
 
-  const result = scoreTutorAcademyQuiz(answers);
+  const result = scoreTutorAcademyQuiz(answers, course);
   const now = new Date().toISOString();
-  const completedAt = result.passed ? existing?.completed_at || now : existing?.completed_at || null;
+  const alreadyPassedCurrentQuiz = Number(existing?.passed_quiz_revision || 0) >= (course.quizRevision || 1);
+  const completedAt = result.passed ? (alreadyPassedCurrentQuiz ? existing?.completed_at || now : now) : existing?.completed_at || null;
   const { error } = await supabase.from("tutor_academy_progress").upsert(
     {
       user_id: user.id,
-      course_key: TUTOR_ACADEMY_COURSE_KEY,
+      course_key: courseKey,
       completed_lessons: [...completed],
       started_lessons: Array.from(new Set([
         ...(existing?.started_lessons || []),
@@ -154,6 +168,7 @@ export async function submitTutorAcademyQuiz(
       quiz_attempts: Number(existing?.quiz_attempts || 0) + 1,
       best_score: Math.max(Number(existing?.best_score || 0), result.score),
       completed_at: completedAt,
+      passed_quiz_revision: result.passed ? (course.quizRevision || 1) : Number(existing?.passed_quiz_revision || 0),
       last_viewed_at: now,
       updated_at: now,
     },
