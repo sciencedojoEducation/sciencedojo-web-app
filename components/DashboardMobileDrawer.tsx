@@ -7,24 +7,18 @@ import type { PointerEvent } from "react";
 import DashboardAvatar from "./DashboardAvatar";
 import { DashboardMenuBadge } from "./DashboardBadgeProvider";
 import DashboardTourReplayButton from "./DashboardTourReplayButton";
+import DashboardAccountMenu from "./DashboardAccountMenu";
+import DashboardNavIcon from "./DashboardNavIcon";
 import { signOut } from "@/app/login/actions";
-import type { DashboardBadgeKey, DashboardRole } from "@/lib/dashboard-badges";
-
-type DashboardMobileNavLink = {
-  name: string;
-  href: string;
-  icon: string;
-  badgeKey?: DashboardBadgeKey;
-  exact?: boolean;
-  tourId?: string;
-};
+import type { DashboardRole } from "@/lib/dashboard-badges";
+import { isDashboardNavItemActive, type DashboardNavSection } from "@/lib/dashboard-navigation";
 
 type DashboardMobileDrawerProps = {
   role: DashboardRole;
   displayRole: string;
   userName: string;
   avatarUrl?: string;
-  links: DashboardMobileNavLink[];
+  sections: DashboardNavSection[];
 };
 
 function getFocusableElements(root: HTMLElement | null) {
@@ -42,7 +36,7 @@ export default function DashboardMobileDrawer({
   displayRole,
   userName,
   avatarUrl,
-  links,
+  sections,
 }: DashboardMobileDrawerProps) {
   const pathname = usePathname();
   const drawerId = useId();
@@ -50,6 +44,7 @@ export default function DashboardMobileDrawer({
   const drawerRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const touchOpenLockRef = useRef(false);
+  const links = sections[0]?.items || [];
   const dashboardHref = role === "admin" ? "/dashboard/admin" : role === "internal" ? "/dashboard/internal" : role === "tutor" ? "/dashboard/tutor" : role === "student" ? "/dashboard/student" : role === "user" ? "/dashboard/user" : "/dashboard/parent";
 
   const openDrawer = useCallback(() => {
@@ -82,11 +77,13 @@ export default function DashboardMobileDrawer({
     if (!isOpen) return;
 
     const previousOverflow = document.body.style.overflow;
+    const trigger = triggerRef.current;
     document.body.style.overflow = "hidden";
     getFocusableElements(drawerRef.current)[0]?.focus();
 
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape") {
+        if (drawerRef.current?.querySelector('[data-account-menu-open="true"]')) return;
         setIsOpen(false);
         return;
       }
@@ -116,13 +113,9 @@ export default function DashboardMobileDrawer({
     return () => {
       document.body.style.overflow = previousOverflow;
       document.removeEventListener("keydown", handleKeyDown);
-      triggerRef.current?.focus();
+      trigger?.focus();
     };
   }, [isOpen]);
-
-  function isActiveLink(link: DashboardMobileNavLink) {
-    return link.exact ? pathname === link.href : pathname === link.href || (link.href !== "/dashboard" && pathname.startsWith(`${link.href}/`));
-  }
 
   const utilityRowClass = "flex min-h-[52px] w-full items-center justify-center gap-2 rounded-xl border border-slate-200/80 bg-white/70 px-4 py-3 text-[10px] font-black uppercase tracking-[0.14em] text-slate-500 transition-all hover:border-[#1E5AA8]/20 hover:bg-[#1E5AA8]/5 hover:text-[#1E5AA8] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1E5AA8] focus-visible:ring-offset-2";
 
@@ -193,6 +186,40 @@ export default function DashboardMobileDrawer({
             </div>
 
             <div className="min-h-0 flex-1 overflow-y-auto px-4 py-3.5">
+              {role === "admin" ? (
+                <nav aria-label="Admin navigation" className="space-y-5">
+                  {sections.map((section) => (
+                    <section key={section.title} aria-label={section.title}>
+                      <h3 className="mb-1 px-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-500">{section.title}</h3>
+                      <div className="space-y-0.5">
+                        {section.items.map((link) => {
+                          const isActive = isDashboardNavItemActive(pathname, link);
+                          return (
+                            <Link
+                              key={link.href}
+                              href={link.href}
+                              aria-current={isActive ? "page" : undefined}
+                              onClick={() => setIsOpen(false)}
+                              className={`group flex min-h-11 items-center gap-2.5 rounded-xl px-2.5 text-[13px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1E5AA8] ${
+                                isActive ? "bg-[#1E5AA8]/8 font-semibold text-[#164b87]" : "font-medium text-slate-600 hover:bg-white hover:text-slate-900"
+                              }`}
+                            >
+                              <span className={`flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-lg ${
+                                isActive ? "bg-[#1E5AA8]/12 text-[#1E5AA8] ring-1 ring-[#6FE3D6]/70" : "bg-slate-100 text-slate-500 group-hover:bg-white group-hover:text-[#1E5AA8]"
+                              }`}>
+                                {link.iconName && <DashboardNavIcon name={link.iconName} />}
+                              </span>
+                              <span className="min-w-0 flex-1 truncate">{link.name}</span>
+                              <DashboardMenuBadge badgeKey={link.badgeKey} label={link.name} />
+                            </Link>
+                          );
+                        })}
+                      </div>
+                    </section>
+                  ))}
+                </nav>
+              ) : (
+              <>
               <div className="mb-3 flex items-center gap-3 rounded-[1.35rem] border border-slate-200/80 bg-white/88 p-3 shadow-sm">
                 <div className="h-10 w-10 shrink-0 overflow-hidden rounded-2xl border border-white bg-[#1E5AA8]/10 text-[#1E5AA8] shadow-sm">
                   <DashboardAvatar
@@ -209,13 +236,14 @@ export default function DashboardMobileDrawer({
 
               <nav className="space-y-1" aria-label="Dashboard">
                 {links.map((link) => {
-                  const isActive = isActiveLink(link);
+                  const isActive = isDashboardNavItemActive(pathname, link);
 
                   return (
                     <Link
                       key={link.name}
                       href={link.href}
                       data-tour={link.tourId}
+                      aria-current={isActive ? "page" : undefined}
                       onClick={() => setIsOpen(false)}
                       className={`group relative flex min-h-12 items-center gap-3 rounded-[1.15rem] border px-3.5 py-2.5 text-sm font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1E5AA8] focus-visible:ring-offset-2 ${
                         isActive
@@ -233,13 +261,11 @@ export default function DashboardMobileDrawer({
               </nav>
 
               <div className="mt-2 space-y-2 border-t border-slate-200/70 pt-2">
-                {role !== "admin" && (
-                  <DashboardTourReplayButton
-                    onReplay={() => setIsOpen(false)}
-                    className={utilityRowClass}
-                    iconClassName="text-base leading-none"
-                  />
-                )}
+                <DashboardTourReplayButton
+                  onReplay={() => setIsOpen(false)}
+                  className={utilityRowClass}
+                  iconClassName="text-base leading-none"
+                />
                 <Link
                   href="/"
                   onClick={() => setIsOpen(false)}
@@ -259,7 +285,19 @@ export default function DashboardMobileDrawer({
                   </button>
                 </form>
               </div>
+              </>
+              )}
             </div>
+            {role === "admin" && (
+              <div className="shrink-0 border-t border-slate-200 bg-white/90 p-3">
+                <DashboardAccountMenu
+                  userName={userName}
+                  displayRole={displayRole}
+                  avatarUrl={avatarUrl}
+                  onNavigate={() => setIsOpen(false)}
+                />
+              </div>
+            )}
           </div>
         </div>
       )}

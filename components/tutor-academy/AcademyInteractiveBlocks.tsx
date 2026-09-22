@@ -1,7 +1,14 @@
 "use client";
 
 import { useId, useState } from "react";
-import { CheckCircle2, RotateCcw } from "lucide-react";
+import {
+  ArrowLeft,
+  ArrowRight,
+  Check,
+  CheckCircle2,
+  Play,
+  RotateCcw,
+} from "lucide-react";
 import type { QuizQuestion } from "@/lib/tutor-academy";
 import { recordAcademyBlockCompletion } from "@/app/dashboard/tutor/academy/actions";
 
@@ -98,11 +105,14 @@ export function AcademyAccordion({
 
 export function AcademyFlashcards({
   items,
+  variant = "flip-grid",
   ...tracking
-}: { items: Item[] } & Tracking) {
+}: { items: Item[]; variant?: "flip-grid" | "stack" } & Tracking) {
   const [flipped, setFlipped] = useState<Set<number>>(new Set());
   return (
-    <div className="grid gap-4 sm:grid-cols-2">
+    <div
+      className={`grid gap-5 ${variant === "stack" ? "mx-auto max-w-2xl grid-cols-1" : "sm:grid-cols-2"}`}
+    >
       {items.map((item, index) => {
         const open = flipped.has(index);
         return (
@@ -119,19 +129,195 @@ export function AcademyFlashcards({
               });
               record(tracking);
             }}
-            className="min-h-44 border border-[#DEDFE1] bg-white p-6 text-left focus-visible:ring-2 focus-visible:ring-[#1E5AA8]"
+            className="group relative min-h-52 [perspective:1000px] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1E5AA8] focus-visible:ring-offset-4"
           >
-            <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#1E5AA8]">
-              {open ? "Answer" : "Think first, then reveal"}
-            </span>
             <span
-              className={`mt-4 block ${open ? "font-[family-name:var(--font-academy-serif)] text-base leading-7 text-[#4A4B4E]" : "text-xl font-bold text-[#252629]"}`}
+              className={`absolute inset-0 block transition-transform duration-500 [transform-style:preserve-3d] motion-reduce:transition-none ${open ? "[transform:rotateY(180deg)]" : ""}`}
             >
-              {open ? item.body : item.title}
+              <span className="absolute inset-0 flex flex-col justify-between border border-[#DEDFE1] bg-white p-6 text-left shadow-[0_10px_30px_rgba(20,35,60,0.08)] [backface-visibility:hidden]">
+                <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#1E5AA8]">
+                  Think first, then reveal
+                </span>
+                <span className="text-xl font-bold text-[#252629]">
+                  {item.title}
+                </span>
+                <span className="inline-flex items-center gap-2 text-xs font-bold text-[#717376]">
+                  <RotateCcw size={14} /> Flip card
+                </span>
+              </span>
+              <span className="absolute inset-0 flex flex-col justify-between border border-[#1E5AA8] bg-[#173A63] p-6 text-left text-white shadow-[0_10px_30px_rgba(20,35,60,0.14)] [backface-visibility:hidden] [transform:rotateY(180deg)]">
+                <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-white/65">
+                  Answer
+                </span>
+                <span className="font-[family-name:var(--font-academy-serif)] text-base leading-7">
+                  {item.body}
+                </span>
+                <span className="inline-flex items-center gap-2 text-xs font-bold text-white/70">
+                  <RotateCcw size={14} /> Show front
+                </span>
+              </span>
             </span>
           </button>
         );
       })}
+    </div>
+  );
+}
+
+export function AcademyProcess({
+  items,
+  heading,
+  ...tracking
+}: { items: Item[]; heading?: string } & Tracking) {
+  const [step, setStep] = useState(0);
+  const total = items.length + 1;
+  const goTo = (next: number) => {
+    setStep(Math.max(0, Math.min(next, total - 1)));
+    if (next > 0) record(tracking);
+  };
+  return (
+    <div className="overflow-hidden border border-[#DEDFE1] bg-[#F6F7F8]">
+      <div
+        className="flex transition-transform duration-500 ease-out motion-reduce:transition-none"
+        style={{ transform: `translateX(-${step * 100}%)` }}
+      >
+        <div className="flex min-h-72 w-full shrink-0 flex-col items-center justify-center bg-white p-8 text-center sm:p-12">
+          <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#1E5AA8]">
+            Guided process
+          </p>
+          <h3 className="mt-3 text-2xl font-black text-[#252629]">
+            {heading || "Explore this process"}
+          </h3>
+          <p className="mt-3 max-w-lg font-[family-name:var(--font-academy-serif)] text-[16px] leading-8 text-[#4A4B4E]">
+            Move through each step at your own pace.
+          </p>
+          <button
+            type="button"
+            onClick={() => goTo(1)}
+            className="mt-7 inline-flex min-h-11 items-center gap-2 rounded-full bg-[#1E5AA8] px-7 text-xs font-bold uppercase tracking-[0.1em] text-white"
+          >
+            Start <Play size={14} fill="currentColor" />
+          </button>
+        </div>
+        {items.map((item, index) => (
+          <div
+            key={item.id || index}
+            className="flex min-h-72 w-full shrink-0 flex-col justify-center bg-white p-8 sm:p-12"
+          >
+            <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#1E5AA8]">
+              Step {index + 1} of {items.length}
+            </p>
+            <h3 className="mt-3 text-2xl font-black text-[#252629]">
+              {item.title}
+            </h3>
+            <p className="mt-4 max-w-2xl font-[family-name:var(--font-academy-serif)] text-[17px] leading-8 text-[#4A4B4E]">
+              {item.body}
+            </p>
+          </div>
+        ))}
+      </div>
+      <div className="flex items-center justify-between border-t border-[#DEDFE1] bg-white px-4 py-3">
+        <button
+          type="button"
+          onClick={() => goTo(step - 1)}
+          disabled={step === 0}
+          className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-[#DEDFE1] disabled:opacity-25"
+          aria-label="Previous process step"
+        >
+          <ArrowLeft size={18} />
+        </button>
+        <div className="flex items-center gap-2" aria-label={`Process position ${step + 1} of ${total}`}>
+          {Array.from({ length: total }, (_, index) => (
+            <button
+              key={index}
+              type="button"
+              onClick={() => goTo(index)}
+              aria-label={index === 0 ? "Process introduction" : `Process step ${index}`}
+              aria-current={step === index ? "step" : undefined}
+              className={`h-2.5 rounded-full transition-all motion-reduce:transition-none ${step === index ? "w-7 bg-[#1E5AA8]" : "w-2.5 bg-[#CED1D5]"}`}
+            />
+          ))}
+        </div>
+        <button
+          type="button"
+          onClick={() => goTo(step + 1)}
+          disabled={step === total - 1}
+          className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-[#171719] text-white disabled:bg-emerald-600"
+          aria-label={step === total - 1 ? "Process complete" : "Next process step"}
+        >
+          {step === total - 1 ? <Check size={18} /> : <ArrowRight size={18} />}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+export function AcademySurvey({
+  prompt,
+  lowLabel,
+  highLabel,
+  scale,
+  submitLabel = "Submit",
+  variant = "scale",
+  ...tracking
+}: {
+  prompt: string;
+  lowLabel: string;
+  highLabel: string;
+  scale: 3 | 5 | 7;
+  submitLabel?: string;
+  variant?: "scale" | "compact";
+} & Tracking) {
+  const name = useId();
+  const [answer, setAnswer] = useState<number | null>(null);
+  const [submitted, setSubmitted] = useState(false);
+  return (
+    <div
+      className={`border border-[#DEDFE1] bg-white ${variant === "compact" ? "p-5 sm:p-6" : "p-6 sm:p-9"}`}
+    >
+      <p className="text-xl font-bold text-[#252629]">{prompt}</p>
+      <fieldset className="mt-7">
+        <legend className="sr-only">Choose a rating from 1 to {scale}</legend>
+        <div className="flex items-end justify-between gap-2">
+          <span className="hidden max-w-28 text-xs font-bold text-[#717376] sm:block">{lowLabel}</span>
+          {Array.from({ length: scale }, (_, index) => index + 1).map((value) => (
+            <label key={value} className="flex min-w-10 flex-col items-center gap-2 text-xs font-bold text-[#4A4B4E]">
+              <span>{value}</span>
+              <input
+                type="radio"
+                name={name}
+                value={value}
+                checked={answer === value}
+                onChange={() => {
+                  setAnswer(value);
+                  setSubmitted(false);
+                }}
+                className="h-6 w-6 accent-[#1E5AA8]"
+              />
+            </label>
+          ))}
+          <span className="hidden max-w-28 text-right text-xs font-bold text-[#717376] sm:block">{highLabel}</span>
+        </div>
+        <div className="mt-3 flex justify-between text-[11px] font-bold text-[#717376] sm:hidden">
+          <span>{lowLabel}</span><span>{highLabel}</span>
+        </div>
+      </fieldset>
+      <button
+        type="button"
+        disabled={answer === null || submitted}
+        onClick={() => {
+          setSubmitted(true);
+          record(tracking);
+        }}
+        className="mx-auto mt-8 flex min-h-11 min-w-40 items-center justify-center rounded-full bg-[#1E5AA8] px-7 text-xs font-bold uppercase tracking-[0.1em] text-white disabled:opacity-40"
+      >
+        {submitted ? "Response noted" : submitLabel}
+      </button>
+      {submitted ? (
+        <p role="status" className="mt-4 text-center text-sm font-semibold text-emerald-700">
+          Thank you—your response is complete.
+        </p>
+      ) : null}
     </div>
   );
 }

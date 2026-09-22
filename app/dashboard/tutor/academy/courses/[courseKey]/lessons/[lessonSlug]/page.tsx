@@ -1,10 +1,10 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { ArrowLeft, ArrowRight, CheckCircle2, Clock } from "lucide-react";
+import { ArrowLeft, ArrowRight, CheckCircle2 } from "lucide-react";
 import AcademyLessonBlocks from "@/components/tutor-academy/AcademyLessonBlocks";
+import AcademyLessonHeader from "@/components/tutor-academy/AcademyLessonHeader";
 import AcademyLessonTracker from "@/components/tutor-academy/AcademyLessonTracker";
 import AcademyThemeScope from "@/components/tutor-academy/AcademyThemeScope";
-import { resolveAcademyTheme } from "@/lib/academy-theme";
 import { completeAcademyLesson } from "@/app/dashboard/tutor/academy/actions";
 import { getPublishedAcademyCourse } from "@/lib/academy-courses";
 import {
@@ -25,7 +25,6 @@ export async function renderAcademyCourseLessonPage(
   const lesson = getAcademyLesson(lessonSlug, course);
   if (!lesson) notFound();
   const progress = await getTutorAcademyProgress(course.key);
-  const theme = resolveAcademyTheme(course);
   const index = getAcademyLessonIndex(lesson.slug, course);
   const previousLesson = course.lessons[index - 1];
   const nextLesson = course.lessons[index + 1];
@@ -51,29 +50,7 @@ export async function renderAcademyCourseLessonPage(
     <AcademyThemeScope course={course}>
     <article>
       <AcademyLessonTracker lessonSlug={lesson.slug} courseKey={course.key} />
-      <header className={`border-b border-[#DEDFE1] px-6 sm:px-10 ${theme.lessonHeaderStyle === "compact" ? "pb-7 pt-8" : "pb-10 pt-12 sm:pt-16"} ${theme.lessonHeaderStyle === "media-led" ? "bg-[var(--academy-accent-soft)]" : ""}`}>
-        <div className="mx-auto max-w-[728px]">
-          <div className="flex flex-wrap gap-3 text-[13px] font-semibold text-[#717376]">
-            <span>{lesson.section}</span>
-            <span>·</span>
-            <span>
-              Lesson {index + 1} of {course.lessons.length}
-            </span>
-            <span>·</span>
-            <span className="inline-flex gap-1.5">
-              <Clock size={14} />
-              {lesson.durationMinutes} min
-            </span>
-          </div>
-          <h1 className="mt-5 text-[32px] font-bold leading-[1.2] sm:text-[40px] sm:leading-[48px]">
-            {lesson.title}
-          </h1>
-          <div className="mt-5 h-1 w-12 bg-[var(--academy-accent)]" />
-          <p className="academy-reading-copy mt-6 text-[17px] leading-[33px] text-[#4A4B4E]">
-            {lesson.summary}
-          </p>
-        </div>
-      </header>
+      <AcademyLessonHeader course={course} lesson={lesson} index={index} />
       <div className="px-6 py-12 sm:px-10 sm:py-16">
         <div className="mx-auto max-w-[728px]">
           {error === "progress" ? (

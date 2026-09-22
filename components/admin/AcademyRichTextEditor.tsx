@@ -148,7 +148,7 @@ export default function AcademyRichTextEditor({
   ];
   return (
     <div
-      className={`relative bg-white ${active ? "ring-2 ring-primary/10" : ""}`}
+      className={`relative bg-transparent ${active ? "ring-2 ring-primary/10" : ""}`}
     >
       {active ? (
       <div

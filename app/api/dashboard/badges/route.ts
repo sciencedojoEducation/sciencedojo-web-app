@@ -2,6 +2,7 @@ import {
   getAuthenticatedDashboardBadgeContext,
   getAuthenticatedDashboardBadgeIdentity,
   isDashboardBadgeKey,
+  isMissingDashboardBadgeViewsTableError,
   roleCanViewDashboardBadge,
 } from "@/lib/dashboard-badges";
 import { createClient } from "@/utils/supabase/server";
@@ -50,6 +51,12 @@ export async function POST(request: Request) {
     );
 
   if (error) {
+    if (isMissingDashboardBadgeViewsTableError(error)) {
+      return Response.json(
+        { error: "Badge view storage is not available" },
+        { status: 503, headers: { "Cache-Control": "private, no-store" } },
+      );
+    }
     console.error("[dashboard-badges] Unable to save viewed state:", error.message);
     return Response.json({ error: "Unable to save viewed state" }, { status: 500 });
   }

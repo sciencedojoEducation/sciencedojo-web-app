@@ -128,6 +128,16 @@ function renderNode(node: RichNode, key: string): React.ReactNode {
         key={key}
         latex={String(node.attrs?.latex || "")}
         display={node.type === "blockMath"}
+        label={
+          typeof node.attrs?.ariaLabel === "string"
+            ? node.attrs.ariaLabel
+            : undefined
+        }
+        description={
+          typeof node.attrs?.description === "string"
+            ? node.attrs.description
+            : undefined
+        }
       />
     );
   return <span key={key}>{children}</span>;

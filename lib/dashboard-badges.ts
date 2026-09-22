@@ -55,7 +55,24 @@ export function createEmptyDashboardBadgeCounts(): DashboardBadgeCounts {
   };
 }
 
-function logCountError(label: string, error?: { message?: string } | null) {
+type DashboardBadgeQueryError = {
+  code?: string;
+  message?: string;
+};
+
+export function isMissingDashboardBadgeViewsTableError(
+  error?: DashboardBadgeQueryError | null,
+) {
+  return Boolean(
+    error &&
+      (error.code === "42P01" ||
+        error.code === "PGRST205" ||
+        (error.message?.includes("dashboard_badge_views") &&
+          error.message.includes("schema cache"))),
+  );
+}
+
+function logCountError(label: string, error?: DashboardBadgeQueryError | null) {
   if (error) console.error(`[dashboard-badges] ${label}:`, error.message || error);
 }
 
@@ -70,6 +87,10 @@ export async function getDashboardBadgeCounts(
     .from("dashboard_badge_views")
     .select("badge_key, viewed_at")
     .eq("user_id", userId);
+  // Badge view state is optional infrastructure. If its migration has not yet
+  // reached an environment, fail closed instead of treating every historical
+  // item as unread or turning a dashboard render into a console error.
+  if (isMissingDashboardBadgeViewsTableError(badgeViewsError)) return counts;
   logCountError("badge views", badgeViewsError);
 
   const viewedAt = new Map<DashboardBadgeKey, string>();

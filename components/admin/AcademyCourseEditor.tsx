@@ -22,6 +22,8 @@ import {
   Eye,
   GripVertical,
   History,
+  List,
+  ListOrdered,
   Menu,
   Monitor,
   Palette,
@@ -35,12 +37,15 @@ import {
   Smartphone,
   SlidersHorizontal,
   Trash2,
+  Sigma,
+  Table2,
   Tablet,
   Undo2,
   Upload,
   X,
 } from "lucide-react";
 import AcademyLessonBlocks from "@/components/tutor-academy/AcademyLessonBlocks";
+import AcademyMath from "@/components/tutor-academy/AcademyMath";
 import AcademyBlockIcon from "@/components/admin/academy-builder/AcademyBlockIcon";
 import BlockInsertionTray from "@/components/admin/academy-builder/BlockInsertionTray";
 import AcademyMediaChooser from "@/components/admin/academy-builder/AcademyMediaChooser";
@@ -60,13 +65,15 @@ import {
 } from "@/app/dashboard/admin/academy/actions";
 import {
   academySlugify,
-  groupAcademyValidationErrors,
+  groupAcademyValidationIssues,
   validateAcademyCourse,
+  type AcademyValidationIssue,
 } from "@/lib/academy-course-validation";
 import AcademyThemeScope from "@/components/tutor-academy/AcademyThemeScope";
 import { academyAccentPalettes } from "@/lib/academy-theme";
 import {
   academyBlockRegistry,
+  type AcademyBlockCategory,
   createAcademyId,
   createAcademyLesson,
   createQuestion,
@@ -84,6 +91,7 @@ import type {
   AcademyAudienceRole,
   AcademyCourse,
   AcademyLesson,
+  AcademyMediaCaptionItem,
   LessonBlock,
   QuizQuestion,
 } from "@/lib/tutor-academy";
@@ -107,6 +115,17 @@ type Media = {
   altText?: string | null;
 };
 
+type CaptionedMediaBlock = Extract<
+  LessonBlock,
+  { type: "image" | "video" | "audio" }
+>;
+
+type InlineInsertKind =
+  | "table"
+  | "ordered-list"
+  | "unordered-list"
+  | "equation";
+
 const inputClass =
   "min-h-10 w-full rounded-lg border border-secondary/15 bg-white px-3 text-sm text-secondary outline-none focus:border-primary focus:ring-2 focus:ring-primary/10";
 const textareaClass = `${inputClass} py-2.5 leading-6`;
@@ -116,25 +135,46 @@ const audienceOptions: Array<{ value: AcademyAudienceRole; label: string }> = [
   { value: "student", label: "Students" },
   { value: "parent", label: "Parents" },
 ];
+const RECENT_BLOCKS_STORAGE_KEY = "academy-builder-recent-blocks-v1";
+const blockLibraryCategories: Array<"All" | AcademyBlockCategory> = [
+  "All",
+  "Text",
+  "Media",
+  "Interactive",
+  "Data & STEM",
+  "Assessment",
+];
 
 function useDialogFocus(active: boolean, onClose: () => void) {
   const ref = useRef<HTMLDivElement>(null);
   const closeRef = useRef(onClose);
+  const triggerRef = useRef<HTMLElement | null>(null);
   useEffect(() => {
     closeRef.current = onClose;
   }, [onClose]);
   useEffect(() => {
     if (!active) return;
     const container = ref.current;
-    const focusable = container?.querySelectorAll<HTMLElement>(
-      'button:not([disabled]), a[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
-    );
-    focusable?.[0]?.focus();
+    if (!container) return;
+    triggerRef.current = document.activeElement as HTMLElement | null;
+    const getFocusable = () =>
+      container.querySelectorAll<HTMLElement>(
+        'button:not([disabled]), a[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+      );
+    const focusFrame = window.requestAnimationFrame(() => {
+      getFocusable()[0]?.focus();
+    });
     const onKeyDown = (event: KeyboardEvent) => {
+      const dialogs = document.querySelectorAll<HTMLElement>(
+        '[role="dialog"][aria-modal="true"]',
+      );
+      if (dialogs[dialogs.length - 1] !== container) return;
       if (event.key === "Escape") {
+        event.preventDefault();
         closeRef.current();
         return;
       }
+      const focusable = getFocusable();
       if (event.key !== "Tab" || !focusable?.length) return;
       const first = focusable[0];
       const last = focusable[focusable.length - 1];
@@ -147,7 +187,11 @@ function useDialogFocus(active: boolean, onClose: () => void) {
       }
     };
     document.addEventListener("keydown", onKeyDown);
-    return () => document.removeEventListener("keydown", onKeyDown);
+    return () => {
+      window.cancelAnimationFrame(focusFrame);
+      document.removeEventListener("keydown", onKeyDown);
+      window.requestAnimationFrame(() => triggerRef.current?.focus());
+    };
   }, [active]);
   return ref;
 }
@@ -269,7 +313,7 @@ function TextPresetPicker({
   return (
     <div
       ref={panelRef}
-      className="absolute left-0 top-12 z-40 w-[min(310px,calc(100vw-3rem))] overflow-hidden rounded-xl border border-secondary/15 bg-white text-left shadow-2xl sm:left-12 sm:top-0"
+      className="absolute left-0 top-14 z-40 w-[min(310px,calc(100vw-3rem))] overflow-hidden rounded-xl border border-secondary/15 bg-white text-left shadow-2xl"
       role="dialog"
       aria-label="Text layout"
     >
@@ -307,7 +351,8 @@ function TextPresetPicker({
               className={`block rounded border border-secondary/10 bg-white p-2 ${preset.value === "two-column" ? "grid grid-cols-2 gap-1" : ""}`}
               aria-hidden="true"
             >
-              {preset.value.includes("heading") || preset.value === "heading" ? (
+              {preset.value.includes("heading") ||
+              preset.value === "heading" ? (
                 <span className="mb-1 block h-1.5 w-8 rounded-full bg-secondary/70" />
               ) : null}
               <span className="block space-y-1">
@@ -339,6 +384,8 @@ function DraggableBlockFrame({
   onEdit,
   onMove,
   onMoveDirection,
+  canMoveUp,
+  canMoveDown,
   onDuplicate,
   onDelete,
   onOpenSettings,
@@ -353,9 +400,13 @@ function DraggableBlockFrame({
   onEdit: () => void;
   onMove: (from: number, to: number) => void;
   onMoveDirection: (direction: -1 | 1) => void;
+  canMoveUp: boolean;
+  canMoveDown: boolean;
   onDuplicate: () => void;
   onDelete: () => void;
-  onOpenSettings: () => void;
+  onOpenSettings: (
+    tab: "content" | "design" | "accessibility" | "logic",
+  ) => void;
   onApplyTextPreset: (preset: TextPreset) => void;
   children: React.ReactNode;
 }) {
@@ -368,6 +419,16 @@ function DraggableBlockFrame({
     setPresetOpen(false);
     window.requestAnimationFrame(() => presetButtonRef.current?.focus());
   };
+  const hasLayoutTool = block.type === "text";
+  const hasLogicTool = [
+    "accordion",
+    "carousel",
+    "tabs",
+    "flashcards",
+    "process",
+    "survey",
+    "knowledge-check",
+  ].includes(block.type);
   useEffect(() => {
     const element = ref.current;
     const handle = handleRef.current;
@@ -403,91 +464,118 @@ function DraggableBlockFrame({
       <div
         role="toolbar"
         aria-label={`${getAcademyBlockDefinition(block.type).label} block actions`}
-        className={`absolute -top-14 left-0 z-30 flex items-center gap-1 rounded-xl border border-secondary/15 bg-white p-1 shadow-lg transition-opacity motion-reduce:transition-none sm:-left-[76px] sm:top-0 sm:flex-col ${selected ? "opacity-100" : "pointer-events-none opacity-0 group-hover:pointer-events-auto group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100"}`}
+        onClick={(event) => event.stopPropagation()}
+        className={`relative z-30 mb-4 min-h-14 max-w-full transition-opacity motion-reduce:transition-none ${selected ? "opacity-100" : "pointer-events-none opacity-0 group-hover:pointer-events-auto group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100"}`}
       >
-        <button
-          ref={handleRef}
-          type="button"
-          aria-label={`Move ${getAcademyBlockDefinition(block.type).label}`}
-          className="inline-flex h-10 w-10 cursor-grab items-center justify-center rounded-lg text-secondary/45 outline-none hover:bg-slate-100 focus-visible:ring-2 focus-visible:ring-primary"
-        >
-          <GripVertical size={16} />
-        </button>
-        <button
-          type="button"
-          onClick={onEdit}
-          aria-label={`Edit ${getAcademyBlockDefinition(block.type).label}`}
-          className="inline-flex h-10 w-10 items-center justify-center rounded-lg text-secondary/45 outline-none hover:bg-slate-100 focus-visible:ring-2 focus-visible:ring-primary"
-        >
-          <Pencil size={16} />
-        </button>
-        <button
-          ref={presetButtonRef}
-          type="button"
-          onClick={() =>
-            block.type === "text"
-              ? setPresetOpen((value) => !value)
-              : onOpenSettings()
-          }
-          aria-label={block.type === "text" ? "Change text style" : "Edit block style"}
-          aria-expanded={block.type === "text" ? presetOpen : undefined}
-          className="inline-flex h-10 w-10 items-center justify-center rounded-lg text-secondary/45 outline-none hover:bg-slate-100 focus-visible:ring-2 focus-visible:ring-primary"
-        >
-          <Palette size={16} />
-        </button>
-        <button
-          type="button"
-          onClick={() =>
-            block.type === "text"
-              ? setPresetOpen((value) => !value)
-              : onOpenSettings()
-          }
-          aria-label="Change block layout"
-          className="hidden h-10 w-10 items-center justify-center rounded-lg text-secondary/45 outline-none hover:bg-slate-100 focus-visible:ring-2 focus-visible:ring-primary sm:inline-flex"
-        >
-          <Columns3 size={16} />
-        </button>
-        <button
-          type="button"
-          onClick={onDuplicate}
-          aria-label="Duplicate block"
-          className="hidden h-10 w-10 items-center justify-center rounded-lg text-secondary/45 outline-none hover:bg-slate-100 focus-visible:ring-2 focus-visible:ring-primary sm:inline-flex"
-        >
-          <Copy size={16} />
-        </button>
-        <button
-          type="button"
-          onClick={onOpenSettings}
-          aria-label="Open advanced block settings"
-          className="inline-flex h-10 w-10 items-center justify-center rounded-lg text-secondary/45 outline-none hover:bg-slate-100 focus-visible:ring-2 focus-visible:ring-primary"
-        >
-          <SlidersHorizontal size={16} />
-        </button>
-        <div className="hidden border-t border-secondary/10 pt-1 sm:block">
+        <div className="flex max-w-full items-center gap-1 overflow-x-auto rounded-xl border border-secondary/15 bg-white p-1 shadow-sm">
+          <span className="shrink-0 px-2 text-[10px] font-bold uppercase tracking-[0.08em] text-primary">
+            {getAcademyBlockDefinition(block.type).label}
+          </span>
           <button
+            ref={handleRef}
             type="button"
-            onClick={() => onMoveDirection(-1)}
-            aria-label="Move block up"
-            className="inline-flex h-10 w-10 items-center justify-center rounded-lg text-secondary/45 outline-none hover:bg-slate-100 focus-visible:ring-2 focus-visible:ring-primary"
+            aria-label={`Move ${getAcademyBlockDefinition(block.type).label}`}
+            title="Drag to reorder · Alt+↑/↓ also moves this block"
+            onKeyDown={(event) => {
+              if (!event.altKey) return;
+              if (event.key === "ArrowUp" && canMoveUp) {
+                event.preventDefault();
+                onMoveDirection(-1);
+              }
+              if (event.key === "ArrowDown" && canMoveDown) {
+                event.preventDefault();
+                onMoveDirection(1);
+              }
+            }}
+            className="inline-flex h-11 w-11 shrink-0 cursor-grab items-center justify-center rounded-lg text-secondary/45 outline-none hover:bg-slate-100 focus-visible:ring-2 focus-visible:ring-primary"
           >
-            <ArrowUp size={16} />
+            <GripVertical size={16} />
           </button>
           <button
             type="button"
-            onClick={() => onMoveDirection(1)}
-            aria-label="Move block down"
-            className="inline-flex h-10 w-10 items-center justify-center rounded-lg text-secondary/45 outline-none hover:bg-slate-100 focus-visible:ring-2 focus-visible:ring-primary"
+            onClick={onEdit}
+            aria-label={`Edit ${getAcademyBlockDefinition(block.type).label}`}
+            title="Edit content"
+            className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-secondary/45 outline-none hover:bg-slate-100 focus-visible:ring-2 focus-visible:ring-primary"
           >
-            <ArrowDown size={16} />
+            <Pencil size={16} />
           </button>
           <button
             type="button"
-            onClick={onDelete}
-            aria-label="Delete block"
-            className="inline-flex h-10 w-10 items-center justify-center rounded-lg text-red-500 outline-none hover:bg-red-50 focus-visible:ring-2 focus-visible:ring-red-500"
+            onClick={() => onOpenSettings("design")}
+            aria-label="Edit block design"
+            title="Design: style, surface and spacing"
+            className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-secondary/45 outline-none hover:bg-slate-100 focus-visible:ring-2 focus-visible:ring-primary"
           >
-            <Trash2 size={16} />
+            <Palette size={16} />
           </button>
+          {hasLayoutTool ? (
+            <button
+              ref={presetButtonRef}
+              type="button"
+              onClick={() => {
+                onSelect();
+                setPresetOpen((value) => !value);
+              }}
+              aria-label="Change block layout"
+              aria-expanded={presetOpen}
+              title="Choose a text layout"
+              className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-secondary/45 outline-none hover:bg-slate-100 focus-visible:ring-2 focus-visible:ring-primary"
+            >
+              <Columns3 size={16} />
+            </button>
+          ) : null}
+          <button
+            type="button"
+            onClick={onDuplicate}
+            aria-label="Duplicate block"
+            title="Duplicate block"
+            className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-secondary/45 outline-none hover:bg-slate-100 focus-visible:ring-2 focus-visible:ring-primary"
+          >
+            <Copy size={16} />
+          </button>
+          {hasLogicTool ? (
+            <button
+              type="button"
+              onClick={() => onOpenSettings("logic")}
+              aria-label="Edit block completion rules"
+              title="Completion and interaction rules"
+              className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-secondary/45 outline-none hover:bg-slate-100 focus-visible:ring-2 focus-visible:ring-primary"
+            >
+              <SlidersHorizontal size={16} />
+            </button>
+          ) : null}
+          <div className="flex shrink-0 border-l border-secondary/10 pl-1">
+            <button
+              type="button"
+              onClick={() => onMoveDirection(-1)}
+              disabled={!canMoveUp}
+              aria-label="Move block up"
+              title="Move block up"
+              className="inline-flex h-11 w-11 items-center justify-center rounded-lg text-secondary/45 outline-none hover:bg-slate-100 focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-20"
+            >
+              <ArrowUp size={16} />
+            </button>
+            <button
+              type="button"
+              onClick={() => onMoveDirection(1)}
+              disabled={!canMoveDown}
+              aria-label="Move block down"
+              title="Move block down"
+              className="inline-flex h-11 w-11 items-center justify-center rounded-lg text-secondary/45 outline-none hover:bg-slate-100 focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-20"
+            >
+              <ArrowDown size={16} />
+            </button>
+            <button
+              type="button"
+              onClick={onDelete}
+              aria-label="Delete block"
+              title="Delete block"
+              className="inline-flex h-11 w-11 items-center justify-center rounded-lg text-red-500 outline-none hover:bg-red-50 focus-visible:ring-2 focus-visible:ring-red-500"
+            >
+              <Trash2 size={16} />
+            </button>
+          </div>
         </div>
         {presetOpen && selected && block.type === "text" ? (
           <TextPresetPicker
@@ -550,16 +638,50 @@ function ItemEditor({
             <strong className="text-xs text-secondary/50">
               Item {index + 1}
             </strong>
-            <button
-              type="button"
-              onClick={() =>
-                onChange(items.filter((_, itemIndex) => itemIndex !== index))
-              }
-              aria-label={`Remove item ${index + 1}`}
-              className="text-red-500"
-            >
-              <Trash2 size={15} />
-            </button>
+            <div className="flex items-center">
+              <button
+                type="button"
+                disabled={index === 0}
+                onClick={() => {
+                  const next = [...items];
+                  [next[index - 1], next[index]] = [
+                    next[index],
+                    next[index - 1],
+                  ];
+                  onChange(next);
+                }}
+                aria-label={`Move item ${index + 1} up`}
+                className="inline-flex h-10 w-10 items-center justify-center text-secondary/45 disabled:opacity-20"
+              >
+                <ArrowUp size={15} />
+              </button>
+              <button
+                type="button"
+                disabled={index === items.length - 1}
+                onClick={() => {
+                  const next = [...items];
+                  [next[index], next[index + 1]] = [
+                    next[index + 1],
+                    next[index],
+                  ];
+                  onChange(next);
+                }}
+                aria-label={`Move item ${index + 1} down`}
+                className="inline-flex h-10 w-10 items-center justify-center text-secondary/45 disabled:opacity-20"
+              >
+                <ArrowDown size={15} />
+              </button>
+              <button
+                type="button"
+                onClick={() =>
+                  onChange(items.filter((_, itemIndex) => itemIndex !== index))
+                }
+                aria-label={`Remove item ${index + 1}`}
+                className="inline-flex h-10 w-10 items-center justify-center text-red-500"
+              >
+                <Trash2 size={15} />
+              </button>
+            </div>
           </div>
           <div className="space-y-3">
             {kind !== "gallery" ? (
@@ -651,7 +773,13 @@ function ItemEditor({
             ) : null}
             {kind === "media" || kind === "gallery" ? (
               <>
-                <button type="button" onClick={() => setMediaItemIndex(index)} className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-primary/20 bg-white px-3 text-xs font-black text-primary"><Upload size={14} /> Choose image</button>
+                <button
+                  type="button"
+                  onClick={() => setMediaItemIndex(index)}
+                  className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-primary/20 bg-white px-3 text-xs font-black text-primary"
+                >
+                  <Upload size={14} /> Choose image
+                </button>
                 <Field label="Image URL">
                   <input
                     className={inputClass}
@@ -714,16 +842,34 @@ function ItemEditor({
         open={mediaItemIndex !== null}
         title="Choose item image"
         library={mediaLibrary}
+        selectedUrl={
+          mediaItemIndex === null
+            ? undefined
+            : String(items[mediaItemIndex]?.src || "")
+        }
         onClose={() => setMediaItemIndex(null)}
         onChoose={(choice) => {
           if (mediaItemIndex === null) return;
-          onChange(items.map((item, index) => index === mediaItemIndex ? { ...item, src: choice.url, alt: item.alt || choice.altText || "" } : item));
+          onChange(
+            items.map((item, index) =>
+              index === mediaItemIndex
+                ? {
+                    ...item,
+                    src: choice.url,
+                    alt: item.alt || choice.altText || "",
+                  }
+                : item,
+            ),
+          );
         }}
         onUpload={async (file) => {
           const data = new FormData();
           data.set("file", file);
           const result = await uploadAcademyMedia(data);
-          if (!result.ok || !result.url) { window.alert(result.message); return null; }
+          if (!result.ok || !result.url) {
+            window.alert(result.message);
+            return null;
+          }
           return { name: file.name, url: result.url, mediaType: "image" };
         }}
       />
@@ -893,46 +1039,54 @@ function BlockInspector({
     onChange({ ...block, items } as LessonBlock);
   return (
     <>
-      <div className="border-b border-secondary/10 px-5 py-4">
+      <div className="border-b border-secondary/10 px-5 py-4 pr-16">
         <p className="text-[10px] font-black uppercase tracking-[0.15em] text-primary/60">
           Selected block
         </p>
-        <div className="mt-1 flex items-center justify-between">
+        <div className="mt-1">
           <h2 className="text-lg font-black text-secondary">
             {getAcademyBlockDefinition(block.type).label}
           </h2>
-          <div className="flex">
+          <div
+            className="mt-3 flex items-center gap-1"
+            aria-label="Selected block actions"
+          >
             <button
               type="button"
               onClick={() => onMove(-1)}
               aria-label="Move block up"
-              className="p-2 text-secondary/45"
+              title="Move block up"
+              className="inline-flex h-10 w-10 items-center justify-center rounded-lg text-secondary/50 hover:bg-slate-100 focus-visible:ring-2 focus-visible:ring-primary"
             >
-              <ArrowUp size={15} />
+              <ArrowUp size={17} />
             </button>
             <button
               type="button"
               onClick={() => onMove(1)}
               aria-label="Move block down"
-              className="p-2 text-secondary/45"
+              title="Move block down"
+              className="inline-flex h-10 w-10 items-center justify-center rounded-lg text-secondary/50 hover:bg-slate-100 focus-visible:ring-2 focus-visible:ring-primary"
             >
-              <ArrowDown size={15} />
+              <ArrowDown size={17} />
             </button>
             <button
               type="button"
               onClick={onDuplicate}
               aria-label="Duplicate block"
-              className="p-2 text-secondary/45"
+              title="Duplicate block"
+              className="inline-flex h-10 w-10 items-center justify-center rounded-lg text-secondary/50 hover:bg-slate-100 focus-visible:ring-2 focus-visible:ring-primary"
             >
-              <Copy size={15} />
+              <Copy size={17} />
             </button>
             <button
               type="button"
               onClick={onDelete}
               aria-label="Delete block"
-              className="p-2 text-red-500"
+              title="Delete block"
+              className="ml-auto inline-flex min-h-10 items-center gap-2 rounded-lg px-3 text-xs font-bold text-red-600 hover:bg-red-50 focus-visible:ring-2 focus-visible:ring-red-500"
             >
-              <Trash2 size={15} />
+              <Trash2 size={17} />
+              Delete
             </button>
           </div>
         </div>
@@ -966,8 +1120,20 @@ function BlockInspector({
                 }
               >
                 <option value="view">Complete on view</option>
-                <option value="interact">Complete on interaction</option>
-                <option value="pass">Complete on pass</option>
+                {[
+                  "accordion",
+                  "carousel",
+                  "tabs",
+                  "flashcards",
+                  "process",
+                  "survey",
+                  "knowledge-check",
+                ].includes(block.type) ? (
+                  <option value="interact">Complete on interaction</option>
+                ) : null}
+                {block.type === "knowledge-check" ? (
+                  <option value="pass">Complete on pass</option>
+                ) : null}
               </select>
             </Field>
             {block.type === "knowledge-check" ? (
@@ -991,48 +1157,106 @@ function BlockInspector({
                 Style
               </p>
               <div className="grid grid-cols-3 gap-2">
-                {getAcademyBlockDefinition(block.type).variants.map((variant) => (
+                {getAcademyBlockDefinition(block.type).variants.map(
+                  (variant) => (
+                    <button
+                      key={variant.key}
+                      type="button"
+                      title={variant.description}
+                      onClick={() =>
+                        onChange({
+                          ...block,
+                          appearance: {
+                            variant: variant.key,
+                            surface: block.appearance?.surface || "plain",
+                            spacing: block.appearance?.spacing || "comfortable",
+                            width: block.appearance?.width || "reading",
+                          },
+                        })
+                      }
+                      className={`min-h-16 rounded-lg border p-2 text-left text-[11px] font-black ${block.appearance?.variant === variant.key ? "border-primary bg-primary/5 text-primary" : "border-secondary/10"}`}
+                    >
+                      {variant.label}
+                      <BlockVariantPreview
+                        type={block.type}
+                        variant={variant.key}
+                      />
+                    </button>
+                  ),
+                )}
+              </div>
+            </div>
+            <Field label="Content width">
+              <div className="grid grid-cols-3 rounded-xl bg-slate-100 p-1">
+                {(["narrow", "reading", "wide"] as const).map((width) => (
                   <button
-                    key={variant.key}
+                    key={width}
                     type="button"
-                    title={variant.description}
                     onClick={() =>
                       onChange({
                         ...block,
                         appearance: {
-                          variant: variant.key,
+                          variant:
+                            block.appearance?.variant ||
+                            getAcademyBlockDefinition(block.type).variants[0]
+                              .key,
                           surface: block.appearance?.surface || "plain",
                           spacing: block.appearance?.spacing || "comfortable",
+                          width,
                         },
                       })
                     }
-                    className={`min-h-16 rounded-lg border p-2 text-left text-[11px] font-black ${block.appearance?.variant === variant.key ? "border-primary bg-primary/5 text-primary" : "border-secondary/10"}`}
+                    className={`min-h-10 rounded-lg text-[11px] font-black capitalize ${
+                      (block.appearance?.width || "reading") === width
+                        ? "bg-white text-primary shadow-sm"
+                        : "text-secondary/45"
+                    }`}
                   >
-                    <span className="mb-2 block h-3 rounded-sm bg-current opacity-15" />
-                    {variant.label}
+                    {width}
                   </button>
                 ))}
               </div>
-            </div>
+            </Field>
             <Field label="Surface">
-              <select
-                className={inputClass}
-                value={block.appearance?.surface || "plain"}
-                onChange={(event) =>
-                  onChange({
-                    ...block,
-                    appearance: {
-                      variant: block.appearance?.variant || getAcademyBlockDefinition(block.type).variants[0].key,
-                      surface: event.target.value as "plain" | "subtle" | "accent",
-                      spacing: block.appearance?.spacing || "comfortable",
-                    },
-                  })
-                }
-              >
-                <option value="plain">Plain</option>
-                <option value="subtle">Subtle tint</option>
-                <option value="accent">Accent edge</option>
-              </select>
+              <div className="space-y-2">
+                {(
+                  [
+                    ["plain", "Light", "bg-white"],
+                    ["subtle", "Soft tint", "bg-primary/5"],
+                    [
+                      "accent",
+                      "Accent edge",
+                      "border-l-4 border-primary bg-white",
+                    ],
+                  ] as const
+                ).map(([surface, label, preview]) => (
+                  <button
+                    key={surface}
+                    type="button"
+                    onClick={() =>
+                      onChange({
+                        ...block,
+                        appearance: {
+                          variant:
+                            block.appearance?.variant ||
+                            getAcademyBlockDefinition(block.type).variants[0]
+                              .key,
+                          surface,
+                          spacing: block.appearance?.spacing || "comfortable",
+                          width: block.appearance?.width || "reading",
+                        },
+                      })
+                    }
+                    className={`flex min-h-12 w-full items-center justify-between rounded-lg border px-3 text-left text-xs font-black ${block.appearance?.surface === surface ? "border-primary text-primary" : "border-secondary/10 text-secondary"}`}
+                  >
+                    {label}
+                    <span
+                      className={`h-7 w-16 rounded border border-secondary/10 ${preview}`}
+                      aria-hidden="true"
+                    />
+                  </button>
+                ))}
+              </div>
             </Field>
             <Field label="Spacing">
               <select
@@ -1042,9 +1266,15 @@ function BlockInspector({
                   onChange({
                     ...block,
                     appearance: {
-                      variant: block.appearance?.variant || getAcademyBlockDefinition(block.type).variants[0].key,
+                      variant:
+                        block.appearance?.variant ||
+                        getAcademyBlockDefinition(block.type).variants[0].key,
                       surface: block.appearance?.surface || "plain",
-                      spacing: event.target.value as "compact" | "comfortable" | "spacious",
+                      spacing: event.target.value as
+                        | "compact"
+                        | "comfortable"
+                        | "spacious",
+                      width: block.appearance?.width || "reading",
                     },
                   })
                 }
@@ -1055,53 +1285,55 @@ function BlockInspector({
               </select>
             </Field>
             {block.type === "image" ? (
-            <>
-              <Field label="Width">
-                <select
-                  className={inputClass}
-                  value={block.width || "wide"}
-                  onChange={(event) =>
-                    onChange({
-                      ...block,
-                      width: event.target.value as typeof block.width,
-                    })
-                  }
-                >
-                  <option value="reading">Reading width</option>
-                  <option value="wide">Wide</option>
-                  <option value="full">Full bleed</option>
-                </select>
-              </Field>
-              <Field label="Aspect">
-                <select
-                  className={inputClass}
-                  value={block.aspect || "wide"}
-                  onChange={(event) =>
-                    onChange({
-                      ...block,
-                      aspect: event.target.value as typeof block.aspect,
-                    })
-                  }
-                >
-                  <option value="wide">Wide</option>
-                  <option value="landscape">Landscape</option>
-                  <option value="square">Square</option>
-                </select>
-              </Field>
-              <Field label="Focal point">
-                <select
-                  className={inputClass}
-                  value={block.focalPoint || "center"}
-                  onChange={(event) => onChange({ ...block, focalPoint: event.target.value })}
-                >
-                  <option value="center">Centre</option>
-                  <option value="center top">Top</option>
-                  <option value="center bottom">Bottom</option>
-                  <option value="left center">Left</option>
-                  <option value="right center">Right</option>
-                </select>
-              </Field>
-            </>
+              <>
+                <Field label="Width">
+                  <select
+                    className={inputClass}
+                    value={block.width || "wide"}
+                    onChange={(event) =>
+                      onChange({
+                        ...block,
+                        width: event.target.value as typeof block.width,
+                      })
+                    }
+                  >
+                    <option value="reading">Reading width</option>
+                    <option value="wide">Wide</option>
+                    <option value="full">Full bleed</option>
+                  </select>
+                </Field>
+                <Field label="Aspect">
+                  <select
+                    className={inputClass}
+                    value={block.aspect || "wide"}
+                    onChange={(event) =>
+                      onChange({
+                        ...block,
+                        aspect: event.target.value as typeof block.aspect,
+                      })
+                    }
+                  >
+                    <option value="wide">Wide</option>
+                    <option value="landscape">Landscape</option>
+                    <option value="square">Square</option>
+                  </select>
+                </Field>
+                <Field label="Focal point">
+                  <select
+                    className={inputClass}
+                    value={block.focalPoint || "center"}
+                    onChange={(event) =>
+                      onChange({ ...block, focalPoint: event.target.value })
+                    }
+                  >
+                    <option value="center">Centre</option>
+                    <option value="center top">Top</option>
+                    <option value="center bottom">Bottom</option>
+                    <option value="left center">Left</option>
+                    <option value="right center">Right</option>
+                  </select>
+                </Field>
+              </>
             ) : null}
           </>
         ) : null}
@@ -1172,6 +1404,789 @@ function BlockInspector({
   );
 }
 
+function BlockVariantPreview({
+  type,
+  variant,
+}: {
+  type: LessonBlock["type"];
+  variant: string;
+}) {
+  if (["image", "gallery", "carousel", "video"].includes(type))
+    return (
+      <span
+        className="relative mt-2 block h-12 overflow-hidden rounded-md bg-cover bg-center"
+        style={{
+          backgroundImage:
+            "linear-gradient(180deg, transparent, rgba(7,25,48,.42)), url('/images/home/8.professional-online-teacher.jpg')",
+        }}
+        aria-hidden="true"
+      >
+        {variant === "framed" ? (
+          <span className="absolute inset-1 rounded border border-white/80" />
+        ) : null}
+        {variant === "captioned" ? (
+          <span className="absolute inset-x-1 bottom-1 h-1 rounded-full bg-white/90" />
+        ) : null}
+      </span>
+    );
+  if (type === "numbered-list")
+    return (
+      <span className="mt-2 block space-y-1.5" aria-hidden="true">
+        {[1, 2, 3].map((number) => (
+          <span key={number} className="flex items-center gap-1.5">
+            <span
+              className={`inline-flex h-3.5 w-3.5 items-center justify-center text-[7px] font-black ${
+                variant === "numbered"
+                  ? "rounded-full bg-current text-white"
+                  : variant === "checklist"
+                    ? "rounded-sm border border-current"
+                    : "text-current"
+              }`}
+            >
+              {variant === "bulleted"
+                ? "•"
+                : variant === "checklist"
+                  ? "✓"
+                  : number}
+            </span>
+            <span className="h-1 flex-1 rounded bg-current opacity-15" />
+          </span>
+        ))}
+      </span>
+    );
+  if (type === "process")
+    return variant === "slides" ? (
+      <span
+        className="mt-2 block rounded border border-current/15 p-1.5"
+        aria-hidden="true"
+      >
+        <span className="block h-1 w-1/2 rounded bg-current opacity-30" />
+        <span className="mt-1 block h-1 w-full rounded bg-current opacity-15" />
+        <span className="mx-auto mt-2 block h-1.5 w-8 rounded-full bg-current opacity-35" />
+      </span>
+    ) : (
+      <span
+        className="mt-2 block space-y-1.5 border-l border-current/25 pl-2"
+        aria-hidden="true"
+      >
+        {[1, 2, 3].map((item) => (
+          <span
+            key={item}
+            className="block h-1 w-full rounded bg-current opacity-20"
+          />
+        ))}
+      </span>
+    );
+  if (type === "flashcards")
+    return (
+      <span
+        className={`mt-2 grid gap-1 ${variant === "flip-grid" ? "grid-cols-2" : "grid-cols-1"}`}
+        aria-hidden="true"
+      >
+        <span className="h-7 rounded border border-current/20 bg-current/5" />
+        {variant === "flip-grid" ? (
+          <span className="h-7 rounded border border-current/20 bg-current/5" />
+        ) : null}
+      </span>
+    );
+  if (type === "survey")
+    return (
+      <span className="mt-3 flex justify-between" aria-hidden="true">
+        {[1, 2, 3, 4, 5].map((item) => (
+          <span
+            key={item}
+            className="h-2.5 w-2.5 rounded-full border border-current/40"
+          />
+        ))}
+      </span>
+    );
+  return (
+    <span
+      className={`mt-2 block border border-secondary/10 bg-white ${variant === "compact" ? "p-1.5" : "p-2"}`}
+      aria-hidden="true"
+    >
+      <span
+        className={`mb-1 block h-1.5 bg-current opacity-30 ${variant === "editorial" ? "w-12 rounded-none" : "w-8 rounded-full"}`}
+      />
+      <span className="block h-1 w-full rounded-full bg-current opacity-15" />
+      <span className="mt-1 block h-1 w-4/5 rounded-full bg-current opacity-15" />
+      {variant !== "compact" ? (
+        <span className="mt-1 block h-1 w-3/5 rounded-full bg-current opacity-10" />
+      ) : null}
+    </span>
+  );
+}
+
+function BlockLibraryPreview({ type }: { type: LessonBlock["type"] }) {
+  const frame =
+    "relative h-28 overflow-hidden border-b border-secondary/10 bg-[#F6F3ED]";
+  const photo =
+    type === "gallery"
+      ? "/images/home/12.happy-learning-moment.jpg"
+      : type === "carousel"
+        ? "/images/home/9.modern-online-tutoring.jpg"
+        : "/images/home/8.professional-online-teacher.jpg";
+
+  if (["image", "gallery", "carousel", "video"].includes(type))
+    return (
+      <span className={`${frame} block`} aria-hidden="true">
+        <span
+          className="absolute inset-0 bg-cover bg-center transition duration-300 group-hover:scale-105 motion-reduce:transition-none"
+          style={{ backgroundImage: `url('${photo}')` }}
+        />
+        <span className="absolute inset-0 bg-gradient-to-t from-secondary/55 via-transparent to-transparent" />
+        {type === "gallery" ? (
+          <span className="absolute inset-3 grid grid-cols-2 gap-1.5">
+            <span className="rounded-md border-2 border-white/80 bg-white/10" />
+            <span className="rounded-md border-2 border-white/80 bg-white/10" />
+          </span>
+        ) : null}
+        {type === "carousel" ? (
+          <span className="absolute bottom-3 left-3 rounded-full bg-white/90 px-2 py-1 text-[9px] font-bold text-secondary">
+            1 / 3 →
+          </span>
+        ) : null}
+        {type === "video" ? (
+          <span className="absolute left-1/2 top-1/2 grid h-10 w-10 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-white/95 text-primary shadow-lg">
+            ▶
+          </span>
+        ) : null}
+        {type === "image" ? (
+          <span className="absolute inset-x-3 bottom-3 text-[10px] font-semibold text-white">
+            Image + caption
+          </span>
+        ) : null}
+      </span>
+    );
+
+  if (type === "text")
+    return (
+      <span className={`${frame} block p-5 text-left`} aria-hidden="true">
+        <span className="academy-editorial-copy block text-lg font-bold leading-none text-secondary">
+          A clear idea
+        </span>
+        <span className="mt-3 block h-1.5 w-full rounded-full bg-secondary/15" />
+        <span className="mt-2 block h-1.5 w-5/6 rounded-full bg-secondary/15" />
+        <span className="mt-2 block h-1.5 w-2/3 rounded-full bg-secondary/15" />
+      </span>
+    );
+  if (type === "quote")
+    return (
+      <span className={`${frame} block p-5 text-left`} aria-hidden="true">
+        <span className="academy-editorial-copy text-3xl leading-none text-[#B56B2E]">
+          “
+        </span>
+        <span className="academy-editorial-copy mt-1 block text-sm italic leading-5 text-secondary">
+          Learning begins with curiosity.
+        </span>
+        <span className="mt-2 block text-[9px] font-semibold uppercase tracking-widest text-secondary/50">
+          — Tutor voice
+        </span>
+      </span>
+    );
+  if (type === "callout")
+    return (
+      <span className={`${frame} block p-4`} aria-hidden="true">
+        <span className="block rounded-lg border-l-4 border-[#B56B2E] bg-[#FFF4E8] p-3 text-left">
+          <span className="block text-[10px] font-bold uppercase tracking-wider text-[#94501D]">
+            Key point
+          </span>
+          <span className="mt-1 block text-xs leading-4 text-secondary/70">
+            Pause and connect this idea.
+          </span>
+        </span>
+      </span>
+    );
+  if (type === "numbered-list")
+    return (
+      <span className={`${frame} block space-y-2 p-4`} aria-hidden="true">
+        {["Prepare", "Practise", "Reflect"].map((label, index) => (
+          <span
+            key={label}
+            className="flex items-center gap-2 text-[10px] font-semibold text-secondary/70"
+          >
+            <span className="grid h-6 w-6 place-items-center rounded-full bg-primary text-white">
+              {index + 1}
+            </span>
+            {label}
+          </span>
+        ))}
+      </span>
+    );
+  if (type === "divider")
+    return (
+      <span
+        className={`${frame} grid place-items-center px-5`}
+        aria-hidden="true"
+      >
+        <span className="flex w-full items-center gap-3 text-[9px] font-semibold uppercase tracking-[0.16em] text-secondary/45">
+          <span className="h-px flex-1 bg-secondary/20" />
+          Next idea
+          <span className="h-px flex-1 bg-secondary/20" />
+        </span>
+      </span>
+    );
+  if (type === "audio")
+    return (
+      <span
+        className={`${frame} flex items-center gap-3 p-5`}
+        aria-hidden="true"
+      >
+        <span className="grid h-10 w-10 place-items-center rounded-full bg-[#39766C] text-white">
+          ▶
+        </span>
+        <span className="flex flex-1 items-center gap-1">
+          {[12, 22, 15, 30, 18, 25, 11, 20, 14].map((height, index) => (
+            <span
+              key={index}
+              className="w-1 rounded-full bg-[#39766C]/55"
+              style={{ height }}
+            />
+          ))}
+        </span>
+        <span className="text-[9px] font-semibold text-secondary/50">
+          02:14
+        </span>
+      </span>
+    );
+  if (type === "resources")
+    return (
+      <span className={`${frame} block space-y-2 p-4`} aria-hidden="true">
+        {["Lesson guide.pdf", "Useful link"].map((label, index) => (
+          <span
+            key={label}
+            className="flex items-center gap-2 rounded-md bg-white px-3 py-2 text-[10px] font-semibold text-secondary shadow-sm"
+          >
+            <span className="text-primary">{index ? "↗" : "↓"}</span>
+            {label}
+          </span>
+        ))}
+      </span>
+    );
+  if (type === "accordion")
+    return (
+      <span className={`${frame} block space-y-1.5 p-4`} aria-hidden="true">
+        {["Why it matters", "Try an example", "Go further"].map(
+          (label, index) => (
+            <span
+              key={label}
+              className={`flex items-center justify-between border-b border-secondary/15 py-1.5 text-[10px] font-semibold ${index === 0 ? "text-primary" : "text-secondary/70"}`}
+            >
+              <span>{label}</span>
+              <span>＋</span>
+            </span>
+          ),
+        )}
+      </span>
+    );
+  if (type === "tabs")
+    return (
+      <span className={`${frame} block p-4`} aria-hidden="true">
+        <span className="flex gap-3 border-b border-secondary/15 text-[9px] font-semibold">
+          <span className="border-b-2 border-primary pb-2 text-primary">
+            Concept
+          </span>
+          <span className="pb-2 text-secondary/45">Example</span>
+        </span>
+        <span className="mt-3 block h-10 rounded-md bg-white p-2 shadow-sm">
+          <span className="block h-1.5 w-full rounded bg-secondary/15" />
+          <span className="mt-2 block h-1.5 w-2/3 rounded bg-secondary/10" />
+        </span>
+      </span>
+    );
+  if (type === "flashcards")
+    return (
+      <span
+        className={`${frame} grid place-items-center p-4`}
+        aria-hidden="true"
+      >
+        <span className="grid h-20 w-32 rotate-[-2deg] place-items-center rounded-lg bg-[#243B55] px-3 text-center text-xs font-semibold text-white shadow-[8px_7px_0_#C7D8EA]">
+          What would you do?
+        </span>
+      </span>
+    );
+  if (type === "process")
+    return (
+      <span className={`${frame} flex items-center px-4`} aria-hidden="true">
+        {["Plan", "Teach", "Review"].map((label, index) => (
+          <span key={label} className="contents">
+            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-primary text-[10px] font-bold text-white">
+              {index + 1}
+            </span>
+            {index < 2 ? <span className="h-0.5 flex-1 bg-primary/25" /> : null}
+          </span>
+        ))}
+      </span>
+    );
+  if (type === "survey")
+    return (
+      <span className={`${frame} block p-4 text-left`} aria-hidden="true">
+        <span className="text-[10px] font-semibold text-secondary/70">
+          How confident do you feel?
+        </span>
+        <span className="mt-4 flex justify-between">
+          {[1, 2, 3, 4, 5].map((number) => (
+            <span
+              key={number}
+              className={`grid h-7 w-7 place-items-center rounded-full text-[10px] font-bold ${number === 4 ? "bg-[#39766C] text-white" : "border border-secondary/20 bg-white text-secondary/55"}`}
+            >
+              {number}
+            </span>
+          ))}
+        </span>
+      </span>
+    );
+  if (type === "comparison-table")
+    return (
+      <span className={`${frame} block p-4`} aria-hidden="true">
+        <span className="grid grid-cols-2 overflow-hidden rounded-md border border-secondary/15 text-[9px] text-secondary/65">
+          <span className="bg-[#DCE9F7] p-2 font-bold">Option A</span>
+          <span className="bg-[#DCE9F7] p-2 font-bold">Option B</span>
+          <span className="border-t border-secondary/10 bg-white p-2">
+            Flexible
+          </span>
+          <span className="border-l border-t border-secondary/10 bg-white p-2">
+            Guided
+          </span>
+        </span>
+      </span>
+    );
+  if (type === "worked-example")
+    return (
+      <span className={`${frame} block p-4 text-left`} aria-hidden="true">
+        <span className="academy-editorial-copy block text-sm font-bold text-secondary">
+          2x + 4 = 12
+        </span>
+        <span className="mt-2 block border-l-2 border-[#B56B2E] pl-3 text-[10px] leading-5 text-secondary/60">
+          Subtract 4<br />
+          Divide by 2
+        </span>
+        <span className="mt-1 block text-right text-xs font-bold text-[#39766C]">
+          x = 4
+        </span>
+      </span>
+    );
+  return (
+    <span className={`${frame} block p-4 text-left`} aria-hidden="true">
+      <span className="text-[10px] font-semibold text-secondary">
+        Which answer fits best?
+      </span>
+      <span className="mt-3 block space-y-2">
+        {["A thoughtful response", "Another option"].map((label, index) => (
+          <span
+            key={label}
+            className={`flex items-center gap-2 rounded-md border px-2 py-1.5 text-[9px] ${index === 0 ? "border-primary bg-primary/5 text-primary" : "border-secondary/15 bg-white text-secondary/55"}`}
+          >
+            <span className="h-2.5 w-2.5 rounded-full border border-current" />
+            {label}
+          </span>
+        ))}
+      </span>
+    </span>
+  );
+}
+
+function isCaptionedMediaBlock(
+  block: LessonBlock,
+): block is CaptionedMediaBlock {
+  return (
+    block.type === "image" || block.type === "video" || block.type === "audio"
+  );
+}
+
+function InlineMediaCaption({
+  block,
+  onChange,
+}: {
+  block: CaptionedMediaBlock;
+  onChange: (block: CaptionedMediaBlock) => void;
+}) {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [equationOpen, setEquationOpen] = useState(false);
+  const [latex, setLatex] = useState("");
+  const [shortDescription, setShortDescription] = useState("");
+  const [longDescription, setLongDescription] = useState("");
+  const menuRef = useRef<HTMLDivElement>(null);
+  const closeEquation = () => setEquationOpen(false);
+  const equationDialogRef = useDialogFocus(equationOpen, closeEquation);
+  useEffect(() => {
+    if (!menuOpen) return;
+    const close = (event: MouseEvent) => {
+      if (!menuRef.current?.contains(event.target as Node)) setMenuOpen(false);
+    };
+    const escape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setMenuOpen(false);
+    };
+    document.addEventListener("mousedown", close);
+    document.addEventListener("keydown", escape);
+    return () => {
+      document.removeEventListener("mousedown", close);
+      document.removeEventListener("keydown", escape);
+    };
+  }, [menuOpen]);
+  const items: Array<{
+    kind: InlineInsertKind;
+    label: string;
+    description: string;
+    icon: typeof Table2;
+  }> = [
+    {
+      kind: "table",
+      label: "Table",
+      description: "Compare information",
+      icon: Table2,
+    },
+    {
+      kind: "ordered-list",
+      label: "Ordered list",
+      description: "Add numbered steps",
+      icon: ListOrdered,
+    },
+    {
+      kind: "unordered-list",
+      label: "Unordered list",
+      description: "Add bullet points",
+      icon: List,
+    },
+    {
+      kind: "equation",
+      label: "Equation",
+      description: "Insert LaTeX mathematics",
+      icon: Sigma,
+    },
+  ];
+  const captionItems = block.captionItems || [];
+  const addItem = (kind: Exclude<InlineInsertKind, "equation">) => {
+    const item: AcademyMediaCaptionItem =
+      kind === "table"
+        ? {
+            id: createAcademyId("caption"),
+            type: "table",
+            columns: ["Heading 1", "Heading 2"],
+            rows: [["Cell 1", "Cell 2"]],
+          }
+        : {
+            id: createAcademyId("caption"),
+            type: kind,
+            items: ["Add a caption item"],
+          };
+    onChange({ ...block, captionItems: [...captionItems, item] });
+  };
+  const updateItem = (next: AcademyMediaCaptionItem) =>
+    onChange({
+      ...block,
+      captionItems: captionItems.map((item) =>
+        item.id === next.id ? next : item,
+      ),
+    });
+  const removeItem = (id: string) =>
+    onChange({
+      ...block,
+      captionItems: captionItems.filter((item) => item.id !== id),
+    });
+  return (
+    <div
+      className="relative mt-3 border-b border-secondary/20 pb-3"
+      ref={menuRef}
+    >
+      <div className="flex items-start gap-3">
+        <button
+          type="button"
+          onClick={() => setMenuOpen((value) => !value)}
+          aria-label="Add structured content to this media caption"
+          aria-expanded={menuOpen}
+          className={`inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border bg-white shadow-sm outline-none transition focus-visible:ring-2 focus-visible:ring-primary ${menuOpen ? "rotate-45 border-secondary text-secondary" : "border-secondary/20 text-primary hover:border-primary"}`}
+        >
+          <Plus size={20} />
+        </button>
+        <label className="min-w-0 flex-1">
+          <span className="sr-only">Media caption</span>
+          <textarea
+            rows={1}
+            value={block.caption || ""}
+            onChange={(event) =>
+              onChange({ ...block, caption: event.target.value })
+            }
+            placeholder="Add a caption"
+            className="min-h-11 w-full resize-none bg-transparent px-1 py-2 font-[family-name:var(--font-academy-serif)] text-[14px] leading-6 text-secondary outline-none placeholder:text-secondary/40"
+          />
+        </label>
+      </div>
+      {captionItems.length ? (
+        <div
+          className="ml-14 mt-3 space-y-3"
+          aria-label="Structured caption content"
+        >
+          {captionItems.map((item) => (
+            <div
+              key={item.id}
+              className="relative rounded-lg border border-secondary/10 bg-[#F8F7F4] p-3 pr-11"
+            >
+              <button
+                type="button"
+                onClick={() => removeItem(item.id)}
+                aria-label="Remove caption item"
+                className="absolute right-1.5 top-1.5 grid h-9 w-9 place-items-center rounded-lg text-red-500 hover:bg-red-50"
+              >
+                <Trash2 size={15} />
+              </button>
+              {item.type === "ordered-list" ||
+              item.type === "unordered-list" ? (
+                <label className="block">
+                  <span className="mb-2 block text-[9px] font-semibold uppercase tracking-[0.12em] text-secondary/45">
+                    {item.type === "ordered-list"
+                      ? "Ordered list"
+                      : "Unordered list"}
+                  </span>
+                  <textarea
+                    rows={Math.max(2, item.items.length)}
+                    value={item.items.join("\n")}
+                    onChange={(event) =>
+                      updateItem({
+                        ...item,
+                        items: event.target.value.split("\n"),
+                      })
+                    }
+                    className="w-full resize-y bg-transparent font-[family-name:var(--font-academy-serif)] text-sm leading-7 outline-none"
+                    aria-label={`${item.type === "ordered-list" ? "Ordered" : "Unordered"} caption items, one per line`}
+                  />
+                </label>
+              ) : item.type === "table" ? (
+                <div>
+                  <span className="mb-2 block text-[9px] font-semibold uppercase tracking-[0.12em] text-secondary/45">
+                    Caption table
+                  </span>
+                  <div className="grid grid-cols-2 overflow-hidden rounded border border-secondary/15">
+                    {item.columns.map((column, columnIndex) => (
+                      <input
+                        key={`column-${columnIndex}`}
+                        value={column}
+                        onChange={(event) =>
+                          updateItem({
+                            ...item,
+                            columns: item.columns.map((value, index) =>
+                              index === columnIndex
+                                ? event.target.value
+                                : value,
+                            ),
+                          })
+                        }
+                        className="min-w-0 border-b border-r border-secondary/10 bg-primary/5 p-2 text-xs font-bold outline-none last:border-r-0"
+                        aria-label={`Table heading ${columnIndex + 1}`}
+                      />
+                    ))}
+                    {item.rows[0]?.map((cell, cellIndex) => (
+                      <input
+                        key={`cell-${cellIndex}`}
+                        value={cell}
+                        onChange={(event) =>
+                          updateItem({
+                            ...item,
+                            rows: [
+                              item.rows[0].map((value, index) =>
+                                index === cellIndex
+                                  ? event.target.value
+                                  : value,
+                              ),
+                              ...item.rows.slice(1),
+                            ],
+                          })
+                        }
+                        className="min-w-0 border-r border-secondary/10 bg-white p-2 text-xs outline-none last:border-r-0"
+                        aria-label={`Table cell ${cellIndex + 1}`}
+                      />
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div>
+                  <span className="mb-2 block text-[9px] font-semibold uppercase tracking-[0.12em] text-secondary/45">
+                    Equation · {item.shortDescription}
+                  </span>
+                  <AcademyMath
+                    latex={item.latex}
+                    display
+                    label={item.shortDescription}
+                    description={item.longDescription}
+                  />
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      ) : null}
+      {menuOpen ? (
+        <div
+          role="menu"
+          aria-label="Insert beneath media"
+          className="absolute left-0 top-14 z-40 grid w-[min(360px,calc(100vw-4rem))] grid-cols-2 gap-1 rounded-xl border border-secondary/15 bg-white p-2 shadow-2xl"
+        >
+          {items.map(({ kind, label, description, icon: Icon }) => (
+            <button
+              key={kind}
+              type="button"
+              role="menuitem"
+              onClick={() => {
+                if (kind === "equation") {
+                  setMenuOpen(false);
+                  setEquationOpen(true);
+                  return;
+                } else addItem(kind);
+                setMenuOpen(false);
+              }}
+              className="flex min-h-16 items-start gap-2 rounded-lg p-2 text-left outline-none hover:bg-slate-50 focus-visible:ring-2 focus-visible:ring-primary"
+            >
+              <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
+                <Icon size={17} />
+              </span>
+              <span>
+                <strong className="block text-xs text-secondary">
+                  {label}
+                </strong>
+                <span className="mt-0.5 block text-[10px] leading-4 text-secondary/45">
+                  {description}
+                </span>
+              </span>
+            </button>
+          ))}
+        </div>
+      ) : null}
+      {equationOpen ? (
+        <div
+          className="fixed inset-0 z-[130] grid place-items-center bg-secondary/25 p-4"
+          role="presentation"
+        >
+          <button
+            type="button"
+            className="absolute inset-0 cursor-default"
+            onClick={closeEquation}
+            aria-label="Close equation editor"
+          />
+          <div
+            ref={equationDialogRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="academy-equation-title"
+            className="relative flex max-h-[calc(100vh-2rem)] w-full max-w-4xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl"
+          >
+            <div className="flex items-center gap-4 border-b border-secondary/10 px-6 py-5">
+              <div>
+                <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-primary">
+                  Mathematics
+                </p>
+                <h2
+                  id="academy-equation-title"
+                  className="academy-studio-heading mt-1 text-2xl text-secondary"
+                >
+                  Insert an equation
+                </h2>
+              </div>
+              <button
+                type="button"
+                onClick={closeEquation}
+                className="ml-auto grid h-11 w-11 place-items-center rounded-full hover:bg-slate-100 focus-visible:ring-2 focus-visible:ring-primary"
+                aria-label="Close equation editor"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            <div className="grid min-h-0 flex-1 gap-6 overflow-y-auto p-6 md:grid-cols-2">
+              <div>
+                <Field label="LaTeX markup">
+                  <textarea
+                    autoFocus
+                    rows={10}
+                    value={latex}
+                    onChange={(event) => setLatex(event.target.value)}
+                    placeholder="e.g. x^2 + y^2 = z^2"
+                    className={`${textareaClass} font-mono`}
+                  />
+                </Field>
+                <div className="mt-5 min-h-32 rounded-xl border border-secondary/10 bg-[#F6F3ED] p-5">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-secondary/45">
+                    Preview
+                  </p>
+                  <div className="mt-5 text-center text-xl text-secondary">
+                    {latex.trim() ? (
+                      <AcademyMath latex={latex} display />
+                    ) : (
+                      <span className="text-sm text-secondary/40">
+                        Enter an equation to see it rendered.
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+              <div className="space-y-5">
+                <Field
+                  label="Short description"
+                  hint="A concise spoken description for learners using a screen reader."
+                >
+                  <input
+                    className={inputClass}
+                    value={shortDescription}
+                    onChange={(event) =>
+                      setShortDescription(event.target.value)
+                    }
+                    placeholder="For example: Pythagoras’ theorem"
+                  />
+                </Field>
+                <Field
+                  label="Long description"
+                  hint="Explain notation or meaning when the equation cannot be understood from the short label alone."
+                >
+                  <textarea
+                    rows={8}
+                    className={textareaClass}
+                    value={longDescription}
+                    onChange={(event) => setLongDescription(event.target.value)}
+                    placeholder="Optional detailed explanation"
+                  />
+                </Field>
+              </div>
+            </div>
+            <div className="flex justify-end gap-3 border-t border-secondary/10 px-6 py-4">
+              <button
+                type="button"
+                onClick={closeEquation}
+                className="min-h-11 rounded-lg px-5 text-sm font-semibold text-secondary hover:bg-slate-100"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={!latex.trim() || !shortDescription.trim()}
+                onClick={() => {
+                  onChange({
+                    ...block,
+                    captionItems: [
+                      ...captionItems,
+                      {
+                        id: createAcademyId("caption"),
+                        type: "equation",
+                        latex: latex.trim(),
+                        shortDescription: shortDescription.trim(),
+                        longDescription: longDescription.trim(),
+                      },
+                    ],
+                  });
+                  setLatex("");
+                  setShortDescription("");
+                  setLongDescription("");
+                  closeEquation();
+                }}
+                className="min-h-11 rounded-lg bg-primary px-5 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-35"
+              >
+                Insert equation
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 function BlockContentFields({
   block,
   onChange,
@@ -1193,7 +2208,11 @@ function BlockContentFields({
   if (block.type === "image")
     return (
       <>
-        <button type="button" onClick={() => setMediaChooserOpen(true)} className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 text-xs font-black text-white">
+        <button
+          type="button"
+          onClick={() => setMediaChooserOpen(true)}
+          className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 text-xs font-black text-white"
+        >
           <Upload size={15} /> {block.src ? "Replace image" : "Choose image"}
         </button>
         <Field label="Image URL">
@@ -1251,8 +2270,15 @@ function BlockContentFields({
           open={mediaChooserOpen}
           title="Choose image"
           library={mediaLibrary}
+          selectedUrl={block.src}
           onClose={() => setMediaChooserOpen(false)}
-          onChoose={(choice) => onChange({ ...block, src: choice.url, alt: block.alt || choice.altText || "" })}
+          onChoose={(choice) =>
+            onChange({
+              ...block,
+              src: choice.url,
+              alt: block.alt || choice.altText || "",
+            })
+          }
           onUpload={async (file) => {
             const data = new FormData();
             data.set("file", file);
@@ -1492,6 +2518,73 @@ function BlockContentFields({
         />
       </>
     );
+  if (block.type === "survey")
+    return (
+      <>
+        <Field label="Heading">
+          <input
+            className={inputClass}
+            value={block.heading || ""}
+            onChange={(event) =>
+              onChange({ ...block, heading: event.target.value })
+            }
+          />
+        </Field>
+        <Field label="Survey question">
+          <textarea
+            rows={4}
+            className={textareaClass}
+            value={block.prompt}
+            onChange={(event) =>
+              onChange({ ...block, prompt: event.target.value })
+            }
+          />
+        </Field>
+        <div className="grid grid-cols-2 gap-3">
+          <Field label="Low label">
+            <input
+              className={inputClass}
+              value={block.lowLabel}
+              onChange={(event) =>
+                onChange({ ...block, lowLabel: event.target.value })
+              }
+            />
+          </Field>
+          <Field label="High label">
+            <input
+              className={inputClass}
+              value={block.highLabel}
+              onChange={(event) =>
+                onChange({ ...block, highLabel: event.target.value })
+              }
+            />
+          </Field>
+        </div>
+        <Field label="Scale points">
+          <div className="grid grid-cols-3 gap-2">
+            {([3, 5, 7] as const).map((scale) => (
+              <button
+                key={scale}
+                type="button"
+                onClick={() => onChange({ ...block, scale })}
+                className={`min-h-11 rounded-lg border text-sm font-black ${block.scale === scale ? "border-primary bg-primary/5 text-primary" : "border-secondary/10"}`}
+              >
+                {scale}
+              </button>
+            ))}
+          </div>
+        </Field>
+        <Field label="Button label">
+          <input
+            className={inputClass}
+            value={block.submitLabel || "Submit"}
+            onChange={(event) =>
+              onChange({ ...block, submitLabel: event.target.value })
+            }
+          />
+        </Field>
+      </>
+    );
   if (block.type === "gallery")
     return (
       <>
@@ -1569,6 +2662,63 @@ function BlockContentFields({
   if ("items" in block)
     return (
       <>
+        {[
+          "numbered-list",
+          "accordion",
+          "tabs",
+          "flashcards",
+          "process",
+        ].includes(block.type) ? (
+          <div className="rounded-xl border border-primary/15 bg-primary/[0.035] p-3">
+            <p className="text-[10px] font-black uppercase tracking-[0.13em] text-primary/65">
+              Instant convert
+            </p>
+            <p className="mt-1 text-xs leading-5 text-secondary/50">
+              Keep this content and present it in another learner format.
+            </p>
+            <div className="mt-3 grid grid-cols-2 gap-2">
+              {(
+                [
+                  "numbered-list",
+                  "accordion",
+                  "tabs",
+                  "flashcards",
+                  "process",
+                ] as LessonBlock["type"][]
+              )
+                .filter((type) => type !== block.type)
+                .map((type) => (
+                  <button
+                    key={type}
+                    type="button"
+                    onClick={() => {
+                      const created = getAcademyBlockDefinition(type).create();
+                      if (!("items" in created)) return;
+                      onChange({
+                        ...created,
+                        id: block.id,
+                        heading: block.heading,
+                        items: structuredClone(block.items),
+                        completion:
+                          type === "numbered-list"
+                            ? "view"
+                            : block.completion === "pass"
+                              ? "interact"
+                              : block.completion,
+                      } as LessonBlock);
+                    }}
+                    className="flex min-h-11 items-center gap-2 rounded-lg border border-secondary/10 bg-white px-3 text-left text-[11px] font-black hover:border-primary/30 hover:text-primary"
+                  >
+                    <AcademyBlockIcon
+                      name={getAcademyBlockDefinition(type).icon}
+                      size={15}
+                    />
+                    {getAcademyBlockDefinition(type).shortLabel}
+                  </button>
+                ))}
+            </div>
+          </div>
+        ) : null}
         <Field label="Heading">
           <input
             className={inputClass}
@@ -1669,34 +2819,50 @@ export default function AcademyCourseEditor({
   mediaLibrary = [],
   initialRevision = 1,
   snapshots = [],
+  initialLessonId,
+  initialAssessmentOpen = false,
 }: {
   initialCourse: AcademyCourse;
   status: "draft" | "published" | "archived";
   mediaLibrary?: Media[];
   initialRevision?: number;
   snapshots?: Snapshot[];
+  initialLessonId?: string;
+  initialAssessmentOpen?: boolean;
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [libraryOpen, setLibraryOpen] = useState(false);
   const [librarySearch, setLibrarySearch] = useState("");
-  const [recentBlockTypes, setRecentBlockTypes] = useState<LessonBlock["type"][]>([]);
+  const [libraryCategory, setLibraryCategory] = useState<
+    "All" | AcademyBlockCategory
+  >("All");
+  const [recentBlockTypes, setRecentBlockTypes] = useState<
+    LessonBlock["type"][]
+  >([]);
   const [insertIndex, setInsertIndex] = useState<number | null>(null);
   const [inspectorOpen, setInspectorOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
-  const [assessmentOpen, setAssessmentOpen] = useState(false);
+  const [assessmentOpen, setAssessmentOpen] = useState(initialAssessmentOpen);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [readinessOpen, setReadinessOpen] = useState(false);
   const [outlineOpen, setOutlineOpen] = useState(true);
   const [outlineSearch, setOutlineSearch] = useState("");
+  const [lessonSettingsOpen, setLessonSettingsOpen] = useState(false);
+  const [draggedLessonId, setDraggedLessonId] = useState<string | null>(null);
+  const [collapsedSectionIds, setCollapsedSectionIds] = useState<string[]>([]);
+  const [draggedSectionId, setDraggedSectionId] = useState<string | null>(null);
+  const [deletedNotice, setDeletedNotice] = useState("");
   const [result, setResult] = useState<AcademyAdminActionResult | null>(null);
   const [recovery, setRecovery] = useState<AcademyRecoveryDraft | null>(null);
   const initialized = useRef(false);
   const inspectorReturnFocusRef = useRef<HTMLElement | null>(null);
   const closeInspector = () => {
     setInspectorOpen(false);
-    window.requestAnimationFrame(() => inspectorReturnFocusRef.current?.focus());
+    window.requestAnimationFrame(() =>
+      inspectorReturnFocusRef.current?.focus(),
+    );
   };
   const libraryDialogRef = useDialogFocus(libraryOpen, () =>
     setLibraryOpen(false),
@@ -1717,6 +2883,9 @@ export default function AcademyCourseEditor({
   const command = useAcademyEditorStore((state) => state.command);
   const selectLesson = useAcademyEditorStore((state) => state.selectLesson);
   const selectBlock = useAcademyEditorStore((state) => state.selectBlock);
+  const setInspectorTab = useAcademyEditorStore(
+    (state) => state.setInspectorTab,
+  );
   const setSaveState = useAcademyEditorStore((state) => state.setSaveState);
   const markSaved = useAcademyEditorStore((state) => state.markSaved);
   const undo = useAcademyEditorStore((state) => state.undo);
@@ -1726,6 +2895,11 @@ export default function AcademyCourseEditor({
   useEffect(() => {
     if (!initialized.current) {
       initialize(migrateAcademyCourse(initialCourse), initialRevision);
+      const requestedLesson = initialCourse.lessons.find(
+        (lesson) =>
+          lesson.id === initialLessonId || lesson.slug === initialLessonId,
+      );
+      if (requestedLesson?.id) selectLesson(requestedLesson.id);
       initialized.current = true;
       if (initialCourse.id)
         readAcademyRecoveryDraft(initialCourse.id)
@@ -1735,7 +2909,26 @@ export default function AcademyCourseEditor({
           })
           .catch(() => undefined);
     }
-  }, [initialCourse, initialRevision, initialize]);
+  }, [
+    initialCourse,
+    initialLessonId,
+    initialRevision,
+    initialize,
+    selectLesson,
+  ]);
+  useEffect(() => {
+    try {
+      const stored = JSON.parse(
+        window.localStorage.getItem(RECENT_BLOCKS_STORAGE_KEY) || "[]",
+      ) as LessonBlock["type"][];
+      const allowed = new Set(academyBlockRegistry.map((item) => item.type));
+      setRecentBlockTypes(
+        stored.filter((type) => allowed.has(type)).slice(0, 4),
+      );
+    } catch {
+      // Recent blocks are a convenience; a corrupt local value is disposable.
+    }
+  }, []);
   useEffect(() => {
     if (!document?.id || saveState !== "dirty") return;
     const timer = window.setTimeout(async () => {
@@ -1828,20 +3021,64 @@ export default function AcademyCourseEditor({
       const [moving] = lesson.blocks.splice(from, 1);
       lesson.blocks.splice(to, 0, moving);
     }, "Move block");
-  const insertBlock = (
-    type: LessonBlock["type"],
-    targetIndex = insertIndex ?? selectedLesson?.blocks.length ?? 0,
+  const moveSection = (from: number, to: number) =>
+    command("Move section", (draft) => {
+      const sections = draft.sections || [];
+      if (
+        from < 0 ||
+        to < 0 ||
+        from >= sections.length ||
+        to >= sections.length
+      )
+        return;
+      const [moving] = sections.splice(from, 1);
+      sections.splice(to, 0, moving);
+      const order = new Map(
+        sections.map((section, index) => [section.id, index]),
+      );
+      draft.lessons = draft.lessons
+        .map((lesson, index) => ({ lesson, index }))
+        .sort(
+          (left, right) =>
+            (order.get(left.lesson.sectionId || "") ?? sections.length) -
+              (order.get(right.lesson.sectionId || "") ?? sections.length) ||
+            left.index - right.index,
+        )
+        .map(({ lesson }) => lesson);
+    });
+  const insertCreatedBlock = (
+    block: LessonBlock,
+    targetIndex: number,
+    historyLabel = "Insert block",
   ) => {
-    const block = getAcademyBlockDefinition(type).create();
     updateLesson(
       (lesson) => lesson.blocks.splice(targetIndex, 0, block),
-      "Insert block",
+      historyLabel,
     );
     selectBlock(selectedLesson.id!, block.id!);
-    setRecentBlockTypes((current) => [type, ...current.filter((item) => item !== type)].slice(0, 4));
+    setRecentBlockTypes((current) => {
+      const next = [
+        block.type,
+        ...current.filter((item) => item !== block.type),
+      ].slice(0, 4);
+      try {
+        window.localStorage.setItem(
+          RECENT_BLOCKS_STORAGE_KEY,
+          JSON.stringify(next),
+        );
+      } catch {
+        // Authoring remains fully functional when storage is unavailable.
+      }
+      return next;
+    });
     setLibraryOpen(false);
     setInsertIndex(null);
   };
+  const insertBlock = (
+    type: LessonBlock["type"],
+    targetIndex = insertIndex ?? selectedLesson?.blocks.length ?? 0,
+  ) =>
+    insertCreatedBlock(getAcademyBlockDefinition(type).create(), targetIndex);
   const applyTextPreset = (block: LessonBlock, preset: TextPreset) => {
     if (block.type !== "text") return;
     if (
@@ -1913,11 +3150,44 @@ export default function AcademyCourseEditor({
       setResult(value);
       if (value.ok) after?.(value);
     });
-  const filteredBlocks = academyBlockRegistry.filter((definition) =>
-    `${definition.label} ${definition.description} ${definition.keywords.join(" ")}`
-      .toLowerCase()
-      .includes(librarySearch.toLowerCase()),
+  const filteredBlocks = academyBlockRegistry.filter(
+    (definition) =>
+      (libraryCategory === "All" || definition.category === libraryCategory) &&
+      `${definition.label} ${definition.description} ${definition.keywords.join(" ")}`
+        .toLowerCase()
+        .includes(librarySearch.toLowerCase()),
   );
+  const readiness = validateAcademyCourse(document);
+  const showDeletedNotice = (label: string) => {
+    setDeletedNotice(label);
+    window.setTimeout(() => setDeletedNotice(""), 7000);
+  };
+  const navigateToIssue = (issue: AcademyValidationIssue) => {
+    setReadinessOpen(false);
+    if (issue.scope === "course") {
+      setSettingsOpen(true);
+      return;
+    }
+    if (issue.scope === "assessment") {
+      setAssessmentOpen(true);
+      return;
+    }
+    if (issue.lessonId) selectLesson(issue.lessonId);
+    if (issue.scope === "lesson") {
+      setLessonSettingsOpen(true);
+      return;
+    }
+    if (issue.lessonId && issue.blockId) {
+      selectBlock(issue.lessonId, issue.blockId);
+      setInspectorTab(issue.scope === "media" ? "accessibility" : "content");
+      setInspectorOpen(true);
+      window.requestAnimationFrame(() =>
+        globalThis.document
+          .querySelector<HTMLElement>(`[data-block-id="${issue.blockId}"]`)
+          ?.scrollIntoView({ behavior: "smooth", block: "center" }),
+      );
+    }
+  };
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-[#F5F6F8] text-secondary">
       <header className="flex h-16 shrink-0 items-center gap-3 border-b border-secondary/10 bg-white px-3 sm:px-5">
@@ -1936,6 +3206,13 @@ export default function AcademyCourseEditor({
           Academy
         </Link>
         <span className="hidden text-secondary/20 sm:block">/</span>
+        <Link
+          href={`/dashboard/admin/academy/${document.key}/overview`}
+          className="hidden text-xs font-semibold text-secondary/50 hover:text-primary lg:block"
+        >
+          Overview
+        </Link>
+        <span className="hidden text-secondary/20 lg:block">/</span>
         <input
           value={document.title}
           onChange={(event) =>
@@ -2066,18 +3343,27 @@ export default function AcademyCourseEditor({
                 if (saved.ok) setPreviewOpen(true);
               })
             }
-            className="hidden min-h-10 items-center gap-2 rounded-lg border px-4 text-xs font-black md:inline-flex"
+            className="inline-flex h-10 w-10 items-center justify-center gap-2 rounded-lg border text-xs font-black md:w-auto md:px-4"
+            aria-label="Preview course"
           >
             <Eye size={15} />
-            Preview
+            <span className="hidden md:inline">Preview</span>
           </button>
           <button
             type="button"
             disabled={pending || saveState === "conflict"}
             onClick={() => setReadinessOpen(true)}
-            className="inline-flex min-h-10 items-center gap-2 rounded-lg bg-primary px-4 text-xs font-black text-white disabled:opacity-40"
+            className="relative inline-flex min-h-10 items-center gap-2 rounded-lg bg-primary px-4 text-xs font-black text-white disabled:opacity-40"
           >
             {pending ? "Working…" : "Publish"}
+            {!readiness.valid ? (
+              <span
+                className="inline-flex min-w-5 items-center justify-center rounded-full bg-white px-1.5 py-0.5 text-[9px] text-primary"
+                aria-label={`${readiness.issues.length} publishing issues`}
+              >
+                {readiness.issues.length}
+              </span>
+            ) : null}
           </button>
         </div>
       </header>
@@ -2131,17 +3417,29 @@ export default function AcademyCourseEditor({
           </button>
         </div>
       ) : null}
+      <div className="border-b border-blue-200 bg-blue-50 px-4 py-2 text-center text-[11px] font-semibold text-blue-950 md:hidden">
+        Mobile supports text corrections, preview, and publishing checks. Use a
+        tablet or desktop for structure, media, and theme changes.
+      </div>
       <div className="flex min-h-0 flex-1">
         {outlineOpen ? (
-          <aside className="absolute inset-y-16 left-0 z-30 flex w-[272px] flex-col border-r border-secondary/10 bg-white shadow-xl lg:static lg:shadow-none">
-            <div className="border-b border-secondary/10 p-4">
+          <aside className="absolute inset-y-16 left-0 z-30 flex w-[min(352px,calc(100vw-24px))] flex-col border-r border-black/10 bg-[#F8F7F3] shadow-2xl lg:static lg:w-[336px] lg:shadow-none">
+            <div className="border-b border-black/8 px-5 pb-5 pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-[9px] font-black uppercase tracking-[0.16em] text-primary/60">
-                    Course outline
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#49627A]">
+                    Course structure
                   </p>
-                  <p className="mt-1 text-sm font-black">
-                    {document.lessons.length} lessons
+                  <p className="academy-studio-heading mt-1.5 text-[25px] leading-none text-[#18212B]">
+                    Outline
+                  </p>
+                  <p className="mt-2 text-[11px] font-medium text-[#6C747C]">
+                    {document.lessons.length} lessons ·{" "}
+                    {document.lessons.reduce(
+                      (total, lesson) => total + lesson.durationMinutes,
+                      0,
+                    )}{" "}
+                    min
                   </p>
                 </div>
                 <button
@@ -2157,11 +3455,23 @@ export default function AcademyCourseEditor({
                     });
                     selectLesson(lesson.id!);
                   }}
-                  className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-white"
+                  className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full bg-[#18212B] px-4 text-[11px] font-semibold text-white transition-colors hover:bg-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
                   aria-label="Add lesson"
                 >
-                  <Plus size={17} />
+                  <Plus size={15} /> Lesson
                 </button>
+              </div>
+              <div className="relative mt-5">
+                <Search
+                  size={15}
+                  className="absolute left-3.5 top-3.5 text-[#7B838B]"
+                />
+                <input
+                  className="min-h-11 w-full rounded-xl border border-black/10 bg-white pl-10 pr-4 text-[13px] text-[#18212B] outline-none placeholder:text-[#8C9399] focus:border-primary focus:ring-2 focus:ring-primary/10"
+                  placeholder="Search lessons"
+                  value={outlineSearch}
+                  onChange={(event) => setOutlineSearch(event.target.value)}
+                />
               </div>
               <button
                 type="button"
@@ -2174,31 +3484,64 @@ export default function AcademyCourseEditor({
                     });
                   })
                 }
-                className="mt-3 inline-flex items-center gap-1.5 text-[11px] font-black text-primary"
+                className="mt-3 inline-flex min-h-10 items-center gap-2 rounded-full px-2 text-[11px] font-semibold text-primary outline-none hover:bg-primary/5 focus-visible:ring-2 focus-visible:ring-primary"
               >
-                <Plus size={13} /> Add section
+                <Plus size={14} /> Add section
               </button>
-              <div className="relative mt-3">
-                <Search
-                  size={14}
-                  className="absolute left-3 top-3 text-secondary/35"
-                />
-                <input
-                  className={`${inputClass} pl-9`}
-                  placeholder="Search lessons"
-                  value={outlineSearch}
-                  onChange={(event) => setOutlineSearch(event.target.value)}
-                />
-              </div>
             </div>
             <nav
-              className="flex-1 overflow-y-auto py-3"
+              className="flex-1 overflow-y-auto px-3 py-4"
               aria-label="Course outline"
             >
               {(document.sections || []).map((section, sectionIndex) => (
-                <div key={section.id} className="mb-3">
-                  <div className="flex items-center gap-1 px-3 py-2 text-[10px] font-black uppercase tracking-[0.12em] text-secondary/40">
-                    <ChevronDown size={13} />
+                <div
+                  key={section.id}
+                  className="group/section mb-5"
+                  onDragOver={(event) => {
+                    if (draggedSectionId) event.preventDefault();
+                  }}
+                  onDrop={(event) => {
+                    event.preventDefault();
+                    const from = (document.sections || []).findIndex(
+                      (item) => item.id === draggedSectionId,
+                    );
+                    if (from >= 0 && from !== sectionIndex)
+                      moveSection(from, sectionIndex);
+                    setDraggedSectionId(null);
+                  }}
+                >
+                  <div className="flex min-h-10 items-center gap-1 rounded-lg px-1.5 text-[#52606D]">
+                    <button
+                      type="button"
+                      draggable
+                      onDragStart={(event) => {
+                        setDraggedSectionId(section.id);
+                        event.dataTransfer.effectAllowed = "move";
+                      }}
+                      onDragEnd={() => setDraggedSectionId(null)}
+                      className="hidden h-9 w-6 cursor-grab items-center justify-center rounded-md text-[#A4ABB1] outline-none hover:bg-white hover:text-primary focus-visible:ring-2 focus-visible:ring-primary lg:inline-flex"
+                      aria-label={`Drag ${section.title} to reorder`}
+                    >
+                      <GripVertical size={14} />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setCollapsedSectionIds((current) =>
+                          current.includes(section.id)
+                            ? current.filter((id) => id !== section.id)
+                            : [...current, section.id],
+                        )
+                      }
+                      className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg outline-none hover:bg-white focus-visible:ring-2 focus-visible:ring-primary"
+                      aria-label={`${collapsedSectionIds.includes(section.id) ? "Expand" : "Collapse"} ${section.title}`}
+                      aria-expanded={!collapsedSectionIds.includes(section.id)}
+                    >
+                      <ChevronDown
+                        size={15}
+                        className={`transition-transform motion-reduce:transition-none ${collapsedSectionIds.includes(section.id) ? "-rotate-90" : ""}`}
+                      />
+                    </button>
                     <input
                       value={section.title}
                       aria-label={`Section ${sectionIndex + 1} title`}
@@ -2219,215 +3562,323 @@ export default function AcademyCourseEditor({
                           }
                         })
                       }
-                      className="min-w-0 flex-1 bg-transparent font-black uppercase outline-none"
+                      className="min-w-0 flex-1 bg-transparent text-[10px] font-semibold uppercase tracking-[0.14em] text-[#52606D] outline-none focus:text-[#18212B]"
+                      title={section.title}
                     />
-                    <button
-                      type="button"
-                      disabled={sectionIndex === 0}
-                      onClick={() =>
-                        command("Move section", (draft) => {
-                          const sections = draft.sections || [];
-                          const [moving] = sections.splice(sectionIndex, 1);
-                          sections.splice(sectionIndex - 1, 0, moving);
-                        })
-                      }
-                      className="p-1 disabled:opacity-20"
-                      aria-label={`Move ${section.title} up`}
-                    >
-                      <ArrowUp size={12} />
-                    </button>
-                    <button
-                      type="button"
-                      disabled={
-                        sectionIndex === (document.sections?.length || 0) - 1
-                      }
-                      onClick={() =>
-                        command("Move section", (draft) => {
-                          const sections = draft.sections || [];
-                          const [moving] = sections.splice(sectionIndex, 1);
-                          sections.splice(sectionIndex + 1, 0, moving);
-                        })
-                      }
-                      className="p-1 disabled:opacity-20"
-                      aria-label={`Move ${section.title} down`}
-                    >
-                      <ArrowDown size={12} />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const lesson = createAcademyLesson(
-                          document,
-                          section.id,
-                        );
-                        command("Add lesson", (draft) => {
-                          draft.lessons.push(lesson);
-                        });
-                        selectLesson(lesson.id!);
-                      }}
-                      className="p-1 text-primary"
-                      aria-label={`Add lesson to ${section.title}`}
-                    >
-                      <Plus size={13} />
-                    </button>
-                    <button
-                      type="button"
-                      disabled={document.lessons.some(
-                        (lesson) => lesson.sectionId === section.id,
-                      )}
-                      onClick={() =>
-                        command("Delete section", (draft) => {
-                          draft.sections = draft.sections?.filter(
-                            (item) => item.id !== section.id,
-                          );
-                        })
-                      }
-                      className="p-1 text-red-500 disabled:opacity-20"
-                      aria-label={`Delete ${section.title}`}
-                    >
-                      <Trash2 size={12} />
-                    </button>
-                  </div>
-                  {document.lessons
-                    .filter((lesson) => lesson.sectionId === section.id)
-                    .filter((lesson) =>
-                      lesson.title
-                        .toLowerCase()
-                        .includes(outlineSearch.toLowerCase()),
-                    )
-                    .map((lesson, index) => (
-                      <div
-                        key={lesson.id}
-                        className={`group flex items-center border-l-4 ${selectedLesson?.id === lesson.id ? "border-primary bg-primary/5" : "border-transparent hover:bg-slate-50"}`}
+                    <div className="flex shrink-0 items-center opacity-70 transition-opacity group-hover/section:opacity-100 group-focus-within/section:opacity-100">
+                      <button
+                        type="button"
+                        disabled={sectionIndex === 0}
+                        onClick={() =>
+                          moveSection(sectionIndex, sectionIndex - 1)
+                        }
+                        className="inline-flex h-8 w-7 items-center justify-center rounded-md outline-none hover:bg-white hover:text-primary focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-20"
+                        aria-label={`Move ${section.title} up`}
                       >
-                        <button
-                          type="button"
-                          onClick={() => {
-                            selectLesson(lesson.id!);
-                            if (window.innerWidth < 1024) setOutlineOpen(false);
-                          }}
-                          className="flex min-w-0 flex-1 items-center gap-3 px-4 py-3 text-left"
-                        >
-                          <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full border text-[10px] font-black text-secondary/45">
-                            {index + 1}
-                          </span>
-                          <span className="min-w-0 flex-1">
-                            <span className="block truncate text-xs font-black">
-                              {lesson.title}
-                            </span>
-                            <span className="mt-0.5 block text-[10px] text-secondary/40">
-                              {lesson.blocks.length} blocks ·{" "}
-                              {lesson.durationMinutes} min
-                            </span>
-                          </span>
-                        </button>
-                        <div className="mr-2 hidden shrink-0 items-center group-hover:flex group-focus-within:flex">
-                          <button
-                            type="button"
-                            disabled={
-                              document.lessons.findIndex(
-                                (item) => item.id === lesson.id,
-                              ) === 0
-                            }
-                            onClick={() =>
+                        <ArrowUp size={12} />
+                      </button>
+                      <button
+                        type="button"
+                        disabled={
+                          sectionIndex === (document.sections?.length || 0) - 1
+                        }
+                        onClick={() =>
+                          moveSection(sectionIndex, sectionIndex + 1)
+                        }
+                        className="inline-flex h-8 w-7 items-center justify-center rounded-md outline-none hover:bg-white hover:text-primary focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-20"
+                        aria-label={`Move ${section.title} down`}
+                      >
+                        <ArrowDown size={12} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const lesson = createAcademyLesson(
+                            document,
+                            section.id,
+                          );
+                          command("Add lesson", (draft) => {
+                            draft.lessons.push(lesson);
+                          });
+                          selectLesson(lesson.id!);
+                        }}
+                        className="inline-flex h-8 w-7 items-center justify-center rounded-md text-primary outline-none hover:bg-white focus-visible:ring-2 focus-visible:ring-primary"
+                        aria-label={`Add lesson to ${section.title}`}
+                      >
+                        <Plus size={13} />
+                      </button>
+                      <button
+                        type="button"
+                        disabled={document.lessons.some(
+                          (lesson) => lesson.sectionId === section.id,
+                        )}
+                        onClick={() =>
+                          command("Delete section", (draft) => {
+                            draft.sections = draft.sections?.filter(
+                              (item) => item.id !== section.id,
+                            );
+                          })
+                        }
+                        className="inline-flex h-8 w-7 items-center justify-center rounded-md text-red-500 outline-none hover:bg-red-50 focus-visible:ring-2 focus-visible:ring-red-500 disabled:opacity-20"
+                        aria-label={`Delete ${section.title}`}
+                      >
+                        <Trash2 size={12} />
+                      </button>
+                    </div>
+                  </div>
+                  {!collapsedSectionIds.includes(section.id)
+                    ? document.lessons
+                        .filter((lesson) => lesson.sectionId === section.id)
+                        .filter((lesson) =>
+                          lesson.title
+                            .toLowerCase()
+                            .includes(outlineSearch.toLowerCase()),
+                        )
+                        .map((lesson, index) => (
+                          <div
+                            key={lesson.id}
+                            onDragOver={(event) => {
+                              if (draggedLessonId) event.preventDefault();
+                            }}
+                            onDrop={(event) => {
+                              event.preventDefault();
+                              if (
+                                !draggedLessonId ||
+                                draggedLessonId === lesson.id
+                              )
+                                return;
                               command("Move lesson", (draft) => {
                                 const from = draft.lessons.findIndex(
+                                  (item) => item.id === draggedLessonId,
+                                );
+                                const to = draft.lessons.findIndex(
                                   (item) => item.id === lesson.id,
                                 );
+                                if (from < 0 || to < 0) return;
                                 const [moving] = draft.lessons.splice(from, 1);
-                                draft.lessons.splice(from - 1, 0, moving);
-                              })
-                            }
-                            className="p-1 disabled:opacity-20"
-                            aria-label={`Move ${lesson.title} up`}
+                                draft.lessons.splice(to, 0, moving);
+                              });
+                              setDraggedLessonId(null);
+                            }}
+                            className={`group/lesson relative mb-1 flex items-stretch overflow-hidden rounded-xl border transition-colors motion-reduce:transition-none ${selectedLesson?.id === lesson.id ? "border-primary/20 bg-white shadow-[0_5px_18px_rgba(22,31,42,0.06)] before:absolute before:inset-y-0 before:left-0 before:w-[3px] before:bg-primary" : "border-transparent hover:border-black/8 hover:bg-white"}`}
                           >
-                            <ArrowUp size={12} />
-                          </button>
-                          <button
-                            type="button"
-                            disabled={
-                              document.lessons.findIndex(
-                                (item) => item.id === lesson.id,
-                              ) ===
-                              document.lessons.length - 1
-                            }
-                            onClick={() =>
-                              command("Move lesson", (draft) => {
-                                const from = draft.lessons.findIndex(
-                                  (item) => item.id === lesson.id,
+                            <button
+                              type="button"
+                              draggable
+                              onDragStart={(event) => {
+                                setDraggedLessonId(lesson.id!);
+                                event.dataTransfer.effectAllowed = "move";
+                              }}
+                              onDragEnd={() => setDraggedLessonId(null)}
+                              className="hidden w-7 shrink-0 cursor-grab items-center justify-center text-[#A4ABB1] outline-none hover:text-primary focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary lg:inline-flex"
+                              aria-label={`Drag ${lesson.title} to reorder`}
+                            >
+                              <GripVertical size={13} />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                selectLesson(lesson.id!);
+                                setLessonSettingsOpen(false);
+                                if (window.innerWidth < 1024)
+                                  setOutlineOpen(false);
+                              }}
+                              className="flex min-w-0 flex-1 items-center gap-3 py-3.5 pl-2 pr-2 text-left outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary"
+                              aria-current={
+                                selectedLesson?.id === lesson.id
+                                  ? "page"
+                                  : undefined
+                              }
+                            >
+                              <span
+                                className={`inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border text-[10px] font-semibold ${selectedLesson?.id === lesson.id ? "border-primary bg-primary text-white" : "border-black/15 bg-[#F8F7F3] text-[#6C747C]"}`}
+                              >
+                                {index + 1}
+                              </span>
+                              <span className="min-w-0 flex-1">
+                                <span className="block text-[13px] font-semibold leading-[1.35] text-[#18212B]">
+                                  {lesson.title}
+                                </span>
+                                <span className="mt-1 block text-[10px] font-medium text-[#7B838B]">
+                                  {lesson.blocks.length} blocks ·{" "}
+                                  {lesson.durationMinutes} min
+                                </span>
+                              </span>
+                            </button>
+                            <div className="mr-1 hidden shrink-0 items-center bg-white/90 group-hover/lesson:flex group-focus-within/lesson:flex">
+                              <button
+                                type="button"
+                                disabled={
+                                  document.lessons.findIndex(
+                                    (item) => item.id === lesson.id,
+                                  ) === 0
+                                }
+                                onClick={() =>
+                                  command("Move lesson", (draft) => {
+                                    const from = draft.lessons.findIndex(
+                                      (item) => item.id === lesson.id,
+                                    );
+                                    const [moving] = draft.lessons.splice(
+                                      from,
+                                      1,
+                                    );
+                                    draft.lessons.splice(from - 1, 0, moving);
+                                  })
+                                }
+                                className="inline-flex h-9 w-7 items-center justify-center rounded-md outline-none hover:bg-[#F4F3EF] hover:text-primary focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-20"
+                                aria-label={`Move ${lesson.title} up`}
+                              >
+                                <ArrowUp size={12} />
+                              </button>
+                              <button
+                                type="button"
+                                disabled={
+                                  document.lessons.findIndex(
+                                    (item) => item.id === lesson.id,
+                                  ) ===
+                                  document.lessons.length - 1
+                                }
+                                onClick={() =>
+                                  command("Move lesson", (draft) => {
+                                    const from = draft.lessons.findIndex(
+                                      (item) => item.id === lesson.id,
+                                    );
+                                    const [moving] = draft.lessons.splice(
+                                      from,
+                                      1,
+                                    );
+                                    draft.lessons.splice(from + 1, 0, moving);
+                                  })
+                                }
+                                className="inline-flex h-9 w-7 items-center justify-center rounded-md outline-none hover:bg-[#F4F3EF] hover:text-primary focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-20"
+                                aria-label={`Move ${lesson.title} down`}
+                              >
+                                <ArrowDown size={12} />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  command("Duplicate lesson", (draft) => {
+                                    const from = draft.lessons.findIndex(
+                                      (item) => item.id === lesson.id,
+                                    );
+                                    const copy = structuredClone(lesson);
+                                    copy.id = createAcademyId("lesson");
+                                    copy.slug = `${lesson.slug}-copy-${Date.now().toString(36)}`;
+                                    copy.title = `${lesson.title} copy`;
+                                    copy.blocks = copy.blocks.map((block) => ({
+                                      ...block,
+                                      id: createAcademyId("block"),
+                                    }));
+                                    draft.lessons.splice(from + 1, 0, copy);
+                                  })
+                                }
+                                className="inline-flex h-9 w-7 items-center justify-center rounded-md outline-none hover:bg-[#F4F3EF] hover:text-primary focus-visible:ring-2 focus-visible:ring-primary"
+                                aria-label={`Duplicate ${lesson.title}`}
+                              >
+                                <Copy size={12} />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  if (
+                                    window.confirm(`Delete “${lesson.title}”?`)
+                                  ) {
+                                    command("Delete lesson", (draft) => {
+                                      draft.lessons = draft.lessons.filter(
+                                        (item) => item.id !== lesson.id,
+                                      );
+                                    });
+                                    showDeletedNotice(
+                                      `Deleted “${lesson.title}”.`,
+                                    );
+                                  }
+                                }}
+                                className="inline-flex h-9 w-7 items-center justify-center rounded-md text-red-500 outline-none hover:bg-red-50 focus-visible:ring-2 focus-visible:ring-red-500"
+                                aria-label={`Delete ${lesson.title}`}
+                              >
+                                <Trash2 size={12} />
+                              </button>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const created = createAcademyLesson(
+                                  document,
+                                  section.id,
                                 );
-                                const [moving] = draft.lessons.splice(from, 1);
-                                draft.lessons.splice(from + 1, 0, moving);
-                              })
-                            }
-                            className="p-1 disabled:opacity-20"
-                            aria-label={`Move ${lesson.title} down`}
-                          >
-                            <ArrowDown size={12} />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() =>
-                              command("Duplicate lesson", (draft) => {
-                                const from = draft.lessons.findIndex(
-                                  (item) => item.id === lesson.id,
-                                );
-                                const copy = structuredClone(lesson);
-                                copy.id = createAcademyId("lesson");
-                                copy.slug = `${lesson.slug}-copy-${Date.now().toString(36)}`;
-                                copy.title = `${lesson.title} copy`;
-                                copy.blocks = copy.blocks.map((block) => ({
-                                  ...block,
-                                  id: createAcademyId("block"),
-                                }));
-                                draft.lessons.splice(from + 1, 0, copy);
-                              })
-                            }
-                            className="p-1"
-                            aria-label={`Duplicate ${lesson.title}`}
-                          >
-                            <Copy size={12} />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              if (window.confirm(`Delete “${lesson.title}”?`))
-                                command("Delete lesson", (draft) => {
-                                  draft.lessons = draft.lessons.filter(
-                                    (item) => item.id !== lesson.id,
+                                command("Insert lesson", (draft) => {
+                                  const lessonIndex = draft.lessons.findIndex(
+                                    (item) => item.id === lesson.id,
+                                  );
+                                  draft.lessons.splice(
+                                    lessonIndex + 1,
+                                    0,
+                                    created,
                                   );
                                 });
-                            }}
-                            className="p-1 text-red-500"
-                            aria-label={`Delete ${lesson.title}`}
-                          >
-                            <Trash2 size={12} />
-                          </button>
-                        </div>
-                      </div>
-                    ))}
+                                selectLesson(created.id!);
+                              }}
+                              className="absolute -bottom-3 left-1/2 z-10 inline-flex h-7 w-7 -translate-x-1/2 items-center justify-center rounded-full border border-primary/25 bg-white text-primary opacity-0 shadow-sm outline-none transition-opacity group-hover/lesson:opacity-100 focus:opacity-100 focus-visible:ring-2 focus-visible:ring-primary"
+                              aria-label={`Insert a lesson after ${lesson.title}`}
+                            >
+                              <Plus size={13} />
+                            </button>
+                          </div>
+                        ))
+                    : null}
+                  <button
+                    type="button"
+                    onClick={() =>
+                      command("Insert section", (draft) => {
+                        draft.sections ||= [];
+                        draft.sections.splice(sectionIndex + 1, 0, {
+                          id: createAcademyId("section"),
+                          title: `Section ${draft.sections.length + 1}`,
+                        });
+                      })
+                    }
+                    className="mx-auto mt-2 flex min-h-9 items-center gap-1.5 rounded-full px-3 text-[9px] font-semibold uppercase tracking-[0.1em] text-secondary/40 opacity-0 outline-none hover:bg-white hover:text-primary focus:opacity-100 focus-visible:ring-2 focus-visible:ring-primary group-hover/section:opacity-100"
+                    aria-label={`Insert a section after ${section.title}`}
+                  >
+                    <Plus size={11} /> Section
+                  </button>
                 </div>
               ))}
             </nav>
-            <div className="border-t border-secondary/10 p-3">
+            <div className="border-t border-black/8 bg-white/75 p-3 backdrop-blur-sm">
               <button
                 type="button"
                 onClick={() => setAssessmentOpen(true)}
-                className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-xs font-black hover:bg-slate-50"
+                className="flex min-h-12 w-full items-center gap-3 rounded-xl px-3 text-left text-[12px] font-semibold text-[#18212B] outline-none hover:bg-[#F4F3EF] focus-visible:ring-2 focus-visible:ring-primary"
               >
-                <BookOpen size={16} />
-                Final assessment{" "}
-                <span className="ml-auto text-secondary/35">
+                <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-primary/8 text-primary">
+                  <BookOpen size={16} />
+                </span>
+                <span>
+                  <span className="block">Final assessment</span>
+                  <span className="mt-0.5 block text-[9px] font-medium text-[#7B838B]">
+                    Questions and pass mark
+                  </span>
+                </span>
+                <span className="ml-auto rounded-full bg-[#F4F3EF] px-2 py-1 text-[10px] text-secondary/45">
                   {document.quiz.length}
                 </span>
               </button>
               <button
                 type="button"
                 onClick={() => setSettingsOpen(true)}
-                className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-xs font-black hover:bg-slate-50"
+                className="mt-1 flex min-h-12 w-full items-center gap-3 rounded-xl px-3 text-left text-[12px] font-semibold text-[#18212B] outline-none hover:bg-[#F4F3EF] focus-visible:ring-2 focus-visible:ring-primary"
               >
-                <Palette size={16} />
-                Theme & course settings
+                <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-[#EEF0EA] text-[#49627A]">
+                  <Palette size={16} />
+                </span>
+                <span>
+                  <span className="block">Course appearance</span>
+                  <span className="mt-0.5 block text-[9px] font-medium text-[#7B838B]">
+                    Theme, cover and settings
+                  </span>
+                </span>
               </button>
             </div>
           </aside>
@@ -2451,201 +3902,248 @@ export default function AcademyCourseEditor({
             ) : null}
             {selectedLesson ? (
               <AcademyThemeScope course={document}>
-              <article className="bg-white px-8 py-12 shadow-[0_10px_35px_rgba(0,26,68,0.07)] sm:px-12">
-                <header className="border-b border-[#DEDFE1] pb-9">
-                  <div className="flex flex-wrap items-center gap-3 text-xs font-bold text-[#717376]">
-                    <span>{selectedLesson.section}</span>
-                    <span>·</span>
-                    <span className="inline-flex items-center gap-1">
-                      <Clock3 size={13} />
-                      {selectedLesson.durationMinutes} min
-                    </span>
-                  </div>
-                  <input
-                    value={selectedLesson.title}
-                    onChange={(event) =>
-                      updateLesson((lesson) => {
-                        lesson.title = event.target.value;
-                      }, "Edit lesson title")
-                    }
-                    className="mt-4 w-full bg-transparent text-[36px] font-black leading-tight tracking-tight outline-none"
-                    aria-label="Lesson title"
-                  />
-                  <div className="mt-5 h-1 w-12 bg-primary" />
-                  <textarea
-                    value={selectedLesson.summary}
-                    onChange={(event) =>
-                      updateLesson((lesson) => {
-                        lesson.summary = event.target.value;
-                      }, "Edit lesson summary")
-                    }
-                    rows={2}
-                    className="mt-5 w-full resize-none bg-transparent font-serif text-[17px] leading-8 text-[#4A4B4E] outline-none"
-                    aria-label="Lesson summary"
-                  />
-                  <div className="mt-6 grid gap-4 border-t border-[#ECEDEF] pt-5 sm:grid-cols-3">
-                    <Field label="Lesson slug">
-                      <input
-                        value={selectedLesson.slug}
-                        onChange={(event) =>
-                          updateLesson((lesson) => {
-                            lesson.slug = academySlugify(event.target.value);
-                          }, "Edit lesson slug")
-                        }
-                        className={inputClass}
-                      />
-                    </Field>
-                    <Field label="Section">
-                      <select
-                        value={selectedLesson.sectionId}
-                        onChange={(event) =>
-                          updateLesson((lesson) => {
-                            const section = document.sections?.find(
-                              (item) => item.id === event.target.value,
-                            );
-                            if (section) {
-                              lesson.sectionId = section.id;
-                              lesson.section = section.title;
-                            }
-                          }, "Move lesson to section")
-                        }
-                        className={inputClass}
+                <article className="bg-white px-8 py-12 shadow-[0_10px_35px_rgba(0,26,68,0.07)] sm:px-12">
+                  <header className="border-b border-[#DEDFE1] pb-9">
+                    <div className="flex flex-wrap items-center gap-3 text-xs font-bold text-[#717376]">
+                      <span>{selectedLesson.section}</span>
+                      <span>·</span>
+                      <span className="inline-flex items-center gap-1">
+                        <Clock3 size={13} />
+                        {selectedLesson.durationMinutes} min
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setLessonSettingsOpen((value) => !value)}
+                        className="ml-auto inline-flex min-h-10 items-center gap-2 rounded-lg border border-[#DEDFE1] px-3 text-[10px] font-black uppercase tracking-[0.08em] text-secondary outline-none hover:border-primary focus-visible:ring-2 focus-visible:ring-primary"
+                        aria-expanded={lessonSettingsOpen}
                       >
-                        {(document.sections || []).map((section) => (
-                          <option key={section.id} value={section.id}>
-                            {section.title}
-                          </option>
-                        ))}
-                      </select>
-                    </Field>
-                    <Field label="Minutes">
-                      <input
-                        type="number"
-                        min={1}
-                        value={selectedLesson.durationMinutes}
-                        onChange={(event) =>
-                          updateLesson((lesson) => {
-                            lesson.durationMinutes = Math.max(
-                              1,
-                              Number(event.target.value),
-                            );
-                          }, "Edit lesson duration")
-                        }
-                        className={inputClass}
-                      />
-                    </Field>
-                  </div>
-                </header>
-                <div className="py-10">
-                  <BlockInsertionTray
-                    expanded={
-                      selectedLesson.blocks.length === 0 || insertIndex === 0
-                    }
-                    firstBlock={selectedLesson.blocks.length === 0}
-                    onToggle={() =>
-                      setInsertIndex((value) => (value === 0 ? null : 0))
-                    }
-                    onInsert={(type) => insertBlock(type, 0)}
-                    onOpenLibrary={() => {
-                      setInsertIndex(0);
-                      setLibraryOpen(true);
-                    }}
-                  />
-                  {selectedLesson.blocks.map((block, index) => (
-                    <div key={block.id || index} className="py-8 sm:py-10">
-                      <DraggableBlockFrame
-                        block={block}
-                        lessonId={selectedLesson.id!}
-                        index={index}
-                        selected={selectedBlock?.id === block.id}
-                        onSelect={() =>
-                          selectBlock(selectedLesson.id!, block.id!)
-                        }
-                        onEdit={() => {
-                          selectBlock(selectedLesson.id!, block.id!);
-                          if (block.type === "text")
-                            window.requestAnimationFrame(() =>
-                              globalThis.document
-                                .querySelector<HTMLElement>(
-                                  `[data-block-id="${block.id}"] .ProseMirror`,
-                                )
-                                ?.focus(),
-                            );
-                          else {
-                            inspectorReturnFocusRef.current =
-                              globalThis.document.activeElement as HTMLElement | null;
-                            setInspectorOpen(true);
-                          }
-                        }}
-                        onMove={moveBlock}
-                        onMoveDirection={(direction) =>
-                          moveBlock(index, index + direction)
-                        }
-                        onDuplicate={() =>
-                          updateLesson((lesson) => {
-                            const copy = structuredClone(block);
-                            copy.id = createAcademyId("block");
-                            lesson.blocks.splice(index + 1, 0, copy);
-                          }, "Duplicate block")
-                        }
-                        onDelete={() => {
-                          if (
-                            window.confirm(
-                              `Delete this ${getAcademyBlockDefinition(block.type).label.toLowerCase()} block?`,
-                            )
-                          )
-                            updateLesson((lesson) => {
-                              lesson.blocks = lesson.blocks.filter(
-                                (item) => item.id !== block.id,
-                              );
-                            }, "Delete block");
-                        }}
-                        onOpenSettings={() => {
-                          selectBlock(selectedLesson.id!, block.id!);
-                          inspectorReturnFocusRef.current =
-                            globalThis.document.activeElement as HTMLElement | null;
-                          setInspectorOpen(true);
-                        }}
-                        onApplyTextPreset={(preset) =>
-                          applyTextPreset(block, preset)
-                        }
-                      >
-                        {block.type === "text" ? (
-                          <AcademyRichTextEditor
-                            value={
-                              block.content ||
-                              paragraphsToRichText(
-                                block.heading,
-                                block.paragraphs,
-                              )
-                            }
-                            onChange={(content) =>
-                              updateBlock({ ...block, content })
-                            }
-                            active={selectedBlock?.id === block.id}
-                            layout={block.layout || "single"}
-                          />
-                        ) : (
-                          <AcademyLessonBlocks blocks={[block]} />
-                        )}
-                      </DraggableBlockFrame>
-                      <BlockInsertionTray
-                        expanded={insertIndex === index + 1}
-                        onToggle={() =>
-                          setInsertIndex((value) =>
-                            value === index + 1 ? null : index + 1,
-                          )
-                        }
-                        onInsert={(type) => insertBlock(type, index + 1)}
-                        onOpenLibrary={() => {
-                          setInsertIndex(index + 1);
-                          setLibraryOpen(true);
-                        }}
-                      />
+                        <Settings2 size={14} /> Lesson settings
+                      </button>
                     </div>
-                  ))}
-                </div>
-              </article>
+                    <input
+                      value={selectedLesson.title}
+                      onChange={(event) =>
+                        updateLesson((lesson) => {
+                          lesson.title = event.target.value;
+                        }, "Edit lesson title")
+                      }
+                      className="mt-4 w-full bg-transparent text-[36px] font-black leading-tight tracking-tight outline-none"
+                      aria-label="Lesson title"
+                    />
+                    <div className="mt-5 h-1 w-12 bg-primary" />
+                    <textarea
+                      value={selectedLesson.summary}
+                      onChange={(event) =>
+                        updateLesson((lesson) => {
+                          lesson.summary = event.target.value;
+                        }, "Edit lesson summary")
+                      }
+                      rows={2}
+                      className="mt-5 w-full resize-none bg-transparent font-serif text-[17px] leading-8 text-[#4A4B4E] outline-none"
+                      aria-label="Lesson summary"
+                    />
+                    {lessonSettingsOpen ? (
+                      <div className="mt-6 grid gap-4 border-t border-[#ECEDEF] bg-[#FAFBFC] p-4 sm:grid-cols-3">
+                        <Field label="Lesson slug">
+                          <input
+                            value={selectedLesson.slug}
+                            onChange={(event) =>
+                              updateLesson((lesson) => {
+                                lesson.slug = academySlugify(
+                                  event.target.value,
+                                );
+                              }, "Edit lesson slug")
+                            }
+                            className={inputClass}
+                          />
+                        </Field>
+                        <Field label="Section">
+                          <select
+                            value={selectedLesson.sectionId}
+                            onChange={(event) =>
+                              updateLesson((lesson) => {
+                                const section = document.sections?.find(
+                                  (item) => item.id === event.target.value,
+                                );
+                                if (section) {
+                                  lesson.sectionId = section.id;
+                                  lesson.section = section.title;
+                                }
+                              }, "Move lesson to section")
+                            }
+                            className={inputClass}
+                          >
+                            {(document.sections || []).map((section) => (
+                              <option key={section.id} value={section.id}>
+                                {section.title}
+                              </option>
+                            ))}
+                          </select>
+                        </Field>
+                        <Field label="Minutes">
+                          <input
+                            type="number"
+                            min={1}
+                            value={selectedLesson.durationMinutes}
+                            onChange={(event) =>
+                              updateLesson((lesson) => {
+                                lesson.durationMinutes = Math.max(
+                                  1,
+                                  Number(event.target.value),
+                                );
+                              }, "Edit lesson duration")
+                            }
+                            className={inputClass}
+                          />
+                        </Field>
+                      </div>
+                    ) : null}
+                  </header>
+                  <div className="py-10">
+                    <BlockInsertionTray
+                      expanded={
+                        selectedLesson.blocks.length === 0 || insertIndex === 0
+                      }
+                      firstBlock={selectedLesson.blocks.length === 0}
+                      onToggle={() =>
+                        setInsertIndex((value) => (value === 0 ? null : 0))
+                      }
+                      onInsert={(type) => insertBlock(type, 0)}
+                      onOpenLibrary={() => {
+                        setInsertIndex(0);
+                        setLibraryOpen(true);
+                      }}
+                    />
+                    {selectedLesson.blocks.map((block, index) => (
+                      <div key={block.id || index} className="py-8 sm:py-10">
+                        <DraggableBlockFrame
+                          block={block}
+                          lessonId={selectedLesson.id!}
+                          index={index}
+                          selected={selectedBlock?.id === block.id}
+                          onSelect={() =>
+                            selectBlock(selectedLesson.id!, block.id!)
+                          }
+                          onEdit={() => {
+                            selectBlock(selectedLesson.id!, block.id!);
+                            if (block.type === "text")
+                              window.requestAnimationFrame(() =>
+                                globalThis.document
+                                  .querySelector<HTMLElement>(
+                                    `[data-block-id="${block.id}"] .ProseMirror`,
+                                  )
+                                  ?.focus(),
+                              );
+                            else {
+                              setInspectorTab("content");
+                              inspectorReturnFocusRef.current = globalThis
+                                .document.activeElement as HTMLElement | null;
+                              setInspectorOpen(true);
+                            }
+                          }}
+                          onMove={moveBlock}
+                          onMoveDirection={(direction) =>
+                            moveBlock(index, index + direction)
+                          }
+                          canMoveUp={index > 0}
+                          canMoveDown={index < selectedLesson.blocks.length - 1}
+                          onDuplicate={() =>
+                            updateLesson((lesson) => {
+                              const copy = structuredClone(block);
+                              copy.id = createAcademyId("block");
+                              lesson.blocks.splice(index + 1, 0, copy);
+                            }, "Duplicate block")
+                          }
+                          onDelete={() => {
+                            if (
+                              window.confirm(
+                                `Delete this ${getAcademyBlockDefinition(block.type).label.toLowerCase()} block?`,
+                              )
+                            ) {
+                              updateLesson((lesson) => {
+                                lesson.blocks = lesson.blocks.filter(
+                                  (item) => item.id !== block.id,
+                                );
+                              }, "Delete block");
+                              showDeletedNotice("Block deleted.");
+                            }
+                          }}
+                          onOpenSettings={(tab) => {
+                            selectBlock(selectedLesson.id!, block.id!);
+                            setInspectorTab(tab);
+                            inspectorReturnFocusRef.current = globalThis
+                              .document.activeElement as HTMLElement | null;
+                            setInspectorOpen(true);
+                          }}
+                          onApplyTextPreset={(preset) =>
+                            applyTextPreset(block, preset)
+                          }
+                        >
+                          {block.type === "text" ? (
+                            <div
+                              data-block-variant={
+                                block.appearance?.variant || "default"
+                              }
+                              className={`${
+                                block.appearance?.width === "narrow"
+                                  ? "mx-auto w-full max-w-xl"
+                                  : block.appearance?.width === "wide"
+                                    ? "relative left-1/2 w-[calc(100vw-48px)] max-w-[1000px] -translate-x-1/2 lg:w-[calc(100vw-328px)]"
+                                    : "w-full"
+                              } academy-block-surface-${
+                                block.appearance?.surface || "plain"
+                              } academy-block-spacing-${
+                                block.appearance?.spacing || "comfortable"
+                              }`}
+                            >
+                              <AcademyRichTextEditor
+                                value={
+                                  block.content ||
+                                  paragraphsToRichText(
+                                    block.heading,
+                                    block.paragraphs,
+                                  )
+                                }
+                                onChange={(content) =>
+                                  updateBlock({ ...block, content })
+                                }
+                                active={selectedBlock?.id === block.id}
+                                layout={block.layout || "single"}
+                              />
+                            </div>
+                          ) : isCaptionedMediaBlock(block) ? (
+                            <>
+                              <AcademyLessonBlocks
+                                blocks={[
+                                  { ...block, caption: "", captionItems: [] },
+                                ]}
+                              />
+                              <InlineMediaCaption
+                                block={block}
+                                onChange={(next) => updateBlock(next)}
+                              />
+                            </>
+                          ) : (
+                            <AcademyLessonBlocks blocks={[block]} />
+                          )}
+                        </DraggableBlockFrame>
+                        <BlockInsertionTray
+                          expanded={insertIndex === index + 1}
+                          onToggle={() =>
+                            setInsertIndex((value) =>
+                              value === index + 1 ? null : index + 1,
+                            )
+                          }
+                          onInsert={(type) => insertBlock(type, index + 1)}
+                          onOpenLibrary={() => {
+                            setInsertIndex(index + 1);
+                            setLibraryOpen(true);
+                          }}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </article>
               </AcademyThemeScope>
             ) : (
               <div className="py-24 text-center text-secondary/40">
@@ -2657,7 +4155,7 @@ export default function AcademyCourseEditor({
       </div>
       {inspectorOpen && selectedBlock && selectedLesson ? (
         <div
-          className="fixed inset-0 z-[75] flex justify-end bg-secondary/30"
+          className="fixed inset-0 z-[75] flex justify-end bg-secondary/5"
           role="presentation"
         >
           <button
@@ -2716,12 +4214,19 @@ export default function AcademyCourseEditor({
       {libraryOpen ? (
         <div
           ref={libraryDialogRef}
-          className="fixed inset-0 z-[70] flex items-end justify-center bg-secondary/40 p-0 sm:items-center sm:p-6"
+          className="fixed inset-0 z-[70] flex justify-end bg-secondary/25"
           role="dialog"
           aria-modal="true"
           aria-label="Block library"
         >
-          <div className="max-h-[88vh] w-full max-w-4xl overflow-hidden rounded-t-2xl bg-white shadow-2xl sm:rounded-2xl">
+          <button
+            type="button"
+            tabIndex={-1}
+            className="absolute inset-0"
+            onClick={() => setLibraryOpen(false)}
+            aria-label="Close block library"
+          />
+          <aside className="relative flex h-full w-full max-w-[520px] flex-col overflow-hidden bg-white shadow-2xl">
             <div className="flex items-center gap-4 border-b p-5">
               <div>
                 <p className="text-[10px] font-black uppercase tracking-[0.15em] text-primary/60">
@@ -2740,7 +4245,7 @@ export default function AcademyCourseEditor({
                 <X />
               </button>
             </div>
-            <div className="p-5">
+            <div className="flex min-h-0 flex-1 flex-col p-5">
               <div className="relative">
                 <Search
                   className="absolute left-3 top-3 text-secondary/35"
@@ -2754,14 +4259,52 @@ export default function AcademyCourseEditor({
                   placeholder="Search text, carousel, quiz, media…"
                 />
               </div>
-              <div className="mt-5 max-h-[62vh] overflow-y-auto">
-                {!librarySearch && recentBlockTypes.length ? (
+              <div
+                className="mt-4 flex gap-2 overflow-x-auto pb-2"
+                role="tablist"
+                aria-label="Block categories"
+              >
+                {blockLibraryCategories.map((category) => (
+                  <button
+                    key={category}
+                    type="button"
+                    role="tab"
+                    aria-selected={libraryCategory === category}
+                    onClick={() => setLibraryCategory(category)}
+                    className={`min-h-10 shrink-0 rounded-full border px-3 text-[10px] font-black uppercase tracking-[0.08em] ${libraryCategory === category ? "border-primary bg-primary text-white" : "border-secondary/10 text-secondary/55 hover:border-primary/40"}`}
+                  >
+                    {category}
+                  </button>
+                ))}
+              </div>
+              <div className="mt-3 min-h-0 flex-1 overflow-y-auto pr-1">
+                {!librarySearch &&
+                libraryCategory === "All" &&
+                recentBlockTypes.length ? (
                   <section className="mb-6">
-                    <h3 className="mb-3 text-[10px] font-black uppercase tracking-[0.15em] text-secondary/40">Recently used</h3>
-                    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                    <h3 className="mb-3 text-[10px] font-black uppercase tracking-[0.15em] text-secondary/40">
+                      Recently used
+                    </h3>
+                    <div className="grid gap-3 sm:grid-cols-2">
                       {recentBlockTypes.map((type) => {
                         const definition = getAcademyBlockDefinition(type);
-                        return <button key={type} type="button" onClick={() => insertBlock(type)} className="flex min-h-16 items-center gap-3 rounded-xl border border-secondary/10 p-3 text-left hover:border-primary"><AcademyBlockIcon name={definition.icon} size={18} /><span className="text-xs font-black">{definition.label}</span></button>;
+                        return (
+                          <button
+                            key={type}
+                            type="button"
+                            onClick={() => insertBlock(type)}
+                            className="group grid min-h-16 grid-cols-[64px_1fr] items-center overflow-hidden rounded-xl border border-secondary/10 bg-white text-left hover:border-primary hover:shadow-sm"
+                          >
+                            <span className="relative block h-16 overflow-hidden">
+                              <span className="absolute left-0 top-0 block w-[116px] origin-top-left scale-[.56]">
+                                <BlockLibraryPreview type={type} />
+                              </span>
+                            </span>
+                            <span className="pr-3 text-xs font-bold text-secondary">
+                              {definition.label}
+                            </span>
+                          </button>
+                        );
                       })}
                     </div>
                   </section>
@@ -2781,26 +4324,30 @@ export default function AcademyCourseEditor({
                       <h3 className="mb-3 text-[10px] font-black uppercase tracking-[0.15em] text-secondary/40">
                         {category}
                       </h3>
-                      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                      <div className="grid gap-4 sm:grid-cols-2">
                         {definitions.map((definition) => (
                           <button
                             key={definition.type}
                             type="button"
                             onClick={() => insertBlock(definition.type)}
-                            className="group min-h-28 rounded-xl border border-secondary/10 p-4 text-left hover:border-primary hover:bg-primary/[0.03]"
+                            className="group overflow-hidden rounded-2xl border border-secondary/10 bg-white text-left transition hover:-translate-y-0.5 hover:border-primary hover:shadow-lg motion-reduce:transition-none"
                           >
-                            <span className="mb-3 flex h-10 items-end gap-1 rounded-lg bg-slate-50 p-2" aria-hidden="true"><span className="h-5 w-1/3 rounded-sm bg-primary/20" /><span className="h-3 flex-1 rounded-sm bg-secondary/10" /></span>
-                            <span className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                              <AcademyBlockIcon
-                                name={definition.icon}
-                                size={18}
-                              />
-                            </span>
-                            <strong className="mt-3 block text-sm">
-                              {definition.label}
-                            </strong>
-                            <span className="mt-1 block text-xs leading-5 text-secondary/50">
-                              {definition.description}
+                            <BlockLibraryPreview type={definition.type} />
+                            <span className="block p-4">
+                              <span className="flex items-center gap-2.5">
+                                <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                                  <AcademyBlockIcon
+                                    name={definition.icon}
+                                    size={18}
+                                  />
+                                </span>
+                                <strong className="block text-sm">
+                                  {definition.label}
+                                </strong>
+                              </span>
+                              <span className="mt-2 block text-xs leading-5 text-secondary/55">
+                                {definition.description}
+                              </span>
                             </span>
                           </button>
                         ))}
@@ -2808,9 +4355,36 @@ export default function AcademyCourseEditor({
                     </section>
                   ) : null;
                 })}
+                {!filteredBlocks.length ? (
+                  <div className="rounded-xl border border-dashed border-secondary/15 bg-slate-50 px-6 py-12 text-center">
+                    <Search className="mx-auto text-secondary/25" />
+                    <p className="mt-3 text-sm font-black">No blocks found</p>
+                    <p className="mt-1 text-xs text-secondary/50">
+                      Try another search or category.
+                    </p>
+                  </div>
+                ) : null}
               </div>
             </div>
-          </div>
+          </aside>
+        </div>
+      ) : null}
+      {deletedNotice ? (
+        <div
+          role="status"
+          className="fixed bottom-5 left-1/2 z-[120] flex min-h-12 -translate-x-1/2 items-center gap-4 rounded-xl bg-secondary px-4 py-2 text-xs font-bold text-white shadow-2xl"
+        >
+          <span>{deletedNotice}</span>
+          <button
+            type="button"
+            onClick={() => {
+              undo();
+              setDeletedNotice("");
+            }}
+            className="min-h-10 rounded-lg bg-white/10 px-3 font-black text-white outline-none hover:bg-white/20 focus-visible:ring-2 focus-visible:ring-white"
+          >
+            Undo
+          </button>
         </div>
       ) : null}
       {settingsOpen ? (
@@ -2844,7 +4418,19 @@ export default function AcademyCourseEditor({
       {previewOpen ? (
         <AcademyPreviewStudio
           course={document}
-          onClose={() => setPreviewOpen(false)}
+          initialLessonSlug={selectedLesson?.slug}
+          onClose={() => {
+            setPreviewOpen(false);
+            window.requestAnimationFrame(() =>
+              selectedBlock?.id
+                ? globalThis.document
+                    .querySelector<HTMLElement>(
+                      `[data-block-id="${selectedBlock.id}"]`,
+                    )
+                    ?.scrollIntoView({ block: "center" })
+                : undefined,
+            );
+          }}
         />
       ) : null}
       {readinessOpen ? (
@@ -2852,6 +4438,7 @@ export default function AcademyCourseEditor({
           course={document}
           pending={pending}
           onClose={() => setReadinessOpen(false)}
+          onNavigate={navigateToIssue}
           onPublish={() =>
             startTransition(async () => {
               const saved = await manualSave();
@@ -2882,51 +4469,109 @@ export default function AcademyCourseEditor({
 function AcademyPreviewStudio({
   course,
   onClose,
+  initialLessonSlug,
 }: {
   course: AcademyCourse;
   onClose: () => void;
+  initialLessonSlug?: string;
 }) {
   const [width, setWidth] = useState<1280 | 768 | 390>(1280);
-  const [view, setView] = useState<"cover" | "lesson" | "quiz">("cover");
-  const [lessonSlug, setLessonSlug] = useState(course.lessons[0]?.slug || "");
+  const [view, setView] = useState<"cover" | "lesson" | "quiz">(
+    initialLessonSlug ? "lesson" : "cover",
+  );
+  const [lessonSlug, setLessonSlug] = useState(
+    initialLessonSlug || course.lessons[0]?.slug || "",
+  );
   const dialogRef = useDialogFocus(true, onClose);
   const query = new URLSearchParams({ view });
   if (view === "lesson" && lessonSlug) query.set("lesson", lessonSlug);
   return (
-    <div ref={dialogRef} className="fixed inset-0 z-[100] flex flex-col bg-[#17191d]" role="dialog" aria-modal="true" aria-label="Responsive course preview">
+    <div
+      ref={dialogRef}
+      className="fixed inset-0 z-[100] flex flex-col bg-[#17191d]"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Responsive course preview"
+    >
       <header className="flex min-h-16 flex-wrap items-center gap-3 border-b border-white/10 bg-[#202329] px-4 text-white">
         <div className="mr-auto min-w-0">
-          <p className="text-[9px] font-black uppercase tracking-[0.16em] text-white/45">Draft preview</p>
+          <p className="text-[9px] font-black uppercase tracking-[0.16em] text-white/45">
+            Draft preview
+          </p>
           <p className="truncate text-sm font-black">{course.title}</p>
         </div>
-        <div className="flex rounded-lg bg-black/25 p-1" aria-label="Preview device">
-          {([
-            [1280, Monitor, "Desktop"],
-            [768, Tablet, "Tablet"],
-            [390, Smartphone, "Mobile"],
-          ] as const).map(([deviceWidth, Icon, label]) => (
-            <button key={deviceWidth} type="button" onClick={() => setWidth(deviceWidth)} aria-label={`${label} preview, ${deviceWidth} pixels`} aria-pressed={width === deviceWidth} className={`min-h-10 min-w-11 rounded-md p-2 ${width === deviceWidth ? "bg-white text-secondary" : "text-white/60 hover:text-white"}`}><Icon size={17} /></button>
+        <div
+          className="flex rounded-lg bg-black/25 p-1"
+          aria-label="Preview device"
+        >
+          {(
+            [
+              [1280, Monitor, "Desktop"],
+              [768, Tablet, "Tablet"],
+              [390, Smartphone, "Mobile"],
+            ] as const
+          ).map(([deviceWidth, Icon, label]) => (
+            <button
+              key={deviceWidth}
+              type="button"
+              onClick={() => setWidth(deviceWidth)}
+              aria-label={`${label} preview, ${deviceWidth} pixels`}
+              aria-pressed={width === deviceWidth}
+              className={`min-h-10 min-w-11 rounded-md p-2 ${width === deviceWidth ? "bg-white text-secondary" : "text-white/60 hover:text-white"}`}
+            >
+              <Icon size={17} />
+            </button>
           ))}
         </div>
-        <select value={view} onChange={(event) => setView(event.target.value as typeof view)} className="min-h-10 rounded-lg border border-white/15 bg-white/10 px-3 text-xs font-bold text-white" aria-label="Preview page">
-          <option className="text-secondary" value="cover">Course cover</option>
-          <option className="text-secondary" value="lesson">Lesson</option>
-          <option className="text-secondary" value="quiz">Final assessment</option>
+        <select
+          value={view}
+          onChange={(event) => setView(event.target.value as typeof view)}
+          className="min-h-10 rounded-lg border border-white/15 bg-white/10 px-3 text-xs font-bold text-white"
+          aria-label="Preview page"
+        >
+          <option className="text-secondary" value="cover">
+            Course cover
+          </option>
+          <option className="text-secondary" value="lesson">
+            Lesson
+          </option>
+          <option className="text-secondary" value="quiz">
+            Final assessment
+          </option>
         </select>
         {view === "lesson" ? (
-          <select value={lessonSlug} onChange={(event) => setLessonSlug(event.target.value)} className="min-h-10 max-w-48 rounded-lg border border-white/15 bg-white/10 px-3 text-xs font-bold text-white" aria-label="Preview lesson">
-            {course.lessons.map((lesson) => <option className="text-secondary" key={lesson.slug} value={lesson.slug}>{lesson.title}</option>)}
+          <select
+            value={lessonSlug}
+            onChange={(event) => setLessonSlug(event.target.value)}
+            className="min-h-10 max-w-48 rounded-lg border border-white/15 bg-white/10 px-3 text-xs font-bold text-white"
+            aria-label="Preview lesson"
+          >
+            {course.lessons.map((lesson) => (
+              <option
+                className="text-secondary"
+                key={lesson.slug}
+                value={lesson.slug}
+              >
+                {lesson.title}
+              </option>
+            ))}
           </select>
         ) : null}
-        <button type="button" onClick={onClose} className="inline-flex min-h-10 items-center gap-2 rounded-lg bg-white px-4 text-xs font-black text-secondary"><X size={15} /> Return to editor</button>
+        <button
+          type="button"
+          onClick={onClose}
+          className="inline-flex min-h-10 items-center gap-2 rounded-lg bg-white px-4 text-xs font-black text-secondary"
+        >
+          <X size={15} /> Return to editor
+        </button>
       </header>
       <div className="flex flex-1 justify-center overflow-auto bg-[#111317] p-3 sm:p-6">
         <iframe
-          key={`${view}-${lessonSlug}-${width}`}
+          key={`${view}-${lessonSlug}`}
           title={`${course.title} ${view} preview`}
           src={`/dashboard/admin/academy/${course.key}/preview?${query.toString()}`}
           className="h-full min-h-[640px] border-0 bg-white shadow-2xl transition-[width] duration-200 motion-reduce:transition-none"
-          style={{ width, maxWidth: "100%" }}
+          style={{ width, minWidth: width }}
         />
       </div>
     </div>
@@ -2938,44 +4583,209 @@ function PublishingReadinessPanel({
   pending,
   onClose,
   onPublish,
+  onNavigate,
 }: {
   course: AcademyCourse;
   pending: boolean;
   onClose: () => void;
   onPublish: () => void;
+  onNavigate: (issue: AcademyValidationIssue) => void;
 }) {
   const result = validateAcademyCourse(course);
-  const groups = groupAcademyValidationErrors(result.errors);
+  const groups = groupAcademyValidationIssues(result.issues);
   const dialogRef = useDialogFocus(true, onClose);
   return (
-    <div ref={dialogRef} className="fixed inset-0 z-[95] flex justify-end bg-secondary/40" role="dialog" aria-modal="true" aria-label="Publishing readiness">
-      <button type="button" tabIndex={-1} className="absolute inset-0" onClick={onClose} aria-label="Close publishing readiness" />
+    <div
+      ref={dialogRef}
+      className="fixed inset-0 z-[95] flex justify-end bg-secondary/40"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Publishing readiness"
+    >
+      <button
+        type="button"
+        tabIndex={-1}
+        className="absolute inset-0"
+        onClick={onClose}
+        aria-label="Close publishing readiness"
+      />
       <aside className="relative flex h-full w-full max-w-[460px] flex-col bg-white shadow-2xl">
         <header className="border-b p-6">
-          <button type="button" onClick={onClose} className="float-right p-2" aria-label="Close"><X /></button>
-          <p className="text-[10px] font-black uppercase tracking-[0.15em] text-primary/60">Publish</p>
+          <button
+            type="button"
+            onClick={onClose}
+            className="float-right p-2"
+            aria-label="Close"
+          >
+            <X />
+          </button>
+          <p className="text-[10px] font-black uppercase tracking-[0.15em] text-primary/60">
+            Publish
+          </p>
           <h2 className="mt-1 text-2xl font-black">Course readiness</h2>
-          <p className="mt-2 text-sm leading-6 text-secondary/55">A final check of content, media, accessibility, and assessment settings.</p>
+          <p className="mt-2 text-sm leading-6 text-secondary/55">
+            A final check of content, media, accessibility, and assessment
+            settings.
+          </p>
         </header>
         <div className="flex-1 overflow-y-auto p-6">
           {result.valid ? (
-            <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-5 text-emerald-950"><CheckCircle2 className="mb-3" /><strong className="block">Ready to publish</strong><p className="mt-1 text-sm leading-6">The draft passes all required checks. Publishing creates an immutable learner version.</p></div>
+            <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-5 text-emerald-950">
+              <CheckCircle2 className="mb-3" />
+              <strong className="block">Ready to publish</strong>
+              <p className="mt-1 text-sm leading-6">
+                The draft passes all required checks. Publishing creates an
+                immutable learner version.
+              </p>
+            </div>
           ) : (
-            <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-amber-950"><AlertTriangle className="mb-2" /><strong>{result.errors.length} issue{result.errors.length === 1 ? "" : "s"} to resolve</strong></div>
+            <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-amber-950">
+              <AlertTriangle className="mb-2" />
+              <strong>
+                {result.errors.length} issue
+                {result.errors.length === 1 ? "" : "s"} to resolve
+              </strong>
+            </div>
           )}
-          {(Object.entries(groups) as Array<[keyof typeof groups, string[]]>).map(([group, errors]) => errors.length ? (
-            <section key={group} className="mt-6">
-              <h3 className="text-xs font-black capitalize">{group}</h3>
-              <ul className="mt-2 space-y-2">{errors.map((error) => <li key={error} className="rounded-lg bg-slate-50 p-3 text-xs leading-5 text-secondary/70">{error}</li>)}</ul>
-            </section>
-          ) : null)}
+          {(
+            Object.entries(groups) as Array<
+              [keyof typeof groups, AcademyValidationIssue[]]
+            >
+          ).map(([group, issues]) =>
+            issues.length ? (
+              <section key={group} className="mt-6">
+                <h3 className="text-xs font-black capitalize">{group}</h3>
+                <ul className="mt-2 space-y-2">
+                  {issues.map((issue) => (
+                    <li key={issue.code}>
+                      <button
+                        type="button"
+                        onClick={() => onNavigate(issue)}
+                        className="flex min-h-11 w-full items-center justify-between gap-3 rounded-lg bg-slate-50 p-3 text-left text-xs leading-5 text-secondary/70 outline-none hover:bg-primary/5 hover:text-primary focus-visible:ring-2 focus-visible:ring-primary"
+                      >
+                        <span>{issue.message}</span>
+                        <span aria-hidden="true">→</span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            ) : null,
+          )}
         </div>
         <footer className="flex gap-3 border-t p-5">
-          <button type="button" onClick={onClose} className="min-h-11 flex-1 rounded-lg border text-xs font-black">Return to editor</button>
-          <button type="button" disabled={!result.valid || pending} onClick={onPublish} className="min-h-11 flex-1 rounded-lg bg-primary text-xs font-black text-white disabled:opacity-40">{pending ? "Publishing…" : "Publish course"}</button>
+          <button
+            type="button"
+            onClick={onClose}
+            className="min-h-11 flex-1 rounded-lg border text-xs font-black"
+          >
+            Return to editor
+          </button>
+          <button
+            type="button"
+            disabled={!result.valid || pending}
+            onClick={onPublish}
+            className="min-h-11 flex-1 rounded-lg bg-primary text-xs font-black text-white disabled:opacity-40"
+          >
+            {pending ? "Publishing…" : "Publish course"}
+          </button>
         </footer>
       </aside>
     </div>
+  );
+}
+
+function ThemeOptionThumbnail({
+  group,
+  option,
+}: {
+  group: string;
+  option: string;
+}) {
+  if (group === "Cover layout") {
+    if (option === "split-image")
+      return (
+        <span
+          className="flex h-14 overflow-hidden rounded-md border border-secondary/10 bg-white"
+          aria-hidden="true"
+        >
+          <span className="flex w-1/2 flex-col justify-end gap-1 p-2">
+            <span className="h-1.5 w-4/5 rounded bg-secondary/70" />
+            <span className="h-1 w-3/5 rounded bg-secondary/20" />
+            <span className="mt-1 h-2 w-8 rounded-full bg-primary" />
+          </span>
+          <span className="w-1/2 bg-gradient-to-br from-primary/75 to-sky-200" />
+        </span>
+      );
+    if (option === "minimal")
+      return (
+        <span
+          className="flex h-14 flex-col justify-end gap-1 rounded-md bg-primary/10 p-2"
+          aria-hidden="true"
+        >
+          <span className="h-1.5 w-3/5 rounded bg-secondary/70" />
+          <span className="h-1 w-2/5 rounded bg-secondary/20" />
+          <span className="mt-1 h-0.5 w-6 bg-primary" />
+        </span>
+      );
+    return (
+      <span
+        className="relative flex h-14 flex-col justify-end gap-1 overflow-hidden rounded-md bg-gradient-to-br from-secondary to-primary/70 p-2"
+        aria-hidden="true"
+      >
+        <span className="h-1.5 w-3/5 rounded bg-white/90" />
+        <span className="h-1 w-2/5 rounded bg-white/50" />
+        <span className="mt-1 h-2 w-8 rounded-full bg-white" />
+      </span>
+    );
+  }
+  if (group === "Lesson header") {
+    return (
+      <span
+        className={`flex h-14 flex-col justify-end rounded-md border border-secondary/10 p-2 ${option === "media-led" ? "bg-gradient-to-r from-secondary to-primary/60" : option === "compact" ? "gap-0.5 bg-white" : "gap-1 bg-primary/5"}`}
+        aria-hidden="true"
+      >
+        <span
+          className={`h-1 w-8 rounded ${option === "media-led" ? "bg-white/50" : "bg-primary/60"}`}
+        />
+        <span
+          className={`rounded ${option === "compact" ? "h-1.5 w-1/2" : "h-2 w-3/4"} ${option === "media-led" ? "bg-white" : "bg-secondary/75"}`}
+        />
+        <span
+          className={`h-1 w-2/3 rounded ${option === "media-led" ? "bg-white/40" : "bg-secondary/15"}`}
+        />
+      </span>
+    );
+  }
+  if (group === "Typography") {
+    return (
+      <span
+        className={`flex h-14 items-end gap-2 rounded-md border border-secondary/10 bg-white p-2 ${option === "editorial" ? "font-serif" : option === "friendly-sans" ? "font-sans" : "font-sans tracking-tight"}`}
+        aria-hidden="true"
+      >
+        <span
+          className={`text-2xl font-bold leading-none ${option === "friendly-sans" ? "rounded text-primary" : "text-secondary"}`}
+        >
+          Aa
+        </span>
+        <span className="mb-0.5 flex flex-1 flex-col gap-1">
+          <span className="h-1 w-full rounded bg-secondary/25" />
+          <span className="h-1 w-3/4 rounded bg-secondary/15" />
+        </span>
+      </span>
+    );
+  }
+  const gap =
+    option === "compact" ? "gap-1" : option === "spacious" ? "gap-3" : "gap-2";
+  return (
+    <span
+      className={`flex h-14 flex-col justify-center rounded-md border border-secondary/10 bg-white p-2 ${gap}`}
+      aria-hidden="true"
+    >
+      <span className="h-1.5 w-4/5 rounded bg-secondary/55" />
+      <span className="h-1 w-full rounded bg-secondary/15" />
+      <span className="h-1 w-2/3 rounded bg-secondary/15" />
+    </span>
   );
 }
 
@@ -3004,12 +4814,13 @@ function ThemeCardGroup({
             aria-pressed={value === key}
             className={`min-h-24 rounded-xl border p-3 text-left ${value === key ? "border-primary bg-primary/5 ring-2 ring-primary/10" : "border-secondary/10 hover:border-secondary/25"}`}
           >
-            <span className="mb-3 flex h-8 items-end gap-1 rounded bg-slate-100 p-2" aria-hidden="true">
-              <span className="h-4 w-2/3 rounded-sm bg-secondary/70" />
-              <span className="h-2 w-1/3 rounded-sm bg-primary/50" />
+            <span className="mb-3 block">
+              <ThemeOptionThumbnail group={label} option={key} />
             </span>
             <strong className="block text-xs">{title}</strong>
-            <span className="mt-1 block text-[10px] leading-4 text-secondary/50">{description}</span>
+            <span className="mt-1 block text-[10px] leading-4 text-secondary/50">
+              {description}
+            </span>
           </button>
         ))}
       </div>
@@ -3019,11 +4830,20 @@ function ThemeCardGroup({
 
 function ThemePreviewCard({ course }: { course: AcademyCourse }) {
   return (
-    <AcademyThemeScope course={course} className="overflow-hidden rounded-xl border border-secondary/10 bg-white">
+    <AcademyThemeScope
+      course={course}
+      className="overflow-hidden rounded-xl border border-secondary/10 bg-white"
+    >
       <div className="bg-[var(--academy-accent-soft)] p-5">
-        <span className="text-[9px] font-black uppercase tracking-[0.16em] text-[var(--academy-accent)]">Live theme preview</span>
-        <h3 className="mt-2 text-xl font-black text-secondary">{course.title || "Course title"}</h3>
-        <p className="academy-reading-copy mt-2 max-w-lg text-sm leading-6 text-secondary/65">{course.description || "Your course description will appear here."}</p>
+        <span className="text-[9px] font-black uppercase tracking-[0.16em] text-[var(--academy-accent)]">
+          Live theme preview
+        </span>
+        <h3 className="mt-2 text-xl font-black text-secondary">
+          {course.title || "Course title"}
+        </h3>
+        <p className="academy-reading-copy mt-2 max-w-lg text-sm leading-6 text-secondary/65">
+          {course.description || "Your course description will appear here."}
+        </p>
         <span className="mt-4 block h-1 w-16 bg-[var(--academy-accent)]" />
       </div>
     </AcademyThemeScope>
@@ -3059,12 +4879,19 @@ function CourseSettingsModal({
   return (
     <div
       ref={dialogRef}
-      className="fixed inset-0 z-[80] flex items-center justify-center bg-secondary/45 p-4"
+      className="fixed inset-0 z-[80] flex justify-end bg-secondary/25"
       role="dialog"
       aria-modal="true"
       aria-label="Course settings"
     >
-      <div className="flex max-h-[90vh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl">
+      <button
+        type="button"
+        tabIndex={-1}
+        className="absolute inset-0"
+        onClick={onClose}
+        aria-label="Close course settings"
+      />
+      <aside className="relative flex h-full w-full max-w-[580px] flex-col overflow-hidden bg-white shadow-2xl">
         <div className="flex items-center border-b px-5 py-4">
           <h2 className="text-xl font-black">Course settings</h2>
           <button
@@ -3189,31 +5016,65 @@ function CourseSettingsModal({
                 label="Cover layout"
                 value={course.theme?.coverStyle || "full-image"}
                 options={[
-                  ["full-image", "Full image", "Immersive image with overlaid title"],
+                  [
+                    "full-image",
+                    "Full image",
+                    "Immersive image with overlaid title",
+                  ],
                   ["split-image", "Split image", "Balanced copy and media"],
                   ["minimal", "Minimal", "Typography-led introduction"],
                 ]}
-                onSelect={(value) => onChange((draft) => { draft.theme!.coverStyle = value as NonNullable<AcademyCourse["theme"]>["coverStyle"]; }, "Change cover layout")}
+                onSelect={(value) =>
+                  onChange((draft) => {
+                    draft.theme!.coverStyle = value as NonNullable<
+                      AcademyCourse["theme"]
+                    >["coverStyle"];
+                  }, "Change cover layout")
+                }
               />
               <ThemeCardGroup
                 label="Lesson header"
                 value={course.theme?.lessonHeaderStyle || "editorial"}
                 options={[
-                  ["editorial", "Editorial", "Large title and generous introduction"],
+                  [
+                    "editorial",
+                    "Editorial",
+                    "Large title and generous introduction",
+                  ],
                   ["compact", "Compact", "Fast, space-efficient opening"],
                   ["media-led", "Media-led", "Hero media anchors the lesson"],
                 ]}
-                onSelect={(value) => onChange((draft) => { draft.theme!.lessonHeaderStyle = value as NonNullable<AcademyCourse["theme"]>["lessonHeaderStyle"]; }, "Change lesson header")}
+                onSelect={(value) =>
+                  onChange((draft) => {
+                    draft.theme!.lessonHeaderStyle = value as NonNullable<
+                      AcademyCourse["theme"]
+                    >["lessonHeaderStyle"];
+                  }, "Change lesson header")
+                }
               />
               <ThemeCardGroup
                 label="Typography"
                 value={course.theme?.typography || "editorial"}
                 options={[
-                  ["editorial", "Editorial", "Sans headings with serif reading copy"],
+                  [
+                    "editorial",
+                    "Editorial",
+                    "Sans headings with serif reading copy",
+                  ],
                   ["modern-sans", "Modern sans", "Crisp sans serif throughout"],
-                  ["friendly-sans", "Friendly sans", "Softer, approachable rhythm"],
+                  [
+                    "friendly-sans",
+                    "Friendly sans",
+                    "Softer, approachable rhythm",
+                  ],
                 ]}
-                onSelect={(value) => onChange((draft) => { draft.theme!.typography = value as NonNullable<AcademyCourse["theme"]>["typography"]; }, "Change typography")}
+                onSelect={(value) =>
+                  onChange((draft) => {
+                    draft.theme!.typography = value as NonNullable<
+                      AcademyCourse["theme"]
+                    >["typography"];
+                  }, "Change typography")
+                }
               />
               <ThemeCardGroup
                 label="Density"
@@ -3223,17 +5084,41 @@ function CourseSettingsModal({
                   ["comfortable", "Comfortable", "A balanced default"],
                   ["spacious", "Spacious", "More pause between ideas"],
                 ]}
-                onSelect={(value) => onChange((draft) => { draft.theme!.density = value as NonNullable<AcademyCourse["theme"]>["density"]; }, "Change density")}
+                onSelect={(value) =>
+                  onChange((draft) => {
+                    draft.theme!.density = value as NonNullable<
+                      AcademyCourse["theme"]
+                    >["density"];
+                  }, "Change density")
+                }
               />
               <div>
-                <p className="mb-2 text-[10px] font-black uppercase tracking-[0.13em] text-secondary/45">Accessible accent</p>
+                <p className="mb-2 text-[10px] font-black uppercase tracking-[0.13em] text-secondary/45">
+                  Accessible accent
+                </p>
                 <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                  {Object.entries(academyAccentPalettes).map(([key, palette]) => (
-                    <button key={key} type="button" onClick={() => onChange((draft) => { draft.theme!.accent = key as NonNullable<AcademyCourse["theme"]>["accent"]; }, "Change accent")} className={`min-h-16 rounded-xl border p-3 text-left text-xs font-black ${course.theme?.accent === key ? "border-secondary ring-2 ring-secondary/10" : "border-secondary/10"}`}>
-                      <span className="mb-2 block h-5 rounded" style={{ backgroundColor: palette.accent }} />
-                      {palette.label}
-                    </button>
-                  ))}
+                  {Object.entries(academyAccentPalettes).map(
+                    ([key, palette]) => (
+                      <button
+                        key={key}
+                        type="button"
+                        onClick={() =>
+                          onChange((draft) => {
+                            draft.theme!.accent = key as NonNullable<
+                              AcademyCourse["theme"]
+                            >["accent"];
+                          }, "Change accent")
+                        }
+                        className={`min-h-16 rounded-xl border p-3 text-left text-xs font-black ${course.theme?.accent === key ? "border-secondary ring-2 ring-secondary/10" : "border-secondary/10"}`}
+                      >
+                        <span
+                          className="mb-2 block h-5 rounded"
+                          style={{ backgroundColor: palette.accent }}
+                        />
+                        {palette.label}
+                      </button>
+                    ),
+                  )}
                 </div>
               </div>
             </>
@@ -3340,7 +5225,13 @@ function CourseSettingsModal({
           ) : null}
           {tab === "media" ? (
             <>
-              <button type="button" onClick={() => setMediaChooserOpen(true)} className="inline-flex min-h-11 items-center gap-2 rounded-lg bg-primary px-4 text-xs font-black text-white"><Upload size={15} /> Choose cover image</button>
+              <button
+                type="button"
+                onClick={() => setMediaChooserOpen(true)}
+                className="inline-flex min-h-11 items-center gap-2 rounded-lg bg-primary px-4 text-xs font-black text-white"
+              >
+                <Upload size={15} /> Choose cover image
+              </button>
               <Field label="Hero image URL">
                 <input
                   className={inputClass}
@@ -3416,14 +5307,26 @@ function CourseSettingsModal({
                 open={mediaChooserOpen}
                 title="Choose course cover"
                 library={mediaLibrary}
+                selectedUrl={course.heroImage}
                 onClose={() => setMediaChooserOpen(false)}
-                onChoose={(choice) => onChange((draft) => { draft.heroImage = choice.url; }, "Update hero")}
+                onChoose={(choice) =>
+                  onChange((draft) => {
+                    draft.heroImage = choice.url;
+                  }, "Update hero")
+                }
                 onUpload={async (file) => {
                   const data = new FormData();
                   data.set("file", file);
                   const result = await uploadAcademyMedia(data);
-                  if (!result.ok || !result.url) { window.alert(result.message); return null; }
-                  return { name: file.name, url: result.url, mediaType: "image" };
+                  if (!result.ok || !result.url) {
+                    window.alert(result.message);
+                    return null;
+                  }
+                  return {
+                    name: file.name,
+                    url: result.url,
+                    mediaType: "image",
+                  };
                 }}
               />
             </>
@@ -3438,7 +5341,7 @@ function CourseSettingsModal({
             Done
           </button>
         </div>
-      </div>
+      </aside>
     </div>
   );
 }
@@ -3456,7 +5359,7 @@ function HistoryModal({
   return (
     <div
       ref={dialogRef}
-      className="fixed inset-0 z-[80] flex items-center justify-center bg-secondary/45 p-4"
+      className="fixed inset-0 z-[80] flex bg-[#F5F6F8]"
       role="dialog"
       aria-modal="true"
       aria-label="Revision history"
@@ -3522,8 +5425,11 @@ function AssessmentModal({
   onChange: (recipe: (course: AcademyCourse) => void, label: string) => void;
 }) {
   const dialogRef = useDialogFocus(true, onClose);
-  const [questionType, setQuestionType] = useState<NonNullable<QuizQuestion["type"]>>("single-choice");
-  const [previewQuestionId, setPreviewQuestionId] = useState<string | null>(null);
+  const [questionType, setQuestionType] =
+    useState<NonNullable<QuizQuestion["type"]>>("single-choice");
+  const [previewQuestionId, setPreviewQuestionId] = useState<string | null>(
+    null,
+  );
   return (
     <div
       ref={dialogRef}
@@ -3532,7 +5438,7 @@ function AssessmentModal({
       aria-modal="true"
       aria-label="Final assessment editor"
     >
-      <div className="flex max-h-[90vh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl">
+      <div className="mx-auto flex h-full w-full max-w-5xl flex-col overflow-hidden bg-white shadow-2xl">
         <div className="flex items-center border-b p-5">
           <div>
             <p className="text-[10px] font-black uppercase tracking-[0.15em] text-primary/60">
@@ -3551,62 +5457,227 @@ function AssessmentModal({
         </div>
         <div className="overflow-y-auto bg-slate-50 p-5">
           <section className="mb-5 rounded-xl border bg-white p-4">
-            <h3 className="text-xs font-black uppercase tracking-[0.13em] text-secondary/45">Assessment settings</h3>
+            <h3 className="text-xs font-black uppercase tracking-[0.13em] text-secondary/45">
+              Assessment settings
+            </h3>
             <div className="mt-4 grid gap-4 sm:grid-cols-2">
-              <Field label="Pass mark"><input type="number" min={1} max={100} className={inputClass} value={course.passMark || 80} onChange={(event) => onChange((draft) => { draft.passMark = Number(event.target.value); }, "Change pass mark")} /></Field>
-              <Field label="Attempt limit" hint="0 means unlimited"><input type="number" min={0} max={10} className={inputClass} value={course.rules?.attemptLimit || 0} onChange={(event) => onChange((draft) => { draft.rules!.attemptLimit = Number(event.target.value) || null; }, "Change attempts")} /></Field>
-              <Field label="Feedback timing"><select className={inputClass} value={course.rules?.feedbackTiming || "after-submit"} onChange={(event) => onChange((draft) => { draft.rules!.feedbackTiming = event.target.value as NonNullable<AcademyCourse["rules"]>["feedbackTiming"]; }, "Change feedback")}><option value="immediate">Immediately</option><option value="after-submit">After submission</option><option value="after-pass">After passing</option></select></Field>
-              <label className="flex min-h-10 items-center gap-2 text-sm font-bold"><input type="checkbox" checked={course.rules?.requireFinalAssessment ?? true} onChange={(event) => onChange((draft) => { draft.rules!.requireFinalAssessment = event.target.checked; }, "Change final assessment requirement")} /> Required for completion</label>
+              <Field label="Pass mark">
+                <input
+                  type="number"
+                  min={1}
+                  max={100}
+                  className={inputClass}
+                  value={course.passMark || 80}
+                  onChange={(event) =>
+                    onChange((draft) => {
+                      draft.passMark = Number(event.target.value);
+                    }, "Change pass mark")
+                  }
+                />
+              </Field>
+              <Field label="Attempt limit" hint="0 means unlimited">
+                <input
+                  type="number"
+                  min={0}
+                  max={10}
+                  className={inputClass}
+                  value={course.rules?.attemptLimit || 0}
+                  onChange={(event) =>
+                    onChange((draft) => {
+                      draft.rules!.attemptLimit =
+                        Number(event.target.value) || null;
+                    }, "Change attempts")
+                  }
+                />
+              </Field>
+              <Field label="Feedback timing">
+                <select
+                  className={inputClass}
+                  value={course.rules?.feedbackTiming || "after-submit"}
+                  onChange={(event) =>
+                    onChange((draft) => {
+                      draft.rules!.feedbackTiming = event.target
+                        .value as NonNullable<
+                        AcademyCourse["rules"]
+                      >["feedbackTiming"];
+                    }, "Change feedback")
+                  }
+                >
+                  <option value="immediate">Immediately</option>
+                  <option value="after-submit">After submission</option>
+                  <option value="after-pass">After passing</option>
+                </select>
+              </Field>
+              <label className="flex min-h-10 items-center gap-2 text-sm font-bold">
+                <input
+                  type="checkbox"
+                  checked={course.rules?.requireFinalAssessment ?? true}
+                  onChange={(event) =>
+                    onChange((draft) => {
+                      draft.rules!.requireFinalAssessment =
+                        event.target.checked;
+                    }, "Change final assessment requirement")
+                  }
+                />{" "}
+                Required for completion
+              </label>
             </div>
           </section>
           <div className="space-y-4">
-          {course.quiz.map((question, index) => (
-            <details
-              key={question.id}
-              open={index === 0}
-              className="rounded-xl border bg-white"
-            >
-              <summary className="flex cursor-pointer list-none items-center gap-3 p-4">
-                <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-xs font-black text-primary">
-                  {index + 1}
-                </span>
-                <strong className="min-w-0 flex-1 truncate text-sm">
-                  {question.prompt}
-                </strong>
-                <div className="flex items-center">
-                <button type="button" onClick={(event) => { event.preventDefault(); onChange((draft) => { const copy = structuredClone(question); copy.id = createAcademyId("question"); copy.prompt = `${copy.prompt} copy`; draft.quiz.splice(index + 1, 0, copy); }, "Duplicate assessment question"); }} className="p-2 text-secondary/45" aria-label={`Duplicate question ${index + 1}`}><Copy size={15} /></button>
-                <button type="button" disabled={index === 0} onClick={(event) => { event.preventDefault(); onChange((draft) => { const [moving] = draft.quiz.splice(index, 1); draft.quiz.splice(index - 1, 0, moving); }, "Move assessment question"); }} className="p-2 text-secondary/45 disabled:opacity-20" aria-label={`Move question ${index + 1} up`}><ArrowUp size={15} /></button>
-                <button type="button" disabled={index === course.quiz.length - 1} onClick={(event) => { event.preventDefault(); onChange((draft) => { const [moving] = draft.quiz.splice(index, 1); draft.quiz.splice(index + 1, 0, moving); }, "Move assessment question"); }} className="p-2 text-secondary/45 disabled:opacity-20" aria-label={`Move question ${index + 1} down`}><ArrowDown size={15} /></button>
-                <button
-                  type="button"
-                  onClick={(event) => {
-                    event.preventDefault();
-                    onChange((draft) => {
-                      draft.quiz.splice(index, 1);
-                    }, "Delete assessment question");
-                  }}
-                  className="p-2 text-red-500"
-                  aria-label={`Delete question ${index + 1}`}
-                >
-                  <Trash2 size={15} />
-                </button>
+            {course.quiz.map((question, index) => (
+              <details
+                key={question.id}
+                open={index === 0}
+                className="rounded-xl border bg-white"
+              >
+                <summary className="flex cursor-pointer list-none items-center gap-3 p-4">
+                  <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-xs font-black text-primary">
+                    {index + 1}
+                  </span>
+                  <strong className="min-w-0 flex-1 truncate text-sm">
+                    {question.prompt}
+                  </strong>
+                  <div className="flex items-center">
+                    <button
+                      type="button"
+                      onClick={(event) => {
+                        event.preventDefault();
+                        onChange((draft) => {
+                          const copy = structuredClone(question);
+                          copy.id = createAcademyId("question");
+                          copy.prompt = `${copy.prompt} copy`;
+                          draft.quiz.splice(index + 1, 0, copy);
+                        }, "Duplicate assessment question");
+                      }}
+                      className="p-2 text-secondary/45"
+                      aria-label={`Duplicate question ${index + 1}`}
+                    >
+                      <Copy size={15} />
+                    </button>
+                    <button
+                      type="button"
+                      disabled={index === 0}
+                      onClick={(event) => {
+                        event.preventDefault();
+                        onChange((draft) => {
+                          const [moving] = draft.quiz.splice(index, 1);
+                          draft.quiz.splice(index - 1, 0, moving);
+                        }, "Move assessment question");
+                      }}
+                      className="p-2 text-secondary/45 disabled:opacity-20"
+                      aria-label={`Move question ${index + 1} up`}
+                    >
+                      <ArrowUp size={15} />
+                    </button>
+                    <button
+                      type="button"
+                      disabled={index === course.quiz.length - 1}
+                      onClick={(event) => {
+                        event.preventDefault();
+                        onChange((draft) => {
+                          const [moving] = draft.quiz.splice(index, 1);
+                          draft.quiz.splice(index + 1, 0, moving);
+                        }, "Move assessment question");
+                      }}
+                      className="p-2 text-secondary/45 disabled:opacity-20"
+                      aria-label={`Move question ${index + 1} down`}
+                    >
+                      <ArrowDown size={15} />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={(event) => {
+                        event.preventDefault();
+                        onChange((draft) => {
+                          draft.quiz.splice(index, 1);
+                        }, "Delete assessment question");
+                      }}
+                      className="p-2 text-red-500"
+                      aria-label={`Delete question ${index + 1}`}
+                    >
+                      <Trash2 size={15} />
+                    </button>
+                  </div>
+                </summary>
+                <div className="border-t p-4">
+                  <QuestionEditor
+                    question={question}
+                    onChange={(next) =>
+                      onChange((draft) => {
+                        draft.quiz[index] = next;
+                      }, `Edit final question ${question.id}`)
+                    }
+                  />
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setPreviewQuestionId((value) =>
+                        value === question.id ? null : question.id,
+                      )
+                    }
+                    className="mt-4 inline-flex min-h-10 items-center gap-2 rounded-lg border px-3 text-xs font-black"
+                  >
+                    <Eye size={14} />{" "}
+                    {previewQuestionId === question.id
+                      ? "Hide preview"
+                      : "Preview question"}
+                  </button>
+                  {previewQuestionId === question.id ? (
+                    <div className="mt-4 rounded-xl bg-[var(--academy-accent-soft,#eef4fb)] p-5">
+                      <p className="text-[10px] font-black uppercase tracking-[0.14em] text-primary">
+                        Learner preview
+                      </p>
+                      <p className="mt-2 font-bold">{question.prompt}</p>
+                      <div className="mt-3 space-y-2">
+                        {question.options.map((option) => (
+                          <div
+                            key={option.id}
+                            className="rounded-lg border bg-white px-3 py-2 text-sm"
+                          >
+                            {option.label}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ) : null}
                 </div>
-              </summary>
-              <div className="border-t p-4">
-                <QuestionEditor
-                  question={question}
-                  onChange={(next) =>
-                    onChange((draft) => {
-                      draft.quiz[index] = next;
-                    }, `Edit final question ${question.id}`)
-                  }
-                />
-                <button type="button" onClick={() => setPreviewQuestionId((value) => value === question.id ? null : question.id)} className="mt-4 inline-flex min-h-10 items-center gap-2 rounded-lg border px-3 text-xs font-black"><Eye size={14} /> {previewQuestionId === question.id ? "Hide preview" : "Preview question"}</button>
-                {previewQuestionId === question.id ? <div className="mt-4 rounded-xl bg-[var(--academy-accent-soft,#eef4fb)] p-5"><p className="text-[10px] font-black uppercase tracking-[0.14em] text-primary">Learner preview</p><p className="mt-2 font-bold">{question.prompt}</p><div className="mt-3 space-y-2">{question.options.map((option) => <div key={option.id} className="rounded-lg border bg-white px-3 py-2 text-sm">{option.label}</div>)}</div></div> : null}
+              </details>
+            ))}
+            <div className="rounded-xl border bg-white p-4">
+              <p className="text-[10px] font-black uppercase tracking-[0.13em] text-secondary/45">
+                Add question
+              </p>
+              <div className="mt-3 grid gap-2 sm:grid-cols-3">
+                {(
+                  [
+                    ["single-choice", "Single choice"],
+                    ["multiple-response", "Multiple response"],
+                    ["reflection", "Reflection"],
+                  ] as const
+                ).map(([type, label]) => (
+                  <button
+                    key={type}
+                    type="button"
+                    aria-pressed={questionType === type}
+                    onClick={() => setQuestionType(type)}
+                    className={`min-h-16 rounded-lg border p-3 text-left text-xs font-black ${questionType === type ? "border-primary bg-primary/5 text-primary" : "border-secondary/10"}`}
+                  >
+                    {label}
+                  </button>
+                ))}
               </div>
-            </details>
-          ))}
-          <div className="rounded-xl border bg-white p-4"><p className="text-[10px] font-black uppercase tracking-[0.13em] text-secondary/45">Add question</p><div className="mt-3 grid gap-2 sm:grid-cols-3">{([['single-choice','Single choice'],['multiple-response','Multiple response'],['reflection','Reflection']] as const).map(([type,label]) => <button key={type} type="button" aria-pressed={questionType === type} onClick={() => setQuestionType(type)} className={`min-h-16 rounded-lg border p-3 text-left text-xs font-black ${questionType === type ? "border-primary bg-primary/5 text-primary" : "border-secondary/10"}`}>{label}</button>)}</div><button type="button" onClick={() => onChange((draft) => { draft.quiz.push(createQuestion(questionType)); }, "Add assessment question")} className="mt-3 inline-flex min-h-11 items-center gap-2 rounded-lg bg-primary px-4 text-xs font-black text-white"><Plus size={15} /> Add {questionType.replaceAll("-", " ")}</button></div>
+              <button
+                type="button"
+                onClick={() =>
+                  onChange((draft) => {
+                    draft.quiz.push(createQuestion(questionType));
+                  }, "Add assessment question")
+                }
+                className="mt-3 inline-flex min-h-11 items-center gap-2 rounded-lg bg-primary px-4 text-xs font-black text-white"
+              >
+                <Plus size={15} /> Add {questionType.replaceAll("-", " ")}
+              </button>
+            </div>
           </div>
         </div>
         <div className="border-t p-4 text-right">

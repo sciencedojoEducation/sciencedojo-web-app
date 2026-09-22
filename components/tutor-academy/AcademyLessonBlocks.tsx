@@ -6,7 +6,10 @@ import {
   Lightbulb,
   ShieldCheck,
 } from "lucide-react";
-import type { LessonBlock } from "@/lib/tutor-academy";
+import type {
+  AcademyMediaCaptionItem,
+  LessonBlock,
+} from "@/lib/tutor-academy";
 import AcademyCarousel from "./AcademyCarousel";
 import AcademyRichText from "./AcademyRichText";
 import AcademyMath from "./AcademyMath";
@@ -14,6 +17,8 @@ import {
   AcademyAccordion,
   AcademyFlashcards,
   AcademyKnowledgeCheck,
+  AcademyProcess,
+  AcademySurvey,
   AcademyTabs,
 } from "./AcademyInteractiveBlocks";
 
@@ -23,6 +28,64 @@ const calloutClasses = {
   amber: "border-[#E3CCA2] bg-[#FBF7EE] text-[#59451F]",
   navy: "border-[#1E5AA8] bg-[#EDF4FB] text-[#173A63]",
 };
+
+function AcademyMediaCaption({
+  caption,
+  items = [],
+}: {
+  caption?: string;
+  items?: AcademyMediaCaptionItem[];
+}) {
+  if (!caption && !items.length) return null;
+  return (
+    <div className="space-y-4 px-5 py-4 font-[family-name:var(--font-academy-serif)] text-[13px] leading-6 text-[#5F6267]">
+      {caption ? <p>{caption}</p> : null}
+      {items.map((item) => {
+        if (item.type === "ordered-list" || item.type === "unordered-list") {
+          const ListTag = item.type === "ordered-list" ? "ol" : "ul";
+          return (
+            <ListTag
+              key={item.id}
+              className={`${item.type === "ordered-list" ? "list-decimal" : "list-disc"} space-y-1 pl-5`}
+            >
+              {item.items.filter(Boolean).map((value, index) => (
+                <li key={`${item.id}-${index}`}>{value}</li>
+              ))}
+            </ListTag>
+          );
+        }
+        if (item.type === "table")
+          return (
+            <div key={item.id} className="overflow-x-auto">
+              <table className="w-full min-w-80 border-collapse text-left text-xs">
+                <thead className="bg-[#F1F6FC] text-[#173A63]">
+                  <tr>
+                    {item.columns.map((column, index) => (
+                      <th key={`${item.id}-heading-${index}`} className="border border-[#DEDFE1] px-3 py-2 font-bold">{column}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {item.rows.map((row, rowIndex) => (
+                    <tr key={`${item.id}-row-${rowIndex}`}>
+                      {row.map((cell, cellIndex) => (
+                        <td key={`${item.id}-cell-${rowIndex}-${cellIndex}`} className="border border-[#DEDFE1] px-3 py-2">{cell}</td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          );
+        return (
+          <div key={item.id} className="rounded-lg bg-[#F7F7F5] px-4 py-3 text-[#252629]">
+            <AcademyMath latex={item.latex} display label={item.shortDescription} description={item.longDescription} />
+          </div>
+        );
+      })}
+    </div>
+  );
+}
 
 export default function AcademyLessonBlocks({
   blocks,
@@ -105,11 +168,14 @@ export default function AcademyLessonBlocks({
                   </div>
                 )}
               </div>
-              {block.caption && (
-                <figcaption className="px-5 py-3 font-[family-name:var(--font-academy-serif)] text-[13px] leading-6 text-[#717376]">
-                  {block.caption}
+              {block.caption || block.captionItems?.length ? (
+                <figcaption className="border-t border-[#DEDFE1]">
+                  <AcademyMediaCaption
+                    caption={block.caption}
+                    items={block.captionItems}
+                  />
                 </figcaption>
-              )}
+              ) : null}
             </figure>
           );
         }
@@ -142,6 +208,7 @@ export default function AcademyLessonBlocks({
         }
 
         if (block.type === "numbered-list") {
+          const listStyle = block.appearance?.variant || "numbered";
           return (
             <section key={blockIndex}>
               {block.heading && (
@@ -155,8 +222,11 @@ export default function AcademyLessonBlocks({
                     key={item.title}
                     className="grid grid-cols-[44px_1fr] gap-4 border-b border-[#DEDFE1] py-6"
                   >
-                    <span className="inline-flex h-9 w-9 items-center justify-center rounded-full border-2 border-[#1E5AA8] text-sm font-bold text-[#1E5AA8]">
-                      {index + 1}
+                    <span
+                      className={`inline-flex h-9 w-9 items-center justify-center text-sm font-bold ${listStyle === "bulleted" ? "text-2xl text-[#1E5AA8]" : listStyle === "checklist" ? "rounded-full bg-[#1E5AA8] text-white" : "rounded-full border-2 border-[#1E5AA8] text-[#1E5AA8]"}`}
+                      aria-hidden="true"
+                    >
+                      {listStyle === "bulleted" ? "•" : listStyle === "checklist" ? <Check size={17} /> : index + 1}
                     </span>
                     <div>
                       <h3 className="text-lg font-bold text-[#252629]">
@@ -310,6 +380,11 @@ export default function AcademyLessonBlocks({
               ) : null}
               <AcademyFlashcards
                 items={block.items}
+                variant={
+                  block.appearance?.variant === "stack"
+                    ? "stack"
+                    : "flip-grid"
+                }
                 courseKey={courseKey}
                 blockId={block.id}
                 completion={block.completion}
@@ -319,6 +394,18 @@ export default function AcademyLessonBlocks({
         }
 
         if (block.type === "process") {
+          if ((block.appearance?.variant || "slides") === "slides")
+            return (
+              <section key={block.id || blockIndex}>
+                <AcademyProcess
+                  heading={block.heading}
+                  items={block.items}
+                  courseKey={courseKey}
+                  blockId={block.id}
+                  completion={block.completion}
+                />
+              </section>
+            );
           return (
             <section key={block.id || blockIndex}>
               {block.heading ? (
@@ -344,6 +431,31 @@ export default function AcademyLessonBlocks({
                   </li>
                 ))}
               </ol>
+            </section>
+          );
+        }
+
+        if (block.type === "survey") {
+          return (
+            <section key={block.id || blockIndex}>
+              {block.heading ? (
+                <h2 className="mb-6 text-[28px] font-bold sm:text-[32px]">
+                  {block.heading}
+                </h2>
+              ) : null}
+              <AcademySurvey
+                prompt={block.prompt}
+                lowLabel={block.lowLabel}
+                highLabel={block.highLabel}
+                scale={block.scale}
+                submitLabel={block.submitLabel}
+                variant={
+                  block.appearance?.variant === "compact" ? "compact" : "scale"
+                }
+                courseKey={courseKey}
+                blockId={block.id}
+                completion={block.completion}
+              />
             </section>
           );
         }
@@ -412,8 +524,13 @@ export default function AcademyLessonBlocks({
                   This media URL is not from an approved provider.
                 </div>
               )}
-              {block.caption ? (
-                <p className="mt-3 text-sm text-[#717376]">{block.caption}</p>
+              {block.caption || block.captionItems?.length ? (
+                <div className="mt-3 border-t border-[#DEDFE1]">
+                  <AcademyMediaCaption
+                    caption={block.caption}
+                    items={block.captionItems}
+                  />
+                </div>
               ) : null}
               {block.transcript ? (
                 <details className="mt-4 border-y border-[#DEDFE1] py-4">
@@ -546,12 +663,19 @@ export default function AcademyLessonBlocks({
           variant: "default",
           surface: "plain",
           spacing: "comfortable",
+          width: "reading",
         };
+        const widthClass =
+          appearance.width === "narrow"
+            ? "mx-auto w-full max-w-xl"
+            : appearance.width === "wide"
+              ? "relative left-1/2 w-[calc(100vw-48px)] max-w-[1000px] -translate-x-1/2 lg:w-[calc(100vw-328px)]"
+              : "w-full";
         return (
           <div
             key={block.id || blockIndex}
             data-block-variant={appearance.variant}
-            className={`academy-block-surface-${appearance.surface} academy-block-spacing-${appearance.spacing}`}
+            className={`${widthClass} academy-block-surface-${appearance.surface} academy-block-spacing-${appearance.spacing}`}
           >
             {content}
           </div>

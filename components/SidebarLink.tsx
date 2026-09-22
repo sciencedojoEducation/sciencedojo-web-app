@@ -2,60 +2,39 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ReactNode } from "react";
 import { DashboardMenuBadge } from "./DashboardBadgeProvider";
+import DashboardNavIcon from "./DashboardNavIcon";
 import type { DashboardBadgeKey } from "@/lib/dashboard-badges";
+import { isDashboardNavItemActive, type DashboardNavIconName } from "@/lib/dashboard-navigation";
 
 interface SidebarLinkProps {
   href: string;
   name: string;
-  icon: ReactNode;
+  iconName: DashboardNavIconName;
   badgeKey?: DashboardBadgeKey;
-  variant?: 'light' | 'dark';
   exact?: boolean;
   tourId?: string;
 }
 
-export default function SidebarLink({ href, name, icon, badgeKey, variant = 'dark', exact = false, tourId }: SidebarLinkProps) {
+export default function SidebarLink({ href, name, iconName, badgeKey, exact = false, tourId }: SidebarLinkProps) {
   const pathname = usePathname();
-  // Exact match or prefix match based on the exact prop pulse 🏎️🚀
-  const isActive = exact ? pathname === href : (pathname === href || (href !== "/dashboard" && pathname.startsWith(href + "/")));
-
-  const isLight = variant === 'light';
+  const isActive = isDashboardNavItemActive(pathname, { href, exact });
 
   return (
     <Link
       href={href}
       data-tour={tourId}
-      className={`group relative flex items-center gap-3 px-4 py-3.5 rounded-2xl font-bold transition-all duration-300 border border-transparent ${
-        isActive
-          ? isLight
-            ? "bg-[#1E5AA8]/5 text-[#1E5AA8] border-slate-200 shadow-[inset_0_0_20px_rgba(30,90,168,0.03)]"
-            : "bg-[#1E5AA8]/10 text-white border-white/5 shadow-[inset_0_0_20px_rgba(111,227,214,0.05)]"
-          : isLight
-            ? "text-slate-500 hover:text-slate-900 hover:bg-slate-100/80 hover:translate-x-1"
-            : "text-slate-400 hover:text-white hover:bg-white/5 hover:translate-x-1"
+      aria-current={isActive ? "page" : undefined}
+      className={`group flex min-h-11 items-center gap-2.5 rounded-xl px-2.5 text-[13px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1E5AA8] focus-visible:ring-offset-2 ${
+        isActive ? "bg-[#1E5AA8]/8 font-semibold text-[#164b87]" : "font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900"
       }`}
     >
-      {/* Active Accent Pulse Bar 🏎️🚀 */}
-      {isActive && (
-        <div className="absolute left-[-1px] top-3 bottom-3 w-1 bg-[#6FE3D6] rounded-full shadow-[0_0_10px_rgba(111,227,214,0.5)]" />
-      )}
-
-      <span className={`transition-transform duration-300 ${
-        isActive 
-          ? "text-[#6FE3D6]" 
-          : isLight 
-            ? "text-slate-400 group-hover:scale-110 group-hover:text-[#1E5AA8]"
-            : "text-slate-500 group-hover:scale-110 group-hover:text-[#6FE3D6]"
-      }`}>
-        {icon}
+      <span className={`flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-lg ${
+        isActive ? "bg-[#1E5AA8]/12 text-[#1E5AA8] ring-1 ring-[#6FE3D6]/70" : "bg-slate-100 text-slate-500 group-hover:bg-white group-hover:text-[#1E5AA8]"
+      }`} aria-hidden="true">
+        <DashboardNavIcon name={iconName} />
       </span>
-      
-      <span className={`flex-1 transition-all duration-300 text-sm ${isActive ? "tracking-wide font-black" : "font-semibold"}`}>
-        {name}
-      </span>
-
+      <span className="min-w-0 flex-1 truncate">{name}</span>
       <DashboardMenuBadge badgeKey={badgeKey} label={name} />
     </Link>
   );

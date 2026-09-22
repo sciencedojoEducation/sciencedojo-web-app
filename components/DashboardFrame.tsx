@@ -12,7 +12,11 @@ export default function DashboardFrame({
   guidedTour: React.ReactNode;
 }) {
   const pathname = usePathname();
-  const isAcademyRoute = pathname === "/dashboard/tutor/academy" || pathname.startsWith("/dashboard/tutor/academy/") || pathname.startsWith("/dashboard/academy/");
+  const isAcademyRoute =
+    pathname === "/dashboard/tutor/academy" ||
+    pathname.startsWith("/dashboard/tutor/academy/") ||
+    pathname.startsWith("/dashboard/academy/") ||
+    /^\/dashboard\/admin\/academy\/[^/]+\/preview$/.test(pathname);
 
   if (isAcademyRoute) {
     return <div className="h-[100dvh] min-h-0 overflow-hidden bg-white">{children}</div>;

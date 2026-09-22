@@ -72,13 +72,18 @@ export const useAcademyEditorStore = create<AcademyEditorState>((set, get) => ({
     const now = Date.now();
     const groupWithPrevious =
       state.lastCommand === label && now - state.lastCommandAt < 800;
-    const previous = clone(state.document);
+    // Consecutive keystrokes are one undoable command. Avoid cloning the full
+    // course for every character once the history checkpoint already exists.
+    const previous = groupWithPrevious ? null : clone(state.document);
     const document = produce(state.document, recipe);
     set({
       document,
       past: groupWithPrevious
         ? state.past
-        : [...state.past.slice(-49), { label, document: previous }],
+        : [
+            ...state.past.slice(-49),
+            { label, document: previous || clone(state.document) },
+          ],
       future: [],
       saveState: "dirty",
       message: "",

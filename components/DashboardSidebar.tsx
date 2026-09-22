@@ -1,44 +1,24 @@
-import Link from "next/link";
+import Image from "next/image";
 import { createClient } from "@/utils/supabase/server";
-import DashboardAvatar from "./DashboardAvatar";
 import SidebarLink from "./SidebarLink";
 import DashboardTourReplayButton from "./DashboardTourReplayButton";
 import DashboardMobileDrawer from "./DashboardMobileDrawer";
 import DashboardBadgeProvider from "./DashboardBadgeProvider";
-import { signOut } from "@/app/login/actions";
+import DashboardAccountMenu from "./DashboardAccountMenu";
 import { isFeatureEnabled } from "@/lib/feature-flags";
+import { getDashboardNavSections } from "@/lib/dashboard-navigation";
 import {
   createEmptyDashboardBadgeCounts,
   getDashboardBadgeCounts,
-  type DashboardBadgeKey,
   type DashboardRole,
 } from "@/lib/dashboard-badges";
-import { LogOut } from "lucide-react";
 
-interface NavLink {
-  name: string;
-  href: string;
-  icon: string;
-  badgeKey?: DashboardBadgeKey;
-  exact?: boolean;
-  tourId?: string;
-}
-
-interface DashboardSidebarProps {
-  role: DashboardRole;
-}
-
-export default async function DashboardSidebar({ role }: DashboardSidebarProps) {
+export default async function DashboardSidebar({ role }: { role: DashboardRole }) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   const metadata = user?.user_metadata;
-  const subRole = metadata?.sub_role; // 'student' or 'parent'
-  
-  const displayRole = (role === 'admin' || role === 'tutor' || role === 'internal' || role === 'user') ? role : (subRole || role);
-  
-  // ScienceDojo Aesthetic Pulse: Light-Modern Evolution 🌬️✨
-  const variant = 'light'; 
-  const isLight = variant === 'light';
+  const subRole = metadata?.sub_role;
+  const displayRole = role === "parent" || role === "student" ? subRole || role : role;
 
   let userName = metadata?.full_name || `${displayRole.charAt(0).toUpperCase() + displayRole.slice(1)} User`;
   let avatarUrl = metadata?.avatar_url;
@@ -49,7 +29,7 @@ export default async function DashboardSidebar({ role }: DashboardSidebarProps) 
       .select("full_name, avatar_url")
       .eq("id", user.id)
       .single();
-    
+
     if (profile?.full_name) userName = profile.full_name;
     if (profile?.avatar_url) avatarUrl = profile.avatar_url;
   }
@@ -58,199 +38,64 @@ export default async function DashboardSidebar({ role }: DashboardSidebarProps) 
     ? await getDashboardBadgeCounts(role, user.id)
     : createEmptyDashboardBadgeCounts();
 
-  const tutorMarketplaceEnabled = role === "internal" ? false : await isFeatureEnabled("tutor_marketplace_enabled");
-  const tutorAcademyEnabled = role === "tutor" || role === "student" || role === "parent" ? await isFeatureEnabled("tutor_academy_enabled") : false;
-
-  const navLinks: Record<string, NavLink[]> = {
-    user: [
-      { name: "My Dojo", href: "/dashboard/user", icon: "🏠", exact: true },
-      { name: "FocusDojo", href: "/focus-dojo", icon: "⏱️" },
-      { name: "Subscription", href: "/focus-dojo/pricing", icon: "💳", badgeKey: "subscriptionIssues" },
-      { name: "PracticeDojo", href: "/ai-practice-studio", icon: "✍️" },
-      { name: "Account", href: "/dashboard/user#account", icon: "⚙️" },
-      { name: "Support", href: "/dashboard/support", icon: "🆘" },
-    ],
-    parent: [
-      { name: "Dashboard", href: "/dashboard/parent", icon: "🗓️", badgeKey: "bookingPayments", exact: true, tourId: "parent-bookings" },
-      { name: "Learning Guide", href: "/support", icon: "📘" },
-      ...(tutorAcademyEnabled ? [{ name: "Academy", href: "/dashboard/academy", icon: "📚" }] : []),
-      { name: "My Classes", href: "/dashboard/classes", icon: "🎓", tourId: "parent-classes" },
-      { name: "Messages", href: "/dashboard/messages", icon: "💬", badgeKey: "messages", tourId: "parent-messages" },
-      ...(tutorMarketplaceEnabled ? [{ name: "Browse Tutors", href: "/dashboard/parent/tutors", icon: "🔍", tourId: "parent-browse" }] : []),
-      { name: "Settings", href: "/dashboard/parent/settings", icon: "⚙️" },
-      { name: "Support", href: "/dashboard/support", icon: "🆘", tourId: "parent-support" },
-    ],
-    student: [
-      { name: "My Bookings", href: "/dashboard/student", icon: "🗓️", badgeKey: "bookingPayments", exact: true, tourId: "student-bookings" },
-      { name: "Learning Guide", href: "/support", icon: "📘" },
-      ...(tutorAcademyEnabled ? [{ name: "Academy", href: "/dashboard/academy", icon: "📚" }] : []),
-      { name: "My Classes", href: "/dashboard/classes", icon: "🎓", tourId: "student-classes" },
-      { name: "Messages", href: "/dashboard/messages", icon: "💬", badgeKey: "messages", tourId: "student-messages" },
-      { name: "Missions", href: "/dashboard/student/missions", icon: "🧭", badgeKey: "studentMissions", tourId: "student-tasks" },
-      ...(tutorMarketplaceEnabled ? [{ name: "Browse Tutors", href: "/dashboard/student/tutors", icon: "🔍" }] : []),
-      { name: "Focus Timers", href: "/dashboard/student/timers", icon: "⏱️" },
-      { name: "Settings", href: "/dashboard/student/settings", icon: "⚙️" },
-      { name: "Support", href: "/dashboard/support", icon: "🆘" },
-    ],
-    tutor: [
-      { name: "Dashboard", href: "/dashboard/tutor", icon: "🏠", exact: true },
-      ...(tutorAcademyEnabled ? [{ name: "Tutor Academy", href: "/dashboard/tutor/academy", icon: "🥋" }] : []),
-      { name: "Schedule", href: "/dashboard/tutor/schedule", icon: "🗓️", badgeKey: "tutorRequests", tourId: "tutor-sessions" },
-      { name: "Students & Classes", href: "/dashboard/classes", icon: "🎓", tourId: "tutor-students" },
-      { name: "Messages", href: "/dashboard/messages", icon: "💬", badgeKey: "messages", tourId: "tutor-messages" },
-      { name: "Mission Reviews", href: "/dashboard/tutor/missions", icon: "🧭", badgeKey: "missionReviews" },
-      { name: "Earnings", href: "/dashboard/tutor/earnings", icon: "💰" },
-      { name: "Profile", href: "/dashboard/tutor/settings", icon: "👤", tourId: "tutor-availability" },
-      { name: "Success Center", href: "/support/tutors", icon: "⭐" },
-      { name: "Support", href: "/dashboard/support", icon: "🆘" },
-    ],
-    admin: [
-      { name: "Overview", href: "/dashboard/admin", icon: "📊", exact: true },
-      { name: "Project Ideas", href: "/dashboard/admin/projects", icon: "💡", badgeKey: "projectIdeas" },
-      { name: "Funnel Overview", href: "/dashboard/admin/overview", icon: "📈" },
-      { name: "Assessment Leads", href: "/dashboard/admin/leads", icon: "🧲", badgeKey: "assessmentLeads" },
-      { name: "Messages", href: "/dashboard/messages", icon: "💬", badgeKey: "messages" },
-      { name: "Dojo Safeguards", href: "/dashboard/admin/safeguards", icon: "🛡️", badgeKey: "safeguards" },
-      { name: "Exam Community", href: "/dashboard/admin/community", icon: "💬" },
-      { name: "Broadcast Center", href: "/dashboard/admin/broadcast", icon: "📣" },
-      { name: "Communications", href: "/dashboard/admin/communications", icon: "✉️" },
-      { name: "Academy Courses", href: "/dashboard/admin/academy", icon: "📚" },
-      { name: "Manage Tutors", href: "/dashboard/admin/tutors", icon: "👥", badgeKey: "manageTutors" },
-      { name: "User Directory", href: "/dashboard/admin/users", icon: "👤" },
-      { name: "Tutor Payouts", href: "/dashboard/admin/payouts", icon: "💰" },
-      { name: "Platform Settings", href: "/dashboard/admin/settings", icon: "⚙️" },
-      { name: "Feature Flags", href: "/dashboard/admin/feature-flags", icon: "🚦" },
-    ],
-    internal: [
-      { name: "Internal Dashboard", href: "/dashboard/internal", icon: "🛠️", exact: true },
-      { name: "My Projects", href: "/dashboard/internal/projects", icon: "💡", badgeKey: "projectIdeas" },
-      { name: "Messages", href: "/dashboard/messages", icon: "💬", badgeKey: "messages" },
-      { name: "Settings", href: "/dashboard/internal/settings", icon: "⚙️" },
-    ],
-  };
-
-  const links = navLinks[role] || [];
+  const tutorMarketplaceEnabled = role === "parent" || role === "student"
+    ? await isFeatureEnabled("tutor_marketplace_enabled")
+    : false;
+  const tutorAcademyEnabled = role === "tutor" || role === "parent" || role === "student"
+    ? await isFeatureEnabled("tutor_academy_enabled")
+    : false;
+  const sections = getDashboardNavSections(role, { tutorMarketplaceEnabled, tutorAcademyEnabled });
+  const hasTour = role === "parent" || role === "student" || role === "tutor";
 
   return (
     <DashboardBadgeProvider initialCounts={initialBadgeCounts}>
-    <DashboardMobileDrawer
-      role={role}
-      displayRole={displayRole}
-      userName={userName}
-      avatarUrl={avatarUrl}
-      links={links}
-    />
+      <DashboardMobileDrawer
+        role={role}
+        displayRole={displayRole}
+        userName={userName}
+        avatarUrl={avatarUrl}
+        sections={sections}
+      />
 
-    <aside data-tour={`${role}-sidebar`} className={`hidden w-64 shrink-0 lg:flex flex-col h-full max-h-full top-0 sticky overflow-y-auto overflow-x-hidden transition-all duration-500 border-r ${
-      isLight 
-        ? "bg-slate-50/70 backdrop-blur-xl border-slate-200 shadow-[20px_0_40px_-20px_rgba(30,90,168,0.05)]"
-        : "bg-[#020617] border-white/5"
-    }`}>
-      <div className={`absolute inset-0 pointer-events-none ${
-        isLight ? "bg-gradient-to-b from-white to-transparent" : "bg-gradient-to-b from-[#1E5AA8]/5 to-transparent"
-      }`} />
-      
-      <div className="p-6 relative z-10">
-        <div className="flex items-center gap-3 mb-8 px-2">
-           <div className="w-8 h-8 rounded-lg overflow-hidden border border-white/10 shadow-lg shadow-[#1E5AA8]/20 group hover:scale-105 transition-transform duration-300">
-              <img src="/images/sciencedojo-logo-brand.jpg" alt="ScienceDojo" className="w-full h-full object-cover" />
-           </div>
-           <h2 className={`text-[10px] font-black tracking-[0.3em] uppercase opacity-70 ${
-             isLight ? "text-[#1E5AA8]" : "text-[#6FE3D6]"
-           }`}>
-              {displayRole} Nexus
-           </h2>
+      <aside data-tour={`${role}-sidebar`} className="hidden h-full max-h-full w-64 shrink-0 flex-col border-r border-slate-200 bg-slate-50/90 lg:flex">
+        <div className="flex shrink-0 items-center gap-3 border-b border-slate-200/80 px-5 py-5">
+          <div className="h-8 w-8 overflow-hidden rounded-lg border border-slate-200">
+            <Image src="/images/sciencedojo-logo-brand.jpg" alt="ScienceDojo" width={32} height={32} className="h-full w-full object-cover" />
+          </div>
+          <div>
+            <p className="text-xs font-bold text-slate-900">ScienceDojo</p>
+            <p className="text-[11px] font-medium capitalize text-slate-500">{displayRole}</p>
+          </div>
         </div>
 
-        <nav className="space-y-1">
-          {links.map((link) => (
-            <SidebarLink
-              key={link.name}
-              href={link.href}
-              name={link.name}
-              icon={<span className="text-xl">{link.icon}</span>}
-              badgeKey={link.badgeKey}
-              variant={variant}
-              exact={link.exact}
-              tourId={link.tourId}
-            />
+        <nav aria-label={`${displayRole} navigation`} className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-3 py-4">
+          {sections.map((section) => (
+            <section key={section.title} aria-label={section.title}>
+              <h2 className="mb-1 px-2.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-500">{section.title}</h2>
+              <div className="space-y-0.5">
+                {section.items.map((link) => (
+                  <SidebarLink
+                    key={link.href}
+                    href={link.href}
+                    name={link.name}
+                    iconName={link.iconName}
+                    badgeKey={link.badgeKey}
+                    exact={link.exact}
+                    tourId={link.tourId}
+                  />
+                ))}
+              </div>
+            </section>
           ))}
         </nav>
-      </div>
-      
-      <div className={`mt-auto p-6 relative z-10 border-t backdrop-blur-sm ${
-        isLight ? "border-slate-100 bg-white/40 shadow-[0_-10px_30px_rgba(0,0,0,0.02)]" : "border-white/5 bg-white/2"
-      }`}>
-        <div className="flex items-center gap-3 mb-6 group cursor-pointer">
-           <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#1E5AA8] to-[#154C9E] p-[1.5px] shadow-lg shadow-[#1E5AA8]/10 group-hover:scale-105 transition-all duration-300">
-              <div className={`w-full h-full rounded-[14px] flex items-center justify-center font-bold overflow-hidden border border-white/5 ${
-                isLight ? "bg-white text-[#1E5AA8]" : "bg-slate-900 text-white"
-              }`}>
-                <DashboardAvatar
-                  src={avatarUrl}
-                  name={userName}
-                  fallbackLabel={displayRole}
-                  imgClassName="w-full h-full object-cover"
-                  fallbackClassName="flex h-full w-full items-center justify-center text-sm font-black tracking-tighter"
-                />
-              </div>
-           </div>
-           <div className="overflow-hidden">
-              <p className={`text-sm font-bold truncate max-w-[140px] group-hover:text-[#1E5AA8] transition-colors duration-300 ${
-                isLight ? "text-slate-900" : "text-white"
-              }`}>{userName}</p>
-              <div className="flex items-center gap-1.5">
-                 <div className="w-1.5 h-1.5 rounded-full bg-[#6FE3D6] animate-pulse" />
-                 <p className={`text-[9px] uppercase font-black tracking-widest opacity-60 ${
-                   isLight ? "text-slate-500" : "text-[#6FE3D6]"
-                 }`}>Verified {displayRole}</p>
-              </div>
-           </div>
+
+        <div className="shrink-0 space-y-2 border-t border-slate-200 bg-white/80 p-3">
+          {hasTour && (
+            <DashboardTourReplayButton className="flex min-h-10 w-full items-center justify-center gap-2 rounded-lg text-xs font-medium text-[#1E5AA8] hover:bg-[#1E5AA8]/6 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1E5AA8]" />
+          )}
+          <DashboardAccountMenu userName={userName} displayRole={displayRole} avatarUrl={avatarUrl} />
         </div>
-
-        {role !== "admin" && role !== "internal" && (
-          <div className="mb-3">
-            <DashboardTourReplayButton />
-          </div>
-        )}
-
-        <Link 
-          href="/" 
-          className={`flex items-center justify-center w-full gap-2 px-4 py-3 border rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-500 shadow-lg shadow-black/5 group ${
-            isLight 
-              ? "bg-slate-100 border-slate-200 text-slate-500 hover:bg-slate-900 hover:text-white hover:border-slate-900"
-              : "bg-white/5 border-white/10 text-slate-300 hover:bg-white hover:text-[#020617] hover:border-white shadow-black/20"
-          }`}
-        >
-          <span className="text-base">🚪</span>
-          <span>Exit to Site</span>
-        </Link>
-
-        <form action={signOut} className={`mt-5 border-t pt-5 ${
-          isLight ? "border-slate-200" : "border-white/10"
-        }`}>
-          <button
-            type="submit"
-            className={`flex w-full items-center justify-center gap-2 rounded-2xl border px-4 py-3 text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-500 shadow-lg shadow-black/5 ${
-              isLight
-                ? "border-slate-200 bg-white text-slate-500 hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900"
-                : "border-white/10 bg-white/5 text-slate-300 hover:bg-white hover:text-[#020617]"
-            }`}
-          >
-            <LogOut className="h-4 w-4" aria-hidden="true" />
-            <span>Log Out</span>
-          </button>
-        </form>
-      </div>
-
-      {/* Subtle Background Atmospherics 🏔️✨ */}
-      <div className={`absolute -bottom-24 -left-24 w-48 h-48 blur-[80px] pointer-events-none rounded-full ${
-        isLight ? "bg-[#6FE3D6]/20" : "bg-[#6FE3D6]/10"
-      }`} />
-      <div className={`absolute top-1/4 -right-24 w-48 h-48 blur-[80px] pointer-events-none rounded-full ${
-        isLight ? "bg-[#1E5AA8]/20" : "bg-[#1E5AA8]/10"
-      }`} />
-    </aside>
+      </aside>
     </DashboardBadgeProvider>
   );
 }

@@ -7,8 +7,8 @@ import type {
   QuizQuestion,
 } from "@/lib/tutor-academy";
 
-export const ACADEMY_DOCUMENT_SCHEMA_VERSION = 3;
-export const ACADEMY_BLOCK_SCHEMA_VERSION = 3;
+export const ACADEMY_DOCUMENT_SCHEMA_VERSION = 5;
+export const ACADEMY_BLOCK_SCHEMA_VERSION = 5;
 
 export type AcademyBlockVariant = {
   key: string;
@@ -52,6 +52,7 @@ export type AcademyBlockIconKey =
   | "tabs"
   | "flashcards"
   | "process"
+  | "survey"
   | "table"
   | "worked-example"
   | "knowledge-check";
@@ -85,7 +86,32 @@ const mediaVariants: AcademyBlockVariant[] = [
   { key: "captioned", label: "Caption-led", description: "Emphasises supporting context." },
 ];
 
+const listVariants: AcademyBlockVariant[] = [
+  { key: "numbered", label: "Numbered", description: "Ordered steps with prominent numbers." },
+  { key: "bulleted", label: "Bulleted", description: "A simple editorial list." },
+  { key: "checklist", label: "Checklist", description: "Action-oriented items with checks." },
+];
+
+const processVariants: AcademyBlockVariant[] = [
+  { key: "slides", label: "Guided slides", description: "Reveal one step at a time." },
+  { key: "timeline", label: "Timeline", description: "Show every connected step together." },
+];
+
+const flashcardVariants: AcademyBlockVariant[] = [
+  { key: "flip-grid", label: "Flip grid", description: "Flip individual cards in a responsive grid." },
+  { key: "stack", label: "Card stack", description: "Give each card more room for recall." },
+];
+
+const surveyVariants: AcademyBlockVariant[] = [
+  { key: "scale", label: "Scale", description: "A spacious numbered response scale." },
+  { key: "compact", label: "Compact", description: "A concise survey for short lessons." },
+];
+
 function variantsFor(type: LessonBlock["type"]): AcademyBlockVariant[] {
+  if (type === "numbered-list") return listVariants;
+  if (type === "process") return processVariants;
+  if (type === "flashcards") return flashcardVariants;
+  if (type === "survey") return surveyVariants;
   return ["image", "gallery", "carousel", "video", "audio"].includes(type)
     ? mediaVariants
     : commonVariants;
@@ -98,6 +124,7 @@ export function defaultBlockAppearance(
     variant: variantsFor(type)[0].key,
     surface: "plain",
     spacing: "comfortable",
+    width: "reading",
   };
 }
 
@@ -385,6 +412,27 @@ export const academyBlockRegistry: AcademyBlockDefinition[] = ([
     }),
   },
   {
+    type: "survey",
+    label: "Survey",
+    shortLabel: "Survey",
+    icon: "survey",
+    quickAccessOrder: 9,
+    description: "Invite a private in-lesson rating or reflection.",
+    category: "Interactive",
+    keywords: ["poll", "rating", "feedback", "scale"],
+    create: () => ({
+      ...identity("survey"),
+      type: "survey",
+      heading: "Share your view",
+      prompt: "How helpful was this section?",
+      lowLabel: "Not helpful",
+      highLabel: "Very helpful",
+      scale: 5,
+      submitLabel: "Submit",
+      completion: "interact",
+    }),
+  },
+  {
     type: "comparison-table",
     label: "Comparison table",
     shortLabel: "Table",
@@ -520,6 +568,18 @@ function migrateBlock(
       ...(block.appearance || {}),
     },
   } as LessonBlock;
+  if (
+    !variantsFor(migrated.type).some(
+      (variant) => variant.key === migrated.appearance?.variant,
+    )
+  ) {
+    migrated.appearance = {
+      ...defaultBlockAppearance(migrated.type),
+      surface: migrated.appearance?.surface || "plain",
+      spacing: migrated.appearance?.spacing || "comfortable",
+      width: migrated.appearance?.width || "reading",
+    };
+  }
   if ("items" in migrated) {
     migrated.items = migrated.items.map((item, itemIndex) => ({
       ...item,
@@ -532,6 +592,27 @@ function migrateBlock(
     migrated.question = migrateQuestion(migrated.question, courseKey, index);
   }
   if (migrated.type === "text") migrated.layout ||= "single";
+  if (
+    migrated.type === "image" ||
+    migrated.type === "video" ||
+    migrated.type === "audio"
+  ) {
+    migrated.captionItems = (migrated.captionItems || []).map(
+      (item, captionIndex) => ({
+        ...item,
+        id:
+          item.id ||
+          legacyId(
+            courseKey,
+            lessonSlug,
+            "block",
+            index,
+            "caption",
+            captionIndex,
+          ),
+      }),
+    );
+  }
   return migrated;
 }
 

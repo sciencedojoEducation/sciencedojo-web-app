@@ -33,6 +33,22 @@ body {
   color: var(--foreground);
 }
 
+/* A quieter, humanist type system for learning authoring—not the marketing UI. */
+.academy-authoring-ui {
+  font-family: "Avenir Next", Avenir, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  font-feature-settings: "kern" 1, "liga" 1;
+}
+
+.academy-authoring-ui .academy-studio-heading {
+  font-family: "Avenir Next", Avenir, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  font-weight: 650;
+  letter-spacing: -0.035em;
+}
+
+.academy-authoring-ui .academy-editorial-copy {
+  font-family: Charter, "Iowan Old Style", Georgia, serif;
+}
+
 input, textarea {
   color: var(--color-secondary) !important;
 }
@@ -304,13 +320,48 @@ input::placeholder, textarea::placeholder {
 .academy-block-spacing-comfortable { padding-block: 0.75rem; }
 .academy-block-spacing-spacious { padding-block: 1.5rem; }
 
+@keyframes academy-guide-enter {
+  from { opacity: 0; transform: translateX(18px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+.academy-guide-enter {
+  animation: academy-guide-enter 240ms ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .academy-guide-enter { animation: none; }
+}
+
 [data-block-variant="editorial"] h2,
 [data-block-variant="editorial"] blockquote {
   letter-spacing: -0.025em;
 }
 
+[data-block-variant="editorial"] :is(.ProseMirror, p, li) {
+  font-family: var(--font-academy-serif), Charter, Georgia, serif;
+  font-size: 1.075rem;
+  line-height: 1.95;
+}
+
+[data-block-variant="editorial"] :is(.ProseMirror h2, .ProseMirror h3, h2, h3) {
+  font-family: var(--font-academy-serif), Charter, Georgia, serif;
+  font-weight: 700;
+}
+
 [data-block-variant="compact"] :is(p, li) {
+  font-size: 0.9375rem;
   line-height: 1.55;
+}
+
+[data-block-variant="compact"] .ProseMirror {
+  font-size: 0.9375rem;
+  line-height: 1.55;
+}
+
+[data-block-variant="compact"] :is(.ProseMirror h2, h2) {
+  font-size: 1.35rem;
+  line-height: 1.3;
 }
 
 [data-block-variant="framed"] figure,

@@ -8,6 +8,18 @@ export type AcademyRichTextDocument = {
   content?: Array<Record<string, unknown>>;
 };
 
+export type AcademyMediaCaptionItem =
+  | { id: string; type: "ordered-list"; items: string[] }
+  | { id: string; type: "unordered-list"; items: string[] }
+  | { id: string; type: "table"; columns: string[]; rows: string[][] }
+  | {
+      id: string;
+      type: "equation";
+      latex: string;
+      shortDescription: string;
+      longDescription?: string;
+    };
+
 export type AcademyBlockCompletion = "view" | "interact" | "pass";
 
 export type AcademyBlockSurface = "plain" | "subtle" | "accent";
@@ -16,6 +28,7 @@ export type AcademyBlockAppearance = {
   variant: string;
   surface: AcademyBlockSurface;
   spacing: AcademyBlockSpacing;
+  width?: "narrow" | "reading" | "wide";
 };
 
 type AcademyBlockIdentity = {
@@ -49,6 +62,7 @@ export type LessonBlock = AcademyBlockIdentity &
         src: string;
         alt: string;
         caption?: string;
+        captionItems?: AcademyMediaCaptionItem[];
         aspect?: "wide" | "landscape" | "square";
         width?: "reading" | "wide" | "full";
         focalPoint?: string;
@@ -85,6 +99,7 @@ export type LessonBlock = AcademyBlockIdentity &
         heading?: string;
         url: string;
         caption?: string;
+        captionItems?: AcademyMediaCaptionItem[];
         transcript?: string;
       }
     | {
@@ -92,6 +107,7 @@ export type LessonBlock = AcademyBlockIdentity &
         heading?: string;
         url: string;
         caption?: string;
+        captionItems?: AcademyMediaCaptionItem[];
         transcript?: string;
       }
     | {
@@ -118,6 +134,15 @@ export type LessonBlock = AcademyBlockIdentity &
         type: "process";
         heading?: string;
         items: Array<{ id?: string; title: string; body: string }>;
+      }
+    | {
+        type: "survey";
+        heading?: string;
+        prompt: string;
+        lowLabel: string;
+        highLabel: string;
+        scale: 3 | 5 | 7;
+        submitLabel?: string;
       }
     | {
         type: "worked-example";

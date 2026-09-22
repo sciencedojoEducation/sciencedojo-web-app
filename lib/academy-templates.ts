@@ -1,11 +1,25 @@
-import { migrateAcademyCourse } from "@/lib/academy-schema";
-import type { AcademyCourse } from "@/lib/tutor-academy";
+import { migrateAcademyCourse } from "./academy-schema.ts";
+import { stakeholderAcademyTemplates } from "./academy-stakeholder-templates.ts";
+import type { AcademyAudienceRole, AcademyCourse } from "@/lib/tutor-academy";
+
+export type AcademyTemplateCategory =
+  | "Foundations"
+  | "Platform training"
+  | "Platform updates"
+  | "UK subject learning";
 
 export type AcademyTemplate = {
   key: string;
   name: string;
   description: string;
   badge: string;
+  image: string;
+  imageAlt: string;
+  accent: string;
+  category: AcademyTemplateCategory;
+  audienceRoles: AcademyAudienceRole[];
+  learningPattern: string;
+  curriculumLabel?: string;
   course: AcademyCourse;
 };
 
@@ -25,7 +39,16 @@ const baseCourse: AcademyCourse = {
 };
 
 function makeTemplate(overrides: Partial<AcademyCourse>): AcademyCourse {
-  return migrateAcademyCourse({ ...structuredClone(baseCourse), ...overrides });
+  const draft = { ...structuredClone(baseCourse), ...overrides };
+  if (draft.lessons[0]) {
+    draft.lessons[0].blocks.push({
+      type: "callout",
+      heading: "Author review",
+      body: "[[AUTHOR: Replace or verify the starter copy, answer choices, links, and images before publishing. Remove this note when the course is ready.]]",
+      tone: "amber",
+    });
+  }
+  return migrateAcademyCourse(draft);
 }
 
 export const academyTemplates: AcademyTemplate[] = [
@@ -33,6 +56,12 @@ export const academyTemplates: AcademyTemplate[] = [
     key: "blank",
     name: "Blank course",
     badge: "Flexible",
+    image: "/images/education-bg-minimal.png",
+    imageAlt: "A calm abstract learning workspace",
+    accent: "#46627F",
+    category: "Foundations",
+    audienceRoles: ["tutor"],
+    learningPattern: "Open structure",
     description: "Start with one clean lesson and shape every block yourself.",
     course: makeTemplate({
       lessons: [
@@ -69,9 +98,16 @@ export const academyTemplates: AcademyTemplate[] = [
     key: "guided-induction",
     name: "Guided induction",
     badge: "Recommended",
+    image: "/images/home/8.professional-online-teacher.jpg",
+    imageAlt: "A professional online tutor leading a lesson",
+    accent: "#1E5AA8",
+    category: "Foundations",
+    audienceRoles: ["tutor_applicant", "tutor"],
+    learningPattern: "Welcome → standards → decision → check",
     description:
       "A welcoming, scenario-led onboarding structure with a final check.",
     course: makeTemplate({
+      audienceRoles: ["tutor_applicant", "tutor"],
       title: "New team induction",
       shortTitle: "Team induction",
       description:
@@ -185,9 +221,16 @@ export const academyTemplates: AcademyTemplate[] = [
     key: "microlearning",
     name: "Focused microlearning",
     badge: "10–15 min",
+    image: "/images/home/6.focused-student-study.jpg",
+    imageAlt: "A focused student working through a short learning activity",
+    accent: "#B56B2E",
+    category: "Foundations",
+    audienceRoles: ["tutor", "parent", "student"],
+    learningPattern: "Goal → idea → recall → apply",
     description:
       "A concise single-topic lesson with interaction and immediate practice.",
     course: makeTemplate({
+      audienceRoles: ["tutor", "parent", "student"],
       title: "Focused skill builder",
       shortTitle: "Skill builder",
       description:
@@ -255,9 +298,16 @@ export const academyTemplates: AcademyTemplate[] = [
     key: "media-story",
     name: "Visual story",
     badge: "Media-rich",
+    image: "/images/home/9.modern-online-tutoring.jpg",
+    imageAlt: "A modern online learning session",
+    accent: "#39766C",
+    category: "Foundations",
+    audienceRoles: ["tutor", "parent", "student"],
+    learningPattern: "Observe → explore → compare → reflect",
     description:
       "An editorial narrative with gallery, carousel, tabs, and reflection.",
     course: makeTemplate({
+      audienceRoles: ["tutor", "parent", "student"],
       title: "A visual learning story",
       shortTitle: "Visual story",
       description:
@@ -352,7 +402,29 @@ export const academyTemplates: AcademyTemplate[] = [
       ],
     }),
   },
+  ...stakeholderAcademyTemplates,
 ];
+
+export function filterAcademyTemplates(filters: {
+  search?: string;
+  audience?: string;
+  category?: string;
+}) {
+  const search = (filters.search || "").trim().toLowerCase();
+  return academyTemplates.filter(
+    (item) =>
+      (!filters.audience ||
+        filters.audience === "all" ||
+        item.audienceRoles.includes(filters.audience as AcademyAudienceRole)) &&
+      (!filters.category ||
+        filters.category === "all" ||
+        item.category === filters.category) &&
+      (!search ||
+        `${item.name} ${item.description} ${item.learningPattern} ${item.curriculumLabel || ""}`
+          .toLowerCase()
+          .includes(search)),
+  );
+}
 
 export function getAcademyTemplate(key?: string) {
   return (
