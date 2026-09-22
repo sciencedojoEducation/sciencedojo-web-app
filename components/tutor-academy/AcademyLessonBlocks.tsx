@@ -38,11 +38,21 @@ export default function AcademyLessonBlocks({
           if (block.content)
             return (
               <section key={block.id || blockIndex}>
-                <AcademyRichText document={block.content} />
+                <AcademyRichText
+                  document={block.content}
+                  className={
+                    block.layout === "two-column"
+                      ? "md:columns-2 md:gap-10 [&>*]:break-inside-avoid"
+                      : ""
+                  }
+                />
               </section>
             );
           return (
-            <section key={blockIndex} className="space-y-5">
+            <section
+              key={blockIndex}
+              className={`space-y-5 ${block.layout === "two-column" ? "md:columns-2 md:gap-10 [&>*]:break-inside-avoid" : ""}`}
+            >
               {block.heading && (
                 <h2 className="text-[28px] font-bold leading-9 tracking-[-0.02em] text-[#101010] sm:text-[32px] sm:leading-10">
                   {block.heading}

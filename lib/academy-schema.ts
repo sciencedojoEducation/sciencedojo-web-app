@@ -7,7 +7,7 @@ import type {
 } from "@/lib/tutor-academy";
 
 export const ACADEMY_DOCUMENT_SCHEMA_VERSION = 2;
-export const ACADEMY_BLOCK_SCHEMA_VERSION = 1;
+export const ACADEMY_BLOCK_SCHEMA_VERSION = 2;
 
 export type AcademyBlockCategory =
   | "Text"
@@ -19,11 +19,34 @@ export type AcademyBlockCategory =
 export type AcademyBlockDefinition = {
   type: LessonBlock["type"];
   label: string;
+  shortLabel: string;
+  icon: AcademyBlockIconKey;
+  quickAccessOrder?: number;
   description: string;
   category: AcademyBlockCategory;
   keywords: string[];
   create: () => LessonBlock;
 };
+
+export type AcademyBlockIconKey =
+  | "text"
+  | "quote"
+  | "callout"
+  | "list"
+  | "divider"
+  | "image"
+  | "gallery"
+  | "carousel"
+  | "video"
+  | "audio"
+  | "resources"
+  | "accordion"
+  | "tabs"
+  | "flashcards"
+  | "process"
+  | "table"
+  | "worked-example"
+  | "knowledge-check";
 
 export function createAcademyId(prefix: string) {
   const value =
@@ -45,6 +68,9 @@ export const academyBlockRegistry: AcademyBlockDefinition[] = [
   {
     type: "text",
     label: "Rich text",
+    shortLabel: "Text",
+    icon: "text",
+    quickAccessOrder: 1,
     description: "Headings, paragraphs, lists, links, code, and equations.",
     category: "Text",
     keywords: ["paragraph", "heading", "copy"],
@@ -53,11 +79,14 @@ export const academyBlockRegistry: AcademyBlockDefinition[] = [
       type: "text",
       heading: "New section",
       paragraphs: ["Start writing here."],
+      layout: "single",
     }),
   },
   {
     type: "quote",
     label: "Quote",
+    shortLabel: "Quote",
+    icon: "quote",
     description: "An editorial quotation with attribution.",
     category: "Text",
     keywords: ["testimonial", "statement"],
@@ -71,6 +100,8 @@ export const academyBlockRegistry: AcademyBlockDefinition[] = [
   {
     type: "callout",
     label: "Callout",
+    shortLabel: "Callout",
+    icon: "callout",
     description: "Highlight a tip, warning, or important idea.",
     category: "Text",
     keywords: ["notice", "tip", "warning"],
@@ -85,6 +116,9 @@ export const academyBlockRegistry: AcademyBlockDefinition[] = [
   {
     type: "numbered-list",
     label: "Numbered list",
+    shortLabel: "List",
+    icon: "list",
+    quickAccessOrder: 2,
     description: "Present a clear ordered sequence.",
     category: "Text",
     keywords: ["steps", "list"],
@@ -104,6 +138,8 @@ export const academyBlockRegistry: AcademyBlockDefinition[] = [
   {
     type: "divider",
     label: "Divider",
+    shortLabel: "Divider",
+    icon: "divider",
     description: "Create a visual pause between ideas.",
     category: "Text",
     keywords: ["separator", "space"],
@@ -112,6 +148,9 @@ export const academyBlockRegistry: AcademyBlockDefinition[] = [
   {
     type: "image",
     label: "Image",
+    shortLabel: "Image",
+    icon: "image",
+    quickAccessOrder: 3,
     description: "A responsive image with accessible description.",
     category: "Media",
     keywords: ["photo", "picture"],
@@ -128,6 +167,9 @@ export const academyBlockRegistry: AcademyBlockDefinition[] = [
   {
     type: "gallery",
     label: "Image gallery",
+    shortLabel: "Gallery",
+    icon: "gallery",
+    quickAccessOrder: 4,
     description: "A responsive two- or three-column gallery.",
     category: "Media",
     keywords: ["photos", "grid"],
@@ -142,6 +184,9 @@ export const academyBlockRegistry: AcademyBlockDefinition[] = [
   {
     type: "carousel",
     label: "Media carousel",
+    shortLabel: "Carousel",
+    icon: "carousel",
+    quickAccessOrder: 6,
     description: "Swipeable cards containing copy and imagery.",
     category: "Media",
     keywords: ["slider", "slides"],
@@ -164,6 +209,9 @@ export const academyBlockRegistry: AcademyBlockDefinition[] = [
   {
     type: "video",
     label: "Video",
+    shortLabel: "Video",
+    icon: "video",
+    quickAccessOrder: 5,
     description: "Embed an approved YouTube or Vimeo video.",
     category: "Media",
     keywords: ["youtube", "vimeo", "film"],
@@ -179,6 +227,8 @@ export const academyBlockRegistry: AcademyBlockDefinition[] = [
   {
     type: "audio",
     label: "Audio",
+    shortLabel: "Audio",
+    icon: "audio",
     description: "Embed approved Spotify or SoundCloud audio.",
     category: "Media",
     keywords: ["podcast", "listen"],
@@ -194,6 +244,8 @@ export const academyBlockRegistry: AcademyBlockDefinition[] = [
   {
     type: "resources",
     label: "Resources",
+    shortLabel: "Resources",
+    icon: "resources",
     description: "Provide downloads and trusted external links.",
     category: "Media",
     keywords: ["pdf", "download", "link"],
@@ -214,6 +266,9 @@ export const academyBlockRegistry: AcademyBlockDefinition[] = [
   {
     type: "accordion",
     label: "Accordion",
+    shortLabel: "Accordion",
+    icon: "accordion",
+    quickAccessOrder: 9,
     description: "Reveal supporting details progressively.",
     category: "Interactive",
     keywords: ["expand", "faq"],
@@ -233,6 +288,8 @@ export const academyBlockRegistry: AcademyBlockDefinition[] = [
   {
     type: "tabs",
     label: "Tabs",
+    shortLabel: "Tabs",
+    icon: "tabs",
     description: "Compare related topics without a long page.",
     category: "Interactive",
     keywords: ["switch", "compare"],
@@ -252,6 +309,9 @@ export const academyBlockRegistry: AcademyBlockDefinition[] = [
   {
     type: "flashcards",
     label: "Flashcards",
+    shortLabel: "Flashcards",
+    icon: "flashcards",
+    quickAccessOrder: 8,
     description: "Create retrieval-practice cards.",
     category: "Interactive",
     keywords: ["flip", "recall"],
@@ -268,6 +328,9 @@ export const academyBlockRegistry: AcademyBlockDefinition[] = [
   {
     type: "process",
     label: "Process",
+    shortLabel: "Process",
+    icon: "process",
+    quickAccessOrder: 7,
     description: "Show a process or timeline as connected steps.",
     category: "Interactive",
     keywords: ["timeline", "sequence"],
@@ -287,6 +350,8 @@ export const academyBlockRegistry: AcademyBlockDefinition[] = [
   {
     type: "comparison-table",
     label: "Comparison table",
+    shortLabel: "Table",
+    icon: "table",
     description: "Compare options in an accessible table.",
     category: "Data & STEM",
     keywords: ["table", "data"],
@@ -301,6 +366,8 @@ export const academyBlockRegistry: AcademyBlockDefinition[] = [
   {
     type: "worked-example",
     label: "Worked example",
+    shortLabel: "Example",
+    icon: "worked-example",
     description: "Reveal a STEM solution in teachable steps.",
     category: "Data & STEM",
     keywords: ["math", "equation", "solution"],
@@ -323,6 +390,9 @@ export const academyBlockRegistry: AcademyBlockDefinition[] = [
   {
     type: "knowledge-check",
     label: "Knowledge check",
+    shortLabel: "Knowledge check",
+    icon: "knowledge-check",
+    quickAccessOrder: 10,
     description: "Add a formative check inside the lesson.",
     category: "Assessment",
     keywords: ["quiz", "question", "assessment"],
@@ -401,7 +471,10 @@ function migrateBlock(
   const migrated = {
     ...block,
     id: block.id || legacyId(courseKey, lessonSlug, "block", index),
-    schemaVersion: block.schemaVersion || ACADEMY_BLOCK_SCHEMA_VERSION,
+    schemaVersion: Math.max(
+      block.schemaVersion || 0,
+      ACADEMY_BLOCK_SCHEMA_VERSION,
+    ),
   } as LessonBlock;
   if ("items" in migrated) {
     migrated.items = migrated.items.map((item, itemIndex) => ({
@@ -414,6 +487,7 @@ function migrateBlock(
   if (migrated.type === "knowledge-check") {
     migrated.question = migrateQuestion(migrated.question, courseKey, index);
   }
+  if (migrated.type === "text") migrated.layout ||= "single";
   return migrated;
 }
 

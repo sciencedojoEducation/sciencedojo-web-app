@@ -71,6 +71,19 @@ function isSafeContentUrl(
   }
 }
 
+function collectHeadingLevels(value: unknown, levels: number[] = []) {
+  if (!value || typeof value !== "object") return levels;
+  const node = value as {
+    type?: unknown;
+    attrs?: { level?: unknown };
+    content?: unknown[];
+  };
+  if (node.type === "heading") levels.push(Number(node.attrs?.level));
+  if (Array.isArray(node.content))
+    node.content.forEach((child) => collectHeadingLevels(child, levels));
+  return levels;
+}
+
 function validateBlock(
   block: LessonBlock,
   lessonTitle: string,
@@ -100,6 +113,18 @@ function validateBlock(
   ) {
     errors.push(`${label} needs at least one paragraph.`);
   }
+  if (block.type === "text" && block.content) {
+    const headingLevels = collectHeadingLevels(block.content);
+    if (headingLevels.some((level) => level !== 2 && level !== 3))
+      errors.push(`${label} may only use level 2 and level 3 headings.`);
+  }
+  if (
+    block.type === "text" &&
+    block.layout &&
+    block.layout !== "single" &&
+    block.layout !== "two-column"
+  )
+    errors.push(`${label} has an unsupported text layout.`);
   if (
     block.type === "image" &&
     (!hasText(block.src) || (!block.decorative && !hasText(block.alt)))
@@ -292,9 +317,22 @@ export function validateAcademyCourse(
       errors.push(`${label} needs a valid duration.`);
     if (!Array.isArray(lesson.blocks) || lesson.blocks.length === 0)
       errors.push(`${label} needs at least one content block.`);
-    lesson.blocks?.forEach((block, blockIndex) =>
-      validateBlock(block, lesson.title || label, blockIndex, errors),
-    );
+    let hasLevelTwoHeading = false;
+    lesson.blocks?.forEach((block, blockIndex) => {
+      validateBlock(block, lesson.title || label, blockIndex, errors);
+      if (block.type !== "text") return;
+      if (!block.content) {
+        if (hasText(block.heading)) hasLevelTwoHeading = true;
+        return;
+      }
+      for (const level of collectHeadingLevels(block.content)) {
+        if (level === 2) hasLevelTwoHeading = true;
+        if (level === 3 && !hasLevelTwoHeading)
+          errors.push(
+            `${lesson.title || label}, block ${blockIndex + 1} needs a level 2 heading before a level 3 heading.`,
+          );
+      }
+    });
   });
 
   const questionIds = new Set<string>();

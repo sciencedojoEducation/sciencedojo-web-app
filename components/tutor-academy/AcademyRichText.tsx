@@ -135,11 +135,13 @@ function renderNode(node: RichNode, key: string): React.ReactNode {
 
 export default function AcademyRichText({
   document,
+  className = "",
 }: {
   document: AcademyRichTextDocument;
+  className?: string;
 }) {
   return (
-    <div className="space-y-5">
+    <div className={`space-y-5 ${className}`}>
       {renderChildren(document.content as RichNode[] | undefined, "root")}
     </div>
   );

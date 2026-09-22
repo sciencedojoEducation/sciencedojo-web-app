@@ -11,6 +11,11 @@ import {
   tutorAcademyCourse,
 } from "../lib/tutor-academy.ts";
 import { validateAcademyCourse } from "../lib/academy-course-validation.ts";
+import {
+  ACADEMY_BLOCK_SCHEMA_VERSION,
+  academyBlockRegistry,
+  migrateAcademyCourse,
+} from "../lib/academy-schema.ts";
 
 describe("Tutor Academy course", () => {
   test("contains six unique lessons and ten quiz questions", () => {
@@ -101,5 +106,63 @@ describe("Tutor Academy course", () => {
     const progress = { ...emptyAcademyProgress, completedLessons: tutorAcademyCourse.lessons.map((lesson) => lesson.slug), passedQuizRevision: 1 };
     assert.equal(getAcademyProgressPercent(progress, { ...tutorAcademyCourse, quizRevision: 1 }), 100);
     assert.equal(getAcademyProgressPercent(progress, { ...tutorAcademyCourse, quizRevision: 2 }), 86);
+  });
+
+  test("provides original icons and ordered quick access blocks for authoring", () => {
+    assert.ok(academyBlockRegistry.every((definition) => definition.icon));
+    assert.ok(academyBlockRegistry.every((definition) => definition.shortLabel));
+    assert.deepEqual(
+      academyBlockRegistry
+        .filter((definition) => definition.quickAccessOrder)
+        .sort((left, right) => left.quickAccessOrder - right.quickAccessOrder)
+        .map((definition) => definition.type),
+      [
+        "text",
+        "numbered-list",
+        "image",
+        "gallery",
+        "video",
+        "carousel",
+        "process",
+        "flashcards",
+        "accordion",
+        "knowledge-check",
+      ],
+    );
+  });
+
+  test("migrates existing text blocks to the single-column v2 schema", () => {
+    const legacy = structuredClone(tutorAcademyCourse);
+    const text = legacy.lessons[0].blocks.find((block) => block.type === "text");
+    text.schemaVersion = 1;
+    delete text.layout;
+    const migrated = migrateAcademyCourse(legacy);
+    const migratedText = migrated.lessons[0].blocks.find(
+      (block) => block.type === "text",
+    );
+    assert.equal(migratedText.schemaVersion, ACADEMY_BLOCK_SCHEMA_VERSION);
+    assert.equal(migratedText.layout, "single");
+  });
+
+  test("rejects rich text that skips directly to a subheading", () => {
+    const invalid = structuredClone(tutorAcademyCourse);
+    const text = invalid.lessons[0].blocks.find((block) => block.type === "text");
+    text.content = {
+      type: "doc",
+      content: [
+        {
+          type: "heading",
+          attrs: { level: 3 },
+          content: [{ type: "text", text: "Skipped heading" }],
+        },
+      ],
+    };
+    const result = validateAcademyCourse(invalid);
+    assert.equal(result.valid, false);
+    assert.ok(
+      result.errors.some((error) =>
+        error.includes("needs a level 2 heading before a level 3 heading"),
+      ),
+    );
   });
 });

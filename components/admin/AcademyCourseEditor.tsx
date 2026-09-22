@@ -15,26 +15,29 @@ import {
   BookOpen,
   ChevronDown,
   Clock3,
+  Columns3,
   Copy,
   Eye,
   GripVertical,
   History,
-  LayoutTemplate,
   Menu,
-  MoreHorizontal,
   Palette,
+  Pencil,
   Plus,
   Redo2,
   RotateCcw,
   Save,
   Search,
   Settings2,
+  SlidersHorizontal,
   Trash2,
   Undo2,
   Upload,
   X,
 } from "lucide-react";
 import AcademyLessonBlocks from "@/components/tutor-academy/AcademyLessonBlocks";
+import AcademyBlockIcon from "@/components/admin/academy-builder/AcademyBlockIcon";
+import BlockInsertionTray from "@/components/admin/academy-builder/BlockInsertionTray";
 import AcademyRichTextEditor, {
   paragraphsToRichText,
 } from "@/components/admin/AcademyRichTextEditor";
@@ -194,13 +197,140 @@ function SaveState({
   );
 }
 
+type TextPreset =
+  | "paragraph"
+  | "paragraph-heading"
+  | "paragraph-subheading"
+  | "heading"
+  | "subheading"
+  | "two-column"
+  | "statement"
+  | "note";
+
+const textPresets: Array<{
+  value: TextPreset;
+  label: string;
+  description: string;
+}> = [
+  { value: "paragraph", label: "Paragraph", description: "Body copy" },
+  {
+    value: "paragraph-heading",
+    label: "Paragraph with heading",
+    description: "Heading and body copy",
+  },
+  {
+    value: "paragraph-subheading",
+    label: "Paragraph with subheading",
+    description: "Subheading and body copy",
+  },
+  { value: "heading", label: "Heading", description: "Primary section title" },
+  {
+    value: "subheading",
+    label: "Subheading",
+    description: "Secondary section title",
+  },
+  {
+    value: "two-column",
+    label: "Two columns",
+    description: "Responsive editorial columns",
+  },
+  { value: "statement", label: "Statement", description: "Editorial quote" },
+  { value: "note", label: "Note", description: "Highlighted callout" },
+];
+
+function TextPresetPicker({
+  onApply,
+  onClose,
+}: {
+  onApply: (preset: TextPreset) => void;
+  onClose: () => void;
+}) {
+  const panelRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    panelRef.current?.querySelector<HTMLElement>("button")?.focus();
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [onClose]);
+  return (
+    <div
+      ref={panelRef}
+      className="absolute left-0 top-12 z-40 w-[min(310px,calc(100vw-3rem))] overflow-hidden rounded-xl border border-secondary/15 bg-white text-left shadow-2xl sm:left-12 sm:top-0"
+      role="dialog"
+      aria-label="Text layout"
+    >
+      <div className="flex items-center justify-between border-b px-4 py-3">
+        <div>
+          <p className="text-[9px] font-black uppercase tracking-[0.14em] text-primary/60">
+            Text layout
+          </p>
+          <p className="text-sm font-black">Choose a presentation</p>
+        </div>
+        <button
+          type="button"
+          onClick={onClose}
+          className="inline-flex h-10 w-10 items-center justify-center rounded-lg hover:bg-slate-100 focus-visible:ring-2 focus-visible:ring-primary"
+          aria-label="Close text layout"
+        >
+          <X size={17} />
+        </button>
+      </div>
+      <div className="max-h-[min(560px,70vh)] overflow-y-auto p-2">
+        {textPresets.map((preset) => (
+          <button
+            key={preset.value}
+            type="button"
+            onClick={() => onApply(preset.value)}
+            className="grid min-h-16 w-full grid-cols-[1fr_88px] items-center gap-4 rounded-lg px-3 py-2 text-left outline-none hover:bg-[#F3F4F6] focus-visible:ring-2 focus-visible:ring-primary"
+          >
+            <span>
+              <strong className="block text-sm">{preset.label}</strong>
+              <span className="mt-0.5 block text-[11px] text-secondary/45">
+                {preset.description}
+              </span>
+            </span>
+            <span
+              className={`block rounded border border-secondary/10 bg-white p-2 ${preset.value === "two-column" ? "grid grid-cols-2 gap-1" : ""}`}
+              aria-hidden="true"
+            >
+              {preset.value.includes("heading") || preset.value === "heading" ? (
+                <span className="mb-1 block h-1.5 w-8 rounded-full bg-secondary/70" />
+              ) : null}
+              <span className="block space-y-1">
+                <span className="block h-1 w-full rounded-full bg-secondary/20" />
+                <span className="block h-1 w-4/5 rounded-full bg-secondary/20" />
+                <span className="block h-1 w-3/5 rounded-full bg-secondary/20" />
+              </span>
+              {preset.value === "two-column" ? (
+                <span className="block space-y-1">
+                  <span className="block h-1 w-full rounded-full bg-secondary/20" />
+                  <span className="block h-1 w-4/5 rounded-full bg-secondary/20" />
+                  <span className="block h-1 w-3/5 rounded-full bg-secondary/20" />
+                </span>
+              ) : null}
+            </span>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function DraggableBlockFrame({
   block,
   lessonId,
   index,
   selected,
   onSelect,
+  onEdit,
   onMove,
+  onMoveDirection,
+  onDuplicate,
+  onDelete,
+  onOpenSettings,
+  onApplyTextPreset,
   children,
 }: {
   block: LessonBlock;
@@ -208,12 +338,24 @@ function DraggableBlockFrame({
   index: number;
   selected: boolean;
   onSelect: () => void;
+  onEdit: () => void;
   onMove: (from: number, to: number) => void;
+  onMoveDirection: (direction: -1 | 1) => void;
+  onDuplicate: () => void;
+  onDelete: () => void;
+  onOpenSettings: () => void;
+  onApplyTextPreset: (preset: TextPreset) => void;
   children: React.ReactNode;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const handleRef = useRef<HTMLButtonElement>(null);
   const [dragging, setDragging] = useState(false);
+  const [presetOpen, setPresetOpen] = useState(false);
+  const presetButtonRef = useRef<HTMLButtonElement>(null);
+  const closePreset = () => {
+    setPresetOpen(false);
+    window.requestAnimationFrame(() => presetButtonRef.current?.focus());
+  };
   useEffect(() => {
     const element = ref.current;
     const handle = handleRef.current;
@@ -244,27 +386,106 @@ function DraggableBlockFrame({
       ref={ref}
       data-block-id={block.id}
       onClick={onSelect}
-      className={`group relative rounded-sm outline outline-2 outline-offset-[10px] transition-opacity ${dragging ? "opacity-40" : ""} ${selected ? "outline-primary" : "outline-transparent hover:outline-primary/25"}`}
+      className={`group relative rounded-sm outline outline-2 outline-offset-[10px] transition-opacity motion-reduce:transition-none ${dragging ? "opacity-40" : ""} ${selected ? "outline-primary" : "outline-transparent hover:outline-primary/25"}`}
     >
       <div
-        className={`absolute -left-14 top-2 z-10 flex flex-col items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100 ${selected ? "opacity-100" : ""}`}
+        role="toolbar"
+        aria-label={`${getAcademyBlockDefinition(block.type).label} block actions`}
+        className={`absolute -top-14 left-0 z-30 flex items-center gap-1 rounded-xl border border-secondary/15 bg-white p-1 shadow-lg transition-opacity motion-reduce:transition-none sm:-left-[76px] sm:top-0 sm:flex-col ${selected ? "opacity-100" : "pointer-events-none opacity-0 group-hover:pointer-events-auto group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100"}`}
       >
         <button
           ref={handleRef}
           type="button"
           aria-label={`Move ${getAcademyBlockDefinition(block.type).label}`}
-          className="inline-flex h-9 w-9 cursor-grab items-center justify-center rounded-lg border bg-white text-secondary/45 shadow-sm"
+          className="inline-flex h-10 w-10 cursor-grab items-center justify-center rounded-lg text-secondary/45 outline-none hover:bg-slate-100 focus-visible:ring-2 focus-visible:ring-primary"
         >
           <GripVertical size={16} />
         </button>
         <button
           type="button"
-          onClick={onSelect}
+          onClick={onEdit}
           aria-label={`Edit ${getAcademyBlockDefinition(block.type).label}`}
-          className="inline-flex h-9 w-9 items-center justify-center rounded-lg border bg-white text-secondary/45 shadow-sm"
+          className="inline-flex h-10 w-10 items-center justify-center rounded-lg text-secondary/45 outline-none hover:bg-slate-100 focus-visible:ring-2 focus-visible:ring-primary"
         >
-          <MoreHorizontal size={16} />
+          <Pencil size={16} />
         </button>
+        <button
+          ref={presetButtonRef}
+          type="button"
+          onClick={() =>
+            block.type === "text"
+              ? setPresetOpen((value) => !value)
+              : onOpenSettings()
+          }
+          aria-label={block.type === "text" ? "Change text style" : "Edit block style"}
+          aria-expanded={block.type === "text" ? presetOpen : undefined}
+          className="inline-flex h-10 w-10 items-center justify-center rounded-lg text-secondary/45 outline-none hover:bg-slate-100 focus-visible:ring-2 focus-visible:ring-primary"
+        >
+          <Palette size={16} />
+        </button>
+        <button
+          type="button"
+          onClick={() =>
+            block.type === "text"
+              ? setPresetOpen((value) => !value)
+              : onOpenSettings()
+          }
+          aria-label="Change block layout"
+          className="hidden h-10 w-10 items-center justify-center rounded-lg text-secondary/45 outline-none hover:bg-slate-100 focus-visible:ring-2 focus-visible:ring-primary sm:inline-flex"
+        >
+          <Columns3 size={16} />
+        </button>
+        <button
+          type="button"
+          onClick={onDuplicate}
+          aria-label="Duplicate block"
+          className="hidden h-10 w-10 items-center justify-center rounded-lg text-secondary/45 outline-none hover:bg-slate-100 focus-visible:ring-2 focus-visible:ring-primary sm:inline-flex"
+        >
+          <Copy size={16} />
+        </button>
+        <button
+          type="button"
+          onClick={onOpenSettings}
+          aria-label="Open advanced block settings"
+          className="inline-flex h-10 w-10 items-center justify-center rounded-lg text-secondary/45 outline-none hover:bg-slate-100 focus-visible:ring-2 focus-visible:ring-primary"
+        >
+          <SlidersHorizontal size={16} />
+        </button>
+        <div className="hidden border-t border-secondary/10 pt-1 sm:block">
+          <button
+            type="button"
+            onClick={() => onMoveDirection(-1)}
+            aria-label="Move block up"
+            className="inline-flex h-10 w-10 items-center justify-center rounded-lg text-secondary/45 outline-none hover:bg-slate-100 focus-visible:ring-2 focus-visible:ring-primary"
+          >
+            <ArrowUp size={16} />
+          </button>
+          <button
+            type="button"
+            onClick={() => onMoveDirection(1)}
+            aria-label="Move block down"
+            className="inline-flex h-10 w-10 items-center justify-center rounded-lg text-secondary/45 outline-none hover:bg-slate-100 focus-visible:ring-2 focus-visible:ring-primary"
+          >
+            <ArrowDown size={16} />
+          </button>
+          <button
+            type="button"
+            onClick={onDelete}
+            aria-label="Delete block"
+            className="inline-flex h-10 w-10 items-center justify-center rounded-lg text-red-500 outline-none hover:bg-red-50 focus-visible:ring-2 focus-visible:ring-red-500"
+          >
+            <Trash2 size={16} />
+          </button>
+        </div>
+        {presetOpen && selected && block.type === "text" ? (
+          <TextPresetPicker
+            onClose={closePreset}
+            onApply={(preset) => {
+              onApplyTextPreset(preset);
+              closePreset();
+            }}
+          />
+        ) : null}
       </div>
       <div className="relative">{children}</div>
     </div>
@@ -1233,6 +1454,81 @@ function BlockContentFields({
   return null;
 }
 
+function richTextPlainText(value: unknown): string {
+  if (!value || typeof value !== "object") return "";
+  const node = value as {
+    text?: unknown;
+    content?: unknown[];
+  };
+  const ownText = typeof node.text === "string" ? node.text : "";
+  const childText = Array.isArray(node.content)
+    ? node.content.map(richTextPlainText).filter(Boolean).join(" ")
+    : "";
+  return `${ownText} ${childText}`.trim();
+}
+
+function applyTextPresentation(
+  block: Extract<LessonBlock, { type: "text" }>,
+  preset: TextPreset,
+): LessonBlock {
+  const content = structuredClone(
+    block.content || paragraphsToRichText(block.heading, block.paragraphs),
+  );
+  const nodes = (content.content || []) as Array<Record<string, unknown>>;
+  const ensureFirstNode = () => {
+    if (!nodes.length)
+      nodes.push({
+        type: "paragraph",
+        content: [{ type: "text", text: "Start writing here." }],
+      });
+    return nodes[0];
+  };
+  const setFirstNode = (type: "paragraph" | "heading", level?: 2 | 3) => {
+    const first = ensureFirstNode();
+    first.type = type;
+    if (type === "heading") first.attrs = { level };
+    else delete first.attrs;
+  };
+
+  if (preset === "statement" || preset === "note") {
+    const text = richTextPlainText(content).trim() || "Add your content.";
+    if (preset === "statement")
+      return {
+        id: block.id,
+        schemaVersion: block.schemaVersion,
+        completion: block.completion,
+        type: "quote",
+        quote: text,
+        attribution: "Source",
+      };
+    return {
+      id: block.id,
+      schemaVersion: block.schemaVersion,
+      completion: block.completion,
+      type: "callout",
+      heading: block.heading || "Note",
+      body: text,
+      tone: "blue",
+    };
+  }
+
+  if (preset === "two-column")
+    return { ...block, content, layout: "two-column" };
+  if (preset === "paragraph") setFirstNode("paragraph");
+  if (preset === "heading") setFirstNode("heading", 2);
+  if (preset === "subheading") setFirstNode("heading", 3);
+  if (preset === "paragraph-heading") {
+    setFirstNode("heading", 2);
+    if (nodes.length === 1) nodes.push({ type: "paragraph" });
+  }
+  if (preset === "paragraph-subheading") {
+    setFirstNode("heading", 3);
+    if (nodes.length === 1) nodes.push({ type: "paragraph" });
+  }
+  content.content = nodes;
+  return { ...block, content, layout: "single" };
+}
+
 export default function AcademyCourseEditor({
   initialCourse,
   status,
@@ -1251,6 +1547,7 @@ export default function AcademyCourseEditor({
   const [libraryOpen, setLibraryOpen] = useState(false);
   const [librarySearch, setLibrarySearch] = useState("");
   const [insertIndex, setInsertIndex] = useState<number | null>(null);
+  const [inspectorOpen, setInspectorOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [assessmentOpen, setAssessmentOpen] = useState(false);
@@ -1259,9 +1556,15 @@ export default function AcademyCourseEditor({
   const [result, setResult] = useState<AcademyAdminActionResult | null>(null);
   const [recovery, setRecovery] = useState<AcademyRecoveryDraft | null>(null);
   const initialized = useRef(false);
+  const inspectorReturnFocusRef = useRef<HTMLElement | null>(null);
+  const closeInspector = () => {
+    setInspectorOpen(false);
+    window.requestAnimationFrame(() => inspectorReturnFocusRef.current?.focus());
+  };
   const libraryDialogRef = useDialogFocus(libraryOpen, () =>
     setLibraryOpen(false),
   );
+  const inspectorDialogRef = useDialogFocus(inspectorOpen, closeInspector);
   const document = useAcademyEditorStore((state) => state.document);
   const revision = useAcademyEditorStore((state) => state.revision);
   const selectedLessonId = useAcademyEditorStore(
@@ -1388,16 +1691,29 @@ export default function AcademyCourseEditor({
       const [moving] = lesson.blocks.splice(from, 1);
       lesson.blocks.splice(to, 0, moving);
     }, "Move block");
-  const insertBlock = (type: LessonBlock["type"]) => {
+  const insertBlock = (
+    type: LessonBlock["type"],
+    targetIndex = insertIndex ?? selectedLesson?.blocks.length ?? 0,
+  ) => {
     const block = getAcademyBlockDefinition(type).create();
     updateLesson(
-      (lesson) =>
-        lesson.blocks.splice(insertIndex ?? lesson.blocks.length, 0, block),
+      (lesson) => lesson.blocks.splice(targetIndex, 0, block),
       "Insert block",
     );
     selectBlock(selectedLesson.id!, block.id!);
     setLibraryOpen(false);
     setInsertIndex(null);
+  };
+  const applyTextPreset = (block: LessonBlock, preset: TextPreset) => {
+    if (block.type !== "text") return;
+    if (
+      (preset === "statement" || preset === "note") &&
+      !window.confirm(
+        `Convert this text to a ${preset}? Text styling will be simplified, but the copy will be preserved.`,
+      )
+    )
+      return;
+    updateBlock(applyTextPresentation(block, preset));
   };
   const manualSave = async () => {
     if (!document.id) {
@@ -2098,14 +2414,22 @@ export default function AcademyCourseEditor({
                   </div>
                 </header>
                 <div className="py-10">
-                  <InsertButton
-                    onClick={() => {
+                  <BlockInsertionTray
+                    expanded={
+                      selectedLesson.blocks.length === 0 || insertIndex === 0
+                    }
+                    firstBlock={selectedLesson.blocks.length === 0}
+                    onToggle={() =>
+                      setInsertIndex((value) => (value === 0 ? null : 0))
+                    }
+                    onInsert={(type) => insertBlock(type, 0)}
+                    onOpenLibrary={() => {
                       setInsertIndex(0);
                       setLibraryOpen(true);
                     }}
                   />
                   {selectedLesson.blocks.map((block, index) => (
-                    <div key={block.id || index} className="py-6">
+                    <div key={block.id || index} className="py-8 sm:py-10">
                       <DraggableBlockFrame
                         block={block}
                         lessonId={selectedLesson.id!}
@@ -2114,7 +2438,54 @@ export default function AcademyCourseEditor({
                         onSelect={() =>
                           selectBlock(selectedLesson.id!, block.id!)
                         }
+                        onEdit={() => {
+                          selectBlock(selectedLesson.id!, block.id!);
+                          if (block.type === "text")
+                            window.requestAnimationFrame(() =>
+                              globalThis.document
+                                .querySelector<HTMLElement>(
+                                  `[data-block-id="${block.id}"] .ProseMirror`,
+                                )
+                                ?.focus(),
+                            );
+                          else {
+                            inspectorReturnFocusRef.current =
+                              globalThis.document.activeElement as HTMLElement | null;
+                            setInspectorOpen(true);
+                          }
+                        }}
                         onMove={moveBlock}
+                        onMoveDirection={(direction) =>
+                          moveBlock(index, index + direction)
+                        }
+                        onDuplicate={() =>
+                          updateLesson((lesson) => {
+                            const copy = structuredClone(block);
+                            copy.id = createAcademyId("block");
+                            lesson.blocks.splice(index + 1, 0, copy);
+                          }, "Duplicate block")
+                        }
+                        onDelete={() => {
+                          if (
+                            window.confirm(
+                              `Delete this ${getAcademyBlockDefinition(block.type).label.toLowerCase()} block?`,
+                            )
+                          )
+                            updateLesson((lesson) => {
+                              lesson.blocks = lesson.blocks.filter(
+                                (item) => item.id !== block.id,
+                              );
+                            }, "Delete block");
+                        }}
+                        onOpenSettings={() => {
+                          selectBlock(selectedLesson.id!, block.id!);
+                          inspectorReturnFocusRef.current =
+                            globalThis.document.activeElement as HTMLElement | null;
+                          setInspectorOpen(true);
+                        }}
+                        onApplyTextPreset={(preset) =>
+                          applyTextPreset(block, preset)
+                        }
                       >
                         {block.type === "text" ? (
                           <AcademyRichTextEditor
@@ -2128,13 +2499,22 @@ export default function AcademyCourseEditor({
                             onChange={(content) =>
                               updateBlock({ ...block, content })
                             }
+                            active={selectedBlock?.id === block.id}
+                            layout={block.layout || "single"}
                           />
                         ) : (
                           <AcademyLessonBlocks blocks={[block]} />
                         )}
                       </DraggableBlockFrame>
-                      <InsertButton
-                        onClick={() => {
+                      <BlockInsertionTray
+                        expanded={insertIndex === index + 1}
+                        onToggle={() =>
+                          setInsertIndex((value) =>
+                            value === index + 1 ? null : index + 1,
+                          )
+                        }
+                        onInsert={(type) => insertBlock(type, index + 1)}
+                        onOpenLibrary={() => {
                           setInsertIndex(index + 1);
                           setLibraryOpen(true);
                         }}
@@ -2150,32 +2530,44 @@ export default function AcademyCourseEditor({
             )}
           </div>
         </main>
-        <aside
-          className={`${selectedBlock ? "fixed bottom-0 right-0 top-16 z-[65] flex shadow-2xl" : "hidden"} w-[min(320px,calc(100vw-1rem))] shrink-0 flex-col border-l border-secondary/10 bg-white xl:static xl:flex xl:w-[320px] xl:shadow-none`}
+      </div>
+      {inspectorOpen && selectedBlock && selectedLesson ? (
+        <div
+          className="fixed inset-0 z-[75] flex justify-end bg-secondary/30"
+          role="presentation"
         >
-          {selectedBlock ? (
+          <button
+            type="button"
+            className="absolute inset-0 cursor-default"
+            onClick={closeInspector}
+            aria-label="Close advanced block settings"
+          />
+          <aside
+            ref={inspectorDialogRef}
+            role="dialog"
+            aria-modal="true"
+            aria-label={`Advanced settings for ${getAcademyBlockDefinition(selectedBlock.type).label}`}
+            className="relative flex h-full w-full max-w-[380px] flex-col border-l border-secondary/10 bg-white shadow-2xl"
+          >
             <button
               type="button"
-              onClick={() =>
-                selectedLesson && selectBlock(selectedLesson.id!, "")
-              }
-              className="absolute right-2 top-2 z-10 rounded-lg bg-white p-2 text-secondary/45 shadow-sm xl:hidden"
-              aria-label="Close block settings"
+              onClick={closeInspector}
+              className="absolute right-3 top-3 z-20 inline-flex h-10 w-10 items-center justify-center rounded-lg bg-white text-secondary/45 outline-none hover:bg-slate-100 focus-visible:ring-2 focus-visible:ring-primary"
+              aria-label="Close advanced block settings"
             >
-              <X size={16} />
+              <X size={18} />
             </button>
-          ) : null}
-          {selectedBlock && selectedLesson ? (
             <BlockInspector
               block={selectedBlock}
               onChange={updateBlock}
-              onDelete={() =>
+              onDelete={() => {
                 updateLesson((lesson) => {
                   lesson.blocks = lesson.blocks.filter(
                     (block) => block.id !== selectedBlock.id,
                   );
-                }, "Delete block")
-              }
+                }, "Delete block");
+                closeInspector();
+              }}
               onDuplicate={() =>
                 updateLesson((lesson) => {
                   const index = lesson.blocks.findIndex(
@@ -2194,14 +2586,9 @@ export default function AcademyCourseEditor({
               }}
               mediaLibrary={mediaLibrary}
             />
-          ) : (
-            <div className="p-6 text-sm leading-6 text-secondary/45">
-              Select a block to edit its content, design, accessibility, and
-              learning behavior.
-            </div>
-          )}
-        </aside>
-      </div>
+          </aside>
+        </div>
+      ) : null}
       {libraryOpen ? (
         <div
           ref={libraryDialogRef}
@@ -2268,7 +2655,10 @@ export default function AcademyCourseEditor({
                             className="group min-h-28 rounded-xl border border-secondary/10 p-4 text-left hover:border-primary hover:bg-primary/[0.03]"
                           >
                             <span className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                              <LayoutTemplate size={17} />
+                              <AcademyBlockIcon
+                                name={definition.icon}
+                                size={18}
+                              />
                             </span>
                             <strong className="mt-3 block text-sm">
                               {definition.label}
@@ -2318,23 +2708,6 @@ export default function AcademyCourseEditor({
       <div aria-live="polite" className="sr-only">
         {message}
       </div>
-    </div>
-  );
-}
-
-function InsertButton({ onClick }: { onClick: () => void }) {
-  return (
-    <div className="group flex h-8 items-center">
-      <span className="h-px flex-1 bg-transparent group-hover:bg-primary/25" />
-      <button
-        type="button"
-        onClick={onClick}
-        className="mx-2 inline-flex h-7 w-7 scale-75 items-center justify-center rounded-full border border-primary/20 bg-white text-primary opacity-0 transition group-hover:scale-100 group-hover:opacity-100 focus:scale-100 focus:opacity-100"
-        aria-label="Insert block here"
-      >
-        <Plus size={15} />
-      </button>
-      <span className="h-px flex-1 bg-transparent group-hover:bg-primary/25" />
     </div>
   );
 }

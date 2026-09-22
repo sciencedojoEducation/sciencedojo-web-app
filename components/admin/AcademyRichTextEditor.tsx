@@ -46,9 +46,13 @@ export function paragraphsToRichText(
 export default function AcademyRichTextEditor({
   value,
   onChange,
+  active = false,
+  layout = "single",
 }: {
   value: AcademyRichTextDocument;
   onChange: (value: AcademyRichTextDocument) => void;
+  active?: boolean;
+  layout?: "single" | "two-column";
 }) {
   const editor = useEditor({
     immediatelyRender: false,
@@ -64,7 +68,7 @@ export default function AcademyRichTextEditor({
     editorProps: {
       attributes: {
         class:
-          "min-h-44 space-y-3 px-5 py-4 text-[17px] leading-8 outline-none [&_h2]:text-2xl [&_h2]:font-bold [&_h3]:text-xl [&_h3]:font-bold [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6 [&_blockquote]:border-l-4 [&_blockquote]:border-primary [&_blockquote]:pl-4",
+          "min-h-32 space-y-3 px-1 py-2 text-[17px] leading-8 outline-none [&_h2]:text-2xl [&_h2]:font-bold [&_h3]:text-xl [&_h3]:font-bold [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6 [&_blockquote]:border-l-4 [&_blockquote]:border-primary [&_blockquote]:pl-4",
       },
     },
   });
@@ -143,8 +147,15 @@ export default function AcademyRichTextEditor({
     },
   ];
   return (
-    <div className="overflow-hidden rounded-xl border border-secondary/15 bg-white focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/10">
-      <div className="flex flex-wrap gap-1 border-b border-secondary/10 bg-slate-50 p-2">
+    <div
+      className={`relative bg-white ${active ? "ring-2 ring-primary/10" : ""}`}
+    >
+      {active ? (
+      <div
+        role="toolbar"
+        aria-label="Text formatting"
+        className="absolute -top-14 left-1/2 z-30 flex max-w-[calc(100vw-3rem)] -translate-x-1/2 gap-1 overflow-x-auto rounded-xl border border-secondary/15 bg-white p-1.5 shadow-xl motion-reduce:transition-none"
+      >
         {buttons.map(({ label, icon: Icon, active, run }) => (
           <button
             key={label}
@@ -152,13 +163,22 @@ export default function AcademyRichTextEditor({
             onClick={run}
             aria-label={label}
             aria-pressed={active}
-            className={`inline-flex h-9 w-9 items-center justify-center rounded-lg ${active ? "bg-primary text-white" : "text-secondary/55 hover:bg-white"}`}
+            className={`inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-primary ${active ? "bg-primary text-white" : "text-secondary/55 hover:bg-slate-100"}`}
           >
             <Icon size={16} />
           </button>
         ))}
       </div>
-      <EditorContent editor={editor} />
+      ) : null}
+      <div
+        className={
+          layout === "two-column"
+            ? "[&_.ProseMirror]:md:columns-2 [&_.ProseMirror]:md:gap-10 [&_.ProseMirror>*]:break-inside-avoid"
+            : ""
+        }
+      >
+        <EditorContent editor={editor} />
+      </div>
     </div>
   );
 }

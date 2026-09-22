@@ -33,6 +33,7 @@ export type LessonBlock = AcademyBlockIdentity &
         heading?: string;
         paragraphs: string[];
         content?: AcademyRichTextDocument;
+        layout?: "single" | "two-column";
       }
     | {
         type: "image";
