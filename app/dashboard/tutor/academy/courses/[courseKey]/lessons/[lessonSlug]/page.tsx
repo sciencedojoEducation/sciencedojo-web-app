@@ -3,6 +3,8 @@ import { notFound, redirect } from "next/navigation";
 import { ArrowLeft, ArrowRight, CheckCircle2, Clock } from "lucide-react";
 import AcademyLessonBlocks from "@/components/tutor-academy/AcademyLessonBlocks";
 import AcademyLessonTracker from "@/components/tutor-academy/AcademyLessonTracker";
+import AcademyThemeScope from "@/components/tutor-academy/AcademyThemeScope";
+import { resolveAcademyTheme } from "@/lib/academy-theme";
 import { completeAcademyLesson } from "@/app/dashboard/tutor/academy/actions";
 import { getPublishedAcademyCourse } from "@/lib/academy-courses";
 import {
@@ -23,6 +25,7 @@ export async function renderAcademyCourseLessonPage(
   const lesson = getAcademyLesson(lessonSlug, course);
   if (!lesson) notFound();
   const progress = await getTutorAcademyProgress(course.key);
+  const theme = resolveAcademyTheme(course);
   const index = getAcademyLessonIndex(lesson.slug, course);
   const previousLesson = course.lessons[index - 1];
   const nextLesson = course.lessons[index + 1];
@@ -45,9 +48,10 @@ export async function renderAcademyCourseLessonPage(
     lesson.slug,
   );
   return (
+    <AcademyThemeScope course={course}>
     <article>
       <AcademyLessonTracker lessonSlug={lesson.slug} courseKey={course.key} />
-      <header className="border-b border-[#DEDFE1] px-6 pb-10 pt-12 sm:px-10 sm:pt-16">
+      <header className={`border-b border-[#DEDFE1] px-6 sm:px-10 ${theme.lessonHeaderStyle === "compact" ? "pb-7 pt-8" : "pb-10 pt-12 sm:pt-16"} ${theme.lessonHeaderStyle === "media-led" ? "bg-[var(--academy-accent-soft)]" : ""}`}>
         <div className="mx-auto max-w-[728px]">
           <div className="flex flex-wrap gap-3 text-[13px] font-semibold text-[#717376]">
             <span>{lesson.section}</span>
@@ -64,8 +68,8 @@ export async function renderAcademyCourseLessonPage(
           <h1 className="mt-5 text-[32px] font-bold leading-[1.2] sm:text-[40px] sm:leading-[48px]">
             {lesson.title}
           </h1>
-          <div className="mt-5 h-1 w-12 bg-[#1E5AA8]" />
-          <p className="mt-6 font-[family-name:var(--font-academy-serif)] text-[17px] leading-[33px] text-[#4A4B4E]">
+          <div className="mt-5 h-1 w-12 bg-[var(--academy-accent)]" />
+          <p className="academy-reading-copy mt-6 text-[17px] leading-[33px] text-[#4A4B4E]">
             {lesson.summary}
           </p>
         </div>
@@ -102,7 +106,7 @@ export async function renderAcademyCourseLessonPage(
               </Link>
             )}
             <form action={completeAction}>
-              <button className="inline-flex min-h-11 w-full items-center justify-center gap-2 bg-[#1E5AA8] px-7 text-xs font-bold uppercase text-white">
+              <button className="inline-flex min-h-11 w-full items-center justify-center gap-2 bg-[var(--academy-accent)] px-7 text-xs font-bold uppercase text-white">
                 {completed ? <CheckCircle2 size={17} /> : null}
                 {nextLesson
                   ? completed
@@ -120,6 +124,7 @@ export async function renderAcademyCourseLessonPage(
         </div>
       </div>
     </article>
+    </AcademyThemeScope>
   );
 }
 

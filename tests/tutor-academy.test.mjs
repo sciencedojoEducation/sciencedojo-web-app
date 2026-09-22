@@ -10,9 +10,13 @@ import {
   scoreTutorAcademyQuiz,
   tutorAcademyCourse,
 } from "../lib/tutor-academy.ts";
-import { validateAcademyCourse } from "../lib/academy-course-validation.ts";
+import {
+  groupAcademyValidationErrors,
+  validateAcademyCourse,
+} from "../lib/academy-course-validation.ts";
 import {
   ACADEMY_BLOCK_SCHEMA_VERSION,
+  ACADEMY_DOCUMENT_SCHEMA_VERSION,
   academyBlockRegistry,
   migrateAcademyCourse,
 } from "../lib/academy-schema.ts";
@@ -131,17 +135,52 @@ describe("Tutor Academy course", () => {
     );
   });
 
-  test("migrates existing text blocks to the single-column v2 schema", () => {
+  test("migrates v2 documents to v3 without changing stable IDs", () => {
     const legacy = structuredClone(tutorAcademyCourse);
+    const originalLessonId = "stable-lesson";
+    const originalBlockId = "stable-block";
+    legacy.schemaVersion = 2;
+    legacy.lessons[0].id = originalLessonId;
     const text = legacy.lessons[0].blocks.find((block) => block.type === "text");
+    text.id = originalBlockId;
     text.schemaVersion = 1;
     delete text.layout;
+    delete text.appearance;
+    legacy.theme = {
+      preset: "editorial",
+      accent: "blue",
+      typography: "sans",
+      density: "comfortable",
+    };
     const migrated = migrateAcademyCourse(legacy);
     const migratedText = migrated.lessons[0].blocks.find(
       (block) => block.type === "text",
     );
     assert.equal(migratedText.schemaVersion, ACADEMY_BLOCK_SCHEMA_VERSION);
+    assert.equal(migrated.schemaVersion, ACADEMY_DOCUMENT_SCHEMA_VERSION);
+    assert.equal(migrated.lessons[0].id, originalLessonId);
+    assert.equal(migratedText.id, originalBlockId);
     assert.equal(migratedText.layout, "single");
+    assert.deepEqual(migratedText.appearance, {
+      variant: "default",
+      surface: "plain",
+      spacing: "comfortable",
+    });
+    assert.equal(migrated.theme.typography, "modern-sans");
+    assert.equal(migrated.theme.coverStyle, "full-image");
+  });
+
+  test("groups publishing issues into actionable readiness sections", () => {
+    const groups = groupAcademyValidationErrors([
+      "Course title must contain at least 3 characters.",
+      "Lesson 1 needs a valid duration.",
+      "Welcome, block 1 needs a transcript before publishing.",
+      "Quiz question 1 must identify a valid correct answer.",
+    ]);
+    assert.equal(groups.course.length, 1);
+    assert.equal(groups.lessons.length, 1);
+    assert.equal(groups.media.length, 1);
+    assert.equal(groups.assessment.length, 1);
   });
 
   test("rejects rich text that skips directly to a subheading", () => {

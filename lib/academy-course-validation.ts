@@ -95,6 +95,24 @@ function validateBlock(
     errors.push(`${label} has an unsupported block type.`);
     return;
   }
+  if (block.appearance) {
+    const mediaTypes: LessonBlock["type"][] = [
+      "image",
+      "gallery",
+      "carousel",
+      "video",
+      "audio",
+    ];
+    const allowedVariants = mediaTypes.includes(block.type)
+      ? new Set(["framed", "immersive", "captioned"])
+      : new Set(["default", "editorial", "compact"]);
+    if (!allowedVariants.has(block.appearance.variant))
+      errors.push(`${label} has an unsupported visual variant.`);
+    if (!new Set(["plain", "subtle", "accent"]).has(block.appearance.surface))
+      errors.push(`${label} has an unsupported surface style.`);
+    if (!new Set(["compact", "comfortable", "spacious"]).has(block.appearance.spacing))
+      errors.push(`${label} has an unsupported spacing style.`);
+  }
   const interactiveTypes: LessonBlock["type"][] = [
     "accordion",
     "carousel",
@@ -185,6 +203,12 @@ function validateBlock(
     (!hasText(block.url) || !isSafeContentUrl(block.url, block.type))
   )
     errors.push(`${label} needs an approved ${block.type} URL.`);
+  if (
+    (block.type === "video" || block.type === "audio") &&
+    hasText(block.url) &&
+    !hasText(block.transcript)
+  )
+    errors.push(`${label} needs a transcript before publishing.`);
   if (
     block.type === "resources" &&
     (!block.items.length ||
@@ -356,4 +380,29 @@ export function academySlugify(value: string) {
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "")
     .slice(0, 80);
+}
+
+export type AcademyValidationGroups = {
+  course: string[];
+  lessons: string[];
+  media: string[];
+  assessment: string[];
+};
+
+export function groupAcademyValidationErrors(
+  errors: string[],
+): AcademyValidationGroups {
+  return errors.reduce<AcademyValidationGroups>(
+    (groups, error) => {
+      if (/quiz|assessment|correct answer|answer explanation/i.test(error))
+        groups.assessment.push(error);
+      else if (/image|alt text|video|audio|transcript|media|url/i.test(error))
+        groups.media.push(error);
+      else if (/lesson|block|heading|section/i.test(error))
+        groups.lessons.push(error);
+      else groups.course.push(error);
+      return groups;
+    },
+    { course: [], lessons: [], media: [], assessment: [] },
+  );
 }

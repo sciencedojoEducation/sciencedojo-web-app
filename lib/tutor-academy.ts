@@ -10,10 +10,19 @@ export type AcademyRichTextDocument = {
 
 export type AcademyBlockCompletion = "view" | "interact" | "pass";
 
+export type AcademyBlockSurface = "plain" | "subtle" | "accent";
+export type AcademyBlockSpacing = "compact" | "comfortable" | "spacious";
+export type AcademyBlockAppearance = {
+  variant: string;
+  surface: AcademyBlockSurface;
+  spacing: AcademyBlockSpacing;
+};
+
 type AcademyBlockIdentity = {
   id?: string;
   schemaVersion?: number;
   completion?: AcademyBlockCompletion;
+  appearance?: AcademyBlockAppearance;
 };
 
 export type AcademyMediaItem = {
@@ -161,6 +170,15 @@ export type AcademyAudienceRole =
   | "student"
   | "parent";
 
+export type AcademyTheme = {
+  preset: "editorial" | "modern" | "calm";
+  accent: "blue" | "teal" | "navy" | "amber";
+  typography: "editorial" | "modern-sans" | "friendly-sans";
+  density: "compact" | "comfortable" | "spacious";
+  coverStyle: "full-image" | "split-image" | "minimal";
+  lessonHeaderStyle: "editorial" | "compact" | "media-led";
+};
+
 export type AcademyCourse = {
   id?: string;
   key: string;
@@ -175,12 +193,7 @@ export type AcademyCourse = {
   versionId?: string;
   schemaVersion?: number;
   sections?: AcademySection[];
-  theme?: {
-    preset: "editorial" | "modern" | "calm";
-    accent: "blue" | "teal" | "navy" | "amber";
-    typography: "sans" | "editorial";
-    density: "comfortable" | "compact";
-  };
+  theme?: AcademyTheme;
   rules?: {
     navigation: "free" | "linear";
     lessonCompletion: "manual" | "required-blocks";

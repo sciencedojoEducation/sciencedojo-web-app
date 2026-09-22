@@ -12,6 +12,7 @@ import {
   sanitizeAcademyCourse,
 } from "@/lib/academy-authoring";
 import type { AcademyCourse } from "@/lib/tutor-academy";
+import { ACADEMY_DOCUMENT_SCHEMA_VERSION } from "@/lib/academy-schema";
 
 export type AcademyAdminActionResult = {
   ok: boolean;
@@ -51,7 +52,7 @@ async function persistDraft(course: AcademyCourse, requirePublishable = false) {
     updated_by: user.id,
     updated_at: new Date().toISOString(),
     autosaved_at: new Date().toISOString(),
-    schema_version: cleaned.schemaVersion || 2,
+    schema_version: cleaned.schemaVersion || ACADEMY_DOCUMENT_SCHEMA_VERSION,
   };
 
   const stableKeyValues = {

@@ -32,8 +32,9 @@ export default function AcademyLessonBlocks({
   courseKey?: string;
 }) {
   return (
-    <div className="space-y-14">
+    <div className="academy-block-stack flex flex-col">
       {blocks.map((block, blockIndex) => {
+        const content = (() => {
         if (block.type === "text") {
           if (block.content)
             return (
@@ -539,7 +540,22 @@ export default function AcademyLessonBlocks({
             </section>
           );
 
-        return null;
+          return null;
+        })();
+        const appearance = block.appearance || {
+          variant: "default",
+          surface: "plain",
+          spacing: "comfortable",
+        };
+        return (
+          <div
+            key={block.id || blockIndex}
+            data-block-variant={appearance.variant}
+            className={`academy-block-surface-${appearance.surface} academy-block-spacing-${appearance.spacing}`}
+          >
+            {content}
+          </div>
+        );
       })}
     </div>
   );

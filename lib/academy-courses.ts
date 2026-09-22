@@ -6,7 +6,10 @@ import {
   type AcademyAudienceRole,
   type AcademyCourse,
 } from "@/lib/tutor-academy";
-import { migrateAcademyCourse } from "@/lib/academy-schema";
+import {
+  ACADEMY_DOCUMENT_SCHEMA_VERSION,
+  migrateAcademyCourse,
+} from "@/lib/academy-schema";
 
 export type AcademyCourseStatus = "draft" | "published" | "archived";
 
@@ -57,7 +60,7 @@ function staticFoundationsRecord(): AcademyCourseRecord {
     updatedAt: null,
     publishedAt: null,
     draftRevision: 1,
-    schemaVersion: 2,
+    schemaVersion: ACADEMY_DOCUMENT_SCHEMA_VERSION,
     autosavedAt: null,
     draft: migrateAcademyCourse(tutorAcademyCourse),
   };

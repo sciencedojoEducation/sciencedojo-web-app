@@ -9,7 +9,7 @@ const MAX_DRAFT_BYTES = 900_000;
 
 export async function PATCH(
   request: Request,
-  context: RouteContext<"/api/admin/academy/courses/[courseId]/draft">,
+  context: { params: Promise<{ courseId: string }> },
 ) {
   try {
     const { courseId } = await context.params;

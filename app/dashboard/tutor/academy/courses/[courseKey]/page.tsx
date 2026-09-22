@@ -2,6 +2,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, BookOpen, Clock } from "lucide-react";
 import AcademyProgressRing from "@/components/tutor-academy/AcademyProgressRing";
+import AcademyThemeScope from "@/components/tutor-academy/AcademyThemeScope";
+import { resolveAcademyTheme } from "@/lib/academy-theme";
 import { getPublishedAcademyCourse } from "@/lib/academy-courses";
 import { getTutorAcademyProgress } from "@/lib/tutor-academy-progress";
 import {
@@ -20,12 +22,15 @@ export async function renderAcademyCoursePage(
   if (!course) notFound();
   const progress = await getTutorAcademyProgress(course.key);
   const progressPercent = getAcademyProgressPercent(progress, course);
+  const theme = resolveAcademyTheme(course);
   const sections = Array.from(
     new Set(course.lessons.map((lesson) => lesson.section)),
   );
   return (
-    <div className="min-h-full bg-white">
-      <section className="relative flex min-h-[460px] items-end overflow-hidden bg-slate-900 sm:min-h-[550px]">
+    <AcademyThemeScope course={course} className="min-h-full bg-white">
+      <section className={`relative overflow-hidden ${theme.coverStyle === "split-image" ? "grid min-h-[550px] md:grid-cols-2" : theme.coverStyle === "minimal" ? "flex min-h-[460px] items-end bg-[var(--academy-accent-soft)]" : "flex min-h-[460px] items-end bg-slate-900 sm:min-h-[550px]"}`}>
+        {theme.coverStyle !== "minimal" ? (
+        <div className={theme.coverStyle === "split-image" ? "relative min-h-[300px] md:col-start-2 md:row-start-1" : "absolute inset-0"}>
         <Image
           src={
             course.heroImage || "/images/home/8.professional-online-teacher.jpg"
@@ -36,16 +41,18 @@ export async function renderAcademyCoursePage(
           sizes="100vw"
           className="object-cover"
         />
-        <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(0,0,0,0.82)_0%,rgba(0,0,0,0.5)_50%,rgba(0,0,0,0.12)_100%)]" />
-        <div className="relative mx-auto w-full max-w-[1100px] px-6 pb-16 pt-24 sm:px-10">
-          <div className="max-w-[650px] text-white">
+        </div>
+        ) : null}
+        {theme.coverStyle === "full-image" ? <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(0,0,0,0.82)_0%,rgba(0,0,0,0.5)_50%,rgba(0,0,0,0.12)_100%)]" /> : null}
+        <div className={`relative w-full px-6 pb-16 pt-24 sm:px-10 ${theme.coverStyle === "split-image" ? "md:col-start-1 md:row-start-1 md:flex md:items-end" : "mx-auto max-w-[1100px]"}`}>
+          <div className={`max-w-[650px] ${theme.coverStyle === "full-image" ? "text-white" : "text-secondary"}`}>
             <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-white/75">
               ScienceDojo Academy
             </p>
             <h1 className="mt-5 text-[40px] font-black leading-[1.08] sm:text-[50px]">
               {course.title}
             </h1>
-            <p className="mt-5 max-w-xl font-[family-name:var(--font-academy-serif)] text-[17px] leading-8 text-white/80">
+            <p className={`academy-reading-copy mt-5 max-w-xl text-[17px] leading-8 ${theme.coverStyle === "full-image" ? "text-white/80" : "text-secondary/65"}`}>
               {course.description}
             </p>
             <Link
@@ -77,13 +84,13 @@ export async function renderAcademyCoursePage(
           </div>
           <div className="mt-12 flex items-end justify-between">
             <h2 className="text-3xl font-bold">Course contents</h2>
-            <strong className="text-sm text-[#1E5AA8]">
+            <strong className="text-sm text-[var(--academy-accent)]">
               {progressPercent}%
             </strong>
           </div>
           <div className="mt-4 h-1 bg-[#E6E7E9]">
             <div
-              className="h-full bg-[#1E5AA8]"
+              className="h-full bg-[var(--academy-accent)]"
               style={{ width: `${progressPercent}%` }}
             />
           </div>
@@ -135,7 +142,7 @@ export async function renderAcademyCoursePage(
           </div>
         </div>
       </main>
-    </div>
+    </AcademyThemeScope>
   );
 }
 

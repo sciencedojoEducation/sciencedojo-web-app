@@ -1,13 +1,20 @@
 import type {
   AcademyCourse,
+  AcademyBlockAppearance,
   AcademyLesson,
   AcademySection,
   LessonBlock,
   QuizQuestion,
 } from "@/lib/tutor-academy";
 
-export const ACADEMY_DOCUMENT_SCHEMA_VERSION = 2;
-export const ACADEMY_BLOCK_SCHEMA_VERSION = 2;
+export const ACADEMY_DOCUMENT_SCHEMA_VERSION = 3;
+export const ACADEMY_BLOCK_SCHEMA_VERSION = 3;
+
+export type AcademyBlockVariant = {
+  key: string;
+  label: string;
+  description: string;
+};
 
 export type AcademyBlockCategory =
   | "Text"
@@ -25,6 +32,7 @@ export type AcademyBlockDefinition = {
   description: string;
   category: AcademyBlockCategory;
   keywords: string[];
+  variants: AcademyBlockVariant[];
   create: () => LessonBlock;
 };
 
@@ -61,10 +69,39 @@ function identity(type: LessonBlock["type"]) {
     id: createAcademyId("block"),
     type,
     schemaVersion: ACADEMY_BLOCK_SCHEMA_VERSION,
+    appearance: defaultBlockAppearance(type),
   } as const;
 }
 
-export const academyBlockRegistry: AcademyBlockDefinition[] = [
+const commonVariants: AcademyBlockVariant[] = [
+  { key: "default", label: "Classic", description: "Balanced and familiar." },
+  { key: "editorial", label: "Editorial", description: "More whitespace and stronger type." },
+  { key: "compact", label: "Compact", description: "A tighter presentation for dense lessons." },
+];
+
+const mediaVariants: AcademyBlockVariant[] = [
+  { key: "framed", label: "Framed", description: "Media with a fine boundary." },
+  { key: "immersive", label: "Immersive", description: "Media takes visual priority." },
+  { key: "captioned", label: "Caption-led", description: "Emphasises supporting context." },
+];
+
+function variantsFor(type: LessonBlock["type"]): AcademyBlockVariant[] {
+  return ["image", "gallery", "carousel", "video", "audio"].includes(type)
+    ? mediaVariants
+    : commonVariants;
+}
+
+export function defaultBlockAppearance(
+  type: LessonBlock["type"],
+): AcademyBlockAppearance {
+  return {
+    variant: variantsFor(type)[0].key,
+    surface: "plain",
+    spacing: "comfortable",
+  };
+}
+
+export const academyBlockRegistry: AcademyBlockDefinition[] = ([
   {
     type: "text",
     label: "Rich text",
@@ -405,7 +442,10 @@ export const academyBlockRegistry: AcademyBlockDefinition[] = [
       question: createQuestion("single-choice"),
     }),
   },
-];
+] as Array<Omit<AcademyBlockDefinition, "variants">>).map((definition) => ({
+  ...definition,
+  variants: variantsFor(definition.type),
+}));
 
 export function createQuestion(
   type: NonNullable<QuizQuestion["type"]> = "single-choice",
@@ -475,6 +515,10 @@ function migrateBlock(
       block.schemaVersion || 0,
       ACADEMY_BLOCK_SCHEMA_VERSION,
     ),
+    appearance: {
+      ...defaultBlockAppearance(block.type),
+      ...(block.appearance || {}),
+    },
   } as LessonBlock;
   if ("items" in migrated) {
     migrated.items = migrated.items.map((item, itemIndex) => ({
@@ -519,11 +563,25 @@ export function migrateAcademyCourse(input: AcademyCourse): AcademyCourse {
   course.sections = course.sections?.length
     ? course.sections
     : [...sectionMap.values()];
-  course.theme ||= {
-    preset: "editorial",
-    accent: "blue",
-    typography: "editorial",
-    density: "comfortable",
+  const legacyTheme = course.theme as
+    | (Partial<NonNullable<AcademyCourse["theme"]>> & {
+        typography?: "sans" | "editorial" | "modern-sans" | "friendly-sans";
+      })
+    | undefined;
+  const legacyTypography = (legacyTheme as { typography?: string } | undefined)
+    ?.typography;
+  course.theme = {
+    preset: legacyTheme?.preset || "editorial",
+    accent: legacyTheme?.accent || "blue",
+    typography:
+      legacyTypography === "sans"
+        ? "modern-sans"
+        : legacyTypography === "modern-sans" || legacyTypography === "friendly-sans"
+          ? legacyTypography
+          : "editorial",
+    density: legacyTheme?.density || "comfortable",
+    coverStyle: legacyTheme?.coverStyle || "full-image",
+    lessonHeaderStyle: legacyTheme?.lessonHeaderStyle || "editorial",
   };
   course.rules ||= {
     navigation: "free",

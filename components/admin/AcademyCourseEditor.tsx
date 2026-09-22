@@ -10,17 +10,20 @@ import {
 } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 import {
   Archive,
+  AlertTriangle,
   ArrowDown,
   ArrowUp,
   BookOpen,
   ChevronDown,
   Clock3,
+  CheckCircle2,
   Columns3,
   Copy,
   Eye,
   GripVertical,
   History,
   Menu,
+  Monitor,
   Palette,
   Pencil,
   Plus,
@@ -29,8 +32,10 @@ import {
   Save,
   Search,
   Settings2,
+  Smartphone,
   SlidersHorizontal,
   Trash2,
+  Tablet,
   Undo2,
   Upload,
   X,
@@ -38,6 +43,7 @@ import {
 import AcademyLessonBlocks from "@/components/tutor-academy/AcademyLessonBlocks";
 import AcademyBlockIcon from "@/components/admin/academy-builder/AcademyBlockIcon";
 import BlockInsertionTray from "@/components/admin/academy-builder/BlockInsertionTray";
+import AcademyMediaChooser from "@/components/admin/academy-builder/AcademyMediaChooser";
 import AcademyRichTextEditor, {
   paragraphsToRichText,
 } from "@/components/admin/AcademyRichTextEditor";
@@ -52,7 +58,13 @@ import {
   uploadAcademyMedia,
   type AcademyAdminActionResult,
 } from "@/app/dashboard/admin/academy/actions";
-import { academySlugify } from "@/lib/academy-course-validation";
+import {
+  academySlugify,
+  groupAcademyValidationErrors,
+  validateAcademyCourse,
+} from "@/lib/academy-course-validation";
+import AcademyThemeScope from "@/components/tutor-academy/AcademyThemeScope";
+import { academyAccentPalettes } from "@/lib/academy-theme";
 import {
   academyBlockRegistry,
   createAcademyId,
@@ -496,11 +508,14 @@ function ItemEditor({
   items,
   onChange,
   kind,
+  mediaLibrary = [],
 }: {
   items: Array<Record<string, unknown>>;
   onChange: (items: Array<Record<string, unknown>>) => void;
   kind: "standard" | "media" | "gallery" | "resource";
+  mediaLibrary?: Media[];
 }) {
+  const [mediaItemIndex, setMediaItemIndex] = useState<number | null>(null);
   const add = () =>
     onChange([
       ...items,
@@ -636,6 +651,7 @@ function ItemEditor({
             ) : null}
             {kind === "media" || kind === "gallery" ? (
               <>
+                <button type="button" onClick={() => setMediaItemIndex(index)} className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-primary/20 bg-white px-3 text-xs font-black text-primary"><Upload size={14} /> Choose image</button>
                 <Field label="Image URL">
                   <input
                     className={inputClass}
@@ -694,6 +710,23 @@ function ItemEditor({
         <Plus size={14} />
         Add item
       </button>
+      <AcademyMediaChooser
+        open={mediaItemIndex !== null}
+        title="Choose item image"
+        library={mediaLibrary}
+        onClose={() => setMediaItemIndex(null)}
+        onChoose={(choice) => {
+          if (mediaItemIndex === null) return;
+          onChange(items.map((item, index) => index === mediaItemIndex ? { ...item, src: choice.url, alt: item.alt || choice.altText || "" } : item));
+        }}
+        onUpload={async (file) => {
+          const data = new FormData();
+          data.set("file", file);
+          const result = await uploadAcademyMedia(data);
+          if (!result.ok || !result.url) { window.alert(result.message); return null; }
+          return { name: file.name, url: result.url, mediaType: "image" };
+        }}
+      />
     </div>
   );
 }
@@ -952,7 +985,76 @@ function BlockInspector({
           </>
         ) : null}
         {tab === "design" ? (
-          block.type === "image" ? (
+          <>
+            <div>
+              <p className="mb-2 text-[10px] font-black uppercase tracking-[0.13em] text-secondary/45">
+                Style
+              </p>
+              <div className="grid grid-cols-3 gap-2">
+                {getAcademyBlockDefinition(block.type).variants.map((variant) => (
+                  <button
+                    key={variant.key}
+                    type="button"
+                    title={variant.description}
+                    onClick={() =>
+                      onChange({
+                        ...block,
+                        appearance: {
+                          variant: variant.key,
+                          surface: block.appearance?.surface || "plain",
+                          spacing: block.appearance?.spacing || "comfortable",
+                        },
+                      })
+                    }
+                    className={`min-h-16 rounded-lg border p-2 text-left text-[11px] font-black ${block.appearance?.variant === variant.key ? "border-primary bg-primary/5 text-primary" : "border-secondary/10"}`}
+                  >
+                    <span className="mb-2 block h-3 rounded-sm bg-current opacity-15" />
+                    {variant.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <Field label="Surface">
+              <select
+                className={inputClass}
+                value={block.appearance?.surface || "plain"}
+                onChange={(event) =>
+                  onChange({
+                    ...block,
+                    appearance: {
+                      variant: block.appearance?.variant || getAcademyBlockDefinition(block.type).variants[0].key,
+                      surface: event.target.value as "plain" | "subtle" | "accent",
+                      spacing: block.appearance?.spacing || "comfortable",
+                    },
+                  })
+                }
+              >
+                <option value="plain">Plain</option>
+                <option value="subtle">Subtle tint</option>
+                <option value="accent">Accent edge</option>
+              </select>
+            </Field>
+            <Field label="Spacing">
+              <select
+                className={inputClass}
+                value={block.appearance?.spacing || "comfortable"}
+                onChange={(event) =>
+                  onChange({
+                    ...block,
+                    appearance: {
+                      variant: block.appearance?.variant || getAcademyBlockDefinition(block.type).variants[0].key,
+                      surface: block.appearance?.surface || "plain",
+                      spacing: event.target.value as "compact" | "comfortable" | "spacious",
+                    },
+                  })
+                }
+              >
+                <option value="compact">Compact</option>
+                <option value="comfortable">Comfortable</option>
+                <option value="spacious">Spacious</option>
+              </select>
+            </Field>
+            {block.type === "image" ? (
             <>
               <Field label="Width">
                 <select
@@ -986,13 +1088,22 @@ function BlockInspector({
                   <option value="square">Square</option>
                 </select>
               </Field>
+              <Field label="Focal point">
+                <select
+                  className={inputClass}
+                  value={block.focalPoint || "center"}
+                  onChange={(event) => onChange({ ...block, focalPoint: event.target.value })}
+                >
+                  <option value="center">Centre</option>
+                  <option value="center top">Top</option>
+                  <option value="center bottom">Bottom</option>
+                  <option value="left center">Left</option>
+                  <option value="right center">Right</option>
+                </select>
+              </Field>
             </>
-          ) : (
-            <p className="text-sm leading-6 text-secondary/50">
-              This block inherits the course theme so learner output stays
-              consistent and accessible.
-            </p>
-          )
+            ) : null}
+          </>
         ) : null}
         {tab === "accessibility" ? (
           <>
@@ -1072,6 +1183,7 @@ function BlockContentFields({
   updateItems: (items: Array<Record<string, unknown>>) => void;
   mediaLibrary: Media[];
 }) {
+  const [mediaChooserOpen, setMediaChooserOpen] = useState(false);
   if (block.type === "text")
     return (
       <p className="text-sm leading-6 text-secondary/50">
@@ -1081,6 +1193,9 @@ function BlockContentFields({
   if (block.type === "image")
     return (
       <>
+        <button type="button" onClick={() => setMediaChooserOpen(true)} className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 text-xs font-black text-white">
+          <Upload size={15} /> {block.src ? "Replace image" : "Choose image"}
+        </button>
         <Field label="Image URL">
           <input
             className={inputClass}
@@ -1132,6 +1247,23 @@ function BlockContentFields({
             </div>
           </div>
         ) : null}
+        <AcademyMediaChooser
+          open={mediaChooserOpen}
+          title="Choose image"
+          library={mediaLibrary}
+          onClose={() => setMediaChooserOpen(false)}
+          onChoose={(choice) => onChange({ ...block, src: choice.url, alt: block.alt || choice.altText || "" })}
+          onUpload={async (file) => {
+            const data = new FormData();
+            data.set("file", file);
+            const result = await uploadAcademyMedia(data);
+            if (!result.ok || !result.url) {
+              window.alert(result.message);
+              return null;
+            }
+            return { name: file.name, url: result.url, mediaType: "image" };
+          }}
+        />
       </>
     );
   if (block.type === "callout")
@@ -1391,6 +1523,7 @@ function BlockContentFields({
           items={block.items as unknown as Array<Record<string, unknown>>}
           onChange={updateItems}
           kind="gallery"
+          mediaLibrary={mediaLibrary}
         />
       </>
     );
@@ -1410,6 +1543,7 @@ function BlockContentFields({
           items={block.items as unknown as Array<Record<string, unknown>>}
           onChange={updateItems}
           kind="media"
+          mediaLibrary={mediaLibrary}
         />
       </>
     );
@@ -1546,11 +1680,14 @@ export default function AcademyCourseEditor({
   const [pending, startTransition] = useTransition();
   const [libraryOpen, setLibraryOpen] = useState(false);
   const [librarySearch, setLibrarySearch] = useState("");
+  const [recentBlockTypes, setRecentBlockTypes] = useState<LessonBlock["type"][]>([]);
   const [insertIndex, setInsertIndex] = useState<number | null>(null);
   const [inspectorOpen, setInspectorOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [assessmentOpen, setAssessmentOpen] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [readinessOpen, setReadinessOpen] = useState(false);
   const [outlineOpen, setOutlineOpen] = useState(true);
   const [outlineSearch, setOutlineSearch] = useState("");
   const [result, setResult] = useState<AcademyAdminActionResult | null>(null);
@@ -1701,6 +1838,7 @@ export default function AcademyCourseEditor({
       "Insert block",
     );
     selectBlock(selectedLesson.id!, block.id!);
+    setRecentBlockTypes((current) => [type, ...current.filter((item) => item !== type)].slice(0, 4));
     setLibraryOpen(false);
     setInsertIndex(null);
   };
@@ -1925,10 +2063,7 @@ export default function AcademyCourseEditor({
             onClick={() =>
               startTransition(async () => {
                 const saved = await manualSave();
-                if (saved.ok)
-                  router.push(
-                    `/dashboard/admin/academy/${saved.courseKey || document.key}/preview`,
-                  );
+                if (saved.ok) setPreviewOpen(true);
               })
             }
             className="hidden min-h-10 items-center gap-2 rounded-lg border px-4 text-xs font-black md:inline-flex"
@@ -1939,20 +2074,7 @@ export default function AcademyCourseEditor({
           <button
             type="button"
             disabled={pending || saveState === "conflict"}
-            onClick={() =>
-              startTransition(async () => {
-                const saved = await manualSave();
-                const courseId = document.id || saved.courseId;
-                if (!saved.ok || !courseId) return;
-                const value = await publishAcademyCourseV2(
-                  courseId,
-                  saved.revision || revision,
-                );
-                setResult(value);
-                if (value.ok && saved.courseKey)
-                  router.replace(`/dashboard/admin/academy/${saved.courseKey}`);
-              })
-            }
+            onClick={() => setReadinessOpen(true)}
             className="inline-flex min-h-10 items-center gap-2 rounded-lg bg-primary px-4 text-xs font-black text-white disabled:opacity-40"
           >
             {pending ? "Working…" : "Publish"}
@@ -2328,6 +2450,7 @@ export default function AcademyCourseEditor({
               </div>
             ) : null}
             {selectedLesson ? (
+              <AcademyThemeScope course={document}>
               <article className="bg-white px-8 py-12 shadow-[0_10px_35px_rgba(0,26,68,0.07)] sm:px-12">
                 <header className="border-b border-[#DEDFE1] pb-9">
                   <div className="flex flex-wrap items-center gap-3 text-xs font-bold text-[#717376]">
@@ -2523,6 +2646,7 @@ export default function AcademyCourseEditor({
                   ))}
                 </div>
               </article>
+              </AcademyThemeScope>
             ) : (
               <div className="py-24 text-center text-secondary/40">
                 Add a lesson to begin.
@@ -2631,6 +2755,17 @@ export default function AcademyCourseEditor({
                 />
               </div>
               <div className="mt-5 max-h-[62vh] overflow-y-auto">
+                {!librarySearch && recentBlockTypes.length ? (
+                  <section className="mb-6">
+                    <h3 className="mb-3 text-[10px] font-black uppercase tracking-[0.15em] text-secondary/40">Recently used</h3>
+                    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                      {recentBlockTypes.map((type) => {
+                        const definition = getAcademyBlockDefinition(type);
+                        return <button key={type} type="button" onClick={() => insertBlock(type)} className="flex min-h-16 items-center gap-3 rounded-xl border border-secondary/10 p-3 text-left hover:border-primary"><AcademyBlockIcon name={definition.icon} size={18} /><span className="text-xs font-black">{definition.label}</span></button>;
+                      })}
+                    </div>
+                  </section>
+                ) : null}
                 {[
                   "Text",
                   "Media",
@@ -2654,6 +2789,7 @@ export default function AcademyCourseEditor({
                             onClick={() => insertBlock(definition.type)}
                             className="group min-h-28 rounded-xl border border-secondary/10 p-4 text-left hover:border-primary hover:bg-primary/[0.03]"
                           >
+                            <span className="mb-3 flex h-10 items-end gap-1 rounded-lg bg-slate-50 p-2" aria-hidden="true"><span className="h-5 w-1/3 rounded-sm bg-primary/20" /><span className="h-3 flex-1 rounded-sm bg-secondary/10" /></span>
                             <span className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
                               <AcademyBlockIcon
                                 name={definition.icon}
@@ -2705,10 +2841,192 @@ export default function AcademyCourseEditor({
           }}
         />
       ) : null}
+      {previewOpen ? (
+        <AcademyPreviewStudio
+          course={document}
+          onClose={() => setPreviewOpen(false)}
+        />
+      ) : null}
+      {readinessOpen ? (
+        <PublishingReadinessPanel
+          course={document}
+          pending={pending}
+          onClose={() => setReadinessOpen(false)}
+          onPublish={() =>
+            startTransition(async () => {
+              const saved = await manualSave();
+              const courseId = document.id || saved.courseId;
+              if (!saved.ok || !courseId) return;
+              const value = await publishAcademyCourseV2(
+                courseId,
+                saved.revision || revision,
+              );
+              setResult(value);
+              if (value.ok) {
+                setReadinessOpen(false);
+                router.replace(
+                  `/dashboard/admin/academy/${saved.courseKey || document.key}`,
+                );
+              }
+            })
+          }
+        />
+      ) : null}
       <div aria-live="polite" className="sr-only">
         {message}
       </div>
     </div>
+  );
+}
+
+function AcademyPreviewStudio({
+  course,
+  onClose,
+}: {
+  course: AcademyCourse;
+  onClose: () => void;
+}) {
+  const [width, setWidth] = useState<1280 | 768 | 390>(1280);
+  const [view, setView] = useState<"cover" | "lesson" | "quiz">("cover");
+  const [lessonSlug, setLessonSlug] = useState(course.lessons[0]?.slug || "");
+  const dialogRef = useDialogFocus(true, onClose);
+  const query = new URLSearchParams({ view });
+  if (view === "lesson" && lessonSlug) query.set("lesson", lessonSlug);
+  return (
+    <div ref={dialogRef} className="fixed inset-0 z-[100] flex flex-col bg-[#17191d]" role="dialog" aria-modal="true" aria-label="Responsive course preview">
+      <header className="flex min-h-16 flex-wrap items-center gap-3 border-b border-white/10 bg-[#202329] px-4 text-white">
+        <div className="mr-auto min-w-0">
+          <p className="text-[9px] font-black uppercase tracking-[0.16em] text-white/45">Draft preview</p>
+          <p className="truncate text-sm font-black">{course.title}</p>
+        </div>
+        <div className="flex rounded-lg bg-black/25 p-1" aria-label="Preview device">
+          {([
+            [1280, Monitor, "Desktop"],
+            [768, Tablet, "Tablet"],
+            [390, Smartphone, "Mobile"],
+          ] as const).map(([deviceWidth, Icon, label]) => (
+            <button key={deviceWidth} type="button" onClick={() => setWidth(deviceWidth)} aria-label={`${label} preview, ${deviceWidth} pixels`} aria-pressed={width === deviceWidth} className={`min-h-10 min-w-11 rounded-md p-2 ${width === deviceWidth ? "bg-white text-secondary" : "text-white/60 hover:text-white"}`}><Icon size={17} /></button>
+          ))}
+        </div>
+        <select value={view} onChange={(event) => setView(event.target.value as typeof view)} className="min-h-10 rounded-lg border border-white/15 bg-white/10 px-3 text-xs font-bold text-white" aria-label="Preview page">
+          <option className="text-secondary" value="cover">Course cover</option>
+          <option className="text-secondary" value="lesson">Lesson</option>
+          <option className="text-secondary" value="quiz">Final assessment</option>
+        </select>
+        {view === "lesson" ? (
+          <select value={lessonSlug} onChange={(event) => setLessonSlug(event.target.value)} className="min-h-10 max-w-48 rounded-lg border border-white/15 bg-white/10 px-3 text-xs font-bold text-white" aria-label="Preview lesson">
+            {course.lessons.map((lesson) => <option className="text-secondary" key={lesson.slug} value={lesson.slug}>{lesson.title}</option>)}
+          </select>
+        ) : null}
+        <button type="button" onClick={onClose} className="inline-flex min-h-10 items-center gap-2 rounded-lg bg-white px-4 text-xs font-black text-secondary"><X size={15} /> Return to editor</button>
+      </header>
+      <div className="flex flex-1 justify-center overflow-auto bg-[#111317] p-3 sm:p-6">
+        <iframe
+          key={`${view}-${lessonSlug}-${width}`}
+          title={`${course.title} ${view} preview`}
+          src={`/dashboard/admin/academy/${course.key}/preview?${query.toString()}`}
+          className="h-full min-h-[640px] border-0 bg-white shadow-2xl transition-[width] duration-200 motion-reduce:transition-none"
+          style={{ width, maxWidth: "100%" }}
+        />
+      </div>
+    </div>
+  );
+}
+
+function PublishingReadinessPanel({
+  course,
+  pending,
+  onClose,
+  onPublish,
+}: {
+  course: AcademyCourse;
+  pending: boolean;
+  onClose: () => void;
+  onPublish: () => void;
+}) {
+  const result = validateAcademyCourse(course);
+  const groups = groupAcademyValidationErrors(result.errors);
+  const dialogRef = useDialogFocus(true, onClose);
+  return (
+    <div ref={dialogRef} className="fixed inset-0 z-[95] flex justify-end bg-secondary/40" role="dialog" aria-modal="true" aria-label="Publishing readiness">
+      <button type="button" tabIndex={-1} className="absolute inset-0" onClick={onClose} aria-label="Close publishing readiness" />
+      <aside className="relative flex h-full w-full max-w-[460px] flex-col bg-white shadow-2xl">
+        <header className="border-b p-6">
+          <button type="button" onClick={onClose} className="float-right p-2" aria-label="Close"><X /></button>
+          <p className="text-[10px] font-black uppercase tracking-[0.15em] text-primary/60">Publish</p>
+          <h2 className="mt-1 text-2xl font-black">Course readiness</h2>
+          <p className="mt-2 text-sm leading-6 text-secondary/55">A final check of content, media, accessibility, and assessment settings.</p>
+        </header>
+        <div className="flex-1 overflow-y-auto p-6">
+          {result.valid ? (
+            <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-5 text-emerald-950"><CheckCircle2 className="mb-3" /><strong className="block">Ready to publish</strong><p className="mt-1 text-sm leading-6">The draft passes all required checks. Publishing creates an immutable learner version.</p></div>
+          ) : (
+            <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-amber-950"><AlertTriangle className="mb-2" /><strong>{result.errors.length} issue{result.errors.length === 1 ? "" : "s"} to resolve</strong></div>
+          )}
+          {(Object.entries(groups) as Array<[keyof typeof groups, string[]]>).map(([group, errors]) => errors.length ? (
+            <section key={group} className="mt-6">
+              <h3 className="text-xs font-black capitalize">{group}</h3>
+              <ul className="mt-2 space-y-2">{errors.map((error) => <li key={error} className="rounded-lg bg-slate-50 p-3 text-xs leading-5 text-secondary/70">{error}</li>)}</ul>
+            </section>
+          ) : null)}
+        </div>
+        <footer className="flex gap-3 border-t p-5">
+          <button type="button" onClick={onClose} className="min-h-11 flex-1 rounded-lg border text-xs font-black">Return to editor</button>
+          <button type="button" disabled={!result.valid || pending} onClick={onPublish} className="min-h-11 flex-1 rounded-lg bg-primary text-xs font-black text-white disabled:opacity-40">{pending ? "Publishing…" : "Publish course"}</button>
+        </footer>
+      </aside>
+    </div>
+  );
+}
+
+function ThemeCardGroup({
+  label,
+  value,
+  options,
+  onSelect,
+}: {
+  label: string;
+  value: string;
+  options: Array<[string, string, string]>;
+  onSelect: (value: string) => void;
+}) {
+  return (
+    <fieldset>
+      <legend className="mb-2 text-[10px] font-black uppercase tracking-[0.13em] text-secondary/45">
+        {label}
+      </legend>
+      <div className="grid gap-2 sm:grid-cols-3">
+        {options.map(([key, title, description]) => (
+          <button
+            key={key}
+            type="button"
+            onClick={() => onSelect(key)}
+            aria-pressed={value === key}
+            className={`min-h-24 rounded-xl border p-3 text-left ${value === key ? "border-primary bg-primary/5 ring-2 ring-primary/10" : "border-secondary/10 hover:border-secondary/25"}`}
+          >
+            <span className="mb-3 flex h-8 items-end gap-1 rounded bg-slate-100 p-2" aria-hidden="true">
+              <span className="h-4 w-2/3 rounded-sm bg-secondary/70" />
+              <span className="h-2 w-1/3 rounded-sm bg-primary/50" />
+            </span>
+            <strong className="block text-xs">{title}</strong>
+            <span className="mt-1 block text-[10px] leading-4 text-secondary/50">{description}</span>
+          </button>
+        ))}
+      </div>
+    </fieldset>
+  );
+}
+
+function ThemePreviewCard({ course }: { course: AcademyCourse }) {
+  return (
+    <AcademyThemeScope course={course} className="overflow-hidden rounded-xl border border-secondary/10 bg-white">
+      <div className="bg-[var(--academy-accent-soft)] p-5">
+        <span className="text-[9px] font-black uppercase tracking-[0.16em] text-[var(--academy-accent)]">Live theme preview</span>
+        <h3 className="mt-2 text-xl font-black text-secondary">{course.title || "Course title"}</h3>
+        <p className="academy-reading-copy mt-2 max-w-lg text-sm leading-6 text-secondary/65">{course.description || "Your course description will appear here."}</p>
+        <span className="mt-4 block h-1 w-16 bg-[var(--academy-accent)]" />
+      </div>
+    </AcademyThemeScope>
   );
 }
 
@@ -2726,6 +3044,7 @@ function CourseSettingsModal({
   const [tab, setTab] = useState<"details" | "theme" | "rules" | "media">(
     "details",
   );
+  const [mediaChooserOpen, setMediaChooserOpen] = useState(false);
   const dialogRef = useDialogFocus(true, onClose);
   const upload = (file: File) => {
     const data = new FormData();
@@ -2865,76 +3184,58 @@ function CourseSettingsModal({
           ) : null}
           {tab === "theme" ? (
             <>
-              <Field label="Theme preset">
-                <select
-                  className={inputClass}
-                  value={course.theme?.preset || "editorial"}
-                  onChange={(event) =>
-                    onChange((draft) => {
-                      draft.theme!.preset = event.target.value as NonNullable<
-                        AcademyCourse["theme"]
-                      >["preset"];
-                    }, "Change theme")
-                  }
-                >
-                  <option value="editorial">Editorial</option>
-                  <option value="modern">Modern</option>
-                  <option value="calm">Calm</option>
-                </select>
-              </Field>
-              <Field label="Accent">
-                <select
-                  className={inputClass}
-                  value={course.theme?.accent || "blue"}
-                  onChange={(event) =>
-                    onChange((draft) => {
-                      draft.theme!.accent = event.target.value as NonNullable<
-                        AcademyCourse["theme"]
-                      >["accent"];
-                    }, "Change accent")
-                  }
-                >
-                  <option value="blue">ScienceDojo blue</option>
-                  <option value="teal">Teal</option>
-                  <option value="navy">Navy</option>
-                  <option value="amber">Amber</option>
-                </select>
-              </Field>
-              <Field label="Typography">
-                <select
-                  className={inputClass}
-                  value={course.theme?.typography || "editorial"}
-                  onChange={(event) =>
-                    onChange((draft) => {
-                      draft.theme!.typography = event.target
-                        .value as NonNullable<
-                        AcademyCourse["theme"]
-                      >["typography"];
-                    }, "Change typography")
-                  }
-                >
-                  <option value="editorial">
-                    Sans headings + serif reading
-                  </option>
-                  <option value="sans">Sans throughout</option>
-                </select>
-              </Field>
-              <Field label="Density">
-                <select
-                  className={inputClass}
-                  value={course.theme?.density || "comfortable"}
-                  onChange={(event) =>
-                    onChange((draft) => {
-                      draft.theme!.density = event.target.value as NonNullable<
-                        AcademyCourse["theme"]
-                      >["density"];
-                    }, "Change density")
-                  }
-                >
-                  <option value="comfortable">Comfortable</option>
-                  <option value="compact">Compact</option>
-                </select>
-              </Field>
+              <ThemePreviewCard course={course} />
+              <ThemeCardGroup
+                label="Cover layout"
+                value={course.theme?.coverStyle || "full-image"}
+                options={[
+                  ["full-image", "Full image", "Immersive image with overlaid title"],
+                  ["split-image", "Split image", "Balanced copy and media"],
+                  ["minimal", "Minimal", "Typography-led introduction"],
+                ]}
+                onSelect={(value) => onChange((draft) => { draft.theme!.coverStyle = value as NonNullable<AcademyCourse["theme"]>["coverStyle"]; }, "Change cover layout")}
+              />
+              <ThemeCardGroup
+                label="Lesson header"
+                value={course.theme?.lessonHeaderStyle || "editorial"}
+                options={[
+                  ["editorial", "Editorial", "Large title and generous introduction"],
+                  ["compact", "Compact", "Fast, space-efficient opening"],
+                  ["media-led", "Media-led", "Hero media anchors the lesson"],
+                ]}
+                onSelect={(value) => onChange((draft) => { draft.theme!.lessonHeaderStyle = value as NonNullable<AcademyCourse["theme"]>["lessonHeaderStyle"]; }, "Change lesson header")}
+              />
+              <ThemeCardGroup
+                label="Typography"
+                value={course.theme?.typography || "editorial"}
+                options={[
+                  ["editorial", "Editorial", "Sans headings with serif reading copy"],
+                  ["modern-sans", "Modern sans", "Crisp sans serif throughout"],
+                  ["friendly-sans", "Friendly sans", "Softer, approachable rhythm"],
+                ]}
+                onSelect={(value) => onChange((draft) => { draft.theme!.typography = value as NonNullable<AcademyCourse["theme"]>["typography"]; }, "Change typography")}
+              />
+              <ThemeCardGroup
+                label="Density"
+                value={course.theme?.density || "comfortable"}
+                options={[
+                  ["compact", "Compact", "For short, information-rich courses"],
+                  ["comfortable", "Comfortable", "A balanced default"],
+                  ["spacious", "Spacious", "More pause between ideas"],
+                ]}
+                onSelect={(value) => onChange((draft) => { draft.theme!.density = value as NonNullable<AcademyCourse["theme"]>["density"]; }, "Change density")}
+              />
+              <div>
+                <p className="mb-2 text-[10px] font-black uppercase tracking-[0.13em] text-secondary/45">Accessible accent</p>
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                  {Object.entries(academyAccentPalettes).map(([key, palette]) => (
+                    <button key={key} type="button" onClick={() => onChange((draft) => { draft.theme!.accent = key as NonNullable<AcademyCourse["theme"]>["accent"]; }, "Change accent")} className={`min-h-16 rounded-xl border p-3 text-left text-xs font-black ${course.theme?.accent === key ? "border-secondary ring-2 ring-secondary/10" : "border-secondary/10"}`}>
+                      <span className="mb-2 block h-5 rounded" style={{ backgroundColor: palette.accent }} />
+                      {palette.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
             </>
           ) : null}
           {tab === "rules" ? (
@@ -3039,6 +3340,7 @@ function CourseSettingsModal({
           ) : null}
           {tab === "media" ? (
             <>
+              <button type="button" onClick={() => setMediaChooserOpen(true)} className="inline-flex min-h-11 items-center gap-2 rounded-lg bg-primary px-4 text-xs font-black text-white"><Upload size={15} /> Choose cover image</button>
               <Field label="Hero image URL">
                 <input
                   className={inputClass}
@@ -3110,6 +3412,20 @@ function CourseSettingsModal({
                     </div>
                   ))}
               </div>
+              <AcademyMediaChooser
+                open={mediaChooserOpen}
+                title="Choose course cover"
+                library={mediaLibrary}
+                onClose={() => setMediaChooserOpen(false)}
+                onChoose={(choice) => onChange((draft) => { draft.heroImage = choice.url; }, "Update hero")}
+                onUpload={async (file) => {
+                  const data = new FormData();
+                  data.set("file", file);
+                  const result = await uploadAcademyMedia(data);
+                  if (!result.ok || !result.url) { window.alert(result.message); return null; }
+                  return { name: file.name, url: result.url, mediaType: "image" };
+                }}
+              />
             </>
           ) : null}
         </div>
@@ -3206,6 +3522,8 @@ function AssessmentModal({
   onChange: (recipe: (course: AcademyCourse) => void, label: string) => void;
 }) {
   const dialogRef = useDialogFocus(true, onClose);
+  const [questionType, setQuestionType] = useState<NonNullable<QuizQuestion["type"]>>("single-choice");
+  const [previewQuestionId, setPreviewQuestionId] = useState<string | null>(null);
   return (
     <div
       ref={dialogRef}
@@ -3231,7 +3549,17 @@ function AssessmentModal({
             <X />
           </button>
         </div>
-        <div className="space-y-4 overflow-y-auto bg-slate-50 p-5">
+        <div className="overflow-y-auto bg-slate-50 p-5">
+          <section className="mb-5 rounded-xl border bg-white p-4">
+            <h3 className="text-xs font-black uppercase tracking-[0.13em] text-secondary/45">Assessment settings</h3>
+            <div className="mt-4 grid gap-4 sm:grid-cols-2">
+              <Field label="Pass mark"><input type="number" min={1} max={100} className={inputClass} value={course.passMark || 80} onChange={(event) => onChange((draft) => { draft.passMark = Number(event.target.value); }, "Change pass mark")} /></Field>
+              <Field label="Attempt limit" hint="0 means unlimited"><input type="number" min={0} max={10} className={inputClass} value={course.rules?.attemptLimit || 0} onChange={(event) => onChange((draft) => { draft.rules!.attemptLimit = Number(event.target.value) || null; }, "Change attempts")} /></Field>
+              <Field label="Feedback timing"><select className={inputClass} value={course.rules?.feedbackTiming || "after-submit"} onChange={(event) => onChange((draft) => { draft.rules!.feedbackTiming = event.target.value as NonNullable<AcademyCourse["rules"]>["feedbackTiming"]; }, "Change feedback")}><option value="immediate">Immediately</option><option value="after-submit">After submission</option><option value="after-pass">After passing</option></select></Field>
+              <label className="flex min-h-10 items-center gap-2 text-sm font-bold"><input type="checkbox" checked={course.rules?.requireFinalAssessment ?? true} onChange={(event) => onChange((draft) => { draft.rules!.requireFinalAssessment = event.target.checked; }, "Change final assessment requirement")} /> Required for completion</label>
+            </div>
+          </section>
+          <div className="space-y-4">
           {course.quiz.map((question, index) => (
             <details
               key={question.id}
@@ -3245,6 +3573,10 @@ function AssessmentModal({
                 <strong className="min-w-0 flex-1 truncate text-sm">
                   {question.prompt}
                 </strong>
+                <div className="flex items-center">
+                <button type="button" onClick={(event) => { event.preventDefault(); onChange((draft) => { const copy = structuredClone(question); copy.id = createAcademyId("question"); copy.prompt = `${copy.prompt} copy`; draft.quiz.splice(index + 1, 0, copy); }, "Duplicate assessment question"); }} className="p-2 text-secondary/45" aria-label={`Duplicate question ${index + 1}`}><Copy size={15} /></button>
+                <button type="button" disabled={index === 0} onClick={(event) => { event.preventDefault(); onChange((draft) => { const [moving] = draft.quiz.splice(index, 1); draft.quiz.splice(index - 1, 0, moving); }, "Move assessment question"); }} className="p-2 text-secondary/45 disabled:opacity-20" aria-label={`Move question ${index + 1} up`}><ArrowUp size={15} /></button>
+                <button type="button" disabled={index === course.quiz.length - 1} onClick={(event) => { event.preventDefault(); onChange((draft) => { const [moving] = draft.quiz.splice(index, 1); draft.quiz.splice(index + 1, 0, moving); }, "Move assessment question"); }} className="p-2 text-secondary/45 disabled:opacity-20" aria-label={`Move question ${index + 1} down`}><ArrowDown size={15} /></button>
                 <button
                   type="button"
                   onClick={(event) => {
@@ -3258,6 +3590,7 @@ function AssessmentModal({
                 >
                   <Trash2 size={15} />
                 </button>
+                </div>
               </summary>
               <div className="border-t p-4">
                 <QuestionEditor
@@ -3268,21 +3601,13 @@ function AssessmentModal({
                     }, `Edit final question ${question.id}`)
                   }
                 />
+                <button type="button" onClick={() => setPreviewQuestionId((value) => value === question.id ? null : question.id)} className="mt-4 inline-flex min-h-10 items-center gap-2 rounded-lg border px-3 text-xs font-black"><Eye size={14} /> {previewQuestionId === question.id ? "Hide preview" : "Preview question"}</button>
+                {previewQuestionId === question.id ? <div className="mt-4 rounded-xl bg-[var(--academy-accent-soft,#eef4fb)] p-5"><p className="text-[10px] font-black uppercase tracking-[0.14em] text-primary">Learner preview</p><p className="mt-2 font-bold">{question.prompt}</p><div className="mt-3 space-y-2">{question.options.map((option) => <div key={option.id} className="rounded-lg border bg-white px-3 py-2 text-sm">{option.label}</div>)}</div></div> : null}
               </div>
             </details>
           ))}
-          <button
-            type="button"
-            onClick={() =>
-              onChange((draft) => {
-                draft.quiz.push(createQuestion("single-choice"));
-              }, "Add assessment question")
-            }
-            className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-xs font-black text-white"
-          >
-            <Plus size={15} />
-            Add question
-          </button>
+          <div className="rounded-xl border bg-white p-4"><p className="text-[10px] font-black uppercase tracking-[0.13em] text-secondary/45">Add question</p><div className="mt-3 grid gap-2 sm:grid-cols-3">{([['single-choice','Single choice'],['multiple-response','Multiple response'],['reflection','Reflection']] as const).map(([type,label]) => <button key={type} type="button" aria-pressed={questionType === type} onClick={() => setQuestionType(type)} className={`min-h-16 rounded-lg border p-3 text-left text-xs font-black ${questionType === type ? "border-primary bg-primary/5 text-primary" : "border-secondary/10"}`}>{label}</button>)}</div><button type="button" onClick={() => onChange((draft) => { draft.quiz.push(createQuestion(questionType)); }, "Add assessment question")} className="mt-3 inline-flex min-h-11 items-center gap-2 rounded-lg bg-primary px-4 text-xs font-black text-white"><Plus size={15} /> Add {questionType.replaceAll("-", " ")}</button></div>
+          </div>
         </div>
         <div className="border-t p-4 text-right">
           <button

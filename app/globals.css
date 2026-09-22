@@ -271,6 +271,62 @@ input::placeholder, textarea::placeholder {
   }
 }
 
+/* Academy themes are deliberately scoped so author choices never leak into the dashboard. */
+.academy-theme-editorial .academy-reading-copy {
+  font-family: var(--font-academy-serif), Georgia, serif;
+}
+
+.academy-theme-modern .academy-reading-copy,
+.academy-theme-friendly .academy-reading-copy {
+  font-family: inherit;
+}
+
+.academy-theme-friendly {
+  letter-spacing: 0.005em;
+}
+
+.academy-block-stack {
+  gap: var(--academy-block-gap, 3.5rem);
+}
+
+.academy-block-surface-subtle {
+  background: var(--academy-accent-soft, #eef4fb);
+  padding: 1.5rem;
+}
+
+.academy-block-surface-accent {
+  border-left: 4px solid var(--academy-accent, #1e5aa8);
+  background: var(--academy-accent-soft, #eef4fb);
+  padding: 1.5rem;
+}
+
+.academy-block-spacing-compact { padding-block: 0.25rem; }
+.academy-block-spacing-comfortable { padding-block: 0.75rem; }
+.academy-block-spacing-spacious { padding-block: 1.5rem; }
+
+[data-block-variant="editorial"] h2,
+[data-block-variant="editorial"] blockquote {
+  letter-spacing: -0.025em;
+}
+
+[data-block-variant="compact"] :is(p, li) {
+  line-height: 1.55;
+}
+
+[data-block-variant="framed"] figure,
+[data-block-variant="framed"] iframe {
+  border: 1px solid #dedfe1;
+}
+
+[data-block-variant="immersive"] figure {
+  box-shadow: 0 20px 50px rgb(15 23 42 / 10%);
+}
+
+[data-block-variant="captioned"] figcaption {
+  border-top: 3px solid var(--academy-accent, #1e5aa8);
+  background: var(--academy-accent-soft, #eef4fb);
+}
+
 /* Focus Dojo timer integration */
 @theme inline {
   --color-blue: #3f74ff;
