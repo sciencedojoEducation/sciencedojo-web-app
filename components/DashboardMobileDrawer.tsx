@@ -4,26 +4,23 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import type { PointerEvent } from "react";
-import DashboardAvatar from "./DashboardAvatar";
 import { DashboardMenuBadge } from "./DashboardBadgeProvider";
 import DashboardTourReplayButton from "./DashboardTourReplayButton";
 import DashboardAccountMenu from "./DashboardAccountMenu";
 import DashboardNavIcon from "./DashboardNavIcon";
-import { signOut } from "@/app/login/actions";
 import type { DashboardRole } from "@/lib/dashboard-badges";
 import { isDashboardNavItemActive, type DashboardNavSection } from "@/lib/dashboard-navigation";
 
-type DashboardMobileDrawerProps = {
+interface DashboardMobileDrawerProps {
   role: DashboardRole;
   displayRole: string;
   userName: string;
   avatarUrl?: string;
   sections: DashboardNavSection[];
-};
+}
 
 function getFocusableElements(root: HTMLElement | null) {
   if (!root) return [];
-
   return Array.from(
     root.querySelectorAll<HTMLElement>(
       'a[href], button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])',
@@ -44,33 +41,21 @@ export default function DashboardMobileDrawer({
   const drawerRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const touchOpenLockRef = useRef(false);
-  const links = sections[0]?.items || [];
+  const hasTour = role === "parent" || role === "student" || role === "tutor";
   const dashboardHref = role === "admin" ? "/dashboard/admin" : role === "internal" ? "/dashboard/internal" : role === "tutor" ? "/dashboard/tutor" : role === "student" ? "/dashboard/student" : role === "user" ? "/dashboard/user" : "/dashboard/parent";
 
-  const openDrawer = useCallback(() => {
-    setIsOpen(true);
-  }, []);
+  const openDrawer = useCallback(() => setIsOpen(true), []);
 
   const handleTriggerPointerDown = useCallback((event: PointerEvent<HTMLButtonElement>) => {
-    if (event.pointerType !== "touch" && event.pointerType !== "pen") {
-      return;
-    }
-
+    if (event.pointerType !== "touch" && event.pointerType !== "pen") return;
     event.preventDefault();
     touchOpenLockRef.current = true;
     openDrawer();
-
-    window.setTimeout(() => {
-      touchOpenLockRef.current = false;
-    }, 450);
+    window.setTimeout(() => { touchOpenLockRef.current = false; }, 450);
   }, [openDrawer]);
 
   const handleTriggerClick = useCallback(() => {
-    if (touchOpenLockRef.current) {
-      return;
-    }
-
-    openDrawer();
+    if (!touchOpenLockRef.current) openDrawer();
   }, [openDrawer]);
 
   useEffect(() => {
@@ -87,7 +72,6 @@ export default function DashboardMobileDrawer({
         setIsOpen(false);
         return;
       }
-
       if (event.key !== "Tab") return;
 
       const elements = getFocusableElements(drawerRef.current);
@@ -95,10 +79,8 @@ export default function DashboardMobileDrawer({
         event.preventDefault();
         return;
       }
-
       const firstElement = elements[0];
       const lastElement = elements[elements.length - 1];
-
       if (event.shiftKey && document.activeElement === firstElement) {
         event.preventDefault();
         lastElement.focus();
@@ -109,15 +91,12 @@ export default function DashboardMobileDrawer({
     }
 
     document.addEventListener("keydown", handleKeyDown);
-
     return () => {
       document.body.style.overflow = previousOverflow;
       document.removeEventListener("keydown", handleKeyDown);
       trigger?.focus();
     };
   }, [isOpen]);
-
-  const utilityRowClass = "flex min-h-[52px] w-full items-center justify-center gap-2 rounded-xl border border-slate-200/80 bg-white/70 px-4 py-3 text-[10px] font-black uppercase tracking-[0.14em] text-slate-500 transition-all hover:border-[#1E5AA8]/20 hover:bg-[#1E5AA8]/5 hover:text-[#1E5AA8] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1E5AA8] focus-visible:ring-offset-2";
 
   return (
     <div className="lg:hidden">
@@ -133,7 +112,7 @@ export default function DashboardMobileDrawer({
               onPointerDown={handleTriggerPointerDown}
               onClick={handleTriggerClick}
               style={{ WebkitTapHighlightColor: "transparent" }}
-              className="pointer-events-auto relative z-[70] inline-flex h-11 w-11 shrink-0 cursor-pointer touch-manipulation items-center justify-center rounded-2xl border border-slate-200 bg-white text-[#001A3D] shadow-sm transition-colors hover:bg-[#1E5AA8]/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1E5AA8] focus-visible:ring-offset-2 sm:h-11 sm:w-11"
+              className="pointer-events-auto relative z-[70] inline-flex h-11 w-11 shrink-0 cursor-pointer touch-manipulation items-center justify-center rounded-2xl border border-slate-200 bg-white text-[#001A3D] shadow-sm transition-colors hover:bg-[#1E5AA8]/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1E5AA8] focus-visible:ring-offset-2"
             >
               <span className="flex h-4 w-5 flex-col justify-between" aria-hidden="true">
                 <span className="h-0.5 rounded-full bg-current" />
@@ -141,13 +120,11 @@ export default function DashboardMobileDrawer({
                 <span className="h-0.5 rounded-full bg-current" />
               </span>
             </button>
-
             <Link href={dashboardHref} className="min-w-0 text-xl font-black tracking-tight text-[#001A3D] sm:text-2xl">
               science<span className="text-[#0066FF]">dojo</span><span className="text-[#00CFE8]">.</span>
             </Link>
           </div>
-
-          <span className="shrink-0 rounded-full border border-[#1E5AA8]/10 bg-[#1E5AA8]/5 px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.12em] text-[#1E5AA8] sm:px-3 sm:text-[10px] sm:tracking-[0.14em]">
+          <span className="shrink-0 rounded-full border border-[#1E5AA8]/10 bg-[#1E5AA8]/5 px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.12em] text-[#1E5AA8] sm:px-3 sm:text-[10px]">
             {displayRole}
           </span>
         </div>
@@ -161,7 +138,6 @@ export default function DashboardMobileDrawer({
             className="absolute inset-0 h-full w-full bg-slate-950/45 backdrop-blur-sm"
             onClick={() => setIsOpen(false)}
           />
-
           <div
             ref={drawerRef}
             id={drawerId}
@@ -170,134 +146,68 @@ export default function DashboardMobileDrawer({
             aria-label="Dashboard navigation"
             className="relative flex h-full w-[min(22rem,calc(100vw-2rem))] flex-col overflow-hidden rounded-r-[2rem] border-r border-white/70 bg-slate-50 shadow-2xl shadow-slate-950/25"
           >
-            <div className="flex items-center justify-between gap-3 border-b border-slate-200 bg-white/86 px-4 py-3.5 backdrop-blur-xl">
+            <div className="flex shrink-0 items-center justify-between gap-3 border-b border-slate-200 bg-white/86 px-4 py-3.5 backdrop-blur-xl">
               <div className="min-w-0">
-                <p className="text-[9px] font-black uppercase tracking-[0.18em] text-[#1E5AA8]/70">Dashboard</p>
-                <h2 className="mt-0.5 truncate text-lg font-black text-[#001A3D]">{displayRole} space</h2>
+                <p className="text-[9px] font-semibold uppercase tracking-[0.18em] text-[#1E5AA8]/70">Dashboard</p>
+                <h2 className="mt-0.5 truncate text-lg font-bold capitalize text-[#001A3D]">{displayRole} space</h2>
               </div>
               <button
                 type="button"
                 aria-label="Close menu"
                 onClick={() => setIsOpen(false)}
-                className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-slate-200 bg-white text-xl leading-none text-slate-500 shadow-sm transition-colors hover:bg-slate-100 hover:text-[#001A3D] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1E5AA8] focus-visible:ring-offset-2"
+                className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-slate-200 bg-white text-xl leading-none text-slate-500 shadow-sm transition-colors hover:bg-slate-100 hover:text-[#001A3D] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1E5AA8]"
               >
                 ×
               </button>
             </div>
 
-            <div className="min-h-0 flex-1 overflow-y-auto px-4 py-3.5">
-              {role === "admin" ? (
-                <nav aria-label="Admin navigation" className="space-y-5">
-                  {sections.map((section) => (
-                    <section key={section.title} aria-label={section.title}>
-                      <h3 className="mb-1 px-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-500">{section.title}</h3>
-                      <div className="space-y-0.5">
-                        {section.items.map((link) => {
-                          const isActive = isDashboardNavItemActive(pathname, link);
-                          return (
-                            <Link
-                              key={link.href}
-                              href={link.href}
-                              aria-current={isActive ? "page" : undefined}
-                              onClick={() => setIsOpen(false)}
-                              className={`group flex min-h-11 items-center gap-2.5 rounded-xl px-2.5 text-[13px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1E5AA8] ${
-                                isActive ? "bg-[#1E5AA8]/8 font-semibold text-[#164b87]" : "font-medium text-slate-600 hover:bg-white hover:text-slate-900"
-                              }`}
-                            >
-                              <span className={`flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-lg ${
-                                isActive ? "bg-[#1E5AA8]/12 text-[#1E5AA8] ring-1 ring-[#6FE3D6]/70" : "bg-slate-100 text-slate-500 group-hover:bg-white group-hover:text-[#1E5AA8]"
-                              }`}>
-                                {link.iconName && <DashboardNavIcon name={link.iconName} />}
-                              </span>
-                              <span className="min-w-0 flex-1 truncate">{link.name}</span>
-                              <DashboardMenuBadge badgeKey={link.badgeKey} label={link.name} />
-                            </Link>
-                          );
-                        })}
-                      </div>
-                    </section>
-                  ))}
-                </nav>
-              ) : (
-              <>
-              <div className="mb-3 flex items-center gap-3 rounded-[1.35rem] border border-slate-200/80 bg-white/88 p-3 shadow-sm">
-                <div className="h-10 w-10 shrink-0 overflow-hidden rounded-2xl border border-white bg-[#1E5AA8]/10 text-[#1E5AA8] shadow-sm">
-                  <DashboardAvatar
-                    src={avatarUrl}
-                    name={userName}
-                    fallbackLabel={displayRole}
-                  />
-                </div>
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-black leading-tight text-[#001A3D]">{userName}</p>
-                  <p className="mt-0.5 text-[9px] font-black uppercase tracking-[0.12em] text-slate-400">Verified {displayRole}</p>
-                </div>
-              </div>
+            <nav aria-label={`${displayRole} navigation`} className="min-h-0 flex-1 space-y-5 overflow-y-auto overscroll-contain px-4 py-3.5">
+              {sections.map((section) => (
+                <section key={section.title} aria-label={section.title}>
+                  <h3 className="mb-1 px-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-500">{section.title}</h3>
+                  <div className="space-y-0.5">
+                    {section.items.map((link) => {
+                      const isActive = isDashboardNavItemActive(pathname, link);
+                      return (
+                        <Link
+                          key={link.href}
+                          href={link.href}
+                          data-tour={link.tourId}
+                          aria-current={isActive ? "page" : undefined}
+                          onClick={() => setIsOpen(false)}
+                          className={`group flex min-h-11 items-center gap-2.5 rounded-xl px-2.5 text-[13px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1E5AA8] ${
+                            isActive ? "bg-[#1E5AA8]/8 font-semibold text-[#164b87]" : "font-medium text-slate-600 hover:bg-white hover:text-slate-900"
+                          }`}
+                        >
+                          <span className={`flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-lg ${
+                            isActive ? "bg-[#1E5AA8]/12 text-[#1E5AA8] ring-1 ring-[#6FE3D6]/70" : "bg-slate-100 text-slate-500 group-hover:bg-white group-hover:text-[#1E5AA8]"
+                          }`} aria-hidden="true">
+                            <DashboardNavIcon name={link.iconName} />
+                          </span>
+                          <span className="min-w-0 flex-1 truncate">{link.name}</span>
+                          <DashboardMenuBadge badgeKey={link.badgeKey} label={link.name} />
+                        </Link>
+                      );
+                    })}
+                  </div>
+                </section>
+              ))}
+            </nav>
 
-              <nav className="space-y-1" aria-label="Dashboard">
-                {links.map((link) => {
-                  const isActive = isDashboardNavItemActive(pathname, link);
-
-                  return (
-                    <Link
-                      key={link.name}
-                      href={link.href}
-                      data-tour={link.tourId}
-                      aria-current={isActive ? "page" : undefined}
-                      onClick={() => setIsOpen(false)}
-                      className={`group relative flex min-h-12 items-center gap-3 rounded-[1.15rem] border px-3.5 py-2.5 text-sm font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1E5AA8] focus-visible:ring-offset-2 ${
-                        isActive
-                          ? "border-slate-200 bg-[#1E5AA8]/7 text-[#1E5AA8] shadow-[inset_0_0_20px_rgba(30,90,168,0.035)]"
-                          : "border-transparent text-slate-600 hover:border-slate-200 hover:bg-white hover:text-[#001A3D]"
-                      }`}
-                    >
-                      {isActive && <span className="absolute left-0 top-2.5 bottom-2.5 w-1 rounded-full bg-[#6FE3D6]" />}
-                      <span className="text-base leading-none" aria-hidden="true">{link.icon}</span>
-                      <span className="min-w-0 flex-1">{link.name}</span>
-                      <DashboardMenuBadge badgeKey={link.badgeKey} label={link.name} />
-                    </Link>
-                  );
-                })}
-              </nav>
-
-              <div className="mt-2 space-y-2 border-t border-slate-200/70 pt-2">
+            <div className="shrink-0 space-y-2 border-t border-slate-200 bg-white/90 p-3">
+              {hasTour && (
                 <DashboardTourReplayButton
                   onReplay={() => setIsOpen(false)}
-                  className={utilityRowClass}
-                  iconClassName="text-base leading-none"
+                  className="flex min-h-11 w-full items-center justify-center gap-2 rounded-lg text-xs font-medium text-[#1E5AA8] hover:bg-[#1E5AA8]/6 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1E5AA8]"
                 />
-                <Link
-                  href="/"
-                  onClick={() => setIsOpen(false)}
-                  className={utilityRowClass}
-                >
-                  <span className="text-base" aria-hidden="true">🚪</span>
-                  Exit to Site
-                </Link>
-
-                <form action={signOut} className="border-t border-slate-200/70 pt-2">
-                  <button
-                    type="submit"
-                    className="flex min-h-[52px] w-full items-center justify-center gap-2 rounded-xl border border-slate-200/70 bg-white/55 px-4 py-3 text-[10px] font-black uppercase tracking-[0.14em] text-slate-500 transition-all hover:border-slate-300 hover:bg-white hover:text-[#001A3D] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1E5AA8] focus-visible:ring-offset-2"
-                  >
-                    <span className="text-base leading-none" aria-hidden="true">↳</span>
-                    Log Out
-                  </button>
-                </form>
-              </div>
-              </>
               )}
+              <DashboardAccountMenu
+                userName={userName}
+                displayRole={displayRole}
+                avatarUrl={avatarUrl}
+                onNavigate={() => setIsOpen(false)}
+              />
             </div>
-            {role === "admin" && (
-              <div className="shrink-0 border-t border-slate-200 bg-white/90 p-3">
-                <DashboardAccountMenu
-                  userName={userName}
-                  displayRole={displayRole}
-                  avatarUrl={avatarUrl}
-                  onNavigate={() => setIsOpen(false)}
-                />
-              </div>
-            )}
           </div>
         </div>
       )}
