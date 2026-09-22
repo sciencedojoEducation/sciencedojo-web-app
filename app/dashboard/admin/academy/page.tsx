@@ -14,7 +14,7 @@ export default async function AdminAcademyPage() {
       <Link href="/dashboard/admin/academy/new" className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full bg-primary px-5 text-xs font-black uppercase tracking-[0.1em] text-white"><Plus size={16} /> New course</Link>
     </div>
 
-    {!schemaReady ? <div role="alert" className="mt-7 border-l-4 border-amber-500 bg-amber-50 p-5 text-sm font-semibold leading-6 text-amber-900">Run <strong>sql/056_tutor_academy_started_lessons.sql</strong> and <strong>sql/057_academy_course_builder.sql</strong> in Supabase. Tutor Foundations is shown from the code fallback and will be imported when you save it.</div> : null}
+    {!schemaReady ? <div role="alert" className="mt-7 border-l-4 border-amber-500 bg-amber-50 p-5 text-sm font-semibold leading-6 text-amber-900">Run Academy migrations <strong>056</strong>, <strong>057</strong>, and <strong>058</strong> in Supabase. Tutor Foundations is shown from the code fallback and will be imported when you save it.</div> : null}
 
     <div className="mt-9 space-y-10">{groups.map((status) => {
       const matching = courses.filter((course) => course.status === status);

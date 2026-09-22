@@ -78,21 +78,24 @@ export const FEATURE_FLAG_DEFINITIONS = [
   {
     key: "community_enabled",
     label: "Exam community",
-    description: "Show the moderated GCSE and A-Level community and contribution links.",
+    description:
+      "Show the moderated GCSE and A-Level community and contribution links.",
     category: "Growth / Beta",
     defaultEnabled: true,
   },
   {
     key: "parent_dashboard_enabled",
     label: "Parent dashboard",
-    description: "Allow parent users to access the parent dashboard experience.",
+    description:
+      "Allow parent users to access the parent dashboard experience.",
     category: "Dashboards",
     defaultEnabled: false,
   },
   {
     key: "student_dashboard_enabled",
     label: "Student dashboard",
-    description: "Allow student users to access the student dashboard experience.",
+    description:
+      "Allow student users to access the student dashboard experience.",
     category: "Dashboards",
     defaultEnabled: false,
   },
@@ -106,9 +109,17 @@ export const FEATURE_FLAG_DEFINITIONS = [
   {
     key: "tutor_academy_enabled",
     label: "Tutor Academy",
-    description: "Show the optional Tutor Academy induction course to tutor applicants.",
+    description:
+      "Show the optional Tutor Academy induction course to tutor applicants.",
     category: "Dashboards",
     defaultEnabled: true,
+  },
+  {
+    key: "academy_builder_v2_enabled",
+    label: "Academy Authoring Studio V2",
+    description: "Use the visual Academy authoring studio for administrators.",
+    category: "Dashboards",
+    defaultEnabled: false,
   },
   {
     key: "tutor_applications_enabled",
@@ -134,7 +145,8 @@ export const FEATURE_FLAG_DEFINITIONS = [
   {
     key: "maintenance_mode_enabled",
     label: "Maintenance mode (deployment controlled)",
-    description: "Status reference only. Public maintenance mode is controlled by the MAINTENANCE_MODE deployment environment variable.",
+    description:
+      "Status reference only. Public maintenance mode is controlled by the MAINTENANCE_MODE deployment environment variable.",
     category: "System",
     defaultEnabled: false,
   },
@@ -167,9 +179,11 @@ const definitionMap = Object.fromEntries(
 function isDynamicServerError(error: unknown) {
   return Boolean(
     error &&
-      typeof error === "object" &&
-      "digest" in error &&
-      String((error as { digest?: unknown }).digest).includes("DYNAMIC_SERVER_USAGE"),
+    typeof error === "object" &&
+    "digest" in error &&
+    String((error as { digest?: unknown }).digest).includes(
+      "DYNAMIC_SERVER_USAGE",
+    ),
   );
 }
 
@@ -191,7 +205,9 @@ function fallbackFlag(key: FeatureFlagKey): FeatureFlag {
   };
 }
 
-function normalizeFlag(row: Partial<FeatureFlag> & { key: string }): FeatureFlag | null {
+function normalizeFlag(
+  row: Partial<FeatureFlag> & { key: string },
+): FeatureFlag | null {
   if (!isFeatureFlagKey(row.key)) return null;
 
   const fallback = fallbackFlag(row.key);
@@ -209,7 +225,9 @@ function normalizeFlag(row: Partial<FeatureFlag> & { key: string }): FeatureFlag
 }
 
 export function getDefaultFeatureFlags() {
-  return FEATURE_FLAG_DEFINITIONS.map((definition) => fallbackFlag(definition.key));
+  return FEATURE_FLAG_DEFINITIONS.map((definition) =>
+    fallbackFlag(definition.key),
+  );
 }
 
 export async function getFeatureFlags(): Promise<FeatureFlag[]> {
@@ -217,7 +235,9 @@ export async function getFeatureFlags(): Promise<FeatureFlag[]> {
     const supabase = await createClient();
     const { data, error } = await supabase
       .from("feature_flags")
-      .select("id, key, label, description, enabled, category, updated_at, updated_by")
+      .select(
+        "id, key, label, description, enabled, category, updated_at, updated_by",
+      )
       .order("category", { ascending: true })
       .order("label", { ascending: true });
 
@@ -232,7 +252,10 @@ export async function getFeatureFlags(): Promise<FeatureFlag[]> {
       if (flag) dbFlags.set(flag.key, flag);
     }
 
-    return FEATURE_FLAG_DEFINITIONS.map((definition) => dbFlags.get(definition.key) || fallbackFlag(definition.key));
+    return FEATURE_FLAG_DEFINITIONS.map(
+      (definition) =>
+        dbFlags.get(definition.key) || fallbackFlag(definition.key),
+    );
   } catch (error) {
     if (isDynamicServerError(error)) {
       throw error;
@@ -243,7 +266,9 @@ export async function getFeatureFlags(): Promise<FeatureFlag[]> {
   }
 }
 
-export async function getFeatureFlag(key: FeatureFlagKey): Promise<FeatureFlag> {
+export async function getFeatureFlag(
+  key: FeatureFlagKey,
+): Promise<FeatureFlag> {
   const flags = await getFeatureFlags();
   return flags.find((flag) => flag.key === key) || fallbackFlag(key);
 }
@@ -255,7 +280,9 @@ export async function isFeatureEnabled(key: FeatureFlagKey): Promise<boolean> {
 
 export async function getFeatureFlagMap() {
   const flags = await getFeatureFlags();
-  return Object.fromEntries(flags.map((flag) => [flag.key, flag.enabled])) as Record<FeatureFlagKey, boolean>;
+  return Object.fromEntries(
+    flags.map((flag) => [flag.key, flag.enabled]),
+  ) as Record<FeatureFlagKey, boolean>;
 }
 
 const getCachedPublicFeatureFlags = unstable_cache(
@@ -264,22 +291,29 @@ const getCachedPublicFeatureFlags = unstable_cache(
       const supabase = createPublicClient();
       const { data, error } = await supabase
         .from("feature_flags")
-        .select("id, key, label, description, enabled, category, updated_at, updated_by")
+        .select(
+          "id, key, label, description, enabled, category, updated_at, updated_by",
+        )
         .order("category", { ascending: true })
         .order("label", { ascending: true });
 
       if (error) {
-        throw new Error(`[public-feature-flags] Query failed: ${error.message}`);
+        throw new Error(
+          `[public-feature-flags] Query failed: ${error.message}`,
+        );
       }
 
       const dbFlags = new Map<FeatureFlagKey, FeatureFlag>();
       for (const row of data || []) {
-        const flag = normalizeFlag(row as Partial<FeatureFlag> & { key: string });
+        const flag = normalizeFlag(
+          row as Partial<FeatureFlag> & { key: string },
+        );
         if (flag) dbFlags.set(flag.key, flag);
       }
 
       return FEATURE_FLAG_DEFINITIONS.map(
-        (definition) => dbFlags.get(definition.key) || fallbackFlag(definition.key),
+        (definition) =>
+          dbFlags.get(definition.key) || fallbackFlag(definition.key),
       );
     });
   },
@@ -297,14 +331,19 @@ export const getPublicFeatureFlags = cache(async () => {
     // Keep the safe public fallback request-scoped. Returning it from inside
     // unstable_cache would turn a transient database failure into a cached
     // feature outage for every visitor.
-    console.warn("[public-feature-flags] Falling back to defaults for this request:", error);
+    console.warn(
+      "[public-feature-flags] Falling back to defaults for this request:",
+      error,
+    );
     return getDefaultFeatureFlags();
   }
 });
 
 export async function getPublicFeatureFlagMap() {
   const flags = await getPublicFeatureFlags();
-  return Object.fromEntries(flags.map((flag) => [flag.key, flag.enabled])) as Record<FeatureFlagKey, boolean>;
+  return Object.fromEntries(
+    flags.map((flag) => [flag.key, flag.enabled]),
+  ) as Record<FeatureFlagKey, boolean>;
 }
 
 export async function isPublicFeatureEnabled(key: FeatureFlagKey) {

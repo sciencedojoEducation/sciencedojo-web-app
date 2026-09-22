@@ -3,17 +3,136 @@ export const TUTOR_ACADEMY_PASS_MARK = 80;
 
 export type AcademyBlockTone = "blue" | "teal" | "amber" | "navy";
 
-export type LessonBlock =
-  | { type: "text"; heading?: string; paragraphs: string[] }
-  | { type: "image"; src: string; alt: string; caption?: string }
-  | { type: "callout"; heading: string; body: string; tone: AcademyBlockTone }
-  | { type: "numbered-list"; heading?: string; items: Array<{ title: string; body: string }> }
-  | { type: "accordion"; heading?: string; items: Array<{ title: string; body: string }> }
-  | { type: "carousel"; heading?: string; items: Array<{ title: string; body: string; eyebrow?: string }> }
-  | { type: "quote"; quote: string; attribution: string }
-  | { type: "comparison-table"; heading?: string; columns: string[]; rows: string[][] };
+export type AcademyRichTextDocument = {
+  type: "doc";
+  content?: Array<Record<string, unknown>>;
+};
+
+export type AcademyBlockCompletion = "view" | "interact" | "pass";
+
+type AcademyBlockIdentity = {
+  id?: string;
+  schemaVersion?: number;
+  completion?: AcademyBlockCompletion;
+};
+
+export type AcademyMediaItem = {
+  id?: string;
+  title?: string;
+  body?: string;
+  eyebrow?: string;
+  src?: string;
+  alt?: string;
+  caption?: string;
+};
+
+export type LessonBlock = AcademyBlockIdentity &
+  (
+    | {
+        type: "text";
+        heading?: string;
+        paragraphs: string[];
+        content?: AcademyRichTextDocument;
+      }
+    | {
+        type: "image";
+        src: string;
+        alt: string;
+        caption?: string;
+        aspect?: "wide" | "landscape" | "square";
+        width?: "reading" | "wide" | "full";
+        focalPoint?: string;
+        decorative?: boolean;
+      }
+    | { type: "callout"; heading: string; body: string; tone: AcademyBlockTone }
+    | {
+        type: "numbered-list";
+        heading?: string;
+        items: Array<{ id?: string; title: string; body: string }>;
+      }
+    | {
+        type: "accordion";
+        heading?: string;
+        items: Array<{ id?: string; title: string; body: string }>;
+      }
+    | { type: "carousel"; heading?: string; items: AcademyMediaItem[] }
+    | { type: "quote"; quote: string; attribution: string }
+    | {
+        type: "comparison-table";
+        heading?: string;
+        columns: string[];
+        rows: string[][];
+      }
+    | { type: "divider"; label?: string }
+    | {
+        type: "gallery";
+        heading?: string;
+        columns?: 2 | 3;
+        items: AcademyMediaItem[];
+      }
+    | {
+        type: "video";
+        heading?: string;
+        url: string;
+        caption?: string;
+        transcript?: string;
+      }
+    | {
+        type: "audio";
+        heading?: string;
+        url: string;
+        caption?: string;
+        transcript?: string;
+      }
+    | {
+        type: "resources";
+        heading?: string;
+        items: Array<{
+          id?: string;
+          title: string;
+          description?: string;
+          url: string;
+        }>;
+      }
+    | {
+        type: "tabs";
+        heading?: string;
+        items: Array<{ id?: string; title: string; body: string }>;
+      }
+    | {
+        type: "flashcards";
+        heading?: string;
+        items: Array<{ id?: string; title: string; body: string }>;
+      }
+    | {
+        type: "process";
+        heading?: string;
+        items: Array<{ id?: string; title: string; body: string }>;
+      }
+    | {
+        type: "worked-example";
+        heading?: string;
+        problem: string;
+        steps: Array<{ id?: string; title: string; body: string }>;
+        answer: string;
+        latex?: string;
+      }
+    | {
+        type: "knowledge-check";
+        heading?: string;
+        question: QuizQuestion;
+        required?: boolean;
+      }
+  );
+
+export type AcademySection = {
+  id: string;
+  title: string;
+};
 
 export type AcademyLesson = {
+  id?: string;
+  sectionId?: string;
   slug: string;
   section: string;
   title: string;
@@ -26,13 +145,20 @@ export type QuizOption = { id: string; label: string };
 
 export type QuizQuestion = {
   id: string;
+  type?: "single-choice" | "multiple-response" | "reflection";
   prompt: string;
   options: QuizOption[];
   correctOptionId: string;
+  correctOptionIds?: string[];
   explanation: string;
+  weight?: number;
 };
 
-export type AcademyAudienceRole = "tutor_applicant" | "tutor" | "student" | "parent";
+export type AcademyAudienceRole =
+  | "tutor_applicant"
+  | "tutor"
+  | "student"
+  | "parent";
 
 export type AcademyCourse = {
   id?: string;
@@ -46,6 +172,21 @@ export type AcademyCourse = {
   passMark?: number;
   quizRevision?: number;
   versionId?: string;
+  schemaVersion?: number;
+  sections?: AcademySection[];
+  theme?: {
+    preset: "editorial" | "modern" | "calm";
+    accent: "blue" | "teal" | "navy" | "amber";
+    typography: "sans" | "editorial";
+    density: "comfortable" | "compact";
+  };
+  rules?: {
+    navigation: "free" | "linear";
+    lessonCompletion: "manual" | "required-blocks";
+    requireFinalAssessment: boolean;
+    attemptLimit: number | null;
+    feedbackTiming: "immediate" | "after-submit" | "after-pass";
+  };
   lessons: AcademyLesson[];
   quiz: QuizQuestion[];
 };
@@ -53,7 +194,11 @@ export type AcademyCourse = {
 export type AcademyProgress = {
   completedLessons: string[];
   startedLessons: string[];
+  completedLessonIds: string[];
+  startedLessonIds: string[];
   currentLesson: string | null;
+  currentLessonId: string | null;
+  completedBlockIds: string[];
   quizAttempts: number;
   bestScore: number;
   completedAt: string | null;
@@ -76,14 +221,16 @@ export const tutorAcademyCourse: AcademyCourse = {
       slug: "welcome-to-sciencedojo",
       section: "Your foundations",
       title: "Welcome to ScienceDojo",
-      summary: "Understand our mission, the tutor promise, and what excellent support feels like for a family.",
+      summary:
+        "Understand our mission, the tutor promise, and what excellent support feels like for a family.",
       durationMinutes: 5,
       blocks: [
         {
           type: "image",
           src: "/images/home/9.modern-online-tutoring.jpg",
           alt: "A tutor supporting a learner in an online lesson",
-          caption: "Human tutoring first, with technology making the journey clearer.",
+          caption:
+            "Human tutoring first, with technology making the journey clearer.",
         },
         {
           type: "text",
@@ -97,14 +244,24 @@ export const tutorAcademyCourse: AcademyCourse = {
           type: "numbered-list",
           heading: "The ScienceDojo tutor promise",
           items: [
-            { title: "Meet the learner where they are", body: "Start with evidence and curiosity rather than assumptions about effort or ability." },
-            { title: "Teach for understanding", body: "Model thinking, invite questions, and check that the learner can use the idea independently." },
-            { title: "Make progress visible", body: "Connect each lesson to a focused next step, useful practice, and an honest learning record." },
+            {
+              title: "Meet the learner where they are",
+              body: "Start with evidence and curiosity rather than assumptions about effort or ability.",
+            },
+            {
+              title: "Teach for understanding",
+              body: "Model thinking, invite questions, and check that the learner can use the idea independently.",
+            },
+            {
+              title: "Make progress visible",
+              body: "Connect each lesson to a focused next step, useful practice, and an honest learning record.",
+            },
           ],
         },
         {
           type: "quote",
-          quote: "Confidence grows when a learner can see that today's small step belongs to a larger journey.",
+          quote:
+            "Confidence grows when a learner can see that today's small step belongs to a larger journey.",
           attribution: "The ScienceDojo teaching principle",
         },
       ],
@@ -113,7 +270,8 @@ export const tutorAcademyCourse: AcademyCourse = {
       slug: "safeguarding-and-boundaries",
       section: "Your foundations",
       title: "Safeguarding and Professional Boundaries",
-      summary: "Protect students through professional communication, privacy, clear boundaries, and prompt reporting.",
+      summary:
+        "Protect students through professional communication, privacy, clear boundaries, and prompt reporting.",
       durationMinutes: 8,
       blocks: [
         {
@@ -126,10 +284,22 @@ export const tutorAcademyCourse: AcademyCourse = {
           type: "accordion",
           heading: "Core expectations",
           items: [
-            { title: "Keep communication on ScienceDojo", body: "Use the platform's messages and lesson spaces wherever possible. Do not move students or families to personal messaging accounts, private email, or social media." },
-            { title: "Maintain appropriate boundaries", body: "Keep conversations relevant to learning and wellbeing in the educational context. Never request unnecessary personal information or arrange unrecorded contact." },
-            { title: "Protect personal information", body: "Only use student and family information to deliver the agreed support. Do not download, copy, or share records without a clear platform-approved reason." },
-            { title: "Report concerns promptly", body: "If something feels unsafe, concerning, or inappropriate, preserve the relevant context and contact ScienceDojo support. Do not investigate a safeguarding concern yourself." },
+            {
+              title: "Keep communication on ScienceDojo",
+              body: "Use the platform's messages and lesson spaces wherever possible. Do not move students or families to personal messaging accounts, private email, or social media.",
+            },
+            {
+              title: "Maintain appropriate boundaries",
+              body: "Keep conversations relevant to learning and wellbeing in the educational context. Never request unnecessary personal information or arrange unrecorded contact.",
+            },
+            {
+              title: "Protect personal information",
+              body: "Only use student and family information to deliver the agreed support. Do not download, copy, or share records without a clear platform-approved reason.",
+            },
+            {
+              title: "Report concerns promptly",
+              body: "If something feels unsafe, concerning, or inappropriate, preserve the relevant context and contact ScienceDojo support. Do not investigate a safeguarding concern yourself.",
+            },
           ],
         },
         {
@@ -137,9 +307,21 @@ export const tutorAcademyCourse: AcademyCourse = {
           heading: "Choose the safer response",
           columns: ["Situation", "Do", "Avoid"],
           rows: [
-            ["A parent asks for your private number", "Keep the conversation in platform messages", "Moving routine communication off-platform"],
-            ["A student shares a concerning experience", "Listen calmly and report the facts promptly", "Promising secrecy or conducting your own investigation"],
-            ["You need lesson context", "Request only information relevant to teaching", "Collecting or storing unnecessary personal details"],
+            [
+              "A parent asks for your private number",
+              "Keep the conversation in platform messages",
+              "Moving routine communication off-platform",
+            ],
+            [
+              "A student shares a concerning experience",
+              "Listen calmly and report the facts promptly",
+              "Promising secrecy or conducting your own investigation",
+            ],
+            [
+              "You need lesson context",
+              "Request only information relevant to teaching",
+              "Collecting or storing unnecessary personal details",
+            ],
           ],
         },
         {
@@ -154,31 +336,57 @@ export const tutorAcademyCourse: AcademyCourse = {
       slug: "excellent-lessons",
       section: "Teaching well",
       title: "Delivering an Excellent Lesson",
-      summary: "Prepare with purpose, create active learning, and close with evidence of understanding.",
+      summary:
+        "Prepare with purpose, create active learning, and close with evidence of understanding.",
       durationMinutes: 8,
       blocks: [
         {
           type: "carousel",
           heading: "A dependable lesson rhythm",
           items: [
-            { eyebrow: "Before", title: "Prepare one useful outcome", body: "Review the request and available learning context. Decide what the student should understand or be able to do by the end." },
-            { eyebrow: "During", title: "Make thinking visible", body: "Explain in manageable steps, model expert thinking, and ask the learner to retrieve, apply, and explain—not only listen." },
-            { eyebrow: "After", title: "Check and connect", body: "Confirm what is secure, what still needs work, and the smallest useful action before the next lesson." },
+            {
+              eyebrow: "Before",
+              title: "Prepare one useful outcome",
+              body: "Review the request and available learning context. Decide what the student should understand or be able to do by the end.",
+            },
+            {
+              eyebrow: "During",
+              title: "Make thinking visible",
+              body: "Explain in manageable steps, model expert thinking, and ask the learner to retrieve, apply, and explain—not only listen.",
+            },
+            {
+              eyebrow: "After",
+              title: "Check and connect",
+              body: "Confirm what is secure, what still needs work, and the smallest useful action before the next lesson.",
+            },
           ],
         },
         {
           type: "numbered-list",
           heading: "Four habits of active teaching",
           items: [
-            { title: "Diagnose before explaining", body: "Use a short question or example to find the actual gap." },
-            { title: "Model, then release", body: "Move from worked example to supported attempt to independent attempt." },
-            { title: "Check beyond yes or no", body: "Ask the student to explain, compare, predict, or solve a fresh example." },
-            { title: "Respond to evidence", body: "Slow down, change representation, or revisit a prerequisite when the evidence requires it." },
+            {
+              title: "Diagnose before explaining",
+              body: "Use a short question or example to find the actual gap.",
+            },
+            {
+              title: "Model, then release",
+              body: "Move from worked example to supported attempt to independent attempt.",
+            },
+            {
+              title: "Check beyond yes or no",
+              body: "Ask the student to explain, compare, predict, or solve a fresh example.",
+            },
+            {
+              title: "Respond to evidence",
+              body: "Slow down, change representation, or revisit a prerequisite when the evidence requires it.",
+            },
           ],
         },
         {
           type: "quote",
-          quote: "A busy lesson is not automatically a productive lesson. Look for changed understanding.",
+          quote:
+            "A busy lesson is not automatically a productive lesson. Look for changed understanding.",
           attribution: "ScienceDojo lesson standard",
         },
       ],
@@ -187,7 +395,8 @@ export const tutorAcademyCourse: AcademyCourse = {
       slug: "keeping-learning-moving",
       section: "Teaching well",
       title: "Keeping Learning Moving",
-      summary: "Turn lessons into useful records, focused practice, and progress that families can understand.",
+      summary:
+        "Turn lessons into useful records, focused practice, and progress that families can understand.",
       durationMinutes: 6,
       blocks: [
         {
@@ -203,9 +412,21 @@ export const tutorAcademyCourse: AcademyCourse = {
           heading: "Useful records are specific",
           columns: ["Record", "Too vague", "More useful"],
           rows: [
-            ["Summary", "We covered algebra", "Solved linear equations; sign changes remain the main source of errors"],
-            ["Homework", "Practise more", "Complete five mixed equations and explain each inverse operation"],
-            ["Next lesson", "Continue topic", "Check independent accuracy, then introduce equations with brackets"],
+            [
+              "Summary",
+              "We covered algebra",
+              "Solved linear equations; sign changes remain the main source of errors",
+            ],
+            [
+              "Homework",
+              "Practise more",
+              "Complete five mixed equations and explain each inverse operation",
+            ],
+            [
+              "Next lesson",
+              "Continue topic",
+              "Check independent accuracy, then introduce equations with brackets",
+            ],
           ],
         },
         {
@@ -220,24 +441,41 @@ export const tutorAcademyCourse: AcademyCourse = {
       slug: "using-the-platform",
       section: "Working on ScienceDojo",
       title: "Using the ScienceDojo Platform",
-      summary: "Manage your profile, availability, bookings, messages, classroom work, and support requests confidently.",
+      summary:
+        "Manage your profile, availability, bookings, messages, classroom work, and support requests confidently.",
       durationMinutes: 7,
       blocks: [
         {
           type: "image",
           src: "/images/home/8.professional-online-teacher.jpg",
           alt: "A professional tutor preparing for an online session",
-          caption: "A reliable platform routine helps families trust the learning experience.",
+          caption:
+            "A reliable platform routine helps families trust the learning experience.",
         },
         {
           type: "accordion",
           heading: "Your essential workflow",
           items: [
-            { title: "Profile and availability", body: "Keep your subjects, experience, introduction, rates, and requestable times accurate. Only publish slots you can reliably honour." },
-            { title: "Lesson requests", body: "Review the learner's context before accepting. Accept promptly when the request is a strong fit; ask for clarification or decline when it is not." },
-            { title: "Messages", body: "Use messages for concise, professional lesson communication. Keep scheduling, resources, and decisions in the platform record." },
-            { title: "Classroom and lesson records", body: "Join prepared, use the built-in classroom tools responsibly, and complete the lesson summary and next steps promptly." },
-            { title: "Changes and support", body: "Communicate unavoidable changes early and use dashboard support when a booking, payment, safety, or technical issue needs help." },
+            {
+              title: "Profile and availability",
+              body: "Keep your subjects, experience, introduction, rates, and requestable times accurate. Only publish slots you can reliably honour.",
+            },
+            {
+              title: "Lesson requests",
+              body: "Review the learner's context before accepting. Accept promptly when the request is a strong fit; ask for clarification or decline when it is not.",
+            },
+            {
+              title: "Messages",
+              body: "Use messages for concise, professional lesson communication. Keep scheduling, resources, and decisions in the platform record.",
+            },
+            {
+              title: "Classroom and lesson records",
+              body: "Join prepared, use the built-in classroom tools responsibly, and complete the lesson summary and next steps promptly.",
+            },
+            {
+              title: "Changes and support",
+              body: "Communicate unavoidable changes early and use dashboard support when a booking, payment, safety, or technical issue needs help.",
+            },
           ],
         },
         {
@@ -252,31 +490,57 @@ export const tutorAcademyCourse: AcademyCourse = {
       slug: "payments-reviews-and-growth",
       section: "Working on ScienceDojo",
       title: "Payments, Reviews and Tutor Growth",
-      summary: "Understand professional platform conduct and the habits that build lasting family trust.",
+      summary:
+        "Understand professional platform conduct and the habits that build lasting family trust.",
       durationMinutes: 6,
       blocks: [
         {
           type: "numbered-list",
           heading: "Build a dependable tutor practice",
           items: [
-            { title: "Keep bookings and payments on-platform", body: "This protects the tutor, family, learning record, and support process. Do not arrange private payment for ScienceDojo introductions." },
-            { title: "Earn trust through consistency", body: "Be punctual, prepared, honest about fit, and reliable with follow-up. These habits matter more than promotional language." },
-            { title: "Use feedback professionally", body: "Reviews and support feedback are opportunities to improve. Never pressure a family for a positive review or dispute feedback directly with a student." },
-            { title: "Grow within your strengths", body: "Keep your profile accurate, expand availability sustainably, and accept subjects and levels you can teach confidently." },
+            {
+              title: "Keep bookings and payments on-platform",
+              body: "This protects the tutor, family, learning record, and support process. Do not arrange private payment for ScienceDojo introductions.",
+            },
+            {
+              title: "Earn trust through consistency",
+              body: "Be punctual, prepared, honest about fit, and reliable with follow-up. These habits matter more than promotional language.",
+            },
+            {
+              title: "Use feedback professionally",
+              body: "Reviews and support feedback are opportunities to improve. Never pressure a family for a positive review or dispute feedback directly with a student.",
+            },
+            {
+              title: "Grow within your strengths",
+              body: "Keep your profile accurate, expand availability sustainably, and accept subjects and levels you can teach confidently.",
+            },
           ],
         },
         {
           type: "carousel",
           heading: "What families remember",
           items: [
-            { eyebrow: "Clarity", title: "They knew what was happening", body: "Expectations, explanations, booking decisions, and next steps were easy to understand." },
-            { eyebrow: "Care", title: "The learner felt respected", body: "The tutor was patient, curious, and attentive without lowering expectations." },
-            { eyebrow: "Consistency", title: "The experience felt dependable", body: "Sessions started prepared, records were completed, and communication stayed professional." },
+            {
+              eyebrow: "Clarity",
+              title: "They knew what was happening",
+              body: "Expectations, explanations, booking decisions, and next steps were easy to understand.",
+            },
+            {
+              eyebrow: "Care",
+              title: "The learner felt respected",
+              body: "The tutor was patient, curious, and attentive without lowering expectations.",
+            },
+            {
+              eyebrow: "Consistency",
+              title: "The experience felt dependable",
+              body: "Sessions started prepared, records were completed, and communication stayed professional.",
+            },
           ],
         },
         {
           type: "quote",
-          quote: "Your expertise opens the door. Reliability and care are what make families want to continue.",
+          quote:
+            "Your expertise opens the door. Reliability and care are what make families want to continue.",
           attribution: "ScienceDojo tutor success principle",
         },
       ],
@@ -292,29 +556,37 @@ export const tutorAcademyCourse: AcademyCourse = {
         { id: "c", label: "Only a high homework score" },
       ],
       correctOptionId: "b",
-      explanation: "Our lesson standard prioritises changed understanding, confidence, and a focused next step.",
+      explanation:
+        "Our lesson standard prioritises changed understanding, confidence, and a focused next step.",
     },
     {
       id: "communication",
-      prompt: "A parent asks to move routine lesson communication to your personal messaging account. What should you do?",
+      prompt:
+        "A parent asks to move routine lesson communication to your personal messaging account. What should you do?",
       options: [
         { id: "a", label: "Agree if the parent requests it" },
         { id: "b", label: "Share your number only for cancellations" },
         { id: "c", label: "Keep the conversation in ScienceDojo messages" },
       ],
       correctOptionId: "c",
-      explanation: "Platform communication preserves professional boundaries, visibility, and support records.",
+      explanation:
+        "Platform communication preserves professional boundaries, visibility, and support records.",
     },
     {
       id: "concern",
-      prompt: "A student shares information that raises a safeguarding concern. What is the best response?",
+      prompt:
+        "A student shares information that raises a safeguarding concern. What is the best response?",
       options: [
-        { id: "a", label: "Listen calmly, record the facts, and report promptly" },
+        {
+          id: "a",
+          label: "Listen calmly, record the facts, and report promptly",
+        },
         { id: "b", label: "Promise to keep it secret" },
         { id: "c", label: "Investigate by contacting other people" },
       ],
       correctOptionId: "a",
-      explanation: "Tutors should respond calmly and report concerns, not promise secrecy or investigate independently.",
+      explanation:
+        "Tutors should respond calmly and report concerns, not promise secrecy or investigate independently.",
     },
     {
       id: "diagnose",
@@ -325,7 +597,8 @@ export const tutorAcademyCourse: AcademyCourse = {
         { id: "c", label: "Ask whether they understand" },
       ],
       correctOptionId: "b",
-      explanation: "A short diagnostic question helps the tutor respond to evidence rather than assumptions.",
+      explanation:
+        "A short diagnostic question helps the tutor respond to evidence rather than assumptions.",
     },
     {
       id: "check",
@@ -333,10 +606,14 @@ export const tutorAcademyCourse: AcademyCourse = {
       options: [
         { id: "a", label: "Do you understand?" },
         { id: "b", label: "Was that easy?" },
-        { id: "c", label: "Explain the method and apply it to a fresh example" },
+        {
+          id: "c",
+          label: "Explain the method and apply it to a fresh example",
+        },
       ],
       correctOptionId: "c",
-      explanation: "Explanation and transfer provide stronger evidence than a yes-or-no response.",
+      explanation:
+        "Explanation and transfer provide stronger evidence than a yes-or-no response.",
     },
     {
       id: "record",
@@ -344,10 +621,14 @@ export const tutorAcademyCourse: AcademyCourse = {
       options: [
         { id: "a", label: "Covered algebra" },
         { id: "b", label: "Good lesson" },
-        { id: "c", label: "Solved linear equations; sign changes remain the main error" },
+        {
+          id: "c",
+          label: "Solved linear equations; sign changes remain the main error",
+        },
       ],
       correctOptionId: "c",
-      explanation: "Specific evidence helps the learner, family, and tutor understand what should happen next.",
+      explanation:
+        "Specific evidence helps the learner, family, and tutor understand what should happen next.",
     },
     {
       id: "practice",
@@ -358,18 +639,24 @@ export const tutorAcademyCourse: AcademyCourse = {
         { id: "c", label: "It introduces several unrelated topics" },
       ],
       correctOptionId: "b",
-      explanation: "Focused practice should reinforce the specific understanding or habit the learner needs next.",
+      explanation:
+        "Focused practice should reinforce the specific understanding or habit the learner needs next.",
     },
     {
       id: "request",
       prompt: "When should you accept a lesson request?",
       options: [
         { id: "a", label: "Whenever the time is free" },
-        { id: "b", label: "After checking that the subject, level, and learner need are a strong fit" },
+        {
+          id: "b",
+          label:
+            "After checking that the subject, level, and learner need are a strong fit",
+        },
         { id: "c", label: "Only after moving the conversation off-platform" },
       ],
       correctOptionId: "b",
-      explanation: "Reviewing the context protects lesson quality and sets honest expectations for the family.",
+      explanation:
+        "Reviewing the context protects lesson quality and sets honest expectations for the family.",
     },
     {
       id: "payments",
@@ -380,18 +667,24 @@ export const tutorAcademyCourse: AcademyCourse = {
         { id: "c", label: "Whichever method the tutor prefers" },
       ],
       correctOptionId: "a",
-      explanation: "On-platform payment protects the tutor, family, records, and support process.",
+      explanation:
+        "On-platform payment protects the tutor, family, records, and support process.",
     },
     {
       id: "reviews",
       prompt: "What is the professional response to feedback?",
       options: [
         { id: "a", label: "Pressure the family to change it" },
-        { id: "b", label: "Use it constructively and contact support if formal help is needed" },
+        {
+          id: "b",
+          label:
+            "Use it constructively and contact support if formal help is needed",
+        },
         { id: "c", label: "Message the student to dispute it" },
       ],
       correctOptionId: "b",
-      explanation: "Feedback should support improvement; concerns should be handled through the platform's support process.",
+      explanation:
+        "Feedback should support improvement; concerns should be handled through the platform's support process.",
     },
   ],
 };
@@ -399,7 +692,11 @@ export const tutorAcademyCourse: AcademyCourse = {
 export const emptyAcademyProgress: AcademyProgress = {
   completedLessons: [],
   startedLessons: [],
+  completedLessonIds: [],
+  startedLessonIds: [],
   currentLesson: null,
+  currentLessonId: null,
+  completedBlockIds: [],
   quizAttempts: 0,
   bestScore: 0,
   completedAt: null,
@@ -407,7 +704,14 @@ export const emptyAcademyProgress: AcademyProgress = {
 };
 
 export type AcademyProgressState = "unstarted" | "started" | "completed";
-export type AcademyProgressCourse = Pick<AcademyCourse, "lessons" | "quizRevision">;
+export type AcademyProgressCourse = Pick<
+  AcademyCourse,
+  "lessons" | "quizRevision" | "rules"
+>;
+
+function courseRequiresFinalAssessment(course: AcademyProgressCourse) {
+  return course.rules?.requireFinalAssessment !== false;
+}
 
 function getPassedQuizRevision(progress: AcademyProgress) {
   return Math.max(progress.passedQuizRevision, progress.completedAt ? 1 : 0);
@@ -416,68 +720,151 @@ function getPassedQuizRevision(progress: AcademyProgress) {
 export function getAcademyLessonProgressState(
   progress: AcademyProgress,
   lessonSlug: string,
+  lessonId?: string,
 ): AcademyProgressState {
-  if (progress.completedLessons.includes(lessonSlug)) return "completed";
-  if (progress.startedLessons.includes(lessonSlug)) return "started";
+  const completed =
+    lessonId && progress.completedLessonIds.length
+      ? progress.completedLessonIds.includes(lessonId)
+      : progress.completedLessons.includes(lessonSlug);
+  const started =
+    Boolean(lessonId && progress.startedLessonIds.includes(lessonId)) ||
+    progress.startedLessons.includes(lessonSlug);
+  if (completed) return "completed";
+  if (started) return "started";
   return "unstarted";
 }
 
-export function getAcademyQuizProgressState(progress: AcademyProgress, course: AcademyProgressCourse = tutorAcademyCourse): AcademyProgressState {
-  if (getPassedQuizRevision(progress) >= (course.quizRevision || 1)) return "completed";
+export function getAcademyQuizProgressState(
+  progress: AcademyProgress,
+  course: AcademyProgressCourse = tutorAcademyCourse,
+): AcademyProgressState {
+  if (getPassedQuizRevision(progress) >= (course.quizRevision || 1))
+    return "completed";
   if (progress.quizAttempts > 0) return "started";
   return "unstarted";
 }
 
-export function getAcademyLesson(slug: string, course: AcademyCourse = tutorAcademyCourse) {
+export function getAcademyLesson(
+  slug: string,
+  course: AcademyCourse = tutorAcademyCourse,
+) {
   return course.lessons.find((lesson) => lesson.slug === slug) || null;
 }
 
-export function getAcademyLessonIndex(slug: string, course: AcademyCourse = tutorAcademyCourse) {
+export function getAcademyLessonIndex(
+  slug: string,
+  course: AcademyCourse = tutorAcademyCourse,
+) {
   return course.lessons.findIndex((lesson) => lesson.slug === slug);
 }
 
-export function isAcademyCourseComplete(progress: AcademyProgress, course: AcademyProgressCourse = tutorAcademyCourse) {
-  return course.lessons.every((lesson) => progress.completedLessons.includes(lesson.slug))
-    && getPassedQuizRevision(progress) >= (course.quizRevision || 1);
+export function isAcademyCourseComplete(
+  progress: AcademyProgress,
+  course: AcademyProgressCourse = tutorAcademyCourse,
+) {
+  const lessonsComplete = course.lessons.every(
+    (lesson) =>
+      getAcademyLessonProgressState(progress, lesson.slug, lesson.id) ===
+      "completed",
+  );
+  return (
+    lessonsComplete &&
+    (!courseRequiresFinalAssessment(course) ||
+      getPassedQuizRevision(progress) >= (course.quizRevision || 1))
+  );
 }
 
-export function getAcademyResumeHref(progress: AcademyProgress, course: AcademyCourse = tutorAcademyCourse, basePath = "/dashboard/tutor/academy") {
-  if (isAcademyCourseComplete(progress, course)) return `${basePath}/lessons/${course.lessons[0].slug}`;
+export function getAcademyResumeHref(
+  progress: AcademyProgress,
+  course: AcademyCourse = tutorAcademyCourse,
+  basePath = "/dashboard/tutor/academy",
+) {
+  if (isAcademyCourseComplete(progress, course))
+    return `${basePath}/lessons/${course.lessons[0].slug}`;
 
-  const currentLesson = progress.currentLesson && getAcademyLesson(progress.currentLesson, course);
+  const currentLesson = progress.currentLessonId
+    ? course.lessons.find((lesson) => lesson.id === progress.currentLessonId)
+    : progress.currentLesson &&
+      getAcademyLesson(progress.currentLesson, course);
   if (currentLesson) return `${basePath}/lessons/${currentLesson.slug}`;
 
   const firstIncomplete = course.lessons.find(
-    (lesson) => !progress.completedLessons.includes(lesson.slug),
+    (lesson) =>
+      getAcademyLessonProgressState(progress, lesson.slug, lesson.id) !==
+      "completed",
   );
   return firstIncomplete
     ? `${basePath}/lessons/${firstIncomplete.slug}`
-    : `${basePath}/quiz`;
+    : courseRequiresFinalAssessment(course)
+      ? `${basePath}/quiz`
+      : basePath;
 }
 
-export function getAcademyProgressPercent(progress: AcademyProgress, course: AcademyProgressCourse = tutorAcademyCourse) {
-  const completed = course.lessons.filter((lesson) =>
-    progress.completedLessons.includes(lesson.slug),
+export function getAcademyProgressPercent(
+  progress: AcademyProgress,
+  course: AcademyProgressCourse = tutorAcademyCourse,
+) {
+  const completed = course.lessons.filter(
+    (lesson) =>
+      getAcademyLessonProgressState(progress, lesson.slug, lesson.id) ===
+      "completed",
   ).length;
-  const totalSteps = course.lessons.length + 1;
-  return Math.round(((completed + (getPassedQuizRevision(progress) >= (course.quizRevision || 1) ? 1 : 0)) / totalSteps) * 100);
+  const includesAssessment = courseRequiresFinalAssessment(course);
+  const totalSteps = course.lessons.length + (includesAssessment ? 1 : 0);
+  if (!totalSteps) return 0;
+  const assessmentComplete =
+    includesAssessment &&
+    getPassedQuizRevision(progress) >= (course.quizRevision || 1)
+      ? 1
+      : 0;
+  return Math.round(((completed + assessmentComplete) / totalSteps) * 100);
 }
 
-export function scoreTutorAcademyQuiz(answers: Record<string, string>, course: AcademyCourse = tutorAcademyCourse) {
+export function scoreTutorAcademyQuiz(
+  answers: Record<string, string | string[]>,
+  course: AcademyCourse = tutorAcademyCourse,
+) {
+  const graded = course.quiz.filter(
+    (question) => question.type !== "reflection",
+  );
   const results = course.quiz.map((question) => ({
     questionId: question.id,
-    correct: answers[question.id] === question.correctOptionId,
+    correct:
+      question.type === "reflection"
+        ? true
+        : question.type === "multiple-response"
+          ? [
+              ...(Array.isArray(answers[question.id])
+                ? answers[question.id]
+                : [String(answers[question.id] || "")]),
+            ]
+              .sort()
+              .join("|") ===
+            [...(question.correctOptionIds || [])].sort().join("|")
+          : answers[question.id] === question.correctOptionId,
     correctOptionId: question.correctOptionId,
     explanation: question.explanation,
   }));
-  const correctCount = results.filter((result) => result.correct).length;
-  const score = Math.round((correctCount / course.quiz.length) * 100);
-  return { score, passed: score >= (course.passMark || TUTOR_ACADEMY_PASS_MARK), results };
+  const gradedResults = results.filter((result) =>
+    graded.some((question) => question.id === result.questionId),
+  );
+  const correctCount = gradedResults.filter((result) => result.correct).length;
+  const score = gradedResults.length
+    ? Math.round((correctCount / gradedResults.length) * 100)
+    : 100;
+  return {
+    score,
+    passed: score >= (course.passMark || TUTOR_ACADEMY_PASS_MARK),
+    results,
+  };
 }
 
-export function getPublicQuizQuestions(course: AcademyCourse = tutorAcademyCourse) {
+export function getPublicQuizQuestions(
+  course: AcademyCourse = tutorAcademyCourse,
+) {
   return course.quiz.map((question) => ({
     id: question.id,
+    type: question.type || "single-choice",
     prompt: question.prompt,
     options: question.options,
   }));

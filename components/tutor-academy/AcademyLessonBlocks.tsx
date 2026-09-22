@@ -1,7 +1,21 @@
 import Image from "next/image";
-import { Check, Lightbulb, ShieldCheck } from "lucide-react";
+import {
+  Check,
+  ExternalLink,
+  FileText,
+  Lightbulb,
+  ShieldCheck,
+} from "lucide-react";
 import type { LessonBlock } from "@/lib/tutor-academy";
 import AcademyCarousel from "./AcademyCarousel";
+import AcademyRichText from "./AcademyRichText";
+import AcademyMath from "./AcademyMath";
+import {
+  AcademyAccordion,
+  AcademyFlashcards,
+  AcademyKnowledgeCheck,
+  AcademyTabs,
+} from "./AcademyInteractiveBlocks";
 
 const calloutClasses = {
   blue: "border-[#AFC8E7] bg-[#F1F6FC] text-[#173A63]",
@@ -10,42 +24,106 @@ const calloutClasses = {
   navy: "border-[#1E5AA8] bg-[#EDF4FB] text-[#173A63]",
 };
 
-export default function AcademyLessonBlocks({ blocks }: { blocks: LessonBlock[] }) {
+export default function AcademyLessonBlocks({
+  blocks,
+  courseKey,
+}: {
+  blocks: LessonBlock[];
+  courseKey?: string;
+}) {
   return (
     <div className="space-y-14">
       {blocks.map((block, blockIndex) => {
         if (block.type === "text") {
+          if (block.content)
+            return (
+              <section key={block.id || blockIndex}>
+                <AcademyRichText document={block.content} />
+              </section>
+            );
           return (
             <section key={blockIndex} className="space-y-5">
-              {block.heading && <h2 className="text-[28px] font-bold leading-9 tracking-[-0.02em] text-[#101010] sm:text-[32px] sm:leading-10">{block.heading}</h2>}
+              {block.heading && (
+                <h2 className="text-[28px] font-bold leading-9 tracking-[-0.02em] text-[#101010] sm:text-[32px] sm:leading-10">
+                  {block.heading}
+                </h2>
+              )}
               {block.paragraphs.map((paragraph) => (
-                <p key={paragraph} className="font-[family-name:var(--font-academy-serif)] text-[17px] leading-[30px] text-[#36373A] sm:leading-[33px]">{paragraph}</p>
+                <p
+                  key={paragraph}
+                  className="font-[family-name:var(--font-academy-serif)] text-[17px] leading-[30px] text-[#36373A] sm:leading-[33px]"
+                >
+                  {paragraph}
+                </p>
               ))}
             </section>
           );
         }
 
         if (block.type === "image") {
+          const widthClass =
+            block.width === "reading"
+              ? "w-full"
+              : block.width === "full"
+                ? "relative left-1/2 w-screen -translate-x-1/2"
+                : "relative left-1/2 w-[calc(100vw-48px)] max-w-[1000px] -translate-x-1/2 lg:w-[calc(100vw-328px)]";
+          const aspectClass =
+            block.aspect === "square"
+              ? "aspect-square"
+              : block.aspect === "landscape"
+                ? "aspect-[4/3]"
+                : "aspect-[16/9]";
           return (
-            <figure key={blockIndex} className="relative left-1/2 w-[calc(100vw-48px)] max-w-[1000px] -translate-x-1/2 overflow-hidden border border-[#DEDFE1] bg-white lg:w-[calc(100vw-328px)]">
-              <div className="relative aspect-[16/9] w-full bg-slate-100">
-                <Image src={block.src} alt={block.alt} fill sizes="(max-width: 1024px) 100vw, 900px" className="object-cover" />
+            <figure
+              key={block.id || blockIndex}
+              className={`${widthClass} overflow-hidden border border-[#DEDFE1] bg-white`}
+            >
+              <div className={`relative ${aspectClass} w-full bg-slate-100`}>
+                {block.src ? (
+                  <Image
+                    src={block.src}
+                    alt={block.decorative ? "" : block.alt}
+                    fill
+                    sizes="(max-width: 1024px) 100vw, 1000px"
+                    className="object-cover"
+                    style={{ objectPosition: block.focalPoint || "center" }}
+                  />
+                ) : (
+                  <div className="flex h-full items-center justify-center text-sm font-bold text-[#717376]">
+                    Choose an image
+                  </div>
+                )}
               </div>
-              {block.caption && <figcaption className="px-5 py-3 font-[family-name:var(--font-academy-serif)] text-[13px] leading-6 text-[#717376]">{block.caption}</figcaption>}
+              {block.caption && (
+                <figcaption className="px-5 py-3 font-[family-name:var(--font-academy-serif)] text-[13px] leading-6 text-[#717376]">
+                  {block.caption}
+                </figcaption>
+              )}
             </figure>
           );
         }
 
         if (block.type === "callout") {
           return (
-            <aside key={blockIndex} className={`border-l-4 p-6 sm:p-7 ${calloutClasses[block.tone]}`}>
+            <aside
+              key={blockIndex}
+              className={`border-l-4 p-6 sm:p-7 ${calloutClasses[block.tone]}`}
+            >
               <div className="flex items-start gap-4">
                 <span className="mt-0.5 inline-flex h-9 w-9 shrink-0 items-center justify-center text-[#1E5AA8]">
-                  {block.tone === "amber" ? <ShieldCheck size={21} /> : <Lightbulb size={21} />}
+                  {block.tone === "amber" ? (
+                    <ShieldCheck size={21} />
+                  ) : (
+                    <Lightbulb size={21} />
+                  )}
                 </span>
                 <div>
-                  <h2 className="text-xl font-bold tracking-[-0.01em]">{block.heading}</h2>
-                  <p className="mt-2 font-[family-name:var(--font-academy-serif)] text-[15px] leading-7 opacity-80">{block.body}</p>
+                  <h2 className="text-xl font-bold tracking-[-0.01em]">
+                    {block.heading}
+                  </h2>
+                  <p className="mt-2 font-[family-name:var(--font-academy-serif)] text-[15px] leading-7 opacity-80">
+                    {block.body}
+                  </p>
                 </div>
               </div>
             </aside>
@@ -55,13 +133,28 @@ export default function AcademyLessonBlocks({ blocks }: { blocks: LessonBlock[] 
         if (block.type === "numbered-list") {
           return (
             <section key={blockIndex}>
-              {block.heading && <h2 className="mb-6 text-[28px] font-bold leading-9 tracking-[-0.02em] text-[#101010] sm:text-[32px] sm:leading-10">{block.heading}</h2>}
+              {block.heading && (
+                <h2 className="mb-6 text-[28px] font-bold leading-9 tracking-[-0.02em] text-[#101010] sm:text-[32px] sm:leading-10">
+                  {block.heading}
+                </h2>
+              )}
               <ol className="border-t border-[#DEDFE1]">
                 {block.items.map((item, index) => (
-                  <li key={item.title} className="grid grid-cols-[44px_1fr] gap-4 border-b border-[#DEDFE1] py-6">
-                    <span className="inline-flex h-9 w-9 items-center justify-center rounded-full border-2 border-[#1E5AA8] text-sm font-bold text-[#1E5AA8]">{index + 1}</span>
-                    <div><h3 className="text-lg font-bold text-[#252629]">{item.title}</h3>
-                    <p className="mt-2 font-[family-name:var(--font-academy-serif)] text-[15px] leading-7 text-[#4A4B4E]">{item.body}</p></div>
+                  <li
+                    key={item.title}
+                    className="grid grid-cols-[44px_1fr] gap-4 border-b border-[#DEDFE1] py-6"
+                  >
+                    <span className="inline-flex h-9 w-9 items-center justify-center rounded-full border-2 border-[#1E5AA8] text-sm font-bold text-[#1E5AA8]">
+                      {index + 1}
+                    </span>
+                    <div>
+                      <h3 className="text-lg font-bold text-[#252629]">
+                        {item.title}
+                      </h3>
+                      <p className="mt-2 font-[family-name:var(--font-academy-serif)] text-[15px] leading-7 text-[#4A4B4E]">
+                        {item.body}
+                      </p>
+                    </div>
                   </li>
                 ))}
               </ol>
@@ -72,18 +165,17 @@ export default function AcademyLessonBlocks({ blocks }: { blocks: LessonBlock[] 
         if (block.type === "accordion") {
           return (
             <section key={blockIndex}>
-              {block.heading && <h2 className="mb-6 text-[28px] font-bold leading-9 tracking-[-0.02em] text-[#101010] sm:text-[32px] sm:leading-10">{block.heading}</h2>}
-              <div className="border-y border-[#DEDFE1] bg-white">
-                {block.items.map((item, index) => (
-                  <details key={item.title} className="group" open={index === 0}>
-                    <summary className="flex cursor-pointer list-none items-center justify-between gap-4 border-b border-[#DEDFE1] px-1 py-5 font-bold text-[#252629] outline-none hover:text-[#1E5AA8] focus-visible:ring-2 focus-visible:ring-[#1E5AA8]">
-                      <span>{item.title}</span>
-                      <span className="text-xl text-primary transition-transform group-open:rotate-45" aria-hidden="true">+</span>
-                    </summary>
-                    <p className="border-b border-[#DEDFE1] px-1 pb-6 font-[family-name:var(--font-academy-serif)] text-[15px] leading-7 text-[#4A4B4E]">{item.body}</p>
-                  </details>
-                ))}
-              </div>
+              {block.heading && (
+                <h2 className="mb-6 text-[28px] font-bold leading-9 tracking-[-0.02em] text-[#101010] sm:text-[32px] sm:leading-10">
+                  {block.heading}
+                </h2>
+              )}
+              <AcademyAccordion
+                items={block.items}
+                courseKey={courseKey}
+                blockId={block.id}
+                completion={block.completion}
+              />
             </section>
           );
         }
@@ -91,45 +183,392 @@ export default function AcademyLessonBlocks({ blocks }: { blocks: LessonBlock[] 
         if (block.type === "carousel") {
           return (
             <section key={blockIndex}>
-              {block.heading && <h2 className="mb-6 text-[28px] font-bold leading-9 tracking-[-0.02em] text-[#101010] sm:text-[32px] sm:leading-10">{block.heading}</h2>}
-              <AcademyCarousel items={block.items} />
+              {block.heading && (
+                <h2 className="mb-6 text-[28px] font-bold leading-9 tracking-[-0.02em] text-[#101010] sm:text-[32px] sm:leading-10">
+                  {block.heading}
+                </h2>
+              )}
+              <AcademyCarousel
+                items={block.items}
+                courseKey={courseKey}
+                blockId={block.id}
+                completion={block.completion}
+              />
             </section>
           );
         }
 
         if (block.type === "quote") {
           return (
-            <figure key={blockIndex} className="border-y border-[#DEDFE1] py-9 sm:px-8">
-              <blockquote className="font-[family-name:var(--font-academy-serif)] text-2xl font-bold leading-[1.55] text-[#252629] sm:text-[28px]">“{block.quote}”</blockquote>
-              <figcaption className="mt-5 text-[11px] font-bold uppercase tracking-[0.16em] text-[#1E5AA8]">— {block.attribution}</figcaption>
+            <figure
+              key={blockIndex}
+              className="border-y border-[#DEDFE1] py-9 sm:px-8"
+            >
+              <blockquote className="font-[family-name:var(--font-academy-serif)] text-2xl font-bold leading-[1.55] text-[#252629] sm:text-[28px]">
+                “{block.quote}”
+              </blockquote>
+              <figcaption className="mt-5 text-[11px] font-bold uppercase tracking-[0.16em] text-[#1E5AA8]">
+                — {block.attribution}
+              </figcaption>
             </figure>
           );
         }
 
-        return (
-          <section key={blockIndex}>
-            {block.heading && <h2 className="mb-6 text-[28px] font-bold leading-9 tracking-[-0.02em] text-[#101010] sm:text-[32px] sm:leading-10">{block.heading}</h2>}
-            <div className="overflow-x-auto border border-[#DEDFE1] bg-white">
-              <table className="min-w-[42rem] w-full border-collapse text-left">
-                <thead className="bg-[#F3F3F3] text-[#252629]">
-                  <tr>{block.columns.map((column) => <th key={column} className="border-b border-[#DEDFE1] px-5 py-4 text-xs font-bold uppercase tracking-[0.1em]">{column}</th>)}</tr>
-                </thead>
-                <tbody className="divide-y divide-secondary/8">
-                  {block.rows.map((row, rowIndex) => (
-                    <tr key={rowIndex} className="align-top">
-                      {row.map((cell, cellIndex) => (
-                        <td key={cellIndex} className={`px-5 py-4 text-sm leading-6 ${cellIndex === 0 ? "font-bold text-[#252629]" : "font-[family-name:var(--font-academy-serif)] text-[#4A4B4E]"}`}>
-                          {cellIndex > 0 && <Check size={15} className="mr-2 inline text-[#1E5AA8]" aria-hidden="true" />}{cell}
-                        </td>
+        if (block.type === "divider") {
+          return (
+            <div
+              key={block.id || blockIndex}
+              className="flex items-center gap-4 py-3"
+              role="separator"
+            >
+              <span className="h-px flex-1 bg-[#DEDFE1]" />
+              {block.label ? (
+                <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#717376]">
+                  {block.label}
+                </span>
+              ) : null}
+              <span className="h-px flex-1 bg-[#DEDFE1]" />
+            </div>
+          );
+        }
+
+        if (block.type === "gallery") {
+          return (
+            <section key={block.id || blockIndex}>
+              {block.heading ? (
+                <h2 className="mb-6 text-[28px] font-bold sm:text-[32px]">
+                  {block.heading}
+                </h2>
+              ) : null}
+              <div
+                className={`grid gap-4 ${block.columns === 3 ? "sm:grid-cols-3" : "sm:grid-cols-2"}`}
+              >
+                {block.items.map((item, index) => (
+                  <figure
+                    key={item.id || index}
+                    className="overflow-hidden border border-[#DEDFE1] bg-white"
+                  >
+                    <div className="relative aspect-[4/3] bg-slate-100">
+                      {item.src ? (
+                        <Image
+                          src={item.src}
+                          alt={item.alt || ""}
+                          fill
+                          sizes="(max-width: 640px) 100vw, 360px"
+                          className="object-cover"
+                        />
+                      ) : null}
+                    </div>
+                    {item.caption ? (
+                      <figcaption className="p-3 text-sm text-[#717376]">
+                        {item.caption}
+                      </figcaption>
+                    ) : null}
+                  </figure>
+                ))}
+              </div>
+            </section>
+          );
+        }
+
+        if (block.type === "tabs") {
+          return (
+            <section key={block.id || blockIndex}>
+              {block.heading ? (
+                <h2 className="mb-6 text-[28px] font-bold sm:text-[32px]">
+                  {block.heading}
+                </h2>
+              ) : null}
+              <AcademyTabs
+                items={block.items}
+                courseKey={courseKey}
+                blockId={block.id}
+                completion={block.completion}
+              />
+            </section>
+          );
+        }
+
+        if (block.type === "flashcards") {
+          return (
+            <section key={block.id || blockIndex}>
+              {block.heading ? (
+                <h2 className="mb-6 text-[28px] font-bold sm:text-[32px]">
+                  {block.heading}
+                </h2>
+              ) : null}
+              <AcademyFlashcards
+                items={block.items}
+                courseKey={courseKey}
+                blockId={block.id}
+                completion={block.completion}
+              />
+            </section>
+          );
+        }
+
+        if (block.type === "process") {
+          return (
+            <section key={block.id || blockIndex}>
+              {block.heading ? (
+                <h2 className="mb-7 text-[28px] font-bold sm:text-[32px]">
+                  {block.heading}
+                </h2>
+              ) : null}
+              <ol className="relative ml-4 border-l-2 border-[#AFC8E7]">
+                {block.items.map((item, index) => (
+                  <li
+                    key={item.id || index}
+                    className="relative pb-8 pl-8 last:pb-0"
+                  >
+                    <span className="absolute -left-[17px] top-0 inline-flex h-8 w-8 items-center justify-center rounded-full bg-[#1E5AA8] text-xs font-bold text-white">
+                      {index + 1}
+                    </span>
+                    <h3 className="text-lg font-bold text-[#252629]">
+                      {item.title}
+                    </h3>
+                    <p className="mt-2 font-[family-name:var(--font-academy-serif)] text-[15px] leading-7 text-[#4A4B4E]">
+                      {item.body}
+                    </p>
+                  </li>
+                ))}
+              </ol>
+            </section>
+          );
+        }
+
+        if (block.type === "resources") {
+          return (
+            <section key={block.id || blockIndex}>
+              {block.heading ? (
+                <h2 className="mb-6 text-[28px] font-bold sm:text-[32px]">
+                  {block.heading}
+                </h2>
+              ) : null}
+              <div className="divide-y divide-[#DEDFE1] border-y border-[#DEDFE1]">
+                {block.items.map((item, index) => (
+                  <a
+                    key={item.id || index}
+                    href={item.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex items-center gap-4 py-5 text-[#252629] hover:text-[#1E5AA8]"
+                  >
+                    <FileText className="shrink-0 text-[#1E5AA8]" />
+                    <span className="min-w-0 flex-1">
+                      <strong className="block">{item.title}</strong>
+                      {item.description ? (
+                        <span className="mt-1 block text-sm font-normal text-[#717376]">
+                          {item.description}
+                        </span>
+                      ) : null}
+                    </span>
+                    <ExternalLink size={17} />
+                  </a>
+                ))}
+              </div>
+            </section>
+          );
+        }
+
+        if (block.type === "video" || block.type === "audio") {
+          const embed = getAcademyEmbedUrl(block.type, block.url);
+          return (
+            <section key={block.id || blockIndex}>
+              {block.heading ? (
+                <h2 className="mb-6 text-[28px] font-bold sm:text-[32px]">
+                  {block.heading}
+                </h2>
+              ) : null}
+              {embed ? (
+                <iframe
+                  src={embed}
+                  title={block.heading || `${block.type} content`}
+                  className={
+                    block.type === "video"
+                      ? "aspect-video w-full border-0"
+                      : "h-40 w-full border-0"
+                  }
+                  allow={
+                    block.type === "video"
+                      ? "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      : "autoplay; clipboard-write; encrypted-media"
+                  }
+                  allowFullScreen={block.type === "video"}
+                />
+              ) : (
+                <div className="border border-amber-200 bg-amber-50 p-5 text-sm font-semibold text-amber-950">
+                  This media URL is not from an approved provider.
+                </div>
+              )}
+              {block.caption ? (
+                <p className="mt-3 text-sm text-[#717376]">{block.caption}</p>
+              ) : null}
+              {block.transcript ? (
+                <details className="mt-4 border-y border-[#DEDFE1] py-4">
+                  <summary className="cursor-pointer font-bold text-[#1E5AA8]">
+                    Read transcript
+                  </summary>
+                  <p className="mt-3 whitespace-pre-wrap font-[family-name:var(--font-academy-serif)] text-[15px] leading-7 text-[#4A4B4E]">
+                    {block.transcript}
+                  </p>
+                </details>
+              ) : null}
+            </section>
+          );
+        }
+
+        if (block.type === "worked-example") {
+          return (
+            <section
+              key={block.id || blockIndex}
+              className="border border-[#DEDFE1] bg-[#FAFAFA] p-6 sm:p-8"
+            >
+              {block.heading ? (
+                <h2 className="text-[28px] font-bold sm:text-[32px]">
+                  {block.heading}
+                </h2>
+              ) : null}
+              <p className="mt-5 font-[family-name:var(--font-academy-serif)] text-[17px] leading-8">
+                {block.problem}
+              </p>
+              {block.latex ? (
+                <div className="mt-5 overflow-x-auto border border-[#DEDFE1] bg-white p-4 text-lg text-[#173A63]">
+                  <AcademyMath latex={block.latex} display />
+                </div>
+              ) : null}
+              <ol className="mt-6 space-y-4">
+                {block.steps.map((step, index) => (
+                  <li
+                    key={step.id || index}
+                    className="grid grid-cols-[32px_1fr] gap-3"
+                  >
+                    <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-[#1E5AA8] text-xs font-bold text-white">
+                      {index + 1}
+                    </span>
+                    <div>
+                      <strong>{step.title}</strong>
+                      <p className="mt-1 text-sm leading-6 text-[#4A4B4E]">
+                        {step.body}
+                      </p>
+                    </div>
+                  </li>
+                ))}
+              </ol>
+              <div className="mt-6 border-l-4 border-emerald-600 bg-emerald-50 p-4">
+                <strong>Answer</strong>
+                <p className="mt-1 text-sm leading-6">{block.answer}</p>
+              </div>
+            </section>
+          );
+        }
+
+        if (block.type === "knowledge-check") {
+          return (
+            <section key={block.id || blockIndex}>
+              {block.heading ? (
+                <h2 className="mb-6 text-[28px] font-bold sm:text-[32px]">
+                  {block.heading}
+                </h2>
+              ) : null}
+              <AcademyKnowledgeCheck
+                question={block.question}
+                courseKey={courseKey}
+                blockId={block.id}
+                completion={block.completion}
+              />
+            </section>
+          );
+        }
+
+        if (block.type === "comparison-table")
+          return (
+            <section key={blockIndex}>
+              {block.heading && (
+                <h2 className="mb-6 text-[28px] font-bold leading-9 tracking-[-0.02em] text-[#101010] sm:text-[32px] sm:leading-10">
+                  {block.heading}
+                </h2>
+              )}
+              <div className="overflow-x-auto border border-[#DEDFE1] bg-white">
+                <table className="min-w-[42rem] w-full border-collapse text-left">
+                  <thead className="bg-[#F3F3F3] text-[#252629]">
+                    <tr>
+                      {block.columns.map((column) => (
+                        <th
+                          key={column}
+                          className="border-b border-[#DEDFE1] px-5 py-4 text-xs font-bold uppercase tracking-[0.1em]"
+                        >
+                          {column}
+                        </th>
                       ))}
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </section>
-        );
+                  </thead>
+                  <tbody className="divide-y divide-secondary/8">
+                    {block.rows.map((row, rowIndex) => (
+                      <tr key={rowIndex} className="align-top">
+                        {row.map((cell, cellIndex) => (
+                          <td
+                            key={cellIndex}
+                            className={`px-5 py-4 text-sm leading-6 ${cellIndex === 0 ? "font-bold text-[#252629]" : "font-[family-name:var(--font-academy-serif)] text-[#4A4B4E]"}`}
+                          >
+                            {cellIndex > 0 && (
+                              <Check
+                                size={15}
+                                className="mr-2 inline text-[#1E5AA8]"
+                                aria-hidden="true"
+                              />
+                            )}
+                            {cell}
+                          </td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          );
+
+        return null;
       })}
     </div>
   );
+}
+
+function getAcademyEmbedUrl(type: "video" | "audio", value: string) {
+  try {
+    const url = new URL(value);
+    if (
+      type === "video" &&
+      (url.hostname === "youtube.com" ||
+        url.hostname === "www.youtube.com" ||
+        url.hostname === "youtu.be")
+    ) {
+      const id =
+        url.hostname === "youtu.be"
+          ? url.pathname.slice(1)
+          : url.searchParams.get("v") || url.pathname.split("/").pop();
+      return id
+        ? `https://www.youtube.com/embed/${encodeURIComponent(id)}`
+        : null;
+    }
+    if (
+      type === "video" &&
+      (url.hostname === "vimeo.com" ||
+        url.hostname === "www.vimeo.com" ||
+        url.hostname === "player.vimeo.com")
+    ) {
+      const id = url.pathname.split("/").filter(Boolean).pop();
+      return id
+        ? `https://player.vimeo.com/video/${encodeURIComponent(id)}`
+        : null;
+    }
+    if (type === "audio" && url.hostname.endsWith("spotify.com"))
+      return `https://open.spotify.com/embed${url.pathname.replace(/^\/embed/, "")}`;
+    if (type === "audio" && url.hostname.endsWith("soundcloud.com"))
+      return `https://w.soundcloud.com/player/?url=${encodeURIComponent(value)}`;
+  } catch {
+    return null;
+  }
+  return null;
 }

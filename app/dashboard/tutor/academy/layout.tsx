@@ -23,7 +23,7 @@ export default async function TutorAcademyLayout({ children }: { children: React
   if (!course) redirect("/dashboard/tutor/academy");
   const progress = await getTutorAcademyProgress(course.key);
   const basePath = course.key === tutorAcademyCourse.key ? "/dashboard/tutor/academy" : `/dashboard/tutor/academy/courses/${course.key}`;
-  const navigationCourse = { key: course.key, shortTitle: course.shortTitle, heroImage: course.heroImage, lessons: course.lessons, quizRevision: course.quizRevision };
+  const navigationCourse = { key: course.key, shortTitle: course.shortTitle, heroImage: course.heroImage, lessons: course.lessons, quizRevision: course.quizRevision, rules: course.rules };
 
   return (
     <div className={`${academySerif.variable} h-full min-h-0 bg-white text-[#101010]`}>

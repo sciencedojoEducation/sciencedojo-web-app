@@ -2,7 +2,14 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
 
 function normalizeDashboardRole(role?: unknown) {
-  return role === "user" || role === "admin" || role === "tutor" || role === "parent" || role === "student" || role === "internal" ? role : null;
+  return role === "user" ||
+    role === "admin" ||
+    role === "tutor" ||
+    role === "parent" ||
+    role === "student" ||
+    role === "internal"
+    ? role
+    : null;
 }
 
 export default async function AdminDashboardLayout({
@@ -11,7 +18,9 @@ export default async function AdminDashboardLayout({
   children: React.ReactNode;
 }) {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
   if (!user) {
     redirect("/login");
@@ -24,10 +33,10 @@ export default async function AdminDashboardLayout({
     .maybeSingle();
 
   const profileRole = normalizeDashboardRole(profile?.role);
-  const metadataRole = normalizeDashboardRole(user.user_metadata?.role);
-
-  if (profileRole !== "admin" && metadataRole !== "admin") {
-    redirect(`/dashboard/${profileRole || metadataRole || "user"}`);
+  if (profileRole !== "admin") {
+    redirect(
+      `/dashboard/${profileRole || normalizeDashboardRole(user.user_metadata?.role) || "user"}`,
+    );
   }
 
   return <>{children}</>;
