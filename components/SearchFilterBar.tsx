@@ -45,7 +45,7 @@ export default function SearchFilterBar({ variant = "default" }: { variant?: "de
     router.replace(queryString ? `${pathname}?${queryString}` : pathname, { scroll: false });
   };
 
-  const subjects = ["All", "Science", "Math", "Physics", "Chemistry", "Biology", "Programming"];
+  const subjects = ["All", "Science", "Math", "Physics", "Chemistry", "Biology", "Programming", "English"];
 
   const isCompact = variant === "compact";
 

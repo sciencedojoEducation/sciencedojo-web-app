@@ -119,7 +119,7 @@ export function DashboardMenuBadge({
     <span
       aria-label={`${count} pending ${label.toLowerCase()}`}
       title={`${count} pending ${label.toLowerCase()}`}
-      className="min-w-[1.4rem] rounded-full bg-red-500 px-2 py-0.5 text-center text-[10px] font-black text-white shadow-lg shadow-red-500/20 animate-in zoom-in duration-300"
+      className="min-w-[1.4rem] rounded-full bg-red-600 px-2 py-0.5 text-center text-[10px] font-bold text-white"
     >
       {displayCount}
     </span>

@@ -1,5 +1,6 @@
 import katex from "katex";
 import type { ReactNode } from "react";
+import { normalizeMalformedLatexCommands } from "@/lib/math-notation";
 
 type MathTextProps = {
   text: string;
@@ -42,7 +43,7 @@ function findNextDelimiter(text: string, startIndex: number) {
 }
 
 function normalizeMathTextInput(text: string) {
-  return text
+  return normalizeMalformedLatexCommands(text)
     .replace(/\$begin:math:text\$/g, "\\(")
     .replace(/\$end:math:text\$/g, "\\)")
     .replace(/\$begin:math:display\$/g, "\\[")

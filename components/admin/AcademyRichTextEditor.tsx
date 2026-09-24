@@ -148,27 +148,28 @@ export default function AcademyRichTextEditor({
   ];
   return (
     <div
-      className={`relative bg-transparent ${active ? "ring-2 ring-primary/10" : ""}`}
+      className={`min-w-0 bg-transparent ${active ? "ring-2 ring-primary/10" : ""}`}
     >
       {active ? (
-      <div
-        role="toolbar"
-        aria-label="Text formatting"
-        className="absolute -top-14 left-1/2 z-30 flex max-w-[calc(100vw-3rem)] -translate-x-1/2 gap-1 overflow-x-auto rounded-xl border border-secondary/15 bg-white p-1.5 shadow-xl motion-reduce:transition-none"
-      >
-        {buttons.map(({ label, icon: Icon, active, run }) => (
-          <button
-            key={label}
-            type="button"
-            onClick={run}
-            aria-label={label}
-            aria-pressed={active}
-            className={`inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-primary ${active ? "bg-primary text-white" : "text-secondary/55 hover:bg-slate-100"}`}
-          >
-            <Icon size={16} />
-          </button>
-        ))}
-      </div>
+        <div
+          role="toolbar"
+          aria-label="Text formatting"
+          className="mb-4 inline-flex min-h-14 w-fit max-w-full items-center gap-1 overflow-x-auto rounded-xl border border-secondary/15 bg-white p-1.5 align-top shadow-sm"
+        >
+          {buttons.map(({ label, icon: Icon, active, run }) => (
+            <button
+              key={label}
+              type="button"
+              onMouseDown={(event) => event.preventDefault()}
+              onClick={run}
+              aria-label={label}
+              aria-pressed={active}
+              className={`inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-primary ${active ? "bg-[#163D73] text-white ring-2 ring-inset ring-[#0E2D59]" : "text-secondary/55 hover:bg-slate-100 active:bg-slate-200"}`}
+            >
+              <Icon size={16} />
+            </button>
+          ))}
+        </div>
       ) : null}
       <div
         className={

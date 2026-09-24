@@ -6,7 +6,7 @@ import AcademyCourseCover from "@/components/tutor-academy/AcademyCourseCover";
 import AcademyLessonBlocks from "@/components/tutor-academy/AcademyLessonBlocks";
 import AcademyLessonHeader from "@/components/tutor-academy/AcademyLessonHeader";
 import AcademyThemeScope from "@/components/tutor-academy/AcademyThemeScope";
-import { getAcademyCourseDraft } from "@/lib/academy-courses";
+import { getAcademyCourseDraft, getAcademySnapshotContent } from "@/lib/academy-courses";
 import { emptyAcademyProgress } from "@/lib/tutor-academy";
 
 const academySerif = Merriweather({
@@ -20,13 +20,18 @@ export default async function AcademyDraftPreviewPage({
   searchParams,
 }: {
   params: Promise<{ courseKey: string }>;
-  searchParams: Promise<{ view?: string; lesson?: string }>;
+  searchParams: Promise<{ view?: string; lesson?: string; snapshot?: string }>;
 }) {
   const [{ courseKey }, query] = await Promise.all([params, searchParams]);
   const record = await getAcademyCourseDraft(courseKey);
   if (!record) notFound();
 
-  const course = record.draft;
+  const course = query.snapshot
+    ? record.id
+      ? await getAcademySnapshotContent(record.id, query.snapshot)
+      : null
+    : record.draft;
+  if (!course) notFound();
   const view =
     query.view === "quiz" || query.view === "lesson" ? query.view : "cover";
   const lesson =
@@ -36,6 +41,7 @@ export default async function AcademyDraftPreviewPage({
   const previewHref = (nextView: "cover" | "lesson" | "quiz", slug?: string) => {
     const search = new URLSearchParams({ view: nextView });
     if (slug) search.set("lesson", slug);
+    if (query.snapshot) search.set("snapshot", query.snapshot);
     return `/dashboard/admin/academy/${course.key}/preview?${search.toString()}`;
   };
 
@@ -45,7 +51,7 @@ export default async function AcademyDraftPreviewPage({
       className={`${academySerif.variable} min-h-screen bg-white text-[#101010]`}
     >
       <div className="sticky top-0 z-30 flex min-h-9 items-center justify-center border-b border-amber-200 bg-amber-50 px-4 text-center text-[9px] font-black uppercase tracking-[0.14em] text-amber-900">
-        Admin draft preview · interactions stay in preview and are not saved as learner progress
+        {query.snapshot ? "Snapshot preview" : "Admin draft preview"} · interactions stay in preview and are not saved as learner progress
       </div>
 
       {view === "cover" ? (

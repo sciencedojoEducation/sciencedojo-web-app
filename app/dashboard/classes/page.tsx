@@ -3,6 +3,7 @@ import { getClassesForUser } from "@/lib/class-queries";
 import ClassCard from "@/components/ClassCard";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { Archive, BookOpen } from "lucide-react";
 
 export default async function ClassesPage({ searchParams }: { searchParams: Promise<{ archived?: string }> }) {
   const { archived } = await searchParams;
@@ -19,7 +20,38 @@ export default async function ClassesPage({ searchParams }: { searchParams: Prom
     .single();
 
   const role = profile?.role || "student";
+  const isStudent = role === "student";
   const classes = await getClassesForUser(user.id, isArchivedView);
+
+  if (isStudent) {
+    return (
+      <main className="dashboard-home mx-auto max-w-7xl space-y-6 px-3 py-5 sm:px-4 md:p-8">
+        <header className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="text-sm font-semibold text-[#4f53a5]">Your learning spaces</p>
+            <h1 className="mt-1 text-3xl font-semibold tracking-tight text-slate-900">My Classes</h1>
+            <p className="mt-2 text-sm text-slate-600">{classes.length} {isArchivedView ? "archived" : "active"} class{classes.length === 1 ? "" : "es"}</p>
+          </div>
+          <nav aria-label="Class status" className="flex min-h-11 w-fit rounded-xl border border-slate-200 bg-white p-1">
+            <Link href="/dashboard/classes" aria-current={!isArchivedView ? "page" : undefined} className={`flex min-h-10 items-center rounded-lg px-4 text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4f53a5] ${!isArchivedView ? "bg-[#eeefff] text-[#4f53a5]" : "text-slate-600 hover:bg-slate-50"}`}>Active</Link>
+            <Link href="/dashboard/classes?archived=true" aria-current={isArchivedView ? "page" : undefined} className={`flex min-h-10 items-center rounded-lg px-4 text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4f53a5] ${isArchivedView ? "bg-[#eeefff] text-[#4f53a5]" : "text-slate-600 hover:bg-slate-50"}`}>Archived</Link>
+          </nav>
+        </header>
+        {classes.length > 0 ? (
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {classes.map(cls => <ClassCard key={cls.id} classRoom={cls} currentUserId={user.id} currentUserRole={role} />)}
+          </div>
+        ) : (
+          <section className="rounded-xl border border-slate-200 bg-white p-6 sm:p-8">
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#eeefff] text-[#4f53a5]">{isArchivedView ? <Archive size={20} /> : <BookOpen size={20} />}</div>
+            <h2 className="mt-4 text-lg font-semibold text-slate-900">{isArchivedView ? "No archived classes" : "No classes yet"}</h2>
+            <p className="mt-1 max-w-lg text-sm leading-6 text-slate-600">{isArchivedView ? "Classes you finish will appear here for reference." : "When a lesson is confirmed, its class space will appear here with your tutor and learning history."}</p>
+            {!isArchivedView && <Link href="/dashboard/student/tutors" className="mt-5 inline-flex min-h-11 items-center rounded-xl bg-[#1E5AA8] px-5 text-sm font-semibold text-white hover:bg-[#174a8b] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4f53a5] focus-visible:ring-offset-2">Find a tutor</Link>}
+          </section>
+        )}
+      </main>
+    );
+  }
 
   return (
     <div className="mx-auto max-w-7xl space-y-6 px-3 py-5 sm:px-4 md:space-y-10 md:p-8">
@@ -59,7 +91,7 @@ export default async function ClassesPage({ searchParams }: { searchParams: Prom
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6 lg:grid-cols-3 xl:grid-cols-4">
         {classes.map(cls => (
-          <ClassCard key={cls.id} classRoom={cls as any} currentUserId={user.id} currentUserRole={role} />
+          <ClassCard key={cls.id} classRoom={cls} currentUserId={user.id} currentUserRole={role} />
         ))}
         {classes.length === 0 && (
           <div className="col-span-full mt-2 rounded-[1.5rem] border border-dashed border-secondary/10 bg-white p-8 text-center md:mt-6 md:rounded-[2rem] md:border-2 md:p-16">

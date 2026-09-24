@@ -348,50 +348,44 @@ export default async function ParentDashboard() {
   ];
 
   return (
-    <div className="px-3 py-5 sm:p-6 md:p-8 max-w-5xl mx-auto space-y-5 md:space-y-10">
-      {/* Platform Announcements Hub */}
-      {(announcements.length > 0 || platformAnnouncements.length > 0) && (
-         <AnnouncementFeed announcements={announcements} platformAnnouncements={platformAnnouncements} />
-      )}
-
-      <section data-tour="parent-welcome" className="rounded-[1.5rem] border border-primary/[0.07] bg-gradient-to-br from-white via-[#fbfdff] to-[#f4f9ff] p-4 sm:p-5 md:rounded-[2.25rem] md:p-7">
+    <div data-role="parent" className="dashboard-home mx-auto max-w-5xl space-y-5 px-3 py-5 sm:p-6 md:p-8">
+      <section data-tour="parent-welcome" className="dashboard-hero p-4 sm:p-5 md:p-7">
         <div className="grid gap-5 lg:grid-cols-[1fr_0.78fr] lg:items-stretch">
           <div>
-            <div className="inline-flex rounded-full border border-primary/10 bg-white px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.16em] text-primary shadow-sm">
+            <div className="dashboard-kicker">
               Learning Home
             </div>
-            <h1 className="mt-4 text-3xl font-black tracking-tight text-secondary sm:text-4xl">
+            <h1 className="dashboard-title mt-2 text-2xl sm:text-3xl">
               {studentName === "your child" ? "Your Child's Learning Journey" : `${studentName}'s Learning Journey`}
             </h1>
-            <p className="mt-3 max-w-2xl text-sm font-semibold leading-7 text-secondary/58">
+            <p className="dashboard-subtitle mt-2 max-w-2xl text-sm leading-6">
               A calm place to understand what is happening, who is helping, and what should happen next.
             </p>
             <div className="mt-5 grid gap-3 sm:grid-cols-3">
-              <div className="rounded-2xl bg-white/90 p-4 shadow-sm ring-1 ring-secondary/[0.05]">
-                <p className="text-[10px] font-black uppercase tracking-[0.14em] text-secondary/35">Current status</p>
-                <p className="mt-2 text-lg font-black text-secondary">{currentStatus}</p>
+              <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-4">
+                <p className="text-xs font-medium text-slate-600">Current status</p>
+                <p className="mt-1 text-base font-semibold text-secondary">{currentStatus}</p>
               </div>
-              <div className="rounded-2xl bg-white/90 p-4 shadow-sm ring-1 ring-secondary/[0.05]">
-                <p className="text-[10px] font-black uppercase tracking-[0.14em] text-secondary/35">Current focus</p>
-                <p className="mt-2 text-lg font-black text-secondary">{currentFocus}</p>
+              <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-4">
+                <p className="text-xs font-medium text-slate-600">Current focus</p>
+                <p className="mt-1 text-base font-semibold text-secondary">{currentFocus}</p>
               </div>
-              <div className="rounded-2xl bg-white/90 p-4 shadow-sm ring-1 ring-secondary/[0.05]">
-                <p className="text-[10px] font-black uppercase tracking-[0.14em] text-secondary/35">Next lesson</p>
-                <p className="mt-2 text-lg font-black text-secondary">{nextLessonTime}</p>
+              <div className="dashboard-role-soft rounded-xl p-4">
+                <p className="text-xs font-medium">Next lesson</p>
+                <p className="mt-1 text-base font-semibold">{nextLessonTime}</p>
                 <p className="mt-1 text-xs font-semibold leading-5 text-secondary/48">{nextLessonDetail}</p>
               </div>
             </div>
           </div>
 
-          <div className="rounded-[1.4rem] border border-primary/10 bg-white p-5 shadow-sm">
-            <p className="text-[10px] font-black uppercase tracking-[0.16em] text-primary/65">What it means</p>
-            <p className="mt-3 text-sm font-semibold leading-7 text-secondary/60">{statusMeaning}</p>
-            <div className="mt-5 rounded-2xl bg-primary/5 p-4">
-              <p className="text-[10px] font-black uppercase tracking-[0.14em] text-primary/65">Next recommended action</p>
-              <p className="mt-2 text-base font-black text-secondary">{recommendedAction.label}</p>
+          <div className="dashboard-priority p-5">
+            <p className="dashboard-kicker">Recommended next step</p>
+            <p className="dashboard-title mt-2 text-lg">{recommendedAction.label}</p>
+            <p className="dashboard-subtitle mt-2 text-sm leading-6">{statusMeaning}</p>
+            <div className="mt-4">
               <Link
                 href={recommendedAction.href}
-                className="mt-4 inline-flex min-h-11 w-full items-center justify-center rounded-2xl bg-secondary px-5 py-3 text-xs font-black uppercase tracking-[0.1em] text-white transition-colors hover:bg-secondary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                className="inline-flex min-h-11 w-full items-center justify-center rounded-xl bg-secondary px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-secondary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
               >
                 {recommendedAction.label}
               </Link>
@@ -400,7 +394,11 @@ export default async function ParentDashboard() {
         </div>
       </section>
 
-      <section className="rounded-[1.5rem] border border-secondary/10 bg-white p-4 shadow-sm sm:p-5 md:rounded-[2rem] md:p-6">
+      {(announcements.length > 0 || platformAnnouncements.length > 0) && (
+        <AnnouncementFeed announcements={announcements} platformAnnouncements={platformAnnouncements} />
+      )}
+
+      <section className="dashboard-panel p-4 sm:p-5 md:p-6">
         <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
           <div>
             <p className="text-[10px] font-black uppercase tracking-[0.16em] text-primary/65">Support team</p>
@@ -453,7 +451,7 @@ export default async function ParentDashboard() {
         )}
       </section>
 
-      <section className="rounded-[1.5rem] border border-secondary/10 bg-white p-4 shadow-sm sm:p-5 md:rounded-[2rem] md:p-6">
+      <section className="dashboard-panel p-4 sm:p-5 md:p-6">
         <div className="mb-5">
           <p className="text-[10px] font-black uppercase tracking-[0.16em] text-primary/65">What happens next</p>
           <h2 className="mt-2 text-2xl font-black text-secondary">A simple path through the learning journey</h2>
@@ -477,7 +475,7 @@ export default async function ParentDashboard() {
         </div>
       </section>
 
-      <section className="rounded-[1.5rem] border border-primary/[0.07] bg-white p-4 shadow-sm sm:p-5 md:rounded-[2rem] md:p-6">
+      <section className="dashboard-panel p-4 sm:p-5 md:p-6">
         <div className="mb-5">
           <p className="text-[10px] font-black uppercase tracking-[0.16em] text-primary/65">Recent learning activity</p>
           <h2 className="mt-2 text-2xl font-black text-secondary">What happened recently?</h2>
@@ -505,7 +503,7 @@ export default async function ParentDashboard() {
         <StudentProgressStats bookings={bookings} currentFocus={currentFocus} />
       </div>
 
-      <section id="parent-missions" className="rounded-[1.5rem] border border-primary/10 bg-white p-4 shadow-sm sm:p-5 md:rounded-[2.5rem] md:p-8">
+      <section id="parent-missions" className="dashboard-panel p-4 sm:p-5 md:p-6">
         <div className="mb-7 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
           <div>
             <p className="text-[10px] font-black uppercase tracking-[0.16em] text-primary/65">Learning between lessons</p>
@@ -571,7 +569,7 @@ export default async function ParentDashboard() {
 
       {/* SECURE PAYMENT REQUIRED (Accepted Handshake) */}
       {toPay.length > 0 && (
-        <section id="parent-confirm-booked-support" className="bg-primary/5 rounded-[1.5rem] p-4 border border-primary/20 shadow-sm md:rounded-[2.5rem] md:p-8 md:border-2 md:shadow-xl md:shadow-primary/5">
+        <section id="parent-confirm-booked-support" className="dashboard-priority p-4 md:p-6">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-5 md:mb-8">
             <h2 className="text-2xl font-black text-secondary flex items-center gap-4">
               <span className="p-2 bg-primary text-white rounded-xl">
@@ -581,13 +579,13 @@ export default async function ParentDashboard() {
               </span>
               Confirm booked support
             </h2>
-            <span className="text-xs font-black text-primary uppercase tracking-[0.2em] animate-pulse">Tutor accepted</span>
+            <span className="text-xs font-semibold text-primary">Tutor accepted</span>
           </div>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-8">
              {groupedToPay.map(group => {
                 const booking = group.mainBooking;
                 return (
-                <div key={group.id} className="bg-white p-4 rounded-[1.5rem] border border-primary/10 shadow-sm flex flex-col relative overflow-hidden group md:p-8 md:rounded-[2rem] md:shadow-lg">
+                <div key={group.id} className="group relative flex flex-col overflow-hidden rounded-xl border border-slate-200 bg-white p-4 md:p-6">
                    <div className="flex items-center gap-5 mb-6">
                       <div className="w-16 h-16 relative rounded-2xl overflow-hidden border-2 border-slate-50 shadow-md">
                          <Image src={booking.tutor_avatar || "/tutor_placeholder.webp"} alt="" fill className="object-cover" />

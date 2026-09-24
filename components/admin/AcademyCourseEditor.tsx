@@ -25,7 +25,7 @@ import {
   List,
   ListOrdered,
   Menu,
-  Monitor,
+  MessageSquare,
   Palette,
   Pencil,
   Plus,
@@ -34,12 +34,10 @@ import {
   Save,
   Search,
   Settings2,
-  Smartphone,
   SlidersHorizontal,
   Trash2,
   Sigma,
   Table2,
-  Tablet,
   Undo2,
   Upload,
   X,
@@ -49,19 +47,25 @@ import AcademyMath from "@/components/tutor-academy/AcademyMath";
 import AcademyBlockIcon from "@/components/admin/academy-builder/AcademyBlockIcon";
 import BlockInsertionTray from "@/components/admin/academy-builder/BlockInsertionTray";
 import AcademyMediaChooser from "@/components/admin/academy-builder/AcademyMediaChooser";
+import AcademyPreviewDevicePicker from "@/components/admin/academy-builder/AcademyPreviewDevicePicker";
 import AcademyRichTextEditor, {
   paragraphsToRichText,
 } from "@/components/admin/AcademyRichTextEditor";
 import {
   archiveAcademyCourse,
+  createAcademySnapshot,
+  inviteAcademyReviewer,
   deleteAcademyMedia,
   discardAcademyDraftV2,
   duplicateAcademyCourse,
   publishAcademyCourseV2,
   restoreAcademySnapshot,
+  revokeAcademyReviewInvitation,
   saveAcademyCourseDraft,
+  setAcademyReviewCommentResolved,
   uploadAcademyMedia,
   type AcademyAdminActionResult,
+  type AcademySnapshotResult,
 } from "@/app/dashboard/admin/academy/actions";
 import {
   academySlugify,
@@ -70,7 +74,7 @@ import {
   type AcademyValidationIssue,
 } from "@/lib/academy-course-validation";
 import AcademyThemeScope from "@/components/tutor-academy/AcademyThemeScope";
-import { academyAccentPalettes } from "@/lib/academy-theme";
+import { academyAccentPalettes, isAcademyJourneyPalette } from "@/lib/academy-theme";
 import {
   academyBlockRegistry,
   type AcademyBlockCategory,
@@ -81,6 +85,16 @@ import {
   migrateAcademyCourse,
 } from "@/lib/academy-schema";
 import { useAcademyEditorStore } from "@/lib/academy-editor-store";
+import { replaceAcademyCourseText } from "@/lib/academy-find-replace";
+import { academyRecipes, createAcademyRecipe, type AcademyRecipeKey } from "@/lib/academy-recipes";
+import type {
+  AcademyReviewComment,
+  AcademyReviewInvitation,
+} from "@/lib/academy-review";
+import {
+  academyPreviewDevices,
+  type AcademyPreviewDeviceId,
+} from "@/lib/academy-preview-devices";
 import {
   deleteAcademyRecoveryDraft,
   readAcademyRecoveryDraft,
@@ -101,6 +115,7 @@ type Snapshot = {
   draft_revision: number;
   schema_version: number;
   reason: string;
+  label: string | null;
   created_at: string;
   created_by: string | null;
 };
@@ -380,6 +395,8 @@ function DraggableBlockFrame({
   lessonId,
   index,
   selected,
+  editing,
+  activeSettingsTab,
   onSelect,
   onEdit,
   onMove,
@@ -389,6 +406,7 @@ function DraggableBlockFrame({
   onDuplicate,
   onDelete,
   onOpenSettings,
+  onOpenLayout,
   onApplyTextPreset,
   children,
 }: {
@@ -396,6 +414,8 @@ function DraggableBlockFrame({
   lessonId: string;
   index: number;
   selected: boolean;
+  editing: boolean;
+  activeSettingsTab: "content" | "design" | "accessibility" | "logic" | null;
   onSelect: () => void;
   onEdit: () => void;
   onMove: (from: number, to: number) => void;
@@ -407,6 +427,7 @@ function DraggableBlockFrame({
   onOpenSettings: (
     tab: "content" | "design" | "accessibility" | "logic",
   ) => void;
+  onOpenLayout: () => void;
   onApplyTextPreset: (preset: TextPreset) => void;
   children: React.ReactNode;
 }) {
@@ -429,6 +450,8 @@ function DraggableBlockFrame({
     "survey",
     "knowledge-check",
   ].includes(block.type);
+  const activeToolClass = "bg-[#163D73] text-white hover:bg-[#0E2D59]";
+  const idleToolClass = "text-secondary/45 hover:bg-slate-100 active:bg-slate-200";
   useEffect(() => {
     const element = ref.current;
     const handle = handleRef.current;
@@ -465,9 +488,9 @@ function DraggableBlockFrame({
         role="toolbar"
         aria-label={`${getAcademyBlockDefinition(block.type).label} block actions`}
         onClick={(event) => event.stopPropagation()}
-        className={`relative z-30 mb-4 min-h-14 max-w-full transition-opacity motion-reduce:transition-none ${selected ? "opacity-100" : "pointer-events-none opacity-0 group-hover:pointer-events-auto group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100"}`}
+        className={`relative z-30 mb-4 inline-block min-h-14 w-fit max-w-full align-top transition-opacity motion-reduce:transition-none ${selected ? "opacity-100" : "pointer-events-none opacity-0 group-hover:pointer-events-auto group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100"}`}
       >
-        <div className="flex max-w-full items-center gap-1 overflow-x-auto rounded-xl border border-secondary/15 bg-white p-1 shadow-sm">
+        <div className="flex w-fit max-w-full items-center gap-1 overflow-x-auto rounded-xl border border-secondary/15 bg-white p-1 shadow-sm">
           <span className="shrink-0 px-2 text-[10px] font-bold uppercase tracking-[0.08em] text-primary">
             {getAcademyBlockDefinition(block.type).label}
           </span>
@@ -492,20 +515,22 @@ function DraggableBlockFrame({
             <GripVertical size={16} />
           </button>
           <button
-            type="button"
-            onClick={onEdit}
-            aria-label={`Edit ${getAcademyBlockDefinition(block.type).label}`}
-            title="Edit content"
-            className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-secondary/45 outline-none hover:bg-slate-100 focus-visible:ring-2 focus-visible:ring-primary"
+          type="button"
+          onClick={onEdit}
+          aria-label={`Edit ${getAcademyBlockDefinition(block.type).label}`}
+          aria-pressed={editing || activeSettingsTab === "content"}
+          title="Edit content"
+          className={`inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-primary ${editing || activeSettingsTab === "content" ? activeToolClass : idleToolClass}`}
           >
             <Pencil size={16} />
           </button>
           <button
             type="button"
-            onClick={() => onOpenSettings("design")}
-            aria-label="Edit block design"
-            title="Design: style, surface and spacing"
-            className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-secondary/45 outline-none hover:bg-slate-100 focus-visible:ring-2 focus-visible:ring-primary"
+          onClick={() => onOpenSettings("design")}
+          aria-label="Edit block design"
+          aria-pressed={activeSettingsTab === "design"}
+          title="Design: style, surface and spacing"
+          className={`inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-primary ${activeSettingsTab === "design" ? activeToolClass : idleToolClass}`}
           >
             <Palette size={16} />
           </button>
@@ -513,14 +538,16 @@ function DraggableBlockFrame({
             <button
               ref={presetButtonRef}
               type="button"
-              onClick={() => {
-                onSelect();
-                setPresetOpen((value) => !value);
+            onClick={() => {
+              onSelect();
+              onOpenLayout();
+              setPresetOpen((value) => !value);
               }}
               aria-label="Change block layout"
               aria-expanded={presetOpen}
+              aria-pressed={presetOpen}
               title="Choose a text layout"
-              className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-secondary/45 outline-none hover:bg-slate-100 focus-visible:ring-2 focus-visible:ring-primary"
+              className={`inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-primary ${presetOpen ? activeToolClass : idleToolClass}`}
             >
               <Columns3 size={16} />
             </button>
@@ -539,8 +566,9 @@ function DraggableBlockFrame({
               type="button"
               onClick={() => onOpenSettings("logic")}
               aria-label="Edit block completion rules"
+              aria-pressed={activeSettingsTab === "logic"}
               title="Completion and interaction rules"
-              className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-secondary/45 outline-none hover:bg-slate-100 focus-visible:ring-2 focus-visible:ring-primary"
+              className={`inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-primary ${activeSettingsTab === "logic" ? activeToolClass : idleToolClass}`}
             >
               <SlidersHorizontal size={16} />
             </button>
@@ -1455,7 +1483,21 @@ function BlockVariantPreview({
       </span>
     );
   if (type === "process")
-    return variant === "slides" ? (
+    return variant === "build-up" ? (
+      <span
+        className="mt-2 block space-y-1 rounded border border-current/15 p-1.5"
+        aria-hidden="true"
+      >
+        {[1, 2, 3].map((number, index) => (
+          <span key={number} className="flex items-center gap-1.5">
+            <span className="grid h-2.5 w-2.5 shrink-0 place-items-center rounded-full bg-current text-[6px] font-bold text-white">
+              {number}
+            </span>
+            <span className={`h-1 flex-1 rounded bg-current ${index === 2 ? "opacity-10" : "opacity-25"}`} />
+          </span>
+        ))}
+      </span>
+    ) : variant === "slides" ? (
       <span
         className="mt-2 block rounded border border-current/15 p-1.5"
         aria-hidden="true"
@@ -2819,6 +2861,8 @@ export default function AcademyCourseEditor({
   mediaLibrary = [],
   initialRevision = 1,
   snapshots = [],
+  reviewInvitations = [],
+  reviewComments = [],
   initialLessonId,
   initialAssessmentOpen = false,
 }: {
@@ -2827,6 +2871,8 @@ export default function AcademyCourseEditor({
   mediaLibrary?: Media[];
   initialRevision?: number;
   snapshots?: Snapshot[];
+  reviewInvitations?: AcademyReviewInvitation[];
+  reviewComments?: AcademyReviewComment[];
   initialLessonId?: string;
   initialAssessmentOpen?: boolean;
 }) {
@@ -2842,8 +2888,14 @@ export default function AcademyCourseEditor({
   >([]);
   const [insertIndex, setInsertIndex] = useState<number | null>(null);
   const [inspectorOpen, setInspectorOpen] = useState(false);
+  const [editingTextBlockId, setEditingTextBlockId] = useState<string | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
+  const [reviewOpen, setReviewOpen] = useState(false);
+  const [invitations, setInvitations] = useState(reviewInvitations);
+  const [comments, setComments] = useState(reviewComments);
+  const [findReplaceOpen, setFindReplaceOpen] = useState(false);
+  const [snapshotEntries, setSnapshotEntries] = useState(snapshots);
   const [assessmentOpen, setAssessmentOpen] = useState(initialAssessmentOpen);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [readinessOpen, setReadinessOpen] = useState(false);
@@ -2876,6 +2928,11 @@ export default function AcademyCourseEditor({
   const selectedBlockId = useAcademyEditorStore(
     (state) => state.selectedBlockId,
   );
+  const inspectorTab = useAcademyEditorStore((state) => state.inspectorTab);
+  useEffect(() => {
+    if (editingTextBlockId && editingTextBlockId !== selectedBlockId)
+      setEditingTextBlockId(null);
+  }, [editingTextBlockId, selectedBlockId]);
   const saveState = useAcademyEditorStore((state) => state.saveState);
   const savedAt = useAcademyEditorStore((state) => state.savedAt);
   const message = useAcademyEditorStore((state) => state.message);
@@ -3079,6 +3136,15 @@ export default function AcademyCourseEditor({
     targetIndex = insertIndex ?? selectedLesson?.blocks.length ?? 0,
   ) =>
     insertCreatedBlock(getAcademyBlockDefinition(type).create(), targetIndex);
+  const insertRecipe = (key: AcademyRecipeKey) => {
+    if (!selectedLesson?.id) return;
+    const blocks = createAcademyRecipe(key);
+    const targetIndex = insertIndex ?? selectedLesson.blocks.length;
+    updateLesson((lesson) => lesson.blocks.splice(targetIndex, 0, ...blocks), `Insert ${academyRecipes.find((recipe) => recipe.key === key)?.title || "learning sequence"}`);
+    selectBlock(selectedLesson.id, blocks[0].id!);
+    setLibraryOpen(false);
+    setInsertIndex(null);
+  };
   const applyTextPreset = (block: LessonBlock, preset: TextPreset) => {
     if (block.type !== "text") return;
     if (
@@ -3253,6 +3319,24 @@ export default function AcademyCourseEditor({
             aria-label="Revision history"
           >
             <History size={18} />
+          </button>
+          <button
+            type="button"
+            onClick={() => setFindReplaceOpen(true)}
+            className="hidden p-2.5 text-secondary/55 outline-none hover:text-primary focus-visible:ring-2 focus-visible:ring-primary sm:block"
+            aria-label="Find and replace course text"
+            title="Find and replace course text"
+          >
+            <Search size={18} />
+          </button>
+          <button
+            type="button"
+            onClick={() => setReviewOpen(true)}
+            className="hidden p-2.5 text-secondary/55 outline-none hover:text-primary focus-visible:ring-2 focus-visible:ring-primary sm:block"
+            aria-label={`Course review comments${comments.filter((comment) => !comment.resolved_at).length ? `, ${comments.filter((comment) => !comment.resolved_at).length} open` : ""}`}
+            title="Course review comments"
+          >
+            <MessageSquare size={18} />
           </button>
           <button
             type="button"
@@ -4021,20 +4105,30 @@ export default function AcademyCourseEditor({
                           lessonId={selectedLesson.id!}
                           index={index}
                           selected={selectedBlock?.id === block.id}
+                          editing={editingTextBlockId === block.id}
+                          activeSettingsTab={
+                            inspectorOpen && selectedBlock?.id === block.id
+                              ? inspectorTab
+                              : null
+                          }
                           onSelect={() =>
                             selectBlock(selectedLesson.id!, block.id!)
                           }
                           onEdit={() => {
                             selectBlock(selectedLesson.id!, block.id!);
-                            if (block.type === "text")
-                              window.requestAnimationFrame(() =>
-                                globalThis.document
-                                  .querySelector<HTMLElement>(
-                                    `[data-block-id="${block.id}"] .ProseMirror`,
-                                  )
-                                  ?.focus(),
-                              );
-                            else {
+                            if (block.type === "text") {
+                              const opening = editingTextBlockId !== block.id;
+                              setEditingTextBlockId(opening ? block.id! : null);
+                              if (opening)
+                                window.requestAnimationFrame(() =>
+                                  globalThis.document
+                                    .querySelector<HTMLElement>(
+                                      `[data-block-id="${block.id}"] .ProseMirror`,
+                                    )
+                                    ?.focus(),
+                                );
+                            } else {
+                              setEditingTextBlockId(null);
                               setInspectorTab("content");
                               inspectorReturnFocusRef.current = globalThis
                                 .document.activeElement as HTMLElement | null;
@@ -4069,12 +4163,14 @@ export default function AcademyCourseEditor({
                             }
                           }}
                           onOpenSettings={(tab) => {
+                            setEditingTextBlockId(null);
                             selectBlock(selectedLesson.id!, block.id!);
                             setInspectorTab(tab);
                             inspectorReturnFocusRef.current = globalThis
                               .document.activeElement as HTMLElement | null;
                             setInspectorOpen(true);
                           }}
+                          onOpenLayout={() => setEditingTextBlockId(null)}
                           onApplyTextPreset={(preset) =>
                             applyTextPreset(block, preset)
                           }
@@ -4107,7 +4203,10 @@ export default function AcademyCourseEditor({
                                 onChange={(content) =>
                                   updateBlock({ ...block, content })
                                 }
-                                active={selectedBlock?.id === block.id}
+                                active={
+                                  selectedBlock?.id === block.id &&
+                                  editingTextBlockId === block.id
+                                }
                                 layout={block.layout || "single"}
                               />
                             </div>
@@ -4278,6 +4377,21 @@ export default function AcademyCourseEditor({
                 ))}
               </div>
               <div className="mt-3 min-h-0 flex-1 overflow-y-auto pr-1">
+                {libraryCategory === "All" && academyRecipes.some((recipe) => !librarySearch || `${recipe.title} ${recipe.description}`.toLowerCase().includes(librarySearch.toLowerCase())) ? (
+                  <section className="mb-6">
+                    <h3 className="mb-3 text-[10px] font-black uppercase tracking-[0.15em] text-secondary/40">Learning sequences</h3>
+                    <p className="mb-3 text-xs text-secondary/55">Insert three editable blocks together. Author notes must be replaced before publishing.</p>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      {academyRecipes.filter((recipe) => !librarySearch || `${recipe.title} ${recipe.description}`.toLowerCase().includes(librarySearch.toLowerCase())).map((recipe) => (
+                        <button key={recipe.key} type="button" onClick={() => insertRecipe(recipe.key)} className="min-h-28 rounded-xl border border-secondary/10 bg-[var(--academy-accent-soft,#eef4fb)] p-4 text-left outline-none hover:border-primary focus-visible:ring-2 focus-visible:ring-primary">
+                          <span className="flex gap-1.5" aria-hidden="true">{[1, 2, 3].map((number) => <span key={number} className="grid h-7 w-7 place-items-center rounded-full bg-primary text-[10px] font-bold text-white">{number}</span>)}</span>
+                          <strong className="mt-3 block text-sm text-secondary">{recipe.title}</strong>
+                          <span className="mt-1 block text-xs leading-5 text-secondary/55">{recipe.description}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </section>
+                ) : null}
                 {!librarySearch &&
                 libraryCategory === "All" &&
                 recentBlockTypes.length ? (
@@ -4404,14 +4518,88 @@ export default function AcademyCourseEditor({
       ) : null}
       {historyOpen ? (
         <HistoryModal
-          snapshots={snapshots}
+          snapshots={snapshotEntries}
+          courseKey={document.key}
           onClose={() => setHistoryOpen(false)}
+          onCreate={async (name) => {
+            if (!document.id)
+              return { ok: false, message: "Save the course before creating a snapshot." };
+            if (saveState !== "saved") {
+              const saved = await manualSave();
+              if (!saved.ok) return saved;
+            }
+            const created = await createAcademySnapshot(document.id, name);
+            if (created.snapshot)
+              setSnapshotEntries((current) => [created.snapshot!, ...current]);
+            return created;
+          }}
           onRestore={(snapshotId) => {
             if (!document.id) return;
+            if (!window.confirm("Restore this snapshot as the current draft? Your current draft will remain in the snapshot history.")) return;
             run(
               () => restoreAcademySnapshot(document.id!, snapshotId, revision),
               () => window.location.reload(),
             );
+          }}
+        />
+      ) : null}
+      {findReplaceOpen ? (
+        <AcademyFindReplaceModal
+          course={document}
+          onClose={() => setFindReplaceOpen(false)}
+          onApply={(search, replacement, caseSensitive) => {
+            command("Find and replace course text", (draft) => {
+              const result = replaceAcademyCourseText(
+                draft,
+                search,
+                replacement,
+                caseSensitive,
+              );
+              Object.assign(draft, result.course);
+            });
+            setFindReplaceOpen(false);
+          }}
+        />
+      ) : null}
+      {reviewOpen ? (
+        <AcademyReviewModal
+          courseId={document.id || null}
+          courseKey={document.key}
+          course={document}
+          snapshots={snapshotEntries}
+          invitations={invitations}
+          comments={comments}
+          onClose={() => setReviewOpen(false)}
+          onInvite={async (snapshotId, email) => {
+            if (!document.id) return { ok: false, message: "Save this course first." };
+            const result = await inviteAcademyReviewer(document.id, snapshotId, email);
+            if (result.invitation) setInvitations((current) => [result.invitation!, ...current]);
+            return result;
+          }}
+          onResolve={async (commentId, resolved) => {
+            if (!document.id) return { ok: false, message: "Save this course first." };
+            const result = await setAcademyReviewCommentResolved(document.id, commentId, resolved);
+            if (result.ok)
+              setComments((current) => current.map((comment) => comment.id === commentId ? { ...comment, resolved_at: resolved ? new Date().toISOString() : null } : comment));
+            return result;
+          }}
+          onRevoke={async (invitationId) => {
+            if (!document.id) return { ok: false, message: "Save this course first." };
+            const result = await revokeAcademyReviewInvitation(document.id, invitationId);
+            if (result.ok)
+              setInvitations((current) => current.map((invitation) => invitation.id === invitationId ? { ...invitation, revoked_at: new Date().toISOString() } : invitation));
+            return result;
+          }}
+          onNavigate={(lessonId, blockId) => {
+            setReviewOpen(false);
+            selectLesson(lessonId);
+            if (blockId) selectBlock(lessonId, blockId);
+            if (blockId)
+              window.requestAnimationFrame(() =>
+                globalThis.document
+                  .querySelector<HTMLElement>(`[data-block-id="${blockId}"]`)
+                  ?.scrollIntoView({ behavior: "smooth", block: "center" }),
+              );
           }}
         />
       ) : null}
@@ -4475,7 +4663,8 @@ function AcademyPreviewStudio({
   onClose: () => void;
   initialLessonSlug?: string;
 }) {
-  const [width, setWidth] = useState<1280 | 768 | 390>(1280);
+  const [deviceId, setDeviceId] = useState<AcademyPreviewDeviceId>("desktop");
+  const device = academyPreviewDevices.find((item) => item.id === deviceId)!;
   const [view, setView] = useState<"cover" | "lesson" | "quiz">(
     initialLessonSlug ? "lesson" : "cover",
   );
@@ -4500,29 +4689,7 @@ function AcademyPreviewStudio({
           </p>
           <p className="truncate text-sm font-black">{course.title}</p>
         </div>
-        <div
-          className="flex rounded-lg bg-black/25 p-1"
-          aria-label="Preview device"
-        >
-          {(
-            [
-              [1280, Monitor, "Desktop"],
-              [768, Tablet, "Tablet"],
-              [390, Smartphone, "Mobile"],
-            ] as const
-          ).map(([deviceWidth, Icon, label]) => (
-            <button
-              key={deviceWidth}
-              type="button"
-              onClick={() => setWidth(deviceWidth)}
-              aria-label={`${label} preview, ${deviceWidth} pixels`}
-              aria-pressed={width === deviceWidth}
-              className={`min-h-10 min-w-11 rounded-md p-2 ${width === deviceWidth ? "bg-white text-secondary" : "text-white/60 hover:text-white"}`}
-            >
-              <Icon size={17} />
-            </button>
-          ))}
-        </div>
+        <AcademyPreviewDevicePicker value={deviceId} onChange={setDeviceId} />
         <select
           value={view}
           onChange={(event) => setView(event.target.value as typeof view)}
@@ -4570,8 +4737,8 @@ function AcademyPreviewStudio({
           key={`${view}-${lessonSlug}`}
           title={`${course.title} ${view} preview`}
           src={`/dashboard/admin/academy/${course.key}/preview?${query.toString()}`}
-          className="h-full min-h-[640px] border-0 bg-white shadow-2xl transition-[width] duration-200 motion-reduce:transition-none"
-          style={{ width, minWidth: width }}
+          className="shrink-0 border-0 bg-white shadow-2xl transition-[width,height] duration-200 motion-reduce:transition-none"
+          style={{ width: device.width, height: device.height }}
         />
       </div>
     </div>
@@ -4845,6 +5012,12 @@ function ThemePreviewCard({ course }: { course: AcademyCourse }) {
           {course.description || "Your course description will appear here."}
         </p>
         <span className="mt-4 block h-1 w-16 bg-[var(--academy-accent)]" />
+        {course.theme?.preset === "journey" ? (
+          <div className="mt-5 flex items-center gap-3 rounded-xl bg-white p-3 text-xs font-bold text-[var(--academy-accent-ink)]">
+            <span className="grid h-9 w-9 place-items-center rounded-full bg-[var(--academy-spark)]">1</span>
+            <span>Learn a little · Try it · See your progress</span>
+          </div>
+        ) : null}
       </div>
     </AcademyThemeScope>
   );
@@ -5012,6 +5185,30 @@ function CourseSettingsModal({
           {tab === "theme" ? (
             <>
               <ThemePreviewCard course={course} />
+              <fieldset>
+                <legend className="mb-2 text-[10px] font-black uppercase tracking-[0.13em] text-secondary/45">Learning experience</legend>
+                <div className="grid grid-cols-2 gap-2">
+                  {([
+                    ["standard", "Standard", "Keep the current course presentation"],
+                    ["journey", "Learning Journey", "A vivid roadmap with short learning steps"],
+                  ] as const).map(([value, label, description]) => (
+                    <button
+                      key={value}
+                      type="button"
+                      aria-pressed={(course.theme?.preset === "journey") === (value === "journey")}
+                      onClick={() => onChange((draft) => {
+                        draft.theme!.preset = value === "journey" ? "journey" : "editorial";
+                        if (value === "journey" && !isAcademyJourneyPalette(draft.theme!.accent)) draft.theme!.accent = "blue-citrus";
+                        if (value === "standard" && isAcademyJourneyPalette(draft.theme!.accent)) draft.theme!.accent = "blue";
+                      }, "Change learning experience")}
+                      className={`min-h-20 rounded-xl border p-3 text-left outline-none focus-visible:ring-2 focus-visible:ring-primary ${(course.theme?.preset === "journey") === (value === "journey") ? "border-primary bg-primary/5" : "border-secondary/10 bg-white"}`}
+                    >
+                      <strong className="block text-xs">{label}</strong>
+                      <span className="mt-1 block text-[10px] leading-4 text-secondary/55">{description}</span>
+                    </button>
+                  ))}
+                </div>
+              </fieldset>
               <ThemeCardGroup
                 label="Cover layout"
                 value={course.theme?.coverStyle || "full-image"}
@@ -5097,7 +5294,7 @@ function CourseSettingsModal({
                   Accessible accent
                 </p>
                 <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                  {Object.entries(academyAccentPalettes).map(
+                  {Object.entries(academyAccentPalettes).filter(([key]) => course.theme?.preset === "journey" ? isAcademyJourneyPalette(key) : !isAcademyJourneyPalette(key)).map(
                     ([key, palette]) => (
                       <button
                         key={key}
@@ -5111,10 +5308,10 @@ function CourseSettingsModal({
                         }
                         className={`min-h-16 rounded-xl border p-3 text-left text-xs font-black ${course.theme?.accent === key ? "border-secondary ring-2 ring-secondary/10" : "border-secondary/10"}`}
                       >
-                        <span
-                          className="mb-2 block h-5 rounded"
-                          style={{ backgroundColor: palette.accent }}
-                        />
+                        <span className="mb-2 flex h-5 overflow-hidden rounded">
+                          <span className="h-full w-2/3" style={{ backgroundColor: palette.accent }} />
+                          <span className="h-full w-1/3" style={{ backgroundColor: palette.spark }} />
+                        </span>
                         {palette.label}
                       </button>
                     ),
@@ -5346,16 +5543,201 @@ function CourseSettingsModal({
   );
 }
 
+function AcademyReviewModal({
+  courseId,
+  courseKey,
+  course,
+  snapshots,
+  invitations,
+  comments,
+  onClose,
+  onInvite,
+  onResolve,
+  onRevoke,
+  onNavigate,
+}: {
+  courseId: string | null;
+  courseKey: string;
+  course: AcademyCourse;
+  snapshots: Snapshot[];
+  invitations: AcademyReviewInvitation[];
+  comments: AcademyReviewComment[];
+  onClose: () => void;
+  onInvite: (snapshotId: string, email: string) => Promise<AcademyAdminActionResult & { inviteUrl?: string }>;
+  onResolve: (commentId: string, resolved: boolean) => Promise<AcademyAdminActionResult>;
+  onRevoke: (invitationId: string) => Promise<AcademyAdminActionResult>;
+  onNavigate: (lessonId: string, blockId: string | null) => void;
+}) {
+  const dialogRef = useDialogFocus(true, onClose);
+  const [email, setEmail] = useState("");
+  const [snapshotId, setSnapshotId] = useState(snapshots[0]?.id || "");
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState("");
+  const [inviteUrl, setInviteUrl] = useState("");
+  const [showResolved, setShowResolved] = useState(false);
+  return (
+    <div ref={dialogRef} role="dialog" aria-modal="true" aria-label="Course reviews" className="fixed inset-0 z-[90] flex justify-end bg-[#111827]/60">
+      <div className="flex h-full w-full max-w-xl flex-col bg-white shadow-2xl">
+        <header className="flex items-center gap-3 border-b p-5">
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-primary">Stakeholder feedback</p>
+            <h2 className="text-xl font-bold text-secondary">Course reviews</h2>
+          </div>
+          <button type="button" onClick={onClose} className="ml-auto inline-flex h-11 w-11 items-center justify-center rounded-lg outline-none hover:bg-slate-100 focus-visible:ring-2 focus-visible:ring-primary" aria-label="Close course reviews"><X size={20} /></button>
+        </header>
+        <div className="min-h-0 flex-1 space-y-6 overflow-y-auto p-5">
+          <section aria-labelledby="review-invite-heading">
+            <h3 id="review-invite-heading" className="text-sm font-bold">Invite a reviewer</h3>
+            <p className="mt-1 text-xs text-secondary/60">Reviewers sign in with the invited email. They see an immutable snapshot, not your changing draft.</p>
+            <form onSubmit={async (event) => {
+              event.preventDefault();
+              setBusy(true);
+              const result = await onInvite(snapshotId, email);
+              setBusy(false);
+              setMessage(result.message);
+              if (result.ok) { setEmail(""); setInviteUrl(result.inviteUrl || ""); }
+            }} className="mt-4 space-y-3">
+              <label className="block text-xs font-semibold">Reviewer email
+                <input type="email" required value={email} onChange={(event) => setEmail(event.target.value)} placeholder="colleague@example.com" className="mt-2 min-h-11 w-full rounded-lg border px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-primary" />
+              </label>
+              <label className="block text-xs font-semibold">Snapshot to review
+                <select value={snapshotId} onChange={(event) => setSnapshotId(event.target.value)} className="mt-2 min-h-11 w-full rounded-lg border px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-primary">
+                  {snapshots.map((snapshot) => <option key={snapshot.id} value={snapshot.id}>{snapshot.label || `${snapshot.reason} · revision ${snapshot.draft_revision}`} · {new Date(snapshot.created_at).toLocaleString()}</option>)}
+                </select>
+              </label>
+              {!snapshots.length ? <p className="text-xs text-amber-800">Save a named snapshot in Revision history first.</p> : null}
+              <button type="submit" disabled={busy || !courseId || !snapshotId || !email.trim()} className="min-h-11 rounded-lg bg-primary px-4 text-xs font-bold text-white disabled:opacity-40">{busy ? "Sending…" : "Send review invitation"}</button>
+            </form>
+            {message ? <p role="status" className="mt-3 text-xs text-secondary/70">{message}</p> : null}
+            {inviteUrl ? <div className="mt-3 flex gap-2"><input readOnly aria-label="Review invitation link" value={inviteUrl} className="min-w-0 flex-1 rounded-lg border px-3 text-xs" /><button type="button" onClick={() => navigator.clipboard.writeText(inviteUrl)} className="min-h-11 rounded-lg border px-3 text-xs font-bold">Copy link</button></div> : null}
+          </section>
+          <section aria-labelledby="review-invitations-heading" className="border-t pt-5">
+            <h3 id="review-invitations-heading" className="text-sm font-bold">Invitations</h3>
+            <div className="mt-3 space-y-2">
+              {invitations.map((invitation) => (
+                <div key={invitation.id} className="flex flex-wrap items-center gap-2 rounded-lg border p-3 text-xs">
+                  <span className="min-w-0 flex-1 truncate font-medium">{invitation.email}<span className="ml-2 text-secondary/50">{invitation.revoked_at ? "Revoked" : new Date(invitation.expires_at) < new Date() ? "Expired" : "Active"}</span></span>
+                  <Link href={`/dashboard/admin/academy/${encodeURIComponent(courseKey)}/preview?snapshot=${invitation.snapshot_id}`} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center px-2 font-semibold text-primary">Preview</Link>
+                  {!invitation.revoked_at ? <button type="button" onClick={async () => { if (!window.confirm(`Revoke ${invitation.email}'s review access?`)) return; const result = await onRevoke(invitation.id); setMessage(result.message); }} className="min-h-11 px-2 font-semibold text-red-600">Revoke</button> : null}
+                </div>
+              ))}
+              {!invitations.length ? <p className="text-xs text-secondary/50">No reviewers invited yet.</p> : null}
+            </div>
+          </section>
+          <section aria-labelledby="review-comments-heading" className="border-t pt-5">
+            <div className="flex items-center justify-between gap-2"><h3 id="review-comments-heading" className="text-sm font-bold">Comments ({comments.filter((comment) => !comment.resolved_at).length} open)</h3><label className="flex items-center gap-2 text-xs"><input type="checkbox" checked={showResolved} onChange={(event) => setShowResolved(event.target.checked)} /> Show resolved</label></div>
+            <div className="mt-3 space-y-3">
+              {comments.filter((comment) => showResolved || !comment.resolved_at).map((comment) => {
+                const lesson = course.lessons.find((item) => item.id === comment.lesson_id);
+                const reviewer = invitations.find((invitation) => invitation.id === comment.invitation_id);
+                return <article key={comment.id} className="rounded-lg border p-3 text-xs">
+                  <p className="font-semibold text-primary">{lesson?.title || "Earlier lesson version"}{comment.block_id ? " · Block" : ""}</p>
+                  <p className="mt-1 text-secondary/50">{reviewer?.email || "Reviewer"} · {new Date(comment.created_at).toLocaleString()}</p>
+                  <p className="mt-3 whitespace-pre-wrap break-words text-secondary">{comment.body}</p>
+                  <div className="mt-3 flex flex-wrap gap-3">
+                    {lesson?.id ? <button type="button" onClick={() => onNavigate(lesson.id!, comment.block_id)} className="min-h-11 font-semibold text-primary">Go to {comment.block_id ? "block" : "lesson"}</button> : null}
+                    <button type="button" onClick={async () => { const result = await onResolve(comment.id, !comment.resolved_at); setMessage(result.message); }} className="min-h-11 font-semibold text-primary">{comment.resolved_at ? "Reopen" : "Resolve"}</button>
+                  </div>
+                </article>;
+              })}
+              {!comments.length ? <p className="text-xs text-secondary/50">No feedback yet.</p> : null}
+            </div>
+          </section>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function AcademyFindReplaceModal({
+  course,
+  onClose,
+  onApply,
+}: {
+  course: AcademyCourse;
+  onClose: () => void;
+  onApply: (search: string, replacement: string, caseSensitive: boolean) => void;
+}) {
+  const [search, setSearch] = useState("");
+  const [replacement, setReplacement] = useState("");
+  const [caseSensitive, setCaseSensitive] = useState(false);
+  const dialogRef = useDialogFocus(true, onClose);
+  const preview = replaceAcademyCourseText(course, search, replacement, caseSensitive);
+  const matchCount = preview.changes.reduce((count, change) => count + change.matches, 0);
+  return (
+    <div
+      ref={dialogRef}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Find and replace course text"
+      className="fixed inset-0 z-[90] flex items-center justify-center bg-[#111827]/60 p-4"
+    >
+      <div className="flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-xl bg-white shadow-2xl">
+        <div className="flex items-center gap-3 border-b p-5">
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-primary">Course-wide update</p>
+            <h2 className="text-xl font-bold text-secondary">Find and replace</h2>
+          </div>
+          <button type="button" onClick={onClose} className="ml-auto inline-flex h-11 w-11 items-center justify-center rounded-lg outline-none hover:bg-slate-100 focus-visible:ring-2 focus-visible:ring-primary" aria-label="Close find and replace">
+            <X size={20} />
+          </button>
+        </div>
+        <div className="space-y-4 overflow-y-auto p-5">
+          <label className="block text-xs font-semibold text-secondary">
+            Find
+            <input autoFocus value={search} onChange={(event) => setSearch(event.target.value)} className="mt-2 min-h-11 w-full rounded-lg border border-secondary/20 px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-primary" />
+          </label>
+          <label className="block text-xs font-semibold text-secondary">
+            Replace with
+            <input value={replacement} onChange={(event) => setReplacement(event.target.value)} className="mt-2 min-h-11 w-full rounded-lg border border-secondary/20 px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-primary" />
+          </label>
+          <label className="flex min-h-11 items-center gap-2 text-xs font-semibold text-secondary">
+            <input type="checkbox" checked={caseSensitive} onChange={(event) => setCaseSensitive(event.target.checked)} className="h-4 w-4 accent-primary" />
+            Match case
+          </label>
+          <div className="border-t pt-4">
+            <p className="text-xs font-bold text-secondary" aria-live="polite">
+              {search ? `${matchCount} ${matchCount === 1 ? "match" : "matches"} in ${preview.changes.length} fields` : "Enter a term to preview changes"}
+            </p>
+            <p className="mt-1 text-[11px] text-secondary/55">Course copy, lesson text, accessibility descriptions, and assessment wording are included. IDs, links, media paths, and equations are not changed.</p>
+            <div className="mt-3 max-h-64 divide-y overflow-y-auto rounded-lg border">
+              {preview.changes.slice(0, 30).map((change) => (
+                <div key={change.path} className="space-y-1 p-3 text-xs">
+                  <p className="font-semibold text-primary">{change.path}</p>
+                  <p className="break-words text-secondary/55"><span className="sr-only">Before: </span>{change.before}</p>
+                  <p className="break-words font-medium text-secondary"><span className="sr-only">After: </span>{change.after}</p>
+                </div>
+              ))}
+              {preview.changes.length > 30 ? <p className="p-3 text-xs text-secondary/55">And {preview.changes.length - 30} more fields.</p> : null}
+            </div>
+          </div>
+        </div>
+        <div className="flex justify-end gap-2 border-t p-4">
+          <button type="button" onClick={onClose} className="min-h-11 rounded-lg border px-4 text-xs font-bold">Cancel</button>
+          <button type="button" disabled={!search || !preview.changes.length} onClick={() => onApply(search, replacement, caseSensitive)} className="min-h-11 rounded-lg bg-primary px-4 text-xs font-bold text-white disabled:opacity-40">Replace {matchCount} matches</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function HistoryModal({
   snapshots,
+  courseKey,
   onClose,
+  onCreate,
   onRestore,
 }: {
   snapshots: Snapshot[];
+  courseKey: string;
   onClose: () => void;
+  onCreate: (name: string) => Promise<AcademySnapshotResult>;
   onRestore: (id: string) => void;
 }) {
   const dialogRef = useDialogFocus(true, onClose);
+  const [name, setName] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState("");
   return (
     <div
       ref={dialogRef}
@@ -5381,26 +5763,65 @@ function HistoryModal({
             <X />
           </button>
         </div>
+        <form
+          onSubmit={async (event) => {
+            event.preventDefault();
+            setBusy(true);
+            const result = await onCreate(name);
+            setBusy(false);
+            setMessage(result.message);
+            if (result.ok) setName("");
+          }}
+          className="flex flex-wrap gap-2 border-b p-4"
+        >
+          <label className="sr-only" htmlFor="academy-snapshot-name">Snapshot name</label>
+          <input
+            id="academy-snapshot-name"
+            value={name}
+            onChange={(event) => setName(event.target.value)}
+            maxLength={120}
+            placeholder="Name this recovery point"
+            className="min-h-11 min-w-0 flex-1 rounded-lg border border-secondary/20 px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          />
+          <button
+            type="submit"
+            disabled={busy || !name.trim()}
+            className="min-h-11 rounded-lg bg-primary px-4 text-xs font-bold text-white disabled:opacity-40"
+          >
+            {busy ? "Saving…" : "Save snapshot"}
+          </button>
+          {message ? <p role="status" className="w-full text-xs text-secondary/70">{message}</p> : null}
+        </form>
         <div className="max-h-[65vh] divide-y overflow-y-auto">
           {snapshots.map((snapshot) => (
             <div key={snapshot.id} className="flex items-center gap-4 p-4">
               <History className="text-primary" size={18} />
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-black capitalize">
-                  {snapshot.reason} snapshot
+                  {snapshot.label || `${snapshot.reason} snapshot`}
                 </p>
                 <p className="text-xs text-secondary/45">
                   Revision {snapshot.draft_revision} ·{" "}
                   {new Date(snapshot.created_at).toLocaleString()}
                 </p>
               </div>
-              <button
-                type="button"
-                onClick={() => onRestore(snapshot.id)}
-                className="rounded-lg border px-3 py-2 text-xs font-black"
-              >
-                Restore
-              </button>
+              <div className="flex shrink-0 gap-2">
+                <Link
+                  href={`/dashboard/admin/academy/${encodeURIComponent(courseKey)}/preview?snapshot=${encodeURIComponent(snapshot.id)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex min-h-11 items-center rounded-lg border px-3 text-xs font-bold outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                >
+                  Preview
+                </Link>
+                <button
+                  type="button"
+                  onClick={() => onRestore(snapshot.id)}
+                  className="min-h-11 rounded-lg border px-3 text-xs font-bold outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                >
+                  Restore
+                </button>
+              </div>
             </div>
           ))}
           {!snapshots.length ? (

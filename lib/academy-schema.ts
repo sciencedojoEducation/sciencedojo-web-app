@@ -7,7 +7,7 @@ import type {
   QuizQuestion,
 } from "@/lib/tutor-academy";
 
-export const ACADEMY_DOCUMENT_SCHEMA_VERSION = 5;
+export const ACADEMY_DOCUMENT_SCHEMA_VERSION = 6;
 export const ACADEMY_BLOCK_SCHEMA_VERSION = 5;
 
 export type AcademyBlockVariant = {
@@ -95,6 +95,7 @@ const listVariants: AcademyBlockVariant[] = [
 const processVariants: AcademyBlockVariant[] = [
   { key: "slides", label: "Guided slides", description: "Reveal one step at a time." },
   { key: "timeline", label: "Timeline", description: "Show every connected step together." },
+  { key: "build-up", label: "Build-up", description: "Reveal numbered steps one by one while keeping earlier steps visible." },
 ];
 
 const flashcardVariants: AcademyBlockVariant[] = [

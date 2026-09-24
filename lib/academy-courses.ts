@@ -266,11 +266,35 @@ export async function getAcademyCourseSnapshots(courseId: string) {
   const { data, error } = await supabase
     .from("academy_course_snapshots")
     .select(
-      "id, draft_revision, schema_version, reason, created_at, created_by",
+      "id, draft_revision, schema_version, reason, label, created_at, created_by",
     )
     .eq("course_id", courseId)
     .order("created_at", { ascending: false })
     .limit(30);
+  if (error && error.message.includes("label")) {
+    const fallback = await supabase
+      .from("academy_course_snapshots")
+      .select("id, draft_revision, schema_version, reason, created_at, created_by")
+      .eq("course_id", courseId)
+      .order("created_at", { ascending: false })
+      .limit(30);
+    return (fallback.data || []).map((snapshot) => ({ ...snapshot, label: null }));
+  }
   if (error) return [];
   return data || [];
+}
+
+export async function getAcademySnapshotContent(
+  courseId: string,
+  snapshotId: string,
+): Promise<AcademyCourse | null> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("academy_course_snapshots")
+    .select("content")
+    .eq("course_id", courseId)
+    .eq("id", snapshotId)
+    .maybeSingle();
+  if (error || !data?.content) return null;
+  return migrateAcademyCourse(data.content as AcademyCourse);
 }

@@ -111,6 +111,7 @@ export default async function DashboardLayout({
   
   return (
     <DashboardFrame
+      role={role}
       sidebar={<DashboardSidebar role={role} />}
       guidedTour={<DashboardGuidedTour
         role={role}

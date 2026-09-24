@@ -19,43 +19,39 @@ export default function AnnouncementFeed({ announcements, platformAnnouncements 
   if (active.length === 0 && platformActive.length === 0) return null;
 
   return (
-    <div className="space-y-4 animate-in fade-in slide-in-from-top-4 duration-700">
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl font-black text-secondary flex items-center gap-3">
-          <span className="flex h-3 w-3 relative">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-3 w-3 bg-primary"></span>
-          </span>
-          Dojo Updates 🏴📢
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <h2 className="text-base font-semibold text-secondary">
+          Dojo updates
         </h2>
       </div>
 
-      <div className="grid gap-4">
+      <div className="grid gap-3">
         {platformActive.map((ann) => (
           <div
             key={ann.id}
-            className="relative overflow-hidden rounded-[2rem] border border-primary/15 bg-gradient-to-br from-white to-blue-50/60 p-6 shadow-md shadow-primary/5"
+            className="relative overflow-hidden rounded-xl border border-slate-200 bg-white p-4 sm:p-5"
           >
             <div className="pr-12">
               <div className="mb-2 flex flex-wrap items-center gap-2">
-                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">{ann.category.replace(/_/g, " ")}</span>
-                <span className="text-[10px] font-bold tracking-tight text-secondary/30">• {formatDistanceToNow(new Date(ann.starts_at), { addSuffix: true })}</span>
+                <span className="text-xs font-semibold capitalize text-primary">{ann.category.replace(/_/g, " ")}</span>
+                <span className="text-xs text-slate-500">• {formatDistanceToNow(new Date(ann.starts_at), { addSuffix: true })}</span>
               </div>
-              <h3 className="mb-2 text-lg font-black tracking-tight text-secondary">
+              <h3 className="mb-2 text-base font-semibold text-secondary">
                 {ann.title}
               </h3>
               <p className="whitespace-pre-wrap text-sm font-medium leading-relaxed text-secondary/70">
                 {ann.message}
               </p>
               {ann.cta_label && ann.cta_url && (
-                <a href={ann.cta_url} className="mt-4 inline-flex rounded-full bg-primary px-4 py-2 text-xs font-black uppercase tracking-widest text-white">
+                <a href={ann.cta_url} className="mt-4 inline-flex min-h-11 items-center rounded-xl bg-secondary px-4 py-2 text-sm font-semibold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2">
                   {ann.cta_label}
                 </a>
               )}
             </div>
             <button
               onClick={() => setDismissed([...dismissed, ann.id])}
-              className="absolute right-6 top-6 rounded-full p-2 text-secondary/20 transition-all hover:bg-secondary/5 hover:text-secondary"
+              className="absolute right-3 top-3 inline-flex h-11 w-11 items-center justify-center rounded-xl text-slate-500 transition-colors hover:bg-slate-100 hover:text-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary sm:right-4 sm:top-4"
               aria-label={`Dismiss ${ann.title}`}
             >
               <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l18 18" /></svg>
@@ -65,22 +61,19 @@ export default function AnnouncementFeed({ announcements, platformAnnouncements 
         {active.map((ann) => (
           <div 
             key={ann.id} 
-            className={`relative overflow-hidden p-6 rounded-[2rem] border transition-all ${
+            className={`relative overflow-hidden rounded-xl border p-4 sm:p-5 ${
               ann.is_pinned 
-                ? "bg-gradient-to-br from-indigo-50 to-white border-primary/20 shadow-xl shadow-primary/5" 
-                : "bg-white border-secondary/5 shadow-md"
+                ? "border-primary/30 bg-blue-50/60"
+                : "border-slate-200 bg-white"
             }`}
           >
-            {/* Background Decorative Element */}
-            <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-bl-[4rem] -z-10 group-hover:scale-110 transition-transform"></div>
-
             <div className="pr-12">
               <div className="flex items-center gap-2 mb-2">
-                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">Official Announcement</span>
-                <span className="text-[10px] text-secondary/30 font-bold tracking-tight">• {formatDistanceToNow(new Date(ann.created_at), { addSuffix: true })}</span>
+                <span className="text-xs font-semibold text-primary">Official announcement</span>
+                <span className="text-xs text-slate-500">• {formatDistanceToNow(new Date(ann.created_at), { addSuffix: true })}</span>
               </div>
               
-              <h3 className="text-lg font-black text-secondary mb-2 tracking-tight group-hover:text-primary transition-colors">
+              <h3 className="mb-2 text-base font-semibold text-secondary">
                 {ann.title}
               </h3>
               
@@ -91,7 +84,8 @@ export default function AnnouncementFeed({ announcements, platformAnnouncements 
 
             <button 
               onClick={() => setDismissed([...dismissed, ann.id])}
-              className="absolute top-6 right-6 p-2 rounded-full hover:bg-secondary/5 text-secondary/20 hover:text-secondary transition-all"
+              className="absolute right-3 top-3 inline-flex h-11 w-11 items-center justify-center rounded-xl text-slate-500 transition-colors hover:bg-slate-100 hover:text-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary sm:right-4 sm:top-4"
+              aria-label={`Dismiss ${ann.title}`}
             >
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l18 18" /></svg>
             </button>

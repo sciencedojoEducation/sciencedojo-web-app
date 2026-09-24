@@ -61,6 +61,13 @@ export default function AcademyLessonHeader({
         >
           {lesson.summary}
         </p>
+        {theme.preset === "journey" ? (
+          <div className={`mt-8 flex flex-wrap items-center gap-3 rounded-xl p-4 text-sm ${mediaLed ? "bg-white/15 text-white" : "bg-[var(--academy-accent-soft)] text-[var(--academy-accent-ink)]"}`}>
+            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[var(--academy-spark)] font-bold text-[#17202C]">{index + 1}</span>
+            <span className="font-semibold">Step {index + 1} of {course.lessons.length}</span>
+            {course.lessons[index + 1] ? <span className={mediaLed ? "text-white/80" : "text-[#435164]"}>Next: {course.lessons[index + 1].title}</span> : <span className={mediaLed ? "text-white/80" : "text-[#435164]"}>{course.rules?.requireFinalAssessment !== false ? "Next: final knowledge check" : "Final step in this course"}</span>}
+          </div>
+        ) : null}
       </div>
     </header>
   );

@@ -90,16 +90,16 @@ export default function DashboardAccountMenu({
         aria-expanded={isOpen}
         aria-controls={isOpen ? menuId : undefined}
         onClick={() => setIsOpen((open) => !open)}
-        className="flex min-h-12 w-full items-center gap-2.5 rounded-xl px-2 text-left hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1E5AA8]"
+        className="flex min-h-12 w-full items-center gap-2.5 rounded-xl px-2 text-left hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300"
       >
-        <span className="h-9 w-9 shrink-0 overflow-hidden rounded-xl border border-slate-200 bg-[#1E5AA8]/10 text-[#1E5AA8]">
+        <span className="h-9 w-9 shrink-0 overflow-hidden rounded-xl border border-white/15 bg-white/10 text-white">
           <DashboardAvatar src={avatarUrl} name={userName} fallbackLabel={displayRole} />
         </span>
         <span className="min-w-0 flex-1">
-          <span className="block truncate text-sm font-semibold text-slate-800">{userName}</span>
-          <span className="block text-xs capitalize text-slate-500">{displayRole}</span>
+          <span className="block truncate text-sm font-semibold text-white">{userName}</span>
+          <span className="block text-xs capitalize text-slate-300">{displayRole}</span>
         </span>
-        <ChevronUp className={`h-4 w-4 shrink-0 text-slate-400 transition-transform ${isOpen ? "rotate-180" : ""}`} aria-hidden="true" />
+        <ChevronUp className={`h-4 w-4 shrink-0 text-slate-300 transition-transform ${isOpen ? "rotate-180" : ""}`} aria-hidden="true" />
       </button>
     </div>
   );

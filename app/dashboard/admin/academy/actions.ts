@@ -13,6 +13,9 @@ import {
 } from "@/lib/academy-authoring";
 import type { AcademyCourse } from "@/lib/tutor-academy";
 import { ACADEMY_DOCUMENT_SCHEMA_VERSION } from "@/lib/academy-schema";
+import { sendEmail } from "@/lib/email";
+import { getSitePath } from "@/lib/site-url";
+import type { AcademyReviewInvitation } from "@/lib/academy-review";
 
 export type AcademyAdminActionResult = {
   ok: boolean;
@@ -22,6 +25,99 @@ export type AcademyAdminActionResult = {
   errors?: string[];
   revision?: number;
 };
+
+export type AcademySnapshotResult = AcademyAdminActionResult & {
+  snapshot?: {
+    id: string;
+    draft_revision: number;
+    schema_version: number;
+    reason: string;
+    label: string | null;
+    created_at: string;
+    created_by: string | null;
+  };
+};
+
+function escapeEmailHtml(value: string) {
+  return value.replace(/[&<>"']/g, (character) => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
+  })[character]!);
+}
+
+export async function inviteAcademyReviewer(
+  courseId: string,
+  snapshotId: string,
+  email: string,
+): Promise<AcademyAdminActionResult & { inviteUrl?: string; invitation?: AcademyReviewInvitation }> {
+  try {
+    const address = email.trim().toLowerCase();
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(address) || address.length > 320)
+      return { ok: false, message: "Enter a valid reviewer email address." };
+    const { supabase, user } = await requireAcademyAdmin();
+    const [{ data: course }, { data: snapshot }] = await Promise.all([
+      supabase.from("academy_courses").select("title").eq("id", courseId).maybeSingle(),
+      supabase.from("academy_course_snapshots").select("id").eq("id", snapshotId).eq("course_id", courseId).maybeSingle(),
+    ]);
+    if (!course || !snapshot)
+      return { ok: false, message: "Save a snapshot of this course before inviting a reviewer." };
+    const { data: invitation, error } = await supabase
+      .from("academy_review_invitations")
+      .insert({ course_id: courseId, snapshot_id: snapshotId, email: address, created_by: user.id })
+      .select("id, course_id, snapshot_id, email, expires_at, revoked_at, created_at")
+      .single();
+    if (error || !invitation) return { ok: false, message: error?.message || "Invitation could not be created." };
+    const inviteUrl = getSitePath(`/academy/review/${invitation.id}`);
+    const sent = await sendEmail({
+      to: address,
+      subject: `Review ScienceDojo Academy course: ${course.title}`,
+      html: `<p>You have been invited to review <strong>${escapeEmailHtml(course.title)}</strong>.</p><p><a href="${escapeEmailHtml(inviteUrl)}">Open the course review</a> and sign in using ${escapeEmailHtml(address)} to leave comments.</p><p>This invitation expires in 14 days.</p>`,
+    });
+    revalidatePath("/dashboard/admin/academy", "layout");
+    return {
+      ok: true,
+      message: sent.success ? "Review invitation sent." : "Invitation saved, but the email could not be sent. Share the link manually.",
+      inviteUrl,
+      invitation: invitation as AcademyReviewInvitation,
+    };
+  } catch (error) {
+    return { ok: false, message: error instanceof Error ? error.message : "Invitation could not be created." };
+  }
+}
+
+export async function setAcademyReviewCommentResolved(
+  courseId: string,
+  commentId: string,
+  resolved: boolean,
+): Promise<AcademyAdminActionResult> {
+  try {
+    const { supabase } = await requireAcademyAdmin();
+    const { error } = await supabase
+      .from("academy_review_comments")
+      .update({ resolved_at: resolved ? new Date().toISOString() : null })
+      .eq("course_id", courseId)
+      .eq("id", commentId);
+    return error ? { ok: false, message: error.message } : { ok: true, message: resolved ? "Comment resolved." : "Comment reopened." };
+  } catch (error) {
+    return { ok: false, message: error instanceof Error ? error.message : "Comment could not be updated." };
+  }
+}
+
+export async function revokeAcademyReviewInvitation(
+  courseId: string,
+  invitationId: string,
+): Promise<AcademyAdminActionResult> {
+  try {
+    const { supabase } = await requireAcademyAdmin();
+    const { error } = await supabase
+      .from("academy_review_invitations")
+      .update({ revoked_at: new Date().toISOString() })
+      .eq("course_id", courseId)
+      .eq("id", invitationId);
+    return error ? { ok: false, message: error.message } : { ok: true, message: "Invitation revoked." };
+  } catch (error) {
+    return { ok: false, message: error instanceof Error ? error.message : "Invitation could not be revoked." };
+  }
+}
 
 async function requireAdmin() {
   return requireAcademyAdmin();
@@ -241,6 +337,48 @@ export async function restoreAcademySnapshot(
           ? error.message
           : "Snapshot could not be restored.",
     };
+  }
+}
+
+export async function createAcademySnapshot(
+  courseId: string,
+  label: string,
+): Promise<AcademySnapshotResult> {
+  try {
+    const name = label.trim();
+    if (!name || name.length > 120)
+      return { ok: false, message: "Give the snapshot a name of 1–120 characters." };
+    const { supabase, user } = await requireAcademyAdmin();
+    const { data: course, error: courseError } = await supabase
+      .from("academy_courses")
+      .select("draft_content, draft_revision, schema_version")
+      .eq("id", courseId)
+      .single();
+    if (courseError || !course)
+      return { ok: false, message: "Course could not be loaded." };
+    const { data, error } = await supabase
+      .from("academy_course_snapshots")
+      .insert({
+        course_id: courseId,
+        draft_revision: course.draft_revision,
+        schema_version: course.schema_version,
+        reason: "manual",
+        label: name,
+        content: course.draft_content,
+        created_by: user.id,
+      })
+      .select("id, draft_revision, schema_version, reason, label, created_at, created_by")
+      .single();
+    if (error || !data)
+      return {
+        ok: false,
+        message: error?.message?.includes("label")
+          ? "Apply Academy migration 060 before creating named snapshots."
+          : error?.message || "Snapshot could not be saved.",
+      };
+    return { ok: true, message: "Snapshot saved.", snapshot: data };
+  } catch (error) {
+    return { ok: false, message: error instanceof Error ? error.message : "Snapshot could not be saved." };
   }
 }
 

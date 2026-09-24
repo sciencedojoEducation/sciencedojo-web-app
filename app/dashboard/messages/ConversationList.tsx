@@ -9,6 +9,7 @@ interface ConversationListProps {
   conversations: Conversation[];
   activeId: string | null;
   isInternal?: boolean;
+  isStudent?: boolean;
 }
 
 function getMessagePreview(message?: string) {
@@ -22,7 +23,7 @@ function getMessagePreview(message?: string) {
   return message || "No messages yet";
 }
 
-export default function ConversationList({ conversations, activeId, isInternal = false }: ConversationListProps) {
+export default function ConversationList({ conversations, activeId, isInternal = false, isStudent = false }: ConversationListProps) {
   const router = useRouter();
 
   const handleSelect = (id: string) => {
@@ -32,11 +33,11 @@ export default function ConversationList({ conversations, activeId, isInternal =
   return (
     <div className="flex h-full min-w-0 flex-col overflow-y-auto bg-white lg:border-r lg:border-secondary/10">
       <div className="border-b border-secondary/10 p-5 sm:p-6">
-        <h2 className="text-xl font-black text-secondary">Messages</h2>
-        <p className="mt-2 text-sm font-medium leading-6 text-secondary/45">
+        <h2 className={isStudent ? "text-xl font-semibold text-slate-900" : "text-xl font-black text-secondary"}>Messages</h2>
+        <p className={isStudent ? "mt-2 text-sm leading-6 text-slate-600" : "mt-2 text-sm font-medium leading-6 text-secondary/45"}>
           {isInternal
             ? "Private conversations with internal teammates and admins stay connected here."
-            : "Conversations with tutors, students, and families stay connected here."}
+            : isStudent ? "Your private conversations with tutors appear here." : "Conversations with tutors, students, and families stay connected here."}
         </p>
       </div>
       
@@ -48,11 +49,11 @@ export default function ConversationList({ conversations, activeId, isInternal =
                 <path strokeLinecap="round" strokeLinejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 4v-4z" />
               </svg>
             </div>
-            <h3 className="text-lg font-black text-secondary">No messages yet</h3>
-            <p className="mt-2 max-w-xs text-sm font-medium leading-6 text-secondary/45">
+            <h3 className={isStudent ? "text-lg font-semibold text-slate-900" : "text-lg font-black text-secondary"}>No messages yet</h3>
+            <p className={isStudent ? "mt-2 max-w-xs text-sm leading-6 text-slate-600" : "mt-2 max-w-xs text-sm font-medium leading-6 text-secondary/45"}>
               {isInternal
                 ? "Choose an internal contact above to start a staff conversation."
-                : "Your conversations with tutors, students, or parents will appear here once support begins."}
+                : isStudent ? "When you have a tutor conversation, you’ll find it here." : "Your conversations with tutors, students, or parents will appear here once support begins."}
             </p>
           </div>
         ) : (
@@ -60,7 +61,8 @@ export default function ConversationList({ conversations, activeId, isInternal =
             <button
               key={conv.id}
               onClick={() => handleSelect(conv.id)}
-              className={`flex w-full min-w-0 items-start gap-4 border-b border-secondary/5 p-4 text-left transition-all hover:bg-secondary/5 sm:p-5 ${
+              aria-current={activeId === conv.id ? "page" : undefined}
+              className={`flex w-full min-w-0 items-start gap-4 border-b border-secondary/5 p-4 text-left transition-all hover:bg-secondary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#4f53a5] sm:p-5 ${
                 activeId === conv.id ? "bg-primary/5 border-l-4 border-l-primary" : "border-l-4 border-l-transparent"
               }`}
             >

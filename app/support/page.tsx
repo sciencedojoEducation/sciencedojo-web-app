@@ -232,39 +232,44 @@ const expectations = [
   },
 ];
 
-export default function ParentSupportPage() {
+export function LearningGuideContent({ dashboardRole }: { dashboardRole?: "parent" | "student" }) {
+  const isStudent = dashboardRole === "student";
+  const tutorHref = dashboardRole === "student" ? "/dashboard/student/tutors" : "/dashboard/parent/tutors";
+  const homeHref = dashboardRole ? `/dashboard/${dashboardRole}` : "/";
+  const ContentTag = dashboardRole ? "div" : "main";
+
   return (
-    <div className="bg-[linear-gradient(180deg,#ffffff_0%,#f7fbff_48%,#ffffff_100%)] text-secondary">
-      <section className="relative overflow-hidden border-b border-secondary/10 px-4 py-14 md:px-8 md:py-20">
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_18%_20%,rgba(0,102,255,0.08),transparent_30%),radial-gradient(circle_at_82%_22%,rgba(0,245,212,0.05),transparent_28%)]" />
+    <div className={isStudent ? "student-learning-guide mx-auto max-w-6xl px-3 py-5 text-slate-900 sm:px-5 md:px-8" : dashboardRole ? "mx-auto max-w-6xl px-3 py-5 text-secondary sm:px-5 md:px-8" : "bg-[linear-gradient(180deg,#ffffff_0%,#f7fbff_48%,#ffffff_100%)] text-secondary"}>
+      <section className={dashboardRole ? "relative overflow-hidden rounded-xl border border-slate-200 bg-white px-4 py-8 md:px-8 md:py-10" : "relative overflow-hidden border-b border-secondary/10 px-4 py-14 md:px-8 md:py-20"}>
+        {!isStudent && <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_18%_20%,rgba(0,102,255,0.08),transparent_30%),radial-gradient(circle_at_82%_22%,rgba(0,245,212,0.05),transparent_28%)]" />}
         <div className="relative mx-auto max-w-6xl">
           <nav aria-label="Breadcrumb" className="text-xs font-black uppercase tracking-[0.18em] text-secondary/40">
-            <Link href="/" className="transition-colors hover:text-primary">Home</Link>
+            <Link href={homeHref} className="transition-colors hover:text-primary">{dashboardRole ? "Dashboard" : "Home"}</Link>
             <span className="mx-2" aria-hidden="true">&gt;</span>
             <span className="text-primary">Parent &amp; Student Success Center</span>
           </nav>
-          <div className="mt-8 inline-flex rounded-full border border-primary/10 bg-white px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.16em] text-primary shadow-sm">
+          <div className={isStudent ? "mt-6 inline-flex text-sm font-semibold text-[#4f53a5]" : "mt-8 inline-flex rounded-full border border-primary/10 bg-white px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.16em] text-primary shadow-sm"}>
             Learning guide
           </div>
-          <h1 className="mt-5 max-w-4xl text-4xl font-black tracking-tight md:text-6xl">
+          <h1 className={`mt-5 max-w-4xl font-bold tracking-tight ${dashboardRole ? "text-3xl md:text-4xl" : "text-4xl md:text-6xl"}`}>
             Parent &amp; Student Success Center
           </h1>
-          <p className="mt-6 max-w-3xl text-lg font-semibold leading-8 text-secondary/65">
+          <p className={isStudent ? "mt-4 max-w-3xl text-sm leading-7 text-slate-600" : "mt-6 max-w-3xl text-lg font-semibold leading-8 text-secondary/65"}>
             Everything you need to understand how ScienceDojo supports learning, progress, and confidence.
           </p>
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-            <Link href="/dashboard/parent/tutors" className="inline-flex min-h-12 items-center justify-center rounded-full bg-primary px-6 text-sm font-black text-white shadow-lg shadow-primary/15 transition-all hover:-translate-y-0.5 hover:bg-primary-hover">
+            <Link href={tutorHref} className={isStudent ? "inline-flex min-h-11 items-center justify-center rounded-xl bg-[#1E5AA8] px-5 text-sm font-semibold text-white hover:bg-[#174a8b] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4f53a5] focus-visible:ring-offset-2" : "inline-flex min-h-12 items-center justify-center rounded-full bg-primary px-6 text-sm font-black text-white shadow-lg shadow-primary/15 transition-all hover:-translate-y-0.5 hover:bg-primary-hover"}>
               Browse Tutors
             </Link>
-            <Link href="/free-assessment" className="inline-flex min-h-12 items-center justify-center rounded-full border border-secondary/10 bg-white px-6 text-sm font-black text-secondary/65 transition-all hover:-translate-y-0.5 hover:border-primary/20 hover:text-primary">
+            <Link href="/free-assessment" className={isStudent ? "inline-flex min-h-11 items-center justify-center rounded-xl border border-slate-300 bg-white px-5 text-sm font-semibold text-slate-700 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4f53a5]" : "inline-flex min-h-12 items-center justify-center rounded-full border border-secondary/10 bg-white px-6 text-sm font-black text-secondary/65 transition-all hover:-translate-y-0.5 hover:border-primary/20 hover:text-primary"}>
               Free Assessment
             </Link>
           </div>
         </div>
       </section>
 
-      <main className="mx-auto max-w-6xl px-4 py-10 md:px-8 md:py-14">
-        <section aria-label="Learning journey" className="rounded-[1.5rem] border border-primary/10 bg-white p-4 shadow-xl shadow-secondary/5 md:rounded-[2rem] md:p-5">
+      <ContentTag className={dashboardRole ? "py-8 md:py-10" : "mx-auto max-w-6xl px-4 py-10 md:px-8 md:py-14"}>
+        <section aria-label="Learning journey" className={isStudent ? "rounded-xl border border-slate-200 bg-white p-4 md:p-5" : "rounded-[1.5rem] border border-primary/10 bg-white p-4 shadow-xl shadow-secondary/5 md:rounded-[2rem] md:p-5"}>
           <div className="grid gap-3 md:grid-cols-5 md:items-center">
             {journey.map((step, index) => (
               <div key={step} className="relative">
@@ -289,8 +294,8 @@ export default function ParentSupportPage() {
           {orientationCards.map((card) => (
             <Link
               key={card.title}
-              href={card.href}
-              className="rounded-[1.5rem] border border-secondary/8 bg-white p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:border-primary/20 hover:shadow-xl hover:shadow-primary/8"
+              href={card.href === "/dashboard/parent/tutors" ? tutorHref : card.href}
+              className={isStudent ? "rounded-xl border border-slate-200 bg-white p-5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4f53a5]" : "rounded-[1.5rem] border border-secondary/8 bg-white p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:border-primary/20 hover:shadow-xl hover:shadow-primary/8"}
             >
               <p className="text-[10px] font-black uppercase tracking-[0.16em] text-primary/60">{card.eyebrow}</p>
               <h2 className="mt-2 text-xl font-black tracking-tight text-secondary">{card.title}</h2>
@@ -304,7 +309,7 @@ export default function ParentSupportPage() {
 
         <section className="mt-12 grid gap-5">
           {chapters.map((chapter) => (
-            <article key={chapter.title} className="rounded-[1.75rem] border border-secondary/8 bg-white p-5 shadow-sm md:p-7">
+            <article key={chapter.title} className={isStudent ? "rounded-xl border border-slate-200 bg-white p-5 md:p-7" : "rounded-[1.75rem] border border-secondary/8 bg-white p-5 shadow-sm md:p-7"}>
               <p className="text-xs font-black uppercase tracking-[0.18em] text-primary/65">{chapter.label}</p>
               <h2 className="mt-2 text-2xl font-black tracking-tight md:text-3xl">{chapter.title}</h2>
               <p className="mt-3 max-w-3xl text-sm font-semibold leading-7 text-secondary/60">{chapter.intro}</p>
@@ -326,7 +331,7 @@ export default function ParentSupportPage() {
           ))}
         </section>
 
-        <section className="mt-12 rounded-[2rem] border border-primary/10 bg-[linear-gradient(135deg,#ffffff_0%,#f4fbff_100%)] p-6 shadow-xl shadow-secondary/5 md:p-8">
+        <section className={isStudent ? "mt-8 rounded-xl border border-slate-200 bg-white p-6 md:p-8" : "mt-12 rounded-[2rem] border border-primary/10 bg-[linear-gradient(135deg,#ffffff_0%,#f4fbff_100%)] p-6 shadow-xl shadow-secondary/5 md:p-8"}>
           <p className="text-xs font-black uppercase tracking-[0.18em] text-primary/65">What families can expect</p>
           <h2 className="mt-2 text-3xl font-black tracking-tight text-secondary md:text-4xl">
             What Families Can Expect From ScienceDojo
@@ -341,20 +346,24 @@ export default function ParentSupportPage() {
           </div>
         </section>
 
-        <section className="mt-12 rounded-[2rem] bg-[linear-gradient(135deg,#06172f_0%,#0a4d95_58%,#0066ff_100%)] p-8 text-center shadow-2xl shadow-secondary/15 md:p-10">
-          <p className="text-xs font-black uppercase tracking-[0.22em] text-cyan-100/75">A calm first step</p>
-          <h2 className="mt-3 text-3xl font-black text-white md:text-4xl">Not sure where to begin?</h2>
-          <p className="mx-auto mt-4 max-w-2xl leading-7 text-white/65">
+        <section className={isStudent ? "mt-8 rounded-xl border border-slate-200 bg-[#eeefff] p-6 text-center md:p-8" : "mt-12 rounded-[2rem] bg-[linear-gradient(135deg,#06172f_0%,#0a4d95_58%,#0066ff_100%)] p-8 text-center shadow-2xl shadow-secondary/15 md:p-10"}>
+          <p className={isStudent ? "text-sm font-semibold text-[#4f53a5]" : "text-xs font-black uppercase tracking-[0.22em] text-cyan-100/75"}>A calm first step</p>
+          <h2 className={isStudent ? "mt-2 text-2xl font-semibold text-slate-900" : "mt-3 text-3xl font-black text-white md:text-4xl"}>Not sure where to begin?</h2>
+          <p className={isStudent ? "mx-auto mt-3 max-w-2xl text-sm leading-7 text-slate-700" : "mx-auto mt-4 max-w-2xl leading-7 text-white/65"}>
             Tell us what support feels unclear and use the free assessment to choose the next learning step with more confidence.
           </p>
           <Link
             href="/free-assessment"
-            className="mt-7 inline-flex rounded-full bg-white px-7 py-3.5 text-sm font-black text-primary shadow-lg shadow-black/10 transition-transform hover:-translate-y-0.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white"
+            className={isStudent ? "mt-6 inline-flex min-h-11 items-center rounded-xl bg-[#1E5AA8] px-5 text-sm font-semibold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4f53a5] focus-visible:ring-offset-2" : "mt-7 inline-flex rounded-full bg-white px-7 py-3.5 text-sm font-black text-primary shadow-lg shadow-black/10 transition-transform hover:-translate-y-0.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white"}
           >
             Free Assessment
           </Link>
         </section>
-      </main>
+      </ContentTag>
     </div>
   );
+}
+
+export default function ParentSupportPage() {
+  return <LearningGuideContent />;
 }

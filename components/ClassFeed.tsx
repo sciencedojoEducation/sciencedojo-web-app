@@ -5,6 +5,7 @@ import { ClassPost } from "@/lib/class-queries";
 import ClassCommentThread from "./ClassCommentThread";
 import LinkPreview from "./LinkPreview";
 import { togglePinPost } from "@/app/classes/actions";
+import { formatClassDateTime } from "@/lib/class-date";
 
 interface ClassFeedProps {
   posts: ClassPost[];
@@ -12,8 +13,12 @@ interface ClassFeedProps {
   isTutor: boolean;
 }
 
+type FeedFilter = "all" | "assignments" | "reports";
+
+const feedFilters: FeedFilter[] = ["all", "assignments", "reports"];
+
 export default function ClassFeed({ posts, classId, isTutor }: ClassFeedProps) {
-  const [filter, setFilter] = useState<"all" | "assignments" | "reports">("all");
+  const [filter, setFilter] = useState<FeedFilter>("all");
 
   const filteredPosts = posts.filter(post => {
     if (filter === "assignments") return post.post_type === "assignment";
@@ -44,10 +49,10 @@ export default function ClassFeed({ posts, classId, isTutor }: ClassFeedProps) {
     <div className="mt-5 space-y-4 md:mt-8 md:space-y-6">
       {/* Filters (Optional, nice to have) */}
       <div className="mb-3 flex gap-2 overflow-x-auto pb-2 md:mb-6">
-         {["all", "assignments", "reports"].map((f) => (
+         {feedFilters.map((f) => (
             <button 
               key={f}
-              onClick={() => setFilter(f as any)} 
+              onClick={() => setFilter(f)}
               className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-colors ${
                 filter === f 
                   ? "bg-secondary text-white shadow-md"
@@ -94,7 +99,7 @@ export default function ClassFeed({ posts, classId, isTutor }: ClassFeedProps) {
                     {isPinned && <span className="text-[10px] text-amber-600 font-black uppercase tracking-[0.2em] bg-amber-100 px-2 py-0.5 rounded-full">Pinned</span>}
                   </h3>
                   <p className="text-[10px] text-secondary/40 font-bold uppercase tracking-wider flex gap-2">
-                     <span>{new Date(post.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</span>
+                     <time dateTime={post.created_at}>{formatClassDateTime(post.created_at)}</time>
                   </p>
                 </div>
               </div>
@@ -118,7 +123,7 @@ export default function ClassFeed({ posts, classId, isTutor }: ClassFeedProps) {
                     </span>
                     {post.due_date && (
                        <span className="ml-2 inline-block px-2 py-1 bg-orange-100 text-orange-700 text-[10px] font-black rounded uppercase tracking-widest border border-orange-200">
-                         Due: {new Date(post.due_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
+                         Due: <time dateTime={post.due_date}>{formatClassDateTime(post.due_date)}</time>
                        </span>
                     )}
                  </div>

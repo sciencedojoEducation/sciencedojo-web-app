@@ -5,6 +5,7 @@ import AcademyCourseNavigation from "@/components/tutor-academy/AcademyCourseNav
 import { isFeatureEnabled } from "@/lib/feature-flags";
 import { getPublishedAcademyCourse } from "@/lib/academy-courses";
 import { getTutorAcademyProgress } from "@/lib/tutor-academy-progress";
+import { academyThemeStyle } from "@/lib/academy-theme";
 
 const academySerif = Merriweather({
   subsets: ["latin"],
@@ -37,6 +38,7 @@ export default async function AcademyLayout({
   return (
     <div
       className={`${academySerif.variable} h-full min-h-0 bg-white text-[#101010]`}
+      style={academyThemeStyle(course)}
     >
       <AcademyCourseNavigation
         course={navigationCourse}

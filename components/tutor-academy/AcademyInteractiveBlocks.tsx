@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import {
   ArrowLeft,
   ArrowRight,
@@ -52,7 +52,7 @@ export function AcademyTabs({
               setActive(index);
               record(tracking);
             }}
-            className={`min-h-12 shrink-0 border-b-2 px-5 text-sm font-bold ${active === index ? "border-[#1E5AA8] bg-white text-[#1E5AA8]" : "border-transparent text-[#717376]"}`}
+            className={`min-h-12 shrink-0 border-b-2 px-5 text-sm font-bold ${active === index ? "border-[var(--academy-accent)] bg-white text-[var(--academy-accent)]" : "border-transparent text-[#717376]"}`}
           >
             {item.title}
           </button>
@@ -85,7 +85,7 @@ export function AcademyAccordion({
             if (event.currentTarget.open) record(tracking);
           }}
         >
-          <summary className="flex cursor-pointer list-none items-center justify-between gap-4 border-b border-[#DEDFE1] px-1 py-5 font-bold text-[#252629] outline-none hover:text-[#1E5AA8] focus-visible:ring-2 focus-visible:ring-[#1E5AA8]">
+          <summary className="flex cursor-pointer list-none items-center justify-between gap-4 border-b border-[#DEDFE1] px-1 py-5 font-bold text-[#252629] outline-none hover:text-[var(--academy-accent)] focus-visible:ring-2 focus-visible:ring-[var(--academy-accent)]">
             <span>{item.title}</span>
             <span
               className="text-xl text-primary transition-transform group-open:rotate-45"
@@ -129,13 +129,13 @@ export function AcademyFlashcards({
               });
               record(tracking);
             }}
-            className="group relative min-h-52 [perspective:1000px] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1E5AA8] focus-visible:ring-offset-4"
+            className="group relative min-h-52 [perspective:1000px] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--academy-accent)] focus-visible:ring-offset-4"
           >
             <span
               className={`absolute inset-0 block transition-transform duration-500 [transform-style:preserve-3d] motion-reduce:transition-none ${open ? "[transform:rotateY(180deg)]" : ""}`}
             >
               <span className="absolute inset-0 flex flex-col justify-between border border-[#DEDFE1] bg-white p-6 text-left shadow-[0_10px_30px_rgba(20,35,60,0.08)] [backface-visibility:hidden]">
-                <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#1E5AA8]">
+                <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-[var(--academy-accent)]">
                   Think first, then reveal
                 </span>
                 <span className="text-xl font-bold text-[#252629]">
@@ -145,7 +145,7 @@ export function AcademyFlashcards({
                   <RotateCcw size={14} /> Flip card
                 </span>
               </span>
-              <span className="absolute inset-0 flex flex-col justify-between border border-[#1E5AA8] bg-[#173A63] p-6 text-left text-white shadow-[0_10px_30px_rgba(20,35,60,0.14)] [backface-visibility:hidden] [transform:rotateY(180deg)]">
+              <span className="absolute inset-0 flex flex-col justify-between border border-[var(--academy-accent)] bg-[var(--academy-accent-ink)] p-6 text-left text-white shadow-[0_10px_30px_rgba(20,35,60,0.14)] [backface-visibility:hidden] [transform:rotateY(180deg)]">
                 <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-white/65">
                   Answer
                 </span>
@@ -182,7 +182,7 @@ export function AcademyProcess({
         style={{ transform: `translateX(-${step * 100}%)` }}
       >
         <div className="flex min-h-72 w-full shrink-0 flex-col items-center justify-center bg-white p-8 text-center sm:p-12">
-          <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#1E5AA8]">
+          <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[var(--academy-accent)]">
             Guided process
           </p>
           <h3 className="mt-3 text-2xl font-black text-[#252629]">
@@ -194,7 +194,7 @@ export function AcademyProcess({
           <button
             type="button"
             onClick={() => goTo(1)}
-            className="mt-7 inline-flex min-h-11 items-center gap-2 rounded-full bg-[#1E5AA8] px-7 text-xs font-bold uppercase tracking-[0.1em] text-white"
+            className="mt-7 inline-flex min-h-11 items-center gap-2 rounded-full bg-[var(--academy-accent)] px-7 text-xs font-bold uppercase tracking-[0.1em] text-white"
           >
             Start <Play size={14} fill="currentColor" />
           </button>
@@ -204,7 +204,7 @@ export function AcademyProcess({
             key={item.id || index}
             className="flex min-h-72 w-full shrink-0 flex-col justify-center bg-white p-8 sm:p-12"
           >
-            <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#1E5AA8]">
+            <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[var(--academy-accent)]">
               Step {index + 1} of {items.length}
             </p>
             <h3 className="mt-3 text-2xl font-black text-[#252629]">
@@ -234,7 +234,7 @@ export function AcademyProcess({
               onClick={() => goTo(index)}
               aria-label={index === 0 ? "Process introduction" : `Process step ${index}`}
               aria-current={step === index ? "step" : undefined}
-              className={`h-2.5 rounded-full transition-all motion-reduce:transition-none ${step === index ? "w-7 bg-[#1E5AA8]" : "w-2.5 bg-[#CED1D5]"}`}
+              className={`h-2.5 rounded-full transition-all motion-reduce:transition-none ${step === index ? "w-7 bg-[var(--academy-accent)]" : "w-2.5 bg-[#CED1D5]"}`}
             />
           ))}
         </div>
@@ -249,6 +249,115 @@ export function AcademyProcess({
         </button>
       </div>
     </div>
+  );
+}
+
+export function AcademyProcessBuildUp({
+  items,
+  heading,
+  ...tracking
+}: { items: Item[]; heading?: string } & Tracking) {
+  const [revealedCount, setRevealedCount] = useState(1);
+  const [finished, setFinished] = useState(false);
+  const focusNewStep = useRef(false);
+  const newestHeading = useRef<HTMLHeadingElement>(null);
+  const listId = useId();
+  const visibleCount = Math.min(revealedCount, items.length);
+
+  useEffect(() => {
+    if (!focusNewStep.current) return;
+    focusNewStep.current = false;
+    const target = newestHeading.current;
+    if (!target) return;
+    target.focus({ preventScroll: true });
+    target.scrollIntoView({
+      behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
+        ? "auto"
+        : "smooth",
+      block: "nearest",
+    });
+  }, [visibleCount]);
+
+  const revealNext = () => {
+    if (visibleCount < items.length) {
+      focusNewStep.current = true;
+      setRevealedCount(visibleCount + 1);
+      if (visibleCount + 1 === items.length && !finished) {
+        setFinished(true);
+        record(tracking);
+      }
+    } else if (items.length === 1 && !finished) {
+      setFinished(true);
+      record(tracking);
+    }
+  };
+
+  return (
+    <section className="border border-[#DEDFE1] bg-white p-5 sm:p-8" aria-label={heading || "Step-by-step process"}>
+      {heading ? (
+        <h3 className="text-2xl font-bold leading-tight text-[#252629]">{heading}</h3>
+      ) : null}
+      <p className="mt-2 text-sm text-[#62666C]">
+        Follow the steps in order. Each new step stays visible for reference.
+      </p>
+      <ol id={listId} className="mt-6 space-y-3">
+        {items.slice(0, visibleCount).map((item, index) => (
+          <li key={item.id || index} className="flex gap-3 rounded-2xl bg-[#F5F6FA] p-4 sm:gap-4 sm:p-5">
+            <span aria-hidden="true" className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[var(--academy-accent)] text-sm font-bold text-white">
+              {index + 1}
+            </span>
+            <div className="min-w-0 flex-1">
+              <h4
+                ref={index === visibleCount - 1 ? newestHeading : undefined}
+                tabIndex={-1}
+                className="text-lg font-bold text-[#252629] outline-none focus-visible:rounded focus-visible:ring-2 focus-visible:ring-[var(--academy-accent)]"
+              >
+                <span className="sr-only">Step {index + 1} of {items.length}: </span>
+                {item.title}
+              </h4>
+              <p className="mt-2 whitespace-pre-wrap font-[family-name:var(--font-academy-serif)] text-[15px] leading-7 text-[#4A4B4E]">
+                {item.body}
+              </p>
+            </div>
+          </li>
+        ))}
+      </ol>
+      <p className="sr-only" role="status" aria-live="polite">
+        {finished ? "Process complete." : `${visibleCount} of ${items.length} steps visible.`}
+      </p>
+      {items.length === 0 ? (
+        <p className="mt-6 text-sm text-[#62666C]">No steps have been added yet.</p>
+      ) : (
+        <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-[#DEDFE1] pt-5">
+          <button
+            type="button"
+            onClick={() => setRevealedCount(Math.max(1, visibleCount - 1))}
+            disabled={visibleCount <= 1}
+            className="inline-flex min-h-11 items-center gap-2 rounded-full border border-[#C9CDD2] px-4 text-sm font-semibold text-[#252629] outline-none focus-visible:ring-2 focus-visible:ring-[var(--academy-accent)] disabled:opacity-40"
+            aria-label="Show one fewer process step"
+          >
+            <ArrowLeft size={17} /> Previous
+          </button>
+          <span className="text-xs font-semibold text-[#62666C]" aria-hidden="true">
+            {visibleCount} of {items.length}
+          </span>
+          <button
+            type="button"
+            onClick={revealNext}
+            disabled={finished && visibleCount === items.length}
+            aria-controls={listId}
+            className="inline-flex min-h-11 items-center gap-2 rounded-full bg-[var(--academy-accent)] px-5 text-sm font-bold text-white outline-none focus-visible:ring-2 focus-visible:ring-[var(--academy-accent)] focus-visible:ring-offset-2 disabled:bg-[#39766C]"
+          >
+            {finished && visibleCount === items.length
+              ? "Process complete"
+              : visibleCount === items.length
+                ? "Finish process"
+                : "Next step"}
+            {finished && visibleCount === items.length ? <Check size={17} /> : <ArrowRight size={17} />}
+          </button>
+        </div>
+      )}
+    </section>
   );
 }
 
@@ -292,7 +401,7 @@ export function AcademySurvey({
                   setAnswer(value);
                   setSubmitted(false);
                 }}
-                className="h-6 w-6 accent-[#1E5AA8]"
+                className="h-6 w-6 accent-[var(--academy-accent)]"
               />
             </label>
           ))}
@@ -309,7 +418,7 @@ export function AcademySurvey({
           setSubmitted(true);
           record(tracking);
         }}
-        className="mx-auto mt-8 flex min-h-11 min-w-40 items-center justify-center rounded-full bg-[#1E5AA8] px-7 text-xs font-bold uppercase tracking-[0.1em] text-white disabled:opacity-40"
+        className="mx-auto mt-8 flex min-h-11 min-w-40 items-center justify-center rounded-full bg-[var(--academy-accent)] px-7 text-xs font-bold uppercase tracking-[0.1em] text-white disabled:opacity-40"
       >
         {submitted ? "Response noted" : submitLabel}
       </button>
@@ -338,8 +447,8 @@ export function AcademyKnowledgeCheck({
       : answers[0] === question.correctOptionId);
   if (type === "reflection")
     return (
-      <div className="border-l-4 border-[#1E5AA8] bg-[#F1F6FC] p-6">
-        <p className="text-lg font-bold text-[#173A63]">{question.prompt}</p>
+      <div className="border-l-4 border-[var(--academy-accent)] bg-[var(--academy-accent-soft)] p-6">
+        <p className="text-lg font-bold text-[var(--academy-accent-ink)]">{question.prompt}</p>
         <textarea
           value={reflection}
           onChange={(event) => setReflection(event.target.value)}
@@ -354,12 +463,12 @@ export function AcademyKnowledgeCheck({
             setSubmitted(true);
             record(tracking);
           }}
-          className="mt-3 bg-[#1E5AA8] px-5 py-2.5 text-xs font-bold uppercase text-white disabled:opacity-40"
+          className="mt-3 bg-[var(--academy-accent)] px-5 py-2.5 text-xs font-bold uppercase text-white disabled:opacity-40"
         >
           Save reflection
         </button>
         {submitted ? (
-          <p className="mt-4 text-sm font-semibold text-[#173A63]">
+          <p className="mt-4 text-sm font-semibold text-[var(--academy-accent-ink)]">
             {question.explanation}
           </p>
         ) : null}
@@ -401,7 +510,7 @@ export function AcademyKnowledgeCheck({
             setSubmitted(true);
             if (tracking.completion === "interact" || correct) record(tracking);
           }}
-          className="bg-[#1E5AA8] px-5 py-2.5 text-xs font-bold uppercase text-white disabled:opacity-40"
+          className="bg-[var(--academy-accent)] px-5 py-2.5 text-xs font-bold uppercase text-white disabled:opacity-40"
         >
           Check answer
         </button>

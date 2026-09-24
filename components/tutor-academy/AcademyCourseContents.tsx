@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { BookOpen, Clock } from "lucide-react";
 import AcademyProgressRing from "./AcademyProgressRing";
+import AcademyJourneyContents from "./AcademyJourneyContents";
+import { resolveAcademyTheme } from "@/lib/academy-theme";
 import {
   getAcademyLessonProgressState,
   getAcademyProgressPercent,
@@ -21,6 +23,8 @@ export default function AcademyCourseContents({
   quizHref: string;
 }) {
   const progressPercent = getAcademyProgressPercent(progress, course);
+  if (resolveAcademyTheme(course).preset === "journey")
+    return <AcademyJourneyContents course={course} progress={progress} lessonHref={lessonHref} quizHref={quizHref} />;
   const sections = Array.from(
     new Set(course.lessons.map((lesson) => lesson.section)),
   );

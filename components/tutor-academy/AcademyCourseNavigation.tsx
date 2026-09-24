@@ -14,6 +14,7 @@ import {
   type AcademyProgress,
 } from "@/lib/tutor-academy";
 import AcademyProgressRing from "./AcademyProgressRing";
+import { useDashboardRole } from "@/components/DashboardFrame";
 
 type NavigationCourse = Pick<
   AcademyCourse,
@@ -42,7 +43,7 @@ function NavigationContent({
     <nav aria-label="Tutor Academy course contents">
       {sections.map((section) => (
         <details key={section} open className="group border-b border-[#DEDFE1]">
-          <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between px-5 text-[10px] font-bold uppercase tracking-[0.16em] text-[#717376] outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#1E5AA8] [&::-webkit-details-marker]:hidden">
+          <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between px-5 text-[10px] font-bold uppercase tracking-[0.16em] text-[#717376] outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--academy-accent)] [&::-webkit-details-marker]:hidden">
             {section}
             <ChevronDown
               size={14}
@@ -109,7 +110,7 @@ function NavigationContent({
                           onNavigate?.();
                         }}
                         aria-current={active ? "page" : undefined}
-                        className={`relative flex min-h-[52px] items-center gap-3 border-t border-[#ECEDEF] px-5 py-3 text-[13px] font-bold leading-4 text-[#252629] outline-none transition-colors hover:bg-[#F7F7F7] focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#1E5AA8] motion-reduce:transition-none ${active ? "bg-[#F3F3F3] before:absolute before:inset-y-0 before:left-0 before:w-1 before:bg-[#1E5AA8]" : ""}`}
+                        className={`relative flex min-h-[52px] items-center gap-3 border-t border-[#ECEDEF] px-5 py-3 text-[13px] font-bold leading-4 text-[#252629] outline-none transition-colors hover:bg-[#F7F7F7] focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--academy-accent)] motion-reduce:transition-none ${active ? "bg-[#F3F3F3] before:absolute before:inset-y-0 before:left-0 before:w-1 before:bg-[var(--academy-accent)]" : ""}`}
                       >
                         {content}
                       </Link>
@@ -129,7 +130,7 @@ function NavigationContent({
             href={`${basePath}/quiz`}
             onClick={onNavigate}
             aria-current={pathname.endsWith("/quiz") ? "page" : undefined}
-            className={`relative flex min-h-[52px] items-center gap-3 border-y border-[#ECEDEF] px-5 py-3 text-[13px] font-bold leading-4 text-[#252629] outline-none hover:bg-[#F7F7F7] focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#1E5AA8] ${pathname.endsWith("/quiz") ? "bg-[#F3F3F3] before:absolute before:inset-y-0 before:left-0 before:w-1 before:bg-[#1E5AA8]" : ""}`}
+            className={`relative flex min-h-[52px] items-center gap-3 border-y border-[#ECEDEF] px-5 py-3 text-[13px] font-bold leading-4 text-[#252629] outline-none hover:bg-[#F7F7F7] focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--academy-accent)] ${pathname.endsWith("/quiz") ? "bg-[#F3F3F3] before:absolute before:inset-y-0 before:left-0 before:w-1 before:bg-[var(--academy-accent)]" : ""}`}
           >
             <BookOpen
               size={15}
@@ -200,7 +201,7 @@ function CourseRail({
           aria-valuenow={progressPercent}
         >
           <div
-            className="h-full bg-[#1E5AA8]"
+            className="h-full bg-[var(--academy-accent)]"
             style={{ width: `${progressPercent}%` }}
           />
         </div>
@@ -215,7 +216,7 @@ function CourseRail({
       <div className="p-5">
         <Link
           href={exitHref}
-          className="inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.12em] text-[#717376] hover:text-[#1E5AA8] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#1E5AA8]"
+          className="inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.12em] text-[#717376] hover:text-[var(--academy-accent)] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--academy-accent)]"
         >
           Exit to dashboard <ExternalLink size={14} aria-hidden="true" />
         </Link>
@@ -238,6 +239,8 @@ export default function AcademyCourseNavigation({
   progress: AcademyProgress;
 }) {
   const lessons = course.lessons;
+  const dashboardRole = useDashboardRole();
+  const resolvedExitHref = exitHref === "/dashboard" && (dashboardRole === "student" || dashboardRole === "parent") ? `/dashboard/${dashboardRole}` : exitHref;
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [startedLessons, setStartedLessons] = useState(
@@ -301,7 +304,7 @@ export default function AcademyCourseNavigation({
     return (
       <div className="relative h-full overflow-y-auto bg-white">
         <Link
-          href={exitHref}
+          href={resolvedExitHref}
           className="fixed right-4 top-4 z-40 inline-flex min-h-10 items-center gap-2 rounded-full border border-white/35 bg-black/35 px-4 text-[11px] font-bold uppercase tracking-[0.12em] text-white backdrop-blur-sm hover:bg-black/55 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white sm:right-6 sm:top-6"
         >
           Exit to dashboard <ExternalLink size={14} aria-hidden="true" />
@@ -317,7 +320,7 @@ export default function AcademyCourseNavigation({
         course={course}
         progress={progress}
         basePath={basePath}
-        exitHref={exitHref}
+        exitHref={resolvedExitHref}
         onLessonNavigate={markLessonStarted}
       />
       <div className="flex min-w-0 flex-1 flex-col">
@@ -326,7 +329,7 @@ export default function AcademyCourseNavigation({
             ref={menuButtonRef}
             type="button"
             onClick={() => setOpen(true)}
-            className="inline-flex h-14 w-14 items-center justify-center text-[#252629] focus-visible:outline-2 focus-visible:outline-offset-[-3px] focus-visible:outline-[#1E5AA8]"
+            className="inline-flex h-14 w-14 items-center justify-center text-[#252629] focus-visible:outline-2 focus-visible:outline-offset-[-3px] focus-visible:outline-[var(--academy-accent)]"
             aria-label="Open course contents"
             aria-expanded={open}
           >
@@ -345,9 +348,9 @@ export default function AcademyCourseNavigation({
             {progressPercent}%
           </span>
           <Link
-            href={exitHref}
+            href={resolvedExitHref}
             aria-label="Exit to dashboard"
-            className="inline-flex h-14 w-12 items-center justify-center border-l border-[#DEDFE1] text-[#717376] focus-visible:outline-2 focus-visible:outline-offset-[-3px] focus-visible:outline-[#1E5AA8]"
+            className="inline-flex h-14 w-12 items-center justify-center border-l border-[#DEDFE1] text-[#717376] focus-visible:outline-2 focus-visible:outline-offset-[-3px] focus-visible:outline-[var(--academy-accent)]"
           >
             <ExternalLink size={17} aria-hidden="true" />
           </Link>
@@ -403,7 +406,7 @@ export default function AcademyCourseNavigation({
               </div>
               <div className="mt-3 h-1 bg-[#E6E7E9]">
                 <div
-                  className="h-full bg-[#1E5AA8]"
+                  className="h-full bg-[var(--academy-accent)]"
                   style={{ width: `${progressPercent}%` }}
                 />
               </div>

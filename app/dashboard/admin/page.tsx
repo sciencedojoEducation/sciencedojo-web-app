@@ -195,7 +195,7 @@ export default async function AdminDashboard() {
   ];
 
   return (
-    <div className="px-3 py-5 sm:p-6 md:p-8 max-w-6xl mx-auto space-y-6 md:space-y-8">
+    <div data-role="admin" className="dashboard-home mx-auto max-w-6xl space-y-5 px-3 py-5 sm:p-6 md:p-8">
       <div className="flex items-center gap-4 md:gap-5">
          <div className="w-11 h-11 rounded-2xl bg-secondary/10 border-2 border-white shadow-sm overflow-hidden flex items-center justify-center md:h-14 md:w-14">
             {avatarUrl ? (
@@ -205,18 +205,37 @@ export default async function AdminDashboard() {
             )}
          </div>
          <div>
-            <h1 className="text-2xl font-black mb-1 bg-gradient-to-r from-secondary to-primary bg-clip-text text-transparent md:text-3xl">
+            <h1 className="dashboard-title mb-1 text-2xl md:text-3xl">
                Hello, {userName.split(' ')[0]}!
             </h1>
-            <p className="text-secondary/60 text-sm font-medium tracking-tight">Educational operations, tutor support, and platform health.</p>
+            <p className="dashboard-subtitle text-sm">Educational operations, tutor support, and platform health.</p>
          </div>
       </div>
 
-      <section className="rounded-[1.5rem] border border-secondary/10 bg-white p-4 shadow-sm md:rounded-[2rem] md:p-5">
+      <section aria-labelledby="admin-attention-title" className="dashboard-priority p-4 md:p-5">
+        <div className="mb-3">
+          <p className="dashboard-kicker">Needs attention</p>
+          <h2 id="admin-attention-title" className="dashboard-title mt-1 text-xl">Operational next checks</h2>
+        </div>
+        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
+          {attentionLinks.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={`rounded-xl border px-4 py-3 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${item.tone}`}
+            >
+              <p className={`text-sm font-semibold ${item.labelTone}`}>{item.label}</p>
+              <p className={`mt-1 text-xs font-medium ${item.detailTone}`}>{item.detail}</p>
+            </Link>
+          ))}
+        </div>
+      </section>
+
+      <section className="dashboard-panel p-4 md:p-5">
         <div className="mb-4 flex flex-col gap-1 md:flex-row md:items-end md:justify-between">
           <div>
-            <p className="text-[10px] font-black uppercase tracking-[0.14em] text-secondary/35">Operational snapshot</p>
-            <h2 className="mt-1 text-xl font-black text-secondary">Platform health</h2>
+            <p className="dashboard-kicker">Operational snapshot</p>
+            <h2 className="dashboard-title mt-1 text-xl">Platform health</h2>
           </div>
           <p className="text-xs font-bold text-secondary/45">{totalStudents || 0} family/student accounts tracked</p>
         </div>
@@ -246,27 +265,6 @@ export default async function AdminDashboard() {
         </div>
       </section>
 
-      <section className="rounded-[1.5rem] border border-primary/10 bg-gradient-to-br from-white via-[#fbfdff] to-[#f4f9ff] p-4 shadow-sm md:rounded-[2rem] md:p-5">
-        <div className="mb-3 flex items-center justify-between gap-3">
-          <div>
-            <p className="text-[10px] font-black uppercase tracking-[0.14em] text-secondary/35">Needs attention</p>
-            <h2 className="mt-1 text-lg font-black text-secondary">Operational next checks</h2>
-          </div>
-        </div>
-        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
-          {attentionLinks.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={`rounded-2xl border px-4 py-3 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${item.tone}`}
-            >
-              <p className={`text-sm font-black ${item.labelTone}`}>{item.label}</p>
-              <p className={`mt-1 text-xs font-bold ${item.detailTone}`}>{item.detail}</p>
-            </Link>
-          ))}
-        </div>
-      </section>
-
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 md:gap-6">
          <div className="lg:col-span-2">
             <div className="flex flex-col gap-2 sm:flex-row sm:justify-between sm:items-end mb-3">
@@ -276,7 +274,7 @@ export default async function AdminDashboard() {
                </div>
                <Link href="/dashboard/admin/bookings" className="text-xs font-black uppercase tracking-[0.12em] text-primary hover:underline">View bookings</Link>
             </div>
-            <div className="bg-white rounded-[1.5rem] border border-secondary/10 shadow-sm overflow-hidden min-h-[180px] md:rounded-[2rem]">
+            <div className="dashboard-panel min-h-[180px] overflow-hidden">
                {recentBookings?.map((booking: any, i) => {
                   const studentName = booking.student?.full_name || "Unknown Student";
                   const tutorName = booking.tutor?.full_name || "Unknown Tutor";
@@ -321,7 +319,7 @@ export default async function AdminDashboard() {
               <p className="text-[10px] font-black uppercase tracking-[0.14em] text-secondary/35">Educator operations</p>
               <h2 className="mt-1 text-xl font-black text-secondary">Tutor support snapshot</h2>
             </div>
-            <div className="bg-white rounded-[1.5rem] border border-secondary/10 shadow-sm p-3 md:rounded-[2rem] md:p-4">
+            <div className="dashboard-panel p-3 md:p-4">
                <div className="space-y-2">
                   {topTutors?.map((tutor: any) => (
                      <div key={tutor.id} className="flex justify-between items-center gap-3 rounded-2xl p-2 transition-colors hover:bg-slate-50">

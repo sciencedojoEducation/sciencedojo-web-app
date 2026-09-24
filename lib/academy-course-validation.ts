@@ -116,7 +116,7 @@ function validateBlock(
       block.type === "numbered-list"
         ? ["numbered", "bulleted", "checklist"]
         : block.type === "process"
-          ? ["slides", "timeline"]
+          ? ["slides", "timeline", "build-up"]
           : block.type === "flashcards"
             ? ["flip-grid", "stack"]
             : block.type === "survey"

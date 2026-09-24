@@ -196,8 +196,8 @@ export type AcademyAudienceRole =
   | "parent";
 
 export type AcademyTheme = {
-  preset: "editorial" | "modern" | "calm";
-  accent: "blue" | "teal" | "navy" | "amber";
+  preset: "editorial" | "modern" | "calm" | "journey";
+  accent: "blue" | "teal" | "navy" | "amber" | "blue-citrus" | "coral-navy" | "violet-mint";
   typography: "editorial" | "modern-sans" | "friendly-sans";
   density: "compact" | "comfortable" | "spacious";
   coverStyle: "full-image" | "split-image" | "minimal";

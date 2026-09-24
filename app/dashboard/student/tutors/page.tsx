@@ -27,36 +27,22 @@ export default async function StudentTutorsPage({
   const tutors = await getTutors(searchTerm, selectedSubject);
 
   return (
-    <div className="mx-auto max-w-6xl space-y-5 px-3 py-5 sm:px-4 md:space-y-8 md:p-8">
-      <div className="rounded-[1.5rem] border border-secondary/5 bg-white p-4 shadow-sm md:rounded-[2rem] md:p-6">
-        <p className="mb-2 text-[10px] font-black uppercase tracking-[0.16em] text-primary/60">Guided academic support</p>
-        <h1 className="mb-2 text-3xl font-black tracking-tight text-secondary">Tutor support</h1>
-        <p className="max-w-2xl text-sm font-bold leading-relaxed text-secondary/60 md:text-base">
-          Find guided STEM support for difficult topics, confidence gaps, and your next learning step.
+    <div data-role="student" className="dashboard-home mx-auto max-w-6xl space-y-5 px-3 py-5 sm:px-4 md:p-8">
+      <div className="dashboard-hero p-4 md:p-6">
+        <p className="dashboard-kicker">Guided academic support</p>
+        <h1 className="dashboard-title mt-1 text-2xl md:text-3xl">Find a tutor</h1>
+        <p className="dashboard-subtitle mt-2 max-w-2xl text-sm leading-6">
+          Search by subject or topic, compare teaching styles, and choose support that fits your next step.
         </p>
-        <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-3">
-          <div className="rounded-2xl bg-slate-50 p-3">
-            <p className="text-[9px] font-black uppercase tracking-widest text-secondary/35">Mentor support</p>
-            <p className="mt-1 text-xs font-bold text-secondary/60">Learn with structured guidance</p>
-          </div>
-          <div className="rounded-2xl bg-slate-50 p-3">
-            <p className="text-[9px] font-black uppercase tracking-widest text-secondary/35">Topic clarity</p>
-            <p className="mt-1 text-xs font-bold text-secondary/60">Get help where learning feels stuck</p>
-          </div>
-          <div className="rounded-2xl bg-slate-50 p-3">
-            <p className="text-[9px] font-black uppercase tracking-widest text-secondary/35">Next step</p>
-            <p className="mt-1 text-xs font-bold text-secondary/60">Meet a tutor before booking</p>
-          </div>
-        </div>
       </div>
 
       <SearchFilterBar variant="compact" />
 
       <div className="flex flex-col gap-2 sm:flex-row sm:justify-between sm:items-end">
-        <h2 className="text-[10px] font-black uppercase tracking-widest text-secondary/40">
+        <h2 className="dashboard-title text-lg">
           {selectedSubject === "All" ? "Available tutor support" : `${selectedSubject} support`}
         </h2>
-        <span className="text-xs font-bold text-secondary/40">
+        <span className="text-sm text-slate-600" role="status">
           {tutors.length} support options match your search
         </span>
       </div>
@@ -64,18 +50,18 @@ export default async function StudentTutorsPage({
       {tutors.length > 0 ? (
         <div className="grid grid-cols-1 gap-4 pb-12 md:grid-cols-2 md:gap-6 xl:grid-cols-3">
           {tutors.map((tutor) => (
-            <TutorCard key={tutor.id} tutor={tutor as any} currentUserRole="student" variant="dashboard" />
+            <TutorCard key={tutor.id} tutor={tutor} currentUserRole="student" variant="dashboard" />
           ))}
         </div>
       ) : (
-        <div className="rounded-[1.5rem] border border-dashed border-secondary/10 bg-slate-50 px-5 py-10 text-center md:rounded-[2.5rem] md:border-2 md:py-20">
+        <div className="rounded-xl border border-dashed border-slate-300 bg-white px-5 py-10 text-center md:py-14">
           <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-secondary/5 text-secondary/30 md:h-16 md:w-16">
             <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
           </div>
-          <h3 className="text-lg font-black text-secondary mb-2">No tutor support found</h3>
-          <p className="text-secondary/60 max-w-sm mx-auto">Try adjusting your filters or search terms.</p>
+          <h3 className="mb-2 text-lg font-semibold text-secondary">No tutors match yet</h3>
+          <p className="mx-auto max-w-sm text-sm text-slate-600">Try another subject or remove a search term.</p>
         </div>
       )}
     </div>

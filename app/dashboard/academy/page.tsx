@@ -8,5 +8,41 @@ import { getTutorAcademyProgress } from "@/lib/tutor-academy-progress";
 export default async function AcademyCataloguePage() {
   const courses = await getEligibleAcademyCourses();
   const items = await Promise.all(courses.map(async (course) => ({ course, progress: await getTutorAcademyProgress(course.key) })));
-  return <main className="min-h-full bg-[#F7F8FA] px-5 py-10 sm:px-8"><div className="mx-auto max-w-6xl"><p className="text-[10px] font-black uppercase tracking-[0.18em] text-primary/60">ScienceDojo Academy</p><h1 className="mt-2 text-4xl font-black tracking-tight text-secondary">Your courses</h1><p className="mt-3 max-w-2xl text-sm font-semibold leading-7 text-secondary/55">Focused learning experiences selected for your role and stage on ScienceDojo.</p><div className="mt-8 grid gap-5 md:grid-cols-2">{items.map(({ course, progress }) => { const percent = getAcademyProgressPercent(progress, course); return <article key={course.key} className="overflow-hidden rounded-[1.5rem] border border-secondary/10 bg-white shadow-sm"><div className="relative h-48 bg-slate-800">{course.heroImage ? <Image src={course.heroImage} alt="" fill sizes="(max-width:768px) 100vw, 50vw" className="object-cover" /> : null}<div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" /><h2 className="absolute inset-x-5 bottom-5 text-2xl font-black text-white">{course.title}</h2></div><div className="p-5"><p className="text-sm font-medium leading-6 text-secondary/60">{course.description}</p><div className="mt-4 flex gap-4 text-xs font-bold text-secondary/45"><span className="inline-flex gap-1.5"><BookOpen size={14} />{course.lessons.length} lessons</span><span className="inline-flex gap-1.5"><Clock size={14} />{course.estimatedMinutes} min</span></div><div className="mt-5 h-1 bg-slate-100"><div className="h-full bg-primary" style={{ width: `${percent}%` }} /></div><div className="mt-2 flex justify-between text-[10px] font-black uppercase tracking-[0.1em] text-secondary/40"><span>Progress</span><span>{percent}%</span></div><Link href={`/dashboard/academy/${course.key}`} className="mt-5 inline-flex min-h-10 items-center gap-2 rounded-full bg-primary px-5 text-xs font-black text-white">{percent ? "Continue" : "Start course"}<ArrowRight size={15} /></Link></div></article>; })}</div>{!items.length ? <div className="mt-8 rounded-2xl bg-white p-8 text-center font-semibold text-secondary/45">No Academy courses are currently assigned to you.</div> : null}</div></main>;
+
+  return (
+    <main className="min-h-full bg-[#F6F8FC] px-4 py-7 sm:px-8 md:py-10">
+      <div className="mx-auto max-w-6xl">
+        <header>
+          <p className="text-sm font-semibold text-[#4f53a5]">ScienceDojo Academy</p>
+          <h1 className="mt-1 text-3xl font-semibold tracking-tight text-slate-900">Your courses</h1>
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">Explore the courses available for your learning journey. You can return to a course whenever you&apos;re ready.</p>
+        </header>
+        {items.length ? (
+          <div className="mt-7 grid gap-4 md:grid-cols-2">
+            {items.map(({ course, progress }) => {
+              const percent = getAcademyProgressPercent(progress, course);
+              return (
+                <article key={course.key} className="overflow-hidden rounded-xl border border-slate-200 bg-white">
+                  {course.heroImage && <div className="relative h-40 bg-slate-100"><Image src={course.heroImage} alt="" fill sizes="(max-width: 768px) 100vw, 50vw" className="object-cover" /></div>}
+                  <div className="p-5">
+                    <h2 className="text-xl font-semibold text-slate-900">{course.title}</h2>
+                    <p className="mt-2 text-sm leading-6 text-slate-600">{course.description}</p>
+                    <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-xs font-medium text-slate-600">
+                      <span className="inline-flex items-center gap-1.5"><BookOpen size={15} aria-hidden="true" />{course.lessons.length} lessons</span>
+                      <span className="inline-flex items-center gap-1.5"><Clock size={15} aria-hidden="true" />{course.estimatedMinutes} min</span>
+                    </div>
+                    <div className="mt-5 flex items-center justify-between text-xs font-medium text-slate-700"><span>Course progress</span><span>{percent}%</span></div>
+                    <div role="progressbar" aria-label={`${course.title} progress`} aria-valuemin={0} aria-valuemax={100} aria-valuenow={percent} className="mt-2 h-2 overflow-hidden rounded-full bg-slate-100"><div className="h-full rounded-full bg-[#4f53a5]" style={{ width: `${percent}%` }} /></div>
+                    <Link href={`/dashboard/academy/${course.key}`} className="mt-5 inline-flex min-h-11 items-center gap-2 rounded-xl bg-[#1E5AA8] px-5 text-sm font-semibold text-white hover:bg-[#174a8b] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4f53a5] focus-visible:ring-offset-2">{percent ? "Continue course" : "Start course"}<ArrowRight size={16} aria-hidden="true" /></Link>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        ) : (
+          <section className="mt-7 rounded-xl border border-slate-200 bg-white p-6"><h2 className="text-lg font-semibold text-slate-900">No courses assigned yet</h2><p className="mt-1 text-sm text-slate-600">Available Academy courses will appear here.</p></section>
+        )}
+      </div>
+    </main>
+  );
 }

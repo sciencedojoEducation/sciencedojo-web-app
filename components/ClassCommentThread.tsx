@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 import { ClassComment } from "@/lib/class-queries";
 import { createClassComment, fetchCommentsForPost } from "@/app/classes/actions";
+import { formatClassDateTime } from "@/lib/class-date";
 
 interface ClassCommentThreadProps {
   postId: string;
@@ -109,9 +110,9 @@ export default function ClassCommentThread({
                   <div className="flex-1">
                     <div className="flex items-baseline gap-2 mb-0.5">
                       <span className="font-bold text-secondary text-xs">{comment.author_name}</span>
-                      <span className="text-[9px] font-bold text-secondary/40">
-                        {new Date(comment.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
-                      </span>
+                      <time dateTime={comment.created_at} className="text-[9px] font-bold text-secondary/40">
+                        {formatClassDateTime(comment.created_at)}
+                      </time>
                       {comment.is_submission && (
                         <span className="ml-auto px-2 py-0.5 bg-primary/10 text-primary text-[9px] font-black rounded uppercase tracking-widest">
                           Submission

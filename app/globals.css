@@ -33,6 +33,74 @@ body {
   color: var(--foreground);
 }
 
+/* Dashboard-only surfaces and role accents. Public pages keep their own palette. */
+.dashboard-shell {
+  --dashboard-nav: #102a43;
+  --dashboard-canvas: #f6f8fc;
+  --dashboard-panel: #ffffff;
+  --dashboard-ink: #142b42;
+  --dashboard-muted: #526579;
+  --dashboard-border: #dce5ed;
+  --dashboard-accent: #1e5aa8;
+  --dashboard-accent-soft: #e9f2ff;
+  --dashboard-success: #187553;
+  --dashboard-warning: #995b12;
+  --dashboard-danger: #b12d3b;
+  background: var(--dashboard-canvas);
+  color: var(--dashboard-ink);
+}
+
+.dashboard-sidebar,
+.dashboard-mobile-header {
+  background: var(--dashboard-nav);
+}
+
+.dashboard-canvas {
+  background: var(--dashboard-canvas);
+}
+
+.dashboard-home {
+  --dashboard-role-accent: #1e5aa8;
+  --dashboard-role-soft: #e9f2ff;
+  color: var(--dashboard-ink);
+}
+
+.dashboard-home[data-role="parent"] { --dashboard-role-accent: #0c766d; --dashboard-role-soft: #e5f5f1; }
+.dashboard-home[data-role="student"] { --dashboard-role-accent: #4f53a5; --dashboard-role-soft: #eeefff; }
+.dashboard-home[data-role="tutor"] { --dashboard-role-accent: #087487; --dashboard-role-soft: #e7f6f8; }
+.dashboard-home[data-role="internal"] { --dashboard-role-accent: #247350; --dashboard-role-soft: #e9f5ee; }
+.dashboard-home[data-role="user"] { --dashboard-role-accent: #126b9a; --dashboard-role-soft: #e8f4fb; }
+
+.dashboard-home .dashboard-hero,
+.dashboard-home .dashboard-priority,
+.dashboard-home .dashboard-panel {
+  border: 1px solid var(--dashboard-border);
+  background: var(--dashboard-panel);
+  box-shadow: none;
+}
+
+.dashboard-home .dashboard-hero {
+  border-radius: 1.25rem;
+  border-top: 3px solid var(--dashboard-role-accent);
+}
+
+.dashboard-home .dashboard-priority {
+  border-radius: 1.25rem;
+  border-left: 4px solid var(--dashboard-role-accent);
+}
+
+.dashboard-home .dashboard-panel { border-radius: 1.125rem; }
+.dashboard-home .dashboard-kicker { color: var(--dashboard-role-accent); font-size: 0.75rem; font-weight: 700; letter-spacing: 0; text-transform: none; }
+.dashboard-home .dashboard-title { color: var(--dashboard-ink); font-weight: 700; letter-spacing: -0.025em; }
+.dashboard-home .dashboard-subtitle { color: var(--dashboard-muted); font-weight: 500; }
+.dashboard-home .dashboard-role-soft { background: var(--dashboard-role-soft); color: var(--dashboard-role-accent); }
+
+@media (prefers-reduced-motion: reduce) {
+  .dashboard-shell *, .dashboard-shell *::before, .dashboard-shell *::after {
+    scroll-behavior: auto;
+  }
+}
+
 /* A quieter, humanist type system for learning authoring—not the marketing UI. */
 .academy-authoring-ui {
   font-family: "Avenir Next", Avenir, "Segoe UI", "Helvetica Neue", Arial, sans-serif;

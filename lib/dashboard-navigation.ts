@@ -125,7 +125,7 @@ export function getDashboardNavSections(role: DashboardRole, features: Dashboard
         { name: "Dashboard", href: "/dashboard/parent", iconName: "overview", badgeKey: "bookingPayments", exact: true, tourId: "parent-bookings" },
         { name: "My Classes", href: "/dashboard/classes", iconName: "classes", tourId: "parent-classes" },
         ...(features.tutorAcademyEnabled ? [{ name: "Academy", href: "/dashboard/academy", iconName: "academy" as const }] : []),
-        { name: "Learning Guide", href: "/support", iconName: "guide" },
+        { name: "Learning Guide", href: "/dashboard/parent/learning-guide", iconName: "guide" },
         ...(features.tutorMarketplaceEnabled ? [{ name: "Browse Tutors", href: "/dashboard/parent/tutors", iconName: "search" as const, tourId: "parent-browse" }] : []),
       ],
     },
@@ -146,7 +146,7 @@ export function getDashboardNavSections(role: DashboardRole, features: Dashboard
         { name: "My Bookings", href: "/dashboard/student", iconName: "bookings", badgeKey: "bookingPayments", exact: true, tourId: "student-bookings" },
         { name: "My Classes", href: "/dashboard/classes", iconName: "classes", tourId: "student-classes" },
         ...(features.tutorAcademyEnabled ? [{ name: "Academy", href: "/dashboard/academy", iconName: "academy" as const }] : []),
-        { name: "Learning Guide", href: "/support", iconName: "guide" },
+        { name: "Learning Guide", href: "/dashboard/student/learning-guide", iconName: "guide" },
       ],
     },
     {

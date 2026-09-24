@@ -3,6 +3,7 @@ import { Merriweather } from "next/font/google";
 import { notFound } from "next/navigation";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import AcademyDraftQuizPreview from "@/components/admin/academy-builder/AcademyDraftQuizPreview";
+import AcademyTemplatePreviewStudio from "@/components/admin/academy-builder/AcademyTemplatePreviewStudio";
 import AcademyCourseContents from "@/components/tutor-academy/AcademyCourseContents";
 import AcademyCourseCover from "@/components/tutor-academy/AcademyCourseCover";
 import AcademyLessonBlocks from "@/components/tutor-academy/AcademyLessonBlocks";
@@ -21,17 +22,30 @@ const academySerif = Merriweather({
 export default async function AcademyTemplatePreviewPage({
   searchParams,
 }: {
-  searchParams: Promise<{ template?: string; view?: string; lesson?: string }>;
+  searchParams: Promise<{ template?: string; view?: string; lesson?: string; embedded?: string }>;
 }) {
   const {
     template: key,
     view: requestedView,
     lesson: slug,
+    embedded,
   } = await searchParams;
   if (!(await isFeatureEnabled("academy_builder_v2_enabled"))) notFound();
   const template = academyTemplates.find((item) => item.key === key);
   if (!template) notFound();
   const course = template.course;
+  if (embedded !== "1")
+    return (
+      <AcademyTemplatePreviewStudio
+        templateKey={template.key}
+        templateName={template.name}
+        lessons={course.lessons.map((lesson) => ({
+          slug: lesson.slug,
+          title: lesson.title,
+        }))}
+        hasQuiz={course.quiz.length > 0}
+      />
+    );
   const view =
     requestedView === "lesson" || requestedView === "quiz"
       ? requestedView
@@ -42,6 +56,7 @@ export default async function AcademyTemplatePreviewPage({
     const query = new URLSearchParams({
       template: template.key,
       view: nextView,
+      embedded: "1",
     });
     if (nextSlug) query.set("lesson", nextSlug);
     return `/dashboard/admin/academy/new/preview?${query.toString()}`;
@@ -52,23 +67,6 @@ export default async function AcademyTemplatePreviewPage({
       course={course}
       className={`${academySerif.variable} min-h-screen bg-white text-[#18212B]`}
     >
-      <div className="sticky top-0 z-30 flex flex-wrap items-center justify-between gap-2 border-b border-black/10 bg-[#F8F7F3] px-4 py-2">
-        <Link
-          href="/dashboard/admin/academy/new"
-          className="inline-flex min-h-11 items-center gap-2 rounded-full px-3 text-xs font-semibold text-[#52606D] hover:bg-white"
-        >
-          <ArrowLeft size={15} /> Templates
-        </Link>
-        <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[#6C747C]">
-          Starter preview · {template.name}
-        </span>
-        <Link
-          href={`/dashboard/admin/academy/new?template=${template.key}`}
-          className="inline-flex min-h-11 items-center gap-2 rounded-full bg-[#18212B] px-4 text-xs font-semibold text-white hover:bg-primary"
-        >
-          Use template <ArrowRight size={14} />
-        </Link>
-      </div>
       {view === "cover" ? (
         <main>
           <AcademyCourseCover

@@ -264,7 +264,7 @@ export default async function AdminOverviewPage({
               description: "Open the public intake experience.",
             },
             {
-              href: "/#directory",
+              href: "/find-tutors",
               title: "View tutor directory",
               description: "Review the public tutor marketplace.",
             },

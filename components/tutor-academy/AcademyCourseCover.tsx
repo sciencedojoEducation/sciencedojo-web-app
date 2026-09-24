@@ -18,6 +18,7 @@ export default function AcademyCourseCover({
     course.heroImage || "/images/home/8.professional-online-teacher.jpg";
   const usesImage = theme.coverStyle !== "minimal";
   const overlaysImage = theme.coverStyle === "full-image";
+  const journey = theme.preset === "journey";
 
   return (
     <section
@@ -63,7 +64,7 @@ export default function AcademyCourseCover({
           <p
             className={`text-[11px] font-bold uppercase tracking-[0.2em] ${overlaysImage ? "text-white/75" : "text-[var(--academy-accent)]"}`}
           >
-            ScienceDojo Academy
+            {journey ? "ScienceDojo Learning Journey" : "ScienceDojo Academy"}
           </p>
           <h1 className="mt-5 text-[40px] font-black leading-[1.08] sm:text-[50px]">
             {course.title}
@@ -80,6 +81,11 @@ export default function AcademyCourseCover({
             {ctaLabel}
             <ArrowRight size={16} aria-hidden="true" />
           </Link>
+          {journey ? (
+            <p className={`mt-5 inline-flex items-center rounded-full bg-[var(--academy-spark)] px-4 py-2 text-xs font-bold text-[#17202C] ${overlaysImage ? "shadow-lg" : ""}`}>
+              Learn a little · Try it · See your progress
+            </p>
+          ) : null}
         </div>
       </div>
     </section>

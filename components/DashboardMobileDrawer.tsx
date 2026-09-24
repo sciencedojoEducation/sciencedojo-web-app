@@ -100,7 +100,7 @@ export default function DashboardMobileDrawer({
 
   return (
     <div className="lg:hidden">
-      <header className="sticky top-0 z-50 border-b border-slate-200 bg-white/92 px-3 py-2.5 shadow-sm backdrop-blur-xl sm:px-4 sm:py-3">
+      <header className="dashboard-mobile-header sticky top-0 z-50 border-b border-white/10 px-3 py-2.5 sm:px-4 sm:py-3">
         <div className="flex items-center justify-between gap-3">
           <div className="flex min-w-0 items-center gap-3">
             <button
@@ -112,7 +112,7 @@ export default function DashboardMobileDrawer({
               onPointerDown={handleTriggerPointerDown}
               onClick={handleTriggerClick}
               style={{ WebkitTapHighlightColor: "transparent" }}
-              className="pointer-events-auto relative z-[70] inline-flex h-11 w-11 shrink-0 cursor-pointer touch-manipulation items-center justify-center rounded-2xl border border-slate-200 bg-white text-[#001A3D] shadow-sm transition-colors hover:bg-[#1E5AA8]/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1E5AA8] focus-visible:ring-offset-2"
+              className="pointer-events-auto relative z-[70] inline-flex h-11 w-11 shrink-0 cursor-pointer touch-manipulation items-center justify-center rounded-xl border border-white/20 bg-white/10 text-white transition-colors hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300"
             >
               <span className="flex h-4 w-5 flex-col justify-between" aria-hidden="true">
                 <span className="h-0.5 rounded-full bg-current" />
@@ -120,11 +120,11 @@ export default function DashboardMobileDrawer({
                 <span className="h-0.5 rounded-full bg-current" />
               </span>
             </button>
-            <Link href={dashboardHref} className="min-w-0 text-xl font-black tracking-tight text-[#001A3D] sm:text-2xl">
-              science<span className="text-[#0066FF]">dojo</span><span className="text-[#00CFE8]">.</span>
+            <Link href={dashboardHref} className="min-w-0 text-xl font-bold tracking-tight text-white sm:text-2xl">
+              science<span className="text-cyan-200">dojo</span><span className="text-cyan-300">.</span>
             </Link>
           </div>
-          <span className="shrink-0 rounded-full border border-[#1E5AA8]/10 bg-[#1E5AA8]/5 px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.12em] text-[#1E5AA8] sm:px-3 sm:text-[10px]">
+          <span className="shrink-0 rounded-full border border-white/15 bg-white/10 px-2.5 py-1 text-[10px] font-semibold capitalize text-slate-100 sm:px-3">
             {displayRole}
           </span>
         </div>
@@ -144,18 +144,18 @@ export default function DashboardMobileDrawer({
             role="dialog"
             aria-modal="true"
             aria-label="Dashboard navigation"
-            className="relative flex h-full w-[min(22rem,calc(100vw-2rem))] flex-col overflow-hidden rounded-r-[2rem] border-r border-white/70 bg-slate-50 shadow-2xl shadow-slate-950/25"
+            className="dashboard-sidebar relative flex h-full w-[min(22rem,calc(100vw-2rem))] flex-col overflow-hidden rounded-r-2xl border-r border-white/10 shadow-2xl shadow-slate-950/25"
           >
-            <div className="flex shrink-0 items-center justify-between gap-3 border-b border-slate-200 bg-white/86 px-4 py-3.5 backdrop-blur-xl">
+            <div className="flex shrink-0 items-center justify-between gap-3 border-b border-white/10 px-4 py-3.5">
               <div className="min-w-0">
-                <p className="text-[9px] font-semibold uppercase tracking-[0.18em] text-[#1E5AA8]/70">Dashboard</p>
-                <h2 className="mt-0.5 truncate text-lg font-bold capitalize text-[#001A3D]">{displayRole} space</h2>
+                <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-300">Dashboard</p>
+                <h2 className="mt-0.5 truncate text-lg font-bold capitalize text-white">{displayRole} space</h2>
               </div>
               <button
                 type="button"
                 aria-label="Close menu"
                 onClick={() => setIsOpen(false)}
-                className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-slate-200 bg-white text-xl leading-none text-slate-500 shadow-sm transition-colors hover:bg-slate-100 hover:text-[#001A3D] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1E5AA8]"
+                className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-white/20 bg-white/10 text-xl leading-none text-white transition-colors hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300"
               >
                 ×
               </button>
@@ -164,7 +164,7 @@ export default function DashboardMobileDrawer({
             <nav aria-label={`${displayRole} navigation`} className="min-h-0 flex-1 space-y-5 overflow-y-auto overscroll-contain px-4 py-3.5">
               {sections.map((section) => (
                 <section key={section.title} aria-label={section.title}>
-                  <h3 className="mb-1 px-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-500">{section.title}</h3>
+                  <h3 className="mb-1 px-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-300">{section.title}</h3>
                   <div className="space-y-0.5">
                     {section.items.map((link) => {
                       const isActive = isDashboardNavItemActive(pathname, link);
@@ -175,12 +175,12 @@ export default function DashboardMobileDrawer({
                           data-tour={link.tourId}
                           aria-current={isActive ? "page" : undefined}
                           onClick={() => setIsOpen(false)}
-                          className={`group flex min-h-11 items-center gap-2.5 rounded-xl px-2.5 text-[13px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1E5AA8] ${
-                            isActive ? "bg-[#1E5AA8]/8 font-semibold text-[#164b87]" : "font-medium text-slate-600 hover:bg-white hover:text-slate-900"
+                          className={`group flex min-h-11 items-center gap-2.5 rounded-xl px-2.5 text-[13px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300 ${
+                            isActive ? "bg-white/14 font-semibold text-white" : "font-medium text-slate-200 hover:bg-white/8 hover:text-white"
                           }`}
                         >
                           <span className={`flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-lg ${
-                            isActive ? "bg-[#1E5AA8]/12 text-[#1E5AA8] ring-1 ring-[#6FE3D6]/70" : "bg-slate-100 text-slate-500 group-hover:bg-white group-hover:text-[#1E5AA8]"
+                            isActive ? "bg-cyan-300/20 text-cyan-200 ring-1 ring-cyan-200/40" : "bg-white/8 text-slate-200 group-hover:bg-white/12 group-hover:text-white"
                           }`} aria-hidden="true">
                             <DashboardNavIcon name={link.iconName} />
                           </span>
@@ -194,11 +194,11 @@ export default function DashboardMobileDrawer({
               ))}
             </nav>
 
-            <div className="shrink-0 space-y-2 border-t border-slate-200 bg-white/90 p-3">
+            <div className="shrink-0 space-y-2 border-t border-white/10 bg-white/[0.035] p-3">
               {hasTour && (
                 <DashboardTourReplayButton
                   onReplay={() => setIsOpen(false)}
-                  className="flex min-h-11 w-full items-center justify-center gap-2 rounded-lg text-xs font-medium text-[#1E5AA8] hover:bg-[#1E5AA8]/6 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1E5AA8]"
+                  className="flex min-h-11 w-full items-center justify-center gap-2 rounded-lg text-xs font-medium text-slate-200 hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300"
                 />
               )}
               <DashboardAccountMenu

@@ -21,6 +21,20 @@ import {
   migrateAcademyCourse,
 } from "../lib/academy-schema.ts";
 import { academyTemplates, filterAcademyTemplates } from "../lib/academy-templates.ts";
+import { academyAccentPalettes, academyJourneyPaletteKeys, academyThemeStyle } from "../lib/academy-theme.ts";
+import { academyRecipes, createAcademyRecipe } from "../lib/academy-recipes.ts";
+import { getAcademyJourneyLessonState, getAcademyJourneyResumeTarget } from "../lib/academy-journey.ts";
+
+function luminance(hex) {
+  const channels = hex.slice(1).match(/../g).map((part) => parseInt(part, 16) / 255);
+  const [red, green, blue] = channels.map((channel) => channel <= 0.04045 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4);
+  return 0.2126 * red + 0.7152 * green + 0.0722 * blue;
+}
+
+function contrast(first, second) {
+  const values = [luminance(first), luminance(second)].sort((left, right) => right - left);
+  return (values[0] + 0.05) / (values[1] + 0.05);
+}
 
 describe("Tutor Academy course", () => {
   test("contains six unique lessons and ten quiz questions", () => {
@@ -153,7 +167,26 @@ describe("Tutor Academy course", () => {
     assert.equal(validateAcademyCourse(course).valid, true);
   });
 
-  test("migrates older documents to v5 without changing stable IDs", () => {
+  test("offers optional Process build-up without changing the default style", () => {
+    const definition = academyBlockRegistry.find(
+      (item) => item.type === "process",
+    );
+    const process = definition.create();
+    assert.equal(process.appearance.variant, "slides");
+    assert.deepEqual(
+      definition.variants.map((variant) => variant.key),
+      ["slides", "timeline", "build-up"],
+    );
+
+    const course = migrateAcademyCourse(structuredClone(tutorAcademyCourse));
+    process.appearance.variant = "build-up";
+    course.lessons[0].blocks.push(process);
+    assert.equal(validateAcademyCourse(course).valid, true);
+    const reloaded = migrateAcademyCourse(structuredClone(course));
+    assert.equal(reloaded.lessons[0].blocks.at(-1).appearance.variant, "build-up");
+  });
+
+  test("migrates older documents to v6 without changing stable IDs", () => {
     const legacy = structuredClone(tutorAcademyCourse);
     const originalLessonId = "stable-lesson";
     const originalBlockId = "stable-block";
@@ -191,6 +224,55 @@ describe("Tutor Academy course", () => {
     });
     assert.equal(migrated.theme.typography, "modern-sans");
     assert.equal(migrated.theme.coverStyle, "full-image");
+  });
+
+  test("keeps Learning Journey opt-in with three accessible energetic palettes", () => {
+    assert.equal(academyThemeStyle(tutorAcademyCourse)["--academy-accent"], academyAccentPalettes.blue.accent);
+    assert.deepEqual(academyJourneyPaletteKeys, ["blue-citrus", "coral-navy", "violet-mint"]);
+    for (const key of academyJourneyPaletteKeys) {
+      const palette = academyAccentPalettes[key];
+      assert.ok(contrast(palette.accent, "#FFFFFF") >= 4.5, `${key} primary control contrast`);
+      assert.ok(contrast(palette.ink, palette.soft) >= 4.5, `${key} reading contrast`);
+      assert.ok(contrast("#17202C", palette.spark) >= 4.5, `${key} milestone contrast`);
+    }
+    const oldCourse = structuredClone(tutorAcademyCourse);
+    oldCourse.schemaVersion = 5;
+    oldCourse.theme = undefined;
+    const migrated = migrateAcademyCourse(oldCourse);
+    assert.equal(migrated.schemaVersion, ACADEMY_DOCUMENT_SCHEMA_VERSION);
+    assert.equal(migrated.theme.preset, "editorial");
+  });
+
+  test("roadmap resumes the first incomplete step and respects linear navigation", () => {
+    const course = structuredClone(tutorAcademyCourse);
+    course.rules = { ...course.rules, navigation: "linear", requireFinalAssessment: true };
+    const first = course.lessons[0];
+    const second = course.lessons[1];
+    assert.deepEqual(getAcademyJourneyResumeTarget(course, emptyAcademyProgress), { kind: "lesson", slug: first.slug });
+    assert.equal(getAcademyJourneyLessonState(course, emptyAcademyProgress, 1).locked, true);
+    const oneComplete = { ...emptyAcademyProgress, completedLessons: [first.slug] };
+    assert.deepEqual(getAcademyJourneyResumeTarget(course, oneComplete), { kind: "lesson", slug: second.slug });
+    assert.equal(getAcademyJourneyLessonState(course, oneComplete, 1).locked, false);
+    const allComplete = { ...emptyAcademyProgress, completedLessons: course.lessons.map((lesson) => lesson.slug) };
+    assert.deepEqual(getAcademyJourneyResumeTarget(course, allComplete), { kind: "assessment" });
+    assert.equal(getAcademyJourneyResumeTarget(course, { ...allComplete, completedAt: new Date().toISOString() }), null);
+    course.rules.requireFinalAssessment = false;
+    assert.equal(getAcademyJourneyResumeTarget(course, allComplete), null);
+  });
+
+  test("creates unique, optional, publish-blocked learning sequences", () => {
+    assert.equal(academyRecipes.length, 2);
+    for (const recipe of academyRecipes) {
+      const blocks = createAcademyRecipe(recipe.key);
+      assert.deepEqual(blocks.map((block) => block.type), recipe.key === "explain-practise-check" ? ["text", "flashcards", "knowledge-check"] : ["text", "process", "knowledge-check"]);
+      assert.equal(new Set(blocks.map((block) => block.id)).size, 3);
+      assert.equal(blocks[1].completion, "view");
+      assert.equal(blocks[2].completion, "view");
+      if (blocks[1].type === "process") assert.equal(blocks[1].appearance.variant, "build-up");
+      const course = migrateAcademyCourse(structuredClone(tutorAcademyCourse));
+      course.lessons[0].blocks.splice(1, 0, ...blocks);
+      assert.ok(validateAcademyCourse(course).errors.some((error) => error.includes("author note")));
+    }
   });
 
   test("groups publishing issues into actionable readiness sections", () => {

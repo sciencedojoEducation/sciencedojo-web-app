@@ -24,7 +24,7 @@ export default function ClassCard({ classRoom, currentUserId, currentUserRole }:
     .join("")
     .toUpperCase();
 
-  const theme = getClassSubjectTheme(classRoom.subject, classRoom.cover_color);
+  const theme = getClassSubjectTheme(classRoom.subject, currentUserRole === "student" ? undefined : classRoom.cover_color);
   const accentColor = theme.color;
 
   // Time ago
@@ -39,6 +39,35 @@ export default function ClassCard({ classRoom, currentUserId, currentUserRole }:
     : currentUserRole === "tutor" && (!classRoom.post_count || classRoom.post_count === 0)
       ? "Add the first update"
       : "Open classroom";
+
+  if (currentUserRole === "student") {
+    return (
+      <Link href={`/dashboard/classes/${classRoom.id}`} className="group relative block min-w-0 overflow-hidden rounded-xl border border-slate-200 bg-white p-5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4f53a5] focus-visible:ring-offset-2">
+        <span aria-hidden="true" className="absolute inset-x-0 top-0 h-1.5" style={{ backgroundColor: theme.color }} />
+        <div className="flex items-start justify-between gap-3 rounded-lg p-3" style={{ backgroundColor: `${theme.color}12` }}>
+          <div className="min-w-0">
+            <p className="flex items-center gap-2 text-xs font-semibold text-slate-700"><span aria-hidden="true" className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: theme.color }} />{theme.label}</p>
+            <h2 className="mt-1 truncate text-lg font-semibold text-slate-900">{classRoom.display_name}</h2>
+          </div>
+          <span className={`shrink-0 rounded-md px-2 py-1 text-xs font-medium ${classRoom.is_archived ? "bg-slate-100 text-slate-700" : "bg-emerald-50 text-emerald-800"}`}>{classRoom.is_archived ? "Archived" : "Active"}</span>
+        </div>
+        <div className="mt-5 flex items-center gap-3 border-t border-slate-100 pt-4">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-slate-100 text-xs font-semibold text-slate-700">
+            {otherAvatar ? <img src={otherAvatar} alt="" className="h-full w-full object-cover" /> : initials}
+          </div>
+          <div className="min-w-0">
+            <p className="truncate text-sm font-semibold text-slate-900">{otherName}</p>
+            <p className="text-xs text-slate-600">Your tutor</p>
+          </div>
+        </div>
+        <div className="mt-4 rounded-lg bg-slate-50 p-3">
+          <p className="text-sm font-medium text-slate-800">{activityLabel}</p>
+          <p className="mt-1 text-xs text-slate-600">Last activity: {lastActivity}</p>
+        </div>
+        <p className="mt-4 text-sm font-semibold text-[#1E5AA8] group-hover:underline">{nextStep} <span aria-hidden="true">→</span></p>
+      </Link>
+    );
+  }
 
   return (
     <Link

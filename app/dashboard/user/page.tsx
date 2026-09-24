@@ -238,18 +238,16 @@ export default async function UserDashboardPage({
   );
 
   return (
-    <div className="mx-auto max-w-5xl space-y-6 px-4 py-6 md:p-8">
-      <section className="rounded-3xl border border-primary/10 bg-white p-6 shadow-sm md:p-8">
-        <p className="text-[10px] font-black uppercase tracking-[0.18em] text-primary/65">
+    <div data-role="user" className="dashboard-home mx-auto max-w-5xl space-y-5 px-4 py-6 md:p-8">
+      <section className="dashboard-hero p-6 md:p-8">
+        <p className="dashboard-kicker">
           My Dojo
         </p>
-        <h1 className="mt-2 text-3xl font-black tracking-tight text-secondary md:text-4xl">
+        <h1 className="dashboard-title mt-2 text-2xl md:text-3xl">
           Welcome, {firstName(name)}.
         </h1>
-        <p className="mt-3 max-w-2xl text-sm font-semibold leading-7 text-secondary/55 md:text-base">
-          Use your ScienceDojo account for FocusDojo, subscriptions, and future
-          study tools. If you later become a ScienceDojo student, this same
-          account keeps your subscription and access history.
+        <p className="dashboard-subtitle mt-2 max-w-2xl text-sm leading-6">
+          Your focus and practice tools are ready when you are.
         </p>
       </section>
 
@@ -259,26 +257,40 @@ export default async function UserDashboardPage({
         </div>
       ) : null}
 
-      <section className="grid gap-4 md:grid-cols-2">
-        <div className="rounded-2xl border border-secondary/10 bg-white p-5 shadow-sm">
-          <p className="text-[10px] font-black uppercase tracking-[0.16em] text-primary/65">
+      <section aria-label="Study tools and account" className="grid gap-4 md:grid-cols-2">
+        <div className="dashboard-priority p-5">
+          <p className="dashboard-kicker">
             FocusDojo
           </p>
-          <h2 className="mt-2 text-xl font-black text-secondary">
+          <h2 className="dashboard-title mt-2 text-xl">
             {accessLabel}
           </h2>
-          <p className="mt-3 text-sm font-semibold leading-6 text-secondary/55">
+          <p className="dashboard-subtitle mt-3 text-sm leading-6">
             Open your calm timer and study atmosphere.
           </p>
           <Link
             href="/focus-dojo"
-            className="mt-5 inline-flex min-h-11 items-center justify-center rounded-2xl bg-secondary px-5 text-sm font-black text-white transition hover:bg-secondary/90"
+            className="mt-5 inline-flex min-h-11 items-center justify-center rounded-xl bg-secondary px-5 text-sm font-semibold text-white transition-colors hover:bg-secondary/90"
           >
             Open FocusDojo
           </Link>
         </div>
 
-        <div className="rounded-2xl border border-secondary/10 bg-white p-5 shadow-sm">
+        <div className="dashboard-panel p-5">
+          <p className="dashboard-kicker">PracticeDojo</p>
+          <h2 className="dashboard-title mt-2 text-xl">Practice tools</h2>
+          <p className="dashboard-subtitle mt-3 text-sm leading-6">
+            Generate structured practice when you want a study companion.
+          </p>
+          <Link
+            href="/ai-practice-studio"
+            className="mt-5 inline-flex min-h-11 items-center justify-center rounded-xl border border-secondary/10 bg-white px-5 text-sm font-semibold text-secondary transition-colors hover:border-primary/30 hover:text-primary"
+          >
+            Open PracticeDojo
+          </Link>
+        </div>
+
+        <div className="dashboard-panel p-5">
           <p className="text-[10px] font-black uppercase tracking-[0.16em] text-primary/65">
             Subscription
           </p>
@@ -328,27 +340,9 @@ export default async function UserDashboardPage({
           )}
         </div>
 
-        <div className="rounded-2xl border border-secondary/10 bg-white p-5 shadow-sm">
-          <p className="text-[10px] font-black uppercase tracking-[0.16em] text-primary/65">
-            PracticeDojo
-          </p>
-          <h2 className="mt-2 text-xl font-black text-secondary">
-            Practice tools
-          </h2>
-          <p className="mt-3 text-sm font-semibold leading-6 text-secondary/55">
-            Generate structured practice when you want a study companion.
-          </p>
-          <Link
-            href="/ai-practice-studio"
-            className="mt-5 inline-flex min-h-11 items-center justify-center rounded-2xl border border-secondary/10 bg-white px-5 text-sm font-black text-secondary transition hover:border-primary/30 hover:text-primary"
-          >
-            Open PracticeDojo
-          </Link>
-        </div>
-
         <div
           id="account"
-          className="rounded-2xl border border-secondary/10 bg-white p-5 shadow-sm"
+          className="dashboard-panel p-5"
         >
           <p className="text-[10px] font-black uppercase tracking-[0.16em] text-primary/65">
             Account

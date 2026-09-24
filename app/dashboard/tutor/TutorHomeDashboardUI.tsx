@@ -153,7 +153,7 @@ export default function TutorHomeDashboardUI({
   };
 
   return (
-    <div className="mx-auto max-w-6xl space-y-5 px-3 py-5 sm:p-6 md:space-y-6 md:p-8">
+    <div data-role="tutor" className="dashboard-home mx-auto max-w-6xl space-y-5 px-3 py-5 sm:p-6 md:p-8">
       {!tutorData?.is_verified && (
         <div className="rounded-[1.25rem] border border-amber-100 bg-amber-50 p-4 shadow-sm shadow-amber-900/5">
           <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
@@ -175,8 +175,25 @@ export default function TutorHomeDashboardUI({
         <AnnouncementFeed announcements={announcements} platformAnnouncements={platformAnnouncements} />
       )}
 
+      <section aria-labelledby="tutor-today-title" className="dashboard-priority p-4 md:p-6">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="dashboard-kicker">Teaching today</p>
+            <h1 id="tutor-today-title" className="dashboard-title mt-1 text-2xl md:text-3xl">
+              {requested.length > 0 ? `${requested.length} lesson request${requested.length === 1 ? "" : "s"} to review` : todayLessons.length > 0 ? `${todayLessons.length} lesson${todayLessons.length === 1 ? "" : "s"} today` : "Your teaching workspace is ready"}
+            </h1>
+            <p className="dashboard-subtitle mt-2 text-sm leading-6">
+              {requested.length > 0 ? "Respond to families, then prepare for upcoming lessons." : todayLessons.length > 0 ? "Your schedule has the times and class details you need." : profileReadiness.recommendedNextAction.body}
+            </p>
+          </div>
+          <Link href={requested.length > 0 ? "/dashboard/tutor/schedule?tab=requests" : todayLessons.length > 0 ? "/dashboard/tutor/schedule?tab=sessions" : nextActionHref} className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-xl bg-secondary px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-secondary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2">
+            {requested.length > 0 ? "Review requests" : todayLessons.length > 0 ? "Open schedule" : profileReadiness.recommendedNextAction.cta.label}
+          </Link>
+        </div>
+      </section>
+
       {isWelcomeVisible && (
-        <section className="rounded-[1.5rem] border border-primary/10 bg-[linear-gradient(135deg,#ffffff_0%,#f5fbff_58%,#ecfeff_100%)] p-4 shadow-sm shadow-primary/5 md:p-5">
+        <section className="dashboard-panel p-4 md:p-5">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div>
               <p className="text-[10px] font-black uppercase tracking-[0.16em] text-primary/60">Verified tutor network</p>
@@ -197,7 +214,7 @@ export default function TutorHomeDashboardUI({
         </section>
       )}
 
-      {tutorAcademyEnabled && <section className="overflow-hidden rounded-[1.5rem] border border-blue-100 bg-gradient-to-br from-[#001a3d] via-[#063d7a] to-[#0066ff] text-white shadow-lg shadow-blue-950/10 md:rounded-[2rem]">
+      {tutorAcademyEnabled && <section className="overflow-hidden rounded-xl border border-blue-900 bg-[#14365a] text-white">
         <div className="grid gap-6 p-5 md:grid-cols-[1fr_auto] md:items-center md:p-7">
           <div>
             <p className="text-[10px] font-black uppercase tracking-[0.18em] text-cyan-200/70">ScienceDojo Tutor Academy</p>
@@ -217,13 +234,13 @@ export default function TutorHomeDashboardUI({
               </div>
             </div>
           </div>
-          <Link href={getAcademyResumeHref(academyProgress)} className="inline-flex min-h-12 items-center justify-center rounded-full bg-white px-6 text-xs font-black uppercase tracking-[0.13em] text-primary shadow-lg transition-transform hover:-translate-y-0.5">
+          <Link href={getAcademyResumeHref(academyProgress)} className="inline-flex min-h-11 items-center justify-center rounded-xl bg-white px-6 text-sm font-semibold text-primary transition-colors hover:bg-slate-100">
             {academyProgress.completedAt ? "Review course" : academyProgress.completedLessons.length > 0 ? "Continue course" : "Start course"}
           </Link>
         </div>
       </section>}
 
-      <section className="rounded-[1.5rem] border border-secondary/5 bg-white p-4 shadow-sm md:rounded-[2rem] md:p-6">
+      <section className="dashboard-panel p-4 md:p-6">
         <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex min-w-0 items-center gap-4">
             <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-2xl border-2 border-white bg-accent/10 shadow-md sm:h-16 sm:w-16">
@@ -235,9 +252,9 @@ export default function TutorHomeDashboardUI({
             </div>
             <div className="min-w-0">
               <p className="text-[10px] font-black uppercase tracking-[0.16em] text-secondary/35">Dashboard</p>
-              <h1 className="mt-1 break-words text-3xl font-black tracking-tight text-secondary sm:text-4xl">
+              <h2 className="dashboard-title mt-1 break-words text-2xl sm:text-3xl">
                 Hello, {getFirstName(userName)}
-              </h1>
+              </h2>
               <p className="mt-1 text-sm font-semibold leading-6 text-secondary/55">
                 Your priorities, next action, and teaching activity for today.
               </p>
@@ -260,14 +277,14 @@ export default function TutorHomeDashboardUI({
       </section>
 
       <section className="grid gap-5 lg:grid-cols-[1.05fr_0.95fr]">
-        <article className="rounded-[1.5rem] border border-primary/10 bg-[linear-gradient(135deg,#06172f_0%,#0b4b93_58%,#0066ff_100%)] p-5 text-white shadow-xl shadow-primary/10 md:rounded-[2rem] md:p-6">
+        <article className="rounded-xl border border-blue-900 bg-[#14365a] p-5 text-white md:p-6">
           <p className="text-[10px] font-black uppercase tracking-[0.18em] text-cyan-100/70">Next best action</p>
           <h2 className="mt-3 text-3xl font-black tracking-tight">{profileReadiness.recommendedNextAction.title}</h2>
           <p className="mt-3 max-w-xl text-sm font-semibold leading-7 text-white/70">
             {profileReadiness.recommendedNextAction.body}
           </p>
           <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center">
-            <Link href={nextActionHref} className="inline-flex min-h-12 items-center justify-center rounded-full bg-white px-6 text-sm font-black text-primary shadow-lg shadow-black/10 transition-all hover:-translate-y-0.5">
+            <Link href={nextActionHref} className="inline-flex min-h-11 items-center justify-center rounded-xl bg-white px-6 text-sm font-semibold text-primary transition-colors hover:bg-slate-100">
               {profileReadiness.recommendedNextAction.cta.label}
             </Link>
             <Link href="/support/tutors" className="inline-flex min-h-12 items-center justify-center rounded-full border border-white/15 px-6 text-sm font-black text-white/80 transition-all hover:bg-white/10">
@@ -276,7 +293,7 @@ export default function TutorHomeDashboardUI({
           </div>
         </article>
 
-        <article className="rounded-[1.5rem] border border-secondary/5 bg-white p-5 shadow-sm md:rounded-[2rem] md:p-6">
+        <article className="dashboard-panel p-5 md:p-6">
           <div className="flex items-start justify-between gap-4">
             <div>
               <p className="text-[10px] font-black uppercase tracking-[0.16em] text-secondary/35">Tutor health</p>
@@ -309,7 +326,7 @@ export default function TutorHomeDashboardUI({
         </article>
       </section>
 
-      <section className="rounded-[1.5rem] border border-primary/10 bg-[linear-gradient(135deg,#ffffff_0%,#f6fbff_100%)] p-5 shadow-sm md:rounded-[2rem] md:p-6">
+      <section className="dashboard-panel p-5 md:p-6">
         <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
           <div>
             <p className="text-[10px] font-black uppercase tracking-[0.16em] text-primary/60">Mentor reach</p>
@@ -337,7 +354,7 @@ export default function TutorHomeDashboardUI({
       </section>
 
       <section className="grid gap-5 lg:grid-cols-[1.15fr_0.85fr]">
-        <article className="rounded-[1.5rem] border border-secondary/5 bg-white p-5 shadow-sm md:rounded-[2rem] md:p-6">
+        <article className="dashboard-panel p-5 md:p-6">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <p className="text-[10px] font-black uppercase tracking-[0.16em] text-secondary/35">Teaching queue</p>
@@ -372,7 +389,7 @@ export default function TutorHomeDashboardUI({
           </div>
         </article>
 
-        <article className="rounded-[1.5rem] border border-secondary/5 bg-white p-5 shadow-sm md:rounded-[2rem] md:p-6">
+        <article className="dashboard-panel p-5 md:p-6">
           <p className="text-[10px] font-black uppercase tracking-[0.16em] text-secondary/35">Earnings snapshot</p>
           <h2 className="mt-1 text-2xl font-black tracking-tight text-secondary">£{totalEarnings.toFixed(2)}</h2>
           <p className="mt-2 text-sm font-semibold leading-6 text-secondary/55">
@@ -397,7 +414,7 @@ export default function TutorHomeDashboardUI({
         </article>
       </section>
 
-      <section className="rounded-[1.5rem] border border-secondary/5 bg-white p-5 shadow-sm md:rounded-[2rem] md:p-6">
+      <section className="dashboard-panel p-5 md:p-6">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p className="text-[10px] font-black uppercase tracking-[0.16em] text-secondary/35">Recent activity</p>

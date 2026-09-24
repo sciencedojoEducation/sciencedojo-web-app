@@ -134,15 +134,15 @@ export default async function InternalDashboardPage() {
   const recentProjects = projects.slice(0, 3);
 
   return (
-    <div className="mx-auto max-w-7xl space-y-6 px-3 py-5 sm:px-4 md:p-8">
-      <section className="overflow-hidden rounded-[1.5rem] border border-emerald-100 bg-gradient-to-br from-white via-emerald-50/70 to-lime-50 p-5 shadow-sm md:rounded-[2rem] md:p-7">
+    <div data-role="internal" className="dashboard-home mx-auto max-w-7xl space-y-5 px-3 py-5 sm:px-4 md:p-8">
+      <section className="dashboard-hero overflow-hidden p-5 md:p-7">
         <div className="grid gap-5 md:grid-cols-[1fr_auto] md:items-center">
           <div>
-            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-emerald-700/60">ScienceDojo internal</p>
-            <h1 className="mt-2 text-3xl font-black tracking-tight text-emerald-950 md:text-4xl">
+            <p className="dashboard-kicker">ScienceDojo internal</p>
+            <h1 className="dashboard-title mt-2 text-2xl md:text-3xl">
               Good momentum, {displayName.split(" ")[0] || "team"}.
             </h1>
-            <p className="mt-3 max-w-2xl text-sm font-bold leading-7 text-emerald-900/60">
+            <p className="dashboard-subtitle mt-2 max-w-2xl text-sm leading-6">
               A calm workspace for internal notes, weekly focus, profile context, and deep-work tools.
             </p>
           </div>
@@ -159,10 +159,27 @@ export default async function InternalDashboardPage() {
         </div>
       </section>
 
+      <section aria-labelledby="internal-work-title" className="dashboard-priority p-4 md:p-6">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="dashboard-kicker">Assigned work</p>
+            <h2 id="internal-work-title" className="dashboard-title mt-1 text-xl md:text-2xl">
+              {activeProjectCount > 0 ? `${activeProjectCount} active project${activeProjectCount === 1 ? "" : "s"}` : "Your project queue is clear"}
+            </h2>
+            <p className="dashboard-subtitle mt-2 text-sm leading-6">
+              {internalMember.responsibility_area || "Open your board to see assigned work and recent changes."}
+            </p>
+          </div>
+          <Link href="/dashboard/internal/projects" className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-xl bg-secondary px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-secondary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2">
+            Open projects
+          </Link>
+        </div>
+      </section>
+
       <div className="grid gap-5 lg:grid-cols-[1fr_1.35fr_1fr]">
         <InternalClock />
 
-        <section className="rounded-[1.5rem] border border-emerald-100 bg-white p-5 shadow-sm md:rounded-[2rem]">
+        <section className="dashboard-panel p-5">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-[10px] font-black uppercase tracking-[0.16em] text-emerald-700/50">Assigned projects</p>
@@ -177,7 +194,7 @@ export default async function InternalDashboardPage() {
           </div>
         </section>
 
-        <section className="rounded-[1.5rem] border border-emerald-100 bg-white p-5 shadow-sm md:rounded-[2rem]">
+        <section className="dashboard-panel p-5">
           <p className="text-[10px] font-black uppercase tracking-[0.16em] text-emerald-700/50">
             {today.toLocaleDateString(undefined, { month: "long", year: "numeric" })}
           </p>
@@ -200,7 +217,7 @@ export default async function InternalDashboardPage() {
       </div>
 
       <div className="grid gap-5 lg:grid-cols-[1.1fr_1fr]">
-        <section className="rounded-[1.5rem] border border-emerald-100 bg-white p-5 shadow-sm md:rounded-[2rem]">
+        <section className="dashboard-panel p-5">
           <div className="mb-4">
             <p className="text-[10px] font-black uppercase tracking-[0.16em] text-emerald-700/50">Profile</p>
             <h2 className="mt-2 text-xl font-black text-emerald-950">About you</h2>
@@ -215,7 +232,7 @@ export default async function InternalDashboardPage() {
           </div>
         </section>
 
-        <section className="rounded-[1.5rem] border border-emerald-100 bg-white p-5 shadow-sm md:rounded-[2rem]">
+        <section className="dashboard-panel p-5">
           <p className="text-[10px] font-black uppercase tracking-[0.16em] text-emerald-700/50">Recently updated</p>
           <h2 className="mt-2 text-xl font-black text-emerald-950">My project queue</h2>
           <div className="mt-4 grid gap-2">
@@ -227,7 +244,7 @@ export default async function InternalDashboardPage() {
             ))}
             {recentProjects.length === 0 && <p className="rounded-2xl bg-lime-50/70 p-4 text-sm font-bold text-emerald-950/50">No projects are assigned yet.</p>}
           </div>
-          <Link href={focusDojoUrl} target="_blank" rel="noopener noreferrer" className="mt-5 flex items-center justify-between rounded-2xl bg-gradient-to-br from-emerald-600 to-lime-500 p-4 text-white shadow-lg shadow-emerald-200 transition-transform hover:-translate-y-0.5">
+          <Link href={focusDojoUrl} target="_blank" rel="noopener noreferrer" className="mt-5 flex min-h-11 items-center justify-between rounded-xl bg-emerald-700 p-4 text-white transition-colors hover:bg-emerald-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-offset-2">
             <div>
               <p className="text-[10px] font-black uppercase tracking-[0.16em] text-white/70">FocusDojo</p>
               <p className="mt-1 text-lg font-black">Open deep-work tool</p>
@@ -245,7 +262,7 @@ export default async function InternalDashboardPage() {
       </div>
 
       <div className="grid gap-5 lg:grid-cols-[1fr_1.3fr]">
-        <section className="rounded-[1.5rem] border border-emerald-100 bg-white p-5 shadow-sm md:rounded-[2rem]">
+        <section className="dashboard-panel p-5">
           <p className="text-[10px] font-black uppercase tracking-[0.16em] text-emerald-700/50">Role</p>
           <h2 className="mt-2 text-xl font-black capitalize text-emerald-950">
             {internalMember.title || formatRole(internalMember.role)}
@@ -255,7 +272,7 @@ export default async function InternalDashboardPage() {
           </p>
         </section>
 
-        <section className="rounded-[1.5rem] border border-emerald-100 bg-white p-5 shadow-sm md:rounded-[2rem]">
+        <section className="dashboard-panel p-5">
           <div className="mb-4 flex items-center justify-between gap-3">
             <div>
               <p className="text-[10px] font-black uppercase tracking-[0.16em] text-emerald-700/50">Internal notes</p>

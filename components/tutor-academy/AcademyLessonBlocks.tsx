@@ -18,6 +18,7 @@ import {
   AcademyFlashcards,
   AcademyKnowledgeCheck,
   AcademyProcess,
+  AcademyProcessBuildUp,
   AcademySurvey,
   AcademyTabs,
 } from "./AcademyInteractiveBlocks";
@@ -187,7 +188,7 @@ export default function AcademyLessonBlocks({
               className={`border-l-4 p-6 sm:p-7 ${calloutClasses[block.tone]}`}
             >
               <div className="flex items-start gap-4">
-                <span className="mt-0.5 inline-flex h-9 w-9 shrink-0 items-center justify-center text-[#1E5AA8]">
+                <span className="mt-0.5 inline-flex h-9 w-9 shrink-0 items-center justify-center text-[var(--academy-accent)]">
                   {block.tone === "amber" ? (
                     <ShieldCheck size={21} />
                   ) : (
@@ -223,7 +224,7 @@ export default function AcademyLessonBlocks({
                     className="grid grid-cols-[44px_1fr] gap-4 border-b border-[#DEDFE1] py-6"
                   >
                     <span
-                      className={`inline-flex h-9 w-9 items-center justify-center text-sm font-bold ${listStyle === "bulleted" ? "text-2xl text-[#1E5AA8]" : listStyle === "checklist" ? "rounded-full bg-[#1E5AA8] text-white" : "rounded-full border-2 border-[#1E5AA8] text-[#1E5AA8]"}`}
+                      className={`inline-flex h-9 w-9 items-center justify-center text-sm font-bold ${listStyle === "bulleted" ? "text-2xl text-[var(--academy-accent)]" : listStyle === "checklist" ? "rounded-full bg-[var(--academy-accent)] text-white" : "rounded-full border-2 border-[var(--academy-accent)] text-[var(--academy-accent)]"}`}
                       aria-hidden="true"
                     >
                       {listStyle === "bulleted" ? "•" : listStyle === "checklist" ? <Check size={17} /> : index + 1}
@@ -288,7 +289,7 @@ export default function AcademyLessonBlocks({
               <blockquote className="font-[family-name:var(--font-academy-serif)] text-2xl font-bold leading-[1.55] text-[#252629] sm:text-[28px]">
                 “{block.quote}”
               </blockquote>
-              <figcaption className="mt-5 text-[11px] font-bold uppercase tracking-[0.16em] text-[#1E5AA8]">
+              <figcaption className="mt-5 text-[11px] font-bold uppercase tracking-[0.16em] text-[var(--academy-accent)]">
                 — {block.attribution}
               </figcaption>
             </figure>
@@ -394,6 +395,18 @@ export default function AcademyLessonBlocks({
         }
 
         if (block.type === "process") {
+          if (block.appearance?.variant === "build-up")
+            return (
+              <section key={block.id || blockIndex}>
+                <AcademyProcessBuildUp
+                  heading={block.heading}
+                  items={block.items}
+                  courseKey={courseKey}
+                  blockId={block.id}
+                  completion={block.completion}
+                />
+              </section>
+            );
           if ((block.appearance?.variant || "slides") === "slides")
             return (
               <section key={block.id || blockIndex}>
@@ -419,7 +432,7 @@ export default function AcademyLessonBlocks({
                     key={item.id || index}
                     className="relative pb-8 pl-8 last:pb-0"
                   >
-                    <span className="absolute -left-[17px] top-0 inline-flex h-8 w-8 items-center justify-center rounded-full bg-[#1E5AA8] text-xs font-bold text-white">
+                    <span className="absolute -left-[17px] top-0 inline-flex h-8 w-8 items-center justify-center rounded-full bg-[var(--academy-accent)] text-xs font-bold text-white">
                       {index + 1}
                     </span>
                     <h3 className="text-lg font-bold text-[#252629]">
@@ -475,9 +488,9 @@ export default function AcademyLessonBlocks({
                     href={item.url}
                     target="_blank"
                     rel="noreferrer"
-                    className="flex items-center gap-4 py-5 text-[#252629] hover:text-[#1E5AA8]"
+                    className="flex items-center gap-4 py-5 text-[#252629] hover:text-[var(--academy-accent)]"
                   >
-                    <FileText className="shrink-0 text-[#1E5AA8]" />
+                    <FileText className="shrink-0 text-[var(--academy-accent)]" />
                     <span className="min-w-0 flex-1">
                       <strong className="block">{item.title}</strong>
                       {item.description ? (
@@ -534,7 +547,7 @@ export default function AcademyLessonBlocks({
               ) : null}
               {block.transcript ? (
                 <details className="mt-4 border-y border-[#DEDFE1] py-4">
-                  <summary className="cursor-pointer font-bold text-[#1E5AA8]">
+                  <summary className="cursor-pointer font-bold text-[var(--academy-accent)]">
                     Read transcript
                   </summary>
                   <p className="mt-3 whitespace-pre-wrap font-[family-name:var(--font-academy-serif)] text-[15px] leading-7 text-[#4A4B4E]">
@@ -571,7 +584,7 @@ export default function AcademyLessonBlocks({
                     key={step.id || index}
                     className="grid grid-cols-[32px_1fr] gap-3"
                   >
-                    <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-[#1E5AA8] text-xs font-bold text-white">
+                    <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-[var(--academy-accent)] text-xs font-bold text-white">
                       {index + 1}
                     </span>
                     <div>
@@ -642,7 +655,7 @@ export default function AcademyLessonBlocks({
                             {cellIndex > 0 && (
                               <Check
                                 size={15}
-                                className="mr-2 inline text-[#1E5AA8]"
+                                className="mr-2 inline text-[var(--academy-accent)]"
                                 aria-hidden="true"
                               />
                             )}
@@ -674,6 +687,7 @@ export default function AcademyLessonBlocks({
         return (
           <div
             key={block.id || blockIndex}
+            id={block.id ? `academy-block-${block.id}` : undefined}
             data-block-variant={appearance.variant}
             className={`${widthClass} academy-block-surface-${appearance.surface} academy-block-spacing-${appearance.spacing}`}
           >

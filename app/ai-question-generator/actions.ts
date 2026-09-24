@@ -7,6 +7,7 @@ import {
   type QuestionGeneratorResult,
 } from "@/lib/question-generator";
 import { validateQuizSelection } from "@/lib/educationTaxonomy";
+import { normalizeMalformedLatexCommands } from "@/lib/math-notation";
 
 const initialError: QuestionGeneratorResult = {
   status: "error",
@@ -208,7 +209,7 @@ function wrapRawLatexCommands(text: string) {
 }
 
 function addMathNotation(text: string) {
-  const normalizedText = wrapRawLatexCommands(normalizeMathDelimiters(text));
+  const normalizedText = wrapRawLatexCommands(normalizeMathDelimiters(normalizeMalformedLatexCommands(text)));
 
   return transformOutsideMathDelimiters(normalizedText, (segment) => segment
     .replace(/\b(\d+(?:\.\d+)?)\s*(m\/s\^2|m\/s|kg|kJ|km|cm|Hz|mol|min|ohms?|Pa|[ACJKNVWKmsg])\b/g, (_match, value: string, unit: string) => {
