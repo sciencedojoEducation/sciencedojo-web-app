@@ -124,7 +124,7 @@ export const learningArticles: LearningArticle[] = [
     internalLinks: [
       { label: "Complete Guide to Online Tutoring", href: "/complete-guide-to-online-tutoring" },
       { label: "How to Study for GCSE Exams", href: "/how-to-study-for-gcse-exams" },
-      { label: "Book Free Assessment", href: "/free-assessment" },
+      { label: "Request Free Assessment", href: "/free-assessment" },
     ],
     ctas: ["questions", "assessment"],
   },
@@ -205,7 +205,7 @@ export const learningArticles: LearningArticle[] = [
       },
     ],
     internalLinks: [
-      { label: "Book Free Assessment", href: "/free-assessment" },
+      { label: "Request Free Assessment", href: "/free-assessment" },
       { label: "Complete Guide to Online Tutoring", href: "/complete-guide-to-online-tutoring" },
       { label: "Browse Tutors", href: "/#directory" },
     ],

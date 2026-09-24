@@ -25,10 +25,10 @@ export default function SupportInfoPage({
   subtitle,
   sections,
   ctaEyebrow = "Ready to find your tutor?",
-  ctaTitle = "Book a free session",
+  ctaTitle = "Request a free assessment",
   ctaBody = "Tell us what support you need and we will help you find the right learning path.",
   ctaHref = "/free-assessment",
-  ctaLabel = "Book Free Assessment",
+  ctaLabel = "Request Free Assessment",
 }: SupportInfoPageProps) {
   return (
     <div className="bg-[linear-gradient(180deg,#ffffff_0%,#f7fbff_48%,#ffffff_100%)] text-secondary">

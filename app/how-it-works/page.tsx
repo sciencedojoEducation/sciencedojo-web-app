@@ -33,7 +33,7 @@ export default async function HowItWorksPage() {
             <h1 id="how-heading" className="mt-3 max-w-3xl text-4xl font-black leading-tight tracking-tight md:text-5xl">One connected home for tutoring, practice and progress.</h1>
             <p className="mt-5 max-w-2xl text-lg leading-8 text-white/85">Students, tutors and parents each get a clear view of what matters to them—from booking a lesson to practising between classes.</p>
             <div className="mt-7 flex flex-wrap gap-3">
-              {flags.free_assessment_enabled && <BookAssessmentLink source="how_it_works_hero" className="inline-flex min-h-12 items-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-extrabold text-[#073a72] hover:bg-cyan-50">Book a free assessment <ArrowRight className="h-4 w-4" aria-hidden="true" /></BookAssessmentLink>}
+              {flags.free_assessment_enabled && <BookAssessmentLink source="how_it_works_hero" className="inline-flex min-h-12 items-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-extrabold text-[#073a72] hover:bg-cyan-50">Request a free assessment <ArrowRight className="h-4 w-4" aria-hidden="true" /></BookAssessmentLink>}
               <a href="#audiences" className="inline-flex min-h-12 items-center rounded-xl border border-white/60 px-5 py-3 text-sm font-extrabold text-white hover:bg-white/10">Explore each workspace</a>
               {flags.tutor_marketplace_enabled && <Link href="/find-tutors" className="inline-flex min-h-12 items-center rounded-xl border border-white/60 px-5 py-3 text-sm font-extrabold text-white hover:bg-white/10">Meet our tutors</Link>}
             </div>
@@ -84,7 +84,7 @@ export default async function HowItWorksPage() {
         </div>
       </section>
 
-      {flags.free_assessment_enabled && <section className="bg-[linear-gradient(125deg,#073a72,#0066cc)] px-4 py-14 text-white md:px-8" aria-label="Start learning"><div className="mx-auto flex max-w-6xl flex-col gap-5 md:flex-row md:items-center md:justify-between"><div><h2 className="text-2xl font-black md:text-3xl">Start with what your child needs now.</h2><p className="mt-2 text-white/85">Tell us what they’re finding difficult, and take the first step together.</p></div><BookAssessmentLink source="how_it_works_final" className="inline-flex min-h-12 shrink-0 items-center justify-center rounded-xl bg-white px-5 py-3 text-sm font-extrabold text-[#073a72] hover:bg-cyan-50">Book a free assessment</BookAssessmentLink></div></section>}
+      {flags.free_assessment_enabled && <section className="bg-[linear-gradient(125deg,#073a72,#0066cc)] px-4 py-14 text-white md:px-8" aria-label="Start learning"><div className="mx-auto flex max-w-6xl flex-col gap-5 md:flex-row md:items-center md:justify-between"><div><h2 className="text-2xl font-black md:text-3xl">Start with what your child needs now.</h2><p className="mt-2 text-white/85">Tell us what they’re finding difficult, and take the first step together.</p></div><BookAssessmentLink source="how_it_works_final" className="inline-flex min-h-12 shrink-0 items-center justify-center rounded-xl bg-white px-5 py-3 text-sm font-extrabold text-[#073a72] hover:bg-cyan-50">Request a free assessment</BookAssessmentLink></div></section>}
     </main>
   );
 }

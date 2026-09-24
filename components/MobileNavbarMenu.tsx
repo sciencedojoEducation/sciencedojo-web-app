@@ -182,7 +182,7 @@ export default function MobileNavbarMenu({
                 onClick={closeMenu}
                 className="rounded-2xl bg-primary px-4 py-3 text-center text-sm font-black text-white shadow-lg shadow-primary/15 transition-colors hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
               >
-                Book a Free Learning Assessment
+                Request a Free Learning Assessment
               </BookAssessmentLink>
             )}
             {isLoggedIn && (

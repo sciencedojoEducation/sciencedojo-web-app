@@ -256,10 +256,10 @@ export const seoPages: SeoPage[] = [
     h1: "Contact ScienceDojo",
     eyebrow: "Get in touch",
     intro: "Have a question about finding a tutor, booking a lesson, or supporting your child? Contact ScienceDojo and we will help you take the next step.",
-    directAnswer: "Parents can contact ScienceDojo to ask about tutor matching, online lessons, subject support, and account help. The fastest next step is to book a free assessment or message the team.",
+    directAnswer: "Parents can contact ScienceDojo to ask about tutor matching, online lessons, subject support, and account help. The fastest next step is to request a free assessment or message the team.",
     benefits: ["Tutor matching help", "Booking support", "Parent questions", "Platform guidance"],
     related: ["about", "online-math-tutor", "complete-guide-to-online-tutoring"],
-    cta: "Book Free Assessment",
+    cta: "Request Free Assessment",
     faqs: defaultFaqs,
   },
   {

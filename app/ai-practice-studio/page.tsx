@@ -95,7 +95,7 @@ export default async function AiPracticeStudioPage({ searchParams }: { searchPar
             source="ai_practice_studio_parent_reassurance"
             className="inline-flex min-h-12 shrink-0 items-center justify-center rounded-xl bg-white px-5 py-3 text-sm font-extrabold text-[#073a72] transition hover:bg-cyan-50"
           >
-            Book a free assessment
+            Request a free assessment
           </AiPracticeStudioCtaLink>
         </div>
       </section>

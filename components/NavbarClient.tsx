@@ -89,7 +89,7 @@ export default function NavbarClient({ flags }: { flags: PublicFlagMap }) {
               <Link href="/signup" className="text-sm font-medium text-secondary hover:text-primary">Sign up</Link>
               {flags.free_assessment_enabled && (
                 <BookAssessmentLink source="navbar" className="inline-flex min-h-11 items-center justify-center rounded-full bg-primary px-5 py-3 text-center text-xs font-black text-white shadow-lg shadow-primary/15 transition-all hover:-translate-y-0.5 hover:bg-primary-hover">
-                  Book a Free Learning Assessment
+                  Request a Free Learning Assessment
                 </BookAssessmentLink>
               )}
             </>

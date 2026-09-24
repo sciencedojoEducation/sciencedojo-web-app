@@ -124,7 +124,7 @@ export default async function SeoPage({ params }: PageProps) {
           <aside className="h-fit rounded-3xl bg-secondary p-8 text-white shadow-2xl">
             <h2 className="text-2xl font-black">Ready to find the right support?</h2>
             <p className="mt-4 leading-7 text-white/70">
-              Book a free assessment or browse verified tutors. We will help you choose a calm, clear next step.
+              Request a free assessment or browse verified tutors. We will help you choose a calm, clear next step.
             </p>
             <AssessmentCTA className="mt-7 flex w-full px-6" />
             <InternalLinksSection pages={relatedPages} />

@@ -59,7 +59,7 @@ export default function SeoConversionCtas({ enabled }: { enabled: boolean }) {
         }}
         className="flex min-h-14 w-full items-center justify-center rounded-full bg-primary px-5 py-3 text-center text-sm font-black text-white shadow-[0_18px_48px_rgba(0,102,255,0.3)] transition-all hover:-translate-y-0.5 hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
       >
-        Book a Free Learning Assessment
+        Request a Free Learning Assessment
       </Link>
     </div>
   );

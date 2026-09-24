@@ -29,7 +29,7 @@ export default async function AboutPage() {
           <h1 className="mt-3 max-w-4xl text-4xl font-black leading-tight tracking-tight md:text-6xl">Helping students feel capable again.</h1>
           <p className="mt-6 max-w-3xl text-lg leading-8 text-white/85">We believe many students understand more than their grades show. The right tutor, a clear learning plan, and follow-through between lessons can turn uncertainty into calmer progress.</p>
           <div className="mt-8 flex flex-wrap gap-3">
-            {flags.free_assessment_enabled && <BookAssessmentLink source="about_hero" className="inline-flex min-h-12 items-center rounded-xl bg-white px-5 py-3 text-sm font-extrabold text-[#073a72] hover:bg-cyan-50">Book a free assessment</BookAssessmentLink>}
+            {flags.free_assessment_enabled && <BookAssessmentLink source="about_hero" className="inline-flex min-h-12 items-center rounded-xl bg-white px-5 py-3 text-sm font-extrabold text-[#073a72] hover:bg-cyan-50">Request a free assessment</BookAssessmentLink>}
             {flags.tutor_marketplace_enabled && <Link href="/find-tutors" className="inline-flex min-h-12 items-center rounded-xl border border-white/60 px-5 py-3 text-sm font-extrabold text-white hover:bg-white/10">Meet our tutors</Link>}
           </div>
         </div>
@@ -72,7 +72,7 @@ export default async function AboutPage() {
         </div>
       </section>
 
-      {flags.free_assessment_enabled && <section className="px-4 py-14 md:px-8" aria-label="Next step"><div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-5"><div><h2 className="text-2xl font-black">Ready to find a clearer path?</h2><p className="mt-2 text-secondary/70">Start with a conversation about the support your child needs.</p></div><BookAssessmentLink source="about_final" className="inline-flex min-h-12 items-center gap-2 rounded-xl bg-primary px-5 py-3 text-sm font-extrabold text-white hover:bg-primary-hover">Book a free assessment <ArrowRight className="h-4 w-4" aria-hidden="true" /></BookAssessmentLink></div></section>}
+      {flags.free_assessment_enabled && <section className="px-4 py-14 md:px-8" aria-label="Next step"><div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-5"><div><h2 className="text-2xl font-black">Ready to find a clearer path?</h2><p className="mt-2 text-secondary/70">Start with a conversation about the support your child needs.</p></div><BookAssessmentLink source="about_final" className="inline-flex min-h-12 items-center gap-2 rounded-xl bg-primary px-5 py-3 text-sm font-extrabold text-white hover:bg-primary-hover">Request a free assessment <ArrowRight className="h-4 w-4" aria-hidden="true" /></BookAssessmentLink></div></section>}
     </main>
   );
 }

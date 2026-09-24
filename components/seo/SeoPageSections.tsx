@@ -54,7 +54,7 @@ export function AssessmentCTA({ className = "" }: { className?: string }) {
       className={`inline-flex justify-center rounded-2xl bg-primary px-7 py-4 text-sm font-black uppercase tracking-[0.14em] text-white shadow-xl shadow-primary/20 transition-all hover:bg-primary-hover ${className}`}
       source="seo_page_cta"
     >
-      Book Free Assessment
+      Request Free Assessment
     </BookAssessmentLink>
   );
 }
@@ -192,7 +192,7 @@ export function InternalLinksSection({ pages }: { pages: SeoPage[] }) {
           PracticeDojo
         </Link>
         <BookAssessmentLink source="seo_internal_link" className="font-bold text-white/85 hover:text-white">
-          Book Free Assessment
+          Request Free Assessment
         </BookAssessmentLink>
       </div>
     </div>
