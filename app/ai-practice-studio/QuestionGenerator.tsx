@@ -2,10 +2,12 @@
 
 import { useActionState, useState } from "react";
 import { usePathname } from "next/navigation";
-import AiPracticeStudioCtaLink from "@/components/analytics/AiPracticeStudioCtaLink";
 import MathText from "@/components/MathText";
 import {
   allowedQuestionCounts,
+  getLevelsForEducationSelection,
+  getSubjectVariants,
+  getTopicsForSubject,
 } from "@/lib/educationTaxonomy";
 import EducationPathwayFields, { type EducationPathwayValue } from "@/components/EducationPathwayFields";
 import { getPublicSource, trackEvent } from "@/lib/analytics";
@@ -22,24 +24,27 @@ function SubmitButton({ isPending }: { isPending: boolean }) {
     <button
       type="submit"
       disabled={isPending}
-      className="mt-6 w-full rounded-2xl bg-primary px-6 py-4 text-sm font-black uppercase tracking-[0.14em] text-white shadow-lg shadow-primary/20 transition-all hover:bg-primary-hover disabled:cursor-wait disabled:opacity-70"
+      className="mt-6 w-full rounded-xl bg-primary px-6 py-4 text-sm font-black text-white shadow-lg shadow-primary/20 transition-all hover:bg-primary-hover disabled:cursor-wait disabled:opacity-70"
     >
-      {isPending ? "Preparing Practice..." : "Create Practice Set"}
+      {isPending ? "Preparing questions..." : "Get my practice questions"}
     </button>
   );
 }
 
-export default function QuestionGenerator() {
+const suggestedSubjects = ["Mathematics", "Physics", "Chemistry", "Biology", "Computer Science", "English"];
+
+export default function QuestionGenerator({ initialSubject }: { initialSubject?: string }) {
   const pathname = usePathname();
   const [state, formAction, isPending] = useActionState(generatePracticeQuestions, initialState);
+  const subject = initialSubject && suggestedSubjects.includes(initialSubject) ? initialSubject : "Mathematics";
   const [education, setEducation] = useState<EducationPathwayValue>({
     curriculumKey: "england",
     stage: "gcse",
     awardingBodyKey: "pearson_edexcel",
-    subject: "Mathematics",
-    subjectVariant: "mathematics",
-    level: "higher",
-    topic: "Mixed Topics",
+    subject,
+    subjectVariant: getSubjectVariants(subject, "england", "gcse")[0]?.key || "",
+    level: getLevelsForEducationSelection("england", "gcse", subject)[0]?.key || "",
+    topic: getTopicsForSubject(subject)[0] || "",
     specificationCode: "",
   });
   const questions = state.questions;
@@ -58,32 +63,18 @@ export default function QuestionGenerator() {
 
   return (
     <div className="min-w-0 max-w-full overflow-hidden rounded-3xl border border-secondary/10 bg-white p-6 shadow-xl md:p-8">
+      <p className="text-sm font-bold text-primary">Free practice · no sign-up needed</p>
+      <h2 className="mt-2 text-2xl font-black tracking-tight md:text-3xl">Build a practice set</h2>
+      <p className="mt-2 max-w-2xl text-sm leading-6 text-secondary/65">Choose a subject, stage and topic. You’ll get questions with answers you can reveal when you’re ready.</p>
       <form action={formAction} onSubmit={handleGenerate} className="min-w-0 max-w-full">
-        <EducationPathwayFields value={education} onChange={setEducation} topicRequired className="rounded-2xl bg-surface p-5" />
-        <div className="mt-5 grid min-w-0 gap-5 md:grid-cols-2">
-          <label className="flex flex-col gap-2 text-sm font-black text-secondary">
-            Practice Questions
-            <select
-              name="count"
-              defaultValue="6"
-              className="rounded-2xl border border-secondary/10 bg-surface px-4 py-3 font-bold outline-none focus:border-primary"
-            >
-              {allowedQuestionCounts.map((item) => (
-                <option key={item} value={item}>
-                  {item}
-                </option>
-              ))}
+        <EducationPathwayFields value={education} onChange={setEducation} topicRequired progressive className="mt-6 rounded-2xl bg-surface p-5" advancedFields={
+          <label className="text-xs font-black uppercase tracking-widest text-secondary/60">
+            Number of questions
+            <select name="count" defaultValue="6" className="mt-2 w-full rounded-xl border border-secondary/10 bg-white px-4 py-3 text-sm font-bold text-secondary outline-none focus:border-primary">
+              {allowedQuestionCounts.map((item) => <option key={item} value={item}>{item}</option>)}
             </select>
           </label>
-        </div>
-
-        <p className="mt-5 text-sm font-bold leading-6 text-secondary/55">
-          Choose your stage, curriculum, subject, and topic to create a focused knowledge check.
-        </p>
-        <p className="mt-2 text-xs font-black uppercase tracking-[0.14em] text-primary/70">
-          Supports major pathways including UK National Curriculum, Cambridge, Edexcel, AQA, SQA, and IB.
-        </p>
-
+        } />
         <SubmitButton isPending={isPending} />
       </form>
 
@@ -99,29 +90,16 @@ export default function QuestionGenerator() {
         </div>
       )}
 
-      <div className="mt-8 min-w-0 max-w-full">
+      {questions.length > 0 && <div className="mt-8 min-w-0 max-w-full">
         <div className="flex min-w-0 max-w-full flex-col gap-2 md:flex-row md:items-end md:justify-between">
           <div className="min-w-0 max-w-full">
-            <p className="text-xs font-black uppercase tracking-[0.2em] text-primary">
-              {questions.length > 0 ? "Structured practice set" : "Ready when you are"}
-            </p>
-            <h2 className="mt-2 text-2xl font-black">{questions.length ? "Your practice questions" : "Create curriculum-aligned practice"}</h2>
-            {questions.length > 0 && (
-              <p className="mt-2 max-w-2xl text-sm font-semibold leading-6 text-secondary/55">
-                Designed to help identify strengths, misconceptions, and topics that may need further explanation.
-              </p>
-            )}
+            <p className="text-xs font-black uppercase tracking-[0.2em] text-primary">Your practice set</p>
+            <h2 className="mt-2 text-2xl font-black">Your practice questions</h2>
+            <p className="mt-2 max-w-2xl text-sm font-semibold leading-6 text-secondary/55">Try each question before revealing its answer and worked guidance.</p>
           </div>
-          {questions.length > 0 && <p className="text-sm font-bold text-secondary/45">{questions.length} questions with answers</p>}
+          <p className="text-sm font-bold text-secondary/45">{questions.length} questions with answers</p>
         </div>
 
-        {questions.length === 0 ? (
-          <div className="mt-5 rounded-2xl border border-secondary/10 bg-surface p-6">
-            <p className="font-bold leading-7 text-secondary/65">
-              PracticeDojo creates structured practice questions by stage, curriculum, level, subject, and topic.
-            </p>
-          </div>
-        ) : (
           <div className="mt-5 grid min-w-0 max-w-full gap-3">
             {questions.map((question, index) => (
               <details key={`${question.question}-${index}`} className="group min-w-0 max-w-full overflow-hidden rounded-xl border border-secondary/12 bg-white p-4 shadow-sm shadow-secondary/5 md:p-5">
@@ -160,35 +138,8 @@ export default function QuestionGenerator() {
               </details>
             ))}
           </div>
-        )}
-      </div>
+      </div>}
 
-      {questions.length > 0 && (
-        <div className="mt-8 rounded-3xl bg-secondary p-6 text-white shadow-xl">
-          <h2 className="text-2xl font-black">Need help understanding these questions?</h2>
-          <p className="mt-3 leading-7 text-white/70">
-            A ScienceDojo tutor can help your child turn uncertain topics into a clear learning plan. Enrolled students can also receive personalized Missions between lessons.
-          </p>
-          <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-            <AiPracticeStudioCtaLink
-              href="/free-assessment"
-              cta="request_free_assessment"
-              source="ai_practice_studio_after_generation"
-              className="inline-flex justify-center rounded-2xl bg-primary px-6 py-3 text-sm font-black uppercase tracking-[0.14em] text-white transition-all hover:bg-primary-hover"
-            >
-              Book Free Assessment
-            </AiPracticeStudioCtaLink>
-            <AiPracticeStudioCtaLink
-              href="/#directory"
-              cta="find_tutor"
-              source="ai_practice_studio_after_generation"
-              className="inline-flex justify-center rounded-2xl border border-white/15 bg-white/10 px-6 py-3 text-sm font-black uppercase tracking-[0.14em] text-white transition-all hover:bg-white/15"
-            >
-              Find a Tutor
-            </AiPracticeStudioCtaLink>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

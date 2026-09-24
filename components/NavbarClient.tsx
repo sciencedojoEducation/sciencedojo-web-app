@@ -66,11 +66,10 @@ export default function NavbarClient({ flags }: { flags: PublicFlagMap }) {
         </div>
 
         <nav className="hidden items-center gap-5 xl:flex">
-          {flags.tutor_marketplace_enabled && <Link href="/#directory" className="text-sm font-medium text-secondary/70 hover:text-primary transition-colors">Find Tutors</Link>}
-          {flags.learning_hub_enabled && <Link href="/learning-hub" className="text-sm font-medium text-secondary/70 hover:text-primary transition-colors">Learning Hub</Link>}
-          {flags.community_enabled && <Link href="/community" className="text-sm font-medium text-secondary/70 hover:text-primary transition-colors">Exam Community</Link>}
-          {flags.practice_dojo_enabled && <Link href="/ai-practice-studio" className="text-sm font-medium text-secondary/70 hover:text-primary transition-colors">PracticeDojo</Link>}
-          {flags.focus_dojo_enabled && <Link href="/focus-dojo" className="text-sm font-medium text-secondary/70 hover:text-primary transition-colors">FocusDojo</Link>}
+          {flags.tutor_marketplace_enabled && <Link href="/find-tutors" className="text-sm font-medium text-secondary/70 hover:text-primary transition-colors">Find a Tutor</Link>}
+          <Link href="/how-it-works" className="text-sm font-medium text-secondary/70 hover:text-primary transition-colors">How It Works</Link>
+          {flags.practice_dojo_enabled && <Link href="/ai-practice-studio" className="text-sm font-medium text-secondary/70 hover:text-primary transition-colors">Free Practice</Link>}
+          {flags.learning_hub_enabled && <Link href="/learning-hub" className="text-sm font-medium text-secondary/70 hover:text-primary transition-colors">Resources</Link>}
         </nav>
 
         <div className="hidden items-center gap-4 xl:flex">

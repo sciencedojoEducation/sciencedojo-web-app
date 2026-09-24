@@ -12,7 +12,7 @@ const ctaConfig: Record<CtaVariant, { title: string; body: string; href?: string
   tutor: {
     title: "Find the Right Tutor",
     body: "Browse experienced tutors by subject, profile, availability, and learning fit.",
-    href: "/#directory",
+    href: "/find-tutors",
     label: "Browse Tutors",
   },
   questions: {

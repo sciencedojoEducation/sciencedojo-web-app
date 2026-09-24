@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import {
   curriculumPathways,
   getAwardingBodiesForSelection,
@@ -31,6 +32,8 @@ type Props = {
   allowedSubjects?: string[];
   showTopic?: boolean;
   topicRequired?: boolean;
+  progressive?: boolean;
+  advancedFields?: ReactNode;
   className?: string;
 };
 
@@ -41,7 +44,7 @@ const uncertainOptions = [
 
 const fieldClass = "mt-2 w-full rounded-xl border border-secondary/10 bg-white px-4 py-3 text-sm font-bold text-secondary outline-none focus:border-primary";
 
-export default function EducationPathwayFields({ value, onChange, allowedSubjects, showTopic = true, topicRequired = false, className = "" }: Props) {
+export default function EducationPathwayFields({ value, onChange, allowedSubjects, showTopic = true, topicRequired = false, progressive = false, advancedFields, className = "" }: Props) {
   const stages = getStagesForCurriculum(value.curriculumKey);
   const boardOptions = getAwardingBodiesForSelection(value.curriculumKey, value.stage);
   const derivedBoard = getDerivedAwardingBody(value.curriculumKey, value.stage);
@@ -77,6 +80,86 @@ export default function EducationPathwayFields({ value, onChange, allowedSubject
   }
 
   const needsClarification = [value.curriculumKey, value.stage, effectiveBoard, value.level].some((item) => [uncertainEducationOption, otherEducationOption].includes(item));
+  const boardNeedsChoice = boardOptions.length > 1 && !boardOptions.some((item) => item.key === value.awardingBodyKey);
+  const curriculumSummary = value.curriculumKey === "england" ? "England" : getEducationLabel("curriculum", value.curriculumKey);
+  const boardSummary = effectiveBoard === "pearson_edexcel" ? "Edexcel" : getEducationLabel("awardingBody", effectiveBoard);
+
+  if (progressive) {
+    const boardField = boardOptions.length > 1 ? (
+      <label className="text-xs font-black uppercase tracking-widest text-secondary/60">
+        Exam board / awarding body
+        <select name="awardingBodyKey" required value={value.awardingBodyKey} onChange={(event) => changeBoard(event.target.value)} className={fieldClass}>
+          <option value="">Choose an exam board</option>
+          {boardOptions.map((item) => <option key={item.key} value={item.key}>{item.label}</option>)}
+        </select>
+      </label>
+    ) : <input type="hidden" name="awardingBodyKey" value={effectiveBoard} />;
+
+    return (
+      <div className={`grid gap-5 ${className}`}>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <label className="text-xs font-black uppercase tracking-widest text-secondary/60">
+            Subject
+            <select name="subject" required value={value.subject} onChange={(event) => changeSubject(event.target.value)} className={fieldClass}>
+              <option value="">Choose a subject</option>
+              {subjects.map((item) => <option key={item} value={item}>{item}</option>)}
+            </select>
+            {allowedSubjects?.length && value.stage && subjects.length === 0 ? <span className="mt-2 block normal-case tracking-normal text-amber-700">This tutor has no listed subject matching this route.</span> : null}
+          </label>
+          <label className="text-xs font-black uppercase tracking-widest text-secondary/60">
+            Stage or qualification
+            <select name="stage" required value={value.stage} onChange={(event) => changeStage(event.target.value)} className={fieldClass}>
+              <option value="">Choose a stage</option>
+              {stages.map((item) => <option key={item.key} value={item.key}>{item.label}</option>)}
+            </select>
+          </label>
+          {boardNeedsChoice && boardField}
+          {showTopic && <label className="text-xs font-black uppercase tracking-widest text-secondary/60">
+            Topic
+            <select name="topic" required={topicRequired} value={value.topic} onChange={(event) => update({ topic: event.target.value })} className={fieldClass}>
+              <option value="">Choose a topic</option>
+              {topics.map((item) => <option key={item} value={item}>{item}</option>)}
+            </select>
+          </label>}
+        </div>
+        <details className="group rounded-xl border border-secondary/10 bg-white">
+          <summary className="cursor-pointer list-none px-4 py-3 text-sm font-bold text-primary marker:hidden focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
+            More options <span className="ml-1 text-secondary/50 group-open:hidden">· {curriculumSummary} · {getEducationLabel("stage", value.stage, { curriculumKey: value.curriculumKey })}{effectiveBoard ? ` · ${boardSummary}` : ""}{value.level ? ` · ${getEducationLabel("level", value.level, { curriculumKey: value.curriculumKey, stage: value.stage, subject: value.subject })}` : ""}</span>
+            <span className="ml-2 text-secondary/50 group-open:hidden">+</span><span className="ml-2 hidden text-secondary/50 group-open:inline">−</span>
+          </summary>
+          <div className="grid gap-4 border-t border-secondary/10 p-4 sm:grid-cols-2">
+            <label className="text-xs font-black uppercase tracking-widest text-secondary/60">
+              Curriculum pathway
+              <select name="curriculumKey" required value={value.curriculumKey} onChange={(event) => changeCurriculum(event.target.value)} className={fieldClass}>
+                <option value="">Choose a curriculum</option>
+                {curriculumPathways.filter((item) => ![otherEducationOption, uncertainEducationOption].includes(item.key)).map((item) => <option key={item.key} value={item.key}>{item.label}</option>)}
+              </select>
+            </label>
+            {!boardNeedsChoice && boardField}
+            {variants.length > 0 ? <label className="text-xs font-black uppercase tracking-widest text-secondary/60">
+              Subject route
+              <select name="subjectVariant" required value={value.subjectVariant} onChange={(event) => update({ subjectVariant: event.target.value, specificationCode: "" })} className={fieldClass}>
+                {variants.map((item) => <option key={item.key} value={item.key}>{item.label}</option>)}
+              </select>
+            </label> : <input type="hidden" name="subjectVariant" value="" />}
+            {levels.length > 0 ? <label className="text-xs font-black uppercase tracking-widest text-secondary/60">
+              Tier or course level
+              <select name="level" required value={value.level} onChange={(event) => update({ level: event.target.value })} className={fieldClass}>
+                <option value="">Choose a level</option>
+                {levels.map((item) => <option key={item.key} value={item.key}>{item.label}</option>)}
+              </select>
+            </label> : <input type="hidden" name="level" value="" />}
+            <label className="text-xs font-black uppercase tracking-widest text-secondary/60 sm:col-span-2">
+              Specification or syllabus code <span className="normal-case tracking-normal text-secondary/35">(optional)</span>
+              <input name="specificationCode" value={value.specificationCode} onChange={(event) => update({ specificationCode: event.target.value })} placeholder="For example: 8463, 4MA1, 0625" className={fieldClass} />
+            </label>
+            {advancedFields}
+          </div>
+        </details>
+        {needsClarification && <p className="rounded-xl bg-amber-50 px-3 py-2 text-xs font-bold leading-5 text-amber-800">Choose a specific curriculum route before creating a practice set.</p>}
+      </div>
+    );
+  }
 
   return (
     <div className={`grid gap-4 ${className}`}>

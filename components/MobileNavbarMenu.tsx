@@ -149,13 +149,16 @@ export default function MobileNavbarMenu({
         >
           <nav className="grid gap-1.5" aria-label="Mobile primary navigation">
             {showTutorMarketplace && (
-              <Link href="/#directory" onClick={closeMenu} className={navLinkClass}>
-                Find Tutors
+              <Link href="/find-tutors" onClick={closeMenu} className={navLinkClass}>
+                Find a Tutor
               </Link>
             )}
+            <Link href="/how-it-works" onClick={closeMenu} className={navLinkClass}>
+              How It Works
+            </Link>
             {showLearningHub && (
               <Link href="/learning-hub" onClick={closeMenu} className={navLinkClass}>
-                Learning Hub
+                Resources
               </Link>
             )}
             {showCommunity && (
@@ -165,7 +168,7 @@ export default function MobileNavbarMenu({
             )}
             {showPracticeDojo && (
               <Link href="/ai-practice-studio" onClick={closeMenu} className={navLinkClass}>
-                PracticeDojo
+                Free Practice
               </Link>
             )}
             {showFocusDojo && (

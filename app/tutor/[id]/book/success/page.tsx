@@ -107,7 +107,7 @@ export default async function BookingSuccessPage({
                   </svg>
                </Link>
                <Link 
-                  href="/#directory"
+                  href="/find-tutors"
                   className="w-full py-4 bg-transparent text-secondary/60 font-bold rounded-2xl hover:text-secondary transition-colors"
                >
                   Browse more Experts

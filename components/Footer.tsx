@@ -6,7 +6,8 @@ const footerGroups = [
   {
     title: "Learning",
     links: [
-      ["Find Tutors", "/#directory"],
+      ["Find Tutors", "/find-tutors"],
+      ["How It Works", "/how-it-works"],
       ["PracticeDojo", "/ai-practice-studio"],
       ["FocusDojo", "/focus-dojo"],
       ["Free Assessment", "/free-assessment"],
@@ -25,6 +26,7 @@ const footerGroups = [
   {
     title: "Company",
     links: [
+      ["About ScienceDojo", "/about"],
       ["Dashboard", "/login"],
       ["Code of Conduct", "/code-of-conduct"],
       ["Community Guidelines", "/community/guidelines"],
