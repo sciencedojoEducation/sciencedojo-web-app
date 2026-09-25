@@ -2,8 +2,18 @@
 
 import { Announcement } from "@/lib/announcement-queries";
 import { PlatformAnnouncement } from "@/lib/platform-announcements";
-import { formatDistanceToNow } from "date-fns";
 import { useState } from "react";
+
+const announcementDateFormatter = new Intl.DateTimeFormat("en-GB", {
+  day: "numeric",
+  month: "short",
+  year: "numeric",
+  timeZone: "UTC",
+});
+
+function formatAnnouncementDate(value: string): string {
+  return announcementDateFormatter.format(new Date(value));
+}
 
 interface AnnouncementFeedProps {
   announcements: Announcement[];
@@ -35,7 +45,7 @@ export default function AnnouncementFeed({ announcements, platformAnnouncements 
             <div className="pr-12">
               <div className="mb-2 flex flex-wrap items-center gap-2">
                 <span className="text-xs font-semibold capitalize text-primary">{ann.category.replace(/_/g, " ")}</span>
-                <span className="text-xs text-slate-500">• {formatDistanceToNow(new Date(ann.starts_at), { addSuffix: true })}</span>
+                <span className="text-xs text-slate-500">• {formatAnnouncementDate(ann.starts_at)}</span>
               </div>
               <h3 className="mb-2 text-base font-semibold text-secondary">
                 {ann.title}
@@ -70,7 +80,7 @@ export default function AnnouncementFeed({ announcements, platformAnnouncements 
             <div className="pr-12">
               <div className="flex items-center gap-2 mb-2">
                 <span className="text-xs font-semibold text-primary">Official announcement</span>
-                <span className="text-xs text-slate-500">• {formatDistanceToNow(new Date(ann.created_at), { addSuffix: true })}</span>
+                <span className="text-xs text-slate-500">• {formatAnnouncementDate(ann.created_at)}</span>
               </div>
               
               <h3 className="mb-2 text-base font-semibold text-secondary">

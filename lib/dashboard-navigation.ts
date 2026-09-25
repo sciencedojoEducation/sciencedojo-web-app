@@ -143,7 +143,7 @@ export function getDashboardNavSections(role: DashboardRole, features: Dashboard
     {
       title: "Learning",
       items: [
-        { name: "My Bookings", href: "/dashboard/student", iconName: "bookings", badgeKey: "bookingPayments", exact: true, tourId: "student-bookings" },
+        { name: "Home", href: "/dashboard/student", iconName: "home", badgeKey: "bookingPayments", exact: true, tourId: "student-bookings" },
         { name: "My Classes", href: "/dashboard/classes", iconName: "classes", tourId: "student-classes" },
         ...(features.tutorAcademyEnabled ? [{ name: "Academy", href: "/dashboard/academy", iconName: "academy" as const }] : []),
         { name: "Learning Guide", href: "/dashboard/student/learning-guide", iconName: "guide" },
@@ -153,7 +153,9 @@ export function getDashboardNavSections(role: DashboardRole, features: Dashboard
       title: "Practice & Focus",
       items: [
         { name: "Missions", href: "/dashboard/student/missions", iconName: "missions", badgeKey: "studentMissions", tourId: "student-tasks" },
+        { name: "PracticeDojo", href: "/ai-practice-studio", iconName: "practice" },
         { name: "Focus Timers", href: "/dashboard/student/timers", iconName: "focus" },
+        { name: "FocusDojo", href: "/focus-dojo", iconName: "focus" },
       ],
     },
     {

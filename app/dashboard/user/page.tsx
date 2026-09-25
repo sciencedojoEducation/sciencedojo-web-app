@@ -5,15 +5,13 @@ import { FOCUSDOJO_PRO_PRODUCT_KEY } from "@/lib/focusdojo/access-levels";
 import { syncFocusDojoSubscriptionFromStripeSubscriptionId } from "@/lib/focusdojo/subscription-sync";
 import { createClient } from "@/utils/supabase/server";
 import ManageFocusDojoSubscriptionButton from "./ManageFocusDojoSubscriptionButton";
+import { HomePrimaryAction, HomeSectionHeading } from "@/components/DashboardHomeUI";
+import { Timer } from "lucide-react";
 
 export const metadata = {
   title: "My Dojo | ScienceDojo",
   description: "A lightweight dashboard for ScienceDojo tools and account access.",
 };
-
-function firstName(name?: string | null) {
-  return name?.trim().split(/\s+/)[0] || "there";
-}
 
 function formatDate(value?: string | null) {
   if (!value) return null;
@@ -21,6 +19,7 @@ function formatDate(value?: string | null) {
     day: "numeric",
     month: "short",
     year: "numeric",
+    timeZone: "UTC",
   }).format(new Date(value));
 }
 
@@ -210,14 +209,13 @@ export default async function UserDashboardPage({
     await Promise.all([
       supabase
         .from("profiles")
-        .select("full_name, email")
+        .select("email")
         .eq("id", user.id)
         .maybeSingle(),
       subscriptionPromise,
       getFocusDojoAccessLevel(user.id),
     ]);
 
-  const name = profile?.full_name || user.user_metadata?.full_name;
   const subscriptionCopy = getSubscriptionStatusCopy(
     accessLevelResult,
     subscription,
@@ -238,93 +236,71 @@ export default async function UserDashboardPage({
   );
 
   return (
-    <div data-role="user" className="dashboard-home mx-auto max-w-5xl space-y-5 px-4 py-6 md:p-8">
-      <section className="dashboard-hero p-6 md:p-8">
-        <p className="dashboard-kicker">
-          My Dojo
-        </p>
-        <h1 className="dashboard-title mt-2 text-2xl md:text-3xl">
-          Welcome, {firstName(name)}.
-        </h1>
-        <p className="dashboard-subtitle mt-2 max-w-2xl text-sm leading-6">
-          Your focus and practice tools are ready when you are.
-        </p>
-      </section>
-
+    <div data-role="user" className="dashboard-home mx-auto max-w-5xl space-y-6 px-3 py-5 sm:px-6 md:px-8 md:pb-12 md:pt-7">
       {billingReturnedMessage ? (
-        <div className="rounded-2xl border border-primary/15 bg-primary/5 px-5 py-4 text-sm font-bold leading-6 text-secondary">
+        <div role="status" className="rounded-2xl border border-[var(--theme-line)] bg-[var(--theme-accent-soft)] px-5 py-4 text-sm leading-6 text-[var(--theme-ink)]">
           {billingReturnedMessage}
         </div>
       ) : null}
-
-      <section aria-label="Study tools and account" className="grid gap-4 md:grid-cols-2">
-        <div className="dashboard-priority p-5">
-          <p className="dashboard-kicker">
-            FocusDojo
-          </p>
-          <h2 className="dashboard-title mt-2 text-xl">
-            {accessLabel}
-          </h2>
-          <p className="dashboard-subtitle mt-3 text-sm leading-6">
-            Open your calm timer and study atmosphere.
-          </p>
-          <Link
-            href="/focus-dojo"
-            className="mt-5 inline-flex min-h-11 items-center justify-center rounded-xl bg-secondary px-5 text-sm font-semibold text-white transition-colors hover:bg-secondary/90"
-          >
-            Open FocusDojo
-          </Link>
+      {["past_due", "unpaid"].includes(subscription?.status || "") && (
+        <div role="alert" className="rounded-2xl border border-amber-300 bg-amber-50 px-5 py-4 text-sm leading-6 text-amber-950">
+          <span className="font-semibold">Your FocusDojo payment needs attention.</span>{" "}
+          <a href="#user-subscription" className="font-semibold underline underline-offset-2">Manage billing</a>
         </div>
+      )}
 
-        <div className="dashboard-panel p-5">
-          <p className="dashboard-kicker">PracticeDojo</p>
-          <h2 className="dashboard-title mt-2 text-xl">Practice tools</h2>
-          <p className="dashboard-subtitle mt-3 text-sm leading-6">
-            Generate structured practice when you want a study companion.
-          </p>
-          <Link
-            href="/ai-practice-studio"
-            className="mt-5 inline-flex min-h-11 items-center justify-center rounded-xl border border-secondary/10 bg-white px-5 text-sm font-semibold text-secondary transition-colors hover:border-primary/30 hover:text-primary"
-          >
-            Open PracticeDojo
-          </Link>
+      <section aria-label="Your study tools" className="grid gap-4 lg:grid-cols-[minmax(0,1.5fr)_minmax(17rem,1fr)]">
+        <HomePrimaryAction
+          eyebrow="Your study space"
+          title="FocusDojo"
+          description="Open your calm timer and study atmosphere when you're ready to focus."
+          href="/focus-dojo"
+          label="Start focus"
+          detail={accessLabel}
+          icon={<Timer size={24} strokeWidth={1.7} />}
+        />
+        <div className="home-surface flex flex-col justify-between sm:p-7">
+          <div>
+            <p className="home-eyebrow">PracticeDojo</p>
+            <h2 className="home-section-title">Practise at your own pace</h2>
+            <p className="home-section-description">Generate structured questions whenever you want a study companion.</p>
+          </div>
+          <Link href="/ai-practice-studio" className="home-text-link mt-5">Open PracticeDojo →</Link>
         </div>
+      </section>
 
-        <div className="dashboard-panel p-5">
-          <p className="text-[10px] font-black uppercase tracking-[0.16em] text-primary/65">
-            Subscription
-          </p>
-          <h2 className="mt-2 text-xl font-black text-secondary">
-            {accessLabel}
-          </h2>
-          <p className="mt-3 text-sm font-semibold leading-6 text-secondary/55">
-            {subscriptionCopy.description}
-          </p>
+      <section aria-label="Your plan and account">
+        <HomeSectionHeading eyebrow="Account" title="Plan and access" description="Your current access and account details, in one place." />
+        <div className="grid gap-4 md:grid-cols-2">
+        <div id="user-subscription" className="home-surface scroll-mt-6 sm:p-6">
+          <p className="home-eyebrow">Subscription</p>
+          <h3 className="home-section-title">{accessLabel}</h3>
+          <p className="home-section-description">{subscriptionCopy.description}</p>
           {subscription ? (
-            <dl className="mt-4 grid gap-2 text-sm font-bold text-secondary/60">
+            <dl className="mt-5 divide-y divide-[var(--theme-line)] text-sm text-[var(--theme-muted)]">
               {subscription.plan ? (
-                <div className="flex items-center justify-between gap-3 rounded-xl bg-secondary/[0.03] px-3 py-2">
+                <div className="flex items-center justify-between gap-3 py-2.5">
                   <dt>Plan</dt>
-                  <dd className="capitalize text-secondary">{subscription.plan}</dd>
+                  <dd className="capitalize font-medium text-[var(--theme-ink)]">{subscription.plan}</dd>
                 </div>
               ) : null}
-              <div className="flex items-center justify-between gap-3 rounded-xl bg-secondary/[0.03] px-3 py-2">
+              <div className="flex items-center justify-between gap-3 py-2.5">
                 <dt>Status</dt>
-                <dd className="capitalize text-secondary">
+                <dd className="capitalize font-medium text-[var(--theme-ink)]">
                   {subscriptionCopy.status}
                 </dd>
               </div>
               {periodEnd ? (
-                <div className="flex items-center justify-between gap-3 rounded-xl bg-secondary/[0.03] px-3 py-2">
+                <div className="flex items-center justify-between gap-3 py-2.5">
                   <dt>{subscriptionCopy.dateLabel}</dt>
-                  <dd className="text-secondary">{periodEnd}</dd>
+                  <dd className="font-medium text-[var(--theme-ink)]">{periodEnd}</dd>
                 </div>
               ) : null}
             </dl>
           ) : null}
           {canManageSubscription ? (
             <>
-              <p className="mt-4 text-sm font-semibold leading-6 text-secondary/55">
+              <p className="mt-4 text-sm leading-6 text-[var(--theme-muted)]">
                 You can update payment details, view invoices, or cancel your
                 subscription securely through Stripe.
               </p>
@@ -333,27 +309,26 @@ export default async function UserDashboardPage({
           ) : (
             <Link
               href="/focus-dojo/pricing"
-              className="mt-5 inline-flex min-h-11 items-center justify-center rounded-2xl border border-secondary/10 bg-white px-5 text-sm font-black text-secondary transition hover:border-primary/30 hover:text-primary"
+              className="home-text-link mt-4"
             >
-              View pricing
+              View pricing →
             </Link>
           )}
         </div>
 
         <div
           id="account"
-          className="dashboard-panel p-5"
+          className="home-surface sm:p-6"
         >
-          <p className="text-[10px] font-black uppercase tracking-[0.16em] text-primary/65">
-            Account
-          </p>
-          <h2 className="mt-2 text-xl font-black text-secondary">
+          <p className="home-eyebrow">Account</p>
+          <h3 className="home-section-title break-all">
             {profile?.email || user.email}
-          </h2>
-          <p className="mt-3 text-sm font-semibold leading-6 text-secondary/55">
+          </h3>
+          <p className="home-section-description">
             Your account can later be linked to ScienceDojo student, parent, or
             tutor access without creating a second login.
           </p>
+        </div>
         </div>
       </section>
     </div>

@@ -9,6 +9,7 @@ import DisputeModal from "./DisputeModal";
 interface LessonHistoryTableProps {
   bookings: Booking[];
   currentUserRole?: string;
+  appearance?: "default" | "student";
 }
 
 const AVATAR_GRADIENTS = [
@@ -20,6 +21,17 @@ const AVATAR_GRADIENTS = [
   "from-purple-500 to-fuchsia-500",
 ];
 
+const lessonDateFormatter = new Intl.DateTimeFormat("en-GB", {
+  day: "numeric",
+  month: "short",
+  year: "numeric",
+  timeZone: "UTC",
+});
+
+function formatLessonDate(value: string): string {
+  return lessonDateFormatter.format(new Date(value));
+}
+
 function getAvatarGradient(seed: string): string {
   let hash = 0;
   for (let i = 0; i < seed.length; i++) {
@@ -28,7 +40,7 @@ function getAvatarGradient(seed: string): string {
   return AVATAR_GRADIENTS[Math.abs(hash) % AVATAR_GRADIENTS.length];
 }
 
-export default function LessonHistoryTable({ bookings, currentUserRole = "student" }: LessonHistoryTableProps) {
+export default function LessonHistoryTable({ bookings, currentUserRole = "student", appearance = "default" }: LessonHistoryTableProps) {
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [reviewBooking, setReviewBooking] = useState<Booking | null>(null);
@@ -72,7 +84,7 @@ export default function LessonHistoryTable({ bookings, currentUserRole = "studen
   };
 
   return (
-    <div className="relative group/scroll bg-white rounded-[1.5rem] border border-secondary/10 shadow-sm shadow-black/[0.02] overflow-hidden p-3 md:rounded-[2.5rem] md:p-4 md:shadow-xl">
+    <div className={`relative group/scroll bg-white rounded-[1.5rem] border border-secondary/10 shadow-sm shadow-black/[0.02] overflow-hidden p-3 md:rounded-[2.5rem] md:p-4 md:shadow-xl ${appearance === "student" ? "student-lesson-history" : ""}`}>
       <div className="space-y-3 md:hidden">
         {bookings.map((booking) => {
           const note = getNote(booking);
@@ -94,12 +106,12 @@ export default function LessonHistoryTable({ bookings, currentUserRole = "studen
                 <div className="min-w-0 flex-1">
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
-                      <p className="truncate text-sm font-black text-secondary">{booking.subject}</p>
-                      <p className="mt-1 text-xs font-bold text-secondary/45">
-                        {new Date(booking.requested_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })} with {booking.tutor_name || "Tutor"}
+                      <p className="history-tutor-name truncate text-sm font-black text-secondary">{booking.subject}</p>
+                      <p className="history-mobile-meta mt-1 text-xs font-bold text-secondary/45">
+                        {formatLessonDate(booking.requested_date)} with {booking.tutor_name || "Tutor"}
                       </p>
                     </div>
-                    <span className="shrink-0 rounded-full bg-emerald-50 px-2 py-1 text-[9px] font-black uppercase tracking-[0.08em] text-emerald-600">
+                    <span className="history-status shrink-0 rounded-full bg-emerald-50 px-2 py-1 text-[9px] font-black uppercase tracking-[0.08em] text-emerald-600">
                       Completed
                     </span>
                   </div>
@@ -115,7 +127,7 @@ export default function LessonHistoryTable({ bookings, currentUserRole = "studen
                           setSelectedBooking(booking);
                           setShowModal(true);
                         }}
-                        className="inline-flex min-h-11 flex-1 items-center justify-center rounded-xl bg-primary px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-white shadow-sm transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                        className="history-summary-action inline-flex min-h-11 flex-1 items-center justify-center rounded-xl bg-primary px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-white shadow-sm transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
                       >
                         View summary
                       </button>
@@ -127,7 +139,7 @@ export default function LessonHistoryTable({ bookings, currentUserRole = "studen
                     {currentUserRole !== 'tutor' && !booking.has_review && (
                       <button
                         onClick={() => setReviewBooking(booking)}
-                        className="inline-flex min-h-11 flex-1 items-center justify-center rounded-xl border border-amber-200 bg-amber-50 px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-amber-700 transition-colors hover:bg-amber-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:ring-offset-2"
+                        className="history-review-action inline-flex min-h-11 flex-1 items-center justify-center rounded-xl border border-amber-200 bg-amber-50 px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-amber-700 transition-colors hover:bg-amber-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:ring-offset-2"
                       >
                         Review
                       </button>
@@ -171,13 +183,13 @@ export default function LessonHistoryTable({ bookings, currentUserRole = "studen
                 <tr key={booking.id} className={`border-b border-secondary/5 hover:bg-slate-50/30 transition-colors ${i === bookings.length - 1 ? 'border-none' : ''}`}>
                   <td className="px-8 py-6 text-sm text-secondary font-black">
                      <div className="flex flex-col">
-                        <span>{new Date(booking.requested_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                        <span>{formatLessonDate(booking.requested_date)}</span>
                         <span className="text-[10px] text-secondary/30 font-bold tracking-tight mt-0.5">#{booking.id.slice(0, 8)}</span>
                      </div>
                   </td>
                   <td className="px-8 py-6">
                     <div className="flex items-center gap-4">
-                       <div className="w-12 h-12 relative rounded-2xl overflow-hidden border-2 border-white shadow-lg flex-shrink-0">
+                       <div className="history-avatar w-12 h-12 relative rounded-2xl overflow-hidden border-2 border-white shadow-lg flex-shrink-0">
                           {booking.tutor_avatar ? (
                              <Image src={booking.tutor_avatar} alt="" fill className="object-cover" />
                           ) : (
@@ -187,16 +199,16 @@ export default function LessonHistoryTable({ bookings, currentUserRole = "studen
                           )}
                        </div>
                        <div>
-                          <p className="text-sm font-black text-secondary">{booking.tutor_name}</p>
-                          <p className="text-[10px] font-bold text-secondary/40 uppercase tracking-[0.14em]">Verified tutor</p>
+                          <p className="history-tutor-name text-sm font-black text-secondary">{booking.tutor_name}</p>
+                          <p className="history-verified text-[10px] font-bold text-secondary/40 uppercase tracking-[0.14em]">Verified tutor</p>
                        </div>
                     </div>
                   </td>
                   <td className="px-8 py-6">
-                     <span className="text-[10px] font-black text-primary bg-primary/5 px-3 py-1.5 rounded-full border border-primary/10 uppercase tracking-widest">{booking.subject}</span>
+                     <span className="history-subject-tag text-[10px] font-black text-primary bg-primary/5 px-3 py-1.5 rounded-full border border-primary/10 uppercase tracking-widest">{booking.subject}</span>
                   </td>
                   <td className="px-8 py-6">
-                    <div className="inline-flex items-center gap-2 px-3 py-1 bg-emerald-50 text-emerald-600 rounded-full text-[10px] font-black uppercase tracking-widest border border-emerald-100">
+                    <div className="history-status inline-flex items-center gap-2 px-3 py-1 bg-emerald-50 text-emerald-600 rounded-full text-[10px] font-black uppercase tracking-widest border border-emerald-100">
                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
                        Completed
                     </div>
@@ -210,7 +222,7 @@ export default function LessonHistoryTable({ bookings, currentUserRole = "studen
                             setSelectedBooking(booking);
                             setShowModal(true);
                           }}
-                          className="px-5 py-2.5 bg-primary text-white text-[10px] font-black uppercase tracking-widest rounded-full hover:bg-primary/90 shadow-lg shadow-primary/20 transition-all active:scale-95 whitespace-nowrap"
+                          className="history-summary-action px-5 py-2.5 bg-primary text-white text-[10px] font-black uppercase tracking-widest rounded-full hover:bg-primary/90 shadow-lg shadow-primary/20 transition-all active:scale-95 whitespace-nowrap"
                         >
                           View Summary
                         </button>
@@ -224,7 +236,7 @@ export default function LessonHistoryTable({ bookings, currentUserRole = "studen
                             e.stopPropagation();
                             setReviewBooking(booking);
                           }}
-                          className="px-5 py-2.5 bg-amber-400 text-amber-950 text-[10px] font-black uppercase tracking-widest rounded-full hover:bg-amber-500 shadow-lg shadow-amber-200 transition-all active:scale-95 whitespace-nowrap"
+                          className="history-review-action px-5 py-2.5 bg-amber-400 text-amber-950 text-[10px] font-black uppercase tracking-widest rounded-full hover:bg-amber-500 shadow-lg shadow-amber-200 transition-all active:scale-95 whitespace-nowrap"
                         >
                           Review
                         </button>
@@ -235,7 +247,7 @@ export default function LessonHistoryTable({ bookings, currentUserRole = "studen
                           e.stopPropagation();
                           setDisputeBooking(booking);
                         }}
-                        className="w-10 h-10 flex items-center justify-center bg-slate-50 text-secondary/40 rounded-xl hover:bg-red-50 hover:text-red-500 transition-all border border-secondary/5 group shadow-sm flex-shrink-0"
+                        className="history-issue-action w-10 h-10 flex items-center justify-center bg-slate-50 text-secondary/40 rounded-xl hover:bg-red-50 hover:text-red-500 transition-all border border-secondary/5 group shadow-sm flex-shrink-0"
                         title="Report an Issue"
                       >
                          <svg className="w-4 h-4 group-hover:scale-110 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M3 21h18M3 10h18M3 7l9 5 9-5M4 10v11h16V10" /></svg>
@@ -267,7 +279,7 @@ export default function LessonHistoryTable({ bookings, currentUserRole = "studen
                     <h2 className="text-2xl font-black text-secondary tracking-tighter mb-2 md:text-4xl">Lesson Summary</h2>
                     <p className="text-sm text-secondary/40 font-bold flex items-center gap-2">
                        <span className="w-2 h-2 rounded-full bg-green-500"></span>
-                       Session from {new Date(selectedBooking.requested_date).toLocaleDateString()}
+                       Session from {formatLessonDate(selectedBooking.requested_date)}
                     </p>
                   </div>
                   <button onClick={() => setShowModal(false)} className="bg-slate-100 hover:bg-slate-200 w-10 h-10 rounded-xl flex items-center justify-center text-2xl text-secondary/40 transition-colors md:h-12 md:w-12 md:rounded-2xl">×</button>
@@ -277,13 +289,13 @@ export default function LessonHistoryTable({ bookings, currentUserRole = "studen
                   <div className="p-4 bg-slate-50 rounded-[1.5rem] border border-secondary/5 md:p-6 md:rounded-[2rem]">
                      <h3 className="text-[10px] font-black text-primary uppercase tracking-widest mb-4">What was covered</h3>
                      <p className="text-secondary/80 text-sm font-medium leading-relaxed italic">
-                        "{getNote(selectedBooking)?.summary || "No summary provided."}"
+                        &ldquo;{getNote(selectedBooking)?.summary || "No summary provided."}&rdquo;
                      </p>
                   </div>
                   <div className="p-4 bg-slate-50 rounded-[1.5rem] border border-secondary/5 md:p-6 md:rounded-[2rem]">
                      <h3 className="text-[10px] font-black text-secondary/40 uppercase tracking-widest mb-4">Homework / Next Steps</h3>
                      <p className="text-secondary/80 text-sm font-medium leading-relaxed italic">
-                        "{getNote(selectedBooking)?.homework || "No practice task assigned."}"
+                        &ldquo;{getNote(selectedBooking)?.homework || "No practice task assigned."}&rdquo;
                      </p>
                   </div>
                </div>

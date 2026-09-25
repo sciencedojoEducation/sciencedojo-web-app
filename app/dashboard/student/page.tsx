@@ -1,14 +1,13 @@
-import { getBookingsByUserId, getTutors } from "@/lib/supabase-queries";
+import { getBookingsByUserId } from "@/lib/supabase-queries";
 import { getActiveAnnouncementsForUser } from "@/lib/announcement-queries";
 import { getActivePlatformAnnouncementsForUser } from "@/lib/platform-announcements";
 import Link from "next/link";
 import Image from "next/image";
 import { createClient } from "@/utils/supabase/server";
-import TutorCard from "@/components/TutorCard";
 import CheckoutButton from "@/components/CheckoutButton";
 import LessonHistoryTable from "@/components/LessonHistoryTable";
-import HomeworkFeed from "@/components/HomeworkFeed";
-import StudentProgressStats from "@/components/StudentProgressStats";
+import StudentProgressChart from "@/components/StudentProgressChart";
+import StudentHomeOverview, { type StudentHomeAction, type StudentPlanItem } from "@/components/StudentHomeOverview";
 import AnnouncementFeed from "@/components/AnnouncementFeed";
 import { getHomeworkForStudent } from "@/lib/class-queries";
 import FeatureUnavailable from "@/components/FeatureUnavailable";
@@ -40,36 +39,29 @@ export default async function StudentDashboard() {
     );
   }
 
-  const meta = user?.user_metadata;
-  
   const [
-    { data: profile },
     bookings,
-    availableTutors,
     announcements,
     platformAnnouncements,
     assignments,
   ] = await Promise.all([
-    supabase
-      .from("profiles")
-      .select("full_name, avatar_url")
-      .eq("id", user.id)
-      .single(),
     getBookingsByUserId(user.id),
-    getTutors("", "All", 6),
     getActiveAnnouncementsForUser(),
     getActivePlatformAnnouncementsForUser(),
     getHomeworkForStudent(user.id),
   ]);
-  const { data: missionMomentum } = await supabase
+  const { data: readyMissionRows, count: readyMissionCount } = await supabase
     .from("student_missions")
-    .select("id, status, mission_tier, score_percentage, created_at, mission_blueprint, classes(display_name, subject)")
+    .select("id, status, mission_tier, score_percentage, created_at, mission_blueprint, classes(display_name, subject)", { count: "exact" })
     .eq("student_id", user.id)
+    .eq("status", "pending_assessment")
     .order("created_at", { ascending: false })
-    .limit(3);
-
-  const userName = profile?.full_name || meta?.full_name || "User";
-  const avatarUrl = profile?.avatar_url || meta?.avatar_url;
+    .limit(1)
+    .returns<Array<{
+      id: string;
+      mission_blueprint: { topic?: string } | null;
+      classes: { display_name: string; subject: string } | { display_name: string; subject: string }[] | null;
+    }>>();
 
   const requested = bookings.filter(b => b.status === "requested");
   const groupedRequested = Object.values(requested.reduce((acc, booking) => {
@@ -104,154 +96,167 @@ export default async function StudentDashboard() {
   const upcoming = bookings.filter(b => b.status === "confirmed");
   const past = bookings.filter(b => b.status === "completed");
   const nextLesson = [...upcoming].sort((a, b) => new Date(a.requested_date).getTime() - new Date(b.requested_date).getTime())[0];
+  const readyMission = readyMissionRows?.[0];
+  const readyMissionClass = Array.isArray(readyMission?.classes) ? readyMission.classes[0] : readyMission?.classes;
+  const nextAssignment = assignments[0];
+  const learningHours = past.reduce((sum, booking) => sum + (booking.duration_hours || 1), 0);
+  const subjects = Object.entries(past.reduce((counts, booking) => {
+    const subject = booking.subject || "General";
+    counts[subject] = (counts[subject] || 0) + 1;
+    return counts;
+  }, {} as Record<string, number>))
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 6)
+    .map(([name, lessons]) => ({ name, lessons }));
+
+  let action: StudentHomeAction;
+  if (toPay.length > 0) {
+    action = {
+      sectionLabel: "Your next step",
+      eyebrow: "Ready to confirm",
+      title: "Confirm your next lesson",
+      description: `${toPay.length} accepted lesson${toPay.length === 1 ? " is" : "s are"} waiting for payment confirmation.`,
+      href: "#student-payment",
+      label: "Review payment",
+      detail: "Your tutor has accepted the request",
+    };
+  } else if (readyMission) {
+    action = {
+      eyebrow: readyMissionClass?.subject || "Guided practice",
+      title: readyMission.mission_blueprint?.topic || "Your next Mission",
+      description: "Pick up a tutor-guided Mission and practise at your own pace.",
+      href: "/dashboard/student/missions",
+      label: "Start practice",
+      detail: readyMissionClass?.display_name || "Ready when you are",
+    };
+  } else if (nextAssignment) {
+    action = {
+      eyebrow: nextAssignment.class_display_name || "Tutor practice",
+      title: "Practice from your tutor",
+      description: nextAssignment.content,
+      href: `/dashboard/classes/${nextAssignment.class_id}`,
+      label: "Open class",
+      detail: nextAssignment.due_date ? "Due date in class details" : "Set by your tutor",
+    };
+  } else if (nextLesson) {
+    action = {
+      eyebrow: nextLesson.subject,
+      title: "Your next lesson is coming up",
+      description: `Prepare for your session with ${nextLesson.tutor_name || "your tutor"}.`,
+      href: "#student-sessions",
+      label: "View lesson",
+      detail: "Your session details are below",
+    };
+  } else {
+    action = {
+      eyebrow: "Your learning journey",
+      title: "Choose your next step",
+      description: "Explore guided practice or find a tutor when you want support with a topic.",
+      href: "/dashboard/student/missions",
+      label: "Explore Missions",
+      detail: "Begin at your own pace",
+    };
+  }
+
+  const plan: StudentPlanItem[] = [
+    ...(toPay.length > 0 ? [{ title: "Confirm your lesson", detail: "Accepted by your tutor", href: "#student-payment" }] : []),
+    ...(readyMission ? [{ title: readyMission.mission_blueprint?.topic || "Start a Mission", detail: "Guided practice is ready", href: "/dashboard/student/missions" }] : []),
+    ...(nextAssignment ? [{ title: "Review tutor practice", detail: nextAssignment.class_display_name || "From your class", href: `/dashboard/classes/${nextAssignment.class_id}` }] : []),
+    ...(nextLesson ? [{ title: "Prepare for your next lesson", detail: nextLesson.subject, href: "#student-sessions" }] : []),
+  ].slice(0, 3);
+  if (plan.length === 0) {
+    plan.push({ title: "Explore a Mission", detail: "Practise at your own pace", href: "/dashboard/student/missions" });
+    plan.push({ title: "Find tutor support", detail: "Get help with a topic", href: "/dashboard/student/tutors" });
+  }
 
   return (
-    <div data-role="student" className="dashboard-home mx-auto max-w-5xl space-y-5 px-3.5 py-4 sm:px-4 sm:py-5 md:p-8">
-      <div data-tour="student-welcome" className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between md:gap-4">
-         <div className="flex items-center gap-3 sm:gap-5 md:gap-6">
-            <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-xl border border-slate-200 bg-white sm:h-16 sm:w-16">
-               {avatarUrl ? (
-                  <img src={avatarUrl} alt="Profile" className="w-full h-full object-cover" />
-               ) : (
-                  <span className="text-xl font-black text-primary sm:text-2xl md:text-3xl">{userName.charAt(0)}</span>
-               )}
-            </div>
-            <div>
-               <h1 className="dashboard-title mb-0.5 text-2xl sm:text-3xl">
-                  Hello, {userName.trim().split(' ')[0]}!
-               </h1>
-               <p className="dashboard-subtitle text-sm">
-                 Ready for your next learning session?
-               </p>
-            </div>
-         </div>
-         <Link href="/dashboard/student/tutors" className="min-h-11 w-full rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-center text-sm font-semibold text-secondary transition-colors hover:border-primary/30 hover:text-primary md:w-auto md:px-6 md:py-3">
-            Find tutor support
-         </Link>
-      </div>
-
-      <section aria-labelledby="student-next-step" className="dashboard-priority p-4 sm:p-5 md:p-6">
-        <p className="dashboard-kicker">Your next step</p>
-        <h2 id="student-next-step" className="dashboard-title mt-1 text-xl md:text-2xl">
-          {toPay.length > 0 ? "Confirm your lesson" : nextLesson ? "Your next lesson is coming up" : "Keep learning between lessons"}
-        </h2>
-        <p className="dashboard-subtitle mt-2 text-sm leading-6">
-          {toPay.length > 0
-            ? `${toPay.length} accepted lesson${toPay.length === 1 ? " is" : "s are"} waiting for payment confirmation.`
-            : nextLesson
-              ? `${nextLesson.subject} on ${new Date(nextLesson.requested_date).toLocaleDateString(undefined, { weekday: "long", month: "short", day: "numeric" })}.`
-              : missionMomentum?.length
-                ? "Pick one Mission to practise at your own pace."
-                : "Your lessons and practice steps will appear here as your learning begins."}
-        </p>
-        <Link href={toPay.length > 0 ? "#student-payment" : nextLesson ? "#student-sessions" : "/dashboard/student/missions"} className="mt-4 inline-flex min-h-11 items-center justify-center rounded-xl bg-secondary px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-secondary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2">
-          {toPay.length > 0 ? "Review payment" : nextLesson ? "View lesson" : "Open Missions"}
-        </Link>
-      </section>
-
+    <div data-role="student" className="student-dashboard-home dashboard-home mx-auto max-w-6xl space-y-5 px-3.5 py-4 sm:px-6 sm:py-6 md:px-8 md:pb-12 md:pt-7">
       {(announcements.length > 0 || platformAnnouncements.length > 0) && (
         <AnnouncementFeed announcements={announcements} platformAnnouncements={platformAnnouncements} />
       )}
 
-      <div data-tour="student-progress">
-        <StudentProgressStats bookings={bookings} mobileDensity="compact" />
-      </div>
+      <StudentHomeOverview
+        action={action}
+        plan={plan}
+        completedLessons={past.length}
+        learningHours={learningHours}
+        readyMissions={readyMissionCount || 0}
+        subjects={subjects}
+      />
 
-      <section className="dashboard-panel p-3.5 sm:p-4 md:p-6">
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between md:gap-5">
-          <div>
-            <p className="text-sm font-semibold text-[#4f53a5]">Practice</p>
-            <h2 className="mt-1 text-xl font-semibold text-slate-900">Your next steps between lessons</h2>
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
-              Missions turn lesson notes and class progress into guided reinforcement, so you always know what to practise next.
-            </p>
+      {assignments.length > 0 && (
+        <section data-tour="student-homework" aria-labelledby="student-practice-title" className="rounded-[1.4rem] border border-[var(--student-line)] bg-[var(--student-surface)] p-5 sm:p-7">
+          <div className="flex flex-wrap items-end justify-between gap-3">
+            <div>
+              <p className="text-xs font-medium text-[var(--student-accent)]">From your tutor</p>
+              <h2 id="student-practice-title" className="mt-1 text-xl font-semibold tracking-tight text-[var(--student-ink)]">Practice between lessons</h2>
+            </div>
+            <Link href="/dashboard/classes" className="text-sm font-medium text-[var(--student-accent)] hover:text-[var(--student-accent-hover)]">Open classes →</Link>
           </div>
-          <Link href="/dashboard/student/missions" className="inline-flex min-h-11 items-center justify-center rounded-xl bg-[#1E5AA8] px-5 text-sm font-semibold text-white hover:bg-[#174a8b] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4f53a5] focus-visible:ring-offset-2">
-            Open Missions
-          </Link>
-        </div>
-
-        {missionMomentum && missionMomentum.length > 0 ? (
-          <div className="mt-4 grid gap-2.5 md:mt-6 md:grid-cols-3 md:gap-4">
-            {missionMomentum.map((mission) => (
-              <div key={mission.id} className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-                <div className="mb-2.5 flex flex-wrap gap-2 md:mb-3">
-                  <span className="rounded-full bg-primary/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-primary">
-                  {String(mission.mission_tier || "mission").replace(/_/g, " ")}
-                  </span>
-                  <span className="rounded-full bg-white px-3 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-secondary/45">
-                    {mission.status === "completed" ? "Completed" : mission.status === "pending_tutor_approval" ? "Tutor review" : "Ready"}
-                  </span>
-                </div>
-                <h3 className="font-semibold text-slate-900">{mission.mission_blueprint?.topic || "Guided practice pathway"}</h3>
-                <p className="mt-1.5 text-sm leading-5 text-slate-600">
-                  {mission.classes?.[0]?.display_name || "Class-linked support"} {mission.score_percentage !== null ? "- tutor review ready" : ""}
-                </p>
-              </div>
+          <div className="mt-5 divide-y divide-[var(--student-line)]">
+            {assignments.slice(0, 3).map((assignment) => (
+              <Link key={assignment.id} href={`/dashboard/classes/${assignment.class_id}`} className="group flex min-h-16 items-center justify-between gap-4 py-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--student-accent)]">
+                <span className="min-w-0">
+                  <span className="block text-xs text-[#a25b38]">{assignment.class_display_name || "Your class"}</span>
+                  <span className="mt-1 block truncate text-sm font-medium text-[var(--student-ink-soft)] group-hover:text-[var(--student-accent-hover)]">{assignment.content}</span>
+                </span>
+                <span className="shrink-0 text-xs text-[var(--student-muted)]">{assignment.due_date ? `Due ${new Date(assignment.due_date).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}` : "View task"}</span>
+              </Link>
             ))}
           </div>
-        ) : (
-          <div className="mt-4 rounded-2xl border border-dashed border-secondary/15 bg-surface p-4 md:mt-6 md:rounded-3xl md:p-7">
-            <p className="font-bold text-secondary/55">Your learning journey begins here.</p>
-            <p className="mt-2 text-sm text-secondary/45">After your first sessions, personalized Missions will show what to practise next and why it matters.</p>
-          </div>
-        )}
-      </section>
-
-      <div data-tour="student-homework">
-        <HomeworkFeed assignments={assignments} mobileDensity="compact" />
-      </div>
+        </section>
+      )}
 
       {/* SECURE PAYMENT REQUIRED (Accepted Handshake) */}
       {toPay.length > 0 && (
-        <section id="student-payment" className="dashboard-priority scroll-mt-5 p-3.5 md:p-6">
-          <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between md:mb-8">
-            <h2 className="flex items-center gap-3 text-xl font-semibold text-slate-900 md:gap-4">
-              <span className="rounded-xl bg-primary p-1.5 text-white md:p-2">
-                 <svg className="h-5 w-5 md:h-6 md:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-                 </svg>
+        <section id="student-payment" className="scroll-mt-5 rounded-[1.4rem] border border-[var(--student-line)] bg-[var(--student-surface)] p-5 sm:p-6">
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+            <h2 className="flex items-center gap-2.5 text-lg font-semibold tracking-tight text-[var(--student-ink)] sm:text-xl">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[var(--student-accent-soft)] text-[var(--student-accent)]">
+                <svg className="h-[18px] w-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                </svg>
               </span>
               Secure payment required
             </h2>
-            <span className="text-xs font-semibold text-primary">Accepted by tutor</span>
+            <span className="rounded-full bg-[var(--student-accent-soft)] px-3 py-1 text-xs font-medium text-[var(--student-accent)]">Accepted by tutor</span>
           </div>
-          <div className="grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-8">
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
              {groupedToPay.map(group => {
                 const booking = group.mainBooking;
                 return (
-                <div key={group.id} className="group relative flex flex-col overflow-hidden rounded-xl border border-slate-200 bg-white p-3.5 md:p-6">
-                   <div className="mb-4 flex items-center gap-3 md:mb-6 md:gap-5">
-                      <div className="relative h-12 w-12 overflow-hidden rounded-2xl border-2 border-slate-50 shadow-md md:h-16 md:w-16">
+                <div key={group.id} className="flex flex-col rounded-xl border border-[var(--student-line)] bg-[var(--student-surface)] p-4 sm:p-5">
+                   <div className="flex items-center gap-3">
+                      <div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-xl bg-slate-100">
                          <Image src={booking.tutor_avatar || "/tutor_placeholder.webp"} alt="" fill className="object-cover" />
                       </div>
-                      <div>
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="inline-block px-3 py-1 bg-primary/10 text-primary text-[10px] font-black rounded-lg uppercase tracking-widest">{booking.subject}</span>
-                          <span className={`px-2 py-0.5 text-[9px] font-black uppercase tracking-widest rounded ${booking.lesson_mode === "physical" ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-500"}`}>
+                      <div className="min-w-0">
+                        <h3 className="truncate text-sm font-semibold text-[var(--student-ink)] sm:text-base">{booking.tutor_name || "Your tutor"}</h3>
+                        <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                          <span className="rounded-md bg-[var(--student-accent-soft)] px-2 py-0.5 text-[11px] font-medium text-[var(--student-accent)]">{booking.subject}</span>
+                          <span className={`rounded-md px-2 py-0.5 text-[11px] font-medium ${booking.lesson_mode === "physical" ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-600"}`}>
                             {booking.lesson_mode === "physical" ? "In-person" : "Online"}
                           </span>
                           {group.isGroup && (
-                            <span className="px-2 py-0.5 bg-yellow-100 text-yellow-800 text-[9px] font-black uppercase tracking-widest rounded">{group.count}-Week Series</span>
+                            <span className="rounded-md bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-800">{group.count}-week series</span>
                           )}
                         </div>
-                        <h3 className="font-black text-secondary text-lg">{booking.tutor_name}</h3>
                       </div>
                    </div>
                    
-                   <div className="mt-auto flex flex-col gap-3 border-t border-secondary/5 pt-4 md:pt-6">
-                      <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-wider text-secondary/30">
+                   <div className="mt-4 flex flex-col gap-3 border-t border-[var(--student-line)] pt-3">
+                      <div className="flex flex-wrap items-start justify-between gap-2 text-xs text-[var(--student-muted)]">
                          <span className="flex items-center gap-1.5">
-                            <svg className="w-4 h-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2-2v12a2 2 0 002 2z" /></svg>
+                            <svg className="h-4 w-4 text-[var(--student-accent)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2-2v12a2 2 0 002 2z" /></svg>
                             {group.isGroup ? `Starts ${new Date(booking.requested_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}` : new Date(booking.requested_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
                          </span>
                          <div className="text-right">
-                           <div className="text-secondary font-black text-xs">£{booking.price_at_booking * group.count} Total</div>
-                           {group.isGroup && <div className="text-[8px] opacity-50">£{booking.price_at_booking} × {group.count} sessions</div>}
+                          <div className="text-sm font-semibold text-[var(--student-ink)]">£{booking.price_at_booking * group.count} total</div>
+                          {group.isGroup && <div className="text-[11px] text-[var(--student-muted-soft)]">£{booking.price_at_booking} × {group.count} sessions</div>}
                          </div>
                       </div>
                       {booking.lesson_mode === "physical" && (
-                        <p className="rounded-xl bg-emerald-50 p-3 text-xs font-bold leading-5 text-emerald-900">
+                        <p className="rounded-lg bg-emerald-50 px-3 py-2 text-xs leading-5 text-emerald-900">
                           {booking.location_details || "In-person location pending"}
                         </p>
                       )}
@@ -259,6 +264,7 @@ export default async function StudentDashboard() {
                       <CheckoutButton
                         bookingId={booking.id}
                         paymentStatus={booking.payment_status}
+                        variant="compact"
                       />
                    </div>
                 </div>
@@ -270,16 +276,16 @@ export default async function StudentDashboard() {
       {requested.length > 0 && (
         <section>
           <div className="mb-4 flex items-center justify-between md:mb-6">
-            <h2 className="flex items-center gap-3 text-xl font-semibold text-slate-900">
+            <h2 className="flex items-center gap-3 text-xl font-semibold text-[var(--student-ink)]">
               Lesson requests
             </h2>
-            <span className="text-xs font-black text-secondary/40 uppercase tracking-widest">Awaiting tutor confirmation</span>
+            <span className="text-xs font-medium text-[var(--student-muted)]">Awaiting tutor confirmation</span>
           </div>
           <div className="grid grid-cols-1 gap-3 md:grid-cols-3 md:gap-6">
              {groupedRequested.map(group => {
                 const booking = group.mainBooking;
                 return (
-                <div key={group.id} className="relative flex flex-col overflow-hidden rounded-xl border border-slate-200 bg-white p-4 md:p-6">
+                <div key={group.id} className="relative flex flex-col overflow-hidden rounded-xl border border-[var(--student-line)] bg-[var(--student-surface)] p-4 md:p-6">
                    <div className="mb-3 flex items-start justify-between md:mb-4">
                       <div className="flex items-center gap-3 md:gap-4">
                         <div className="w-10 h-10 relative rounded-xl overflow-hidden border border-secondary/5 shadow-sm">
@@ -287,7 +293,7 @@ export default async function StudentDashboard() {
                         </div>
                         <div>
                           <div className="flex items-center gap-1.5 mb-1">
-                            <span className="inline-block px-2 py-0.5 bg-secondary/5 text-secondary/40 text-[9px] font-black rounded-md uppercase tracking-wider">{booking.subject}</span>
+                            <span className="inline-block rounded-md bg-[var(--student-accent-soft)] px-2 py-0.5 text-[11px] font-medium text-[var(--student-accent)]">{booking.subject}</span>
                             <span className={`px-1.5 py-0.5 text-[8px] font-black uppercase tracking-widest rounded ${booking.lesson_mode === "physical" ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-500"}`}>
                               {booking.lesson_mode === "physical" ? "In-person" : "Online"}
                             </span>
@@ -295,7 +301,7 @@ export default async function StudentDashboard() {
                               <span className="px-1.5 py-0.5 bg-yellow-50 text-yellow-600 text-[8px] font-black uppercase tracking-widest rounded">{group.count} Weeks</span>
                             )}
                           </div>
-                          <h3 className="font-bold text-secondary text-sm">{booking.tutor_name}</h3>
+                          <h3 className="text-sm font-semibold text-[var(--student-ink)]">{booking.tutor_name}</h3>
                         </div>
                       </div>
                       <span className="text-[10px] font-black text-orange-400 flex items-center gap-1 bg-orange-50 px-2 py-1 rounded-full">
@@ -303,14 +309,14 @@ export default async function StudentDashboard() {
                       </span>
                    </div>
                    
-                   <p className="mb-3 line-clamp-2 text-[11px] italic text-secondary/40 md:mb-4">
+                   <p className="mb-3 line-clamp-2 text-xs italic text-[var(--student-muted)] md:mb-4">
                       &ldquo;{booking.description}&rdquo;
                    </p>
 
                    <div className="mt-auto flex flex-col gap-2 border-t border-secondary/5 pt-3 md:pt-4">
-                     <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-wider text-secondary/30">
-                        <span className="flex items-center gap-1.5 font-black">
-                           <svg className="w-4 h-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2-2v12a2 2 0 002 2z" /></svg>
+                     <div className="flex items-center justify-between text-xs text-[var(--student-muted)]">
+                        <span className="flex items-center gap-1.5">
+                           <svg className="h-4 w-4 text-[var(--student-accent)]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2-2v12a2 2 0 002 2z" /></svg>
                            {group.isGroup ? `Starts ${new Date(booking.requested_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}` : new Date(booking.requested_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
                         </span>
                         <span>£{booking.price_at_booking}/hr</span>
@@ -324,15 +330,15 @@ export default async function StudentDashboard() {
 
       <section id="student-sessions" data-tour="student-sessions" className="scroll-mt-5">
         <div className="mb-4 flex items-center justify-between gap-3 md:mb-6">
-           <h2 className="text-xl font-semibold text-slate-900">Upcoming lessons</h2>
-           <a href={`/api/calendar?id=${user.id}`} target="_blank" className="flex items-center gap-1.5 rounded-xl bg-slate-100 px-3 py-2 text-[10px] font-black uppercase tracking-[0.14em] text-secondary/60 transition-all hover:bg-slate-200 md:gap-2 md:px-4 md:text-xs md:tracking-widest">
+           <h2 className="text-xl font-semibold text-[var(--student-ink)]">Upcoming lessons</h2>
+           <a href={`/api/calendar?id=${user.id}`} target="_blank" className="flex items-center gap-1.5 rounded-xl bg-[var(--student-surface-soft)] px-3 py-2 text-xs font-medium text-[var(--student-muted)] transition-colors hover:text-[var(--student-accent)] md:gap-2 md:px-4">
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2-2v12a2 2 0 002 2z" /></svg>
               Sync iCal
            </a>
         </div>
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-6">
            {upcoming.map(booking => (
-              <div key={booking.id} className="relative flex flex-col overflow-hidden rounded-xl border border-slate-200 bg-white p-4 md:p-6">
+              <div key={booking.id} className="relative flex flex-col overflow-hidden rounded-xl border border-[var(--student-line)] bg-[var(--student-surface)] p-4 md:p-6">
                  
                  <div className="mb-3 flex items-start justify-between md:mb-4">
                     <div className="flex items-center gap-3 md:gap-4">
@@ -340,18 +346,18 @@ export default async function StudentDashboard() {
                          <Image src={booking.tutor_avatar || "/tutor_placeholder.webp"} alt={booking.tutor_name || "Tutor"} fill className="object-cover" />
                       </div>
                       <div>
-                        <span className="inline-block px-2.5 py-0.5 bg-primary/10 text-primary text-[10px] font-black rounded-lg mb-1 uppercase tracking-wider">{booking.subject}</span>
+                        <span className="mb-1 inline-block rounded-lg bg-[var(--student-accent-soft)] px-2.5 py-0.5 text-[11px] font-medium text-[var(--student-accent)]">{booking.subject}</span>
                         <span className={`ml-2 inline-block rounded-lg px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider ${booking.lesson_mode === "physical" ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-500"}`}>
                           {booking.lesson_mode === "physical" ? "In-person" : "Online"}
                         </span>
-                        <h3 className="font-black text-secondary text-lg">{booking.tutor_name}</h3>
+                        <h3 className="text-lg font-semibold text-[var(--student-ink)]">{booking.tutor_name}</h3>
                       </div>
                     </div>
                  </div>
                  
-                 <div className="mb-4 flex items-center gap-2 font-black md:mb-6">
-                    <div className="flex items-center gap-2 rounded-xl border border-secondary/5 bg-slate-50 p-2 text-xs uppercase tracking-tight text-secondary md:gap-3">
-                       <svg className="h-4 w-4 text-primary md:h-5 md:w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2-2v12a2 2 0 002 2z" /></svg>
+                 <div className="mb-4 flex items-center gap-2 md:mb-6">
+                    <div className="flex items-center gap-2 rounded-xl border border-[var(--student-line)] bg-[var(--student-surface-soft)] p-2 text-xs text-[var(--student-ink-soft)] md:gap-3">
+                       <svg className="h-4 w-4 text-[var(--student-accent)] md:h-5 md:w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2-2v12a2 2 0 002 2z" /></svg>
                        {new Date(booking.requested_date).toLocaleDateString(undefined, { month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
                     </div>
                  </div>
@@ -370,7 +376,7 @@ export default async function StudentDashboard() {
                          Attend in person
                       </div>
                     ) : (
-                      <a href={booking.meeting_url || "#"} target="_blank" rel="noreferrer" className="block min-h-11 w-full rounded-xl bg-secondary px-4 py-3 text-center font-semibold text-white transition-colors hover:bg-secondary/90 md:py-4">
+                      <a href={booking.meeting_url || "#"} target="_blank" rel="noreferrer" className="block min-h-11 w-full rounded-xl bg-[var(--student-accent)] px-4 py-3 text-center font-semibold text-[var(--student-accent-contrast)] transition-colors hover:bg-[var(--student-accent-hover)] md:py-4">
                          Join classroom
                       </a>
                     )}
@@ -378,35 +384,34 @@ export default async function StudentDashboard() {
               </div>
            ))}
            {upcoming.length === 0 && (
-              <div className="rounded-2xl border border-dashed border-secondary/20 bg-slate-50 p-4 text-center md:col-span-2 md:rounded-3xl md:p-12">
-                 <p className="text-secondary/45 font-bold">Practice and lesson support will appear here once your next session is scheduled.</p>
+              <div className="rounded-2xl border border-dashed border-[var(--student-line)] bg-[var(--student-surface)] p-4 text-center md:col-span-2 md:rounded-3xl md:p-12">
+                 <p className="text-sm text-[var(--student-muted)]">Practice and lesson support will appear here once your next session is scheduled.</p>
               </div>
            )}
         </div>
       </section>
 
+      {past.length > 0 && (
+        <section aria-labelledby="student-trends-title" className="pt-2">
+          <div className="px-1">
+            <p className="text-xs font-medium text-[var(--student-accent)]">Learning over time</p>
+            <h2 id="student-trends-title" className="mt-1 text-xl font-semibold tracking-tight text-[var(--student-ink)]">Your progress</h2>
+          </div>
+          <StudentProgressChart bookings={bookings} appearance="student" />
+        </section>
+      )}
+
       <section data-tour="student-history">
-        <h2 className="mb-4 text-xl font-semibold text-slate-900 md:mb-6">Lesson History</h2>
-        <LessonHistoryTable bookings={past} />
+        <h2 className="mb-4 text-xl font-semibold tracking-tight text-[var(--student-ink)]">Lesson history</h2>
+        <LessonHistoryTable bookings={past} appearance="student" />
       </section>
 
-      {/* AVAILABLE EXPERTS (Directory integrated into dashboard) */}
-      <section data-tour="student-tutors" className="border-t border-secondary/10 pt-5 md:pt-8">
-        <div className="mb-4 flex flex-col gap-3 md:mb-8 md:flex-row md:items-center md:justify-between md:gap-4">
-           <div>
-              <h2 className="text-xl font-semibold text-slate-900">Find tutor support</h2>
-              <p className="mt-1 text-sm text-slate-600">Get help with difficult topics and your next learning step through guided STEM support.</p>
-           </div>
-           <Link href="/dashboard/student/tutors" className="text-sm font-black text-primary hover:underline flex items-center gap-1">
-              View support options <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M9 5l7 7-7 7" /></svg>
-           </Link>
+      <section data-tour="student-tutors" className="flex flex-wrap items-center justify-between gap-4 border-t border-[var(--student-line)] px-1 pt-6">
+        <div>
+          <h2 className="text-lg font-semibold tracking-tight text-[var(--student-ink)]">Need a little help?</h2>
+          <p className="mt-1 text-sm text-[var(--student-muted)]">Find a tutor when you want support with a topic.</p>
         </div>
-        
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6 xl:grid-cols-3">
-           {availableTutors.slice(0, 6).map((tutor) => (
-             <TutorCard key={tutor.id} tutor={tutor} currentUserRole="student" variant="dashboard" />
-           ))}
-        </div>
+        <Link href="/dashboard/student/tutors" className="inline-flex min-h-10 items-center text-sm font-medium text-[var(--student-accent)] hover:text-[var(--student-accent-hover)]">Browse tutors →</Link>
       </section>
     </div>
   );

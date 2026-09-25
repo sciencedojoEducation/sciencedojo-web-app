@@ -3,7 +3,7 @@ import DashboardSidebar from "@/components/DashboardSidebar";
 import DashboardGuidedTour from "@/components/DashboardGuidedTour";
 import DashboardFrame from "@/components/DashboardFrame";
 import { createClient } from "@/utils/supabase/server";
-import { headers } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { getActiveInternalMemberByUserId, repairLinkedInternalUserRole } from "@/lib/internal-auth";
 
@@ -29,7 +29,7 @@ export default async function DashboardLayout({
   const { data: { user } } = await supabase.auth.getUser();
   const { data: profile } = await supabase
     .from("profiles")
-    .select("role, is_suspended")
+    .select("role, is_suspended, full_name, avatar_url")
     .eq("id", user?.id)
     .maybeSingle();
 
@@ -46,6 +46,7 @@ export default async function DashboardLayout({
   // ROUTE-BASED ROLE INFERENCE: If the URL is /dashboard/tutor but the profile says 'parent',
   // check for an existing application record. If found, auto-repair the profile.
   const headersList = await headers();
+  const cookieStore = await cookies();
   const pathname = headersList.get("x-next-pathname") || headersList.get("referer") || "";
   const isTutorRoute = pathname.includes("/dashboard/tutor");
 
@@ -108,10 +109,18 @@ export default async function DashboardLayout({
       role = "tutor";
     }
   }
+
+  const dashboardDarkCookie = cookieStore.get("dashboard_dark")?.value;
+  const dashboardDarkPreference = dashboardDarkCookie === "1" || (
+    dashboardDarkCookie === undefined && role === "student" && cookieStore.get("student_dashboard_dark")?.value === "1"
+  );
   
   return (
     <DashboardFrame
       role={role}
+      initialDashboardDark={dashboardDarkPreference}
+      userName={profile?.full_name || user?.user_metadata?.full_name}
+      avatarUrl={profile?.avatar_url || user?.user_metadata?.avatar_url}
       sidebar={<DashboardSidebar role={role} />}
       guidedTour={<DashboardGuidedTour
         role={role}

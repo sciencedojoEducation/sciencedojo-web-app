@@ -1,351 +1,142 @@
 import { createClient } from "@/utils/supabase/server";
+import { HomeListRow, HomeMetricStrip, HomePrimaryAction, HomeSectionHeading } from "@/components/DashboardHomeUI";
+import { AlertTriangle, BookOpen, Clock3, GraduationCap, ShieldCheck, Users } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 
+type RecentBooking = {
+  id: string;
+  status: string;
+  requested_date: string;
+  price_at_booking: number;
+  student?: { full_name?: string | null } | null;
+  tutor?: { full_name?: string | null } | null;
+};
+
 export default async function AdminDashboard() {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  const meta = user?.user_metadata;
-  const userName = meta?.full_name || "Admin";
-  const avatarUrl = meta?.avatar_url;
+  const [
+    { count: activeTutors },
+    { count: totalStudents },
+    { count: flaggedCount },
+    { count: activeTeamMembers },
+    { data: settings },
+    { data: completedBookings },
+    { data: joinedBookings, error: bookingsError },
+    { data: topTutors },
+  ] = await Promise.all([
+    supabase.from("tutors").select("*", { count: "exact", head: true }).eq("is_publicly_listed", true),
+    supabase.from("profiles").select("*", { count: "exact", head: true }).in("role", ["parent", "student"]),
+    supabase.from("messages").select("*", { count: "exact", head: true }).eq("is_flagged", true),
+    supabase.from("internal_team_members").select("*", { count: "exact", head: true }).eq("status", "active"),
+    supabase.from("platform_settings").select("platform_fee_percent").limit(1).single(),
+    supabase.from("bookings").select("price_at_booking, duration_hours").eq("status", "completed"),
+    supabase.from("bookings").select("*, student:profiles!student_id(full_name), tutor:profiles!tutor_id(full_name)").order("created_at", { ascending: false }).limit(5),
+    supabase.from("tutors").select("id, rating, subjects, profiles!id(full_name, avatar_url)").order("rating", { ascending: false }).limit(4),
+  ]);
 
-  // Fetch Live Stats
-  // 1. Tutors Count
-  const { count: activeTutors } = await supabase
-    .from("tutors")
-    .select("*", { count: 'exact', head: true })
-    .eq("is_publicly_listed", true);
+  let recentBookings = joinedBookings as RecentBooking[] | null;
+  if (bookingsError || !recentBookings) {
+    const { data: rawBookings } = await supabase.from("bookings").select("*").order("created_at", { ascending: false }).limit(5);
+    if (rawBookings?.length) {
+      const profileIds = [...new Set(rawBookings.flatMap((booking) => [booking.student_id, booking.tutor_id]).filter(Boolean))];
+      const { data: profiles } = await supabase.from("profiles").select("id, full_name").in("id", profileIds);
+      const profileMap = Object.fromEntries(profiles?.map((profile) => [profile.id, profile.full_name]) || []);
+      recentBookings = rawBookings.map((booking) => ({
+        ...booking,
+        student: { full_name: profileMap[booking.student_id] || "Unknown student" },
+        tutor: { full_name: profileMap[booking.tutor_id] || "Unknown tutor" },
+      }));
+    }
+  }
 
-  // 2. Students Count
-  const { count: totalStudents } = await supabase
-    .from("profiles")
-    .select("*", { count: 'exact', head: true })
-    .in("role", ["parent", "student"]);
-
-  // 3. Flagged Messages Count (Safety Alerts)
-  const { count: flaggedCount } = await supabase
-    .from("messages")
-    .select("*", { count: 'exact', head: true })
-    .eq("is_flagged", true);
-
-  const { count: activeTeamMembers } = await supabase
-    .from("internal_team_members")
-    .select("*", { count: 'exact', head: true })
-    .eq("status", "active");
-
-  // 4. Platform Fee Configuration
-  const { data: settings } = await supabase.from("platform_settings").select("platform_fee_percent").limit(1).single();
   const platformFeeRaw = settings?.platform_fee_percent ?? 25;
   const platformFee = platformFeeRaw / 100;
-
-  // 4. Completed Bookings (for Revenue and Hours)
-  const { data: completedBookings } = await supabase
-    .from("bookings")
-    .select("price_at_booking, duration_hours")
-    .eq("status", "completed");
-
-  let totalPlatformVolume = 0;
-  let totalPlatformProfit = 0;
-  let hoursTaught = 0;
-
-  if (completedBookings) {
-    completedBookings.forEach(b => {
-      const price = Number(b.price_at_booking);
-      totalPlatformVolume += price;
-      totalPlatformProfit += (price * platformFee);
-      hoursTaught += Number(b.duration_hours || 1);
-    });
-  }
-
-  // 4. Recent Bookings (All statuses)
-  // Hardened dual-strategy fetch: 
-  // 1. Try Joined Fetch first
-  let { data: recentBookings, error: bookingsError } = await supabase
-    .from("bookings")
-    .select('*, student:profiles!student_id(full_name), tutor:profiles!tutor_id(full_name)')
-    .order('created_at', { ascending: false })
-    .limit(5);
-
-  // 2. FALLBACK: Manual profile fetch if the Join failed (PGRST200)
-  if (bookingsError || !recentBookings) {
-     console.log("🕵️ Falling back to manual profile fetch...");
-     const { data: rawBookings } = await supabase
-        .from("bookings")
-        .select("*")
-        .order('created_at', { ascending: false })
-        .limit(5);
-
-     if (rawBookings && rawBookings.length > 0) {
-        // Fetch all involved profile names manually
-        const profileIds = [...new Set([
-           ...rawBookings.map(b => b.student_id),
-           ...rawBookings.map(b => b.tutor_id)
-        ])];
-
-        const { data: manualProfiles } = await supabase
-           .from("profiles")
-           .select("id, full_name")
-           .in("id", profileIds);
-
-        const profileMap = Object.fromEntries(manualProfiles?.map(p => [p.id, p.full_name]) || []);
-
-        recentBookings = rawBookings.map(b => ({
-           ...b,
-           student: { full_name: profileMap[b.student_id] || "Unknown Student" },
-           tutor: { full_name: profileMap[b.tutor_id] || "Unknown Tutor" }
-        }));
-     }
-  }
-
-  // 5. Top Tutors
-  const { data: topTutors } = await supabase
-    .from("tutors")
-    .select(`
-      id,
-      rating,
-      subjects,
-      profiles!id(full_name, avatar_url)
-    `)
-    .order('rating', { ascending: false })
-    .limit(4);
-
-  const operationalMetrics = [
-    {
-      label: `Platform profit (${platformFeeRaw}%)`,
-      value: `£${totalPlatformProfit.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
-      detail: `Gross volume £${totalPlatformVolume.toFixed(2)}`,
-      tone: "border-secondary/20 bg-gradient-to-br from-secondary to-primary",
-      labelTone: "text-white/72",
-      valueTone: "text-white",
-      detailTone: "text-white/58",
-    },
-    {
-      label: "Tutoring hours",
-      value: `${hoursTaught}`,
-      detail: "Completed session hours",
-      tone: "border-sky-100 bg-sky-50/85 hover:border-sky-200",
-      labelTone: "text-sky-700/70",
-      valueTone: "text-sky-900",
-      detailTone: "text-sky-700/55",
-    },
-    {
-      label: "Verified tutors",
-      value: `${activeTutors || 0}`,
-      detail: "Approved educators",
-      tone: "border-cyan-100 bg-cyan-50/85 hover:border-cyan-200",
-      labelTone: "text-cyan-700/70",
-      valueTone: "text-cyan-900",
-      detailTone: "text-cyan-700/55",
-    },
-    {
-      label: "Safety alerts",
-      value: `${flaggedCount || 0}`,
-      detail: flaggedCount && flaggedCount > 0 ? "Needs review" : "No active flags",
-      href: "/dashboard/admin/safeguards",
-      attention: !!flaggedCount && flaggedCount > 0,
-      tone: flaggedCount && flaggedCount > 0 ? "border-red-200 bg-red-50/80 hover:border-red-300" : "border-emerald-100 bg-emerald-50/80 hover:border-emerald-200",
-      labelTone: flaggedCount && flaggedCount > 0 ? "text-red-500" : "text-emerald-700/70",
-      valueTone: flaggedCount && flaggedCount > 0 ? "text-red-600" : "text-emerald-800",
-      detailTone: flaggedCount && flaggedCount > 0 ? "text-red-500/65" : "text-emerald-700/55",
-    },
-  ];
-
-  const attentionLinks = [
-    {
-      label: flaggedCount && flaggedCount > 0 ? `${flaggedCount} safeguard alert${flaggedCount === 1 ? "" : "s"}` : "Safeguards clear",
-      detail: flaggedCount && flaggedCount > 0 ? "Review flagged messages" : "Monitor student safety",
-      href: "/dashboard/admin/safeguards",
-      attention: !!flaggedCount && flaggedCount > 0,
-      tone: flaggedCount && flaggedCount > 0 ? "border-red-200 bg-red-50/80 hover:border-red-300" : "border-emerald-100 bg-emerald-50/85 hover:border-emerald-200",
-      labelTone: flaggedCount && flaggedCount > 0 ? "text-red-600" : "text-emerald-800",
-      detailTone: flaggedCount && flaggedCount > 0 ? "text-red-500/65" : "text-emerald-700/55",
-    },
-    {
-      label: "Assessment leads",
-      detail: "Review parent intake",
-      href: "/dashboard/admin/leads",
-      tone: "border-sky-100 bg-sky-50/85 hover:border-sky-200",
-      labelTone: "text-sky-800",
-      detailTone: "text-sky-700/55",
-    },
-    {
-      label: "Tutor review",
-      detail: "Verify experts and applications",
-      href: "/dashboard/admin/tutors",
-      tone: "border-indigo-100 bg-indigo-50/85 hover:border-indigo-200",
-      labelTone: "text-indigo-800",
-      detailTone: "text-indigo-700/55",
-    },
-    {
-      label: "Payouts",
-      detail: "Check tutor balances",
-      href: "/dashboard/admin/payouts",
-      tone: "border-cyan-100 bg-cyan-50/85 hover:border-cyan-200",
-      labelTone: "text-cyan-800",
-      detailTone: "text-cyan-700/55",
-    },
-    {
-      label: "Internal team",
-      detail: `${activeTeamMembers || 0} active collaborator${activeTeamMembers === 1 ? "" : "s"}`,
-      href: "/dashboard/admin/team",
-      tone: "border-slate-200 bg-slate-50/90 hover:border-slate-300",
-      labelTone: "text-slate-800",
-      detailTone: "text-slate-500",
-    },
-  ];
+  const totalPlatformVolume = (completedBookings || []).reduce((sum, booking) => sum + Number(booking.price_at_booking || 0), 0);
+  const totalPlatformProfit = totalPlatformVolume * platformFee;
+  const hoursTaught = (completedBookings || []).reduce((sum, booking) => sum + Number(booking.duration_hours || 1), 0);
+  const hasSafetyAlerts = (flaggedCount || 0) > 0;
 
   return (
-    <div data-role="admin" className="dashboard-home mx-auto max-w-6xl space-y-5 px-3 py-5 sm:p-6 md:p-8">
-      <div className="flex items-center gap-4 md:gap-5">
-         <div className="w-11 h-11 rounded-2xl bg-secondary/10 border-2 border-white shadow-sm overflow-hidden flex items-center justify-center md:h-14 md:w-14">
-            {avatarUrl ? (
-               <img src={avatarUrl} alt="Profile" className="w-full h-full object-cover" />
-            ) : (
-               <span className="text-lg font-bold text-secondary md:text-xl">{userName.charAt(0)}</span>
-            )}
-         </div>
-         <div>
-            <h1 className="dashboard-title mb-1 text-2xl md:text-3xl">
-               Hello, {userName.split(' ')[0]}!
-            </h1>
-            <p className="dashboard-subtitle text-sm">Educational operations, tutor support, and platform health.</p>
-         </div>
+    <div data-role="admin" className="dashboard-home mx-auto max-w-6xl space-y-6 px-3 py-5 sm:px-6 md:px-8 md:pb-12 md:pt-7">
+      {hasSafetyAlerts && (
+        <div role="status" className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-900">
+          <span className="font-semibold">{flaggedCount} flagged message{flaggedCount === 1 ? "" : "s"} need review.</span>
+          <Link href="/dashboard/admin/safeguards" className="ml-2 font-semibold underline underline-offset-2">Open safeguards</Link>
+        </div>
+      )}
+
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1.45fr)_minmax(18rem,1fr)]">
+        <HomePrimaryAction
+          eyebrow="Next operational check"
+          title={hasSafetyAlerts ? "Review safeguarding alerts" : "Keep the platform running smoothly"}
+          description={hasSafetyAlerts ? "Flagged messages need a prompt, careful review." : "Safeguards are clear. Review the latest activity and keep learner support moving."}
+          href={hasSafetyAlerts ? "/dashboard/admin/safeguards" : "/dashboard/admin/bookings"}
+          label={hasSafetyAlerts ? "Review alerts" : "Review bookings"}
+          detail={hasSafetyAlerts ? "Safety takes priority" : "Today's operations"}
+          icon={hasSafetyAlerts ? <AlertTriangle size={23} /> : <ShieldCheck size={23} />}
+        />
+        <section className="home-surface sm:p-6">
+          <HomeSectionHeading eyebrow="Short queue" title="What to check" />
+          <HomeListRow href="/dashboard/admin/safeguards" title={hasSafetyAlerts ? "Safeguarding alerts" : "Safeguards"} detail={hasSafetyAlerts ? "Review flagged messages" : "No active flags"} />
+          <HomeListRow href="/dashboard/admin/leads" title="Assessment leads" detail="Review parent intake" />
+          <HomeListRow href="/dashboard/admin/tutors" title="Tutor review" detail="Verify experts and applications" />
+          <HomeListRow href="/dashboard/admin/payouts" title="Payouts" detail="Check tutor balances" />
+          <HomeListRow href="/dashboard/admin/team" title="Internal team" detail={`${activeTeamMembers || 0} active collaborators`} />
+        </section>
       </div>
 
-      <section aria-labelledby="admin-attention-title" className="dashboard-priority p-4 md:p-5">
-        <div className="mb-3">
-          <p className="dashboard-kicker">Needs attention</p>
-          <h2 id="admin-attention-title" className="dashboard-title mt-1 text-xl">Operational next checks</h2>
-        </div>
-        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
-          {attentionLinks.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={`rounded-xl border px-4 py-3 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${item.tone}`}
-            >
-              <p className={`text-sm font-semibold ${item.labelTone}`}>{item.label}</p>
-              <p className={`mt-1 text-xs font-medium ${item.detailTone}`}>{item.detail}</p>
-            </Link>
+      <HomeMetricStrip label="Platform at a glance" items={[
+        { label: "Safety alerts", value: flaggedCount || 0, icon: <ShieldCheck size={20} />, tone: hasSafetyAlerts ? "amber" : "mint" },
+        { label: "Verified tutors", value: activeTutors || 0, icon: <GraduationCap size={20} />, tone: "violet" },
+        { label: "Learner accounts", value: totalStudents || 0, icon: <Users size={20} />, tone: "sky" },
+        { label: "Tutoring hours", value: hoursTaught, icon: <Clock3 size={20} />, tone: "mint" },
+      ]} />
+
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1.5fr)_minmax(17rem,1fr)]">
+        <section className="home-surface sm:p-6">
+          <HomeSectionHeading eyebrow="Learning movement" title="Recent bookings" href="/dashboard/admin/bookings" linkLabel="View all" />
+          {recentBookings?.map((booking) => (
+            <HomeListRow
+              key={booking.id}
+              href="/dashboard/admin/bookings"
+              title={`${booking.student?.full_name || "Unknown student"} with ${booking.tutor?.full_name || "Unknown tutor"}`}
+              detail={`${new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" }).format(new Date(booking.requested_date))} · ${booking.status} · £${booking.price_at_booking}`}
+            />
           ))}
-        </div>
-      </section>
-
-      <section className="dashboard-panel p-4 md:p-5">
-        <div className="mb-4 flex flex-col gap-1 md:flex-row md:items-end md:justify-between">
-          <div>
-            <p className="dashboard-kicker">Operational snapshot</p>
-            <h2 className="dashboard-title mt-1 text-xl">Platform health</h2>
-          </div>
-          <p className="text-xs font-bold text-secondary/45">{totalStudents || 0} family/student accounts tracked</p>
-        </div>
-
-        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-          {operationalMetrics.map((metric) => {
-            const content = (
-              <div className={`h-full rounded-2xl border p-4 transition-colors ${metric.tone}`}>
-                <p className={`text-[10px] font-black uppercase tracking-[0.1em] ${metric.labelTone}`}>
-                  {metric.label}
-                </p>
-                <p className={`mt-2 text-2xl font-black md:text-3xl ${metric.valueTone}`}>
-                  {metric.value}
-                </p>
-                <p className={`mt-1 text-xs font-bold leading-5 ${metric.detailTone}`}>{metric.detail}</p>
+          {!recentBookings?.length && <p className="mt-4 text-sm text-[var(--theme-muted)]">No recent bookings yet.</p>}
+        </section>
+        <section className="home-surface sm:p-6">
+          <HomeSectionHeading eyebrow="Educators" title="Tutor snapshot" href="/dashboard/admin/tutors" linkLabel="Manage tutors" />
+          {topTutors?.map((tutor) => {
+            const tutorProfile = Array.isArray(tutor.profiles) ? tutor.profiles[0] : tutor.profiles;
+            return (
+              <div key={tutor.id} className="flex items-center gap-3 border-t border-[var(--theme-line)] py-3">
+                <span className="relative h-9 w-9 shrink-0 overflow-hidden rounded-full bg-[var(--theme-accent-soft)]">
+                  <Image src={tutorProfile?.avatar_url || "/tutor_placeholder.webp"} alt="" fill className="object-cover" />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-sm font-medium text-[var(--theme-ink)]">{tutorProfile?.full_name || "Tutor"}</span>
+                  <span className="block truncate text-xs text-[var(--theme-muted)]">{tutor.subjects?.[0] || "General support"}</span>
+                </span>
+                <span className="text-xs text-[var(--theme-muted)]">{tutor.rating > 0 ? `★ ${tutor.rating}` : "New"}</span>
               </div>
             );
-
-            return metric.href ? (
-              <Link key={metric.label} href={metric.href} className="block rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2">
-                {content}
-              </Link>
-            ) : (
-              <div key={metric.label}>{content}</div>
-            );
           })}
-        </div>
-      </section>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 md:gap-6">
-         <div className="lg:col-span-2">
-            <div className="flex flex-col gap-2 sm:flex-row sm:justify-between sm:items-end mb-3">
-               <div>
-                  <p className="text-[10px] font-black uppercase tracking-[0.14em] text-secondary/35">Learning movement</p>
-                  <h2 className="mt-1 text-xl font-black text-secondary">Recent learning activity</h2>
-               </div>
-               <Link href="/dashboard/admin/bookings" className="text-xs font-black uppercase tracking-[0.12em] text-primary hover:underline">View bookings</Link>
-            </div>
-            <div className="dashboard-panel min-h-[180px] overflow-hidden">
-               {recentBookings?.map((booking: any, i) => {
-                  const studentName = booking.student?.full_name || "Unknown Student";
-                  const tutorName = booking.tutor?.full_name || "Unknown Tutor";
-                  return (
-                     <div key={booking.id} className={`p-4 flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center ${i !== (recentBookings?.length || 0) - 1 ? 'border-b border-secondary/5' : ''}`}>
-                        <div className="flex min-w-0 items-center gap-3">
-                           <div className={`w-8 h-8 shrink-0 rounded-xl flex items-center justify-center ${
-                             booking.status === 'completed' ? 'bg-green-50 text-green-600' :
-                             booking.status === 'confirmed' ? 'bg-blue-50 text-blue-600' :
-                             'bg-amber-50 text-amber-600'
-                           }`}>
-                              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                           </div>
-                           <div className="min-w-0">
-                              <p className="truncate text-sm font-black text-secondary">
-                                {studentName} <span className="text-secondary/45 font-semibold">with</span> {tutorName}
-                              </p>
-                              <div className="mt-1 flex flex-wrap gap-2 items-center text-xs">
-                                <span className="font-bold text-secondary/45">{new Date(booking.requested_date).toLocaleDateString()}</span>
-                                <span className="uppercase font-black text-[9px] px-2 py-0.5 rounded-full bg-slate-100 text-slate-500">
-                                  {booking.status}
-                                </span>
-                              </div>
-                           </div>
-                        </div>
-                        <div className="text-sm font-black text-secondary/60 sm:text-right">
-                           £{booking.price_at_booking}
-                        </div>
-                     </div>
-                  );
-               })}
-               {(!recentBookings || recentBookings.length === 0) && (
-                 <div className="flex min-h-[180px] items-center justify-center p-8 text-center text-sm font-bold text-secondary/40">
-                    No recent learning activity yet.
-                 </div>
-               )}
-            </div>
-         </div>
-
-         <div>
-            <div className="mb-3">
-              <p className="text-[10px] font-black uppercase tracking-[0.14em] text-secondary/35">Educator operations</p>
-              <h2 className="mt-1 text-xl font-black text-secondary">Tutor support snapshot</h2>
-            </div>
-            <div className="dashboard-panel p-3 md:p-4">
-               <div className="space-y-2">
-                  {topTutors?.map((tutor: any) => (
-                     <div key={tutor.id} className="flex justify-between items-center gap-3 rounded-2xl p-2 transition-colors hover:bg-slate-50">
-                        <div className="flex min-w-0 items-center gap-3">
-                           <div className="w-9 h-9 shrink-0 rounded-xl bg-secondary/10 relative overflow-hidden">
-                              <Image src={tutor.profiles?.avatar_url || "/tutor_placeholder.webp"} alt={tutor.profiles?.full_name || "Tutor"} fill className="object-cover" />
-                           </div>
-                           <div className="min-w-0">
-                              <p className="truncate text-sm font-black text-secondary">{tutor.profiles?.full_name || "Tutor"}</p>
-                              <p className="truncate text-[10px] uppercase font-black tracking-[0.1em] text-secondary/38">
-                                {tutor.subjects?.[0] || "General support"}
-                              </p>
-                           </div>
-                        </div>
-                        <div className="shrink-0 rounded-full bg-amber-50 px-2 py-1 text-[10px] font-black text-amber-600">
-                           {tutor.rating > 0 ? `★ ${tutor.rating}` : "New"}
-                        </div>
-                     </div>
-                  ))}
-               </div>
-               <Link href="/dashboard/admin/payouts" className="mt-4 flex w-full items-center justify-center rounded-2xl border border-secondary/10 bg-slate-50 px-4 py-3 text-[10px] font-black uppercase tracking-[0.12em] text-secondary/60 transition-colors hover:bg-slate-100 hover:text-secondary">
-                  Manage payouts
-               </Link>
-            </div>
-         </div>
+          {!topTutors?.length && <p className="mt-4 text-sm text-[var(--theme-muted)]">Tutor profiles will appear here.</p>}
+        </section>
       </div>
+
+      <section className="border-t border-[var(--theme-line)] px-1 pt-5">
+        <HomeSectionHeading
+          eyebrow="Platform context"
+          title="Financial overview"
+          description={`Platform profit £${totalPlatformProfit.toFixed(2)} at the current ${platformFeeRaw}% fee · gross booking volume £${totalPlatformVolume.toFixed(2)}.`}
+          href="/dashboard/admin/payouts"
+          linkLabel="Manage payouts"
+        />
+        <Link href="/dashboard/admin/team" className="home-text-link">Internal team: {activeTeamMembers || 0} active <BookOpen size={15} /></Link>
+      </section>
     </div>
   );
 }

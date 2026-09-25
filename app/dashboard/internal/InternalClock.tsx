@@ -18,18 +18,18 @@ function formatDate(date: Date) {
 }
 
 export default function InternalClock() {
-  const [now, setNow] = useState(() => new Date());
+  const [now, setNow] = useState<Date | null>(null);
 
   useEffect(() => {
-    const timer = window.setInterval(() => setNow(new Date()), 1000);
-    return () => window.clearInterval(timer);
+    const frame = window.requestAnimationFrame(() => setNow(new Date()));
+    const timer = window.setInterval(() => setNow(new Date()), 30_000);
+    return () => { window.cancelAnimationFrame(frame); window.clearInterval(timer); };
   }, []);
 
   return (
-    <div className="rounded-[1.5rem] border border-emerald-100 bg-white p-5 shadow-sm md:rounded-[2rem]">
-      <p className="text-[10px] font-black uppercase tracking-[0.16em] text-emerald-700/50">Clock</p>
-      <p className="mt-3 text-4xl font-black tracking-tight text-emerald-950">{formatTime(now)}</p>
-      <p className="mt-2 text-sm font-bold text-emerald-800/55">{formatDate(now)}</p>
+    <div className="flex items-center justify-between gap-4 border-t border-[var(--theme-line)] py-3" aria-label="Local date and time">
+      <span className="text-sm text-[var(--theme-muted)]">{now ? formatDate(now) : "Local date"}</span>
+      <time className="text-base font-semibold tabular-nums text-[var(--theme-ink)]">{now ? formatTime(now) : "--:--"}</time>
     </div>
   );
 }

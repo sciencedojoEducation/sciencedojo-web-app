@@ -4,9 +4,11 @@ import type { Announcement } from "@/lib/announcement-queries";
 import type { PlatformAnnouncement } from "@/lib/platform-announcements";
 import type { AvailabilitySlot, Booking, TutorProfile } from "@/lib/supabase-queries";
 import type { TutorReadinessResult } from "@/lib/tutor-readiness";
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import Link from "next/link";
 import AnnouncementFeed from "@/components/AnnouncementFeed";
+import { HomeListRow, HomeMetricStrip, HomePrimaryAction, HomeSectionHeading } from "@/components/DashboardHomeUI";
+import { CalendarDays, ClipboardList, GraduationCap, UserRoundCheck } from "lucide-react";
 import { markTutorWelcomeSeen } from "./actions";
 import {
   getAcademyProgressPercent,
@@ -49,10 +51,6 @@ interface TutorHomeDashboardUIProps {
   tutorAcademyEnabled: boolean;
 }
 
-function getFirstName(name: string) {
-  return name.trim().split(/\s+/)[0] || "Tutor";
-}
-
 function isSameDay(value: string, date: Date) {
   const source = new Date(value);
   return (
@@ -63,12 +61,13 @@ function isSameDay(value: string, date: Date) {
 }
 
 function formatLessonDate(value: string) {
-  return new Date(value).toLocaleDateString(undefined, {
+  return new Date(value).toLocaleDateString("en-GB", {
     weekday: "short",
     month: "short",
     day: "numeric",
     hour: "numeric",
     minute: "2-digit",
+    timeZone: "UTC",
   });
 }
 
@@ -79,8 +78,6 @@ function getActionHref(readiness: TutorReadinessResult) {
 }
 
 export default function TutorHomeDashboardUI({
-  userName,
-  avatarUrl,
   bookings,
   tutorData,
   slots,
@@ -96,17 +93,45 @@ export default function TutorHomeDashboardUI({
 }: TutorHomeDashboardUIProps) {
   const [isWelcomeVisible, setIsWelcomeVisible] = useState(showAcceptedWelcome);
   const [isDismissingWelcome, startWelcomeDismiss] = useTransition();
+  const [localToday, setLocalToday] = useState<Date | null>(null);
+  useEffect(() => {
+    const frame = window.requestAnimationFrame(() => setLocalToday(new Date()));
+    return () => window.cancelAnimationFrame(frame);
+  }, []);
 
   const requested = bookings.filter((booking) => booking.status === "requested");
   const upcoming = bookings
     .filter((booking) => booking.status === "confirmed" || booking.status === "accepted")
     .sort((a, b) => new Date(a.requested_date).getTime() - new Date(b.requested_date).getTime());
-  const todayLessons = upcoming.filter((booking) => isSameDay(booking.requested_date, new Date()));
+  const todayLessons = localToday ? upcoming.filter((booking) => isSameDay(booking.requested_date, localToday)) : [];
   const completed = bookings.filter((booking) => booking.status === "completed");
   const totalEarnings = completed.reduce((sum, booking) => sum + Number(booking.price_at_booking), 0);
   const nextActionHref = getActionHref(profileReadiness);
   const remainingProfileActions = launchChecklist.filter((item) => !item.completed).length;
   const academyProgressPercent = getAcademyProgressPercent(academyProgress);
+  const teachingAction = requested.length > 0
+    ? {
+        title: `${requested.length} lesson request${requested.length === 1 ? "" : "s"} to review`,
+        description: "Respond to families, then prepare for your upcoming lessons.",
+        href: "/dashboard/tutor/schedule?tab=requests",
+        label: "Review requests",
+        detail: "Teaching today",
+      }
+    : todayLessons.length > 0
+      ? {
+          title: `${todayLessons.length} lesson${todayLessons.length === 1 ? "" : "s"} today`,
+          description: "Your schedule has the times and class details you need.",
+          href: "/dashboard/tutor/schedule?tab=sessions",
+          label: "Open schedule",
+          detail: "Teaching today",
+        }
+      : {
+          title: profileReadiness.recommendedNextAction.title,
+          description: profileReadiness.recommendedNextAction.body,
+          href: nextActionHref,
+          label: profileReadiness.recommendedNextAction.cta.label,
+          detail: "Your next step",
+        };
 
   const recentActivity = [
     ...requested.slice(0, 2).map((booking) => ({
@@ -153,18 +178,18 @@ export default function TutorHomeDashboardUI({
   };
 
   return (
-    <div data-role="tutor" className="dashboard-home mx-auto max-w-6xl space-y-5 px-3 py-5 sm:p-6 md:p-8">
+    <div data-role="tutor" className="dashboard-home mx-auto max-w-6xl space-y-6 px-3 py-5 sm:px-6 md:px-8 md:pb-12 md:pt-7">
       {!tutorData?.is_verified && (
-        <div className="rounded-[1.25rem] border border-amber-100 bg-amber-50 p-4 shadow-sm shadow-amber-900/5">
+        <div className="rounded-2xl border border-amber-300 bg-amber-50 p-4 text-amber-950">
           <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
             <div>
-              <p className="text-[10px] font-black uppercase tracking-[0.16em] text-amber-700/60">Verification in progress</p>
-              <h2 className="mt-1 text-lg font-black text-amber-950">Your tutor profile is under review.</h2>
-              <p className="mt-1 max-w-2xl text-sm font-semibold leading-6 text-amber-800/70">
+              <p className="text-xs font-medium text-amber-800">Verification in progress</p>
+              <h2 className="mt-1 text-base font-semibold">Your tutor profile is under review.</h2>
+              <p className="mt-1 max-w-2xl text-sm leading-6 text-amber-900">
                 You can keep polishing your profile and availability while ScienceDojo reviews your application.
               </p>
             </div>
-            <Link href="/support/tutors" className="inline-flex min-h-10 items-center justify-center rounded-full bg-white px-4 text-xs font-black uppercase tracking-[0.12em] text-amber-800 shadow-sm">
+            <Link href="/support/tutors" className="inline-flex min-h-10 items-center justify-center rounded-full border border-amber-300 px-4 text-sm font-medium text-amber-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-700">
               Review guide
             </Link>
           </div>
@@ -175,38 +200,37 @@ export default function TutorHomeDashboardUI({
         <AnnouncementFeed announcements={announcements} platformAnnouncements={platformAnnouncements} />
       )}
 
-      <section aria-labelledby="tutor-today-title" className="dashboard-priority p-4 md:p-6">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1.5fr)_minmax(18rem,1fr)]">
+        <HomePrimaryAction eyebrow="Teaching today" {...teachingAction} />
+        <section className="home-surface sm:p-6" aria-label="Upcoming lessons">
+          <HomeSectionHeading eyebrow="Your schedule" title="Coming up" href="/dashboard/tutor/schedule" linkLabel="View all" />
           <div>
-            <p className="dashboard-kicker">Teaching today</p>
-            <h1 id="tutor-today-title" className="dashboard-title mt-1 text-2xl md:text-3xl">
-              {requested.length > 0 ? `${requested.length} lesson request${requested.length === 1 ? "" : "s"} to review` : todayLessons.length > 0 ? `${todayLessons.length} lesson${todayLessons.length === 1 ? "" : "s"} today` : "Your teaching workspace is ready"}
-            </h1>
-            <p className="dashboard-subtitle mt-2 text-sm leading-6">
-              {requested.length > 0 ? "Respond to families, then prepare for upcoming lessons." : todayLessons.length > 0 ? "Your schedule has the times and class details you need." : profileReadiness.recommendedNextAction.body}
-            </p>
+            {upcoming.slice(0, 3).map((booking) => <HomeListRow key={booking.id} href="/dashboard/tutor/schedule?tab=sessions" title={booking.subject} detail={`${booking.student_name || "Student"} · ${formatLessonDate(booking.requested_date)}`} />)}
+            {upcoming.length === 0 && <p className="py-4 text-sm leading-6 text-[var(--theme-muted)]">Confirmed lessons will appear here when students book your available times.</p>}
           </div>
-          <Link href={requested.length > 0 ? "/dashboard/tutor/schedule?tab=requests" : todayLessons.length > 0 ? "/dashboard/tutor/schedule?tab=sessions" : nextActionHref} className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-xl bg-secondary px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-secondary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2">
-            {requested.length > 0 ? "Review requests" : todayLessons.length > 0 ? "Open schedule" : profileReadiness.recommendedNextAction.cta.label}
-          </Link>
-        </div>
-      </section>
+        </section>
+      </div>
+
+      <HomeMetricStrip label="Teaching at a glance" items={[
+        { label: "Today", value: todayLessons.length, icon: <CalendarDays size={20} />, tone: "sky" },
+        { label: "Upcoming", value: upcoming.length, icon: <GraduationCap size={20} />, tone: "mint" },
+        { label: "Requests", value: requested.length, icon: <ClipboardList size={20} />, tone: "amber" },
+        { label: "Profile tasks", value: remainingProfileActions, icon: <UserRoundCheck size={20} />, tone: "violet" },
+      ]} />
 
       {isWelcomeVisible && (
-        <section className="dashboard-panel p-4 md:p-5">
+        <section className="home-surface sm:p-6">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div>
-              <p className="text-[10px] font-black uppercase tracking-[0.16em] text-primary/60">Verified tutor network</p>
-              <h2 className="mt-1 text-2xl font-black tracking-tight text-secondary">Welcome to ScienceDojo</h2>
-              <p className="mt-1 max-w-2xl text-sm font-semibold leading-6 text-secondary/60">
-                You're now part of our verified tutor network. Next goal: launch your tutor profile.
-              </p>
+              <p className="home-eyebrow">Verified tutor network</p>
+              <h2 className="home-section-title">Your tutor profile is ready to build</h2>
+              <p className="home-section-description">You&apos;re part of the verified network. Set up your profile so families can get to know you.</p>
             </div>
             <button
               type="button"
               onClick={handleDismissWelcome}
               disabled={isDismissingWelcome}
-              className="inline-flex min-h-10 items-center justify-center rounded-full border border-secondary/10 bg-white px-5 text-xs font-black uppercase tracking-[0.12em] text-secondary/50 transition-all hover:border-primary/20 hover:text-primary disabled:opacity-50"
+              className="home-text-link disabled:opacity-50"
             >
               {isDismissingWelcome ? "Saving..." : "Got it"}
             </button>
@@ -214,229 +238,44 @@ export default function TutorHomeDashboardUI({
         </section>
       )}
 
-      {tutorAcademyEnabled && <section className="overflow-hidden rounded-xl border border-blue-900 bg-[#14365a] text-white">
-        <div className="grid gap-6 p-5 md:grid-cols-[1fr_auto] md:items-center md:p-7">
-          <div>
-            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-cyan-200/70">ScienceDojo Tutor Academy</p>
-            <h2 className="mt-2 text-2xl font-black tracking-tight">{academyProgress.completedAt ? "Tutor Foundations complete" : "Build your ScienceDojo foundations"}</h2>
-            <p className="mt-2 max-w-2xl text-sm font-semibold leading-6 text-white/65">
-              {academyProgress.completedAt
-                ? `You completed the induction with a best score of ${academyProgress.bestScore}%. You can revisit any lesson at any time.`
-                : `A ${tutorAcademyCourse.estimatedMinutes}-minute induction covering safe teaching, excellent lessons, platform workflows, and family trust.`}
-            </p>
-            <div className="mt-5 max-w-2xl">
-              <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-[0.13em] text-white/55">
-                <span>{academyProgress.completedLessons.length}/{tutorAcademyCourse.lessons.length} lessons</span>
-                <span>{academyProgressPercent}%</span>
-              </div>
-              <div className="mt-2 h-2 overflow-hidden rounded-full bg-white/12">
-                <div className="h-full rounded-full bg-gradient-to-r from-cyan-300 to-teal-300" style={{ width: `${academyProgressPercent}%` }} />
-              </div>
-            </div>
-          </div>
-          <Link href={getAcademyResumeHref(academyProgress)} className="inline-flex min-h-11 items-center justify-center rounded-xl bg-white px-6 text-sm font-semibold text-primary transition-colors hover:bg-slate-100">
-            {academyProgress.completedAt ? "Review course" : academyProgress.completedLessons.length > 0 ? "Continue course" : "Start course"}
-          </Link>
-        </div>
-      </section>}
-
-      <section className="dashboard-panel p-4 md:p-6">
-        <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
-          <div className="flex min-w-0 items-center gap-4">
-            <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-2xl border-2 border-white bg-accent/10 shadow-md sm:h-16 sm:w-16">
-              {avatarUrl ? (
-                <img src={avatarUrl} alt="Profile" className="h-full w-full object-cover" />
-              ) : (
-                <span className="text-2xl font-black text-accent">{userName.charAt(0)}</span>
-              )}
-            </div>
-            <div className="min-w-0">
-              <p className="text-[10px] font-black uppercase tracking-[0.16em] text-secondary/35">Dashboard</p>
-              <h2 className="dashboard-title mt-1 break-words text-2xl sm:text-3xl">
-                Hello, {getFirstName(userName)}
-              </h2>
-              <p className="mt-1 text-sm font-semibold leading-6 text-secondary/55">
-                Your priorities, next action, and teaching activity for today.
-              </p>
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:min-w-[32rem]">
-            {[
-              ["Today", todayLessons.length],
-              ["Upcoming", upcoming.length],
-              ["Requests", requested.length],
-              ["Profile tasks", profileReadiness.actionsRemaining],
-            ].map(([label, value]) => (
-              <div key={label} className="rounded-2xl bg-slate-50 px-3 py-3">
-                <p className="text-[9px] font-black uppercase tracking-[0.13em] text-secondary/35">{label}</p>
-                <p className="mt-1 text-xl font-black text-secondary">{value}</p>
-              </div>
+      <section aria-label="Tutor readiness and Academy" className={`grid gap-4 ${tutorAcademyEnabled ? "lg:grid-cols-2" : ""}`}>
+        <div className="home-surface sm:p-6">
+          <HomeSectionHeading eyebrow="Tutor readiness" title="Ready for students" href="/dashboard/tutor/settings" linkLabel="Open profile" />
+          <div className="flex items-baseline gap-2"><strong className="text-2xl font-semibold text-[var(--theme-ink)]">{profileReadiness.percent}%</strong><span className="text-sm text-[var(--theme-muted)]">complete</span></div>
+          <div className="mt-3 h-2 overflow-hidden rounded-full bg-[var(--theme-surface-soft)]"><div className="h-full rounded-full bg-[var(--theme-accent)]" style={{ width: `${profileReadiness.percent}%` }} /></div>
+          <div className="mt-5 grid gap-x-5 sm:grid-cols-2">
+            {Object.entries({ Availability: profileReadiness.healthSummary.availabilityLabel, Payouts: profileReadiness.healthSummary.payoutsLabel, Reviews: profileReadiness.healthSummary.reviewsLabel, Status: profileReadiness.healthSummary.launchStatus }).map(([label, value]) => (
+              <div key={label} className="flex justify-between gap-3 border-t border-[var(--theme-line)] py-2.5 text-sm"><span className="text-[var(--theme-muted)]">{label}</span><span className="text-right font-medium text-[var(--theme-ink-soft)]">{value}</span></div>
             ))}
           </div>
+          {requested.length > 0 || todayLessons.length > 0 ? <HomeListRow href={nextActionHref} title={profileReadiness.recommendedNextAction.title} detail={profileReadiness.recommendedNextAction.cta.label} /> : null}
+        </div>
+        {tutorAcademyEnabled && <div className="home-surface sm:p-6">
+          <HomeSectionHeading eyebrow="Tutor Academy" title={academyProgress.completedAt ? "Foundations complete" : "Build your foundations"} description={academyProgress.completedAt ? "Revisit your lessons whenever you like." : `${tutorAcademyCourse.estimatedMinutes} minutes of safe-teaching and platform guidance.`} />
+          <div className="mt-5 flex justify-between text-xs text-[var(--theme-muted)]"><span>{academyProgress.completedLessons.length} of {tutorAcademyCourse.lessons.length} lessons</span><span>{academyProgressPercent}%</span></div>
+          <div className="mt-2 h-2 overflow-hidden rounded-full bg-[var(--theme-surface-soft)]"><div className="h-full rounded-full bg-[var(--theme-accent)]" style={{ width: `${academyProgressPercent}%` }} /></div>
+          <Link href={getAcademyResumeHref(academyProgress)} className="home-text-link mt-5">{academyProgress.completedAt ? "Review course" : academyProgress.completedLessons.length > 0 ? "Continue course" : "Start course"} →</Link>
+        </div>}
+      </section>
+
+      <section aria-label="Business and reach" className="grid gap-4 lg:grid-cols-2">
+        <div className="home-surface sm:p-6">
+          <HomeSectionHeading eyebrow="Earnings" title={`£${totalEarnings.toFixed(2)}`} description={`From ${completed.length} completed lesson${completed.length === 1 ? "" : "s"}, before platform fee calculations.`} href="/dashboard/tutor/earnings" linkLabel="View earnings" />
+          <div className="mt-5 flex gap-6 border-t border-[var(--theme-line)] pt-4 text-sm"><span className="text-[var(--theme-muted)]">Reviews public <strong className="ml-1 font-medium text-[var(--theme-ink)]">{reviewVisibility.approved}</strong></span><span className="text-[var(--theme-muted)]">Pending <strong className="ml-1 font-medium text-[var(--theme-ink)]">{reviewVisibility.pending}</strong></span></div>
+        </div>
+        <div className="home-surface sm:p-6">
+          <HomeSectionHeading eyebrow="Mentor reach" title="Profile activity" description="Signals from your profile shares this month." href="/dashboard/tutor/settings" linkLabel="Share tools" />
+          <div className="mt-4 grid grid-cols-3 gap-3 border-t border-[var(--theme-line)] pt-4">
+            {[["Visits", mentorReach.profileVisits], ["Checks", mentorReach.learningChecks], ["Trials", mentorReach.trialLessons]].map(([label, value]) => <div key={label}><p className="text-xl font-semibold text-[var(--theme-ink)]">{value}</p><p className="text-xs text-[var(--theme-muted)]">{label}</p></div>)}
+          </div>
         </div>
       </section>
 
-      <section className="grid gap-5 lg:grid-cols-[1.05fr_0.95fr]">
-        <article className="rounded-xl border border-blue-900 bg-[#14365a] p-5 text-white md:p-6">
-          <p className="text-[10px] font-black uppercase tracking-[0.18em] text-cyan-100/70">Next best action</p>
-          <h2 className="mt-3 text-3xl font-black tracking-tight">{profileReadiness.recommendedNextAction.title}</h2>
-          <p className="mt-3 max-w-xl text-sm font-semibold leading-7 text-white/70">
-            {profileReadiness.recommendedNextAction.body}
-          </p>
-          <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center">
-            <Link href={nextActionHref} className="inline-flex min-h-11 items-center justify-center rounded-xl bg-white px-6 text-sm font-semibold text-primary transition-colors hover:bg-slate-100">
-              {profileReadiness.recommendedNextAction.cta.label}
-            </Link>
-            <Link href="/support/tutors" className="inline-flex min-h-12 items-center justify-center rounded-full border border-white/15 px-6 text-sm font-black text-white/80 transition-all hover:bg-white/10">
-              Open Success Center
-            </Link>
-          </div>
-        </article>
-
-        <article className="dashboard-panel p-5 md:p-6">
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <p className="text-[10px] font-black uppercase tracking-[0.16em] text-secondary/35">Tutor health</p>
-              <h2 className="mt-1 text-2xl font-black tracking-tight text-secondary">Ready for students</h2>
-            </div>
-            <div className="rounded-2xl bg-primary/5 px-4 py-3 text-center">
-              <p className="text-2xl font-black text-primary">{profileReadiness.percent}%</p>
-              <p className="text-[9px] font-black uppercase tracking-[0.12em] text-secondary/35">ready</p>
-            </div>
-          </div>
-          <div className="mt-4 h-2 overflow-hidden rounded-full bg-slate-100">
-            <div
-              className="h-full rounded-full bg-gradient-to-r from-primary to-cyan-400 transition-all duration-700"
-              style={{ width: `${profileReadiness.percent}%` }}
-            />
-          </div>
-          <div className="mt-5 grid gap-2 sm:grid-cols-2">
-            {[
-              ["Availability", profileReadiness.healthSummary.availabilityLabel],
-              ["Payouts", profileReadiness.healthSummary.payoutsLabel],
-              ["Reviews", profileReadiness.healthSummary.reviewsLabel],
-              ["Status", profileReadiness.healthSummary.launchStatus],
-            ].map(([label, value]) => (
-              <div key={label} className="rounded-2xl bg-slate-50 px-3 py-3">
-                <p className="text-[9px] font-black uppercase tracking-[0.13em] text-secondary/35">{label}</p>
-                <p className="mt-1 text-sm font-black text-secondary">{value}</p>
-              </div>
-            ))}
-          </div>
-        </article>
-      </section>
-
-      <section className="dashboard-panel p-5 md:p-6">
-        <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
-          <div>
-            <p className="text-[10px] font-black uppercase tracking-[0.16em] text-primary/60">Mentor reach</p>
-            <h2 className="mt-1 text-2xl font-black tracking-tight text-secondary">Is your sharing working?</h2>
-            <p className="mt-2 max-w-2xl text-sm font-semibold leading-6 text-secondary/55">
-              Share your mentor profile to help parents discover you through ScienceDojo. These are profile-share signals from this month.
-            </p>
-          </div>
-          <Link href="/dashboard/tutor/settings" className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-full bg-primary px-5 text-xs font-black uppercase tracking-[0.12em] text-white shadow-lg shadow-primary/10 transition-all hover:-translate-y-0.5">
-            Open Share Tools
-          </Link>
-        </div>
-        <div className="mt-5 grid gap-2 sm:grid-cols-3">
-          {[
-            ["Profile visits", mentorReach.profileVisits],
-            ["Learning checks", mentorReach.learningChecks],
-            ["Trial lessons", mentorReach.trialLessons],
-          ].map(([label, value]) => (
-            <div key={label} className="rounded-2xl bg-white px-4 py-4 shadow-sm ring-1 ring-secondary/5">
-              <p className="text-2xl font-black text-secondary">{value}</p>
-              <p className="mt-1 text-[9px] font-black uppercase tracking-[0.13em] text-secondary/35">{label}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <section className="grid gap-5 lg:grid-cols-[1.15fr_0.85fr]">
-        <article className="dashboard-panel p-5 md:p-6">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-            <div>
-              <p className="text-[10px] font-black uppercase tracking-[0.16em] text-secondary/35">Teaching queue</p>
-              <h2 className="mt-1 text-2xl font-black tracking-tight text-secondary">Upcoming lessons</h2>
-            </div>
-            <Link href="/dashboard/tutor/schedule" className="text-[10px] font-black uppercase tracking-[0.12em] text-accent hover:text-accent-hover">
-              Open schedule
-            </Link>
-          </div>
-          <div className="mt-5 space-y-3">
-            {upcoming.slice(0, 3).map((booking) => (
-              <Link key={booking.id} href="/dashboard/tutor/schedule?tab=sessions" className="flex flex-col gap-2 rounded-2xl border border-secondary/5 bg-slate-50/70 p-4 transition-all hover:border-primary/20 hover:bg-primary/5 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <p className="text-sm font-black text-secondary">{booking.subject}</p>
-                  <p className="mt-1 text-xs font-semibold text-secondary/50">
-                    {booking.student_name || "Student"} · {formatLessonDate(booking.requested_date)}
-                  </p>
-                </div>
-                <span className="rounded-full bg-white px-3 py-1 text-[9px] font-black uppercase tracking-[0.12em] text-primary shadow-sm">
-                  {booking.status}
-                </span>
-              </Link>
-            ))}
-            {upcoming.length === 0 && (
-              <div className="rounded-2xl border border-dashed border-secondary/10 bg-slate-50/70 p-5">
-                <p className="text-sm font-black text-secondary/55">No upcoming lessons yet.</p>
-                <p className="mt-1 text-xs font-semibold leading-5 text-secondary/40">
-                  Confirmed lessons will appear here once students book your available times.
-                </p>
-              </div>
-            )}
-          </div>
-        </article>
-
-        <article className="dashboard-panel p-5 md:p-6">
-          <p className="text-[10px] font-black uppercase tracking-[0.16em] text-secondary/35">Earnings snapshot</p>
-          <h2 className="mt-1 text-2xl font-black tracking-tight text-secondary">£{totalEarnings.toFixed(2)}</h2>
-          <p className="mt-2 text-sm font-semibold leading-6 text-secondary/55">
-            Based on {completed.length} completed lesson{completed.length === 1 ? "" : "s"} before platform fee calculations.
-          </p>
-          <Link href="/dashboard/tutor/earnings" className="mt-5 inline-flex min-h-11 items-center justify-center rounded-full bg-slate-900 px-5 text-xs font-black uppercase tracking-[0.12em] text-white transition-all hover:-translate-y-0.5">
-            View earnings
-          </Link>
-          <div className="mt-5 border-t border-secondary/5 pt-5">
-            <p className="text-[10px] font-black uppercase tracking-[0.16em] text-secondary/35">Review visibility</p>
-            <div className="mt-3 grid grid-cols-2 gap-2">
-              <div className="rounded-2xl bg-slate-50 px-3 py-3">
-                <p className="text-lg font-black text-secondary">{reviewVisibility.approved}</p>
-                <p className="text-[9px] font-black uppercase tracking-[0.12em] text-secondary/35">public</p>
-              </div>
-              <div className="rounded-2xl bg-primary/5 px-3 py-3">
-                <p className="text-lg font-black text-primary">{reviewVisibility.pending}</p>
-                <p className="text-[9px] font-black uppercase tracking-[0.12em] text-secondary/35">pending</p>
-              </div>
-            </div>
-          </div>
-        </article>
-      </section>
-
-      <section className="dashboard-panel p-5 md:p-6">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <p className="text-[10px] font-black uppercase tracking-[0.16em] text-secondary/35">Recent activity</p>
-            <h2 className="mt-1 text-2xl font-black tracking-tight text-secondary">What changed recently</h2>
-          </div>
-          <Link href="/dashboard/tutor/schedule?tab=requests" className="text-[10px] font-black uppercase tracking-[0.12em] text-accent hover:text-accent-hover">
-            Review requests
-          </Link>
-        </div>
-        <div className="mt-5 grid gap-3 md:grid-cols-2">
-          {recentActivity.map((activity) => (
-            <Link key={activity.id} href={activity.href} className="rounded-2xl border border-secondary/5 bg-slate-50/70 p-4 transition-all hover:border-primary/20 hover:bg-primary/5">
-              <p className="text-[10px] font-black uppercase tracking-[0.14em] text-primary/60">{activity.label}</p>
-              <h3 className="mt-2 text-sm font-black text-secondary">{activity.title}</h3>
-              <p className="mt-1 text-xs font-semibold text-secondary/42">{activity.meta}</p>
-            </Link>
-          ))}
-          {recentActivity.length === 0 && (
-            <div className="rounded-2xl border border-dashed border-secondary/10 bg-slate-50/70 p-5 md:col-span-2">
-              <p className="text-sm font-black text-secondary/55">Activity will appear here as students request lessons and your profile changes.</p>
-            </div>
-          )}
+      <section className="home-surface sm:p-6">
+        <HomeSectionHeading eyebrow="Recent activity" title="What changed recently" href="/dashboard/tutor/schedule?tab=requests" linkLabel="Review requests" />
+        <div className="grid gap-x-6 md:grid-cols-2">
+          {recentActivity.map((activity) => <HomeListRow key={activity.id} href={activity.href} title={activity.title} detail={`${activity.label} · ${activity.meta}`} />)}
+          {recentActivity.length === 0 && <p className="py-4 text-sm leading-6 text-[var(--theme-muted)]">Activity will appear as students request lessons and your profile changes.</p>}
         </div>
       </section>
     </div>

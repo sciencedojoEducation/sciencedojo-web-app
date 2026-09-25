@@ -1,16 +1,16 @@
-import { getBookingsByUserId, getTutors, type Booking } from "@/lib/supabase-queries";
+import { getBookingsByUserId, type Booking } from "@/lib/supabase-queries";
 import { getActiveAnnouncementsForUser } from "@/lib/announcement-queries";
 import { getActivePlatformAnnouncementsForUser } from "@/lib/platform-announcements";
 import Link from "next/link";
 import Image from "next/image";
 import { createClient } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
-import TutorCard from "@/components/TutorCard";
 import CheckoutButton from "@/components/CheckoutButton";
 import LessonHistoryTable from "@/components/LessonHistoryTable";
-import HomeworkFeed from "@/components/HomeworkFeed";
-import StudentProgressStats from "@/components/StudentProgressStats";
+import StudentProgressChart from "@/components/StudentProgressChart";
 import AnnouncementFeed from "@/components/AnnouncementFeed";
+import { HomeListRow, HomeMetricStrip, HomePrimaryAction, HomeSectionHeading } from "@/components/DashboardHomeUI";
+import { BookOpen, CalendarDays, GraduationCap } from "lucide-react";
 import FeatureUnavailable from "@/components/FeatureUnavailable";
 import { isFeatureEnabled } from "@/lib/feature-flags";
 
@@ -26,20 +26,6 @@ function shortText(value: string | undefined, fallback: string, limit = 150) {
   if (!value?.trim()) return fallback;
   return value.length > limit ? `${value.slice(0, limit).trim()}...` : value;
 }
-
-type ParentActivityItem = {
-  id: string;
-  label: string;
-  title: string;
-  body: string;
-  action?: string;
-};
-
-type ParentNextStepItem = {
-  title: string;
-  body: string;
-  active: boolean;
-};
 
 type SupportTeamMember = {
   id: string;
@@ -64,7 +50,7 @@ function resolveParentLearnerContext({
   userId: string;
   userName: string;
   profileStudentName?: string | null;
-  meta: any;
+  meta: { sub_role?: string; role?: string; student_name?: string };
 }): ParentLearnerContext {
   const isParent = meta?.sub_role === "parent" || meta?.role === "parent";
   const childName = profileStudentName || meta?.student_name;
@@ -82,15 +68,11 @@ function uniqueNonEmpty(values: Array<string | undefined | null>) {
 }
 
 function formatLessonDate(value: string) {
-  return new Date(value).toLocaleDateString(undefined, { month: "short", day: "numeric" });
+  return new Intl.DateTimeFormat("en-GB", { month: "short", day: "numeric", timeZone: "UTC" }).format(new Date(value));
 }
 
 function formatNextLessonDate(value: string) {
-  return new Date(value).toLocaleDateString(undefined, { month: "long", day: "numeric", hour: "numeric", minute: "2-digit" });
-}
-
-function formatNextLessonShort(value: string) {
-  return new Date(value).toLocaleString(undefined, { weekday: "long", hour: "numeric", minute: "2-digit" });
+  return new Intl.DateTimeFormat("en-GB", { month: "long", day: "numeric", hour: "numeric", minute: "2-digit", timeZone: "UTC" }).format(new Date(value));
 }
 
 export default async function ParentDashboard() {
@@ -136,12 +118,11 @@ export default async function ParentDashboard() {
   // Fetch fresh profile data to avoid stale Auth metadata
   const { data: profile } = await supabase
     .from("profiles")
-    .select("full_name, avatar_url, student_name")
+    .select("full_name, student_name")
     .eq("id", user.id)
     .single();
 
   const userName = profile?.full_name || meta?.full_name || "User";
-  const avatarUrl = profile?.avatar_url || meta?.avatar_url;
   const learnerContext = resolveParentLearnerContext({
     userId: user.id,
     userName,
@@ -200,13 +181,11 @@ export default async function ParentDashboard() {
     .eq("student_id", learnerContext.learnerId)
     .order("created_at", { ascending: false })
     .limit(4);
-  const missions = (missionProgress ?? []) as any[];
+  const missions = missionProgress ?? [];
   const latestMission = missions[0];
   const latestWeakTopic = latestMission?.weak_topics?.[0];
   const latestLesson = recentLessonNotes[0];
   const latestAssignment = assignments[0];
-  const shouldShowTutorGrid = bookings.length === 0;
-  const availableTutors = shouldShowTutorGrid ? await getTutors("", "All") : [];
   const subjectsSupported = uniqueNonEmpty(bookings.map((booking) => booking.subject));
   const currentFocus =
     latestWeakTopic ||
@@ -216,16 +195,15 @@ export default async function ParentDashboard() {
     latestLesson?.subject ||
     subjectsSupported[0] ||
     "First lesson will identify the focus";
-  const currentStatus = nextSession
-    ? `${nextSession.subject} lesson scheduled`
-    : requested.length > 0
-      ? "Lesson request waiting for tutor confirmation"
-      : toPay.length > 0
-        ? "Tutor accepted. Payment is ready to confirm"
+  const currentStatus = toPay.length > 0
+    ? "Tutor accepted. Payment is ready to confirm"
+    : nextSession
+      ? `${nextSession.subject} lesson scheduled`
+      : requested.length > 0
+        ? "Lesson request waiting for tutor confirmation"
         : latestLesson
           ? "Learning support is underway"
           : "Ready to schedule support";
-  const nextLessonTime = nextSession ? formatNextLessonShort(nextSession.requested_date) : "Not scheduled yet";
   const nextLessonSubject = nextSession?.subject?.trim();
   const nextLessonTutor = nextSession?.tutor_name?.trim();
   const nextLessonDetail = nextSession
@@ -237,12 +215,12 @@ export default async function ParentDashboard() {
           ? `Upcoming lesson with ${nextLessonTutor}`
           : "Upcoming lesson"
     : "Book a lesson to continue the learning journey.";
-  const statusMeaning = nextSession
-    ? `${studentName} has a guided lesson coming up on ${formatNextLessonDate(nextSession.requested_date)}${nextSession.tutor_name ? ` with ${nextSession.tutor_name}` : ""}.`
-    : requested.length > 0
-      ? "A tutor request has been sent. Once the tutor accepts, you can confirm the booking and continue the journey."
-      : toPay.length > 0
-        ? "The tutor has accepted the request. Confirming payment secures the learning support."
+  const statusMeaning = toPay.length > 0
+    ? "The tutor has accepted the request. Confirming payment secures the learning support."
+    : nextSession
+      ? `${studentName} has a guided lesson coming up on ${formatNextLessonDate(nextSession.requested_date)}${nextSession.tutor_name ? ` with ${nextSession.tutor_name}` : ""}.`
+      : requested.length > 0
+        ? "A tutor request has been sent. Once the tutor accepts, you can confirm the booking and continue the journey."
         : latestLesson
           ? "There is completed learning activity to review and build from."
           : "No upcoming lesson is booked yet, so the next guided step is to schedule support.";
@@ -271,153 +249,47 @@ export default async function ParentDashboard() {
         ? { label: "Review learning Missions", href: "#parent-missions" }
       : { label: "Message tutor", href: "/dashboard/messages" };
 
-  const recentLearningActivity: ParentActivityItem[] = [
-    {
-      id: "latest-lesson",
-      label: "Latest lesson",
-      title: latestLesson ? `${latestLesson.subject} lesson` : "No lessons yet",
-      body: latestLesson
-        ? `Completed ${formatLessonDate(latestLesson.requested_date)}${latestLesson.tutor_name ? ` with ${latestLesson.tutor_name}` : ""}.`
-        : "Learning activity will appear here after the first lesson.",
-      action: latestLesson ? "Review the lesson summary below." : "Book a lesson to begin the learning journey.",
-    },
-    {
-      id: "latest-note",
-      label: "Latest tutor feedback",
-      title: latestLesson ? "What the tutor noticed" : "Tutor feedback will appear here",
-      body: shortText(
-        latestLesson?.lesson_notes?.summary,
-        "After a completed lesson, this will show what was covered and what matters next.",
-        125,
-      ),
-      action: latestLesson?.lesson_notes?.homework
-        ? shortText(latestLesson.lesson_notes.homework, "Follow the tutor's recommended practice.", 95)
-        : "Tutor guidance will shape the next step after lessons begin.",
-    },
-    {
-      id: "latest-practice",
-      label: "Latest practice",
-      title: latestAssignment ? "Practice task ready" : latestMission ? "Learning Mission active" : "Practice will build here",
-      body: latestAssignment
-        ? shortText(latestAssignment.content, "A tutor-guided practice task is ready.", 125)
-        : latestMission
-          ? `${latestMission.mission_blueprint?.topic || "A guided practice pathway"} is keeping learning connected between lessons.`
-          : "Homework and Missions will appear when structured practice begins.",
-      action: latestAssignment
-        ? "Make time for this before the next lesson."
-        : latestMission
-          ? "Review the Mission to understand the current pathway."
-          : "Schedule a lesson to begin between-lesson support.",
-    },
-    {
-      id: "progress-signal",
-      label: "Current learning focus",
-      title: latestWeakTopic || latestMission?.mission_blueprint?.topic || "Current focus will become clearer",
-      body: latestWeakTopic
-        ? `${latestWeakTopic} is the clearest area for guided reinforcement.`
-        : "ScienceDojo will connect lesson notes, practice, and tutor guidance into a clearer learning picture over time.",
-      action: "Use the next lesson or practice task to keep momentum visible.",
-    },
-  ];
-  const whatHappensNext: ParentNextStepItem[] = [
-    {
-      title: "Schedule lesson",
-      body: "Book the next guided support session.",
-      active: !nextSession,
-    },
-    {
-      title: "Meet tutor",
-      body: "Attend the lesson and focus on one clear goal.",
-      active: !!nextSession,
-    },
-    {
-      title: "Receive summary",
-      body: "Review what was covered and why it matters.",
-      active: !!latestLesson,
-    },
-    {
-      title: "Practise between lessons",
-      body: "Use homework or Missions to reinforce learning.",
-      active: !!latestAssignment || !!latestMission,
-    },
-    {
-      title: "Track progress over time",
-      body: "Look for patterns in focus areas, notes, and confidence.",
-      active: past.length > 0,
-    },
+  const learningPlan = [
+    { title: nextSession ? "Prepare for the next lesson" : "Arrange the next lesson", detail: nextSession ? nextLessonDetail : currentStatus, href: nextSession ? "#parent-confirmed-lessons" : "/dashboard/parent/tutors" },
+    { title: latestAssignment ? "Review tutor practice" : "Build practice between lessons", detail: latestAssignment ? shortText(latestAssignment.content, "Practice is ready.", 58) : "Open your class space", href: latestAssignment ? "#parent-practice-tasks" : "/dashboard/classes" },
+    { title: "See learning progress", detail: currentFocus, href: "#parent-progress" },
   ];
 
   return (
-    <div data-role="parent" className="dashboard-home mx-auto max-w-5xl space-y-5 px-3 py-5 sm:p-6 md:p-8">
-      <section data-tour="parent-welcome" className="dashboard-hero p-4 sm:p-5 md:p-7">
-        <div className="grid gap-5 lg:grid-cols-[1fr_0.78fr] lg:items-stretch">
-          <div>
-            <div className="dashboard-kicker">
-              Learning Home
-            </div>
-            <h1 className="dashboard-title mt-2 text-2xl sm:text-3xl">
-              {studentName === "your child" ? "Your Child's Learning Journey" : `${studentName}'s Learning Journey`}
-            </h1>
-            <p className="dashboard-subtitle mt-2 max-w-2xl text-sm leading-6">
-              A calm place to understand what is happening, who is helping, and what should happen next.
-            </p>
-            <div className="mt-5 grid gap-3 sm:grid-cols-3">
-              <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-4">
-                <p className="text-xs font-medium text-slate-600">Current status</p>
-                <p className="mt-1 text-base font-semibold text-secondary">{currentStatus}</p>
-              </div>
-              <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-4">
-                <p className="text-xs font-medium text-slate-600">Current focus</p>
-                <p className="mt-1 text-base font-semibold text-secondary">{currentFocus}</p>
-              </div>
-              <div className="dashboard-role-soft rounded-xl p-4">
-                <p className="text-xs font-medium">Next lesson</p>
-                <p className="mt-1 text-base font-semibold">{nextLessonTime}</p>
-                <p className="mt-1 text-xs font-semibold leading-5 text-secondary/48">{nextLessonDetail}</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="dashboard-priority p-5">
-            <p className="dashboard-kicker">Recommended next step</p>
-            <p className="dashboard-title mt-2 text-lg">{recommendedAction.label}</p>
-            <p className="dashboard-subtitle mt-2 text-sm leading-6">{statusMeaning}</p>
-            <div className="mt-4">
-              <Link
-                href={recommendedAction.href}
-                className="inline-flex min-h-11 w-full items-center justify-center rounded-xl bg-secondary px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-secondary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
-              >
-                {recommendedAction.label}
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
-
+    <div data-role="parent" className="dashboard-home mx-auto max-w-5xl space-y-6 px-3 py-5 sm:px-6 md:px-8 md:pb-12 md:pt-7">
       {(announcements.length > 0 || platformAnnouncements.length > 0) && (
         <AnnouncementFeed announcements={announcements} platformAnnouncements={platformAnnouncements} />
       )}
 
-      <section className="dashboard-panel p-4 sm:p-5 md:p-6">
-        <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
-          <div>
-            <p className="text-[10px] font-black uppercase tracking-[0.16em] text-primary/65">Support team</p>
-            <h2 className="mt-2 text-2xl font-black text-secondary">Your Child&apos;s Support Team</h2>
-            {supportTeam.length > 0 && (
-              <p className="mt-2 max-w-2xl text-sm font-semibold leading-6 text-secondary/55">
-                These are the tutors currently supporting your child&apos;s learning journey.
-              </p>
-            )}
-          </div>
-          <Link href="/dashboard/messages" className="text-sm font-black text-primary hover:underline">
-            Open messages →
-          </Link>
-        </div>
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1.5fr)_minmax(18rem,1fr)]">
+        <HomePrimaryAction eyebrow="Recommended next step" title={currentStatus} description={statusMeaning} href={recommendedAction.href} label={recommendedAction.label} detail={studentName === "your child" ? "Your child's learning" : `${studentName}'s learning`} icon={<BookOpen size={23} strokeWidth={1.7} />} />
+        <section className="home-surface sm:p-6" aria-label="Learning plan">
+          <HomeSectionHeading eyebrow="A simple path forward" title="Your plan" />
+          {learningPlan.map((item) => <HomeListRow key={item.title} {...item} />)}
+        </section>
+      </div>
+
+      <HomeMetricStrip label="Learning at a glance" items={[
+        { label: "Lessons completed", value: past.length, icon: <GraduationCap size={20} />, tone: "mint" },
+        { label: "Upcoming", value: upcoming.length, icon: <CalendarDays size={20} />, tone: "violet" },
+        { label: "Practice tasks", value: assignments.length, icon: <BookOpen size={20} />, tone: "amber" },
+      ]} />
+
+      <section id="parent-confirmed-lessons" data-tour="parent-sessions" className="home-surface scroll-mt-5 sm:p-6">
+        <HomeSectionHeading eyebrow="Scheduled support" title="Upcoming lessons" href="/dashboard/classes" linkLabel="Open classes" />
+        {sortByDateAsc(upcoming).slice(0, 3).map((booking) => (
+          <HomeListRow key={booking.id} href="/dashboard/classes" title={`${booking.subject} with ${booking.tutor_name || "your tutor"}`} detail={formatNextLessonDate(booking.requested_date)} />
+        ))}
+        {upcoming.length === 0 && <p className="mt-4 text-sm text-[var(--theme-muted)]">No lessons are scheduled yet. Your next booking will appear here.</p>}
+      </section>
+
+      <section className="home-surface sm:p-6">
+        <HomeSectionHeading eyebrow="People" title="Your support team" href="/dashboard/messages" linkLabel="Open messages" />
         {supportTeam.length > 0 ? (
           <div className="mt-5 grid gap-3 md:grid-cols-2">
             {supportTeam.map((tutor) => (
-              <div key={tutor.id} className="flex items-center gap-4 rounded-2xl border border-secondary/8 bg-slate-50/70 p-4">
-                <div className="relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-primary/10 text-sm font-black text-primary">
+              <div key={tutor.id} className="flex items-center gap-3 rounded-xl bg-[var(--theme-surface-soft)] p-3">
+                <div className="relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-[var(--theme-accent-soft)] text-sm font-medium text-[var(--theme-accent)]">
                   {tutor.avatar ? (
                     <Image src={tutor.avatar} alt="" fill className="object-cover" />
                   ) : (
@@ -425,14 +297,14 @@ export default async function ParentDashboard() {
                   )}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-black text-secondary">{tutor.name}</p>
-                  {tutor.subject && <p className="mt-1 text-xs font-bold text-secondary/45">{tutor.subject} support</p>}
+                  <p className="truncate text-sm font-medium text-[var(--theme-ink)]">{tutor.name}</p>
+                  {tutor.subject && <p className="mt-1 text-xs text-[var(--theme-muted)]">{tutor.subject} support</p>}
                 </div>
                 <div className="flex shrink-0 flex-col items-end gap-1 text-right">
-                  <Link href={`/tutor/${tutor.id}`} className="text-[10px] font-black uppercase tracking-[0.12em] text-primary hover:underline">
+                  <Link href={`/tutor/${tutor.id}`} className="text-xs font-medium text-[var(--theme-accent)] hover:underline">
                     Profile
                   </Link>
-                  <Link href="/dashboard/messages" className="text-[10px] font-black uppercase tracking-[0.12em] text-secondary/45 hover:text-primary">
+                  <Link href="/dashboard/messages" className="text-xs text-[var(--theme-muted)] hover:text-[var(--theme-accent)]">
                     Message
                   </Link>
                 </div>
@@ -440,132 +312,48 @@ export default async function ParentDashboard() {
             ))}
           </div>
         ) : (
-          <div className="mt-5 rounded-2xl border border-dashed border-secondary/15 bg-surface p-5">
-            <p className="text-sm font-bold leading-7 text-secondary/58">
+          <div className="mt-5 border-t border-[var(--theme-line)] pt-4">
+            <p className="text-sm leading-6 text-[var(--theme-muted)]">
               Your support team will appear here once a tutor is connected to a lesson. Until then, you can browse verified tutor support for the right subject and learning fit.
             </p>
-            <Link href="/dashboard/parent/tutors" className="mt-4 inline-flex rounded-2xl bg-secondary px-5 py-3 text-xs font-black uppercase tracking-[0.14em] text-white transition-colors hover:bg-secondary/90">
-              Browse Tutors
+            <Link href="/dashboard/parent/tutors" className="home-text-link mt-2">
+              Browse tutors →
             </Link>
           </div>
         )}
       </section>
 
-      <section className="dashboard-panel p-4 sm:p-5 md:p-6">
-        <div className="mb-5">
-          <p className="text-[10px] font-black uppercase tracking-[0.16em] text-primary/65">What happens next</p>
-          <h2 className="mt-2 text-2xl font-black text-secondary">A simple path through the learning journey</h2>
-        </div>
-        <div className="grid gap-2">
-          {whatHappensNext.map((step, index) => (
-            <div key={step.title} className={`flex gap-3 rounded-2xl px-3 py-3 ${
-              step.active ? "bg-primary/5" : "bg-slate-50"
-            }`}>
-              <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-black ${
-                step.active ? "bg-primary text-white" : "bg-white text-primary ring-1 ring-primary/10"
-              }`}>
-                {index + 1}
-              </span>
-              <span>
-                <span className="block text-sm font-black text-secondary">{step.title}</span>
-                <span className="mt-0.5 block text-xs font-semibold leading-5 text-secondary/48">{step.body}</span>
-              </span>
-            </div>
-          ))}
+      <section className="home-surface sm:p-6" aria-label="Recent learning">
+        <HomeSectionHeading eyebrow="Recent learning" title="What has happened" description="A concise view of lessons, feedback, and practice." />
+        <div className="grid gap-x-6 md:grid-cols-2">
+          <HomeListRow href="#parent-history" title={latestLesson ? `${latestLesson.subject} lesson` : "Lessons will appear here"} detail={latestLesson ? `Completed ${formatLessonDate(latestLesson.requested_date)}${latestLesson.tutor_name ? ` with ${latestLesson.tutor_name}` : ""}` : "Schedule a lesson to begin"} />
+          <HomeListRow href="#parent-history" title="Latest tutor feedback" detail={shortText(latestLesson?.lesson_notes?.summary, "Feedback will appear after a completed lesson.", 90)} />
+          <HomeListRow href="#parent-practice-tasks" title={latestAssignment ? "Practice task ready" : "Practice between lessons"} detail={shortText(latestAssignment?.content, "Tutor-guided practice will appear here.", 90)} />
+          <HomeListRow href="#parent-progress" title="Current focus" detail={currentFocus} />
         </div>
       </section>
 
-      <section className="dashboard-panel p-4 sm:p-5 md:p-6">
-        <div className="mb-5">
-          <p className="text-[10px] font-black uppercase tracking-[0.16em] text-primary/65">Recent learning activity</p>
-          <h2 className="mt-2 text-2xl font-black text-secondary">What happened recently?</h2>
-          <p className="mt-2 max-w-2xl text-sm font-medium leading-6 text-secondary/56">
-            Lesson notes, practice, and Missions will build a clearer picture as support continues.
-          </p>
-        </div>
-        <div className="grid gap-3 md:grid-cols-2">
-          {recentLearningActivity.map((item) => (
-            <article key={item.id} className="rounded-2xl bg-slate-50 p-4">
-              <p className="text-[10px] font-black uppercase tracking-[0.14em] text-secondary/35">{item.label}</p>
-              <h3 className="mt-2 text-base font-black text-secondary">{item.title}</h3>
-              <p className="mt-2 text-sm font-medium leading-6 text-secondary/58">{item.body}</p>
-              {item.action && (
-                <p className="mt-3 text-xs font-bold leading-5 text-secondary/45">
-                  <span className="text-primary/65">Next &rarr; </span>{item.action}
-                </p>
-              )}
-            </article>
-          ))}
-        </div>
+      <section id="parent-progress" data-tour="parent-progress" className="parent-calm-progress scroll-mt-5">
+        <HomeSectionHeading eyebrow="Learning over time" title="Your child's progress" description={`Current focus: ${currentFocus}`} />
+        <StudentProgressChart bookings={bookings} appearance="student" />
+        {past.length === 0 && <div className="home-surface text-sm text-[var(--theme-muted)]">Progress charts will appear after completed lessons.</div>}
       </section>
 
-      <div data-tour="parent-progress">
-        <StudentProgressStats bookings={bookings} currentFocus={currentFocus} />
-      </div>
-
-      <section id="parent-missions" className="dashboard-panel p-4 sm:p-5 md:p-6">
-        <div className="mb-7 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
-          <div>
-            <p className="text-[10px] font-black uppercase tracking-[0.16em] text-primary/65">Learning between lessons</p>
-            <h2 className="mt-2 text-2xl font-black text-secondary">Practice support between sessions</h2>
-            <p className="mt-3 max-w-2xl text-sm font-medium leading-7 text-secondary/55">
-              Progress grows between lessons, not only during lessons. Homework and Missions help connect tutor guidance to steady practice.
-            </p>
+      <section id="parent-missions" className="home-surface scroll-mt-5 sm:p-6">
+        <HomeSectionHeading eyebrow="Between lessons" title="Missions and practice" description="Tutor-guided work that keeps the next step clear." href="/dashboard/classes" linkLabel="Open classes" />
+        {missions.length > 0 ? missions.map((mission) => (
+          <div key={mission.id} className="border-t border-[var(--theme-line)] py-3">
+            <div className="flex flex-wrap items-center justify-between gap-2"><h3 className="text-sm font-medium text-[var(--theme-ink)]">{mission.mission_blueprint?.topic || "Guided practice pathway"}</h3><span className="text-xs text-[var(--theme-muted)]">{mission.status === "completed" ? "Completed" : mission.status === "pending_tutor_approval" ? "Tutor review" : "In progress"}</span></div>
+            <p className="mt-1 text-xs text-[var(--theme-muted)]">{mission.classes?.[0]?.display_name || "Class pathway"} · {mission.weak_topics?.[0] || "Tutor will guide the next step"}</p>
+            {mission.tutor_feedback && <p className="mt-2 text-sm leading-6 text-[var(--theme-ink-soft)]">Tutor comment: {mission.tutor_feedback}</p>}
           </div>
-          <Link href="/dashboard/classes" className="rounded-2xl border border-secondary/10 px-5 py-3 text-xs font-black uppercase tracking-[0.14em] text-secondary/60 transition-colors hover:border-primary/20 hover:text-primary">
-            View class spaces
-          </Link>
-        </div>
-
-        {missionProgress && missionProgress.length > 0 ? (
-          <div className="grid gap-4 md:grid-cols-2">
-            {missionProgress.map((mission: any) => (
-              <div key={mission.id} className="rounded-2xl border border-secondary/10 bg-surface p-4 md:rounded-3xl md:p-5">
-                <div className="mb-3 flex flex-wrap gap-2">
-                  <span className="rounded-full bg-primary/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-primary">
-                    {String(mission.mission_tier || "mission").replace(/_/g, " ")}
-                  </span>
-                  <span className="rounded-full bg-white px-3 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-secondary/45">
-                    {mission.status === "completed" ? "Completed" : mission.status === "pending_tutor_approval" ? "Tutor review" : "In progress"}
-                  </span>
-                </div>
-                <h3 className="font-black text-secondary">{mission.mission_blueprint?.topic || "Guided practice pathway"}</h3>
-                <p className="mt-1 text-xs font-bold text-secondary/45">
-                  {mission.classes?.display_name || "Class pathway"} {mission.classes?.subject ? `- ${mission.classes.subject}` : ""}
-                </p>
-                <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                  <div className="border-t border-secondary/8 pt-3">
-                    <p className="text-[10px] font-black uppercase tracking-[0.12em] text-secondary/35">Practice signal</p>
-                    <p className="mt-2 text-sm font-bold text-secondary/65">
-                      {typeof mission.score_percentage === "number" ? "Completed work is ready to inform the next step" : "Practice pathway started"}
-                    </p>
-                  </div>
-                  <div className="border-t border-secondary/8 pt-3">
-                    <p className="text-[10px] font-black uppercase tracking-[0.12em] text-secondary/35">Next learning step</p>
-                    <p className="mt-2 text-sm font-bold text-secondary/65">
-                      {mission.weak_topics?.[0] || "Tutor will guide the next step"}
-                    </p>
-                  </div>
-                </div>
-                {mission.tutor_feedback && (
-                  <p className="mt-4 border-t border-primary/10 pt-3 text-sm font-medium leading-6 text-secondary/60">
-                    Tutor comment: {mission.tutor_feedback}
-                  </p>
-                )}
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="rounded-2xl border border-dashed border-secondary/15 bg-surface p-5 text-center md:rounded-3xl md:p-7">
-            <p className="font-bold text-secondary/55">Learning Missions will appear here after structured practice begins.</p>
-            <p className="mt-2 text-sm text-secondary/45">This area will show the practice pathway, why it matters, and what the tutor recommends next.</p>
-          </div>
-        )}
+        )) : <p className="border-t border-[var(--theme-line)] py-4 text-sm text-[var(--theme-muted)]">Missions will appear after structured practice begins.</p>}
       </section>
 
-      <div id="parent-practice-tasks" data-tour="parent-homework">
-        <HomeworkFeed assignments={assignments} showEmptyState />
-      </div>
+      <section id="parent-practice-tasks" data-tour="parent-homework" className="home-surface scroll-mt-5 sm:p-6">
+        <HomeSectionHeading eyebrow="Tutor-guided practice" title="Next practice tasks" href="/dashboard/classes" linkLabel="Open classes" />
+        {assignments.length > 0 ? assignments.slice(0, 3).map((assignment) => <div key={assignment.id} className="border-t border-[var(--theme-line)] py-3"><p className="text-sm font-medium text-[var(--theme-ink)]">{assignment.class_display_name || "Class practice"}</p><p className="mt-1 line-clamp-2 text-sm leading-6 text-[var(--theme-muted)]">{assignment.content}</p>{assignment.due_date && <p className="mt-1 text-xs text-[var(--theme-muted)]">Due {formatLessonDate(assignment.due_date)}</p>}</div>) : <p className="border-t border-[var(--theme-line)] py-4 text-sm text-[var(--theme-muted)]">Tutor practice will appear here once it is assigned.</p>}
+      </section>
 
       {/* SECURE PAYMENT REQUIRED (Accepted Handshake) */}
       {toPay.length > 0 && (
@@ -608,7 +396,7 @@ export default async function ParentDashboard() {
                       <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-wider text-secondary/30">
                          <span className="flex items-center gap-1.5">
                             <svg className="w-4 h-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2-2v12a2 2 0 002 2z" /></svg>
-                            {group.isGroup ? `Starts ${new Date(booking.requested_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}` : new Date(booking.requested_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
+                            {group.isGroup ? `Starts ${formatLessonDate(booking.requested_date)}` : formatNextLessonDate(booking.requested_date)}
                          </span>
                          <div className="text-right">
                            <div className="text-secondary font-black text-xs">£{booking.price_at_booking * group.count} Total</div>
@@ -624,6 +412,7 @@ export default async function ParentDashboard() {
                       <CheckoutButton
                         bookingId={booking.id}
                         paymentStatus={booking.payment_status}
+                        variant="compact"
                       />
                    </div>
                 </div>
@@ -668,14 +457,14 @@ export default async function ParentDashboard() {
                    </div>
                    
                    <p className="text-secondary/40 text-[11px] italic line-clamp-2 mb-4">
-                      "{booking.description}"
+                      &ldquo;{booking.description}&rdquo;
                    </p>
 
                    <div className="mt-auto border-t border-secondary/5 pt-4 flex flex-col gap-2">
                      <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-wider text-secondary/30">
                         <span className="flex items-center gap-1.5 font-black">
                            <svg className="w-4 h-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2-2v12a2 2 0 002 2z" /></svg>
-                           {group.isGroup ? `Starts ${new Date(booking.requested_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}` : new Date(booking.requested_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
+                           {group.isGroup ? `Starts ${formatLessonDate(booking.requested_date)}` : formatNextLessonDate(booking.requested_date)}
                         </span>
                         <span>£{booking.price_at_booking}/hr</span>
                      </div>
@@ -686,63 +475,19 @@ export default async function ParentDashboard() {
         </section>
       )}
 
-      <section id="parent-history" data-tour="parent-history">
-        <div className="mb-6">
-          <p className="text-[10px] font-black uppercase tracking-[0.16em] text-primary/65">Past support</p>
-          <h2 className="mt-2 text-xl font-black text-secondary">Past lesson summaries</h2>
-          <p className="mt-3 max-w-2xl text-sm font-medium leading-7 text-secondary/55">
-            A full record of completed lessons, with parent-friendly summaries where tutor notes are available.
-          </p>
+      <details id="parent-history" data-tour="parent-history" className="home-surface parent-history-disclosure scroll-mt-5 sm:p-6">
+        <summary className="cursor-pointer list-none focus-visible:outline-2 focus-visible:outline-[var(--theme-accent)]">
+          <span className="home-eyebrow block">Past support</span>
+          <span className="home-section-title block">Past lesson summaries <span className="text-sm font-normal text-[var(--theme-muted)]">({past.length})</span></span>
+          <span className="home-section-description block">Open the full record of completed lessons and tutor notes.</span>
+        </summary>
+        <div className="mt-5 border-t border-[var(--theme-line)] pt-5">
+          <LessonHistoryTable bookings={past} currentUserRole="parent" appearance="student" />
         </div>
-        {recentLessonNotes.length > 0 && (
-          <div className="mb-6 grid gap-4 md:grid-cols-3">
-            {recentLessonNotes.map((lesson) => (
-              <div key={`history-preview-${lesson.id}`} className="rounded-2xl border border-secondary/10 bg-white p-4 shadow-sm md:rounded-3xl md:p-5">
-                <p className="text-[10px] font-black uppercase tracking-[0.16em] text-primary">{lesson.subject}</p>
-                <h3 className="mt-2 font-black text-secondary">What this lesson means</h3>
-                <p className="mt-3 text-sm font-medium leading-6 text-secondary/58">{shortText(lesson.lesson_notes?.summary, "Tutor summary pending.", 120)}</p>
-                <p className="mt-4 rounded-2xl bg-surface p-3 text-xs font-bold leading-5 text-secondary/50">
-                  Next: {shortText(lesson.lesson_notes?.homework, "Tutor guidance will appear when added.", 90)}
-                </p>
-              </div>
-            ))}
-          </div>
-        )}
-        <LessonHistoryTable bookings={past} />
-      </section>
+      </details>
 
-      {/* AVAILABLE EXPERTS (Directory integrated into dashboard) */}
-      <section data-tour="parent-tutors" className="pt-8 border-t border-secondary/10">
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-5 md:mb-8">
-           <div>
-              <h2 className="text-2xl font-black text-secondary">{shouldShowTutorGrid ? "Find tutor support" : "Need support in another subject?"}</h2>
-              <p className="text-sm text-secondary/60 font-bold mt-1">
-                {shouldShowTutorGrid
-                  ? "Find verified tutor support when your child is ready for structured 1-1 guidance."
-                  : "Keep the dashboard focused on current support, and browse tutors only when your child needs an extra area of guidance."}
-              </p>
-           </div>
-           <Link href="/dashboard/parent/tutors" className="text-sm font-black text-primary hover:underline flex items-center gap-1">
-              {shouldShowTutorGrid ? "View support options" : "Browse tutor support"} <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M9 5l7 7-7 7" /></svg>
-           </Link>
-        </div>
-        
-        {shouldShowTutorGrid ? (
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6 xl:grid-cols-3">
-             {availableTutors.slice(0, 6).map((tutor) => (
-               <TutorCard key={tutor.id} tutor={tutor as any} currentUserRole="parent" variant="dashboard" />
-             ))}
-          </div>
-        ) : (
-          <div className="rounded-[1.5rem] border border-primary/10 bg-white p-4 shadow-sm md:rounded-[2rem] md:p-6">
-            <p className="text-sm font-bold leading-7 text-secondary/58">
-              Your child already has learning activity in progress. If another subject starts feeling difficult, you can browse verified tutors without losing the current learning picture.
-            </p>
-            <Link href="/dashboard/parent/tutors" className="mt-5 inline-flex rounded-2xl bg-secondary px-5 py-3 text-xs font-black uppercase tracking-[0.14em] text-white transition-colors hover:bg-secondary/90">
-              Find additional support
-            </Link>
-          </div>
-        )}
+      <section data-tour="parent-tutors" className="border-t border-[var(--theme-line)] px-1 pt-6">
+        <HomeSectionHeading eyebrow="More support" title={bookings.length === 0 ? "Find tutor support" : "Need help in another subject?"} description="Browse verified tutors whenever your child needs additional guidance." href="/dashboard/parent/tutors" linkLabel="Browse tutors" />
       </section>
     </div>
   );
