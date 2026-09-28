@@ -229,7 +229,7 @@ export async function getAcademyMediaLibrary() {
         path: asset.storage_path,
         name: asset.original_name,
         url: asset.public_url,
-        mediaType: asset.media_type as "image" | "document",
+        mediaType: asset.media_type as "image" | "document" | "audio",
         mimeType: asset.mime_type,
         byteSize: Number(asset.byte_size),
         altText: asset.alt_text as string | null,

@@ -13,6 +13,7 @@ type PublicQuizQuestion = {
   id: string;
   type?: "single-choice" | "multiple-response" | "reflection";
   prompt: string;
+  audioUrl?: string;
   options: QuizOption[];
 };
 
@@ -106,6 +107,21 @@ export default function AcademyQuiz({
               </span>
               {question.prompt}
             </legend>
+            {question.audioUrl && (
+              <div className="mt-5 border-l-4 border-[#1E5AA8] bg-[#F1F6FC] p-4">
+                <p className="mb-3 text-xs font-bold uppercase tracking-[0.12em] text-[#173A63]">
+                  Hören Sie den Ausschnitt. Sie können ihn mehrmals abspielen.
+                </p>
+                <audio
+                  controls
+                  preload="metadata"
+                  src={question.audioUrl}
+                  className="w-full"
+                >
+                  Ihr Browser unterstützt die Audiowiedergabe nicht.
+                </audio>
+              </div>
+            )}
             {question.type === "reflection" ? (
               <textarea
                 name={question.id}

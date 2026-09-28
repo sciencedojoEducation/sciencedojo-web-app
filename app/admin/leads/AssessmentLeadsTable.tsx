@@ -10,13 +10,13 @@ export type AssessmentLeadTableRow = {
   id: string;
   parent_name: string;
   email: string;
-  whatsapp_number: string;
+  whatsapp_number: string | null;
   student_name: string;
   student_grade: string;
   curriculum: string;
   subject_needed: string;
   main_challenge: string;
-  preferred_time: string;
+  preferred_time: string | null;
   message: string | null;
   status: string;
   source: string;
@@ -48,8 +48,8 @@ function formatDate(value: string) {
   });
 }
 
-function getWhatsAppHref(value: string) {
-  const digits = value.replace(/[^\d]/g, "");
+function getWhatsAppHref(value: string | null) {
+  const digits = (value || "").replace(/[^\d]/g, "");
   return digits ? `https://wa.me/${digits}` : "";
 }
 
@@ -172,7 +172,7 @@ function LeadDetailDrawer({
                 {lead.main_challenge || lead.noteValues.hardestRightNow || "The family has shared an assessment request and needs a calm review before follow-up."}
               </p>
               <p className="mt-2 text-sm font-bold leading-6 text-secondary/55">
-                Next step → Review the intake, confirm the assessment time, and guide the family toward the right support pathway.
+                Next step → Review the request, email the family to arrange a conversation, and clarify any missing curriculum details.
               </p>
             </section>
 
@@ -187,7 +187,7 @@ function LeadDetailDrawer({
                   <DetailBlock label="Subject route" value={lead.learning_context.subjectVariant ? getEducationLabel("subjectVariant", lead.learning_context.subjectVariant, { subject: lead.learning_context.subject, curriculumKey: lead.learning_context.curriculumKey || undefined, stage: lead.learning_context.stage || undefined }) : undefined} />
                   <DetailBlock label="Tier / level" value={lead.learning_context.level ? getEducationLabel("level", lead.learning_context.level, { subject: lead.learning_context.subject, curriculumKey: lead.learning_context.curriculumKey || undefined, stage: lead.learning_context.stage || undefined }) : undefined} />
                   <DetailBlock label="Specification" value={lead.learning_context.specificationCode || lead.learning_context.specificationVersionId} />
-                  <DetailBlock label="Intake status" value={lead.learning_context.intakeStatus === "complete" ? "Plan-ready" : `Needs clarification: ${lead.learning_context.missingFields.join(", ")}`} />
+              <DetailBlock label="Intake status" value={lead.learning_context.intakeStatus === "complete" ? "Curriculum details recorded" : `Needs clarification: ${lead.learning_context.missingFields.join(", ")}`} />
                 </>}
               </IntakeSection>
 
@@ -232,12 +232,13 @@ function LeadDetailDrawer({
             <section className="rounded-[1.5rem] border border-primary/10 bg-primary/5 p-4">
               <h3 className="text-sm font-black text-secondary">Suggested follow-up</h3>
               <p className="mt-1 text-xs font-bold leading-5 text-secondary/50">
-                Calm drafts for quick response. Review and personalize before sending.
+                Review and personalize before sending. These are drafts only; nothing is sent automatically.
               </p>
               <div className="mt-4">
                 <FollowUpDrafts
+                  key={lead.id}
                   variant="panel"
-                  whatsappMessage={lead.whatsappDraft}
+                  whatsappMessage={lead.whatsapp_number ? lead.whatsappDraft : null}
                   emailSubject={lead.emailSubject}
                   emailBody={lead.emailBody}
                 />
@@ -325,7 +326,7 @@ function LeadDetailPanel({
               {lead.main_challenge || lead.noteValues.hardestRightNow || "The family has shared an assessment request and needs a calm review before follow-up."}
             </p>
             <p className="mt-2 text-sm font-bold leading-6 text-secondary/55">
-              Next step → Review the intake, confirm the assessment time, and guide the family toward the right support pathway.
+              Next step → Review the request, email the family to arrange a conversation, and clarify any missing curriculum details.
             </p>
           </section>
 
@@ -366,8 +367,9 @@ function LeadDetailPanel({
             </p>
             <div className="mt-4">
               <FollowUpDrafts
+                key={lead.id}
                 variant="panel"
-                whatsappMessage={lead.whatsappDraft}
+                whatsappMessage={lead.whatsapp_number ? lead.whatsappDraft : null}
                 emailSubject={lead.emailSubject}
                 emailBody={lead.emailBody}
               />

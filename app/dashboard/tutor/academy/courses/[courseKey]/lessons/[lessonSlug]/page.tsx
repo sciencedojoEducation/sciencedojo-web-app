@@ -63,7 +63,7 @@ export async function renderAcademyCourseLessonPage(
               Complete the required activities in this lesson before continuing.
             </div>
           ) : null}
-          <AcademyLessonBlocks blocks={lesson.blocks} courseKey={course.key} />
+          <AcademyLessonBlocks blocks={lesson.blocks} courseKey={course.key} lessonId={lesson.id} />
           <footer className="mt-16 flex flex-col justify-between gap-3 border-t border-[#DEDFE1] pt-7 sm:flex-row">
             {previousLesson ? (
               <Link

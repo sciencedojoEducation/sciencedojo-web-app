@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { getPublicSource, trackEvent } from "@/lib/analytics";
+import { getDeviceCategory, getPublicSource, trackEvent } from "@/lib/analytics";
 
 type BookAssessmentLinkProps = {
   children: React.ReactNode;
@@ -30,6 +30,7 @@ export default function BookAssessmentLink({
         trackEvent("cta_book_free_assessment_click", {
           source: source || getPublicSource(pathname),
           page_slug: pageSlug || getPublicSource(pathname),
+          device_category: getDeviceCategory(),
         });
       }}
     >

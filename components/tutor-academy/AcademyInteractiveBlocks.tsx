@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useId, useRef, useState } from "react";
 import {
   ArrowLeft,
@@ -13,11 +14,52 @@ import type { QuizQuestion } from "@/lib/tutor-academy";
 import { recordAcademyBlockCompletion } from "@/app/dashboard/tutor/academy/actions";
 
 type Item = { id?: string; title: string; body: string };
+type FlashcardItem = Item & {
+  eyebrow?: string;
+  src?: string;
+  alt?: string;
+  sprite?: {
+    row: number;
+    column: number;
+    rows: number;
+    columns: number;
+  };
+};
 type Tracking = {
   courseKey?: string;
   blockId?: string;
   completion?: "view" | "interact" | "pass";
 };
+
+function FlashcardVisual({ item }: { item: FlashcardItem }) {
+  if (!item.src) return null;
+  return (
+    <span
+      className="relative mx-auto block aspect-square w-44 shrink-0 overflow-hidden rounded-2xl border border-[#D8E2EA] bg-[#EAF1F7]"
+      role={item.sprite ? "img" : undefined}
+      aria-label={item.sprite ? item.alt || undefined : undefined}
+    >
+      {item.sprite ? (
+        <span
+          className="absolute inset-0 block bg-cover bg-no-repeat transition-transform duration-500 group-hover:scale-[1.03] motion-reduce:transition-none"
+          style={{
+            backgroundImage: `url(${JSON.stringify(item.src)})`,
+            backgroundSize: `${item.sprite.columns * 100}% ${item.sprite.rows * 100}%`,
+            backgroundPosition: `${item.sprite.columns === 1 ? 0 : (item.sprite.column / (item.sprite.columns - 1)) * 100}% ${item.sprite.rows === 1 ? 0 : (item.sprite.row / (item.sprite.rows - 1)) * 100}%`,
+          }}
+        />
+      ) : (
+        <Image
+          src={item.src}
+          alt={item.alt || ""}
+          fill
+          sizes="176px"
+          className="object-contain transition-transform duration-500 group-hover:scale-[1.03] motion-reduce:transition-none"
+        />
+      )}
+    </span>
+  );
+}
 
 function record({ courseKey, blockId, completion }: Tracking) {
   if (
@@ -107,13 +149,28 @@ export function AcademyFlashcards({
   items,
   variant = "flip-grid",
   ...tracking
-}: { items: Item[]; variant?: "flip-grid" | "stack" } & Tracking) {
+}: {
+  items: FlashcardItem[];
+  variant?: "flip-grid" | "stack" | "picture-grid";
+} & Tracking) {
   const [flipped, setFlipped] = useState<Set<number>>(new Set());
   return (
     <div
       className={`grid gap-5 ${variant === "stack" ? "mx-auto max-w-2xl grid-cols-1" : "sm:grid-cols-2"}`}
     >
       {items.map((item, index) => {
+        if (variant === "picture-grid")
+          return (
+            <article
+              key={item.id || item.title}
+              className="group border border-[#DEDFE1] bg-white p-5 text-center shadow-[0_10px_30px_rgba(20,35,60,0.08)]"
+            >
+              <FlashcardVisual item={item} />
+              <h3 className="mt-4 text-xl font-black text-[#252629]">
+                {item.title}
+              </h3>
+            </article>
+          );
         const open = flipped.has(index);
         return (
           <button
@@ -129,31 +186,38 @@ export function AcademyFlashcards({
               });
               record(tracking);
             }}
-            className="group relative min-h-52 [perspective:1000px] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--academy-accent)] focus-visible:ring-offset-4"
+            className="group relative min-h-80 [perspective:1000px] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--academy-accent)] focus-visible:ring-offset-4"
           >
             <span
               className={`absolute inset-0 block transition-transform duration-500 [transform-style:preserve-3d] motion-reduce:transition-none ${open ? "[transform:rotateY(180deg)]" : ""}`}
             >
-              <span className="absolute inset-0 flex flex-col justify-between border border-[#DEDFE1] bg-white p-6 text-left shadow-[0_10px_30px_rgba(20,35,60,0.08)] [backface-visibility:hidden]">
-                <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-[var(--academy-accent)]">
-                  Think first, then reveal
-                </span>
-                <span className="text-xl font-bold text-[#252629]">
-                  {item.title}
-                </span>
-                <span className="inline-flex items-center gap-2 text-xs font-bold text-[#717376]">
-                  <RotateCcw size={14} /> Flip card
+              <span className="absolute inset-0 flex flex-col overflow-hidden border border-[#DEDFE1] bg-white text-left shadow-[0_10px_30px_rgba(20,35,60,0.08)] [backface-visibility:hidden]">
+                {item.src ? (
+                  <span className="mt-5 block">
+                    <FlashcardVisual item={item} />
+                  </span>
+                ) : null}
+                <span className="flex min-h-28 flex-1 flex-col justify-between gap-3 p-5">
+                  <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-[var(--academy-accent)]">
+                    {item.eyebrow || "Think first, then reveal"}
+                  </span>
+                  <span className="text-2xl font-black text-[#252629]">
+                    {item.title}
+                  </span>
+                  <span className="inline-flex items-center gap-2 text-xs font-bold text-[#717376]">
+                    <RotateCcw size={14} /> Karte umdrehen
+                  </span>
                 </span>
               </span>
               <span className="absolute inset-0 flex flex-col justify-between border border-[var(--academy-accent)] bg-[var(--academy-accent-ink)] p-6 text-left text-white shadow-[0_10px_30px_rgba(20,35,60,0.14)] [backface-visibility:hidden] [transform:rotateY(180deg)]">
                 <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-white/65">
-                  Answer
+                  Laut sprechen
                 </span>
                 <span className="font-[family-name:var(--font-academy-serif)] text-base leading-7">
                   {item.body}
                 </span>
                 <span className="inline-flex items-center gap-2 text-xs font-bold text-white/70">
-                  <RotateCcw size={14} /> Show front
+                  <RotateCcw size={14} /> Vorderseite zeigen
                 </span>
               </span>
             </span>

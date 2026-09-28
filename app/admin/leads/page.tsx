@@ -18,13 +18,13 @@ type AssessmentLead = {
   id: string;
   parent_name: string;
   email: string;
-  whatsapp_number: string;
+  whatsapp_number: string | null;
   student_name: string;
   student_grade: string;
   curriculum: string;
   subject_needed: string;
   main_challenge: string;
-  preferred_time: string;
+  preferred_time: string | null;
   message: string | null;
   status: string;
   source: string;

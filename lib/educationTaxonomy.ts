@@ -140,7 +140,7 @@ export function getTopicsForSubject(subject: string) { return [...(topicTaxonomy
 export function getEducationLabel(kind: "curriculum" | "stage" | "awardingBody" | "level" | "subjectVariant", key?: string | null, context: { curriculumKey?: string; stage?: string; subject?: string } = {}) {
   if (!key) return "Not specified";
   if (kind === "curriculum") return curriculumPathways.find((item) => item.key === key)?.label || key;
-  if (kind === "stage") return getStagesForCurriculum(context.curriculumKey || "").find((item) => item.key === key)?.label || key;
+  if (kind === "stage") return key === uncertainEducationOption ? "I’m not sure" : getStagesForCurriculum(context.curriculumKey || "").find((item) => item.key === key)?.label || key;
   if (kind === "awardingBody") return awardingBodies.find((item) => item.key === key)?.label || key;
   if (kind === "subjectVariant") return getSubjectVariants(context.subject || "", context.curriculumKey, context.stage).find((item) => item.key === key)?.label || key;
   return getLevelsForEducationSelection(context.curriculumKey || "", context.stage || "", context.subject || "").find((item) => item.key === key)?.label || key;
@@ -154,7 +154,7 @@ export function validateEducationSelection(input: EducationSelectionInput, optio
   if (!curriculumPathways.some((item) => item.key === input.curriculumKey)) return { valid: false, missingFields, error: "Choose a valid curriculum pathway." };
   if ([uncertainEducationOption, otherEducationOption].includes(input.curriculumKey)) missingFields.push("curriculum");
   const stages = getStagesForCurriculum(input.curriculumKey);
-  if (!stages.some((item) => item.key === input.stage)) return { valid: false, missingFields, error: "Choose a valid stage or qualification." };
+  if (!stages.some((item) => item.key === input.stage) && input.stage !== uncertainEducationOption) return { valid: false, missingFields, error: "Choose a valid stage or qualification." };
   if ([uncertainEducationOption, otherEducationOption].includes(input.stage)) missingFields.push("stage");
   const selectedStage = stages.find((item) => item.key === input.stage);
   if (selectedStage?.requiresAwardingBody && !selectedStage.awardingBodies.includes(input.awardingBodyKey || "")) {

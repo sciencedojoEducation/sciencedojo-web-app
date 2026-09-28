@@ -11,7 +11,11 @@
     "lint:latency": "eslint app/page.tsx app/layout.tsx proxy.ts instrumentation.ts components/AuthenticatedHomeRedirect.tsx components/HomeTutorDirectory.tsx components/Navbar.tsx components/NavbarClient.tsx components/PublicSeoConversionCtas.tsx lib/feature-flags.ts lib/public-render.ts lib/public-tutors.ts lib/server-tracing.ts scripts/check-public-latency.mjs utils/supabase/public.ts tests/public-render.test.mjs",
     "test": "node --experimental-strip-types --test tests/*.test.mjs",
     "test:latency": "node scripts/check-public-latency.mjs",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "academy:german-a1:audio": "node --env-file-if-exists=.env.local --experimental-strip-types scripts/generate-german-a1-audio.mjs",
+    "academy:german-a1:images": "node scripts/slice-german-a1-vocabulary-images.mjs",
+    "academy:german-a1:seed": "node --experimental-strip-types scripts/seed-german-a1-course.mjs",
+    "showcase:staging:seed": "node --env-file=.env.showcase.local scripts/seed-showcase-staging.mjs"
   },
   "dependencies": {
     "@atlaskit/pragmatic-drag-and-drop": "^3.1.0",

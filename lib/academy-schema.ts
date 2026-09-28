@@ -55,7 +55,9 @@ export type AcademyBlockIconKey =
   | "survey"
   | "table"
   | "worked-example"
-  | "knowledge-check";
+  | "knowledge-check"
+  | "writing-practice"
+  | "speaking-practice";
 
 export function createAcademyId(prefix: string) {
   const value =
@@ -101,6 +103,7 @@ const processVariants: AcademyBlockVariant[] = [
 const flashcardVariants: AcademyBlockVariant[] = [
   { key: "flip-grid", label: "Flip grid", description: "Flip individual cards in a responsive grid." },
   { key: "stack", label: "Card stack", description: "Give each card more room for recall." },
+  { key: "picture-grid", label: "Picture grid", description: "Show a static image and word without a reverse side." },
 ];
 
 const surveyVariants: AcademyBlockVariant[] = [
@@ -489,6 +492,46 @@ export const academyBlockRegistry: AcademyBlockDefinition[] = ([
       completion: "interact",
       required: false,
       question: createQuestion("single-choice"),
+    }),
+  },
+  {
+    type: "writing-practice",
+    label: "Writing practice",
+    shortLabel: "Writing",
+    icon: "writing-practice",
+    description: "Save a learner writing response and reveal a model answer.",
+    category: "Assessment",
+    keywords: ["writing", "language", "portfolio", "response"],
+    create: () => ({
+      ...identity("writing-practice"),
+      type: "writing-practice",
+      heading: "Schreiben",
+      prompt: "Schreiben Sie eine kurze Antwort.",
+      minWords: 20,
+      maxWords: 50,
+      checklist: ["Die Aufgabe ist vollständig.", "Die Sätze sind verständlich."],
+      modelAnswer: "Hier steht eine mögliche Antwort.",
+      completion: "interact",
+    }),
+  },
+  {
+    type: "speaking-practice",
+    label: "Speaking practice",
+    shortLabel: "Speaking",
+    icon: "speaking-practice",
+    description: "Record a private speaking response and compare it with a model.",
+    category: "Assessment",
+    keywords: ["speaking", "recording", "language", "portfolio"],
+    create: () => ({
+      ...identity("speaking-practice"),
+      type: "speaking-practice",
+      heading: "Sprechen",
+      prompt: "Sprechen Sie 30 bis 45 Sekunden.",
+      preparationSeconds: 30,
+      targetSeconds: 45,
+      checklist: ["Ich spreche deutlich.", "Ich benutze vollständige Sätze."],
+      modelAnswer: "Hier steht eine mögliche Antwort.",
+      completion: "interact",
     }),
   },
 ] as Array<Omit<AcademyBlockDefinition, "variants">>).map((definition) => ({

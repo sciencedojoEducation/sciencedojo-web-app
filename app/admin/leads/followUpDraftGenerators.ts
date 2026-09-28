@@ -19,7 +19,11 @@ export type EmailFollowUpDraft = {
 
 function clean(value?: string | null) {
   const trimmed = String(value || "").trim();
-  return trimmed && trimmed !== "Not specified" ? trimmed : "";
+  return trimmed && !["Not specified", "I’m not sure", "I'm not sure"].includes(trimmed) ? trimmed : "";
+}
+
+function cleanClause(value: string) {
+  return value.replace(/[.!?]+\s*$/, "");
 }
 
 export function getLeadNoteValue(message: string | null | undefined, label: string) {
@@ -46,7 +50,7 @@ function getLeadContext(lead: AssessmentLeadForFollowUp) {
     || "their next learning goals";
   const preferredSupport = getLeadNoteValue(lead.message, "Preferred support style");
   const preferredTime = clean(lead.preferred_time);
-  const priority = hardestRightNow || weakTopics || studyConcerns || "building confidence and a clearer study structure";
+  const priority = cleanClause(hardestRightNow || weakTopics || studyConcerns || "building confidence and a clearer study structure");
   const timeQuestion = preferredTime
     ? `Would ${preferredTime} still work for you?`
     : "What time would work best for a short free learning assessment?";

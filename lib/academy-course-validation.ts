@@ -32,6 +32,8 @@ const allowedBlockTypes = new Set<LessonBlock["type"]>([
   "survey",
   "worked-example",
   "knowledge-check",
+  "writing-practice",
+  "speaking-practice",
 ]);
 
 export type AcademyValidationResult = {
@@ -62,7 +64,7 @@ function isSafeContentUrl(
   value: string,
   kind: "link" | "image" | "video" | "audio" = "link",
 ) {
-  if (kind === "image" && value.startsWith("/")) return true;
+  if ((kind === "image" || kind === "audio") && value.startsWith("/")) return true;
   try {
     const url = new URL(value);
     if (!new Set(["https:", "http:"]).has(url.protocol)) return false;
@@ -75,11 +77,12 @@ function isSafeContentUrl(
         hostname === "player.vimeo.com"
       );
     if (kind === "audio")
-      return (
+      return url.protocol === "https:" && (
         hostname === "spotify.com" ||
         hostname === "open.spotify.com" ||
         hostname === "soundcloud.com" ||
-        hostname === "w.soundcloud.com"
+        hostname === "w.soundcloud.com" ||
+        /\.(mp3|m4a|mp4)(?:$|\?)/i.test(url.pathname + url.search)
       );
     return true;
   } catch {
@@ -118,7 +121,7 @@ function validateBlock(
         : block.type === "process"
           ? ["slides", "timeline", "build-up"]
           : block.type === "flashcards"
-            ? ["flip-grid", "stack"]
+            ? ["flip-grid", "stack", "picture-grid"]
             : block.type === "survey"
               ? ["scale", "compact"]
               : ["image", "gallery", "carousel", "video", "audio"].includes(
@@ -147,6 +150,8 @@ function validateBlock(
     "process",
     "survey",
     "knowledge-check",
+    "writing-practice",
+    "speaking-practice",
   ];
   if (block.completion === "interact" && !interactiveTypes.includes(block.type))
     errors.push(`${label} cannot use interaction-based completion.`);
@@ -279,6 +284,38 @@ function validateBlock(
   )
     errors.push(`${label} needs complete items.`);
   if (
+    block.type === "flashcards" &&
+    block.items.some(
+      (item) =>
+        (hasText(item.src) &&
+          (!hasText(item.alt) || !isSafeContentUrl(item.src!, "image"))) ||
+        (!hasText(item.src) && hasText(item.alt)),
+    )
+  )
+    errors.push(`${label} has a flashcard with an incomplete or invalid image.`);
+  if (
+    block.type === "flashcards" &&
+    block.items.some((item) => {
+      if (!item.sprite) return false;
+      const { row, column, rows, columns } = item.sprite;
+      return (
+        !Number.isInteger(row) ||
+        !Number.isInteger(column) ||
+        !Number.isInteger(rows) ||
+        !Number.isInteger(columns) ||
+        rows < 1 ||
+        columns < 1 ||
+        row < 0 ||
+        column < 0 ||
+        row >= rows ||
+        column >= columns ||
+        !hasText(item.src) ||
+        !hasText(item.alt)
+      );
+    })
+  )
+    errors.push(`${label} has invalid flashcard sprite coordinates.`);
+  if (
     block.type === "survey" &&
     (!hasText(block.prompt) ||
       !hasText(block.lowLabel) ||
@@ -286,6 +323,31 @@ function validateBlock(
       !new Set([3, 5, 7]).has(block.scale))
   )
     errors.push(`${label} needs a question, endpoint labels, and a valid scale.`);
+  if (
+    block.type === "writing-practice" &&
+    (!hasText(block.prompt) ||
+      !Number.isInteger(block.minWords) ||
+      !Number.isInteger(block.maxWords) ||
+      block.minWords < 1 ||
+      block.maxWords < block.minWords ||
+      !block.checklist.length ||
+      block.checklist.some((item) => !hasText(item)) ||
+      !hasText(block.modelAnswer))
+  )
+    errors.push(`${label} needs a prompt, valid word target, checklist, and model answer.`);
+  if (
+    block.type === "speaking-practice" &&
+    (!hasText(block.prompt) ||
+      !Number.isInteger(block.preparationSeconds) ||
+      !Number.isInteger(block.targetSeconds) ||
+      block.preparationSeconds < 0 ||
+      block.targetSeconds < 1 ||
+      block.targetSeconds > 180 ||
+      !block.checklist.length ||
+      block.checklist.some((item) => !hasText(item)) ||
+      !hasText(block.modelAnswer))
+  )
+    errors.push(`${label} needs a prompt, valid timing, checklist, and model answer.`);
   if (
     block.type === "worked-example" &&
     (!hasText(block.problem) || !hasText(block.answer) || !block.steps.length)
@@ -303,6 +365,11 @@ function validateQuestion(
   const label = `Quiz question ${index + 1}`;
   if (!hasText(question.id) || !hasText(question.prompt))
     errors.push(`${label} needs an ID and prompt.`);
+  if (
+    question.audioUrl !== undefined &&
+    (!hasText(question.audioUrl) || !isSafeContentUrl(question.audioUrl, "audio"))
+  )
+    errors.push(`${label} needs a valid audio URL.`);
   if (
     question.type !== "reflection" &&
     (!Array.isArray(question.options) || question.options.length < 2)

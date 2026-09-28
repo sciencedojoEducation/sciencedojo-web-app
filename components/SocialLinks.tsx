@@ -57,7 +57,7 @@ const socialLinks: SocialLink[] = [
   },
 ];
 
-export default function SocialLinks() {
+export default function SocialLinks({ inverted = false }: { inverted?: boolean }) {
   const configuredLinks = socialLinks.filter((link) => link.href);
 
   if (configuredLinks.length === 0) {
@@ -73,7 +73,7 @@ export default function SocialLinks() {
           aria-label={`ScienceDojo on ${link.name}`}
           target="_blank"
           rel="noreferrer"
-          className="flex h-9 w-9 items-center justify-center rounded-full border border-secondary/10 bg-white text-secondary/60 shadow-sm transition-colors hover:border-primary/30 hover:text-primary"
+          className={`flex h-9 w-9 items-center justify-center rounded-full border shadow-sm transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 ${inverted ? "border-white/20 bg-white/10 text-white/80 hover:border-cyan-200/60 hover:bg-white/15 hover:text-cyan-200 focus-visible:outline-cyan-200" : "border-secondary/10 bg-white text-secondary/60 hover:border-primary/30 hover:text-primary focus-visible:outline-primary"}`}
         >
           {link.icon}
         </Link>

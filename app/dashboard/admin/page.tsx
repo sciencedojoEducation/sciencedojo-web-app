@@ -66,7 +66,7 @@ export default async function AdminDashboard() {
         </div>
       )}
 
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1.45fr)_minmax(18rem,1fr)]">
+      <div className="grid min-w-0 grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1.45fr)_minmax(18rem,1fr)]">
         <HomePrimaryAction
           eyebrow="Next operational check"
           title={hasSafetyAlerts ? "Review safeguarding alerts" : "Keep the platform running smoothly"}
@@ -93,7 +93,7 @@ export default async function AdminDashboard() {
         { label: "Tutoring hours", value: hoursTaught, icon: <Clock3 size={20} />, tone: "mint" },
       ]} />
 
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1.5fr)_minmax(17rem,1fr)]">
+      <div className="grid min-w-0 grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1.5fr)_minmax(17rem,1fr)]">
         <section className="home-surface sm:p-6">
           <HomeSectionHeading eyebrow="Learning movement" title="Recent bookings" href="/dashboard/admin/bookings" linkLabel="View all" />
           {recentBookings?.map((booking) => (

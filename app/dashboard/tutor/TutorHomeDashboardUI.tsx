@@ -200,7 +200,7 @@ export default function TutorHomeDashboardUI({
         <AnnouncementFeed announcements={announcements} platformAnnouncements={platformAnnouncements} />
       )}
 
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1.5fr)_minmax(18rem,1fr)]">
+      <div className="grid min-w-0 grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1.5fr)_minmax(18rem,1fr)]">
         <HomePrimaryAction eyebrow="Teaching today" {...teachingAction} />
         <section className="home-surface sm:p-6" aria-label="Upcoming lessons">
           <HomeSectionHeading eyebrow="Your schedule" title="Coming up" href="/dashboard/tutor/schedule" linkLabel="View all" />
@@ -238,12 +238,12 @@ export default function TutorHomeDashboardUI({
         </section>
       )}
 
-      <section aria-label="Tutor readiness and Academy" className={`grid gap-4 ${tutorAcademyEnabled ? "lg:grid-cols-2" : ""}`}>
+      <section aria-label="Tutor readiness and Academy" className={`grid min-w-0 grid-cols-1 gap-4 ${tutorAcademyEnabled ? "lg:grid-cols-2" : ""}`}>
         <div className="home-surface sm:p-6">
           <HomeSectionHeading eyebrow="Tutor readiness" title="Ready for students" href="/dashboard/tutor/settings" linkLabel="Open profile" />
           <div className="flex items-baseline gap-2"><strong className="text-2xl font-semibold text-[var(--theme-ink)]">{profileReadiness.percent}%</strong><span className="text-sm text-[var(--theme-muted)]">complete</span></div>
           <div className="mt-3 h-2 overflow-hidden rounded-full bg-[var(--theme-surface-soft)]"><div className="h-full rounded-full bg-[var(--theme-accent)]" style={{ width: `${profileReadiness.percent}%` }} /></div>
-          <div className="mt-5 grid gap-x-5 sm:grid-cols-2">
+          <div className="mt-5 grid min-w-0 grid-cols-1 gap-x-5 sm:grid-cols-2">
             {Object.entries({ Availability: profileReadiness.healthSummary.availabilityLabel, Payouts: profileReadiness.healthSummary.payoutsLabel, Reviews: profileReadiness.healthSummary.reviewsLabel, Status: profileReadiness.healthSummary.launchStatus }).map(([label, value]) => (
               <div key={label} className="flex justify-between gap-3 border-t border-[var(--theme-line)] py-2.5 text-sm"><span className="text-[var(--theme-muted)]">{label}</span><span className="text-right font-medium text-[var(--theme-ink-soft)]">{value}</span></div>
             ))}
@@ -258,7 +258,7 @@ export default function TutorHomeDashboardUI({
         </div>}
       </section>
 
-      <section aria-label="Business and reach" className="grid gap-4 lg:grid-cols-2">
+      <section aria-label="Business and reach" className="grid min-w-0 grid-cols-1 gap-4 lg:grid-cols-2">
         <div className="home-surface sm:p-6">
           <HomeSectionHeading eyebrow="Earnings" title={`£${totalEarnings.toFixed(2)}`} description={`From ${completed.length} completed lesson${completed.length === 1 ? "" : "s"}, before platform fee calculations.`} href="/dashboard/tutor/earnings" linkLabel="View earnings" />
           <div className="mt-5 flex gap-6 border-t border-[var(--theme-line)] pt-4 text-sm"><span className="text-[var(--theme-muted)]">Reviews public <strong className="ml-1 font-medium text-[var(--theme-ink)]">{reviewVisibility.approved}</strong></span><span className="text-[var(--theme-muted)]">Pending <strong className="ml-1 font-medium text-[var(--theme-ink)]">{reviewVisibility.pending}</strong></span></div>
@@ -273,7 +273,7 @@ export default function TutorHomeDashboardUI({
 
       <section className="home-surface sm:p-6">
         <HomeSectionHeading eyebrow="Recent activity" title="What changed recently" href="/dashboard/tutor/schedule?tab=requests" linkLabel="Review requests" />
-        <div className="grid gap-x-6 md:grid-cols-2">
+        <div className="grid min-w-0 grid-cols-1 gap-x-6 md:grid-cols-2">
           {recentActivity.map((activity) => <HomeListRow key={activity.id} href={activity.href} title={activity.title} detail={`${activity.label} · ${activity.meta}`} />)}
           {recentActivity.length === 0 && <p className="py-4 text-sm leading-6 text-[var(--theme-muted)]">Activity will appear as students request lessons and your profile changes.</p>}
         </div>

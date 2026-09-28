@@ -3,6 +3,7 @@ import { cache } from "react";
 import type { Subject, TutorProfile } from "@/lib/supabase-queries";
 import { createPublicClient } from "@/utils/supabase/public";
 import { traceServerOperation } from "@/lib/server-tracing";
+import { matchesTutorSubject } from "@/lib/tutor-subject-match";
 
 export const PUBLIC_TUTORS_CACHE_TAG = "public-tutors";
 
@@ -116,11 +117,11 @@ export async function getPublicTutors(
   const normalizedSearch = searchTerm.trim().toLowerCase();
   const tutors = await getPublicTutorList();
   const filtered = tutors.filter((tutor) => {
-    const matchesSubject = subject === "All" || tutor.subjects.includes(subject as Subject);
+    const matchesSubject = matchesTutorSubject(tutor.subjects, subject);
     const matchesSearch =
       !normalizedSearch ||
       tutor.full_name.toLowerCase().includes(normalizedSearch) ||
-      tutor.bio.toLowerCase().includes(normalizedSearch) ||
+      (tutor.bio || "").toLowerCase().includes(normalizedSearch) ||
       tutor.subjects.some((tutorSubject) => tutorSubject.toLowerCase().includes(normalizedSearch));
 
     return matchesSubject && matchesSearch;

@@ -128,7 +128,20 @@ export type LessonBlock = AcademyBlockIdentity &
     | {
         type: "flashcards";
         heading?: string;
-        items: Array<{ id?: string; title: string; body: string }>;
+        items: Array<{
+          id?: string;
+          title: string;
+          body: string;
+          eyebrow?: string;
+          src?: string;
+          alt?: string;
+          sprite?: {
+            row: number;
+            column: number;
+            rows: number;
+            columns: number;
+          };
+        }>;
       }
     | {
         type: "process";
@@ -158,6 +171,24 @@ export type LessonBlock = AcademyBlockIdentity &
         question: QuizQuestion;
         required?: boolean;
       }
+    | {
+        type: "writing-practice";
+        heading?: string;
+        prompt: string;
+        minWords: number;
+        maxWords: number;
+        checklist: string[];
+        modelAnswer: string;
+      }
+    | {
+        type: "speaking-practice";
+        heading?: string;
+        prompt: string;
+        preparationSeconds: number;
+        targetSeconds: number;
+        checklist: string[];
+        modelAnswer: string;
+      }
   );
 
 export type AcademySection = {
@@ -182,6 +213,7 @@ export type QuizQuestion = {
   id: string;
   type?: "single-choice" | "multiple-response" | "reflection";
   prompt: string;
+  audioUrl?: string;
   options: QuizOption[];
   correctOptionId: string;
   correctOptionIds?: string[];
@@ -905,6 +937,7 @@ export function getPublicQuizQuestions(
     id: question.id,
     type: question.type || "single-choice",
     prompt: question.prompt,
+    audioUrl: question.audioUrl,
     options: question.options,
   }));
 }

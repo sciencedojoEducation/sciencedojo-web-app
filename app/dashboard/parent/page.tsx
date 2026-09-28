@@ -261,7 +261,7 @@ export default async function ParentDashboard() {
         <AnnouncementFeed announcements={announcements} platformAnnouncements={platformAnnouncements} />
       )}
 
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1.5fr)_minmax(18rem,1fr)]">
+      <div className="grid min-w-0 grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1.5fr)_minmax(18rem,1fr)]">
         <HomePrimaryAction eyebrow="Recommended next step" title={currentStatus} description={statusMeaning} href={recommendedAction.href} label={recommendedAction.label} detail={studentName === "your child" ? "Your child's learning" : `${studentName}'s learning`} icon={<BookOpen size={23} strokeWidth={1.7} />} />
         <section className="home-surface sm:p-6" aria-label="Learning plan">
           <HomeSectionHeading eyebrow="A simple path forward" title="Your plan" />
@@ -286,7 +286,7 @@ export default async function ParentDashboard() {
       <section className="home-surface sm:p-6">
         <HomeSectionHeading eyebrow="People" title="Your support team" href="/dashboard/messages" linkLabel="Open messages" />
         {supportTeam.length > 0 ? (
-          <div className="mt-5 grid gap-3 md:grid-cols-2">
+          <div className="mt-5 grid min-w-0 grid-cols-1 gap-3 md:grid-cols-2">
             {supportTeam.map((tutor) => (
               <div key={tutor.id} className="flex items-center gap-3 rounded-xl bg-[var(--theme-surface-soft)] p-3">
                 <div className="relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-[var(--theme-accent-soft)] text-sm font-medium text-[var(--theme-accent)]">
@@ -325,7 +325,7 @@ export default async function ParentDashboard() {
 
       <section className="home-surface sm:p-6" aria-label="Recent learning">
         <HomeSectionHeading eyebrow="Recent learning" title="What has happened" description="A concise view of lessons, feedback, and practice." />
-        <div className="grid gap-x-6 md:grid-cols-2">
+        <div className="grid min-w-0 grid-cols-1 gap-x-6 md:grid-cols-2">
           <HomeListRow href="#parent-history" title={latestLesson ? `${latestLesson.subject} lesson` : "Lessons will appear here"} detail={latestLesson ? `Completed ${formatLessonDate(latestLesson.requested_date)}${latestLesson.tutor_name ? ` with ${latestLesson.tutor_name}` : ""}` : "Schedule a lesson to begin"} />
           <HomeListRow href="#parent-history" title="Latest tutor feedback" detail={shortText(latestLesson?.lesson_notes?.summary, "Feedback will appear after a completed lesson.", 90)} />
           <HomeListRow href="#parent-practice-tasks" title={latestAssignment ? "Practice task ready" : "Practice between lessons"} detail={shortText(latestAssignment?.content, "Tutor-guided practice will appear here.", 90)} />

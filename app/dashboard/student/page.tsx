@@ -232,8 +232,8 @@ export default async function StudentDashboard() {
                       </div>
                       <div className="min-w-0">
                         <h3 className="truncate text-sm font-semibold text-[var(--student-ink)] sm:text-base">{booking.tutor_name || "Your tutor"}</h3>
-                        <div className="mt-1 flex flex-wrap items-center gap-1.5">
-                          <span className="rounded-md bg-[var(--student-accent-soft)] px-2 py-0.5 text-[11px] font-medium text-[var(--student-accent)]">{booking.subject}</span>
+                        <div className="mt-1 flex min-w-0 flex-wrap items-center gap-1.5">
+                          <span className="max-w-full break-words rounded-md bg-[var(--student-accent-soft)] px-2 py-0.5 text-[11px] font-medium text-[var(--student-accent)]">{booking.subject}</span>
                           <span className={`rounded-md px-2 py-0.5 text-[11px] font-medium ${booking.lesson_mode === "physical" ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-600"}`}>
                             {booking.lesson_mode === "physical" ? "In-person" : "Online"}
                           </span>
@@ -286,14 +286,14 @@ export default async function StudentDashboard() {
                 const booking = group.mainBooking;
                 return (
                 <div key={group.id} className="relative flex flex-col overflow-hidden rounded-xl border border-[var(--student-line)] bg-[var(--student-surface)] p-4 md:p-6">
-                   <div className="mb-3 flex items-start justify-between md:mb-4">
-                      <div className="flex items-center gap-3 md:gap-4">
-                        <div className="w-10 h-10 relative rounded-xl overflow-hidden border border-secondary/5 shadow-sm">
+                   <div className="mb-3 flex min-w-0 items-start justify-between gap-2 md:mb-4">
+                      <div className="flex min-w-0 flex-1 items-center gap-3 md:gap-4">
+                        <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-xl border border-secondary/5 shadow-sm">
                            <Image src={booking.tutor_avatar || "/tutor_placeholder.webp"} alt="" fill className="object-cover" />
                         </div>
-                        <div>
-                          <div className="flex items-center gap-1.5 mb-1">
-                            <span className="inline-block rounded-md bg-[var(--student-accent-soft)] px-2 py-0.5 text-[11px] font-medium text-[var(--student-accent)]">{booking.subject}</span>
+                        <div className="min-w-0">
+                          <div className="mb-1 flex min-w-0 flex-wrap items-center gap-1.5">
+                            <span className="max-w-full break-words rounded-md bg-[var(--student-accent-soft)] px-2 py-0.5 text-[11px] font-medium text-[var(--student-accent)]">{booking.subject}</span>
                             <span className={`px-1.5 py-0.5 text-[8px] font-black uppercase tracking-widest rounded ${booking.lesson_mode === "physical" ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-500"}`}>
                               {booking.lesson_mode === "physical" ? "In-person" : "Online"}
                             </span>
@@ -301,10 +301,10 @@ export default async function StudentDashboard() {
                               <span className="px-1.5 py-0.5 bg-yellow-50 text-yellow-600 text-[8px] font-black uppercase tracking-widest rounded">{group.count} Weeks</span>
                             )}
                           </div>
-                          <h3 className="text-sm font-semibold text-[var(--student-ink)]">{booking.tutor_name}</h3>
+                          <h3 className="break-words text-sm font-semibold text-[var(--student-ink)]">{booking.tutor_name}</h3>
                         </div>
                       </div>
-                      <span className="text-[10px] font-black text-orange-400 flex items-center gap-1 bg-orange-50 px-2 py-1 rounded-full">
+                      <span className="flex shrink-0 items-center gap-1 rounded-full bg-orange-50 px-2 py-1 text-[10px] font-black text-orange-400">
                         Pending
                       </span>
                    </div>
@@ -340,17 +340,19 @@ export default async function StudentDashboard() {
            {upcoming.map(booking => (
               <div key={booking.id} className="relative flex flex-col overflow-hidden rounded-xl border border-[var(--student-line)] bg-[var(--student-surface)] p-4 md:p-6">
                  
-                 <div className="mb-3 flex items-start justify-between md:mb-4">
-                    <div className="flex items-center gap-3 md:gap-4">
-                      <div className="relative h-12 w-12 overflow-hidden rounded-xl border-2 border-white shadow-md md:h-14 md:w-14 md:shadow-xl">
+                 <div className="mb-3 flex min-w-0 items-start justify-between md:mb-4">
+                    <div className="flex min-w-0 items-center gap-3 md:gap-4">
+                      <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-xl border-2 border-white shadow-md md:h-14 md:w-14 md:shadow-xl">
                          <Image src={booking.tutor_avatar || "/tutor_placeholder.webp"} alt={booking.tutor_name || "Tutor"} fill className="object-cover" />
                       </div>
-                      <div>
-                        <span className="mb-1 inline-block rounded-lg bg-[var(--student-accent-soft)] px-2.5 py-0.5 text-[11px] font-medium text-[var(--student-accent)]">{booking.subject}</span>
-                        <span className={`ml-2 inline-block rounded-lg px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider ${booking.lesson_mode === "physical" ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-500"}`}>
-                          {booking.lesson_mode === "physical" ? "In-person" : "Online"}
-                        </span>
-                        <h3 className="text-lg font-semibold text-[var(--student-ink)]">{booking.tutor_name}</h3>
+                      <div className="min-w-0">
+                        <div className="flex min-w-0 flex-wrap items-center gap-1.5">
+                          <span className="max-w-full break-words rounded-lg bg-[var(--student-accent-soft)] px-2.5 py-0.5 text-[11px] font-medium text-[var(--student-accent)]">{booking.subject}</span>
+                          <span className={`rounded-lg px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider ${booking.lesson_mode === "physical" ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-500"}`}>
+                            {booking.lesson_mode === "physical" ? "In-person" : "Online"}
+                          </span>
+                        </div>
+                        <h3 className="mt-1 break-words text-lg font-semibold text-[var(--student-ink)]">{booking.tutor_name}</h3>
                       </div>
                     </div>
                  </div>

@@ -3,7 +3,7 @@
 import { useState } from "react";
 
 type FollowUpDraftsProps = {
-  whatsappMessage: string;
+  whatsappMessage: string | null;
   emailSubject: string;
   emailBody: string;
   variant?: "details" | "panel";
@@ -20,7 +20,7 @@ export default function FollowUpDrafts({
   emailBody,
   variant = "details",
 }: FollowUpDraftsProps) {
-  const [whatsapp, setWhatsapp] = useState(whatsappMessage);
+  const [whatsapp, setWhatsapp] = useState(whatsappMessage || "");
   const [subject, setSubject] = useState(emailSubject);
   const [body, setBody] = useState(emailBody);
   const [copied, setCopied] = useState<string | null>(null);
@@ -40,11 +40,11 @@ export default function FollowUpDrafts({
 
   const content = (
     <div className={variant === "details" ? "mt-4 grid gap-4" : "grid gap-4"}>
-        <p className="text-xs font-bold leading-5 text-secondary/55">
+        {variant === "details" && <p className="text-xs font-bold leading-5 text-secondary/55">
           Review and personalize before sending. These are drafts only; nothing is sent automatically.
-        </p>
+        </p>}
 
-        <section className="rounded-2xl border border-secondary/10 bg-white/75 p-4">
+        {whatsappMessage && <section className="rounded-2xl border border-secondary/10 bg-white/75 p-4">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <h3 className="text-xs font-black uppercase tracking-[0.16em] text-secondary/45">WhatsApp Message</h3>
             <button
@@ -61,7 +61,7 @@ export default function FollowUpDrafts({
             rows={8}
             className={`${fieldClass} mt-3 resize-y`}
           />
-        </section>
+        </section>}
 
         <section className="rounded-2xl border border-secondary/10 bg-white/75 p-4">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">

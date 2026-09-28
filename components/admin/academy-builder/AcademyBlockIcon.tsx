@@ -9,7 +9,9 @@ import {
   Layers3,
   ListOrdered,
   MessageSquareQuote,
+  Mic,
   PanelTop,
+  PencilLine,
   PlaySquare,
   Rows3,
   ClipboardList,
@@ -42,6 +44,8 @@ const icons: Record<AcademyBlockIconKey, LucideIcon> = {
   table: Table2,
   "worked-example": BetweenHorizontalStart,
   "knowledge-check": Rows3,
+  "writing-practice": PencilLine,
+  "speaking-practice": Mic,
 };
 
 export default function AcademyBlockIcon({

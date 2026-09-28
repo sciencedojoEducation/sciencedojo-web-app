@@ -63,7 +63,7 @@ export default async function InternalDashboardPage() {
 
   return (
     <div data-role="internal" className="dashboard-home mx-auto max-w-6xl space-y-6 px-3 py-5 sm:px-6 md:px-8 md:pb-12 md:pt-7">
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1.45fr)_minmax(18rem,1fr)]">
+      <div className="grid min-w-0 grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1.45fr)_minmax(18rem,1fr)]">
         <HomePrimaryAction
           eyebrow="Assigned work"
           title={nextProject ? nextProject.title : "Your project queue is clear"}
@@ -87,7 +87,7 @@ export default async function InternalDashboardPage() {
         { label: "Paused", value: pausedProjectCount, icon: <CirclePause size={20} />, tone: "violet" },
       ]} />
 
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1.4fr)_minmax(17rem,1fr)]">
+      <div className="grid min-w-0 grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1.4fr)_minmax(17rem,1fr)]">
         <section className="home-surface sm:p-6">
           <HomeSectionHeading eyebrow="Recently updated" title="My project queue" href="/dashboard/internal/projects" linkLabel="Open board" />
           {recentProjects.map((project) => (
@@ -107,7 +107,7 @@ export default async function InternalDashboardPage() {
       <section className="home-surface sm:p-6">
         <HomeSectionHeading eyebrow="Team context" title={internalMember.title || internalMember.role.replace(/_/g, " ")} href="/dashboard/internal/settings" linkLabel="Edit settings" />
         <p className="text-sm leading-6 text-[var(--theme-muted)]">{internalMember.responsibility_area || "No responsibility area has been set yet."}</p>
-        <div className="mt-4 grid gap-4 border-t border-[var(--theme-line)] pt-4 md:grid-cols-2">
+        <div className="mt-4 grid min-w-0 grid-cols-1 gap-4 border-t border-[var(--theme-line)] pt-4 md:grid-cols-2">
           <div>
             <p className="text-xs font-medium text-[var(--theme-ink)]">About you</p>
             <p className="mt-1 text-sm leading-6 text-[var(--theme-muted)]">{profile?.bio || "Add a short bio so collaborators know how you help ScienceDojo."}</p>

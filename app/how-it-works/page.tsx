@@ -5,24 +5,27 @@ import { ArrowRight, BookOpenCheck, MessageSquareText, SearchCheck, UserRoundChe
 import BookAssessmentLink from "@/components/analytics/BookAssessmentLink";
 import HowItWorksRoleExplorer from "@/components/HowItWorksRoleExplorer";
 import { getPublicFeatureFlagMap } from "@/lib/feature-flags";
+import { getVisibleShowcaseItems } from "@/lib/product-showcase";
 import { homeImages } from "@/lib/homeImages";
 import { siteUrl } from "@/lib/seo";
 
 export const metadata: Metadata = {
   title: "How It Works",
-  description: "Explore how ScienceDojo connects students, tutors and parents through lessons, class spaces, Missions, bookings and progress updates.",
+  description: "See how ScienceDojo connects tutoring, practice and progress for students, parents and tutors.",
   alternates: { canonical: `${siteUrl}/how-it-works` },
 };
 
-const steps = [
-  { icon: SearchCheck, title: "Tell us what feels difficult", text: "Start with your child’s goals, curriculum and the topics they want help with." },
-  { icon: UserRoundCheck, title: "Find the right tutor", text: "Explore a tutor who fits the subject and helps your child ask questions freely." },
-  { icon: BookOpenCheck, title: "Learn, then practise", text: "Lessons build understanding; focused practice keeps it moving between sessions." },
-  { icon: MessageSquareText, title: "See the next step", text: "Learning records help families follow what was covered and what comes next." },
-];
-
-export default async function HowItWorksPage() {
+export default async function HowItWorksPage({ searchParams }: { searchParams: Promise<{ role?: string }> }) {
   const flags = await getPublicFeatureFlagMap();
+  const visibleShowcaseItems = getVisibleShowcaseItems(flags);
+  const { role: requestedRole } = await searchParams;
+  const initialRole = visibleShowcaseItems.find((item) => item.role === requestedRole)?.role || visibleShowcaseItems[0]?.role || "parent";
+  const steps = [
+    { icon: SearchCheck, title: "Start with a learning goal", text: "Think about the subject and the topics that feel difficult." },
+    ...(flags.tutor_marketplace_enabled ? [{ icon: UserRoundCheck, title: "Find the right tutor", text: "Explore a tutor who fits the subject and helps your child ask questions freely." }] : []),
+    ...(flags.practice_dojo_enabled || flags.student_dashboard_enabled ? [{ icon: BookOpenCheck, title: "Learn, then practise", text: "Lessons build understanding; focused practice keeps it moving between sessions." }] : []),
+    ...(flags.parent_dashboard_enabled ? [{ icon: MessageSquareText, title: "See the next step", text: "Learning records help families follow what was covered and what comes next." }] : []),
+  ];
 
   return (
     <main className="flex-1 bg-white text-secondary">
@@ -31,10 +34,10 @@ export default async function HowItWorksPage() {
           <div>
             <p className="text-sm font-bold text-cyan-200">How ScienceDojo works</p>
             <h1 id="how-heading" className="mt-3 max-w-3xl text-4xl font-black leading-tight tracking-tight md:text-5xl">One connected home for tutoring, practice and progress.</h1>
-            <p className="mt-5 max-w-2xl text-lg leading-8 text-white/85">Students, tutors and parents each get a clear view of what matters to them—from booking a lesson to practising between classes.</p>
+            <p className="mt-5 max-w-2xl text-lg leading-8 text-white/85">See how tutoring support connects to the tools available for learning, teaching and staying informed.</p>
             <div className="mt-7 flex flex-wrap gap-3">
               {flags.free_assessment_enabled && <BookAssessmentLink source="how_it_works_hero" className="inline-flex min-h-12 items-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-extrabold text-[#073a72] hover:bg-cyan-50">Request a free assessment <ArrowRight className="h-4 w-4" aria-hidden="true" /></BookAssessmentLink>}
-              <a href="#audiences" className="inline-flex min-h-12 items-center rounded-xl border border-white/60 px-5 py-3 text-sm font-extrabold text-white hover:bg-white/10">Explore each workspace</a>
+              {visibleShowcaseItems.length > 0 && <a href="#audiences" className="inline-flex min-h-12 items-center rounded-xl border border-white/60 px-5 py-3 text-sm font-extrabold text-white hover:bg-white/10">Explore each workspace</a>}
               {flags.tutor_marketplace_enabled && <Link href="/find-tutors" className="inline-flex min-h-12 items-center rounded-xl border border-white/60 px-5 py-3 text-sm font-extrabold text-white hover:bg-white/10">Meet our tutors</Link>}
             </div>
           </div>
@@ -47,10 +50,10 @@ export default async function HowItWorksPage() {
 
       <section id="approach" className="scroll-mt-24 px-4 py-16 md:px-8 md:py-20" aria-labelledby="approach-heading">
         <div className="mx-auto max-w-6xl">
-          <p className="text-sm font-bold text-primary">Four connected steps</p>
+          <p className="text-sm font-bold text-primary">A connected approach</p>
           <h2 id="approach-heading" className="mt-2 text-3xl font-black tracking-tight md:text-4xl">What happens next?</h2>
           <p className="mt-3 max-w-2xl leading-7 text-secondary/70">A simple path, shaped around the student rather than a fixed script.</p>
-          <ol className="mt-10 grid gap-6 md:grid-cols-4 md:gap-4">
+          <ol className={`mt-10 grid gap-6 md:gap-4 ${steps.length === 4 ? "md:grid-cols-4" : steps.length === 3 ? "md:grid-cols-3" : steps.length === 2 ? "md:grid-cols-2" : "md:grid-cols-1"}`}>
             {steps.map((step, index) => <li key={step.title} className="relative border-l-2 border-cyan-200 pl-6 pb-2 md:border-l-0 md:border-t-2 md:pl-0 md:pt-7">
               <span className="absolute -left-5 top-0 flex h-10 w-10 items-center justify-center rounded-full bg-[#dff4ff] text-primary ring-4 ring-white md:-top-5 md:left-0"><step.icon className="h-5 w-5" aria-hidden="true" /></span>
               <p className="text-xs font-black uppercase tracking-widest text-primary">Step {index + 1}</p>
@@ -61,19 +64,19 @@ export default async function HowItWorksPage() {
         </div>
       </section>
 
-      <section id="audiences" className="scroll-mt-24 bg-[#f4f9ff] px-4 py-16 md:px-8 md:py-20" aria-labelledby="audiences-heading">
+      {visibleShowcaseItems.length > 0 && <section id="audiences" className="scroll-mt-24 bg-[#f4f9ff] px-4 py-16 md:px-8 md:py-20" aria-labelledby="audiences-heading">
         <div className="mx-auto max-w-6xl">
-          <p className="text-sm font-bold text-primary">Three connected workspaces</p>
-          <h2 id="audiences-heading" className="mt-2 max-w-3xl text-3xl font-black tracking-tight md:text-4xl">How does ScienceDojo work for you?</h2>
-          <p className="mt-3 mb-8 max-w-2xl leading-7 text-secondary/70">Choose your role to see the tools and updates you can expect.</p>
-          <HowItWorksRoleExplorer />
+          <p className="text-sm font-bold text-primary">Inside the workspaces</p>
+          <h2 id="audiences-heading" className="mt-2 max-w-3xl text-3xl font-black tracking-tight md:text-4xl">See your ScienceDojo workspace.</h2>
+          <p className="mt-3 mb-8 max-w-2xl leading-7 text-secondary/70">Choose your role to explore the dashboard tools, shown with sample learning data.</p>
+          <HowItWorksRoleExplorer items={visibleShowcaseItems} flags={flags} initialRole={initialRole} />
         </div>
-      </section>
+      </section>}
 
       <section className="px-4 py-12 md:px-8 md:py-14" aria-labelledby="connected-heading">
         <div className="mx-auto grid max-w-6xl gap-4 rounded-3xl border border-[#d6e5f4] bg-white p-6 sm:p-8 md:grid-cols-[.75fr_1.25fr] md:gap-10">
           <div><p className="text-sm font-bold text-primary">One learning journey</p><h2 id="connected-heading" className="mt-2 text-2xl font-black tracking-tight md:text-3xl">Connected where it counts.</h2></div>
-          <div><p className="leading-7 text-secondary/75">Bookings, class activity, assignments, Missions, feedback and parent updates work together in ScienceDojo, so the next step is easier to find.</p><p className="mt-3 text-sm leading-6 text-secondary/60">Live video lessons open in Jitsi Meet from the class space; card payments continue through secure checkout.</p></div>
+          <div><p className="leading-7 text-secondary/75">Clear teaching and focused practice help students keep moving between lessons. Families can see what support is available and choose a useful next step.</p>{flags.booking_enabled && <p className="mt-3 text-sm leading-6 text-secondary/60">Bookings and class activity stay connected inside ScienceDojo.</p>}</div>
         </div>
       </section>
 

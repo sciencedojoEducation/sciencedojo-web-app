@@ -64,14 +64,16 @@ export default function DashboardFrame({
     />
   ) : null;
   const dashboardWidth = role === "internal" ? "max-w-7xl" : role === "admin" || role === "tutor" || role === "student" ? "max-w-6xl" : "max-w-5xl";
+  const isAdminAcademyPreview =
+    /^\/dashboard\/admin\/academy\/[^/]+\/preview$/.test(pathname);
   const isAcademyRoute =
     pathname === "/dashboard/tutor/academy" ||
     pathname.startsWith("/dashboard/tutor/academy/") ||
     pathname.startsWith("/dashboard/academy/") ||
-    /^\/dashboard\/admin\/academy\/[^/]+\/preview$/.test(pathname);
+    isAdminAcademyPreview;
 
   if (isAcademyRoute) {
-    return <DashboardRoleContext.Provider value={role}><div className="h-[100dvh] min-h-0 overflow-hidden bg-white">{children}</div></DashboardRoleContext.Provider>;
+    return <DashboardRoleContext.Provider value={role}><div className="h-[100dvh] min-h-0 overflow-y-auto overscroll-contain bg-white">{children}</div></DashboardRoleContext.Provider>;
   }
 
   return (

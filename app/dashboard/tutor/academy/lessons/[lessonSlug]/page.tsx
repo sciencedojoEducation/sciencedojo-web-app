@@ -98,7 +98,7 @@ export default async function TutorAcademyLessonPage({
               Complete the required activities in this lesson before continuing.
             </div>
           )}
-          <AcademyLessonBlocks blocks={lesson.blocks} courseKey={course.key} />
+          <AcademyLessonBlocks blocks={lesson.blocks} courseKey={course.key} lessonId={lesson.id} />
 
           <footer className="mt-16 border-t border-[#DEDFE1] pt-7">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">

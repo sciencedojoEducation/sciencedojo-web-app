@@ -16,6 +16,11 @@ export function trackEvent(eventName: string, params: AnalyticsParams = {}) {
   window.gtag("event", eventName, sanitizeParams(params));
 }
 
+export function getDeviceCategory() {
+  if (typeof window === "undefined") return "unknown";
+  return window.matchMedia("(max-width: 767px)").matches ? "mobile" : "desktop";
+}
+
 function sanitizeParams(params: AnalyticsParams) {
   return Object.fromEntries(
     Object.entries(params)

@@ -40,6 +40,7 @@ import {
   Table2,
   Undo2,
   Upload,
+  Volume2,
   X,
 } from "lucide-react";
 import AcademyLessonBlocks from "@/components/tutor-academy/AcademyLessonBlocks";
@@ -124,7 +125,7 @@ type Media = {
   path: string;
   name: string;
   url: string;
-  mediaType?: "image" | "document";
+  mediaType?: "image" | "document" | "audio";
   mimeType?: string;
   byteSize?: number;
   altText?: string | null;
@@ -628,7 +629,7 @@ function ItemEditor({
 }: {
   items: Array<Record<string, unknown>>;
   onChange: (items: Array<Record<string, unknown>>) => void;
-  kind: "standard" | "media" | "gallery" | "resource";
+  kind: "standard" | "media" | "gallery" | "resource" | "flashcard";
   mediaLibrary?: Media[];
 }) {
   const [mediaItemIndex, setMediaItemIndex] = useState<number | null>(null);
@@ -644,7 +645,7 @@ function ItemEditor({
           }
         : kind === "gallery"
           ? { id: createAcademyId("item"), src: "", alt: "", caption: "" }
-          : kind === "media"
+          : kind === "media" || kind === "flashcard"
             ? {
                 id: createAcademyId("item"),
                 eyebrow: "",
@@ -729,7 +730,7 @@ function ItemEditor({
                 />
               </Field>
             ) : null}
-            {kind === "media" ? (
+            {kind === "media" || kind === "flashcard" ? (
               <Field label="Eyebrow">
                 <input
                   className={inputClass}
@@ -746,7 +747,7 @@ function ItemEditor({
                 />
               </Field>
             ) : null}
-            {kind === "standard" || kind === "media" ? (
+            {kind === "standard" || kind === "media" || kind === "flashcard" ? (
               <Field label="Body">
                 <textarea
                   rows={3}
@@ -799,7 +800,7 @@ function ItemEditor({
                 </Field>
               </>
             ) : null}
-            {kind === "media" || kind === "gallery" ? (
+            {kind === "media" || kind === "gallery" || kind === "flashcard" ? (
               <>
                 <button
                   type="button"
@@ -816,7 +817,11 @@ function ItemEditor({
                       onChange(
                         items.map((current, itemIndex) =>
                           itemIndex === index
-                            ? { ...current, src: event.target.value }
+                            ? {
+                                ...current,
+                                src: event.target.value,
+                                sprite: undefined,
+                              }
                             : current,
                         ),
                       )
@@ -838,21 +843,23 @@ function ItemEditor({
                     }
                   />
                 </Field>
-                <Field label="Caption">
-                  <input
-                    className={inputClass}
-                    value={String(item.caption || "")}
-                    onChange={(event) =>
-                      onChange(
-                        items.map((current, itemIndex) =>
-                          itemIndex === index
-                            ? { ...current, caption: event.target.value }
-                            : current,
-                        ),
-                      )
-                    }
-                  />
-                </Field>
+                {kind !== "flashcard" ? (
+                  <Field label="Caption">
+                    <input
+                      className={inputClass}
+                      value={String(item.caption || "")}
+                      onChange={(event) =>
+                        onChange(
+                          items.map((current, itemIndex) =>
+                            itemIndex === index
+                              ? { ...current, caption: event.target.value }
+                              : current,
+                          ),
+                        )
+                      }
+                    />
+                  </Field>
+                ) : null}
               </>
             ) : null}
           </div>
@@ -885,6 +892,7 @@ function ItemEditor({
                     ...item,
                     src: choice.url,
                     alt: item.alt || choice.altText || "",
+                    sprite: undefined,
                   }
                 : item,
             ),
@@ -944,6 +952,19 @@ function QuestionEditor({
           value={question.prompt}
           onChange={(event) =>
             onChange({ ...question, prompt: event.target.value })
+          }
+        />
+      </Field>
+      <Field label="Question audio URL (optional)">
+        <input
+          className={inputClass}
+          value={question.audioUrl || ""}
+          placeholder="/audio/example.m4a or https://…"
+          onChange={(event) =>
+            onChange({
+              ...question,
+              audioUrl: event.target.value || undefined,
+            })
           }
         />
       </Field>
@@ -1522,11 +1543,11 @@ function BlockVariantPreview({
   if (type === "flashcards")
     return (
       <span
-        className={`mt-2 grid gap-1 ${variant === "flip-grid" ? "grid-cols-2" : "grid-cols-1"}`}
+        className={`mt-2 grid gap-1 ${variant === "stack" ? "grid-cols-1" : "grid-cols-2"}`}
         aria-hidden="true"
       >
         <span className="h-7 rounded border border-current/20 bg-current/5" />
-        {variant === "flip-grid" ? (
+        {variant !== "stack" ? (
           <span className="h-7 rounded border border-current/20 bg-current/5" />
         ) : null}
       </span>
@@ -2275,14 +2296,14 @@ function BlockContentFields({
             }
           />
         </Field>
-        {mediaLibrary.some((media) => media.mediaType !== "document") ? (
+        {mediaLibrary.some((media) => !media.mediaType || media.mediaType === "image") ? (
           <div>
             <p className="mb-2 text-[10px] font-black uppercase tracking-[0.13em] text-secondary/45">
               Media library
             </p>
             <div className="grid grid-cols-3 gap-2">
               {mediaLibrary
-                .filter((media) => media.mediaType !== "document")
+                .filter((media) => !media.mediaType || media.mediaType === "image")
                 .slice(0, 12)
                 .map((media) => (
                   <button
@@ -2469,7 +2490,7 @@ function BlockContentFields({
           label={
             block.type === "video"
               ? "YouTube or Vimeo URL"
-              : "Spotify or SoundCloud URL"
+              : "Uploaded MP3/M4A, Spotify, or SoundCloud URL"
           }
         >
           <input
@@ -2480,6 +2501,43 @@ function BlockContentFields({
             }
           />
         </Field>
+        {block.type === "audio" ? (
+          <>
+            <label className="inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-lg bg-primary px-4 text-xs font-black text-white">
+              <Upload size={15} /> Upload MP3 or M4A
+              <input
+                type="file"
+                accept="audio/mpeg,audio/mp4,audio/x-m4a"
+                className="sr-only"
+                onChange={async (event) => {
+                  const file = event.target.files?.[0];
+                  if (!file) return;
+                  const data = new FormData();
+                  data.set("file", file);
+                  const result = await uploadAcademyMedia(data);
+                  if (!result.ok || !result.url) window.alert(result.message);
+                  else onChange({ ...block, url: result.url });
+                  event.target.value = "";
+                }}
+              />
+            </label>
+            {mediaLibrary.some((media) => media.mediaType === "audio") ? (
+              <div className="space-y-2">
+                <p className="text-[10px] font-black uppercase tracking-[0.13em] text-secondary/45">Audio library</p>
+                {mediaLibrary.filter((media) => media.mediaType === "audio").slice(0, 12).map((media) => (
+                  <button
+                    key={media.path}
+                    type="button"
+                    onClick={() => onChange({ ...block, url: media.url })}
+                    className="flex min-h-10 w-full items-center gap-2 rounded-lg border border-secondary/15 px-3 text-left text-xs font-semibold text-secondary hover:border-primary"
+                  >
+                    <Volume2 size={15} className="text-primary" /> {media.name}
+                  </button>
+                ))}
+              </div>
+            ) : null}
+          </>
+        ) : null}
         <Field label="Caption">
           <textarea
             rows={3}
@@ -2558,6 +2616,32 @@ function BlockContentFields({
           question={block.question}
           onChange={(question) => onChange({ ...block, question })}
         />
+      </>
+    );
+  if (block.type === "writing-practice")
+    return (
+      <>
+        <Field label="Heading"><input className={inputClass} value={block.heading || ""} onChange={(event) => onChange({ ...block, heading: event.target.value })} /></Field>
+        <Field label="Prompt"><textarea rows={4} className={textareaClass} value={block.prompt} onChange={(event) => onChange({ ...block, prompt: event.target.value })} /></Field>
+        <div className="grid grid-cols-2 gap-3">
+          <Field label="Minimum words"><input type="number" min={1} className={inputClass} value={block.minWords} onChange={(event) => onChange({ ...block, minWords: Number(event.target.value) })} /></Field>
+          <Field label="Maximum words"><input type="number" min={1} className={inputClass} value={block.maxWords} onChange={(event) => onChange({ ...block, maxWords: Number(event.target.value) })} /></Field>
+        </div>
+        <Field label="Checklist, one item per line"><textarea rows={4} className={textareaClass} value={block.checklist.join("\n")} onChange={(event) => onChange({ ...block, checklist: event.target.value.split("\n").map((item) => item.trim()).filter(Boolean) })} /></Field>
+        <Field label="Model answer"><textarea rows={6} className={textareaClass} value={block.modelAnswer} onChange={(event) => onChange({ ...block, modelAnswer: event.target.value })} /></Field>
+      </>
+    );
+  if (block.type === "speaking-practice")
+    return (
+      <>
+        <Field label="Heading"><input className={inputClass} value={block.heading || ""} onChange={(event) => onChange({ ...block, heading: event.target.value })} /></Field>
+        <Field label="Prompt"><textarea rows={4} className={textareaClass} value={block.prompt} onChange={(event) => onChange({ ...block, prompt: event.target.value })} /></Field>
+        <div className="grid grid-cols-2 gap-3">
+          <Field label="Preparation seconds"><input type="number" min={0} className={inputClass} value={block.preparationSeconds} onChange={(event) => onChange({ ...block, preparationSeconds: Number(event.target.value) })} /></Field>
+          <Field label="Target seconds"><input type="number" min={1} max={180} className={inputClass} value={block.targetSeconds} onChange={(event) => onChange({ ...block, targetSeconds: Number(event.target.value) })} /></Field>
+        </div>
+        <Field label="Checklist, one item per line"><textarea rows={4} className={textareaClass} value={block.checklist.join("\n")} onChange={(event) => onChange({ ...block, checklist: event.target.value.split("\n").map((item) => item.trim()).filter(Boolean) })} /></Field>
+        <Field label="Model response"><textarea rows={6} className={textareaClass} value={block.modelAnswer} onChange={(event) => onChange({ ...block, modelAnswer: event.target.value })} /></Field>
       </>
     );
   if (block.type === "survey")
@@ -2773,7 +2857,8 @@ function BlockContentFields({
         <ItemEditor
           items={block.items as unknown as Array<Record<string, unknown>>}
           onChange={updateItems}
-          kind="standard"
+          kind={block.type === "flashcards" ? "flashcard" : "standard"}
+          mediaLibrary={mediaLibrary}
         />
       </>
     );
@@ -5455,7 +5540,7 @@ function CourseSettingsModal({
               </label>
               <div className="grid grid-cols-3 gap-3">
                 {mediaLibrary
-                  .filter((media) => media.mediaType !== "document")
+                  .filter((media) => !media.mediaType || media.mediaType === "image")
                   .map((media) => (
                     <div
                       key={media.path}

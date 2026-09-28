@@ -535,17 +535,23 @@ export async function uploadAcademyMedia(
       "image/webp",
       "image/gif",
       "application/pdf",
+      "audio/mpeg",
+      "audio/mp4",
+      "audio/x-m4a",
     ]);
     if (!allowed.has(file.type))
-      return { ok: false, message: "Use a JPG, PNG, WebP, GIF, or PDF file." };
+      return { ok: false, message: "Use a JPG, PNG, WebP, GIF, PDF, MP3, or M4A file." };
+    const isAudio = file.type.startsWith("audio/");
     const maxSize =
-      file.type === "application/pdf" ? 20 * 1024 * 1024 : 5 * 1024 * 1024;
+      file.type === "application/pdf" || isAudio
+        ? 20 * 1024 * 1024
+        : 5 * 1024 * 1024;
     if (file.size > maxSize)
       return {
         ok: false,
         message:
-          file.type === "application/pdf"
-            ? "PDFs must be 20 MB or smaller."
+          file.type === "application/pdf" || isAudio
+            ? "PDF and audio files must be 20 MB or smaller."
             : "Images must be 5 MB or smaller.",
       };
     const extension = file.name.split(".").pop()?.toLowerCase() || "jpg";
@@ -559,7 +565,7 @@ export async function uploadAcademyMedia(
     await admin.from("academy_assets").insert({
       storage_path: path,
       public_url: data.publicUrl,
-      media_type: file.type === "application/pdf" ? "document" : "image",
+      media_type: file.type === "application/pdf" ? "document" : isAudio ? "audio" : "image",
       mime_type: file.type,
       original_name: file.name,
       byte_size: file.size,
@@ -570,7 +576,9 @@ export async function uploadAcademyMedia(
       message:
         file.type === "application/pdf"
           ? "Document uploaded."
-          : "Image uploaded.",
+          : isAudio
+            ? "Audio uploaded."
+            : "Image uploaded.",
       url: data.publicUrl,
     };
   } catch (error) {

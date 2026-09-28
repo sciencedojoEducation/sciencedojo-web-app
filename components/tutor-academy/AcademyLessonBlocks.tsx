@@ -13,6 +13,7 @@ import type {
 import AcademyCarousel from "./AcademyCarousel";
 import AcademyRichText from "./AcademyRichText";
 import AcademyMath from "./AcademyMath";
+import AcademyLanguagePractice from "./AcademyLanguagePractice";
 import {
   AcademyAccordion,
   AcademyFlashcards,
@@ -91,9 +92,11 @@ function AcademyMediaCaption({
 export default function AcademyLessonBlocks({
   blocks,
   courseKey,
+  lessonId,
 }: {
   blocks: LessonBlock[];
   courseKey?: string;
+  lessonId?: string;
 }) {
   return (
     <div className="academy-block-stack flex flex-col">
@@ -382,8 +385,9 @@ export default function AcademyLessonBlocks({
               <AcademyFlashcards
                 items={block.items}
                 variant={
-                  block.appearance?.variant === "stack"
-                    ? "stack"
+                  block.appearance?.variant === "stack" ||
+                  block.appearance?.variant === "picture-grid"
+                    ? block.appearance.variant
                     : "flip-grid"
                 }
                 courseKey={courseKey}
@@ -509,6 +513,8 @@ export default function AcademyLessonBlocks({
 
         if (block.type === "video" || block.type === "audio") {
           const embed = getAcademyEmbedUrl(block.type, block.url);
+          const directAudio =
+            block.type === "audio" && isDirectAcademyAudioUrl(block.url);
           return (
             <section key={block.id || blockIndex}>
               {block.heading ? (
@@ -516,7 +522,16 @@ export default function AcademyLessonBlocks({
                   {block.heading}
                 </h2>
               ) : null}
-              {embed ? (
+              {directAudio ? (
+                <audio
+                  controls
+                  preload="metadata"
+                  className="w-full"
+                  src={block.url}
+                >
+                  Ihr Browser unterstützt die Audiowiedergabe nicht.
+                </audio>
+              ) : embed ? (
                 <iframe
                   src={embed}
                   title={block.heading || `${block.type} content`}
@@ -619,6 +634,17 @@ export default function AcademyLessonBlocks({
                 completion={block.completion}
               />
             </section>
+          );
+        }
+
+        if (block.type === "writing-practice" || block.type === "speaking-practice") {
+          return (
+            <AcademyLanguagePractice
+              key={block.id || blockIndex}
+              block={block}
+              courseKey={courseKey}
+              lessonId={lessonId}
+            />
           );
         }
 
@@ -735,4 +761,14 @@ function getAcademyEmbedUrl(type: "video" | "audio", value: string) {
     return null;
   }
   return null;
+}
+
+function isDirectAcademyAudioUrl(value: string) {
+  if (value.startsWith("/")) return true;
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:" && /\.(mp3|m4a|mp4)$/i.test(url.pathname);
+  } catch {
+    return false;
+  }
 }

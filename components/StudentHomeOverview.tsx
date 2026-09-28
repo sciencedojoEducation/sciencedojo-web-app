@@ -67,7 +67,7 @@ export default function StudentHomeOverview({
         ))}
       </section>
 
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1.5fr)_minmax(18rem,1fr)]">
+      <div className="grid min-w-0 grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1.5fr)_minmax(18rem,1fr)]">
         <section aria-labelledby="student-continue-title" className="relative flex min-h-[17rem] flex-col overflow-hidden rounded-[1.4rem] border border-[var(--student-line)] bg-[var(--student-surface)] p-5 sm:p-7">
           <div className="student-home-glow pointer-events-none absolute -right-10 -top-16 h-52 w-52 rounded-full" aria-hidden="true" />
           <h2 className="text-lg font-semibold tracking-tight text-[var(--student-ink)]">{action.sectionLabel || "Continue learning"}</h2>
@@ -101,7 +101,7 @@ export default function StudentHomeOverview({
                 <Link href={item.href} className="group flex min-h-[4.2rem] items-center gap-3 py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--student-accent)]">
                   <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${["bg-[#eaf3ff] text-[#2867b7]", "bg-[#e8f8ee] text-[#16804d]", "bg-[#f0edff] text-[#6955ba]"][index % 3]}`}>{index + 1}</span>
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate text-sm font-medium text-[var(--student-ink-soft)] group-hover:text-[var(--student-accent-hover)]">{item.title}</span>
+                    <span className="block break-words text-sm font-medium leading-5 text-[var(--student-ink-soft)] group-hover:text-[var(--student-accent-hover)]">{item.title}</span>
                     <span className="block truncate text-xs text-[var(--student-muted-soft)]">{item.detail}</span>
                   </span>
                   <ArrowRight className="h-4 w-4 shrink-0 text-[var(--student-muted-soft)] group-hover:text-[var(--student-accent-hover)]" aria-hidden="true" />
@@ -124,7 +124,7 @@ export default function StudentHomeOverview({
             </div>
             <Link href="/dashboard/classes" className="inline-flex min-h-10 items-center gap-1.5 text-sm font-medium text-[var(--student-accent)] hover:text-[var(--student-accent-hover)]">Open classes <ArrowRight className="h-4 w-4" aria-hidden="true" /></Link>
           </div>
-          <div className="mt-5 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="mt-5 grid min-w-0 grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
             {subjects.map((subject) => {
               const { Icon, color } = getSubjectVisual(subject.name);
               return (

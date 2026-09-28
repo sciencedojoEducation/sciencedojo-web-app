@@ -9,6 +9,7 @@ export default function SeoConversionCtas({ enabled }: { enabled: boolean }) {
   const pathname = usePathname();
   // Assume hero is visible on first render to avoid a flash on the homepage.
   const [heroVisible, setHeroVisible] = useState(true);
+  const [onTutorDirectory, setOnTutorDirectory] = useState(false);
   const hiddenPrefixes = [
     "/dashboard",
     "/support/tutors",
@@ -18,10 +19,15 @@ export default function SeoConversionCtas({ enabled }: { enabled: boolean }) {
     "/signup",
     "/reset-password",
     "/forgot-password",
+    "/free-assessment",
     "/maintenance",
     "/ai-practice-studio",
     "/ai-question-generator",
   ];
+
+  useEffect(() => {
+    setOnTutorDirectory(pathname === "/find-tutors");
+  }, [pathname]);
 
   useEffect(() => {
     const hero = document.getElementById("hero");
@@ -39,7 +45,7 @@ export default function SeoConversionCtas({ enabled }: { enabled: boolean }) {
     return () => observer.disconnect();
   }, [pathname]);
 
-  if (!enabled || hiddenPrefixes.some((prefix) => pathname.startsWith(prefix))) {
+  if (!enabled || pathname === "/" || onTutorDirectory || hiddenPrefixes.some((prefix) => pathname.startsWith(prefix))) {
     return null;
   }
 

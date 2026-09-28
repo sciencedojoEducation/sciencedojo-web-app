@@ -49,6 +49,21 @@ describe("curriculum-aware education taxonomy", () => {
     assert.equal(result.snapshot?.specificationVersionId, null);
   });
 
+  test("accepts a known curriculum with an unknown stage for assessment follow-up", () => {
+    const result = buildEducationSelectionSnapshot({
+      curriculumKey: "england",
+      stage: "not_sure",
+      subject: "Mathematics",
+      subjectVariant: "mathematics",
+    });
+    assert.equal(result.error, null);
+    assert.equal(result.snapshot?.curriculumKey, "england");
+    assert.equal(result.snapshot?.stage, null);
+    assert.equal(result.snapshot?.intakeStatus, "needs_clarification");
+    assert.deepEqual(result.snapshot?.missingFields, ["stage"]);
+    assert.equal(result.snapshot?.specificationVersionId, null);
+  });
+
   test("uses the assessment year when resolving a specification version", () => {
     const id = resolveSpecificationVersion({
       curriculumKey: "england",

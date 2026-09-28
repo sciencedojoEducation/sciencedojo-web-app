@@ -249,7 +249,7 @@ export default async function UserDashboardPage({
         </div>
       )}
 
-      <section aria-label="Your study tools" className="grid gap-4 lg:grid-cols-[minmax(0,1.5fr)_minmax(17rem,1fr)]">
+      <section aria-label="Your study tools" className="grid min-w-0 grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1.5fr)_minmax(17rem,1fr)]">
         <HomePrimaryAction
           eyebrow="Your study space"
           title="FocusDojo"
@@ -271,7 +271,7 @@ export default async function UserDashboardPage({
 
       <section aria-label="Your plan and account">
         <HomeSectionHeading eyebrow="Account" title="Plan and access" description="Your current access and account details, in one place." />
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid min-w-0 grid-cols-1 gap-4 md:grid-cols-2">
         <div id="user-subscription" className="home-surface scroll-mt-6 sm:p-6">
           <p className="home-eyebrow">Subscription</p>
           <h3 className="home-section-title">{accessLabel}</h3>

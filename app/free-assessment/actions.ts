@@ -3,7 +3,7 @@
 import { sendEmail } from "@/lib/email";
 import { getMentorAttributionFromCookies, isAttributionSchemaError, markMentorLeadConverted } from "@/lib/mentor-attribution";
 import { createAdminClient } from "@/utils/supabase/server";
-import { buildEducationSelectionSnapshot, getEducationLabel } from "@/lib/educationTaxonomy";
+import { buildEducationSelectionSnapshot, getEducationLabel, uncertainEducationOption } from "@/lib/educationTaxonomy";
 
 export type AssessmentFormState = {
   status: "idle" | "success" | "error";
@@ -11,12 +11,6 @@ export type AssessmentFormState = {
   fallbackText?: string;
   mailtoHref?: string;
   whatsappHref?: string;
-  summary?: {
-    confidenceAreas: string[];
-    supportAreas: string[];
-    recommendedDirection: string;
-    nextSteps: string[];
-  };
 };
 
 const recipientEmail = process.env.ASSESSMENT_RECIPIENT_EMAIL || "hello@sciencedojo.co.uk";
@@ -63,7 +57,7 @@ function buildFallbackMessage(fields: Record<string, string>) {
 
 function buildStructuredLeadNotes(fields: Record<string, string>) {
   return [
-    "Premium assessment intake profile",
+    "Free assessment request",
     "",
     "Student Profile",
     `Student: ${fields.studentName || "Not specified"} (${fields.studentYear || "Not specified"})`,
@@ -98,35 +92,6 @@ function buildStructuredLeadNotes(fields: Record<string, string>) {
   ].join("\n");
 }
 
-function buildAssessmentSummary(fields: Record<string, string>): AssessmentFormState["summary"] {
-  const subject = fields.subject || "STEM";
-  const curriculum = fields.curriculum || "curriculum";
-  const focus = (fields.hardestAreas || fields.challenge || "confidence and understanding")
-    .split(",")
-    .map((item) => item.trim())
-    .filter(Boolean)[0] || "confidence and understanding";
-  const supportAreas = [
-    fields.subject,
-    fields.hardestAreas,
-    fields.studyConcerns,
-    fields.supportStyle,
-  ]
-    .filter(Boolean)
-    .flatMap((value) => value.split(",").map((item) => item.trim()).filter(Boolean))
-    .slice(0, 5);
-
-  return {
-    confidenceAreas: [fields.hardestAreas, fields.challenge].filter(Boolean),
-    supportAreas: supportAreas.length > 0 ? supportAreas : ["Confidence", "Structured practice", "Tutor guidance"],
-    recommendedDirection: `Structured ${curriculum} ${subject} support focused on ${focus.toLowerCase()}.`,
-    nextSteps: [
-      "Review the intake before the assessment call",
-      "Discuss confidence, subject gaps, and exam timeline",
-      "Recommend a suitable tutor and learning support rhythm",
-    ],
-  };
-}
-
 export async function requestFreeAssessment(
   _previousState: AssessmentFormState,
   formData: FormData,
@@ -137,8 +102,8 @@ export async function requestFreeAssessment(
     whatsapp: clean(formData.get("whatsapp")),
     studentName: clean(formData.get("studentName")),
     studentYear: clean(formData.get("studentYear")),
-    curriculumKey: clean(formData.get("curriculumKey")),
-    stage: clean(formData.get("stage")),
+    curriculumKey: clean(formData.get("curriculumKey")) || uncertainEducationOption,
+    stage: clean(formData.get("stage")) || uncertainEducationOption,
     awardingBodyKey: clean(formData.get("awardingBodyKey")),
     level: clean(formData.get("level")),
     subject: clean(formData.get("subject")),
@@ -158,6 +123,29 @@ export async function requestFreeAssessment(
     message: clean(formData.get("message")),
   };
 
+  const requiredFields = [
+    fields.parentName,
+    fields.email,
+    fields.studentName,
+    fields.studentYear,
+    fields.subject,
+    fields.challenge,
+  ];
+
+  if (requiredFields.some((field) => !field)) {
+    return {
+      status: "error",
+      message: "Please complete the required fields so we can review your request.",
+    };
+  }
+
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(fields.email)) {
+    return {
+      status: "error",
+      message: "Please enter a valid email address.",
+    };
+  }
+
   const educationResult = buildEducationSelectionSnapshot({
     curriculumKey: fields.curriculumKey,
     stage: fields.stage,
@@ -169,7 +157,7 @@ export async function requestFreeAssessment(
     topic: fields.topic,
     subtopic: fields.subtopic,
     assessmentDate: fields.upcomingExams,
-  }, { topicRequired: true });
+  }, { topicRequired: false });
   if (!educationResult.snapshot) return { status: "error", message: educationResult.error || "Choose a valid education route." };
 
   const curriculum = getEducationLabel("curriculum", fields.curriculumKey);
@@ -177,36 +165,8 @@ export async function requestFreeAssessment(
   const boardLabel = fields.awardingBodyKey ? getEducationLabel("awardingBody", fields.awardingBodyKey) : "Not applicable";
   const displayFields: Record<string, string> = { ...fields, curriculum, stageLabel, boardLabel };
 
-  const requiredFields = [
-    fields.parentName,
-    fields.email,
-    fields.whatsapp,
-    fields.studentName,
-    fields.studentYear,
-    fields.curriculumKey,
-    fields.stage,
-    fields.subject,
-    fields.topic,
-    fields.preferredTime,
-  ];
-
-  if (requiredFields.some((field) => !field)) {
-    return {
-      status: "error",
-      message: "Please complete the required fields so we can recommend the right tutoring plan.",
-    };
-  }
-
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(fields.email)) {
-    return {
-      status: "error",
-      message: "Please enter a valid email address.",
-    };
-  }
-
   const fallbackText = buildFallbackMessage(displayFields);
   const structuredLeadNotes = buildStructuredLeadNotes(displayFields);
-  const assessmentSummary = buildAssessmentSummary(displayFields);
   const mailtoHref = `mailto:${recipientEmail}?subject=${encodeURIComponent("Free assessment request")}&body=${encodeURIComponent(fallbackText)}`;
   const whatsappNumber = (process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "+94773850821").replace(/[^\d]/g, "");
   const whatsappHref = whatsappNumber ? `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(fallbackText)}` : undefined;
@@ -214,12 +174,12 @@ export async function requestFreeAssessment(
   const html = `
     <div style="font-family: Arial, sans-serif; max-width: 680px; margin: 0 auto; color: #0f172a;">
       <h1 style="color: #1E5AA8;">New Free Assessment Request</h1>
-      <p>A parent has requested a free 30-minute ScienceDojo learning assessment.</p>
+      <p>A parent has requested a free ScienceDojo learning assessment conversation.</p>
       <table style="width: 100%; border-collapse: collapse;">
         ${Object.entries({
           "Parent name": fields.parentName,
           Email: fields.email,
-          "WhatsApp number": fields.whatsapp,
+          "WhatsApp number": fields.whatsapp || "Not provided",
           "Student name": fields.studentName,
           "Student year/grade": fields.studentYear,
           "Curriculum pathway": curriculum,
@@ -236,7 +196,7 @@ export async function requestFreeAssessment(
           "Study habits and concerns": fields.studyConcerns || "Not specified.",
           "Successful next few months": fields.goalsTimeline || "Not specified.",
           "Preferred support style": fields.supportStyle || "Not specified.",
-          "Preferred assessment time": fields.preferredTime,
+          "Preferred assessment time": fields.preferredTime || "Not provided",
           Message: fields.message || "No extra message provided.",
         })
           .map(
@@ -259,14 +219,14 @@ export async function requestFreeAssessment(
     const leadPayload = {
       parent_name: fields.parentName,
       email: fields.email.toLowerCase(),
-      whatsapp_number: fields.whatsapp,
+      whatsapp_number: fields.whatsapp || null,
       student_name: fields.studentName,
       student_grade: fields.studentYear,
       curriculum,
       subject_needed: fields.subject,
       learning_context: educationResult.snapshot,
       main_challenge: fields.challenge || fields.hardestAreas || "Assessment intake completed",
-      preferred_time: fields.preferredTime,
+      preferred_time: fields.preferredTime || null,
       message: structuredLeadNotes,
       status: "new_inquiry",
       source: attribution.acquisitionSource === "mentor_profile" ? "mentor_profile_learning_check" : "free_assessment_page",
@@ -340,20 +300,18 @@ export async function requestFreeAssessment(
   if (!result.success) {
     return {
       status: "success",
-      message: "Thank you. ScienceDojo received your request. The email notification did not send, but your lead was saved for follow-up.",
+      message: "Thank you. ScienceDojo received your request. We will contact you by email about a free conversation.",
       fallbackText,
       mailtoHref,
       whatsappHref,
-      summary: assessmentSummary,
     };
   }
 
   return {
     status: "success",
-    message: "Thank you. Your assessment intake has been received. We will review it before the call so the conversation can focus on the right support for your child.",
+    message: "Thank you. We will review your request and contact you by email to arrange a free conversation.",
     fallbackText,
     mailtoHref,
     whatsappHref,
-    summary: assessmentSummary,
   };
 }

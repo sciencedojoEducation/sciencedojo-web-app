@@ -18,18 +18,38 @@ export default function AcademyCourseCover({
     course.heroImage || "/images/home/8.professional-online-teacher.jpg";
   const usesImage = theme.coverStyle !== "minimal";
   const overlaysImage = theme.coverStyle === "full-image";
+  const splitImage = theme.coverStyle === "split-image";
   const journey = theme.preset === "journey";
 
   return (
     <section
+      style={
+        splitImage
+          ? {
+              backgroundImage:
+                "linear-gradient(135deg, #eaf3fa 0%, #dfecf5 54%, #f3e8d3 100%)",
+              boxShadow: "0 20px 50px -34px rgba(15, 42, 70, 0.62)",
+            }
+          : undefined
+      }
       className={`relative overflow-hidden ${
-        theme.coverStyle === "split-image"
-          ? "grid min-h-[550px] md:grid-cols-2"
+        splitImage
+          ? "grid min-h-[550px] border-b border-slate-300 md:grid-cols-2"
           : theme.coverStyle === "minimal"
             ? "flex min-h-[460px] items-end bg-[var(--academy-accent-soft)]"
             : "flex min-h-[460px] items-end bg-slate-900 sm:min-h-[550px]"
       }`}
     >
+      {splitImage ? (
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 overflow-hidden md:right-1/2"
+        >
+          <span className="absolute -left-24 -top-32 h-80 w-80 rounded-full bg-[var(--academy-accent)] opacity-[0.09] blur-3xl" />
+          <span className="absolute -bottom-32 left-[42%] h-72 w-72 rounded-full bg-[var(--academy-spark)] opacity-25 blur-3xl" />
+          <span className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-[var(--academy-accent)]/25 to-transparent" />
+        </div>
+      ) : null}
       {usesImage ? (
         <div
           className={
@@ -46,6 +66,12 @@ export default function AcademyCourseCover({
             sizes="100vw"
             className="object-cover"
           />
+          {splitImage ? (
+            <div
+              aria-hidden="true"
+              className="absolute inset-y-0 left-0 hidden w-16 bg-gradient-to-r from-[#EEF5FA] to-transparent md:block"
+            />
+          ) : null}
         </div>
       ) : null}
       {overlaysImage ? (
@@ -53,7 +79,7 @@ export default function AcademyCourseCover({
       ) : null}
       <div
         className={`relative w-full px-6 pb-16 pt-24 sm:px-10 ${
-          theme.coverStyle === "split-image"
+          splitImage
             ? "md:col-start-1 md:row-start-1 md:flex md:items-end md:px-16"
             : "mx-auto max-w-[1100px]"
         }`}
@@ -88,6 +114,12 @@ export default function AcademyCourseCover({
           ) : null}
         </div>
       </div>
+      {splitImage ? (
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-x-0 bottom-0 z-20 h-1 bg-gradient-to-r from-[var(--academy-accent)] via-[var(--academy-spark)] to-transparent opacity-55"
+        />
+      ) : null}
     </section>
   );
 }

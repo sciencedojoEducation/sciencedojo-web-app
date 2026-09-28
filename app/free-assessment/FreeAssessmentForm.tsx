@@ -1,467 +1,352 @@
 "use client";
 
-import { useActionState, useEffect, useMemo, useRef, useState } from "react";
-import { trackEvent } from "@/lib/analytics";
-import EducationPathwayFields, { type EducationPathwayValue } from "@/components/EducationPathwayFields";
-import { uncertainEducationOption } from "@/lib/educationTaxonomy";
+import { useActionState, useEffect, useRef, useState } from "react";
+import { ArrowLeft, ArrowRight, Check } from "lucide-react";
+import { getDeviceCategory, trackEvent } from "@/lib/analytics";
+import {
+  awardingBodies,
+  curriculumPathways,
+  getAwardingBodiesForSelection,
+  getDerivedAwardingBody,
+  getLevelsForEducationSelection,
+  getStagesForCurriculum,
+  getSubjectVariants,
+  getSubjectsForEducationSelection,
+  getTopicsForSubject,
+  uncertainEducationOption,
+} from "@/lib/educationTaxonomy";
 import { requestFreeAssessment, type AssessmentFormState } from "./actions";
 
-const initialState: AssessmentFormState = {
-  status: "idle",
-  message: "",
-};
+const initialState: AssessmentFormState = { status: "idle", message: "" };
+const fieldClass = "mt-2 min-h-12 w-full rounded-xl border border-secondary/15 bg-[#f8fbff] px-4 py-3 text-sm font-semibold text-secondary outline-none focus:border-primary focus:bg-white focus:ring-4 focus:ring-primary/10";
+const subjectOptions = getSubjectsForEducationSelection(uncertainEducationOption, uncertainEducationOption);
 
-const steps = [
-  {
-    title: "Student Profile",
-    eyebrow: "Step 1 of 6",
-    microcopy: "Start with the essentials. There are no perfect answers here.",
-  },
-  {
-    title: "Subject & Goals",
-    eyebrow: "Step 2 of 6",
-    microcopy: "This helps us understand the academic route and the result your child is working toward.",
-  },
-  {
-    title: "Confidence & Gaps",
-    eyebrow: "Step 3 of 6",
-    microcopy: "Confidence often tells us more than a mark on a test.",
-  },
-  {
-    title: "Study Habits & Concerns",
-    eyebrow: "Step 4 of 6",
-    microcopy: "Tell us what you are noticing at home, not just what appears on reports.",
-  },
-  {
-    title: "Support Style",
-    eyebrow: "Step 5 of 6",
-    microcopy: "A good tutor fit is about temperament as much as subject knowledge.",
-  },
-  {
-    title: "Contact & Assessment Time",
-    eyebrow: "Step 6 of 6",
-    microcopy: "We will use this only to arrange the assessment and next step.",
-  },
-] as const;
-
-type IntakeValues = EducationPathwayValue & {
+type Values = {
+  studentName: string;
+  studentYear: string;
+  subject: string;
+  challenge: string;
   parentName: string;
   email: string;
   whatsapp: string;
-  studentName: string;
-  studentYear: string;
-  weakTopics: string;
-  subtopic: string;
-  targetGrade: string;
-  upcomingExams: string;
-  hardestAreas: string[];
-  challenge: string;
-  studyConcerns: string[];
-  goalsTimeline: string;
-  supportStyle: string;
   preferredTime: string;
-  message: string;
+  curriculumKey: string;
+  stage: string;
+  awardingBodyKey: string;
+  subjectVariant: string;
+  level: string;
+  topic: string;
+  goalsTimeline: string;
 };
 
-const defaultValues: IntakeValues = {
+const initialValues: Values = {
+  studentName: "",
+  studentYear: "",
+  subject: "",
+  challenge: "",
   parentName: "",
   email: "",
   whatsapp: "",
-  studentName: "",
-  studentYear: "",
+  preferredTime: "",
   curriculumKey: uncertainEducationOption,
   stage: uncertainEducationOption,
   awardingBodyKey: "",
-  subject: "",
   subjectVariant: "",
   level: "",
   topic: "",
-  specificationCode: "",
-  weakTopics: "",
-  subtopic: "",
-  targetGrade: "",
-  upcomingExams: "",
-  hardestAreas: [],
-  challenge: "",
-  studyConcerns: [],
   goalsTimeline: "",
-  supportStyle: "",
-  preferredTime: "",
-  message: "",
 };
 
-const hardestAreaOptions = ["Understanding concepts", "Applying ideas in exam questions", "Remembering content", "Exam timing", "Explaining answers clearly", "Staying consistent"];
-const studyConcernOptions = ["Loses motivation", "Revises but forgets", "Avoids difficult topics", "Panics before tests", "Lacks structure", "Needs accountability"];
-const supportStyleOptions = ["Calm explanation and confidence rebuilding", "Exam-focused practice", "Structured weekly accountability", "Topic-by-topic catch-up", "Stretch and challenge", "Not sure yet"];
-
-function updateArrayValue(current: string[], value: string) {
-  return current.includes(value) ? current.filter((item) => item !== value) : [...current, value];
-}
-
-function TextField({
-  label,
-  value,
-  onChange,
-  type = "text",
-  placeholder,
-}: {
-  label: string;
-  value: string;
-  onChange: (value: string) => void;
-  type?: string;
-  placeholder?: string;
-}) {
-  return (
-    <label className="flex flex-col gap-2 text-sm font-black text-secondary">
-      {label}
-      <input
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        type={type}
-        placeholder={placeholder}
-        className="min-h-13 rounded-2xl border border-secondary/15 bg-[#f4f7fb] px-4 py-3.5 font-bold outline-none transition-colors placeholder:text-secondary/40 hover:border-secondary/25 focus:border-primary focus:bg-white focus:ring-4 focus:ring-primary/15"
-      />
-    </label>
-  );
-}
-
-function TextAreaField({
-  label,
-  value,
-  onChange,
-  placeholder,
-}: {
-  label: string;
-  value: string;
-  onChange: (value: string) => void;
-  placeholder?: string;
-}) {
-  return (
-    <label className="flex flex-col gap-2 text-sm font-black text-secondary">
-      {label}
-      <textarea
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        rows={4}
-        placeholder={placeholder}
-        className="resize-none rounded-2xl border border-secondary/15 bg-[#f4f7fb] px-4 py-3.5 font-bold leading-7 outline-none transition-colors placeholder:text-secondary/40 hover:border-secondary/25 focus:border-primary focus:bg-white focus:ring-4 focus:ring-primary/15"
-      />
-    </label>
-  );
-}
-
-function OptionGrid({
-  options,
-  selected,
-  onToggle,
-  multi = true,
-}: {
-  options: string[];
-  selected: string | string[];
-  onToggle: (value: string) => void;
-  multi?: boolean;
-}) {
-  return (
-    <div>
-      {multi && <p className="mb-3 text-xs font-bold text-secondary/55">Select all that apply</p>}
-      <div className="grid gap-3 sm:grid-cols-2">
-        {options.map((option) => {
-          const isSelected = Array.isArray(selected) ? selected.includes(option) : selected === option;
-          return (
-            <button
-              key={option}
-              type="button"
-              aria-pressed={isSelected}
-              onClick={() => onToggle(option)}
-              className={`flex min-h-14 items-center rounded-2xl border px-4 py-3 text-left text-sm font-black leading-6 transition-all focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20 focus-visible:ring-offset-2 ${
-                isSelected
-                  ? "border-primary bg-primary text-white shadow-md shadow-primary/20 hover:bg-primary-hover"
-                  : "border-secondary/15 bg-[#f4f7fb] text-secondary/80 shadow-sm hover:border-primary/40 hover:bg-primary/5 hover:text-secondary"
-              }`}
-            >
-              <span
-                aria-hidden="true"
-                className={`mr-3 flex size-5 shrink-0 items-center justify-center rounded-full border text-[0.7rem] leading-none ${
-                  isSelected ? "border-white/80 bg-white/15 text-white" : "border-primary/45 bg-white text-transparent"
-                }`}
-              >
-                ✓
-              </span>
-              <span>{option}</span>
-            </button>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
+type FieldKey = keyof Values;
+type FieldErrors = Partial<Record<FieldKey, string>>;
 
 export default function FreeAssessmentForm() {
   const [state, formAction, isPending] = useActionState(requestFreeAssessment, initialState);
   const [step, setStep] = useState(0);
-  const [values, setValues] = useState<IntakeValues>(defaultValues);
-  const hasStartedRef = useRef(false);
+  const [values, setValues] = useState<Values>(initialValues);
+  const [errors, setErrors] = useState<FieldErrors>({});
+  const formRef = useRef<HTMLFormElement>(null);
+  const errorRef = useRef<HTMLDivElement>(null);
   const lastTrackedMessageRef = useRef("");
-  const currentStep = steps[step];
+  const startedRef = useRef(false);
 
-  const progress = useMemo(() => Math.round(((step + 1) / steps.length) * 100), [step]);
+  const stages = getStagesForCurriculum(values.curriculumKey);
+  const boards = getAwardingBodiesForSelection(values.curriculumKey, values.stage);
+  const variants = getSubjectVariants(values.subject, values.curriculumKey, values.stage);
+  const levels = getLevelsForEducationSelection(values.curriculumKey, values.stage, values.subject);
+  const topics = values.subject ? getTopicsForSubject(values.subject) : [];
 
   useEffect(() => {
-    if (!state.message || state.message === lastTrackedMessageRef.current) {
-      return;
-    }
+    trackEvent("free_assessment_step_view", { step: step + 1, total_steps: 2, device_category: getDeviceCategory() });
+  }, [step]);
 
+  useEffect(() => {
+    if (!state.message || state.message === lastTrackedMessageRef.current) return;
     lastTrackedMessageRef.current = state.message;
     trackEvent(state.status === "success" ? "free_assessment_submit_success" : "free_assessment_submit_error", {
       source: "free_assessment_page",
-      subject: values.subject,
-      curriculum: values.curriculumKey,
+      device_category: getDeviceCategory(),
     });
-  }, [state.message, state.status, values.curriculumKey, values.subject]);
+    if (state.status === "error") errorRef.current?.focus();
+  }, [state.message, state.status]);
 
-  const updateValue = <K extends keyof IntakeValues>(key: K, value: IntakeValues[K]) => {
+  function start() {
+    if (startedRef.current) return;
+    startedRef.current = true;
+    trackEvent("free_assessment_start", { source: "free_assessment_page", device_category: getDeviceCategory() });
+  }
+
+  function update<K extends FieldKey>(key: K, value: Values[K]) {
+    start();
     setValues((current) => ({ ...current, [key]: value }));
-    handleStart();
-  };
+    setErrors((current) => ({ ...current, [key]: undefined }));
+  }
 
-  const handleStart = () => {
-    if (hasStartedRef.current) {
+  function changeSubject(subject: string) {
+    start();
+    setValues((current) => ({
+      ...current,
+      subject,
+      topic: "",
+      subjectVariant: getSubjectVariants(subject, current.curriculumKey, current.stage)[0]?.key || "",
+      level: getLevelsForEducationSelection(current.curriculumKey, current.stage, subject)[0]?.key || "",
+    }));
+    setErrors((current) => ({ ...current, subject: undefined }));
+  }
+
+  function changeCurriculum(curriculumKey: string) {
+    start();
+    const stage = uncertainEducationOption;
+    setValues((current) => ({
+      ...current,
+      curriculumKey,
+      stage,
+      awardingBodyKey: "",
+      subjectVariant: getSubjectVariants(current.subject, curriculumKey, stage)[0]?.key || "",
+      level: "",
+    }));
+    setErrors((current) => ({ ...current, stage: undefined }));
+  }
+
+  function changeStage(stage: string) {
+    start();
+    const board = getDerivedAwardingBody(values.curriculumKey, stage);
+    setValues((current) => ({
+      ...current,
+      stage,
+      awardingBodyKey: board || (getAwardingBodiesForSelection(current.curriculumKey, stage).length ? uncertainEducationOption : ""),
+      subjectVariant: getSubjectVariants(current.subject, current.curriculumKey, stage)[0]?.key || "",
+      level: getLevelsForEducationSelection(current.curriculumKey, stage, current.subject)[0]?.key || "",
+    }));
+    setErrors((current) => ({ ...current, stage: undefined }));
+  }
+
+  function validateCurrentStep(): FieldErrors {
+    const next: FieldErrors = {};
+    if (step === 0) {
+      if (!values.studentName.trim()) next.studentName = "Enter your child's first name.";
+      if (!values.studentYear.trim()) next.studentYear = "Enter your child's year or grade.";
+      if (!values.subject) next.subject = "Choose a subject.";
+      if (!values.challenge.trim()) next.challenge = "Tell us briefly what feels difficult.";
+      if (values.subject && values.stage !== uncertainEducationOption && values.curriculumKey !== uncertainEducationOption) {
+        const choices = getSubjectsForEducationSelection(values.curriculumKey, values.stage, values.awardingBodyKey);
+        if (!choices.includes(values.subject)) next.subject = "Choose a subject available for this curriculum route, or select “I’m not sure” for curriculum.";
+      }
+    } else {
+      if (!values.parentName.trim()) next.parentName = "Enter your name.";
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email.trim())) next.email = "Enter a valid email address.";
+    }
+    return next;
+  }
+
+  function focusFirstError(next: FieldErrors) {
+    const first = Object.keys(next)[0];
+    if (first) window.requestAnimationFrame(() => document.getElementById(`assessment-${first}`)?.focus());
+  }
+
+  function continueToContact(event: React.MouseEvent<HTMLButtonElement>) {
+    event.preventDefault();
+    const next = validateCurrentStep();
+    setErrors(next);
+    if (Object.keys(next).length) {
+      focusFirstError(next);
       return;
     }
+    trackEvent("free_assessment_step_complete", { step: 1, total_steps: 2, device_category: getDeviceCategory() });
+    setErrors({});
+    setStep(1);
+    const behavior = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth";
+    formRef.current?.scrollIntoView({ behavior, block: "start" });
+    window.requestAnimationFrame(() => document.getElementById("assessment-parentName")?.focus());
+  }
 
-    hasStartedRef.current = true;
-    trackEvent("free_assessment_start", {
-      source: "free_assessment_page",
-    });
-  };
+  function backToStudent() {
+    setErrors({});
+    setStep(0);
+    window.requestAnimationFrame(() => document.getElementById("assessment-studentName")?.focus());
+  }
 
-  const handleSubmitCapture = () => {
-    trackEvent("free_assessment_submit_attempt", {
-      source: "free_assessment_page",
-      subject: values.subject,
-      curriculum: values.curriculumKey,
-    });
-  };
+  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    const next = validateCurrentStep();
+    setErrors(next);
+    if (Object.keys(next).length) {
+      event.preventDefault();
+      focusFirstError(next);
+      return;
+    }
+    trackEvent("free_assessment_step_complete", { step: 2, total_steps: 2, device_category: getDeviceCategory() });
+    trackEvent("free_assessment_submit_attempt", { source: "free_assessment_page", device_category: getDeviceCategory() });
+  }
 
   if (state.status === "success") {
     return (
-      <section className="rounded-[2rem] border border-primary/10 bg-white p-6 shadow-xl shadow-secondary/5 md:p-9">
-        <div className="rounded-[1.75rem] bg-[linear-gradient(135deg,#06172f,#0a4d95)] p-7 text-white">
-          <p className="text-xs font-black uppercase tracking-[0.24em] text-cyan-100/70">Assessment request received</p>
-          <h2 className="mt-4 text-3xl font-black tracking-tight md:text-4xl">We have enough to begin thoughtfully.</h2>
-          <p className="mt-4 leading-7 text-white/70">
-            {state.message}
-          </p>
-        </div>
-
-        {state.summary && (
-          <div className="mt-7 grid gap-5 lg:grid-cols-[0.95fr_1.05fr]">
-            <div className="rounded-3xl border border-secondary/10 bg-surface p-6">
-              <p className="text-xs font-black uppercase tracking-[0.2em] text-primary">Recommended support direction</p>
-              <h3 className="mt-3 text-2xl font-black leading-tight text-secondary">{state.summary.recommendedDirection}</h3>
-              <p className="mt-4 text-sm font-bold leading-7 text-secondary/58">
-                This is not a final diagnosis. It gives the assessment call a clearer starting point.
-              </p>
-            </div>
-            <div className="grid gap-4">
-              <div className="rounded-3xl border border-secondary/10 bg-white p-5">
-                <p className="text-xs font-black uppercase tracking-[0.18em] text-secondary/35">Support areas</p>
-                <div className="mt-3 flex flex-wrap gap-2">
-                  {state.summary.supportAreas.map((area) => (
-                    <span key={area} className="rounded-full bg-primary/10 px-3 py-1.5 text-xs font-black text-primary">
-                      {area}
-                    </span>
-                  ))}
-                </div>
-              </div>
-              <div className="rounded-3xl border border-secondary/10 bg-white p-5">
-                <p className="text-xs font-black uppercase tracking-[0.18em] text-secondary/35">Likely next steps</p>
-                <ul className="mt-3 grid gap-2">
-                  {state.summary.nextSteps.map((item) => (
-                    <li key={item} className="flex gap-2 text-sm font-bold leading-6 text-secondary/60">
-                      <span className="text-primary">✓</span>
-                      {item}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-          </div>
-        )}
+      <section className="rounded-[1.75rem] border border-primary/10 bg-white p-7 shadow-[0_24px_70px_rgba(18,59,95,.09)] md:p-10" aria-live="polite">
+        <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#e5f5ee] text-[#16734c]" aria-hidden="true"><Check className="h-7 w-7" /></div>
+        <p className="mt-5 text-sm font-bold text-primary">Assessment request received</p>
+        <h2 className="mt-3 text-3xl font-black tracking-tight text-secondary">Thank you. We&apos;ll take it from here.</h2>
+        <p className="mt-4 max-w-2xl leading-7 text-secondary/70">We&apos;ll review what you shared and contact you by email to arrange a free assessment conversation. You can tell us more about curriculum details and goals when we talk.</p>
       </section>
     );
   }
 
   return (
-    <form action={formAction} onSubmitCapture={handleSubmitCapture} onChange={handleStart} onFocus={handleStart} className="rounded-[2rem] border border-secondary/10 bg-white p-6 shadow-xl shadow-secondary/5 md:p-9">
-      <div className="mb-8">
-        <div className="flex items-center justify-between gap-4">
-          <p className="text-xs font-black uppercase tracking-[0.22em] text-primary">{currentStep.eyebrow}</p>
-          <p className="text-xs font-black text-secondary/35">{progress}%</p>
+    <form ref={formRef} action={formAction} onSubmit={handleSubmit} onChange={start} onFocus={start} noValidate className="scroll-mt-28 rounded-[1.75rem] border border-[#dce8f2] bg-white p-5 shadow-[0_24px_70px_rgba(18,59,95,.09)] sm:p-7 md:p-9">
+      <div className="mb-7">
+        <div className="flex items-center justify-between gap-3">
+          <p className="text-xs font-black uppercase tracking-[0.16em] text-primary">Your request</p>
+          <p className="rounded-full bg-[#edf6ff] px-3 py-1 text-xs font-bold text-primary">Step {step + 1} of 2</p>
         </div>
-        <div className="mt-4 h-2 overflow-hidden rounded-full bg-surface">
-          <div className="h-full rounded-full bg-primary transition-all duration-300" style={{ width: `${progress}%` }} />
-        </div>
-        <h2 className="mt-6 text-3xl font-black tracking-tight text-secondary">{currentStep.title}</h2>
-        <p className="mt-3 max-w-2xl text-sm font-bold leading-6 text-secondary/52">{currentStep.microcopy}</p>
+        <ol className="mt-5 grid grid-cols-2 gap-2" aria-label="Assessment request progress">
+          <li aria-current={step === 0 ? "step" : undefined} className={`flex min-w-0 items-center gap-2 rounded-xl px-3 py-2.5 text-xs font-bold sm:text-sm ${step === 0 ? "bg-primary text-white" : "bg-[#e7f4ee] text-[#176447]"}`}>
+            <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full ${step === 0 ? "bg-white/20" : "bg-white"}`} aria-hidden="true">{step === 0 ? "1" : <Check className="h-3.5 w-3.5" />}</span>
+            <span>Child&apos;s needs</span>
+          </li>
+          <li aria-current={step === 1 ? "step" : undefined} className={`flex min-w-0 items-center gap-2 rounded-xl px-3 py-2.5 text-xs font-bold sm:text-sm ${step === 1 ? "bg-primary text-white" : "bg-[#f0f5f9] text-secondary/55"}`}>
+            <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full ${step === 1 ? "bg-white/20" : "bg-white"}`} aria-hidden="true">2</span>
+            <span>Contact details</span>
+          </li>
+        </ol>
+        <h2 className="mt-7 text-2xl font-black tracking-tight text-secondary md:text-3xl">{step === 0 ? "What does your child need help with?" : "How can we reach you?"}</h2>
+        <p className="mt-2 text-sm leading-6 text-secondary/65">{step === 0 ? "Just the basics for now. Extra detail is optional." : "We'll email you to arrange the free conversation. WhatsApp and a preferred time are optional."}</p>
       </div>
 
+      <input type="hidden" name="studentName" value={values.studentName} />
+      <input type="hidden" name="studentYear" value={values.studentYear} />
+      <input type="hidden" name="subject" value={values.subject} />
+      <input type="hidden" name="challenge" value={values.challenge} />
       <input type="hidden" name="parentName" value={values.parentName} />
       <input type="hidden" name="email" value={values.email} />
       <input type="hidden" name="whatsapp" value={values.whatsapp} />
-      <input type="hidden" name="studentName" value={values.studentName} />
-      <input type="hidden" name="studentYear" value={values.studentYear} />
+      <input type="hidden" name="preferredTime" value={values.preferredTime} />
       <input type="hidden" name="curriculumKey" value={values.curriculumKey} />
       <input type="hidden" name="stage" value={values.stage} />
       <input type="hidden" name="awardingBodyKey" value={values.awardingBodyKey} />
-      <input type="hidden" name="subject" value={values.subject} />
       <input type="hidden" name="subjectVariant" value={values.subjectVariant} />
       <input type="hidden" name="level" value={values.level} />
       <input type="hidden" name="topic" value={values.topic} />
-      <input type="hidden" name="subtopic" value={values.subtopic} />
-      <input type="hidden" name="specificationCode" value={values.specificationCode} />
-      <input type="hidden" name="weakTopics" value={values.weakTopics} />
-      <input type="hidden" name="targetGrade" value={values.targetGrade} />
-      <input type="hidden" name="upcomingExams" value={values.upcomingExams} />
-      <input type="hidden" name="hardestAreas" value={values.hardestAreas.join(", ")} />
-      <input type="hidden" name="challenge" value={values.challenge} />
-      <input type="hidden" name="studyConcerns" value={values.studyConcerns.join(", ")} />
       <input type="hidden" name="goalsTimeline" value={values.goalsTimeline} />
-      <input type="hidden" name="supportStyle" value={values.supportStyle} />
-      <input type="hidden" name="preferredTime" value={values.preferredTime} />
-      <input type="hidden" name="message" value={values.message} />
 
-      {state.status === "error" && state.message && (
-        <div className="mb-6 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm font-bold text-red-700">
-          {state.message}
+      {state.status === "error" && state.message && <div ref={errorRef} tabIndex={-1} role="alert" className="mb-6 rounded-xl border border-red-200 bg-red-50 p-4 text-sm font-semibold text-red-700">{state.message}</div>}
+
+      {step === 0 ? (
+        <div className="grid gap-5">
+          <div className="grid gap-5 sm:grid-cols-2">
+            <label className="block text-sm font-bold text-secondary" htmlFor="assessment-studentName">Child&apos;s first name <span aria-hidden="true">*</span>
+              <input id="assessment-studentName" required value={values.studentName} onChange={(event) => update("studentName", event.target.value)} aria-invalid={Boolean(errors.studentName)} aria-describedby={errors.studentName ? "assessment-studentName-error" : undefined} className={fieldClass} autoComplete="off" />
+              {errors.studentName && <span id="assessment-studentName-error" className="mt-1 block text-xs text-red-700">{errors.studentName}</span>}
+            </label>
+            <label className="block text-sm font-bold text-secondary" htmlFor="assessment-studentYear">School year or grade <span aria-hidden="true">*</span>
+              <input id="assessment-studentYear" required value={values.studentYear} onChange={(event) => update("studentYear", event.target.value)} aria-invalid={Boolean(errors.studentYear)} aria-describedby={errors.studentYear ? "assessment-studentYear-error" : undefined} placeholder="Year 10, Grade 11, IB Year 1..." className={fieldClass} />
+              {errors.studentYear && <span id="assessment-studentYear-error" className="mt-1 block text-xs text-red-700">{errors.studentYear}</span>}
+            </label>
+          </div>
+          <label className="block text-sm font-bold text-secondary" htmlFor="assessment-subject">Subject <span aria-hidden="true">*</span>
+            <select id="assessment-subject" required value={values.subject} onChange={(event) => changeSubject(event.target.value)} aria-invalid={Boolean(errors.subject)} aria-describedby={errors.subject ? "assessment-subject-error" : undefined} className={fieldClass}>
+              <option value="">Choose a subject</option>
+              {subjectOptions.map((subject) => <option key={subject} value={subject}>{subject}</option>)}
+            </select>
+            {errors.subject && <span id="assessment-subject-error" className="mt-1 block text-xs text-red-700">{errors.subject}</span>}
+          </label>
+          <label className="block text-sm font-bold text-secondary" htmlFor="assessment-challenge">What feels difficult right now? <span aria-hidden="true">*</span>
+            <textarea id="assessment-challenge" required value={values.challenge} onChange={(event) => update("challenge", event.target.value)} aria-invalid={Boolean(errors.challenge)} aria-describedby={errors.challenge ? "assessment-challenge-error" : undefined} rows={3} placeholder="A few words about the topic, confidence, or an upcoming exam are enough." className={fieldClass} />
+            {errors.challenge && <span id="assessment-challenge-error" className="mt-1 block text-xs text-red-700">{errors.challenge}</span>}
+          </label>
+          <details className="rounded-xl border border-secondary/10 bg-[#f8fbff] p-4">
+            <summary className="cursor-pointer text-sm font-bold text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">Add curriculum, topic or goals (optional)</summary>
+            <div className="mt-5 grid gap-4 sm:grid-cols-2">
+              <label className="block text-sm font-bold text-secondary" htmlFor="assessment-curriculumKey">Curriculum
+                <select id="assessment-curriculumKey" value={values.curriculumKey} onChange={(event) => changeCurriculum(event.target.value)} className={fieldClass}>
+                  {curriculumPathways.map((item) => <option key={item.key} value={item.key}>{item.label}</option>)}
+                </select>
+              </label>
+              <label className="block text-sm font-bold text-secondary" htmlFor="assessment-stage">Stage or qualification
+                <select id="assessment-stage" value={values.stage} onChange={(event) => changeStage(event.target.value)} aria-invalid={Boolean(errors.stage)} className={fieldClass}>
+                  {values.curriculumKey !== uncertainEducationOption && <option value={uncertainEducationOption}>I&apos;m not sure</option>}
+                  {stages.map((item) => <option key={item.key} value={item.key}>{item.label}</option>)}
+                </select>
+                {errors.stage && <span className="mt-1 block text-xs text-red-700">{errors.stage}</span>}
+              </label>
+              {boards.length > 1 && <label className="block text-sm font-bold text-secondary" htmlFor="assessment-awardingBodyKey">Exam board
+                <select id="assessment-awardingBodyKey" value={values.awardingBodyKey} onChange={(event) => update("awardingBodyKey", event.target.value)} className={fieldClass}>
+                  <option value={uncertainEducationOption}>I&apos;m not sure</option>
+                  {boards.map((item) => <option key={item.key} value={item.key}>{awardingBodies.find((board) => board.key === item.key)?.label || item.label}</option>)}
+                </select>
+              </label>}
+              {variants.length > 0 && <label className="block text-sm font-bold text-secondary" htmlFor="assessment-subjectVariant">Subject route
+                <select id="assessment-subjectVariant" value={values.subjectVariant} onChange={(event) => update("subjectVariant", event.target.value)} className={fieldClass}>
+                  {variants.map((item) => <option key={item.key} value={item.key}>{item.label}</option>)}
+                </select>
+              </label>}
+              {levels.length > 0 && <label className="block text-sm font-bold text-secondary" htmlFor="assessment-level">Tier or course level
+                <select id="assessment-level" value={values.level} onChange={(event) => update("level", event.target.value)} className={fieldClass}>
+                  {levels.map((item) => <option key={item.key} value={item.key}>{item.label}</option>)}
+                </select>
+              </label>}
+              <label className="block text-sm font-bold text-secondary" htmlFor="assessment-topic">Topic
+                <select id="assessment-topic" value={values.topic} onChange={(event) => update("topic", event.target.value)} className={fieldClass}>
+                  <option value="">Not sure yet</option>
+                  {topics.map((item) => <option key={item} value={item}>{item}</option>)}
+                </select>
+              </label>
+              <label className="block text-sm font-bold text-secondary sm:col-span-2" htmlFor="assessment-goalsTimeline">What would you like to change?
+                <input id="assessment-goalsTimeline" value={values.goalsTimeline} onChange={(event) => update("goalsTimeline", event.target.value)} placeholder="Confidence, exam readiness, a particular topic..." className={fieldClass} />
+              </label>
+            </div>
+          </details>
+        </div>
+      ) : (
+        <div className="grid gap-5">
+          <label className="block text-sm font-bold text-secondary" htmlFor="assessment-parentName">Your name <span aria-hidden="true">*</span>
+            <input id="assessment-parentName" required value={values.parentName} onChange={(event) => update("parentName", event.target.value)} aria-invalid={Boolean(errors.parentName)} aria-describedby={errors.parentName ? "assessment-parentName-error" : undefined} autoComplete="name" className={fieldClass} />
+            {errors.parentName && <span id="assessment-parentName-error" className="mt-1 block text-xs text-red-700">{errors.parentName}</span>}
+          </label>
+          <label className="block text-sm font-bold text-secondary" htmlFor="assessment-email">Email <span aria-hidden="true">*</span>
+            <input id="assessment-email" required value={values.email} onChange={(event) => update("email", event.target.value)} aria-invalid={Boolean(errors.email)} aria-describedby={errors.email ? "assessment-email-error" : undefined} autoComplete="email" inputMode="email" type="email" className={fieldClass} />
+            {errors.email && <span id="assessment-email-error" className="mt-1 block text-xs text-red-700">{errors.email}</span>}
+          </label>
+          <div className="grid gap-5 sm:grid-cols-2">
+            <label className="block text-sm font-bold text-secondary" htmlFor="assessment-whatsapp">WhatsApp number <span className="font-normal text-secondary/55">(optional)</span>
+              <input id="assessment-whatsapp" value={values.whatsapp} onChange={(event) => update("whatsapp", event.target.value)} autoComplete="tel" inputMode="tel" type="tel" className={fieldClass} />
+            </label>
+            <label className="block text-sm font-bold text-secondary" htmlFor="assessment-preferredTime">Preferred time <span className="font-normal text-secondary/55">(optional)</span>
+              <input id="assessment-preferredTime" value={values.preferredTime} onChange={(event) => update("preferredTime", event.target.value)} placeholder="Weekday evenings, Saturday..." className={fieldClass} />
+            </label>
+          </div>
+          <p className="rounded-xl bg-[#f4f9ff] p-4 text-sm leading-6 text-secondary/70">The assessment conversation is free and there is no pressure to continue. We&apos;ll contact you by email to arrange it.</p>
         </div>
       )}
-
-      <div className="min-h-[27rem]">
-        {step === 0 && (
-          <div className="grid gap-6">
-            <TextField label="Student name" value={values.studentName} onChange={(value) => updateValue("studentName", value)} />
-            <TextField label="Student year/grade" value={values.studentYear} onChange={(value) => updateValue("studentYear", value)} placeholder="Year 10, Grade 11, IB Year 1..." />
-            <EducationPathwayFields value={values} onChange={(education) => setValues((current) => ({ ...current, ...education }))} topicRequired />
-          </div>
-        )}
-
-        {step === 1 && (
-          <div className="grid gap-6">
-            <div className="grid gap-5 md:grid-cols-2">
-              <TextField label="Target grade or goal" value={values.targetGrade} onChange={(value) => updateValue("targetGrade", value)} placeholder="A*, 7, improve confidence..." />
-              <TextField label="Specific subtopic (optional)" value={values.subtopic} onChange={(value) => updateValue("subtopic", value)} placeholder="Quadratic factorisation, six-mark questions..." />
-            </div>
-            <TextAreaField label="Weak topics or recent difficulty" value={values.weakTopics} onChange={(value) => updateValue("weakTopics", value)} placeholder="Forces, organic chemistry, exam questions, practical writeups..." />
-            <TextField label="Upcoming exams or important dates" value={values.upcomingExams} onChange={(value) => updateValue("upcomingExams", value)} placeholder="Mocks in March, IB exams, GCSE summer..." />
-          </div>
-        )}
-
-        {step === 2 && (
-          <div className="grid gap-7">
-            <div>
-              <p className="mb-3 text-sm font-black text-secondary">What feels hardest for your child right now?</p>
-              <OptionGrid options={hardestAreaOptions} selected={values.hardestAreas} onToggle={(value) => updateValue("hardestAreas", updateArrayValue(values.hardestAreas, value))} />
-            </div>
-            <TextAreaField label="What made you feel support may be needed now?" value={values.challenge} onChange={(value) => updateValue("challenge", value)} placeholder="Tell us what you have noticed recently, in schoolwork, revision, tests, or confidence." />
-          </div>
-        )}
-
-        {step === 3 && (
-          <div className="grid gap-7">
-            <div>
-              <p className="mb-3 text-sm font-black text-secondary">Which study habits or concerns sound familiar?</p>
-              <OptionGrid options={studyConcernOptions} selected={values.studyConcerns} onToggle={(value) => updateValue("studyConcerns", updateArrayValue(values.studyConcerns, value))} />
-            </div>
-            <p className="rounded-3xl border border-primary/10 bg-primary/5 p-5 text-sm font-bold leading-7 text-secondary/60">
-              These choices help us understand whether the main barrier is confidence, routine, exam pressure, or accountability.
-            </p>
-          </div>
-        )}
-
-        {step === 4 && (
-          <div className="grid gap-7">
-            <div>
-              <p className="mb-3 text-sm font-black text-secondary">What kind of support would fit best?</p>
-              <OptionGrid options={supportStyleOptions} selected={values.supportStyle} multi={false} onToggle={(value) => updateValue("supportStyle", value)} />
-            </div>
-            <TextAreaField label="What would a successful next few months look like?" value={values.goalsTimeline} onChange={(value) => updateValue("goalsTimeline", value)} placeholder="Confidence, exam readiness, consistency, better topic understanding..." />
-          </div>
-        )}
-
-        {step === 5 && (
-          <div className="grid gap-5">
-            <div className="grid gap-5 md:grid-cols-2">
-              <TextField label="Parent name" value={values.parentName} onChange={(value) => updateValue("parentName", value)} />
-              <TextField label="Email" value={values.email} onChange={(value) => updateValue("email", value)} type="email" />
-              <TextField label="WhatsApp number" value={values.whatsapp} onChange={(value) => updateValue("whatsapp", value)} type="tel" />
-              <TextField label="Preferred assessment time" value={values.preferredTime} onChange={(value) => updateValue("preferredTime", value)} placeholder="Weekday evenings, Saturday mornings..." />
-            </div>
-            <TextAreaField label="Anything else we should know? (optional)" value={values.message} onChange={(value) => updateValue("message", value)} placeholder="Tutor preference, school context, wellbeing notes, previous tutoring experience..." />
-            <div className="rounded-3xl border border-primary/10 bg-primary/5 p-5">
-              <p className="text-sm font-black text-secondary">What happens next?</p>
-              <p className="mt-2 text-sm font-bold leading-7 text-secondary/58">
-                We review the intake before the assessment call, then discuss confidence, subject gaps, tutor fit, and a realistic support plan.
-              </p>
-            </div>
-          </div>
-        )}
-      </div>
 
       <div className="mt-8 flex flex-col-reverse gap-3 border-t border-secondary/10 pt-6 sm:flex-row sm:items-center sm:justify-between">
-        <button
-          type="button"
-          onClick={() => setStep((current) => Math.max(0, current - 1))}
-          disabled={step === 0 || isPending}
-          className="min-h-13 rounded-2xl border border-secondary/15 bg-[#f4f7fb] px-5 py-3 text-sm font-black text-secondary/70 transition-colors hover:border-secondary/30 hover:bg-white hover:text-secondary focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-35"
-        >
-          Back
-        </button>
-
-        {step < steps.length - 1 ? (
-          <button
-            type="button"
-            onClick={() => {
-              handleStart();
-              setStep((current) => Math.min(steps.length - 1, current + 1));
-            }}
-            className="min-h-13 rounded-2xl bg-primary px-7 py-3.5 text-sm font-black uppercase tracking-[0.14em] text-white shadow-lg shadow-primary/20 transition-all hover:-translate-y-0.5 hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/25 focus-visible:ring-offset-2 active:translate-y-0"
-          >
-            Continue
-          </button>
-        ) : (
-          <button
-            type="submit"
-            disabled={isPending}
-            className="min-h-13 rounded-2xl bg-primary px-7 py-3.5 text-sm font-black uppercase tracking-[0.14em] text-white shadow-lg shadow-primary/20 transition-all hover:-translate-y-0.5 hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/25 focus-visible:ring-offset-2 active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {isPending ? "Sending Intake..." : "Request Assessment"}
-          </button>
-        )}
+        {step === 1 ? <button type="button" onClick={backToStudent} disabled={isPending} className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-secondary/15 px-5 py-3 text-sm font-bold text-secondary hover:border-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"><ArrowLeft className="h-4 w-4" aria-hidden="true" /> Back</button> : <span />}
+        {step === 0 ? <button type="button" onClick={continueToContact} className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-primary px-6 py-3 text-sm font-extrabold text-white hover:bg-primary-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">Continue to contact details <ArrowRight className="h-4 w-4" aria-hidden="true" /></button> : <button type="submit" disabled={isPending} className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-primary px-6 py-3 text-sm font-extrabold text-white hover:bg-primary-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:opacity-60">{isPending ? "Sending request..." : "Request my free assessment"}{!isPending && <ArrowRight className="h-4 w-4" aria-hidden="true" />}</button>}
       </div>
-
-      {state.status === "error" && (state.mailtoHref || state.whatsappHref) && (
-        <div className="mt-6 rounded-2xl border border-secondary/10 bg-surface p-5">
-          <p className="text-sm font-bold text-secondary/70">Fallback contact options:</p>
-          <div className="mt-4 flex flex-col gap-3 sm:flex-row">
-            {state.mailtoHref && (
-              <a href={state.mailtoHref} className="rounded-xl bg-secondary px-5 py-3 text-center text-xs font-black uppercase tracking-[0.14em] text-white">
-                Email ScienceDojo
-              </a>
-            )}
-            {state.whatsappHref && (
-              <a
-                href={state.whatsappHref}
-                target="_blank"
-                rel="noreferrer"
-                className="rounded-xl bg-emerald-500 px-5 py-3 text-center text-xs font-black uppercase tracking-[0.14em] text-white"
-              >
-                Send WhatsApp
-              </a>
-            )}
-          </div>
+      {state.status === "error" && (state.mailtoHref || state.whatsappHref) && <div className="mt-6 rounded-xl border border-secondary/10 bg-[#f8fbff] p-4">
+        <p className="text-sm font-semibold text-secondary">You can still send your request directly:</p>
+        <div className="mt-3 flex flex-wrap gap-3">
+          {state.mailtoHref && <a href={state.mailtoHref} className="inline-flex min-h-11 items-center rounded-xl bg-primary px-4 text-sm font-bold text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">Email ScienceDojo</a>}
+          {state.whatsappHref && <a href={state.whatsappHref} className="inline-flex min-h-11 items-center rounded-xl border border-primary px-4 text-sm font-bold text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">Send by WhatsApp</a>}
         </div>
-      )}
+      </div>}
     </form>
   );
 }
