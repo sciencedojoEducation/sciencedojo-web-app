@@ -1,6 +1,7 @@
 import type { HTMLAttributes, ReactNode } from "react";
 import type { AcademyCourse } from "@/lib/tutor-academy";
 import { academyThemeStyle, academyTypographyClass } from "@/lib/academy-theme";
+import { academyBodyFont } from "@/lib/academy-fonts";
 
 export default function AcademyThemeScope({
   course,
@@ -15,7 +16,7 @@ export default function AcademyThemeScope({
     <div
       {...props}
       style={academyThemeStyle(course)}
-      className={`${academyTypographyClass(course)} ${className}`}
+      className={`${academyBodyFont.variable} academy-course-typography ${academyTypographyClass(course)} ${className}`}
     >
       {children}
     </div>

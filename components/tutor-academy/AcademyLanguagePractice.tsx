@@ -50,7 +50,7 @@ function Frame({
       <h2 className="mt-2 text-[28px] font-bold text-[#101010] sm:text-[32px]">
         {block.heading || (block.type === "writing-practice" ? "Schreiben" : "Sprechen")}
       </h2>
-      <p className="mt-4 font-[family-name:var(--font-academy-serif)] text-[17px] leading-8 text-[#202733]">
+      <p className="mt-4 font-[family-name:var(--font-academy-body)] text-[17px] leading-8 text-[#202733]">
         {block.prompt}
       </p>
       {children}
@@ -60,7 +60,7 @@ function Frame({
 
 function Checklist({ items }: { items: string[] }) {
   return (
-    <ul className="mt-5 grid gap-2 text-sm text-[#4A4B4E] sm:grid-cols-2">
+    <ul className="mt-5 grid gap-2 font-[family-name:var(--font-academy-body)] text-sm text-[#4A4B4E] sm:grid-cols-2">
       {items.map((item) => (
         <li key={item} className="flex gap-2">
           <CheckCircle2 size={17} className="mt-0.5 shrink-0 text-emerald-700" />

@@ -106,7 +106,7 @@ export function AcademyTabs({
         id={`${baseId}-panel-${active}`}
         role="tabpanel"
         aria-labelledby={`${baseId}-tab-${active}`}
-        className="p-6 font-[family-name:var(--font-academy-serif)] text-[16px] leading-8 text-[#27313B]"
+        className="p-6 font-[family-name:var(--font-academy-body)] text-[16px] leading-8 text-[#27313B]"
       >
         {items[active]?.body}
       </div>
@@ -138,7 +138,7 @@ export function AcademyAccordion({
               +
             </span>
           </summary>
-          <p className="border-b border-[#DEDFE1] px-1 pb-6 font-[family-name:var(--font-academy-serif)] text-[15px] leading-7 text-[#27313B]">
+          <p className="border-b border-[#DEDFE1] px-1 pb-6 font-[family-name:var(--font-academy-body)] text-[15px] leading-7 text-[#27313B]">
             {item.body}
           </p>
         </details>
@@ -215,7 +215,7 @@ export function AcademyFlashcards({
                 <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-white/65">
                   Laut sprechen
                 </span>
-                <span className="font-[family-name:var(--font-academy-serif)] text-base leading-7">
+                <span className="font-[family-name:var(--font-academy-body)] text-base leading-7">
                   {item.body}
                 </span>
                 <span className="inline-flex items-center gap-2 text-xs font-bold text-white/70">
@@ -255,7 +255,7 @@ export function AcademyProcess({
           <h3 className="mt-3 text-2xl font-black text-[#252629]">
             {heading || (german ? "Diese Schritte entdecken" : "Explore this process")}
           </h3>
-          <p className="mt-3 max-w-lg font-[family-name:var(--font-academy-serif)] text-[16px] leading-8 text-[#27313B]">
+          <p className="mt-3 max-w-lg font-[family-name:var(--font-academy-body)] text-[16px] leading-8 text-[#27313B]">
             {german ? "Gehen Sie die Schritte in Ihrem Tempo durch." : "Move through each step at your own pace."}
           </p>
           <button
@@ -277,7 +277,7 @@ export function AcademyProcess({
             <h3 className="mt-3 text-2xl font-black text-[#252629]">
               {item.title}
             </h3>
-            <p className="mt-4 max-w-2xl font-[family-name:var(--font-academy-serif)] text-[17px] leading-8 text-[#27313B]">
+            <p className="mt-4 max-w-2xl font-[family-name:var(--font-academy-body)] text-[17px] leading-8 text-[#27313B]">
               {item.body}
             </p>
           </div>
@@ -387,7 +387,7 @@ export function AcademyProcessBuildUp({
                 <span className="sr-only">{german ? `Schritt ${index + 1} von ${items.length}: ` : `Step ${index + 1} of ${items.length}: `}</span>
                 {item.title}
               </h4>
-              <p className="mt-2 whitespace-pre-wrap font-[family-name:var(--font-academy-serif)] text-[15px] leading-7 text-[#27313B]">
+              <p className="mt-2 whitespace-pre-wrap font-[family-name:var(--font-academy-body)] text-[15px] leading-7 text-[#27313B]">
                 {item.body}
               </p>
             </div>

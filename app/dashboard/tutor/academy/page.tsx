@@ -57,7 +57,7 @@ export default async function TutorAcademyWelcomePage() {
             <h1 className="mt-5 max-w-[620px] text-[40px] font-black leading-[1.08] tracking-[-0.025em] sm:text-[50px] sm:leading-[1.04]">
               {course.title}
             </h1>
-            <p className="mt-5 max-w-[540px] font-[family-name:var(--font-academy-serif)] text-[16px] leading-8 text-white/82 sm:text-[17px]">
+            <p className="mt-5 max-w-[540px] font-[family-name:var(--font-academy-body)] text-[16px] leading-8 text-white/82 sm:text-[17px]">
               Teach with clarity, care, and confidence from your very first
               lesson.
             </p>
@@ -78,7 +78,7 @@ export default async function TutorAcademyWelcomePage() {
 
       <main className="px-6 py-14 sm:px-8 sm:py-20">
         <div className="mx-auto max-w-[600px]">
-          <p className="font-[family-name:var(--font-academy-serif)] text-[16px] leading-[33px] text-[#252629] sm:text-[17px]">
+          <p className="font-[family-name:var(--font-academy-body)] text-[16px] leading-[33px] text-[#252629] sm:text-[17px]">
             {course.description} Work through the course at your own pace while
             your tutor application is reviewed, then return whenever you need a
             refresher.

@@ -74,7 +74,7 @@ export default async function TutorAcademyLessonPage({
             {lesson.title}
           </h1>
           <div className="mt-5 h-1 w-12 bg-[#1E5AA8]" aria-hidden="true" />
-          <p className="mt-6 max-w-[660px] font-[family-name:var(--font-academy-serif)] text-[17px] leading-[30px] text-[#4A4B4E] sm:leading-[33px]">
+          <p className="mt-6 max-w-[660px] font-[family-name:var(--font-academy-body)] text-[17px] leading-[30px] text-[#4A4B4E] sm:leading-[33px]">
             {lesson.summary}
           </p>
         </div>

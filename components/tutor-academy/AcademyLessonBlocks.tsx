@@ -42,7 +42,7 @@ function AcademyMediaCaption({
 }) {
   if (!caption && !items.length) return null;
   return (
-    <div className="space-y-4 px-5 py-4 font-[family-name:var(--font-academy-serif)] text-[13px] leading-6 text-[#5F6267]">
+    <div className="space-y-4 px-5 py-4 font-[family-name:var(--font-academy-body)] text-[13px] leading-6 text-[#5F6267]">
       {caption ? <p>{caption}</p> : null}
       {items.map((item) => {
         if (item.type === "ordered-list" || item.type === "unordered-list") {
@@ -134,7 +134,7 @@ export default function AcademyLessonBlocks({
               {block.paragraphs.map((paragraph) => (
                 <p
                   key={paragraph}
-                  className="font-[family-name:var(--font-academy-serif)] text-[17px] font-medium leading-[30px] text-[#17202C] sm:leading-[33px]"
+                  className="font-[family-name:var(--font-academy-body)] text-[17px] font-medium leading-[30px] text-[#17202C] sm:leading-[33px]"
                 >
                   {paragraph}
                 </p>
@@ -207,7 +207,7 @@ export default function AcademyLessonBlocks({
                   <h2 className="text-xl font-bold tracking-[-0.01em]">
                     {block.heading}
                   </h2>
-                  <p className="mt-2 font-[family-name:var(--font-academy-serif)] text-[15px] leading-7">
+                  <p className="mt-2 font-[family-name:var(--font-academy-body)] text-[15px] leading-7">
                     {block.body}
                   </p>
                 </div>
@@ -241,7 +241,7 @@ export default function AcademyLessonBlocks({
                       <h3 className="text-lg font-bold text-[#252629]">
                         {item.title}
                       </h3>
-                      <p className="mt-2 font-[family-name:var(--font-academy-serif)] text-[15px] leading-7 text-[#27313B]">
+                      <p className="mt-2 font-[family-name:var(--font-academy-body)] text-[15px] leading-7 text-[#27313B]">
                         {item.body}
                       </p>
                     </div>
@@ -470,7 +470,7 @@ export default function AcademyLessonBlocks({
                     <h3 className="text-lg font-bold text-[#252629]">
                       {item.title}
                     </h3>
-                    <p className="mt-2 font-[family-name:var(--font-academy-serif)] text-[15px] leading-7 text-[#27313B]">
+                    <p className="mt-2 font-[family-name:var(--font-academy-body)] text-[15px] leading-7 text-[#27313B]">
                       {item.body}
                     </p>
                   </li>
@@ -593,7 +593,7 @@ export default function AcademyLessonBlocks({
                   <summary className="cursor-pointer font-bold text-[var(--academy-accent)]">
                     {activityLanguage === "de" ? "Transkript lesen" : "Read transcript"}
                   </summary>
-                  <p className="mt-3 whitespace-pre-wrap font-[family-name:var(--font-academy-serif)] text-[15px] leading-7 text-[#27313B]">
+                  <p className="mt-3 whitespace-pre-wrap font-[family-name:var(--font-academy-body)] text-[15px] leading-7 text-[#27313B]">
                     {block.transcript}
                   </p>
                 </details>
@@ -613,7 +613,7 @@ export default function AcademyLessonBlocks({
                   {block.heading}
                 </h2>
               ) : null}
-              <p className="mt-5 font-[family-name:var(--font-academy-serif)] text-[17px] leading-8">
+              <p className="mt-5 font-[family-name:var(--font-academy-body)] text-[17px] leading-8">
                 {block.problem}
               </p>
               {block.latex ? (
@@ -705,7 +705,7 @@ export default function AcademyLessonBlocks({
                         {row.map((cell, cellIndex) => (
                           <td
                             key={cellIndex}
-                            className={`px-5 py-4 text-sm leading-6 ${cellIndex === 0 ? "font-bold text-[#252629]" : "font-[family-name:var(--font-academy-serif)] text-[#27313B]"}`}
+                            className={`px-5 py-4 text-sm leading-6 ${cellIndex === 0 ? "font-bold text-[#252629]" : "font-[family-name:var(--font-academy-body)] text-[#27313B]"}`}
                           >
                             {cellIndex > 0 && (
                               <Check
