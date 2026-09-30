@@ -4,6 +4,7 @@ import { ArrowLeft, Award, CheckCircle2 } from "lucide-react";
 import AcademyQuiz from "@/components/tutor-academy/AcademyQuiz";
 import { getPublishedAcademyCourse } from "@/lib/academy-courses";
 import {
+  getAcademyAssessmentLessons,
   getAcademyLessonProgressState,
   getPublicQuizQuestions,
 } from "@/lib/tutor-academy";
@@ -20,8 +21,9 @@ export async function renderAcademyCourseQuizPage(
   const isLessonComplete = (lesson: (typeof course.lessons)[number]) =>
     getAcademyLessonProgressState(progress, lesson.slug, lesson.id) ===
     "completed";
-  const allLessonsComplete = course.lessons.every(isLessonComplete);
-  const firstIncomplete = course.lessons.find(
+  const assessmentLessons = getAcademyAssessmentLessons(course);
+  const allLessonsComplete = assessmentLessons.every(isLessonComplete);
+  const firstIncomplete = assessmentLessons.find(
     (lesson) => !isLessonComplete(lesson),
   );
   const completed =
@@ -42,8 +44,9 @@ export async function renderAcademyCourseQuizPage(
           </h1>
           <div className="mt-5 h-1 w-12 bg-[#1E5AA8]" />
           <p className="mt-6 font-[family-name:var(--font-academy-serif)] text-[17px] leading-[33px] text-[#4A4B4E]">
-            Answer every question. You need {course.passMark || 80}% to complete
-            this course.
+            Answer every question. You need {course.passMark || 80}% to {course.examTracks?.length
+              ? "unlock your Goethe or telc exam route."
+              : "complete this course."}
           </p>
           <div className="mt-5 flex gap-4 text-xs font-bold text-[#717376]">
             <span className="inline-flex gap-2">
@@ -57,10 +60,15 @@ export async function renderAcademyCourseQuizPage(
           {completed ? (
             <section className="border-y border-[#DEDFE1] py-10 text-center">
               <Award className="mx-auto text-[#1E5AA8]" size={48} />
-              <h2 className="mt-5 text-3xl font-bold">Course complete</h2>
+              <h2 className="mt-5 text-3xl font-bold">{course.examTracks?.length ? "Shared A1 check passed" : "Course complete"}</h2>
               <p className="mt-3 text-[#717376]">
                 Best score: {progress.bestScore}%
               </p>
+              {course.examTracks?.length ? (
+                <Link href={progress.selectedExamTrack ? basePath : `${basePath}/choose-exam`} className="mt-6 inline-flex min-h-11 items-center bg-[#1E5AA8] px-6 text-xs font-bold uppercase text-white">
+                  {progress.selectedExamTrack ? "Continue your exam route" : "Choose Goethe or telc"}
+                </Link>
+              ) : null}
             </section>
           ) : !allLessonsComplete && firstIncomplete ? (
             <section className="border-l-4 border-amber-500 bg-amber-50 p-7 text-center">
@@ -77,6 +85,9 @@ export async function renderAcademyCourseQuizPage(
               questions={getPublicQuizQuestions(course)}
               previousBestScore={progress.bestScore}
               courseKey={course.key}
+              hasExamTracks={Boolean(course.examTracks?.length)}
+              selectedExamTrack={progress.selectedExamTrack}
+              basePath={basePath}
             />
           )}
         </div>

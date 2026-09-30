@@ -6,6 +6,8 @@ import { resolveAcademyTheme } from "@/lib/academy-theme";
 import {
   getAcademyLessonProgressState,
   getAcademyProgressPercent,
+  getAcademyRequiredLessons,
+  getAcademyCoreLessons,
   getAcademyQuizProgressState,
   type AcademyCourse,
   type AcademyProgress,
@@ -25,9 +27,15 @@ export default function AcademyCourseContents({
   const progressPercent = getAcademyProgressPercent(progress, course);
   if (resolveAcademyTheme(course).preset === "journey")
     return <AcademyJourneyContents course={course} progress={progress} lessonHref={lessonHref} quizHref={quizHref} />;
+  const requiredLessons = getAcademyRequiredLessons(course, progress);
   const sections = Array.from(
-    new Set(course.lessons.map((lesson) => lesson.section)),
+    new Set(requiredLessons.map((lesson) => lesson.section)),
   );
+  const examChoiceReady = Boolean(course.examTracks?.length && !progress.selectedExamTrack &&
+    getAcademyCoreLessons(course).every((lesson) =>
+      getAcademyLessonProgressState(progress, lesson.slug, lesson.id) === "completed") &&
+    (course.rules?.requireFinalAssessment === false ||
+      getAcademyQuizProgressState(progress, course) === "completed"));
 
   return (
     <main className="px-6 py-14 sm:py-20">
@@ -35,14 +43,20 @@ export default function AcademyCourseContents({
         <div className="flex flex-wrap gap-6 border-y border-[#DEDFE1] py-4 text-xs font-bold text-[#717376]">
           <span className="inline-flex gap-2">
             <BookOpen size={15} aria-hidden="true" />
-            {course.lessons.length} lessons
+            {requiredLessons.length} lessons
           </span>
           <span className="inline-flex gap-2">
             <Clock size={15} aria-hidden="true" />
-            About {course.estimatedMinutes} minutes
+            About {requiredLessons.reduce((minutes, lesson) => minutes + lesson.durationMinutes, 0)} minutes
           </span>
           {course.rules?.requireFinalAssessment !== false ? (
             <span>{course.passMark || 80}% pass mark</span>
+          ) : null}
+          {examChoiceReady ? (
+            <Link href={`${quizHref.replace(/\/quiz$/, "")}/choose-exam`}
+              className="flex min-h-14 items-center gap-4 border-b border-[#DEDFE1] py-3 text-sm font-bold text-[var(--academy-accent)]">
+              Choose your exam route
+            </Link>
           ) : null}
         </div>
         <div className="mt-12 flex items-end justify-between">
@@ -71,7 +85,7 @@ export default function AcademyCourseContents({
                 {section}
               </h3>
               <div className="border-b border-[#DEDFE1]">
-                {course.lessons
+                {requiredLessons
                   .filter((lesson) => lesson.section === section)
                   .map((lesson) => (
                     <Link

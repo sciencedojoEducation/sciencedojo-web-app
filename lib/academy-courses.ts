@@ -86,7 +86,10 @@ function mapCourseRow(row: CourseRow): AcademyCourseRecord {
       key: row.course_key,
       audienceRoles:
         row.audience_roles || row.draft_content.audienceRoles || [],
-      quizRevision: row.quiz_revision || row.draft_content.quizRevision || 1,
+      quizRevision: Math.max(
+        row.quiz_revision || 1,
+        row.draft_content.quizRevision || 1,
+      ),
     }),
   };
 }

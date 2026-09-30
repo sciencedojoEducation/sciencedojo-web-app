@@ -5,12 +5,13 @@ import {
   germanA1ChapterSpecs,
   germanA1Course,
 } from "../lib/german-a1-course.ts";
+import { germanA1FunctionalScenarios } from "../lib/german-a1-functional-scenarios.ts";
 import { germanA1SpeakerProfiles } from "../lib/german-a1-audio.ts";
 import { validateAcademyCourse } from "../lib/academy-course-validation.ts";
 
 test("builds the expanded German A1 draft curriculum", () => {
   assert.equal(germanA1Course.key, "deutsch-a1-komplett");
-  assert.equal(germanA1Course.estimatedMinutes, 4050);
+  assert.equal(germanA1Course.estimatedMinutes, 4470);
   assert.deepEqual(germanA1Course.audienceRoles, ["student"]);
   assert.equal(germanA1Course.lessons.length, 39);
   assert.equal(germanA1Course.quiz.length, 40);
@@ -43,6 +44,104 @@ test("develops chapter 1 as a complete five-hour beginner unit", () => {
   assert.ok(chapter.blocks.filter((block) => block.type === "knowledge-check").length >= 10);
   assert.ok(chapter.blocks.some((block) => block.id?.endsWith("-schreiben") && block.type === "writing-practice"));
   assert.ok(chapter.blocks.some((block) => block.id?.endsWith("-sprechen") && block.type === "speaking-practice"));
+  const registrationAudio = chapter.blocks.find((block) => block.type === "audio");
+  assert.equal(registrationAudio?.url, "/audio/german-a1/a1-kapitel-01-anmeldung.m4a");
+  assert.match(registrationAudio.transcript, /Anna: Ja: W, E, B, E, R/);
+  assert.ok(chapter.blocks.some((block) => block.type === "knowledge-check" &&
+    block.question.prompt.includes("Nachnamen buchstabiert Anna")));
+  assert.ok(chapter.blocks.some((block) => block.type === "knowledge-check" &&
+    block.question.prompt.includes("Ende der Telefonnummer")));
+});
+
+test("develops chapter 2 as a complete five-hour introductions unit", () => {
+  const chapter = germanA1Course.lessons.find((lesson) => lesson.id === "lesson-de-a1-02");
+  assert.ok(chapter);
+  assert.equal(chapter.durationMinutes, 300);
+  assert.ok(chapter.blocks.length >= 50);
+  const combinedText = JSON.stringify(chapter.blocks);
+  for (const topic of [
+    "Begrüßungen und Abschiede",
+    "Sich vorstellen und Namen erfragen",
+    "Persönliche Fragen und Satzbau",
+    "Länder und Herkunft",
+    "Wo wohnen Sie?",
+    "Sprachen und Sprachkenntnisse",
+    "Alter und sein",
+    "du und Sie",
+    "Erster Tag im Deutschkurs",
+    "Das bin ich",
+  ]) assert.match(combinedText, new RegExp(topic.replace(/[?]/g, "\\?"), "i"));
+  assert.ok(chapter.blocks.filter((block) => block.type === "knowledge-check").length >= 15);
+  assert.ok(chapter.blocks.some((block) => block.id?.endsWith("-schreiben") && block.type === "writing-practice"));
+  assert.ok(chapter.blocks.some((block) => block.id?.endsWith("-sprechen") && block.type === "speaking-practice"));
+});
+
+test("develops chapter 3 as a complete five-hour family unit", () => {
+  const chapter = germanA1Course.lessons.find((lesson) => lesson.id === "lesson-de-a1-03");
+  assert.ok(chapter);
+  assert.equal(chapter.durationMinutes, 300);
+  assert.ok(chapter.blocks.length >= 55);
+  const combinedText = JSON.stringify(chapter.blocks);
+  for (const topic of [
+    "Familie: Wer gehört dazu?",
+    "Wer ist das? Personen vorstellen",
+    "mein und meine",
+    "dein und deine",
+    "er und sie",
+    "Alter und Familieninformationen",
+    "Menschen beschreiben",
+    "Familienstand und Beziehungen",
+    "Geschwister, Kinder und Hören",
+    "Mini-Projekt: Meine Familie",
+  ]) assert.match(combinedText, new RegExp(topic.replace(/[?]/g, "\\?"), "i"));
+  assert.ok(chapter.blocks.filter((block) => block.type === "knowledge-check").length >= 15);
+  assert.ok(chapter.blocks.some((block) => block.id?.endsWith("-schreiben") && block.type === "writing-practice"));
+  assert.ok(chapter.blocks.some((block) => block.id?.endsWith("-sprechen") && block.type === "speaking-practice"));
+  const familyTree = chapter.blocks.find((block) => block.id?.endsWith("-familienbaum-bild"));
+  assert.equal(familyTree?.type, "image");
+  assert.equal(familyTree.src, "/images/academy/german-a1/family-tree-chapter-03.svg");
+  const assessment = chapter.blocks.filter((block) => block.id?.includes("-abschluss-") && block.type === "knowledge-check");
+  assert.equal(assessment.length, 5);
+  assert.ok(assessment.every((block) => block.required && block.question.weight === 4));
+  const cards = chapter.blocks.find((block) => block.type === "flashcards")?.items;
+  assert.ok(cards);
+  assert.ok(cards.every((card) => !card.src.includes("?")), "local picture-card URLs must not contain unconfigured query strings");
+  assert.match(cards[22].src, /chapter-21-03\.jpg/); // sportlich: a runner
+  assert.match(cards[23].src, /chapter-02-21\.jpg/); // verheiratet: wedding couple
+  assert.match(cards[24].src, /chapter-02-20\.jpg/); // ledig: single-person symbol
+  assert.ok(chapter.blocks.some((block) => block.id?.endsWith("-formell-kinder") && block.type === "quote"));
+});
+
+test("uses an original time-change dialogue and functional message for daily routine", () => {
+  const lesson = germanA1Course.lessons.find((item) => item.id === "lesson-de-a1-12");
+  assert.ok(lesson);
+  const audio = lesson.blocks.find((block) => block.type === "audio");
+  assert.equal(audio?.url, "/audio/german-a1/a1-kapitel-04-tagesablauf.m4a");
+  assert.match(audio.transcript, /Anna: Guten Morgen, Sam/);
+  assert.match(audio.transcript, /Sam: Normalerweise um sechs Uhr/);
+  assert.match(audio.transcript, /Am Mittwoch rufe ich nach dem Kurs meine Mutter an/);
+  const listeningChecks = lesson.blocks.filter((block) =>
+    block.type === "knowledge-check" && block.id.includes("hoercheck"));
+  assert.equal(listeningChecks.length, 2);
+  assert.ok(listeningChecks.every((block) => block.required));
+  assert.ok(lesson.blocks.some((block) => block.type === "text" && block.heading === "Lesen" &&
+    block.paragraphs.some((line) => line.includes("18:30 Uhr statt um 18 Uhr"))));
+});
+
+test("replaces generic listening with functional adult scenarios in chapters 5–14", () => {
+  assert.deepEqual(Object.keys(germanA1FunctionalScenarios).map(Number).sort((a, b) => a - b), [14, 15, 16, 18, 19, 20, 21, 22, 23, 24]);
+  for (const [number, scenario] of Object.entries(germanA1FunctionalScenarios)) {
+    const lesson = germanA1Course.lessons.find((item) => item.id === `lesson-de-a1-${number}`);
+    assert.ok(lesson, `source chapter ${number}`);
+    const audio = lesson.blocks.find((block) => block.type === "audio");
+    assert.equal(audio?.transcript, scenario.transcript);
+    assert.match(audio.url, new RegExp(`a1-kapitel-${String(scenario.routeChapter).padStart(2, "0")}-`));
+    assert.ok(lesson.blocks.some((block) => block.type === "text" && block.heading === "Lesen" &&
+      block.paragraphs.includes(scenario.reading)));
+    for (const question of scenario.listeningQuestions)
+      assert.ok(lesson.blocks.some((block) => block.type === "knowledge-check" && block.required &&
+        block.question.prompt === question.prompt));
+  }
 });
 
 test("keeps all 32 syllabus chapters in order with every language skill", () => {
@@ -89,15 +188,18 @@ test("adds an image and active speaking prompt to every vocabulary card", () => 
   assert.equal(cards.length, 800);
   assert.ok(cards.every((card) => card.src?.startsWith("/images/academy/german-a1/word-cards/chapter-")));
   assert.ok(cards.every((card) => card.alt?.includes(card.title)));
-  assert.equal(new Set(cards.map((card) => card.src)).size, 800);
+  assert.ok(cards.every((card) => !card.src.includes("?")), "local picture-card URLs must be valid Next.js image sources");
+  assert.ok(new Set(cards.map((card) => card.src)).size >= 775);
   assert.ok(cards.every((card) => card.body.includes("laut vor") && card.body.includes("eigenen einfachen Satz")));
 });
 
 test("assigns dialogue speakers distinct gender- and age-aware German voices", () => {
   assert.equal(germanA1SpeakerProfiles.Anna.gender, "female");
   assert.equal(germanA1SpeakerProfiles.Eddy.gender, "male");
+  assert.equal(germanA1SpeakerProfiles.Sam.gender, "male");
   assert.equal(germanA1SpeakerProfiles["Ansage eins"].ageGroup, "older-adult");
   assert.notEqual(germanA1SpeakerProfiles.Anna.voice, germanA1SpeakerProfiles.Eddy.voice);
+  assert.notEqual(germanA1SpeakerProfiles.Anna.voice, germanA1SpeakerProfiles.Sam.voice);
   assert.equal(new Set(Object.values(germanA1SpeakerProfiles).map((profile) => profile.voice)).size, 5);
   assert.ok(Object.values(germanA1SpeakerProfiles).every((profile) => profile.performance.length > 50));
 });

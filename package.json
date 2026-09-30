@@ -15,6 +15,8 @@
     "academy:german-a1:audio": "node --env-file-if-exists=.env.local --experimental-strip-types scripts/generate-german-a1-audio.mjs",
     "academy:german-a1:images": "node scripts/slice-german-a1-vocabulary-images.mjs",
     "academy:german-a1:seed": "node --experimental-strip-types scripts/seed-german-a1-course.mjs",
+    "academy:german-a1:restructure": "node --experimental-strip-types scripts/seed-german-a1-restructured-course.mjs",
+    "academy:german-a1:audit": "node --experimental-strip-types scripts/audit-german-a1-course.mjs",
     "showcase:staging:seed": "node --env-file=.env.showcase.local scripts/seed-showcase-staging.mjs"
   },
   "dependencies": {

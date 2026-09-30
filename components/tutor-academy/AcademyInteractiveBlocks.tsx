@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { useEffect, useId, useRef, useState } from "react";
 import {
   ArrowLeft,
@@ -29,6 +30,7 @@ type Tracking = {
   courseKey?: string;
   blockId?: string;
   completion?: "view" | "interact" | "pass";
+  uiLanguage?: "de" | "en";
 };
 
 function FlashcardVisual({ item }: { item: FlashcardItem }) {
@@ -80,7 +82,7 @@ export function AcademyTabs({
     <div className="border border-[#DEDFE1] bg-white">
       <div
         role="tablist"
-        aria-label="Content tabs"
+        aria-label={tracking.uiLanguage === "de" ? "Inhaltsbereiche" : "Content tabs"}
         className="flex overflow-x-auto border-b border-[#DEDFE1] bg-[#F7F8FA]"
       >
         {items.map((item, index) => (
@@ -199,7 +201,7 @@ export function AcademyFlashcards({
                 ) : null}
                 <span className="flex min-h-28 flex-1 flex-col justify-between gap-3 p-5">
                   <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-[var(--academy-accent)]">
-                    {item.eyebrow || "Think first, then reveal"}
+                    {item.eyebrow || (tracking.uiLanguage === "de" ? "Erst überlegen, dann aufdecken" : "Think first, then reveal")}
                   </span>
                   <span className="text-2xl font-black text-[#252629]">
                     {item.title}
@@ -234,6 +236,7 @@ export function AcademyProcess({
   ...tracking
 }: { items: Item[]; heading?: string } & Tracking) {
   const [step, setStep] = useState(0);
+  const german = tracking.uiLanguage === "de";
   const total = items.length + 1;
   const goTo = (next: number) => {
     setStep(Math.max(0, Math.min(next, total - 1)));
@@ -247,20 +250,20 @@ export function AcademyProcess({
       >
         <div className="flex min-h-72 w-full shrink-0 flex-col items-center justify-center bg-white p-8 text-center sm:p-12">
           <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[var(--academy-accent)]">
-            Guided process
+            {german ? "Lernschritte" : "Guided process"}
           </p>
           <h3 className="mt-3 text-2xl font-black text-[#252629]">
-            {heading || "Explore this process"}
+            {heading || (german ? "Diese Schritte entdecken" : "Explore this process")}
           </h3>
           <p className="mt-3 max-w-lg font-[family-name:var(--font-academy-serif)] text-[16px] leading-8 text-[#4A4B4E]">
-            Move through each step at your own pace.
+            {german ? "Gehen Sie die Schritte in Ihrem Tempo durch." : "Move through each step at your own pace."}
           </p>
           <button
             type="button"
             onClick={() => goTo(1)}
             className="mt-7 inline-flex min-h-11 items-center gap-2 rounded-full bg-[var(--academy-accent)] px-7 text-xs font-bold uppercase tracking-[0.1em] text-white"
           >
-            Start <Play size={14} fill="currentColor" />
+            {german ? "Starten" : "Start"} <Play size={14} fill="currentColor" />
           </button>
         </div>
         {items.map((item, index) => (
@@ -269,7 +272,7 @@ export function AcademyProcess({
             className="flex min-h-72 w-full shrink-0 flex-col justify-center bg-white p-8 sm:p-12"
           >
             <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[var(--academy-accent)]">
-              Step {index + 1} of {items.length}
+              {german ? `Schritt ${index + 1} von ${items.length}` : `Step ${index + 1} of ${items.length}`}
             </p>
             <h3 className="mt-3 text-2xl font-black text-[#252629]">
               {item.title}
@@ -286,17 +289,19 @@ export function AcademyProcess({
           onClick={() => goTo(step - 1)}
           disabled={step === 0}
           className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-[#DEDFE1] disabled:opacity-25"
-          aria-label="Previous process step"
+          aria-label={german ? "Vorheriger Schritt" : "Previous process step"}
         >
           <ArrowLeft size={18} />
         </button>
-        <div className="flex items-center gap-2" aria-label={`Process position ${step + 1} of ${total}`}>
+        <div className="flex items-center gap-2" aria-label={german ? `Position ${step + 1} von ${total}` : `Process position ${step + 1} of ${total}`}>
           {Array.from({ length: total }, (_, index) => (
             <button
               key={index}
               type="button"
               onClick={() => goTo(index)}
-              aria-label={index === 0 ? "Process introduction" : `Process step ${index}`}
+              aria-label={index === 0
+                ? german ? "Einführung" : "Process introduction"
+                : german ? `Schritt ${index}` : `Process step ${index}`}
               aria-current={step === index ? "step" : undefined}
               className={`h-2.5 rounded-full transition-all motion-reduce:transition-none ${step === index ? "w-7 bg-[var(--academy-accent)]" : "w-2.5 bg-[#CED1D5]"}`}
             />
@@ -307,7 +312,9 @@ export function AcademyProcess({
           onClick={() => goTo(step + 1)}
           disabled={step === total - 1}
           className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-[#171719] text-white disabled:bg-emerald-600"
-          aria-label={step === total - 1 ? "Process complete" : "Next process step"}
+          aria-label={step === total - 1
+            ? german ? "Schritte abgeschlossen" : "Process complete"
+            : german ? "Nächster Schritt" : "Next process step"}
         >
           {step === total - 1 ? <Check size={18} /> : <ArrowRight size={18} />}
         </button>
@@ -321,6 +328,7 @@ export function AcademyProcessBuildUp({
   heading,
   ...tracking
 }: { items: Item[]; heading?: string } & Tracking) {
+  const german = tracking.uiLanguage === "de";
   const [revealedCount, setRevealedCount] = useState(1);
   const [finished, setFinished] = useState(false);
   const focusNewStep = useRef(false);
@@ -357,12 +365,12 @@ export function AcademyProcessBuildUp({
   };
 
   return (
-    <section className="border border-[#DEDFE1] bg-white p-5 sm:p-8" aria-label={heading || "Step-by-step process"}>
+    <section className="border border-[#DEDFE1] bg-white p-5 sm:p-8" aria-label={heading || (german ? "Schritt-für-Schritt-Anleitung" : "Step-by-step process")}>
       {heading ? (
         <h3 className="text-2xl font-bold leading-tight text-[#252629]">{heading}</h3>
       ) : null}
       <p className="mt-2 text-sm text-[#62666C]">
-        Follow the steps in order. Each new step stays visible for reference.
+        {german ? "Gehen Sie der Reihe nach vor. Jeder neue Schritt bleibt sichtbar." : "Follow the steps in order. Each new step stays visible for reference."}
       </p>
       <ol id={listId} className="mt-6 space-y-3">
         {items.slice(0, visibleCount).map((item, index) => (
@@ -376,7 +384,7 @@ export function AcademyProcessBuildUp({
                 tabIndex={-1}
                 className="text-lg font-bold text-[#252629] outline-none focus-visible:rounded focus-visible:ring-2 focus-visible:ring-[var(--academy-accent)]"
               >
-                <span className="sr-only">Step {index + 1} of {items.length}: </span>
+                <span className="sr-only">{german ? `Schritt ${index + 1} von ${items.length}: ` : `Step ${index + 1} of ${items.length}: `}</span>
                 {item.title}
               </h4>
               <p className="mt-2 whitespace-pre-wrap font-[family-name:var(--font-academy-serif)] text-[15px] leading-7 text-[#4A4B4E]">
@@ -387,10 +395,12 @@ export function AcademyProcessBuildUp({
         ))}
       </ol>
       <p className="sr-only" role="status" aria-live="polite">
-        {finished ? "Process complete." : `${visibleCount} of ${items.length} steps visible.`}
+        {finished
+          ? german ? "Alle Schritte abgeschlossen." : "Process complete."
+          : german ? `${visibleCount} von ${items.length} Schritten sichtbar.` : `${visibleCount} of ${items.length} steps visible.`}
       </p>
       {items.length === 0 ? (
-        <p className="mt-6 text-sm text-[#62666C]">No steps have been added yet.</p>
+        <p className="mt-6 text-sm text-[#62666C]">{german ? "Noch keine Schritte vorhanden." : "No steps have been added yet."}</p>
       ) : (
         <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-[#DEDFE1] pt-5">
           <button
@@ -398,12 +408,12 @@ export function AcademyProcessBuildUp({
             onClick={() => setRevealedCount(Math.max(1, visibleCount - 1))}
             disabled={visibleCount <= 1}
             className="inline-flex min-h-11 items-center gap-2 rounded-full border border-[#C9CDD2] px-4 text-sm font-semibold text-[#252629] outline-none focus-visible:ring-2 focus-visible:ring-[var(--academy-accent)] disabled:opacity-40"
-            aria-label="Show one fewer process step"
+            aria-label={german ? "Einen Schritt weniger anzeigen" : "Show one fewer process step"}
           >
-            <ArrowLeft size={17} /> Previous
+            <ArrowLeft size={17} /> {german ? "Zurück" : "Previous"}
           </button>
           <span className="text-xs font-semibold text-[#62666C]" aria-hidden="true">
-            {visibleCount} of {items.length}
+            {visibleCount} {german ? "von" : "of"} {items.length}
           </span>
           <button
             type="button"
@@ -413,10 +423,10 @@ export function AcademyProcessBuildUp({
             className="inline-flex min-h-11 items-center gap-2 rounded-full bg-[var(--academy-accent)] px-5 text-sm font-bold text-white outline-none focus-visible:ring-2 focus-visible:ring-[var(--academy-accent)] focus-visible:ring-offset-2 disabled:bg-[#39766C]"
           >
             {finished && visibleCount === items.length
-              ? "Process complete"
+              ? german ? "Abgeschlossen" : "Process complete"
               : visibleCount === items.length
-                ? "Finish process"
-                : "Next step"}
+                ? german ? "Abschließen" : "Finish process"
+                : german ? "Nächster Schritt" : "Next step"}
             {finished && visibleCount === items.length ? <Check size={17} /> : <ArrowRight size={17} />}
           </button>
         </div>
@@ -499,9 +509,13 @@ export function AcademyKnowledgeCheck({
   question,
   ...tracking
 }: { question: QuizQuestion } & Tracking) {
+  const german = tracking.uiLanguage === "de";
   const [answers, setAnswers] = useState<string[]>([]);
   const [reflection, setReflection] = useState("");
   const [submitted, setSubmitted] = useState(false);
+  const [saveError, setSaveError] = useState("");
+  const [pending, setPending] = useState(false);
+  const router = useRouter();
   const type = question.type || "single-choice";
   const correct =
     type === "reflection" ||
@@ -509,6 +523,23 @@ export function AcademyKnowledgeCheck({
       ? [...answers].sort().join("|") ===
         [...(question.correctOptionIds || [])].sort().join("|")
       : answers[0] === question.correctOptionId);
+  const saveCompletion = async (answer: string | string[]) => {
+    if (!tracking.courseKey || !tracking.blockId ||
+      (tracking.completion !== "interact" && tracking.completion !== "pass")) return;
+    setPending(true);
+    setSaveError("");
+    try {
+      const result = await recordAcademyBlockCompletion(tracking.courseKey, tracking.blockId, answer);
+      if (result.error) setSaveError(result.error);
+      else router.refresh();
+    } catch {
+      setSaveError(german
+        ? "Der Lernfortschritt konnte nicht gespeichert werden. Bitte versuchen Sie es noch einmal."
+        : "Activity progress could not be saved. Please try again.");
+    } finally {
+      setPending(false);
+    }
+  };
   if (type === "reflection")
     return (
       <div className="border-l-4 border-[var(--academy-accent)] bg-[var(--academy-accent-soft)] p-6">
@@ -518,24 +549,25 @@ export function AcademyKnowledgeCheck({
           onChange={(event) => setReflection(event.target.value)}
           rows={4}
           className="mt-4 w-full border border-[#AFC8E7] bg-white p-3 text-sm"
-          placeholder="Write your reflection…"
+          placeholder={german ? "Schreiben Sie Ihre Antwort …" : "Write your reflection…"}
         />
         <button
           type="button"
-          disabled={!reflection.trim()}
+          disabled={!reflection.trim() || pending}
           onClick={() => {
             setSubmitted(true);
-            record(tracking);
+            void saveCompletion(reflection);
           }}
           className="mt-3 bg-[var(--academy-accent)] px-5 py-2.5 text-xs font-bold uppercase text-white disabled:opacity-40"
         >
-          Save reflection
+          {german ? "Antwort speichern" : "Save reflection"}
         </button>
         {submitted ? (
           <p className="mt-4 text-sm font-semibold text-[var(--academy-accent-ink)]">
             {question.explanation}
           </p>
         ) : null}
+        {saveError ? <p role="alert" className="mt-3 text-sm font-semibold text-red-700">{saveError}</p> : null}
       </div>
     );
   return (
@@ -553,6 +585,7 @@ export function AcademyKnowledgeCheck({
               checked={answers.includes(option.id)}
               onChange={() => {
                 setSubmitted(false);
+                setSaveError("");
                 setAnswers((current) =>
                   type === "multiple-response"
                     ? current.includes(option.id)
@@ -569,14 +602,15 @@ export function AcademyKnowledgeCheck({
       <div className="mt-4 flex gap-2">
         <button
           type="button"
-          disabled={!answers.length}
+          disabled={!answers.length || pending}
           onClick={() => {
             setSubmitted(true);
-            if (tracking.completion === "interact" || correct) record(tracking);
+            if (tracking.completion === "interact" || correct)
+              void saveCompletion(type === "multiple-response" ? answers : answers[0]);
           }}
           className="bg-[var(--academy-accent)] px-5 py-2.5 text-xs font-bold uppercase text-white disabled:opacity-40"
         >
-          Check answer
+          {german ? "Antwort prüfen" : "Check answer"}
         </button>
         {submitted ? (
           <button
@@ -588,10 +622,11 @@ export function AcademyKnowledgeCheck({
             className="inline-flex items-center gap-2 border px-4 text-xs font-bold"
           >
             <RotateCcw size={14} />
-            Try again
+            {german ? "Erneut versuchen" : "Try again"}
           </button>
         ) : null}
       </div>
+      {saveError ? <p role="alert" className="mt-3 text-sm font-semibold text-red-700">{saveError}</p> : null}
       {submitted ? (
         <div
           role="status"
@@ -599,7 +634,9 @@ export function AcademyKnowledgeCheck({
         >
           <p className="flex items-center gap-2 font-bold">
             {correct ? <CheckCircle2 size={17} /> : null}
-            {correct ? "Correct" : "Not quite yet"}
+            {correct
+              ? german ? "Richtig" : "Correct"
+              : german ? "Noch nicht ganz" : "Not quite yet"}
           </p>
           <p className="mt-1">{question.explanation}</p>
         </div>

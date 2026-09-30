@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import { getAcademyRecordingFormat } from "@/lib/academy-recording";
 import { CheckCircle2, Mic, Save, Square, Trash2 } from "lucide-react";
-import type { LessonBlock } from "@/lib/tutor-academy";
+import { isAcademyBlockRequiredForCompletion, type LessonBlock } from "@/lib/tutor-academy";
 import {
   deleteAcademySpeakingSubmission,
   getAcademyPortfolioSubmission,
@@ -89,6 +91,7 @@ function WritingPractice({
   courseKey: string;
   lessonId: string;
 }) {
+  const router = useRouter();
   const [text, setText] = useState("");
   const [saved, setSaved] = useState(false);
   const [message, setMessage] = useState("");
@@ -125,6 +128,7 @@ function WritingPractice({
             const result = await saveAcademyWritingSubmission(courseKey, lessonId, block.id!, text);
             setMessage(result.message);
             setSaved(result.ok);
+            if (result.ok) router.refresh();
           })}
           className="inline-flex min-h-11 items-center gap-2 bg-[var(--academy-accent)] px-5 font-bold text-white disabled:opacity-40"
         >
@@ -146,6 +150,7 @@ function SpeakingPractice({
   courseKey: string;
   lessonId: string;
 }) {
+  const router = useRouter();
   const recorder = useRef<MediaRecorder | null>(null);
   const stream = useRef<MediaStream | null>(null);
   const startedAt = useRef(0);
@@ -245,10 +250,19 @@ function SpeakingPractice({
               data.set("lessonId", lessonId);
               data.set("blockId", block.id!);
               data.set("durationSeconds", String(elapsed));
-              data.set("audio", new File([blob], `aufnahme.${blob.type === "audio/mp4" ? "m4a" : blob.type.split("/")[1] || "webm"}`, { type: blob.type }));
+              const format = getAcademyRecordingFormat(blob.type);
+              if (!format) {
+                setMessage("Dieses Aufnahmeformat wird nicht unterstützt. Bitte versuchen Sie es in einem anderen Browser.");
+                return;
+              }
+              data.set("audio", new File([blob], `aufnahme.${format.extension}`, { type: format.contentType }));
               const result = await saveAcademySpeakingSubmission(data);
               setMessage(result.message);
-              if (result.ok) { setSaved(true); setSavedUrl(result.audioUrl || localUrl); }
+              if (result.ok) {
+                setSaved(true);
+                setSavedUrl(result.audioUrl || localUrl);
+                router.refresh();
+              }
             })}
             className="inline-flex min-h-11 items-center gap-2 border border-[var(--academy-accent)] bg-white px-5 text-sm font-bold text-[var(--academy-accent)] disabled:opacity-40"
           >
@@ -260,10 +274,12 @@ function SpeakingPractice({
         <audio controls preload="metadata" src={localUrl || savedUrl || undefined} className="mt-5 w-full" />
       ) : null}
       {saved ? (
-        <button
+        <><button
           type="button"
           disabled={pending}
           onClick={() => startTransition(async () => {
+            if (isAcademyBlockRequiredForCompletion(block) &&
+              !window.confirm("Wenn Sie diese Aufnahme löschen, müssen Sie die Sprechaufgabe erneut speichern und das Kapitel erneut abschließen. Aufnahme wirklich löschen?")) return;
             const result = await deleteAcademySpeakingSubmission(courseKey, lessonId, block.id!);
             setMessage(result.message);
             if (result.ok) {
@@ -274,14 +290,23 @@ function SpeakingPractice({
                 if (current) URL.revokeObjectURL(current);
                 return null;
               });
+              router.refresh();
             }
           })}
           className="mt-4 inline-flex items-center gap-2 text-sm font-bold text-red-700"
         >
           <Trash2 size={16} /> Gespeicherte Aufnahme löschen
         </button>
+        {isAcademyBlockRequiredForCompletion(block) ? (
+          <p className="mt-2 text-xs text-[#6B4D14]">Durch das Löschen wird diese Pflichtaufgabe und gegebenenfalls das Kapitel wieder geöffnet.</p>
+        ) : null}</>
       ) : null}
       {message ? <p role="status" className="mt-3 text-sm font-semibold text-[#244743]">{message}</p> : null}
+      {!saved ? (
+        <p className="mt-3 text-sm font-semibold text-[#6B4D14]">
+          Zum Abschließen des Kapitels: Aufnahme stoppen und „Aufnahme speichern“ wählen. Erst danach ist „Weiter“ möglich.
+        </p>
+      ) : null}
       {saved ? <ModelAnswer answer={block.modelAnswer} /> : null}
     </Frame>
   );

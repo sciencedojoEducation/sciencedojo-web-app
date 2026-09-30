@@ -26,6 +26,15 @@ export const germanA1SpeakerProfiles: Record<string, GermanA1SpeakerProfile> = {
     performance:
       "A friendly man in his early thirties. He sounds relaxed, encouraging, and gently energetic, never stern or theatrical.",
   },
+  Sam: {
+    voice: "de-de-assistant-8",
+    openAIVoice: "onyx",
+    systemVoice: "Eddy (German (Germany))",
+    gender: "male",
+    ageGroup: "adult",
+    performance:
+      "A friendly male language learner in his early thirties. He sounds open, curious, and slightly tentative while introducing himself, with warm natural energy.",
+  },
   "Ansage eins": {
     voice: "de-de-storyteller-5",
     openAIVoice: "fable",

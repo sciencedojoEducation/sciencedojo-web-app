@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-labelledby="title desc">
+  <title id="title">Familienbaum von Eva, Peter, Mia und Ben</title>
+  <desc id="desc">Eva ist die Mutter, Peter ist der Vater. Ihre Kinder sind Mia, die Tochter, und Ben, der Sohn. Mia und Ben sind Geschwister.</desc>
+  <rect width="960" height="540" fill="#f7faf9"/>
+  <text x="480" y="57" fill="#17324d" font-family="Arial, sans-serif" font-size="30" font-weight="700" text-anchor="middle">Familie Beispiel</text>
+  <path d="M300 243v48h360v-48M480 291v49M300 291v49M660 291v49" fill="none" stroke="#6796a3" stroke-linecap="round" stroke-width="6"/>
+  <rect x="120" y="111" width="360" height="132" rx="22" fill="#e3f3ec" stroke="#96c9b3" stroke-width="2"/>
+  <circle cx="177" cy="177" r="33" fill="#b4dcc8"/>
+  <text x="177" y="186" fill="#17324d" font-family="Arial, sans-serif" font-size="24" font-weight="700" text-anchor="middle">E</text>
+  <text x="232" y="169" fill="#17324d" font-family="Arial, sans-serif" font-size="25" font-weight="700">Eva</text>
+  <text x="232" y="201" fill="#3b6071" font-family="Arial, sans-serif" font-size="19">die Mutter</text>
+  <rect x="480" y="111" width="360" height="132" rx="22" fill="#e8f0fc" stroke="#a5bfe5" stroke-width="2"/>
+  <circle cx="537" cy="177" r="33" fill="#c3d7f2"/>
+  <text x="537" y="186" fill="#17324d" font-family="Arial, sans-serif" font-size="24" font-weight="700" text-anchor="middle">P</text>
+  <text x="592" y="169" fill="#17324d" font-family="Arial, sans-serif" font-size="25" font-weight="700">Peter</text>
+  <text x="592" y="201" fill="#3b6071" font-family="Arial, sans-serif" font-size="19">der Vater</text>
+  <rect x="120" y="340" width="360" height="132" rx="22" fill="#fff4df" stroke="#e4c788" stroke-width="2"/>
+  <circle cx="177" cy="406" r="33" fill="#f6dca8"/>
+  <text x="177" y="415" fill="#17324d" font-family="Arial, sans-serif" font-size="24" font-weight="700" text-anchor="middle">M</text>
+  <text x="232" y="398" fill="#17324d" font-family="Arial, sans-serif" font-size="25" font-weight="700">Mia</text>
+  <text x="232" y="430" fill="#3b6071" font-family="Arial, sans-serif" font-size="19">die Tochter</text>
+  <rect x="480" y="340" width="360" height="132" rx="22" fill="#f0ebfa" stroke="#c6b6df" stroke-width="2"/>
+  <circle cx="537" cy="406" r="33" fill="#d9c9ed"/>
+  <text x="537" y="415" fill="#17324d" font-family="Arial, sans-serif" font-size="24" font-weight="700" text-anchor="middle">B</text>
+  <text x="592" y="398" fill="#17324d" font-family="Arial, sans-serif" font-size="25" font-weight="700">Ben</text>
+  <text x="592" y="430" fill="#3b6071" font-family="Arial, sans-serif" font-size="19">der Sohn</text>
+  <text x="480" y="518" fill="#3b6071" font-family="Arial, sans-serif" font-size="18" text-anchor="middle">Eva und Peter sind die Eltern. Mia und Ben sind Geschwister.</text>
+</svg>

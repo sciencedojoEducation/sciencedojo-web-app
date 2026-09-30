@@ -7,13 +7,25 @@ export default function AcademyLessonHeader({
   course,
   lesson,
   index,
+  sequence,
+  nextStepLabel,
 }: {
   course: AcademyCourse;
   lesson: AcademyLesson;
   index: number;
+  sequence?: AcademyLesson[];
+  nextStepLabel?: string;
 }) {
   const theme = resolveAcademyTheme(course);
   const mediaLed = theme.lessonHeaderStyle === "media-led";
+  const german = course.key === "deutsch-a1-komplett";
+  const journey = sequence || course.lessons;
+  const following = journey[index + 1];
+  const nextText = nextStepLabel || (following
+    ? `${german ? "Als Nächstes" : "Next"}: ${following.title}`
+    : course.rules?.requireFinalAssessment !== false
+      ? german ? "Als Nächstes: Abschlusstest" : "Next: final knowledge check"
+      : german ? "Letzter Schritt in diesem Kurs" : "Final step in this course");
   return (
     <header
       className={`relative overflow-hidden border-b border-[#DEDFE1] px-6 sm:px-10 ${
@@ -44,7 +56,7 @@ export default function AcademyLessonHeader({
           <span>{lesson.section}</span>
           <span>·</span>
           <span>
-            Lesson {index + 1} of {course.lessons.length}
+            {german ? "Lektion" : "Lesson"} {index + 1} {german ? "von" : "of"} {journey.length}
           </span>
           <span>·</span>
           <span className="inline-flex gap-1.5">
@@ -64,8 +76,8 @@ export default function AcademyLessonHeader({
         {theme.preset === "journey" ? (
           <div className={`mt-8 flex flex-wrap items-center gap-3 rounded-xl p-4 text-sm ${mediaLed ? "bg-white/15 text-white" : "bg-[var(--academy-accent-soft)] text-[var(--academy-accent-ink)]"}`}>
             <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[var(--academy-spark)] font-bold text-[#17202C]">{index + 1}</span>
-            <span className="font-semibold">Step {index + 1} of {course.lessons.length}</span>
-            {course.lessons[index + 1] ? <span className={mediaLed ? "text-white/80" : "text-[#435164]"}>Next: {course.lessons[index + 1].title}</span> : <span className={mediaLed ? "text-white/80" : "text-[#435164]"}>{course.rules?.requireFinalAssessment !== false ? "Next: final knowledge check" : "Final step in this course"}</span>}
+            <span className="font-semibold">{german ? "Schritt" : "Step"} {index + 1} {german ? "von" : "of"} {journey.length}</span>
+            <span className={mediaLed ? "text-white/80" : "text-[#435164]"}>{nextText}</span>
           </div>
         ) : null}
       </div>

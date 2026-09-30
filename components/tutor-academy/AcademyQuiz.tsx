@@ -14,6 +14,7 @@ type PublicQuizQuestion = {
   type?: "single-choice" | "multiple-response" | "reflection";
   prompt: string;
   audioUrl?: string;
+  audioTranscript?: string;
   options: QuizOption[];
 };
 
@@ -23,20 +24,25 @@ export default function AcademyQuiz({
   questions,
   previousBestScore,
   courseKey,
+  hasExamTracks = false,
+  selectedExamTrack = null,
+  basePath,
 }: {
   questions: PublicQuizQuestion[];
   previousBestScore: number;
   courseKey: string;
+  hasExamTracks?: boolean;
+  selectedExamTrack?: string | null;
+  basePath?: string;
 }) {
   const submitAction = submitTutorAcademyQuiz.bind(null, courseKey);
   const [state, formAction, pending] = useActionState(
     submitAction,
     initialState,
   );
-  const courseHref =
-    courseKey === "science-dojo-tutor-foundations"
-      ? "/dashboard/tutor/academy"
-      : `/dashboard/tutor/academy/courses/${courseKey}`;
+  const courseHref = basePath || (courseKey === "science-dojo-tutor-foundations"
+    ? "/dashboard/tutor/academy"
+    : `/dashboard/tutor/academy/courses/${courseKey}`);
 
   if (state.status === "passed") {
     return (
@@ -48,7 +54,7 @@ export default function AcademyQuiz({
           <Trophy size={31} />
         </span>
         <p className="mt-6 text-[11px] font-bold uppercase tracking-[0.18em] text-[#1E5AA8]">
-          Course complete
+          {hasExamTracks ? "Shared A1 check passed" : "Course complete"}
         </p>
         <h2 className="mt-3 text-3xl font-bold tracking-[-0.02em] text-[#101010]">
           You scored {state.score}%
@@ -58,10 +64,14 @@ export default function AcademyQuiz({
         </p>
         <div className="mt-7 flex flex-col justify-center gap-3 sm:flex-row">
           <Link
-            href="/dashboard/tutor"
+            href={hasExamTracks
+              ? selectedExamTrack ? courseHref : `${courseHref}/choose-exam`
+              : courseHref.startsWith("/dashboard/academy/") ? "/dashboard" : "/dashboard/tutor"}
             className="inline-flex min-h-11 items-center justify-center bg-[#1E5AA8] px-7 text-xs font-bold uppercase tracking-[0.1em] text-white"
           >
-            Go to dashboard
+            {hasExamTracks
+              ? selectedExamTrack ? "Continue exam route" : "Choose Goethe or telc"
+              : "Go to dashboard"}
           </Link>
           <Link
             href={courseHref}
@@ -120,6 +130,13 @@ export default function AcademyQuiz({
                 >
                   Ihr Browser unterstützt die Audiowiedergabe nicht.
                 </audio>
+                {question.audioTranscript ? (
+                  <details className="mt-3 text-sm text-[#173A63]">
+                    <summary className="cursor-pointer font-semibold underline underline-offset-2">Transkript als barrierefreie Alternative anzeigen</summary>
+                    <p className="mt-2 whitespace-pre-line leading-6">{question.audioTranscript}</p>
+                    <p className="mt-2 text-xs">Wenn Sie das Transkript verwenden, prüfen Sie damit Leseverstehen statt reines Hörverstehen.</p>
+                  </details>
+                ) : null}
               </div>
             )}
             {question.type === "reflection" ? (

@@ -93,11 +93,14 @@ export default function AcademyLessonBlocks({
   blocks,
   courseKey,
   lessonId,
+  uiLanguage,
 }: {
   blocks: LessonBlock[];
   courseKey?: string;
   lessonId?: string;
+  uiLanguage?: "de" | "en";
 }) {
+  const activityLanguage = uiLanguage || (courseKey === "deutsch-a1-komplett" ? "de" : "en");
   return (
     <div className="academy-block-stack flex flex-col">
       {blocks.map((block, blockIndex) => {
@@ -366,6 +369,7 @@ export default function AcademyLessonBlocks({
               ) : null}
               <AcademyTabs
                 items={block.items}
+                uiLanguage={activityLanguage}
                 courseKey={courseKey}
                 blockId={block.id}
                 completion={block.completion}
@@ -375,25 +379,45 @@ export default function AcademyLessonBlocks({
         }
 
         if (block.type === "flashcards") {
+          const cards = (
+            <AcademyFlashcards
+              items={block.items}
+              uiLanguage={activityLanguage}
+              variant={
+                block.appearance?.variant === "stack" ||
+                block.appearance?.variant === "picture-grid"
+                  ? block.appearance.variant
+                  : "flip-grid"
+              }
+              courseKey={courseKey}
+              blockId={block.id}
+              completion={block.completion}
+            />
+          );
           return (
             <section key={block.id || blockIndex}>
-              {block.heading ? (
-                <h2 className="mb-6 text-[28px] font-bold sm:text-[32px]">
-                  {block.heading}
-                </h2>
-              ) : null}
-              <AcademyFlashcards
-                items={block.items}
-                variant={
-                  block.appearance?.variant === "stack" ||
-                  block.appearance?.variant === "picture-grid"
-                    ? block.appearance.variant
-                    : "flip-grid"
-                }
-                courseKey={courseKey}
-                blockId={block.id}
-                completion={block.completion}
-              />
+              {block.optional ? (
+                <details className="group rounded-xl border border-[#DEDFE1] bg-[#FAFAF8]">
+                  <summary className="flex cursor-pointer list-none flex-wrap items-center justify-between gap-2 px-5 py-4 marker:hidden sm:px-6 [&::-webkit-details-marker]:hidden">
+                    <span className="text-lg font-bold text-[#252629]">
+                      {block.heading || (activityLanguage === "de" ? "Zusatzwortschatz" : "Extra vocabulary")}
+                    </span>
+                    <span className="text-xs font-semibold text-[#62666C]">
+                      {activityLanguage === "de" ? "Freiwillig" : "Optional"} · {block.items.length} {activityLanguage === "de" ? "Bildkarten" : "picture cards"}
+                    </span>
+                  </summary>
+                  <div className="border-t border-[#DEDFE1] px-5 py-6 sm:px-6">{cards}</div>
+                </details>
+              ) : (
+                <>
+                  {block.heading ? (
+                    <h2 className="mb-6 text-[28px] font-bold sm:text-[32px]">
+                      {block.heading}
+                    </h2>
+                  ) : null}
+                  {cards}
+                </>
+              )}
             </section>
           );
         }
@@ -405,6 +429,7 @@ export default function AcademyLessonBlocks({
                 <AcademyProcessBuildUp
                   heading={block.heading}
                   items={block.items}
+                  uiLanguage={activityLanguage}
                   courseKey={courseKey}
                   blockId={block.id}
                   completion={block.completion}
@@ -417,6 +442,7 @@ export default function AcademyLessonBlocks({
                 <AcademyProcess
                   heading={block.heading}
                   items={block.items}
+                  uiLanguage={activityLanguage}
                   courseKey={courseKey}
                   blockId={block.id}
                   completion={block.completion}
@@ -563,7 +589,7 @@ export default function AcademyLessonBlocks({
               {block.transcript ? (
                 <details className="mt-4 border-y border-[#DEDFE1] py-4">
                   <summary className="cursor-pointer font-bold text-[var(--academy-accent)]">
-                    Read transcript
+                    {activityLanguage === "de" ? "Transkript lesen" : "Read transcript"}
                   </summary>
                   <p className="mt-3 whitespace-pre-wrap font-[family-name:var(--font-academy-serif)] text-[15px] leading-7 text-[#4A4B4E]">
                     {block.transcript}
@@ -612,7 +638,7 @@ export default function AcademyLessonBlocks({
                 ))}
               </ol>
               <div className="mt-6 border-l-4 border-emerald-600 bg-emerald-50 p-4">
-                <strong>Answer</strong>
+                <strong>{activityLanguage === "de" ? "Antwort" : "Answer"}</strong>
                 <p className="mt-1 text-sm leading-6">{block.answer}</p>
               </div>
             </section>
@@ -629,6 +655,7 @@ export default function AcademyLessonBlocks({
               ) : null}
               <AcademyKnowledgeCheck
                 question={block.question}
+                uiLanguage={activityLanguage}
                 courseKey={courseKey}
                 blockId={block.id}
                 completion={block.completion}
@@ -660,9 +687,9 @@ export default function AcademyLessonBlocks({
                 <table className="min-w-[42rem] w-full border-collapse text-left">
                   <thead className="bg-[#F3F3F3] text-[#252629]">
                     <tr>
-                      {block.columns.map((column) => (
+                      {block.columns.map((column, columnIndex) => (
                         <th
-                          key={column}
+                          key={`${block.id || blockIndex}-column-${columnIndex}`}
                           className="border-b border-[#DEDFE1] px-5 py-4 text-xs font-bold uppercase tracking-[0.1em]"
                         >
                           {column}
@@ -715,7 +742,7 @@ export default function AcademyLessonBlocks({
             key={block.id || blockIndex}
             id={block.id ? `academy-block-${block.id}` : undefined}
             data-block-variant={appearance.variant}
-            className={`${widthClass} academy-block-surface-${appearance.surface} academy-block-spacing-${appearance.spacing}`}
+            className={`${widthClass} scroll-mt-24 academy-block-surface-${appearance.surface} academy-block-spacing-${appearance.spacing}`}
           >
             {content}
           </div>

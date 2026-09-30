@@ -1,9 +1,12 @@
+import { Fragment } from "react";
 import Link from "next/link";
 import { ArrowRight, BookOpen, Check, Clock3, LockKeyhole, Sparkles } from "lucide-react";
 import { getAcademyJourneyLessonState, getAcademyJourneyResumeTarget } from "@/lib/academy-journey";
 import {
   getAcademyLessonProgressState,
+  getAcademyFirstMissingRequiredBlockId,
   getAcademyProgressPercent,
+  getAcademyRequiredLessons,
   getAcademyQuizProgressState,
   type AcademyCourse,
   type AcademyProgress,
@@ -20,13 +23,33 @@ export default function AcademyJourneyContents({
   lessonHref: (slug: string) => string;
   quizHref: string;
 }) {
-  const completedCount = course.lessons.filter(
+  const requiredLessons = getAcademyRequiredLessons(course, progress);
+  const completedCount = requiredLessons.filter(
     (lesson) => getAcademyLessonProgressState(progress, lesson.slug, lesson.id) === "completed",
   ).length;
   const progressPercent = getAcademyProgressPercent(progress, course);
   const resumeTarget = getAcademyJourneyResumeTarget(course, progress);
-  const nextHref = resumeTarget?.kind === "lesson" ? lessonHref(resumeTarget.slug) : resumeTarget?.kind === "assessment" ? quizHref : null;
-  const sections = Array.from(new Set(course.lessons.map((lesson) => lesson.section)));
+  const resumeLesson = resumeTarget?.kind === "lesson"
+    ? course.lessons.find((lesson) => lesson.slug === resumeTarget.slug)
+    : null;
+  const missingBlockId = resumeLesson
+    ? getAcademyFirstMissingRequiredBlockId(course, progress, resumeLesson)
+    : null;
+  const nextHref = resumeLesson
+    ? `${lessonHref(resumeLesson.slug)}${missingBlockId ? `#academy-block-${missingBlockId}` : ""}`
+    : resumeTarget?.kind === "assessment" ? quizHref
+      : resumeTarget?.kind === "track-choice" ? `${quizHref.replace(/\/quiz$/, "")}/choose-exam` : null;
+  const sections = Array.from(new Set(requiredLessons.map((lesson) => lesson.section)));
+  const lastCoreSection = Array.from(new Set(requiredLessons
+    .filter((lesson) => !lesson.examTrack)
+    .map((lesson) => lesson.section))).at(-1);
+  const assessmentCard = course.rules?.requireFinalAssessment !== false ? (
+    <Link href={quizHref} className="mt-10 flex min-h-24 items-center gap-4 rounded-2xl border border-[var(--academy-accent)] bg-[var(--academy-accent-soft)] p-5 outline-none focus-visible:ring-2 focus-visible:ring-[var(--academy-accent)]">
+      <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-[var(--academy-spark)] text-[#17202C]"><BookOpen size={20} aria-hidden="true" /></span>
+      <span className="flex-1"><strong className="block text-base text-[#17202C]">Final knowledge check</strong><span className="text-xs text-[#435164]">{getAcademyQuizProgressState(progress, course) === "completed" ? "Completed" : "See what you have learned"}</span></span>
+      <ArrowRight size={19} className="text-[var(--academy-accent)]" aria-hidden="true" />
+    </Link>
+  ) : null;
 
   return (
     <main className="bg-[#FBFCFD] px-5 py-12 sm:px-8 sm:py-16">
@@ -35,7 +58,10 @@ export default function AcademyJourneyContents({
           <div>
             <span className="inline-flex items-center gap-2 text-xs font-bold text-[var(--academy-accent-ink)]"><Sparkles size={16} aria-hidden="true" /> Your learning journey</span>
             <h2 className="mt-2 text-2xl font-bold leading-tight text-[#17202C] sm:text-3xl">Small steps, real progress</h2>
-            <p className="mt-2 text-sm text-[#384554]">{completedCount} of {course.lessons.length} lessons complete · About {course.estimatedMinutes} minutes in total</p>
+            <p className="mt-2 text-sm text-[#384554]">{completedCount} of {requiredLessons.length} lessons complete · About {requiredLessons.reduce((minutes, lesson) => minutes + lesson.durationMinutes, 0)} minutes on your route</p>
+            {course.examTracks?.length && !progress.selectedExamTrack ? (
+              <p className="mt-2 text-sm text-[#384554]">After the core chapters and final check, choose one exam route.</p>
+            ) : null}
           </div>
           <strong className="grid h-20 w-20 place-items-center rounded-full border-4 border-[var(--academy-accent)] bg-white text-xl text-[var(--academy-accent-ink)]" aria-label={`${progressPercent}% course progress`}>
             {progressPercent}%
@@ -46,15 +72,16 @@ export default function AcademyJourneyContents({
         </div>
         {nextHref ? (
           <Link href={nextHref} className="mt-6 inline-flex min-h-11 items-center gap-2 rounded-full bg-[var(--academy-accent)] px-6 text-sm font-bold text-white outline-none focus-visible:ring-2 focus-visible:ring-[var(--academy-accent)] focus-visible:ring-offset-2">
-            {resumeTarget?.kind === "assessment" ? "Go to final check" : "Continue learning"} <ArrowRight size={17} aria-hidden="true" />
+            {resumeTarget?.kind === "assessment" ? "Go to final check" : resumeTarget?.kind === "track-choice" ? "Choose your exam" : missingBlockId ? "Finish required activity" : "Continue learning"} <ArrowRight size={17} aria-hidden="true" />
           </Link>
         ) : <p className="mt-6 text-sm font-semibold text-[var(--academy-accent-ink)]">Journey complete — revisit any lesson whenever you like.</p>}
 
         {sections.map((section) => (
-          <section key={section} className="mt-12">
+          <Fragment key={section}>
+          <section className="mt-12">
             <h3 className="mb-4 text-sm font-bold text-[#263548]">{section}</h3>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {course.lessons.filter((lesson) => lesson.section === section).map((lesson) => {
+              {requiredLessons.filter((lesson) => lesson.section === section).map((lesson) => {
                 const index = course.lessons.findIndex((candidate) => candidate.id === lesson.id || candidate.slug === lesson.slug);
                 const { status: state, locked } = getAcademyJourneyLessonState(course, progress, index)!;
                 const card = (
@@ -79,14 +106,9 @@ export default function AcademyJourneyContents({
               })}
             </div>
           </section>
+          {section === lastCoreSection ? assessmentCard : null}
+          </Fragment>
         ))}
-        {course.rules?.requireFinalAssessment !== false ? (
-          <Link href={quizHref} className="mt-10 flex min-h-24 items-center gap-4 rounded-2xl border border-[var(--academy-accent)] bg-[var(--academy-accent-soft)] p-5 outline-none focus-visible:ring-2 focus-visible:ring-[var(--academy-accent)]">
-            <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-[var(--academy-spark)] text-[#17202C]"><BookOpen size={20} aria-hidden="true" /></span>
-            <span className="flex-1"><strong className="block text-base text-[#17202C]">Final knowledge check</strong><span className="text-xs text-[#435164]">{getAcademyQuizProgressState(progress, course) === "completed" ? "Completed" : "See what you have learned"}</span></span>
-            <ArrowRight size={19} className="text-[var(--academy-accent)]" aria-hidden="true" />
-          </Link>
-        ) : null}
       </div>
     </main>
   );

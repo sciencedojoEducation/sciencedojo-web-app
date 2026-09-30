@@ -13,16 +13,37 @@ import { tmpdir } from "node:os";
 import OpenAI from "openai";
 import { germanA1AudioManifest } from "../lib/german-a1-course.ts";
 import { germanA1SpeakerProfiles } from "../lib/german-a1-audio.ts";
+import { germanA1RestructuredCourse } from "../lib/german-a1-restructured-course.ts";
+import { germanA1FinalListening } from "../lib/german-a1-final-listening.ts";
 
 const root = resolve(import.meta.dirname, "..");
 const outputDirectory = join(root, "public", "audio", "german-a1");
+const restructured = process.argv.includes("--restructured");
+const finalAssessment = process.argv.includes("--final-assessment");
+const manifest = finalAssessment
+  ? germanA1FinalListening.map((item, index) => ({
+      lessonId: "final-assessment",
+      slug: `final-hoeren-${String(index + 1).padStart(2, "0")}`,
+      outputPath: item.audioUrl,
+      transcript: item.transcript,
+    }))
+  : restructured
+  ? [...new Map(germanA1RestructuredCourse.lessons.flatMap((lesson) =>
+      lesson.blocks.filter((block) => block.type === "audio" && block.url.startsWith("/audio/"))
+        .map((block) => [block.url, {
+          lessonId: lesson.id,
+          slug: lesson.slug,
+          outputPath: block.url,
+          transcript: block.transcript || "",
+        }]))).values()]
+  : germanA1AudioManifest;
 const force = process.argv.includes("--force");
 const engineArgument = process.argv.find((argument) => argument.startsWith("--engine="));
 const engine = engineArgument?.split("=")[1] || "gemini";
 const startArgument = process.argv.find((argument) => argument.startsWith("--start="));
 const start = startArgument ? Number(startArgument.split("=")[1]) : 0;
 const limitArgument = process.argv.find((argument) => argument.startsWith("--limit="));
-const limit = limitArgument ? Number(limitArgument.split("=")[1]) : germanA1AudioManifest.length - start;
+const limit = limitArgument ? Number(limitArgument.split("=")[1]) : manifest.length - start;
 if (!new Set(["gemini", "openai", "system"]).has(engine))
   throw new Error(`Unsupported audio engine: ${engine}`);
 const openai = engine === "openai" ? new OpenAI() : null;
@@ -50,6 +71,8 @@ function parseWave(buffer) {
     offset = start + size + (size % 2);
   }
   if (!format || !data) throw new Error("WAV file is missing format or audio data.");
+  if (data.length < 1000)
+    throw new Error("Generated speech segment is empty or too short; check voice availability and sandbox permissions.");
   return { format, data };
 }
 
@@ -207,12 +230,13 @@ function generateSystemSegment(line, destination, rate) {
   ]);
 }
 
-for (const [relativeIndex, item] of germanA1AudioManifest.slice(start, start + limit).entries()) {
+for (const [relativeIndex, item] of manifest.slice(start, start + limit).entries()) {
   const index = start + relativeIndex;
   if (!item.outputPath || !item.transcript) throw new Error(`Missing audio data for ${item.slug}`);
   const output = join(root, "public", item.outputPath.replace(/^\//, ""));
   if (!force && existsSync(output) && statSync(output).size > 0) continue;
-  const rate = index < 32 ? "145" : "165";
+  const isReview = finalAssessment || index >= 32;
+  const rate = isReview ? "165" : "145";
   const lines = item.transcript.split("\n").filter(Boolean).map((line) => {
     const match = line.match(/^([^:]+):\s*(.+)$/);
     if (!match) throw new Error(`Transcript line needs a speaker label: ${line}`);
@@ -228,10 +252,10 @@ for (const [relativeIndex, item] of germanA1AudioManifest.slice(start, start + l
         `  ${line.speaker}: ${engine === "gemini" ? line.profile.voice : engine === "openai" ? line.profile.openAIVoice : line.profile.systemVoice} (${line.profile.gender}, ${line.profile.ageGroup})`,
       );
     }
-    if (engine === "gemini") segments = await generateGeminiTrack(lines, temporaryDirectory, index >= 32);
+    if (engine === "gemini") segments = await generateGeminiTrack(lines, temporaryDirectory, isReview);
     else for (const [lineIndex, line] of lines.entries()) {
       const segment = join(temporaryDirectory, `${lineIndex}.wav`);
-      if (engine === "openai") await generateOpenAISegment(line, segment, index >= 32);
+      if (engine === "openai") await generateOpenAISegment(line, segment, isReview);
       else generateSystemSegment(line, segment, rate);
       segments.push(segment);
     }
@@ -252,4 +276,4 @@ for (const [relativeIndex, item] of germanA1AudioManifest.slice(start, start + l
   }
 }
 
-console.log(`German A1 ${engine} audio ready: ${germanA1AudioManifest.length} tracks in ${outputDirectory}`);
+console.log(`German A1 ${engine} audio ready: ${manifest.length} tracks in ${outputDirectory}`);

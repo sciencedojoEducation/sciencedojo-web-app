@@ -2854,6 +2854,16 @@ function BlockContentFields({
             }
           />
         </Field>
+        {block.type === "flashcards" ? (
+          <label className="flex items-center gap-3 rounded-lg border border-secondary/10 bg-white p-3 text-xs font-semibold text-secondary/70">
+            <input
+              type="checkbox"
+              checked={Boolean(block.optional)}
+              onChange={(event) => onChange({ ...block, optional: event.target.checked })}
+            />
+            Show as a collapsed optional vocabulary deck
+          </label>
+        ) : null}
         <ItemEditor
           items={block.items as unknown as Array<Record<string, unknown>>}
           onChange={updateItems}

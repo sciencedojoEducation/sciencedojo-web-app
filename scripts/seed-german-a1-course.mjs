@@ -17,6 +17,7 @@ const supabase = createClient(url, key, { auth: { persistSession: false } });
 const replace = process.argv.includes("--replace");
 const mergeVocabularyCards = process.argv.includes("--merge-vocabulary-cards");
 const mergeAudio = process.argv.includes("--merge-audio");
+const mergeQuiz = process.argv.includes("--merge-quiz");
 const mergeLessonArgument = process.argv.find((argument) => argument.startsWith("--merge-lesson="));
 const mergeLessonId = mergeLessonArgument?.split("=")[1];
 const audioStartArgument = process.argv.find((argument) => argument.startsWith("--audio-start="));
@@ -36,8 +37,29 @@ const { data: existing, error: loadError } = await supabase
   .eq("course_key", course.key)
   .maybeSingle();
 if (loadError) throw loadError;
-if (existing && !replace && !mergeVocabularyCards && !mergeAudio && !mergeLessonId) {
+if (existing && !replace && !mergeVocabularyCards && !mergeAudio && !mergeQuiz && !mergeLessonId) {
   console.log(`Course ${course.key} already exists (${existing.status}); no changes made. Use --replace explicitly to overwrite its draft.`);
+  process.exit(0);
+}
+if (mergeQuiz) {
+  if (!existing?.draft_content) throw new Error(`Course ${course.key} does not have an existing draft to update.`);
+  const draft = structuredClone(existing.draft_content);
+  const currentQuestions = new Map(draft.quiz.map((question) => [question.id, question]));
+  draft.quiz = structuredClone(course.quiz).map((question) => ({
+    ...question,
+    audioUrl: question.audioUrl
+      ? currentQuestions.get(question.id)?.audioUrl || question.audioUrl
+      : undefined,
+  }));
+  const validation = validateAcademyCourse(draft);
+  if (!validation.valid) throw new Error(`Merged course validation failed:\n${validation.errors.join("\n")}`);
+  const { error: mergeError } = await supabase.from("academy_courses").update({
+    draft_content: draft,
+    updated_at: new Date().toISOString(),
+    autosaved_at: new Date().toISOString(),
+  }).eq("id", existing.id);
+  if (mergeError) throw mergeError;
+  console.log(`Merged ${draft.quiz.length} questions into ${course.key}; mapped audio URLs and lessons were preserved.`);
   process.exit(0);
 }
 if (mergeLessonId) {

@@ -285,6 +285,12 @@ function validateBlock(
     errors.push(`${label} needs complete items.`);
   if (
     block.type === "flashcards" &&
+    block.optional !== undefined &&
+    typeof block.optional !== "boolean"
+  )
+    errors.push(`${label} has an invalid optional-deck setting.`);
+  if (
+    block.type === "flashcards" &&
     block.items.some(
       (item) =>
         (hasText(item.src) &&
@@ -370,6 +376,8 @@ function validateQuestion(
     (!hasText(question.audioUrl) || !isSafeContentUrl(question.audioUrl, "audio"))
   )
     errors.push(`${label} needs a valid audio URL.`);
+  if (question.audioTranscript !== undefined && !hasText(question.audioTranscript))
+    errors.push(`${label} needs a non-empty audio transcript.`);
   if (
     question.type !== "reflection" &&
     (!Array.isArray(question.options) || question.options.length < 2)
@@ -433,6 +441,24 @@ export function validateAcademyCourse(
   )
     errors.push("Attempt limit must be between 1 and 10, or unlimited.");
 
+  const trackIds = new Set<string>();
+  if (course.examTracks?.length) {
+    if (course.rules?.requireFinalAssessment === false)
+      errors.push("Exam-track courses need a final core assessment before track selection.");
+    if (!course.lessons.some((lesson) => !lesson.examTrack))
+      errors.push("Exam-track courses need at least one core lesson.");
+    for (const track of course.examTracks) {
+      if (!courseKeyPattern.test(track.id) || trackIds.has(track.id))
+        errors.push(`Exam track “${track.id}” needs a unique lowercase hyphenated ID.`);
+      trackIds.add(track.id);
+      if (!hasText(track.title) || !hasText(track.description))
+        errors.push(`Exam track “${track.id}” needs a title and description.`);
+      if (!course.lessons.some((lesson) => lesson.examTrack === track.id))
+        errors.push(`Exam track “${track.id}” needs at least one lesson.`);
+    }
+  }
+  let reachedTrackLessons = false;
+
   const lessonSlugs = new Set<string>();
   const lessonIds = new Set<string>();
   const sectionIds = new Set(
@@ -442,6 +468,13 @@ export function validateAcademyCourse(
     Number(course.schemaVersion || 1) >= 2 || Boolean(course.sections?.length);
   course.lessons?.forEach((lesson, lessonIndex) => {
     const label = `Lesson ${lessonIndex + 1}`;
+    if (lesson.examTrack) {
+      reachedTrackLessons = true;
+      if (!trackIds.has(lesson.examTrack))
+        errors.push(`${label} references an unknown exam track.`);
+    } else if (reachedTrackLessons) {
+      errors.push(`${label} must come before all exam-track lessons.`);
+    }
     if (!courseKeyPattern.test(lesson.slug))
       errors.push(`${label} needs a lowercase hyphenated slug.`);
     if (lessonSlugs.has(lesson.slug))

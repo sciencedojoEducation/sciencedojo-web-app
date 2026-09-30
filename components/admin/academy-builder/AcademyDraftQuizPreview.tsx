@@ -76,6 +76,27 @@ export default function AcademyDraftQuizPreview({
               </span>
               {question.prompt}
             </legend>
+            {question.audioUrl ? (
+              <div className="mt-5 border-l-4 border-[var(--academy-accent)] bg-[var(--academy-accent-soft)] p-4">
+                <p className="mb-3 text-xs font-bold uppercase tracking-[0.12em] text-[var(--academy-accent-ink)]">
+                  Hören Sie den Ausschnitt. Sie können ihn mehrmals abspielen.
+                </p>
+                <audio controls preload="metadata" src={question.audioUrl} className="w-full">
+                  Ihr Browser unterstützt die Audiowiedergabe nicht.
+                </audio>
+                {question.audioTranscript ? (
+                  <details className="mt-3 text-sm text-[var(--academy-accent-ink)]">
+                    <summary className="cursor-pointer font-semibold underline underline-offset-2">
+                      Transkript als barrierefreie Alternative anzeigen
+                    </summary>
+                    <p className="mt-2 whitespace-pre-line leading-6">{question.audioTranscript}</p>
+                    <p className="mt-2 text-xs">
+                      Wenn Sie das Transkript verwenden, prüfen Sie damit Leseverstehen statt reines Hörverstehen.
+                    </p>
+                  </details>
+                ) : null}
+              </div>
+            ) : null}
             {question.type === "reflection" ? (
               <textarea
                 rows={5}

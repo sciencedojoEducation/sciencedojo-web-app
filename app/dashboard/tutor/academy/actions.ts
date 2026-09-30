@@ -5,11 +5,19 @@ import { redirect } from "next/navigation";
 import {
   getAcademyLesson,
   getAcademyLessonIndex,
+  getAcademyRequiredLessons,
+  isAcademyBlockRequiredForCompletion,
+  isAcademyPracticeSubmissionSaved,
+  isAcademyKnowledgeCheckAnswerAccepted,
+  getAcademyCoreLessons,
+  getAcademyAssessmentLessons,
   scoreTutorAcademyQuiz,
-  TUTOR_ACADEMY_COURSE_KEY,
+  type AcademyCourse,
 } from "@/lib/tutor-academy";
-import { requireTutorAcademyUser } from "@/lib/tutor-academy-progress";
+import { normalizeAcademyProgress, requireTutorAcademyUser } from "@/lib/tutor-academy-progress";
 import { getPublishedAcademyCourse } from "@/lib/academy-courses";
+import { getAcademyExamTrackResumeLesson, getAcademyJourneyLessonState } from "@/lib/academy-journey";
+import { resolveAcademyCourseBasePath } from "@/lib/academy-route-paths";
 
 export type QuizActionState = {
   status: "idle" | "error" | "failed" | "passed";
@@ -28,19 +36,41 @@ async function loadProgressRow(
   userId: string,
   courseKey: string,
 ) {
-  return supabase
+  const result = await supabase
     .from("tutor_academy_progress")
     .select(
-      "completed_lessons, started_lessons, current_lesson, quiz_attempts, best_score, completed_at, passed_quiz_revision, completed_lesson_ids, started_lesson_ids, current_lesson_id, completed_block_ids",
+      "completed_lessons, started_lessons, current_lesson, quiz_attempts, best_score, completed_at, passed_quiz_revision, completed_lesson_ids, started_lesson_ids, current_lesson_id, completed_block_ids, selected_exam_track",
     )
     .eq("user_id", userId)
     .eq("course_key", courseKey)
     .maybeSingle();
+  if (!result.error?.message.includes("selected_exam_track")) return result;
+  const fallback = await supabase
+    .from("tutor_academy_progress")
+    .select("completed_lessons, started_lessons, current_lesson, quiz_attempts, best_score, completed_at, passed_quiz_revision, completed_lesson_ids, started_lesson_ids, current_lesson_id, completed_block_ids")
+    .eq("user_id", userId)
+    .eq("course_key", courseKey)
+    .maybeSingle();
+  return {
+    ...fallback,
+    data: fallback.data ? { ...fallback.data, selected_exam_track: null } : null,
+  };
+}
+
+function hasCompletedCoreLessons(
+  course: AcademyCourse,
+  row: { completed_lesson_ids?: string[] | null; completed_lessons?: string[] | null } | null,
+) {
+  const completedIds = new Set(row?.completed_lesson_ids || []);
+  const completedSlugs = new Set(row?.completed_lessons || []);
+  return getAcademyCoreLessons(course).every((lesson) =>
+    lesson.id ? completedIds.has(lesson.id) : completedSlugs.has(lesson.slug));
 }
 
 export async function recordAcademyLessonVisit(
   courseKey: string,
   lessonSlug: string,
+  requestedBasePath?: string,
 ) {
   const course = await getPublishedAcademyCourse(courseKey);
   if (!course) return { error: "Course not found." };
@@ -60,6 +90,17 @@ export async function recordAcademyLessonVisit(
     );
     return { error: "Progress could not be saved. Please try again." };
   }
+  if (lesson.examTrack) {
+    const basePath = resolveAcademyCourseBasePath(courseKey, requestedBasePath);
+    if (!hasCompletedCoreLessons(course, existing)) redirect(basePath);
+    if (lesson.examTrack !== existing?.selected_exam_track)
+      redirect(`${basePath}/choose-exam`);
+    if (Number(existing?.passed_quiz_revision || 0) < (course.quizRevision || 1))
+      redirect(`${basePath}/quiz`);
+  }
+  if (getAcademyJourneyLessonState(course, normalizeAcademyProgress(existing),
+    getAcademyLessonIndex(lessonSlug, course))?.locked)
+    return { error: "Complete the earlier lessons before opening this activity." };
 
   const now = new Date().toISOString();
   const startedLessons = Array.from(
@@ -103,11 +144,13 @@ export async function recordAcademyLessonVisit(
 export async function completeAcademyLesson(
   courseKey: string,
   lessonSlug: string,
+  requestedBasePath?: string,
 ) {
+  const basePath = resolveAcademyCourseBasePath(courseKey, requestedBasePath);
   const course = await getPublishedAcademyCourse(courseKey);
-  if (!course) redirect("/dashboard/tutor/academy");
+  if (!course) redirect(basePath);
   const lessonIndex = getAcademyLessonIndex(lessonSlug, course);
-  if (lessonIndex < 0) redirect("/dashboard/tutor/academy");
+  if (lessonIndex < 0) redirect(basePath);
 
   const { supabase, user } = await requireTutorAcademyUser(courseKey);
   const { data: existing, error: loadError } = await loadProgressRow(
@@ -120,8 +163,18 @@ export async function completeAcademyLesson(
       "[tutor-academy] Unable to load progress before completion:",
       loadError.message,
     );
-    redirect(`/dashboard/tutor/academy/lessons/${lessonSlug}?error=progress`);
+    redirect(`${basePath}/lessons/${lessonSlug}?error=progress`);
   }
+  const selectedLesson = course.lessons[lessonIndex];
+  if (selectedLesson.examTrack) {
+    if (!hasCompletedCoreLessons(course, existing)) redirect(basePath);
+    if (selectedLesson.examTrack !== existing?.selected_exam_track)
+      redirect(`${basePath}/choose-exam`);
+    if (Number(existing?.passed_quiz_revision || 0) < (course.quizRevision || 1))
+      redirect(`${basePath}/quiz`);
+  }
+  if (getAcademyJourneyLessonState(course, normalizeAcademyProgress(existing), lessonIndex)?.locked)
+    redirect(basePath);
 
   const completedLessons = Array.from(
     new Set([...(existing?.completed_lessons || []), lessonSlug]),
@@ -130,23 +183,28 @@ export async function completeAcademyLesson(
     new Set([...(existing?.started_lessons || []), lessonSlug]),
   );
   const lesson = course.lessons[lessonIndex];
-  const requiredBlockIds = lesson.blocks
-    .filter(
-      (block) => block.completion === "interact" || block.completion === "pass",
-    )
-    .map((block) => block.id)
-    .filter((id): id is string => Boolean(id));
+  const requiredBlocks = lesson.blocks.filter((block) =>
+    block.id && isAcademyBlockRequiredForCompletion(block));
+  const requiredPracticeIds = requiredBlocks
+    .filter((block) => block.type === "writing-practice" || block.type === "speaking-practice")
+    .map((block) => block.id!);
+  const { data: submissions, error: submissionError } = requiredPracticeIds.length
+    ? await supabase.from("academy_learner_submissions")
+      .select("block_id, submission_type, text_response, audio_path")
+      .eq("user_id", user.id)
+      .eq("course_key", courseKey)
+      .eq("lesson_id", lesson.id || `legacy:${courseKey}:${lessonSlug}`)
+      .in("block_id", requiredPracticeIds)
+    : { data: [], error: null };
+  if (submissionError)
+    redirect(`${basePath}/lessons/${lessonSlug}?error=progress`);
+  const savedPracticeById = new Map((submissions || []).map((item) => [item.block_id, item]));
   const completedBlockIds = new Set(existing?.completed_block_ids || []);
-  if (
-    course.rules?.lessonCompletion === "required-blocks" &&
-    requiredBlockIds.some((id) => !completedBlockIds.has(id))
-  ) {
-    const lessonBasePath =
-      courseKey === TUTOR_ACADEMY_COURSE_KEY
-        ? "/dashboard/tutor/academy"
-        : `/dashboard/tutor/academy/courses/${courseKey}`;
-    redirect(`${lessonBasePath}/lessons/${lessonSlug}?error=interactions`);
-  }
+  const firstMissingBlockId = requiredBlocks.find((block) =>
+    !completedBlockIds.has(block.id!) ||
+    !isAcademyPracticeSubmissionSaved(block, savedPracticeById.get(block.id!)))?.id;
+  if (course.rules?.lessonCompletion === "required-blocks" && firstMissingBlockId)
+    redirect(`${basePath}/lessons/${lessonSlug}?error=interactions#academy-block-${firstMissingBlockId}`);
   const lessonId = lesson.id || `legacy:${courseKey}:${lessonSlug}`;
   const completedLessonIds = Array.from(
     new Set([...(existing?.completed_lesson_ids || []), lessonId]),
@@ -154,28 +212,29 @@ export async function completeAcademyLesson(
   const startedLessonIds = Array.from(
     new Set([...(existing?.started_lesson_ids || []), lessonId]),
   );
-  const nextLesson = course.lessons[lessonIndex + 1];
+  const requiredLessons = getAcademyRequiredLessons(course, normalizeAcademyProgress(existing));
+  const nextLesson = requiredLessons[requiredLessons.indexOf(lesson) + 1];
   const now = new Date().toISOString();
-  const allLessonsComplete = course.lessons.every((item) =>
+  const allLessonsComplete = requiredLessons.every((item) =>
     item.id
       ? completedLessonIds.includes(item.id)
       : completedLessons.includes(item.slug),
   );
   const courseNowComplete =
     allLessonsComplete &&
+    (!course.examTracks?.length || Boolean(existing?.selected_exam_track)) &&
     (course.rules?.requireFinalAssessment === false ||
       Number(
         existing?.passed_quiz_revision || (existing?.completed_at ? 1 : 0),
       ) >= (course.quizRevision || 1));
-  const basePath =
-    courseKey === TUTOR_ACADEMY_COURSE_KEY
-      ? "/dashboard/tutor/academy"
-      : `/dashboard/tutor/academy/courses/${courseKey}`;
   const nextHref = nextLesson
     ? `${basePath}/lessons/${nextLesson.slug}`
-    : course.rules?.requireFinalAssessment === false
-      ? basePath
-      : `${basePath}/quiz`;
+    : course.rules?.requireFinalAssessment !== false &&
+        Number(existing?.passed_quiz_revision || 0) < (course.quizRevision || 1)
+      ? `${basePath}/quiz`
+      : course.examTracks?.length && !existing?.selected_exam_track
+        ? `${basePath}/choose-exam`
+        : basePath;
 
   const { error } = await supabase.from("tutor_academy_progress").upsert(
     {
@@ -204,25 +263,68 @@ export async function completeAcademyLesson(
 
   if (error) {
     console.error("[tutor-academy] Unable to complete lesson:", error.message);
-    redirect(`/dashboard/tutor/academy/lessons/${lessonSlug}?error=progress`);
+    redirect(`${basePath}/lessons/${lessonSlug}?error=progress`);
   }
 
   revalidatePath("/dashboard/tutor/academy");
+  revalidatePath(basePath);
   revalidatePath("/dashboard/tutor");
   revalidatePath("/dashboard/admin/tutors");
   redirect(nextHref);
 }
 
+export async function chooseAcademyExamTrack(
+  courseKey: string,
+  trackId: string,
+  requestedBasePath?: string,
+) {
+  const course = await getPublishedAcademyCourse(courseKey);
+  const basePath = resolveAcademyCourseBasePath(courseKey, requestedBasePath);
+  if (!course?.examTracks?.some((track) => track.id === trackId))
+    redirect(`${basePath}/choose-exam?error=invalid`);
+  const { supabase, user } = await requireTutorAcademyUser(courseKey);
+  const { data: existing, error } = await loadProgressRow(supabase, user.id, courseKey);
+  if (error) redirect(`${basePath}/choose-exam?error=progress`);
+  const coreComplete = hasCompletedCoreLessons(course, existing);
+  const assessmentComplete = course.rules?.requireFinalAssessment === false ||
+    Number(existing?.passed_quiz_revision || 0) >= (course.quizRevision || 1);
+  if (!coreComplete || !assessmentComplete)
+    redirect(basePath);
+  const nextLesson = getAcademyExamTrackResumeLesson(
+    course,
+    normalizeAcademyProgress(existing),
+    trackId,
+  );
+  if (!nextLesson) redirect(`${basePath}/choose-exam?error=invalid`);
+  const now = new Date().toISOString();
+  const { data: saved, error: saveError } = await supabase.from("tutor_academy_progress").update({
+    selected_exam_track: trackId,
+    current_lesson: nextLesson.slug,
+    current_lesson_id: nextLesson.id || null,
+    completed_at: existing?.selected_exam_track === trackId
+      ? existing?.completed_at || null
+      : null,
+    updated_at: now,
+  }).eq("user_id", user.id).eq("course_key", courseKey)
+    .select("selected_exam_track").single();
+  if (saveError || saved?.selected_exam_track !== trackId)
+    redirect(`${basePath}/choose-exam?error=progress`);
+  revalidatePath(basePath);
+  redirect(`${basePath}/lessons/${nextLesson.slug}`);
+}
+
 export async function recordAcademyBlockCompletion(
   courseKey: string,
   blockId: string,
+  answer?: string | string[],
 ) {
   const course = await getPublishedAcademyCourse(courseKey);
-  const block = course?.lessons
-    .flatMap((lesson) => lesson.blocks)
-    .find((item) => item.id === blockId);
+  const owningLesson = course?.lessons.find((lesson) =>
+    lesson.blocks.some((item) => item.id === blockId));
+  const block = owningLesson?.blocks.find((item) => item.id === blockId);
   if (
     !course ||
+    !owningLesson ||
     !block ||
     (block.completion !== "interact" && block.completion !== "pass")
   ) {
@@ -235,6 +337,29 @@ export async function recordAcademyBlockCompletion(
     courseKey,
   );
   if (loadError) return { error: "Activity progress could not be saved." };
+  if (owningLesson?.examTrack &&
+    (!hasCompletedCoreLessons(course, existing) ||
+      owningLesson.examTrack !== existing?.selected_exam_track ||
+      Number(existing?.passed_quiz_revision || 0) < (course.quizRevision || 1)))
+    return { error: "Choose and unlock this exam route first." };
+  if (getAcademyJourneyLessonState(course, normalizeAcademyProgress(existing),
+    course.lessons.indexOf(owningLesson))?.locked)
+    return { error: "Complete the earlier lessons before this activity." };
+  if (block.type === "knowledge-check" &&
+    !isAcademyKnowledgeCheckAnswerAccepted(block.question, block.completion, answer))
+    return { error: "Answer this check before completing the activity." };
+  if (block.type === "writing-practice" || block.type === "speaking-practice") {
+    const { data: submission, error: submissionError } = await supabase
+      .from("academy_learner_submissions")
+      .select("submission_type, text_response, audio_path")
+      .eq("user_id", user.id)
+      .eq("course_key", courseKey)
+      .eq("lesson_id", owningLesson.id || `legacy:${courseKey}:${owningLesson.slug}`)
+      .eq("block_id", blockId)
+      .maybeSingle();
+    if (submissionError || !isAcademyPracticeSubmissionSaved(block, submission))
+      return { error: "Save your writing or recording before completing this activity." };
+  }
   const now = new Date().toISOString();
   const { error } = await supabase.from("tutor_academy_progress").upsert(
     {
@@ -277,7 +402,8 @@ export async function submitTutorAcademyQuiz(
 
   const completed = new Set(existing?.completed_lessons || []);
   const completedIds = new Set(existing?.completed_lesson_ids || []);
-  const allLessonsComplete = course.lessons.every((lesson) =>
+  const requiredForAssessment = getAcademyAssessmentLessons(course);
+  const allLessonsComplete = requiredForAssessment.every((lesson) =>
     lesson.id && completedIds.size
       ? completedIds.has(lesson.id)
       : completed.has(lesson.slug),
@@ -285,7 +411,7 @@ export async function submitTutorAcademyQuiz(
   if (!allLessonsComplete) {
     return {
       status: "error",
-      message: `Complete all ${course.lessons.length} lessons before taking the final knowledge check.`,
+      message: `Complete all ${requiredForAssessment.length} core lessons before taking the final knowledge check.`,
     };
   }
   const alreadyPassedCurrentQuiz =
@@ -324,7 +450,7 @@ export async function submitTutorAcademyQuiz(
 
   const result = scoreTutorAcademyQuiz(answers, course);
   const now = new Date().toISOString();
-  const completedAt = result.passed
+  const completedAt = result.passed && !course.examTracks?.length
     ? alreadyPassedCurrentQuiz
       ? existing?.completed_at || now
       : now
@@ -376,13 +502,17 @@ export async function submitTutorAcademyQuiz(
 
   revalidatePath("/dashboard/tutor/academy");
   revalidatePath("/dashboard/tutor/academy/quiz");
+  revalidatePath(`/dashboard/academy/${courseKey}`);
+  revalidatePath(`/dashboard/academy/${courseKey}/quiz`);
   revalidatePath("/dashboard/tutor");
   revalidatePath("/dashboard/admin/tutors");
 
   return {
     status: result.passed ? "passed" : "failed",
     message: result.passed
-      ? `You passed ${course.shortTitle}. Your completion has been saved.`
+      ? course.examTracks?.length
+        ? `You passed the shared A1 knowledge check. Choose your Goethe or telc exam route next.`
+        : `You passed ${course.shortTitle}. Your completion has been saved.`
       : `You have not reached ${course.passMark || 80}% yet. Review the course and try again when you are ready.`,
     score: result.score,
     results:

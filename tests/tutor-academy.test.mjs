@@ -4,9 +4,16 @@ import { describe, test } from "node:test";
 import {
   emptyAcademyProgress,
   getAcademyLessonProgressState,
+  getAcademyFirstMissingRequiredBlockId,
+  getAcademyRequiredLessons,
+  getAcademyAssessmentLessons,
   getAcademyProgressPercent,
   getAcademyQuizProgressState,
   getAcademyResumeHref,
+  isAcademyBlockRequiredForCompletion,
+  isAcademyPracticeSubmissionSaved,
+  isAcademyKnowledgeCheckAnswerAccepted,
+  isAcademyCourseComplete,
   scoreTutorAcademyQuiz,
   tutorAcademyCourse,
 } from "../lib/tutor-academy.ts";
@@ -23,7 +30,7 @@ import {
 import { academyTemplates, filterAcademyTemplates } from "../lib/academy-templates.ts";
 import { academyAccentPalettes, academyJourneyPaletteKeys, academyThemeStyle } from "../lib/academy-theme.ts";
 import { academyRecipes, createAcademyRecipe } from "../lib/academy-recipes.ts";
-import { getAcademyJourneyLessonState, getAcademyJourneyResumeTarget } from "../lib/academy-journey.ts";
+import { getAcademyExamTrackResumeLesson, getAcademyJourneyLessonState, getAcademyJourneyResumeTarget } from "../lib/academy-journey.ts";
 
 function luminance(hex) {
   const channels = hex.slice(1).match(/../g).map((part) => parseInt(part, 16) / 255);
@@ -37,6 +44,169 @@ function contrast(first, second) {
 }
 
 describe("Tutor Academy course", () => {
+  test("completion respects an explicitly optional knowledge check", () => {
+    const check = { type: "knowledge-check", completion: "interact", required: false };
+    assert.equal(isAcademyBlockRequiredForCompletion(check), false);
+    assert.equal(isAcademyBlockRequiredForCompletion({ ...check, required: true }), true);
+    assert.equal(isAcademyBlockRequiredForCompletion({ type: "knowledge-check", completion: "pass" }), true);
+    assert.equal(isAcademyBlockRequiredForCompletion({ type: "writing-practice", completion: "interact" }), true);
+    assert.equal(isAcademyBlockRequiredForCompletion({ type: "text", completion: "view" }), false);
+  });
+  test("productive activities require a matching saved portfolio response", () => {
+    const writing = { type: "writing-practice" };
+    const speaking = { type: "speaking-practice" };
+    assert.equal(isAcademyPracticeSubmissionSaved(writing), false);
+    assert.equal(isAcademyPracticeSubmissionSaved(writing, {
+      submission_type: "writing", text_response: "   ", audio_path: null,
+    }), false);
+    assert.equal(isAcademyPracticeSubmissionSaved(writing, {
+      submission_type: "writing", text_response: "Guten Tag!", audio_path: null,
+    }), true);
+    assert.equal(isAcademyPracticeSubmissionSaved(speaking, {
+      submission_type: "writing", text_response: "Guten Tag!", audio_path: null,
+    }), false);
+    assert.equal(isAcademyPracticeSubmissionSaved(speaking, {
+      submission_type: "speaking", text_response: null, audio_path: " ",
+    }), false);
+    assert.equal(isAcademyPracticeSubmissionSaved(speaking, {
+      submission_type: "speaking", text_response: null, audio_path: "learner/course/recording.webm",
+    }), true);
+  });
+  test("server-side knowledge-check validation distinguishes practice from a pass", () => {
+    const single = {
+      id: "single", prompt: "When?", options: [{ id: "a", label: "Now" }, { id: "b", label: "Later" }],
+      correctOptionId: "a", explanation: "Now.",
+    };
+    assert.equal(isAcademyKnowledgeCheckAnswerAccepted(single, "pass", undefined), false);
+    assert.equal(isAcademyKnowledgeCheckAnswerAccepted(single, "pass", "b"), false);
+    assert.equal(isAcademyKnowledgeCheckAnswerAccepted(single, "pass", "a"), true);
+    assert.equal(isAcademyKnowledgeCheckAnswerAccepted(single, "interact", "b"), true);
+    assert.equal(isAcademyKnowledgeCheckAnswerAccepted(single, "interact", "unknown"), false);
+    const multiple = {
+      ...single, type: "multiple-response", correctOptionIds: ["a", "b"],
+    };
+    assert.equal(isAcademyKnowledgeCheckAnswerAccepted(multiple, "pass", ["b", "a"]), true);
+    assert.equal(isAcademyKnowledgeCheckAnswerAccepted(multiple, "pass", ["a"]), false);
+    assert.equal(isAcademyKnowledgeCheckAnswerAccepted(multiple, "pass", ["a", "a"]), false);
+    assert.equal(isAcademyKnowledgeCheckAnswerAccepted({ ...single, type: "reflection" }, "interact", "A short answer"), true);
+    assert.equal(isAcademyKnowledgeCheckAnswerAccepted({ ...single, type: "reflection" }, "interact", " "), false);
+  });
+  test("resuming a started lesson opens its first unsaved required activity", () => {
+    const course = {
+      ...tutorAcademyCourse,
+      key: "resume-practice-test",
+      rules: { ...tutorAcademyCourse.rules, lessonCompletion: "required-blocks" },
+      lessons: [
+        {
+          id: "lesson-1",
+          slug: "lesson-one",
+          section: "Course",
+          title: "Lesson one",
+          summary: "Practice",
+          durationMinutes: 30,
+          blocks: [
+            { id: "read", type: "text", paragraphs: ["Read"], completion: "view" },
+            { id: "write", type: "writing-practice", completion: "interact" },
+            { id: "speak", type: "speaking-practice", completion: "interact" },
+          ],
+        },
+        { id: "lesson-2", slug: "lesson-two", section: "Course", title: "Lesson two", summary: "Next", durationMinutes: 30, blocks: [] },
+      ],
+    };
+    const started = {
+      ...emptyAcademyProgress,
+      startedLessons: ["lesson-one"],
+      startedLessonIds: ["lesson-1"],
+      currentLesson: "lesson-one",
+      currentLessonId: "lesson-1",
+      completedBlockIds: ["write"],
+    };
+    assert.equal(getAcademyFirstMissingRequiredBlockId(course, started, course.lessons[0]), "speak");
+    assert.equal(getAcademyResumeHref(started, course, "/academy/course"),
+      "/academy/course/lessons/lesson-one#academy-block-speak");
+    assert.equal(getAcademyFirstMissingRequiredBlockId(course, { ...started, completedBlockIds: ["write", "speak"] }, course.lessons[0]), null);
+    assert.equal(getAcademyResumeHref({ ...started, completedLessonIds: ["lesson-1"] }, course, "/academy/course"),
+      "/academy/course/lessons/lesson-two");
+  });
+  test("rejects missing, unknown, and interleaved exam routes", () => {
+    const course = migrateAcademyCourse(structuredClone(tutorAcademyCourse));
+    const makeLesson = (slug, examTrack) => ({
+      ...structuredClone(course.lessons[0]),
+      id: `lesson-${slug}`,
+      slug,
+      examTrack,
+    });
+    course.examTracks = [
+      { id: "goethe", title: "Goethe", description: "Goethe exam practice" },
+      { id: "telc", title: "telc", description: "telc exam practice" },
+    ];
+    course.lessons.push(makeLesson("goethe-one", "goethe"), makeLesson("telc-one", "telc"));
+    assert.equal(validateAcademyCourse(course).valid, true);
+
+    const routeLesson = course.lessons.find((lesson) => lesson.slug === "goethe-one");
+    routeLesson.examTrack = "unknown";
+    assert.ok(validateAcademyCourse(course).errors.some((error) => error.includes("unknown exam track")));
+    routeLesson.examTrack = "telc";
+    assert.ok(validateAcademyCourse(course).errors.some((error) => error.includes("goethe") && error.includes("needs at least one lesson")));
+    course.lessons.push(makeLesson("late-core", undefined));
+    assert.ok(validateAcademyCourse(course).errors.some((error) => error.includes("before all exam-track lessons")));
+  });
+
+  test("one selected exam route controls progress and completion", () => {
+    const course = {
+      ...tutorAcademyCourse,
+      key: "a1-track-test",
+      quizRevision: 1,
+      examTracks: [
+        { id: "goethe", title: "Goethe", description: "Goethe practice" },
+        { id: "telc", title: "telc", description: "telc practice" },
+      ],
+      lessons: [
+        { id: "core-1", slug: "core-1", section: "Core", title: "Core 1", summary: "Core", durationMinutes: 60, blocks: [] },
+        { id: "core-2", slug: "core-2", section: "Core", title: "Core 2", summary: "Core", durationMinutes: 60, blocks: [] },
+        { id: "goethe-1", slug: "goethe-1", section: "Goethe", examTrack: "goethe", title: "Goethe 1", summary: "Goethe", durationMinutes: 60, blocks: [] },
+        { id: "telc-1", slug: "telc-1", section: "telc", examTrack: "telc", title: "telc 1", summary: "telc", durationMinutes: 60, blocks: [] },
+      ],
+    };
+    const coreDone = { ...emptyAcademyProgress, completedLessonIds: ["core-1", "core-2"], passedQuizRevision: 1 };
+    assert.deepEqual(getAcademyAssessmentLessons(course).map((lesson) => lesson.id), ["core-1", "core-2"]);
+    assert.equal(getAcademyAssessmentLessons(course).every((lesson) => coreDone.completedLessonIds.includes(lesson.id)), true);
+    assert.deepEqual(getAcademyRequiredLessons(course, coreDone).map((lesson) => lesson.id), ["core-1", "core-2"]);
+    assert.equal(getAcademyResumeHref(coreDone, course, "/academy/a1"), "/academy/a1/choose-exam");
+    assert.deepEqual(getAcademyJourneyResumeTarget(course, coreDone), { kind: "track-choice" });
+    assert.equal(getAcademyProgressPercent(coreDone, course), 75);
+    assert.equal(isAcademyCourseComplete(coreDone, course), false);
+    const goetheChosen = { ...coreDone, selectedExamTrack: "goethe" };
+    const missingCore = { ...goetheChosen, completedLessonIds: ["core-1"], currentLessonId: "goethe-1" };
+    assert.equal(getAcademyJourneyLessonState(course, missingCore, 2).locked, true);
+    assert.equal(getAcademyResumeHref(missingCore, course, "/academy/a1"), "/academy/a1/lessons/core-2");
+    assert.deepEqual(getAcademyRequiredLessons(course, goetheChosen).map((lesson) => lesson.id), ["core-1", "core-2", "goethe-1"]);
+    assert.equal(getAcademyResumeHref(goetheChosen, course, "/academy/a1"), "/academy/a1/lessons/goethe-1");
+    assert.equal(getAcademyJourneyLessonState(course, goetheChosen, 2).locked, false);
+    assert.equal(getAcademyJourneyLessonState(course, goetheChosen, 3).locked, true);
+    assert.equal(getAcademyExamTrackResumeLesson(course, goetheChosen, "goethe")?.slug, "goethe-1");
+    assert.equal(getAcademyExamTrackResumeLesson(course, goetheChosen, "missing"), null);
+    const assessmentRevised = { ...course, quizRevision: 2 };
+    assert.equal(getAcademyResumeHref(goetheChosen, assessmentRevised, "/academy/a1"), "/academy/a1/quiz");
+    assert.deepEqual(getAcademyJourneyResumeTarget(assessmentRevised, goetheChosen), { kind: "assessment" });
+    assert.equal(getAcademyJourneyLessonState(assessmentRevised, goetheChosen, 2).locked, true);
+    const goetheDone = { ...goetheChosen, completedLessonIds: [...goetheChosen.completedLessonIds, "goethe-1"] };
+    assert.equal(getAcademyExamTrackResumeLesson(course, goetheDone, "goethe")?.slug, "goethe-1");
+    const twoGoetheLessons = {
+      ...course,
+      lessons: [
+        ...course.lessons,
+        { id: "goethe-2", slug: "goethe-2", section: "Goethe", examTrack: "goethe", title: "Goethe 2", summary: "Goethe", durationMinutes: 60, blocks: [] },
+      ],
+    };
+    assert.equal(getAcademyExamTrackResumeLesson(twoGoetheLessons, goetheDone, "goethe")?.slug, "goethe-2");
+    assert.equal(getAcademyProgressPercent(goetheDone, course), 100);
+    assert.equal(isAcademyCourseComplete(goetheDone, course), true);
+    const switchedToTelc = { ...goetheDone, selectedExamTrack: "telc", completedAt: new Date().toISOString() };
+    assert.equal(isAcademyCourseComplete(switchedToTelc, course), false);
+    assert.equal(getAcademyResumeHref(switchedToTelc, course, "/academy/a1"), "/academy/a1/lessons/telc-1");
+  });
+
   test("contains six unique lessons and ten quiz questions", () => {
     assert.equal(tutorAcademyCourse.lessons.length, 6);
     assert.equal(new Set(tutorAcademyCourse.lessons.map((lesson) => lesson.slug)).size, 6);

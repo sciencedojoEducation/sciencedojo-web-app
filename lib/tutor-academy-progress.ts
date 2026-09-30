@@ -18,6 +18,7 @@ type ProgressRow = {
   started_lesson_ids?: string[] | null;
   current_lesson_id?: string | null;
   completed_block_ids?: string[] | null;
+  selected_exam_track?: string | null;
 };
 
 export function normalizeAcademyProgress(
@@ -41,6 +42,7 @@ export function normalizeAcademyProgress(
     completedBlockIds: Array.isArray(row?.completed_block_ids)
       ? row.completed_block_ids
       : [],
+    selectedExamTrack: row?.selected_exam_track || null,
     quizAttempts: Number(row?.quiz_attempts || 0),
     bestScore: Number(row?.best_score || 0),
     completedAt: row?.completed_at || null,
@@ -101,14 +103,25 @@ export async function getTutorAcademyProgress(
   courseKey = TUTOR_ACADEMY_COURSE_KEY,
 ): Promise<AcademyProgress> {
   const { supabase, user } = await requireTutorAcademyUser(courseKey);
-  const { data, error } = await supabase
+  let { data, error } = await supabase
     .from("tutor_academy_progress")
     .select(
-      "completed_lessons, started_lessons, current_lesson, quiz_attempts, best_score, completed_at, passed_quiz_revision, completed_lesson_ids, started_lesson_ids, current_lesson_id, completed_block_ids",
+      "completed_lessons, started_lessons, current_lesson, quiz_attempts, best_score, completed_at, passed_quiz_revision, completed_lesson_ids, started_lesson_ids, current_lesson_id, completed_block_ids, selected_exam_track",
     )
     .eq("user_id", user.id)
     .eq("course_key", courseKey)
     .maybeSingle();
+
+  if (error?.message.includes("selected_exam_track")) {
+    const fallback = await supabase
+      .from("tutor_academy_progress")
+      .select("completed_lessons, started_lessons, current_lesson, quiz_attempts, best_score, completed_at, passed_quiz_revision, completed_lesson_ids, started_lesson_ids, current_lesson_id, completed_block_ids")
+      .eq("user_id", user.id)
+      .eq("course_key", courseKey)
+      .maybeSingle();
+    data = fallback.data ? { ...fallback.data, selected_exam_track: null } : null;
+    error = fallback.error;
+  }
 
   if (error) {
     console.error("[tutor-academy] Unable to load progress:", error.message);

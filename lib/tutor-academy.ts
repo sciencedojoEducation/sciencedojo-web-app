@@ -128,6 +128,7 @@ export type LessonBlock = AcademyBlockIdentity &
     | {
         type: "flashcards";
         heading?: string;
+        optional?: boolean;
         items: Array<{
           id?: string;
           title: string;
@@ -199,6 +200,7 @@ export type AcademySection = {
 export type AcademyLesson = {
   id?: string;
   sectionId?: string;
+  examTrack?: string;
   slug: string;
   section: string;
   title: string;
@@ -207,6 +209,28 @@ export type AcademyLesson = {
   blocks: LessonBlock[];
 };
 
+export function isAcademyBlockRequiredForCompletion(block: LessonBlock): boolean {
+  if (block.completion !== "interact" && block.completion !== "pass") return false;
+  // Older knowledge checks may not have a `required` flag. Preserve their
+  // existing behavior, but honor an explicit opt-out set in the builder.
+  return block.type !== "knowledge-check" || block.required !== false;
+}
+
+export function isAcademyPracticeSubmissionSaved(
+  block: LessonBlock,
+  submission?: {
+    submission_type: string;
+    text_response: string | null;
+    audio_path: string | null;
+  } | null,
+): boolean {
+  if (block.type === "writing-practice")
+    return submission?.submission_type === "writing" && Boolean(submission.text_response?.trim());
+  if (block.type === "speaking-practice")
+    return submission?.submission_type === "speaking" && Boolean(submission.audio_path?.trim());
+  return true;
+}
+
 export type QuizOption = { id: string; label: string };
 
 export type QuizQuestion = {
@@ -214,12 +238,33 @@ export type QuizQuestion = {
   type?: "single-choice" | "multiple-response" | "reflection";
   prompt: string;
   audioUrl?: string;
+  audioTranscript?: string;
   options: QuizOption[];
   correctOptionId: string;
   correctOptionIds?: string[];
   explanation: string;
   weight?: number;
 };
+
+export function isAcademyKnowledgeCheckAnswerAccepted(
+  question: QuizQuestion,
+  completion: AcademyBlockCompletion | undefined,
+  answer: string | string[] | undefined,
+): boolean {
+  const type = question.type || "single-choice";
+  if (type === "reflection")
+    return typeof answer === "string" && Boolean(answer.trim());
+  const selected = Array.isArray(answer) ? answer : typeof answer === "string" ? [answer] : [];
+  const validOptions = new Set(question.options.map((option) => option.id));
+  if (!selected.length || new Set(selected).size !== selected.length ||
+    selected.some((id) => !validOptions.has(id))) return false;
+  if (type !== "multiple-response" && selected.length !== 1) return false;
+  if (completion !== "pass") return true;
+  return type === "multiple-response"
+    ? selected.length === (question.correctOptionIds || []).length &&
+        selected.every((id) => question.correctOptionIds?.includes(id))
+    : selected[0] === question.correctOptionId;
+}
 
 export type AcademyAudienceRole =
   | "tutor_applicant"
@@ -250,6 +295,7 @@ export type AcademyCourse = {
   versionId?: string;
   schemaVersion?: number;
   sections?: AcademySection[];
+  examTracks?: { id: string; title: string; description: string }[];
   theme?: AcademyTheme;
   rules?: {
     navigation: "free" | "linear";
@@ -270,6 +316,7 @@ export type AcademyProgress = {
   currentLesson: string | null;
   currentLessonId: string | null;
   completedBlockIds: string[];
+  selectedExamTrack: string | null;
   quizAttempts: number;
   bestScore: number;
   completedAt: string | null;
@@ -768,6 +815,7 @@ export const emptyAcademyProgress: AcademyProgress = {
   currentLesson: null,
   currentLessonId: null,
   completedBlockIds: [],
+  selectedExamTrack: null,
   quizAttempts: 0,
   bestScore: 0,
   completedAt: null,
@@ -777,8 +825,52 @@ export const emptyAcademyProgress: AcademyProgress = {
 export type AcademyProgressState = "unstarted" | "started" | "completed";
 export type AcademyProgressCourse = Pick<
   AcademyCourse,
-  "lessons" | "quizRevision" | "rules"
+  "lessons" | "quizRevision" | "rules" | "examTracks"
 >;
+
+export function getAcademyRequiredLessons(
+  course: AcademyProgressCourse,
+  progress: AcademyProgress,
+) {
+  if (!course.examTracks?.length) return course.lessons;
+  const selectedTrack = course.examTracks.some((track) => track.id === progress.selectedExamTrack)
+    ? progress.selectedExamTrack
+    : null;
+  return course.lessons.filter((lesson) =>
+    !lesson.examTrack || lesson.examTrack === selectedTrack);
+}
+
+export function getAcademyCoreLessons(course: AcademyProgressCourse) {
+  return course.lessons.filter((lesson) => !lesson.examTrack);
+}
+
+export function getAcademyFirstMissingRequiredBlockId(
+  course: AcademyProgressCourse,
+  progress: AcademyProgress,
+  lesson: AcademyProgressCourse["lessons"][number],
+) {
+  if (course.rules?.lessonCompletion !== "required-blocks" ||
+    getAcademyLessonProgressState(progress, lesson.slug, lesson.id) !== "started")
+    return null;
+  const completed = new Set(progress.completedBlockIds);
+  return lesson.blocks.find((block) =>
+    block.id && isAcademyBlockRequiredForCompletion(block) && !completed.has(block.id))?.id || null;
+}
+
+export function getAcademyLessonResumeHref(
+  course: AcademyProgressCourse,
+  progress: AcademyProgress,
+  lesson: AcademyProgressCourse["lessons"][number],
+  basePath: string,
+) {
+  const href = `${basePath}/lessons/${lesson.slug}`;
+  const missingBlockId = getAcademyFirstMissingRequiredBlockId(course, progress, lesson);
+  return missingBlockId ? `${href}#academy-block-${missingBlockId}` : href;
+}
+
+export function getAcademyAssessmentLessons(course: AcademyProgressCourse) {
+  return course.examTracks?.length ? getAcademyCoreLessons(course) : course.lessons;
+}
 
 function courseRequiresFinalAssessment(course: AcademyProgressCourse) {
   return course.rules?.requireFinalAssessment !== false;
@@ -833,13 +925,14 @@ export function isAcademyCourseComplete(
   progress: AcademyProgress,
   course: AcademyProgressCourse = tutorAcademyCourse,
 ) {
-  const lessonsComplete = course.lessons.every(
+  const lessonsComplete = getAcademyRequiredLessons(course, progress).every(
     (lesson) =>
       getAcademyLessonProgressState(progress, lesson.slug, lesson.id) ===
       "completed",
   );
   return (
     lessonsComplete &&
+    (!course.examTracks?.length || course.examTracks.some((track) => track.id === progress.selectedExamTrack)) &&
     (!courseRequiresFinalAssessment(course) ||
       getPassedQuizRevision(progress) >= (course.quizRevision || 1))
   );
@@ -853,35 +946,57 @@ export function getAcademyResumeHref(
   if (isAcademyCourseComplete(progress, course))
     return `${basePath}/lessons/${course.lessons[0].slug}`;
 
+  const requiredLessons = getAcademyRequiredLessons(course, progress);
+  const coreComplete = getAcademyCoreLessons(course).every((lesson) =>
+    getAcademyLessonProgressState(progress, lesson.slug, lesson.id) === "completed");
+  if (course.examTracks?.length && coreComplete) {
+    if (courseRequiresFinalAssessment(course) &&
+      getAcademyQuizProgressState(progress, course) !== "completed")
+      return `${basePath}/quiz`;
+    if (!course.examTracks.some((track) => track.id === progress.selectedExamTrack))
+      return `${basePath}/choose-exam`;
+  }
   const currentLesson = progress.currentLessonId
     ? course.lessons.find((lesson) => lesson.id === progress.currentLessonId)
     : progress.currentLesson &&
       getAcademyLesson(progress.currentLesson, course);
-  if (currentLesson) return `${basePath}/lessons/${currentLesson.slug}`;
+  if (currentLesson && requiredLessons.includes(currentLesson) &&
+    (!currentLesson.examTrack || coreComplete) &&
+    getAcademyLessonProgressState(progress, currentLesson.slug, currentLesson.id) !== "completed")
+    return getAcademyLessonResumeHref(course, progress, currentLesson, basePath);
 
-  const firstIncomplete = course.lessons.find(
+  const firstIncomplete = requiredLessons.find(
     (lesson) =>
       getAcademyLessonProgressState(progress, lesson.slug, lesson.id) !==
       "completed",
   );
-  return firstIncomplete
-    ? `${basePath}/lessons/${firstIncomplete.slug}`
-    : courseRequiresFinalAssessment(course)
-      ? `${basePath}/quiz`
-      : basePath;
+  if (firstIncomplete) return getAcademyLessonResumeHref(course, progress, firstIncomplete, basePath);
+  if (courseRequiresFinalAssessment(course) &&
+    getAcademyQuizProgressState(progress, course) !== "completed")
+    return `${basePath}/quiz`;
+  if (course.examTracks?.length &&
+    !course.examTracks.some((track) => track.id === progress.selectedExamTrack))
+    return `${basePath}/choose-exam`;
+  return basePath;
 }
 
 export function getAcademyProgressPercent(
   progress: AcademyProgress,
   course: AcademyProgressCourse = tutorAcademyCourse,
 ) {
-  const completed = course.lessons.filter(
+  const requiredLessons = getAcademyRequiredLessons(course, progress);
+  const completed = requiredLessons.filter(
     (lesson) =>
       getAcademyLessonProgressState(progress, lesson.slug, lesson.id) ===
       "completed",
   ).length;
   const includesAssessment = courseRequiresFinalAssessment(course);
-  const totalSteps = course.lessons.length + (includesAssessment ? 1 : 0);
+  const pendingTrackLength = course.examTracks?.length &&
+    !course.examTracks.some((track) => track.id === progress.selectedExamTrack)
+    ? Math.min(...course.examTracks.map((track) =>
+        course.lessons.filter((lesson) => lesson.examTrack === track.id).length))
+    : 0;
+  const totalSteps = requiredLessons.length + pendingTrackLength + (includesAssessment ? 1 : 0);
   if (!totalSteps) return 0;
   const assessmentComplete =
     includesAssessment &&
@@ -938,6 +1053,7 @@ export function getPublicQuizQuestions(
     type: question.type || "single-choice",
     prompt: question.prompt,
     audioUrl: question.audioUrl,
+    audioTranscript: question.audioTranscript,
     options: question.options,
   }));
 }

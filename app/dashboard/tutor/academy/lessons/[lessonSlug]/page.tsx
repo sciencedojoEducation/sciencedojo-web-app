@@ -50,6 +50,7 @@ export default async function TutorAcademyLessonPage({
     null,
     course.key,
     lesson.slug,
+    "/dashboard/tutor/academy",
   );
 
   return (

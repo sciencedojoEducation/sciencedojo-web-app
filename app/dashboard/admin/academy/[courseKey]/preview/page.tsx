@@ -1,4 +1,5 @@
 import { Merriweather } from "next/font/google";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import AcademyDraftQuizPreview from "@/components/admin/academy-builder/AcademyDraftQuizPreview";
 import AcademyCourseContents from "@/components/tutor-academy/AcademyCourseContents";
@@ -50,8 +51,22 @@ export default async function AcademyDraftPreviewPage({
       course={course}
       className={`${academySerif.variable} min-h-screen bg-white text-[#101010]`}
     >
-      <div className="sticky top-0 z-30 flex min-h-9 items-center justify-center border-b border-amber-200 bg-amber-50 px-4 text-center text-[9px] font-black uppercase tracking-[0.14em] text-amber-900">
-        {query.snapshot ? "Snapshot preview" : "Admin draft preview"} · interactions stay in preview and are not saved as learner progress
+      <div className="sticky top-0 z-30 flex min-h-12 items-center justify-center border-b border-amber-200 bg-amber-50 px-3 text-center text-[9px] font-black uppercase tracking-[0.14em] text-amber-900 sm:px-4">
+        <Link
+          href={`/dashboard/admin/academy/${courseKey}`}
+          className="absolute left-2 inline-flex min-h-9 items-center gap-1.5 rounded-full border border-amber-300 bg-white px-3 text-[10px] tracking-[0.08em] text-amber-950 shadow-sm transition hover:border-amber-400 hover:bg-amber-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 sm:left-4"
+          aria-label="Exit preview and return to the course builder"
+        >
+          <span aria-hidden="true">←</span>
+          <span className="hidden sm:inline">Exit preview</span>
+          <span className="sm:hidden">Exit</span>
+        </Link>
+        <p className="mx-20 sm:mx-32">
+          {query.snapshot ? "Snapshot preview" : "Admin draft preview"}
+          <span className="hidden md:inline">
+            {" "}· interactions stay in preview and are not saved as learner progress
+          </span>
+        </p>
       </div>
 
       {view === "cover" ? (
@@ -82,7 +97,10 @@ export default async function AcademyDraftPreviewPage({
             index={lessonIndex}
           />
           <div className="mx-auto max-w-[728px] px-6 py-14">
-            <AcademyLessonBlocks blocks={lesson.blocks} />
+            <AcademyLessonBlocks
+              blocks={lesson.blocks}
+              uiLanguage={course.key === "deutsch-a1-komplett" ? "de" : "en"}
+            />
           </div>
         </main>
       ) : null}
