@@ -25,9 +25,16 @@ test("B2 course has complete shared and distinct Goethe/telc routes", () => {
   assert.equal(core.length, 18);
   assert.equal(goethe.length, 10);
   assert.equal(telc.length, 12);
-  assert.ok(goethe.some((lesson) => lesson.title.includes("Forumbeitrag")));
-  assert.ok(telc.some((lesson) => lesson.title.includes("Sprachbausteine")));
-  assert.ok(telc.some((lesson) => lesson.title.includes("gemeinsam planen")));
+  assert.match(goethe[3].title, /Forumbeitrag/);
+  assert.match(goethe[7].title, /Zeittraining/);
+  assert.match(goethe[8].title, /Modelltest/);
+  assert.match(telc[2].title, /Sprachbausteine: Grammatik/);
+  assert.match(telc[3].title, /Sprachbausteine: Lexik/);
+  assert.match(telc[8].title, /gemeinsam planen/);
+  assert.match(telc[9].title, /Zeittraining/);
+  assert.match(telc[10].title, /Übungstest/);
+  assert.ok([goethe[7], telc[9]].every((lesson) => lesson.blocks.some((block) => block.heading === "Zeittraining · Schreiben") && lesson.blocks.some((block) => block.heading === "Zeittraining · Sprechen")));
+  assert.ok([goethe[8], telc[10]].every((lesson) => lesson.blocks.some((block) => block.heading === "Den offiziellen Übungstest durchführen" && block.items.length === 5)));
   assert.ok(core.every((lesson) => ["audio", "writing-practice", "speaking-practice", "knowledge-check", "process"].every((type) =>
     lesson.blocks.some((block) => block.type === type))));
   assert.ok(germanB2Course.lessons.every((lesson) => lesson.blocks.filter((block) =>
@@ -41,8 +48,8 @@ test("B2 course has complete shared and distinct Goethe/telc routes", () => {
   const technology = core[9];
   assert.equal(technology.blocks.find((block) => block.id === "de-b2-10-people")?.items.length, 4);
   assert.ok(technology.blocks.filter((block) => block.type === "knowledge-check" && block.heading?.startsWith("Lesen")).length >= 3);
-  assert.ok(telc[3].blocks.some((block) => block.heading?.includes("Sprachbausteine · Grammatik")));
-  assert.ok(telc[4].blocks.some((block) => block.heading?.includes("Sprachbausteine · Kollokation")));
+  assert.ok(telc[2].blocks.some((block) => block.heading?.includes("Sprachbausteine · Grammatik")));
+  assert.ok(telc[3].blocks.some((block) => block.heading?.includes("Sprachbausteine · Kollokation")));
 });
 
 test("B2 final assessment contains the evidence needed to answer each question", () => {
