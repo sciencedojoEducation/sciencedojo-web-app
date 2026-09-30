@@ -434,7 +434,7 @@ function chapterOneLesson(spec: ChapterSpec): AcademyLesson {
         id: blockId(slug, "hoeren-anmeldung"),
         type: "audio",
         heading: "Hören: Anmeldung mit Name und Telefonnummer",
-        url: "/audio/german-a1/a1-kapitel-01-anmeldung.m4a",
+        url: "/audio/german-a1/a1-kapitel-01-anmeldung-natural-v2.m4a",
         caption: `Hören Sie zuerst ohne Transcript. Beim zweiten Hören notieren Sie Namen, Buchstaben und Zahlen. ${AI_VOICE_DISCLOSURE}`,
         transcript,
         completion: "view",

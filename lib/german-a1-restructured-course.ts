@@ -4,6 +4,7 @@ import { publicLifePracticeBlocks } from "./german-a1-public-life-practice.ts";
 import { lifePracticeBlocks } from "./german-a1-life-practice.ts";
 import { germanA1FinalListening } from "./german-a1-final-listening.ts";
 import { previousChapterRecall } from "./german-a1-retrieval.ts";
+import { styleGermanA1Lesson } from "./german-a1-visual-design.ts";
 import {
   germanA1Curriculum,
   germanA1CurriculumSources,
@@ -981,7 +982,7 @@ export const germanA1RestructuredCourse: AcademyCourse = migrateAcademyCourse({
     title: track.title,
     description: `Eigenständig erstelltes Training mit Link zu offiziellen Übungen: ${track.officialPracticeUrl}`,
   })),
-  lessons: [...coreLessons, ...examLessons],
+  lessons: [...coreLessons, ...examLessons].map(styleGermanA1Lesson),
   quizRevision: (germanA1Course.quizRevision || 1) + 1,
   quiz: revisedQuiz,
   estimatedMinutes: coreLessons.reduce((total, lesson) => total + lesson.durationMinutes, 0) +

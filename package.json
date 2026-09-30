@@ -17,10 +17,15 @@
     "academy:german-a1:seed": "node --experimental-strip-types scripts/seed-german-a1-course.mjs",
     "academy:german-a1:restructure": "node --experimental-strip-types scripts/seed-german-a1-restructured-course.mjs",
     "academy:german-a1:audit": "node --experimental-strip-types scripts/audit-german-a1-course.mjs",
+    "academy:german-b1:audio": "node --experimental-strip-types scripts/generate-german-b1-audio.mjs",
+    "academy:german-b1:seed": "node --experimental-strip-types scripts/seed-german-b1-course.mjs",
+    "academy:german-b1:style": "node --experimental-strip-types scripts/style-german-b1-course.mjs",
     "academy:german-b2:audio": "node --experimental-strip-types scripts/generate-german-b2-audio.mjs",
     "academy:german-b2:advanced-audio": "node --experimental-strip-types scripts/generate-german-b2-advanced-audio.mjs",
     "academy:german-b2:seed": "node --experimental-strip-types scripts/seed-german-b2-course.mjs",
-    "showcase:staging:seed": "node --env-file=.env.showcase.local scripts/seed-showcase-staging.mjs"
+    "showcase:staging:seed": "node --env-file=.env.showcase.local scripts/seed-showcase-staging.mjs",
+    "academy:german-a2:audio": "node --experimental-strip-types scripts/generate-german-a2-audio.mjs",
+    "academy:german-a2:seed": "node --experimental-strip-types scripts/seed-german-a2-course.mjs"
   },
   "dependencies": {
     "@atlaskit/pragmatic-drag-and-drop": "^3.1.0",

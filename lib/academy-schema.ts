@@ -7,8 +7,8 @@ import type {
   QuizQuestion,
 } from "@/lib/tutor-academy";
 
-export const ACADEMY_DOCUMENT_SCHEMA_VERSION = 6;
-export const ACADEMY_BLOCK_SCHEMA_VERSION = 5;
+export const ACADEMY_DOCUMENT_SCHEMA_VERSION = 7;
+export const ACADEMY_BLOCK_SCHEMA_VERSION = 6;
 
 export type AcademyBlockVariant = {
   key: string;
@@ -622,6 +622,7 @@ function migrateBlock(
       surface: migrated.appearance?.surface || "plain",
       spacing: migrated.appearance?.spacing || "comfortable",
       width: migrated.appearance?.width || "reading",
+      background: migrated.appearance?.background,
     };
   }
   if ("items" in migrated) {

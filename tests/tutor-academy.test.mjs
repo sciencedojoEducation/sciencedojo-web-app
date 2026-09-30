@@ -29,6 +29,7 @@ import {
 } from "../lib/academy-schema.ts";
 import { academyTemplates, filterAcademyTemplates } from "../lib/academy-templates.ts";
 import { academyAccentPalettes, academyJourneyPaletteKeys, academyThemeStyle } from "../lib/academy-theme.ts";
+import { academyBackgroundNeedsContentPanel, isSafeAcademyBackgroundImageUrl, isValidAcademyBackgroundColor } from "../lib/academy-block-background.ts";
 import { academyRecipes, createAcademyRecipe } from "../lib/academy-recipes.ts";
 import { getAcademyExamTrackResumeLesson, getAcademyJourneyLessonState, getAcademyJourneyResumeTarget } from "../lib/academy-journey.ts";
 
@@ -356,7 +357,7 @@ describe("Tutor Academy course", () => {
     assert.equal(reloaded.lessons[0].blocks.at(-1).appearance.variant, "build-up");
   });
 
-  test("migrates older documents to v6 without changing stable IDs", () => {
+  test("migrates older documents to v7 without changing stable IDs", () => {
     const legacy = structuredClone(tutorAcademyCourse);
     const originalLessonId = "stable-lesson";
     const originalBlockId = "stable-block";
@@ -394,6 +395,30 @@ describe("Tutor Academy course", () => {
     });
     assert.equal(migrated.theme.typography, "modern-sans");
     assert.equal(migrated.theme.coverStyle, "full-image");
+  });
+
+  test("block backgrounds survive migration and reject unsafe settings", () => {
+    const course = migrateAcademyCourse(structuredClone(tutorAcademyCourse));
+    const block = course.lessons[0].blocks[0];
+    const stableId = block.id;
+    block.appearance.background = { kind: "custom", color: "#FFFDE4" };
+    assert.equal(validateAcademyCourse(course).valid, true);
+    assert.equal(academyBackgroundNeedsContentPanel(block.appearance.background), false);
+    assert.equal(academyBackgroundNeedsContentPanel({ kind: "custom", color: "#142136" }), true);
+    assert.equal(academyBackgroundNeedsContentPanel({ kind: "image", imageUrl: "/images/example.jpg" }), true);
+    assert.equal(isValidAcademyBackgroundColor("#FFFDE4"), true);
+    assert.equal(isValidAcademyBackgroundColor("yellow"), false);
+    assert.equal(isSafeAcademyBackgroundImageUrl("/images/example.jpg"), true);
+    assert.equal(isSafeAcademyBackgroundImageUrl("//example.com/image.jpg"), false);
+    assert.equal(isSafeAcademyBackgroundImageUrl("javascript:alert(1)"), false);
+    const reloaded = migrateAcademyCourse(structuredClone(course));
+    assert.equal(reloaded.lessons[0].blocks[0].id, stableId);
+    assert.deepEqual(reloaded.lessons[0].blocks[0].appearance.background, { kind: "custom", color: "#FFFDE4" });
+    block.appearance.background = { kind: "custom", color: "yellow" };
+    assert.ok(validateAcademyCourse(course).errors.some((error) => error.includes("custom background colour")));
+    assert.equal(validateAcademyCourse(course).issues.find((issue) => issue.field === "background")?.blockId, stableId);
+    block.appearance.background = { kind: "image", imageUrl: "javascript:alert(1)" };
+    assert.ok(validateAcademyCourse(course).errors.some((error) => error.includes("background image URL")));
   });
 
   test("keeps Learning Journey opt-in with three accessible energetic palettes", () => {

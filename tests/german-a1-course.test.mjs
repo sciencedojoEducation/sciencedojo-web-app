@@ -45,7 +45,7 @@ test("develops chapter 1 as a complete five-hour beginner unit", () => {
   assert.ok(chapter.blocks.some((block) => block.id?.endsWith("-schreiben") && block.type === "writing-practice"));
   assert.ok(chapter.blocks.some((block) => block.id?.endsWith("-sprechen") && block.type === "speaking-practice"));
   const registrationAudio = chapter.blocks.find((block) => block.type === "audio");
-  assert.equal(registrationAudio?.url, "/audio/german-a1/a1-kapitel-01-anmeldung.m4a");
+  assert.equal(registrationAudio?.url, "/audio/german-a1/a1-kapitel-01-anmeldung-natural-v2.m4a");
   assert.match(registrationAudio.transcript, /Anna: Ja: W, E, B, E, R/);
   assert.ok(chapter.blocks.some((block) => block.type === "knowledge-check" &&
     block.question.prompt.includes("Nachnamen buchstabiert Anna")));

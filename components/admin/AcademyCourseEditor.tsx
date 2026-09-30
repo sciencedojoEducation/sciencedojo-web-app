@@ -44,6 +44,7 @@ import {
   X,
 } from "lucide-react";
 import AcademyLessonBlocks from "@/components/tutor-academy/AcademyLessonBlocks";
+import AcademyBlockBackgroundFrame from "@/components/tutor-academy/AcademyBlockBackground";
 import AcademyMath from "@/components/tutor-academy/AcademyMath";
 import AcademyBlockIcon from "@/components/admin/academy-builder/AcademyBlockIcon";
 import BlockInsertionTray from "@/components/admin/academy-builder/BlockInsertionTray";
@@ -76,12 +77,14 @@ import {
 } from "@/lib/academy-course-validation";
 import AcademyThemeScope from "@/components/tutor-academy/AcademyThemeScope";
 import { academyAccentPalettes, isAcademyJourneyPalette } from "@/lib/academy-theme";
+import { academyBlockBackgroundChoices, isValidAcademyBackgroundColor } from "@/lib/academy-block-background";
 import {
   academyBlockRegistry,
   type AcademyBlockCategory,
   createAcademyId,
   createAcademyLesson,
   createQuestion,
+  defaultBlockAppearance,
   getAcademyBlockDefinition,
   migrateAcademyCourse,
 } from "@/lib/academy-schema";
@@ -104,6 +107,7 @@ import {
 } from "@/lib/academy-draft-recovery";
 import type {
   AcademyAudienceRole,
+  AcademyBlockBackground,
   AcademyCourse,
   AcademyLesson,
   AcademyMediaCaptionItem,
@@ -1067,6 +1071,101 @@ function QuestionEditor({
   );
 }
 
+function BlockBackgroundPicker({
+  block,
+  onChange,
+  mediaLibrary,
+}: {
+  block: LessonBlock;
+  onChange: (block: LessonBlock) => void;
+  mediaLibrary: Media[];
+}) {
+  const background = block.appearance?.background;
+  const [colorDraft, setColorDraft] = useState<string | null>(null);
+  const visibleColor = colorDraft ?? background?.color ?? "#FFFDE4";
+  const [mediaChooserOpen, setMediaChooserOpen] = useState(false);
+  const selectBackground = (next?: AcademyBlockBackground) => {
+    onChange({
+      ...block,
+      appearance: {
+        ...defaultBlockAppearance(block.type),
+        ...block.appearance,
+        background: next,
+      },
+    });
+  };
+  const applyColor = () => {
+    if (isValidAcademyBackgroundColor(visibleColor)) {
+      selectBackground({ kind: "custom", color: visibleColor.toUpperCase() });
+      setColorDraft(null);
+    }
+  };
+
+  return (
+    <div data-academy-background-picker>
+      <p className="mb-2 text-[10px] font-black uppercase tracking-[0.13em] text-secondary/45">Background</p>
+      <div className="space-y-3">
+        <p className="text-xs leading-5 text-secondary/60">Choose a background for this block. Dark colours and images keep the content on a readable light panel.</p>
+        <div className="grid grid-cols-2 gap-2">
+          {academyBlockBackgroundChoices.map((choice) => (
+            <button
+              key={choice.kind}
+              type="button"
+              aria-pressed={background?.kind === choice.kind}
+              onClick={() => selectBackground({ kind: choice.kind })}
+              className={`flex min-h-12 items-center gap-3 rounded-lg border px-3 text-left text-xs font-bold outline-none focus-visible:ring-2 focus-visible:ring-primary ${background?.kind === choice.kind ? "border-primary bg-primary/5 text-primary" : "border-secondary/15 text-secondary"}`}
+            >
+              <span className="h-6 w-7 shrink-0 rounded border border-black/10" style={{ backgroundColor: choice.preview }} aria-hidden="true" />
+              {choice.label}
+            </button>
+          ))}
+          <button
+            type="button"
+            aria-pressed={background?.kind === "custom"}
+            onClick={() => selectBackground({ kind: "custom", color: isValidAcademyBackgroundColor(visibleColor) ? visibleColor : "#FFFDE4" })}
+            className={`flex min-h-12 items-center gap-3 rounded-lg border px-3 text-left text-xs font-bold outline-none focus-visible:ring-2 focus-visible:ring-primary ${background?.kind === "custom" ? "border-primary bg-primary/5 text-primary" : "border-secondary/15 text-secondary"}`}
+          >
+            <span className="h-6 w-7 shrink-0 rounded border border-black/10" style={{ backgroundColor: isValidAcademyBackgroundColor(visibleColor) ? visibleColor : "#FFFDE4" }} aria-hidden="true" />
+            Custom
+          </button>
+          <button
+            type="button"
+            aria-pressed={background?.kind === "image"}
+            onClick={() => setMediaChooserOpen(true)}
+            className={`flex min-h-12 items-center gap-3 rounded-lg border px-3 text-left text-xs font-bold outline-none focus-visible:ring-2 focus-visible:ring-primary ${background?.kind === "image" ? "border-primary bg-primary/5 text-primary" : "border-secondary/15 text-secondary"}`}
+          >
+            <span className="grid h-6 w-7 shrink-0 place-items-center rounded border border-black/10 bg-slate-100" aria-hidden="true"><Upload size={13} /></span>
+            Image
+          </button>
+        </div>
+        {background?.kind === "custom" ? (
+          <div className="flex items-center gap-2">
+            <input type="color" aria-label="Pick a custom background colour" value={isValidAcademyBackgroundColor(visibleColor) ? visibleColor : "#FFFDE4"} onChange={(event) => { setColorDraft(event.target.value); selectBackground({ kind: "custom", color: event.target.value.toUpperCase() }); }} onBlur={applyColor} className="h-11 w-14 cursor-pointer rounded border border-secondary/15" />
+            <input type="text" aria-label="Custom background hex colour" value={visibleColor} onChange={(event) => { const value = event.target.value; setColorDraft(value); if (isValidAcademyBackgroundColor(value)) selectBackground({ kind: "custom", color: value.toUpperCase() }); }} onBlur={applyColor} onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); applyColor(); } }} maxLength={7} spellCheck={false} className={`${inputClass} min-w-0 flex-1`} />
+          </div>
+        ) : null}
+        {background?.kind === "custom" && !isValidAcademyBackgroundColor(visibleColor) ? <p role="alert" className="text-xs text-red-700">Enter a six-digit hex colour, for example #FFFDE4.</p> : null}
+        {background?.kind === "image" ? <p className="text-xs text-secondary/60">Background images are decorative. Keep important information in the block content.</p> : null}
+        {background ? <button type="button" onClick={() => selectBackground(undefined)} className="min-h-11 text-xs font-bold text-primary underline underline-offset-4">Clear background</button> : null}
+      </div>
+      <AcademyMediaChooser
+        open={mediaChooserOpen}
+        title="Choose block background image"
+        library={mediaLibrary}
+        selectedUrl={background?.kind === "image" ? background.imageUrl : undefined}
+        onClose={() => setMediaChooserOpen(false)}
+        onChoose={(choice) => selectBackground({ kind: "image", imageUrl: choice.url })}
+        onUpload={async (file) => {
+          const data = new FormData();
+          data.set("file", file);
+          const result = await uploadAcademyMedia(data);
+          return result.ok && result.url ? { name: file.name, url: result.url, mediaType: "image" } : null;
+        }}
+      />
+    </div>
+  );
+}
+
 function BlockInspector({
   block,
   onChange,
@@ -1216,6 +1315,7 @@ function BlockInspector({
                         onChange({
                           ...block,
                           appearance: {
+                            ...block.appearance,
                             variant: variant.key,
                             surface: block.appearance?.surface || "plain",
                             spacing: block.appearance?.spacing || "comfortable",
@@ -1245,6 +1345,7 @@ function BlockInspector({
                       onChange({
                         ...block,
                         appearance: {
+                          ...block.appearance,
                           variant:
                             block.appearance?.variant ||
                             getAcademyBlockDefinition(block.type).variants[0]
@@ -1266,12 +1367,12 @@ function BlockInspector({
                 ))}
               </div>
             </Field>
-            <Field label="Surface">
+            <Field label="Content frame">
               <div className="space-y-2">
                 {(
                   [
-                    ["plain", "Light", "bg-white"],
-                    ["subtle", "Soft tint", "bg-primary/5"],
+                    ["plain", "None", "bg-white"],
+                    ["subtle", "Soft inset", "bg-primary/5"],
                     [
                       "accent",
                       "Accent edge",
@@ -1286,6 +1387,7 @@ function BlockInspector({
                       onChange({
                         ...block,
                         appearance: {
+                          ...block.appearance,
                           variant:
                             block.appearance?.variant ||
                             getAcademyBlockDefinition(block.type).variants[0]
@@ -1307,6 +1409,7 @@ function BlockInspector({
                 ))}
               </div>
             </Field>
+            <BlockBackgroundPicker key={block.id} block={block} onChange={onChange} mediaLibrary={mediaLibrary} />
             <Field label="Spacing">
               <select
                 className={inputClass}
@@ -1315,6 +1418,7 @@ function BlockInspector({
                   onChange({
                     ...block,
                     appearance: {
+                      ...block.appearance,
                       variant:
                         block.appearance?.variant ||
                         getAcademyBlockDefinition(block.type).variants[0].key,
@@ -3340,13 +3444,15 @@ export default function AcademyCourseEditor({
     }
     if (issue.lessonId && issue.blockId) {
       selectBlock(issue.lessonId, issue.blockId);
-      setInspectorTab(issue.scope === "media" ? "accessibility" : "content");
+      setInspectorTab(issue.field === "background" ? "design" : issue.scope === "media" ? "accessibility" : "content");
       setInspectorOpen(true);
-      window.requestAnimationFrame(() =>
+      window.requestAnimationFrame(() => {
         globalThis.document
           .querySelector<HTMLElement>(`[data-block-id="${issue.blockId}"]`)
-          ?.scrollIntoView({ behavior: "smooth", block: "center" }),
-      );
+          ?.scrollIntoView({ behavior: "smooth", block: "center" });
+        if (issue.field === "background")
+          globalThis.document.querySelector<HTMLElement>("[data-academy-background-picker] button")?.focus();
+      });
     }
   };
   return (
@@ -4271,10 +4377,9 @@ export default function AcademyCourseEditor({
                           }
                         >
                           {block.type === "text" ? (
-                            <div
-                              data-block-variant={
-                                block.appearance?.variant || "default"
-                              }
+                            <AcademyBlockBackgroundFrame
+                              appearance={block.appearance || defaultBlockAppearance(block.type)}
+                              variant={block.appearance?.variant || "default"}
                               className={`${
                                 block.appearance?.width === "narrow"
                                   ? "mx-auto w-full max-w-xl"
@@ -4304,19 +4409,41 @@ export default function AcademyCourseEditor({
                                 }
                                 layout={block.layout || "single"}
                               />
-                            </div>
+                            </AcademyBlockBackgroundFrame>
                           ) : isCaptionedMediaBlock(block) ? (
-                            <>
+                            <AcademyBlockBackgroundFrame
+                              appearance={block.appearance || defaultBlockAppearance(block.type)}
+                              variant={block.appearance?.variant || "framed"}
+                              className={`${
+                                block.appearance?.width === "narrow"
+                                  ? "mx-auto w-full max-w-xl"
+                                  : block.appearance?.width === "wide"
+                                    ? "relative left-1/2 w-[calc(100vw-48px)] max-w-[1000px] -translate-x-1/2 lg:w-[calc(100vw-328px)]"
+                                    : "w-full"
+                              } academy-block-surface-${block.appearance?.surface || "plain"} academy-block-spacing-${block.appearance?.spacing || "comfortable"}`}
+                            >
                               <AcademyLessonBlocks
                                 blocks={[
-                                  { ...block, caption: "", captionItems: [] },
+                                  {
+                                    ...block,
+                                    caption: "",
+                                    captionItems: [],
+                                    appearance: {
+                                      ...defaultBlockAppearance(block.type),
+                                      ...block.appearance,
+                                      surface: "plain",
+                                      spacing: "compact",
+                                      width: "reading",
+                                      background: undefined,
+                                    },
+                                  },
                                 ]}
                               />
                               <InlineMediaCaption
                                 block={block}
                                 onChange={(next) => updateBlock(next)}
                               />
-                            </>
+                            </AcademyBlockBackgroundFrame>
                           ) : (
                             <AcademyLessonBlocks blocks={[block]} />
                           )}

@@ -88,7 +88,7 @@ export default function AcademyCarousel({
         <h3 className="mt-4 text-2xl font-bold tracking-[-0.02em] text-[#252629] sm:text-[28px]">
           {item.title}
         </h3>
-        <p className="mt-4 max-w-2xl font-[family-name:var(--font-academy-serif)] text-[16px] leading-8 text-[#4A4B4E]">
+        <p className="mt-4 max-w-2xl font-[family-name:var(--font-academy-serif)] text-[16px] leading-8 text-[#27313B]">
           {item.body}
         </p>
       </div>

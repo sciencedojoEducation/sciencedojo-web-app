@@ -15,6 +15,7 @@ import AcademyCarousel from "./AcademyCarousel";
 import AcademyRichText from "./AcademyRichText";
 import AcademyMath from "./AcademyMath";
 import AcademyLanguagePractice from "./AcademyLanguagePractice";
+import AcademyBlockBackground from "./AcademyBlockBackground";
 import {
   AcademyAccordion,
   AcademyFlashcards,
@@ -133,7 +134,7 @@ export default function AcademyLessonBlocks({
               {block.paragraphs.map((paragraph) => (
                 <p
                   key={paragraph}
-                  className="font-[family-name:var(--font-academy-serif)] text-[17px] leading-[30px] text-[#36373A] sm:leading-[33px]"
+                  className="font-[family-name:var(--font-academy-serif)] text-[17px] font-medium leading-[30px] text-[#17202C] sm:leading-[33px]"
                 >
                   {paragraph}
                 </p>
@@ -206,7 +207,7 @@ export default function AcademyLessonBlocks({
                   <h2 className="text-xl font-bold tracking-[-0.01em]">
                     {block.heading}
                   </h2>
-                  <p className="mt-2 font-[family-name:var(--font-academy-serif)] text-[15px] leading-7 opacity-80">
+                  <p className="mt-2 font-[family-name:var(--font-academy-serif)] text-[15px] leading-7">
                     {block.body}
                   </p>
                 </div>
@@ -240,7 +241,7 @@ export default function AcademyLessonBlocks({
                       <h3 className="text-lg font-bold text-[#252629]">
                         {item.title}
                       </h3>
-                      <p className="mt-2 font-[family-name:var(--font-academy-serif)] text-[15px] leading-7 text-[#4A4B4E]">
+                      <p className="mt-2 font-[family-name:var(--font-academy-serif)] text-[15px] leading-7 text-[#27313B]">
                         {item.body}
                       </p>
                     </div>
@@ -469,7 +470,7 @@ export default function AcademyLessonBlocks({
                     <h3 className="text-lg font-bold text-[#252629]">
                       {item.title}
                     </h3>
-                    <p className="mt-2 font-[family-name:var(--font-academy-serif)] text-[15px] leading-7 text-[#4A4B4E]">
+                    <p className="mt-2 font-[family-name:var(--font-academy-serif)] text-[15px] leading-7 text-[#27313B]">
                       {item.body}
                     </p>
                   </li>
@@ -592,7 +593,7 @@ export default function AcademyLessonBlocks({
                   <summary className="cursor-pointer font-bold text-[var(--academy-accent)]">
                     {activityLanguage === "de" ? "Transkript lesen" : "Read transcript"}
                   </summary>
-                  <p className="mt-3 whitespace-pre-wrap font-[family-name:var(--font-academy-serif)] text-[15px] leading-7 text-[#4A4B4E]">
+                  <p className="mt-3 whitespace-pre-wrap font-[family-name:var(--font-academy-serif)] text-[15px] leading-7 text-[#27313B]">
                     {block.transcript}
                   </p>
                 </details>
@@ -631,7 +632,7 @@ export default function AcademyLessonBlocks({
                     </span>
                     <div>
                       <strong>{step.title}</strong>
-                      <p className="mt-1 text-sm leading-6 text-[#4A4B4E]">
+                      <p className="mt-1 text-sm leading-6 text-[#27313B]">
                         {step.body}
                       </p>
                     </div>
@@ -704,7 +705,7 @@ export default function AcademyLessonBlocks({
                         {row.map((cell, cellIndex) => (
                           <td
                             key={cellIndex}
-                            className={`px-5 py-4 text-sm leading-6 ${cellIndex === 0 ? "font-bold text-[#252629]" : "font-[family-name:var(--font-academy-serif)] text-[#4A4B4E]"}`}
+                            className={`px-5 py-4 text-sm leading-6 ${cellIndex === 0 ? "font-bold text-[#252629]" : "font-[family-name:var(--font-academy-serif)] text-[#27313B]"}`}
                           >
                             {cellIndex > 0 && (
                               <Check
@@ -739,14 +740,15 @@ export default function AcademyLessonBlocks({
               ? "relative left-1/2 w-[calc(100vw-48px)] max-w-[1000px] -translate-x-1/2 lg:w-[calc(100vw-328px)]"
               : "w-full";
         return (
-          <div
+          <AcademyBlockBackground
             key={block.id || blockIndex}
             id={block.id ? `academy-block-${block.id}` : undefined}
-            data-block-variant={appearance.variant}
+            appearance={appearance}
+            variant={appearance.variant}
             className={`${widthClass} scroll-mt-24 academy-block-surface-${appearance.surface} academy-block-spacing-${appearance.spacing}`}
           >
             {content}
-          </div>
+          </AcademyBlockBackground>
         );
       })}
     </div>

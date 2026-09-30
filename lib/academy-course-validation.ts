@@ -4,6 +4,7 @@ import type {
   LessonBlock,
   QuizQuestion,
 } from "@/lib/tutor-academy";
+import { academyBlockBackgroundKinds, isSafeAcademyBackgroundImageUrl, isValidAcademyBackgroundColor } from "./academy-block-background.ts";
 
 const courseKeyPattern = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const allowedAudiences = new Set<AcademyAudienceRole>([
@@ -141,6 +142,15 @@ function validateBlock(
       !new Set(["narrow", "reading", "wide"]).has(block.appearance.width)
     )
       errors.push(`${label} has an unsupported content width.`);
+    const background = block.appearance.background;
+    if (background) {
+      if (!academyBlockBackgroundKinds.includes(background.kind))
+        errors.push(`${label} has an unsupported background style.`);
+      if (background.kind === "custom" && !isValidAcademyBackgroundColor(background.color))
+        errors.push(`${label} needs a valid six-digit custom background colour.`);
+      if (background.kind === "image" && !isSafeAcademyBackgroundImageUrl(background.imageUrl))
+        errors.push(`${label} needs a valid background image URL.`);
+    }
   }
   const interactiveTypes: LessonBlock["type"][] = [
     "accordion",
@@ -577,9 +587,7 @@ function locateAcademyValidationIssue(
     lesson && blockMatch
       ? lesson.blocks[Number(blockMatch[1]) - 1]
       : undefined;
-  const mediaIssue = /image|alt text|video|audio|transcript|media|url/i.test(
-    message,
-  );
+  const mediaIssue = !/background/i.test(message) && /image|alt text|video|audio|transcript|media|url/i.test(message);
   if (block) {
     return {
       code: `${mediaIssue ? "media" : "block"}-${issueIndex + 1}`,
@@ -587,7 +595,9 @@ function locateAcademyValidationIssue(
       message,
       lessonId: lesson?.id,
       blockId: block.id,
-      field: /alt text/i.test(message)
+      field: /background/i.test(message)
+        ? "background"
+        : /alt text/i.test(message)
         ? "alt"
         : /transcript/i.test(message)
           ? "transcript"

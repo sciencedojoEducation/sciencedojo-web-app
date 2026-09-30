@@ -24,11 +24,17 @@ export type AcademyBlockCompletion = "view" | "interact" | "pass";
 
 export type AcademyBlockSurface = "plain" | "subtle" | "accent";
 export type AcademyBlockSpacing = "compact" | "comfortable" | "spacious";
+export type AcademyBlockBackground = {
+  kind: "light" | "gray" | "theme" | "theme-tint" | "dark" | "black" | "custom" | "image";
+  color?: string;
+  imageUrl?: string;
+};
 export type AcademyBlockAppearance = {
   variant: string;
   surface: AcademyBlockSurface;
   spacing: AcademyBlockSpacing;
   width?: "narrow" | "reading" | "wide";
+  background?: AcademyBlockBackground;
 };
 
 type AcademyBlockIdentity = {

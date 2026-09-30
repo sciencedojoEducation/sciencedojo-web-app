@@ -108,7 +108,7 @@ export default function AcademyCourseCover({
             {course.title}
           </h1>
           <p
-            className={`academy-reading-copy mt-5 max-w-xl text-[17px] leading-8 ${overlaysImage ? "text-white/80" : "text-[#4A4B4E]"}`}
+            className={`academy-reading-copy mt-5 max-w-xl text-[17px] leading-8 ${overlaysImage ? "text-white/90" : "text-[#27313B]"}`}
           >
             {course.description}
           </p>

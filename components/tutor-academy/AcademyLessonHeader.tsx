@@ -77,7 +77,7 @@ export default function AcademyLessonHeader({
         </h1>
         <div className="mt-5 h-1 w-12 bg-[var(--academy-accent)]" />
         <p
-          className={`academy-reading-copy mt-6 text-[17px] leading-[33px] ${mediaLed ? "text-white/85" : "text-[#4A4B4E]"}`}
+          className={`academy-reading-copy mt-6 text-[17px] leading-[33px] ${mediaLed ? "text-white/85" : "text-[#27313B]"}`}
         >
           {lesson.summary}
         </p>

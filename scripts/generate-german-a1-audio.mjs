@@ -38,6 +38,10 @@ const manifest = finalAssessment
         }]))).values()]
   : germanA1AudioManifest;
 const force = process.argv.includes("--force");
+const natural = process.argv.includes("--natural");
+const outputSuffix = process.argv.find((argument) => argument.startsWith("--output-suffix="))?.split("=")[1] || "";
+if (outputSuffix && !/^[a-z0-9-]+$/.test(outputSuffix))
+  throw new Error("Output suffix must contain only lowercase letters, digits and hyphens.");
 const engineArgument = process.argv.find((argument) => argument.startsWith("--engine="));
 const engine = engineArgument?.split("=")[1] || "gemini";
 const startArgument = process.argv.find((argument) => argument.startsWith("--start="));
@@ -111,6 +115,14 @@ function combineWaveFiles(paths, destination, pauseMilliseconds = 420) {
 }
 
 function performanceInstructions(profile, isReview) {
+  if (natural) return [
+    "Read only the supplied German text, without speaker labels or extra words.",
+    "Speak native Standard German as a real adult in a friendly, everyday conversation at a language-school reception.",
+    profile.performance,
+    "Use warm, natural intonation and connected phrases at an unhurried beginner-friendly pace. Never sound robotic or artificially stretch syllables.",
+    "Pronounce spelled letters with their German alphabet names. Read telephone digits individually, with brief natural pauses between the written groups.",
+    "Keep a consistent voice across turns. No music, sound effects, or theatrical acting.",
+  ].join(" ");
   return [
     "Speak only the supplied German text. Do not add a speaker name, explanation, sound effect, or extra words.",
     "Use native, neutral Standard German pronunciation.",
@@ -126,11 +138,11 @@ function performanceInstructions(profile, isReview) {
 async function generateOpenAISegment(line, destination, isReview) {
   const response = await openai.audio.speech.create({
     model: "gpt-4o-mini-tts",
-    voice: line.profile.openAIVoice,
+    voice: natural ? (line.profile.gender === "female" ? "marin" : "cedar") : line.profile.openAIVoice,
     input: line.text,
     instructions: performanceInstructions(line.profile, isReview),
     response_format: "wav",
-    speed: isReview ? 1 : 0.92,
+    speed: natural || isReview ? 1 : 0.92,
   });
   writeFileSync(destination, Buffer.from(await response.arrayBuffer()));
 }
@@ -193,7 +205,7 @@ async function generateGeminiTrack(lines, temporaryDirectory, isReview) {
       text: line.text,
       speech_metadata: {
         speaker: line.speaker,
-        style: `${line.profile.performance} ${isReview ? "Natural conversational speed." : "Slow, exceptionally clear A1 learner pace."}`,
+        style: natural ? performanceInstructions(line.profile, isReview) : `${line.profile.performance} ${isReview ? "Natural conversational speed." : "Slow, exceptionally clear A1 learner pace."}`,
       },
     }));
     const destination = join(temporaryDirectory, "gemini-dialogue.wav");
@@ -206,7 +218,7 @@ async function generateGeminiTrack(lines, temporaryDirectory, isReview) {
     const parts = [{
       text: line.text,
       speech_metadata: {
-        style: `${line.profile.performance} ${isReview ? "Natural conversational speed." : "Slow, exceptionally clear A1 learner pace."}`,
+        style: natural ? performanceInstructions(line.profile, isReview) : `${line.profile.performance} ${isReview ? "Natural conversational speed." : "Slow, exceptionally clear A1 learner pace."}`,
       },
     }];
     writeFileSync(destination, await requestGeminiSpeech(parts, [[line.speaker, line.profile]]));
@@ -233,7 +245,8 @@ function generateSystemSegment(line, destination, rate) {
 for (const [relativeIndex, item] of manifest.slice(start, start + limit).entries()) {
   const index = start + relativeIndex;
   if (!item.outputPath || !item.transcript) throw new Error(`Missing audio data for ${item.slug}`);
-  const output = join(root, "public", item.outputPath.replace(/^\//, ""));
+  const outputPath = outputSuffix ? item.outputPath.replace(/\.m4a$/, `-${outputSuffix}.m4a`) : item.outputPath;
+  const output = join(root, "public", outputPath.replace(/^\//, ""));
   if (!force && existsSync(output) && statSync(output).size > 0) continue;
   const isReview = finalAssessment || index >= 32;
   const rate = isReview ? "165" : "145";
@@ -249,7 +262,7 @@ for (const [relativeIndex, item] of manifest.slice(start, start + limit).entries
     let segments = [];
     for (const line of lines) {
       console.log(
-        `  ${line.speaker}: ${engine === "gemini" ? line.profile.voice : engine === "openai" ? line.profile.openAIVoice : line.profile.systemVoice} (${line.profile.gender}, ${line.profile.ageGroup})`,
+        `  ${line.speaker}: ${engine === "gemini" ? line.profile.voice : engine === "openai" ? (natural ? (line.profile.gender === "female" ? "marin" : "cedar") : line.profile.openAIVoice) : line.profile.systemVoice} (${line.profile.gender}, ${line.profile.ageGroup})`,
       );
     }
     if (engine === "gemini") segments = await generateGeminiTrack(lines, temporaryDirectory, isReview);
@@ -270,7 +283,7 @@ for (const [relativeIndex, item] of manifest.slice(start, start + limit).entries
       "-d",
       "BEI16",
     ]);
-    console.log(`Generated ${item.slug}.m4a with ${new Set(lines.map((line) => line.profile.voice)).size} expressive voices`);
+    console.log(`Generated ${outputPath} with ${new Set(lines.map((line) => line.profile.voice)).size} expressive voices`);
   } finally {
     rmSync(temporaryDirectory, { recursive: true, force: true });
   }

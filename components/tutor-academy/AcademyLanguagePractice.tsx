@@ -50,7 +50,7 @@ function Frame({
       <h2 className="mt-2 text-[28px] font-bold text-[#101010] sm:text-[32px]">
         {block.heading || (block.type === "writing-practice" ? "Schreiben" : "Sprechen")}
       </h2>
-      <p className="mt-4 font-[family-name:var(--font-academy-serif)] text-[17px] leading-8 text-[#36373A]">
+      <p className="mt-4 font-[family-name:var(--font-academy-serif)] text-[17px] leading-8 text-[#202733]">
         {block.prompt}
       </p>
       {children}

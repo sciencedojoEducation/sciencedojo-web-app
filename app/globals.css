@@ -1216,6 +1216,28 @@ input::placeholder, textarea::placeholder {
 .academy-block-spacing-comfortable { padding-block: 0.75rem; }
 .academy-block-spacing-spacious { padding-block: 1.5rem; }
 
+/* A block background surrounds its content; dark colours and images retain a readable paper surface. */
+.academy-block-background { position: relative; isolation: isolate; overflow: clip; padding-inline: 1.5rem; border-radius: 1.5rem; }
+.academy-block-background-light { background: #fff; }
+.academy-block-background-gray { background: #f0f2f5; }
+.academy-block-background-theme { background: var(--academy-accent, #1e5aa8); }
+.academy-block-background-theme-tint { background: var(--academy-accent-soft, #eef4fb); }
+.academy-block-background-dark { background: #29313d; }
+.academy-block-background-black { background: #101318; }
+.academy-block-background-custom { background: var(--academy-block-custom-color, #fffde4); }
+.academy-block-background-media { position: absolute; inset: 0; z-index: 0; width: 100%; height: 100%; object-fit: cover; object-position: center 25%; border-radius: inherit; }
+.academy-block-background-image { padding-top: clamp(7rem, 16vw, 11rem); }
+.academy-block-background-content { position: relative; z-index: 1; }
+.academy-block-background-panel { padding-block: 1.5rem; }
+.academy-block-background-panel .academy-block-background-content { position: relative; z-index: 1; background: rgba(255, 255, 255, 0.97); border-radius: 1rem; padding: clamp(1rem, 3vw, 2rem); color: #17202c; }
+.academy-block-background-panel.academy-block-spacing-compact { padding-block: 1rem; }
+.academy-block-background-panel.academy-block-spacing-spacious { padding-block: 2rem; }
+.academy-block-background-image.academy-block-background-panel { padding-top: clamp(7rem, 16vw, 11rem); }
+
+@media (max-width: 639px) {
+  .academy-block-background { padding-inline: 1rem; }
+}
+
 @keyframes academy-guide-enter {
   from { opacity: 0; transform: translateX(18px); }
   to { opacity: 1; transform: translateX(0); }

@@ -59,7 +59,7 @@ export default function AcademyQuiz({
         <h2 className="mt-3 text-3xl font-bold tracking-[-0.02em] text-[#101010]">
           You scored {state.score}%
         </h2>
-        <p className="mx-auto mt-4 max-w-xl font-[family-name:var(--font-academy-serif)] text-[16px] leading-8 text-[#4A4B4E]">
+        <p className="mx-auto mt-4 max-w-xl font-[family-name:var(--font-academy-serif)] text-[16px] leading-8 text-[#27313B]">
           {state.message}
         </p>
         <div className="mt-7 flex flex-col justify-center gap-3 sm:flex-row">
