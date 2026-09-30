@@ -4,6 +4,7 @@ import { germanB2Lexicon } from "./german-b2-lexicon.ts";
 import { germanB2AdvancedListening } from "./german-b2-advanced-listening.ts";
 import { germanB2ExamGlimpses } from "./german-b2-exam-glimpses.ts";
 import { germanB2GrammarPractice } from "./german-b2-grammar-practice.ts";
+import { germanB2HeroImage, germanB2SectionScenes } from "./german-b2-visuals.ts";
 import type { AcademyCourse, AcademyLesson, LessonBlock, QuizQuestion } from "./tutor-academy.ts";
 
 export const GERMAN_B2_COURSE_KEY = "german-b2-complete";
@@ -36,6 +37,15 @@ const sections = [
   { id: "b2-goethe", title: "Goethe-Zertifikat B2" },
   { id: "b2-telc", title: "telc Deutsch B2" },
 ];
+
+function sectionScene(prefix: string, sectionId: string): LessonBlock {
+  const scene = germanB2SectionScenes[sectionId];
+  return {
+    id: block(prefix, "section-scene"), type: "image", src: scene.src,
+    alt: scene.alt, caption: `Bildimpuls · ${scene.prompt}`,
+    width: "reading", aspect: "wide",
+  };
+}
 
 const grammarSpine = [
   "B1-Brücke: Wiederholen Sie Fälle, Präsens, Perfekt, Präteritum und Plusquamperfekt. Für Zukünftiges vergleichen Sie Präsens mit Zeitangabe und werden + Infinitiv. Im Mittelfeld stehen Pronomen und Angaben in passender Reihenfolge. Stellen Sie im Nebensatz das finite Verb ans Ende; prüfen Sie danach die Verbposition im folgenden Hauptsatz.",
@@ -206,6 +216,8 @@ function coreLesson(chapter: B2Chapter, index: number): AcademyLesson {
     chapter.listeningAnswer, chapter.listeningDistractors,
     `Im Hörtext wird deutlich: ${chapter.listeningAnswer}`);
   const blocks: LessonBlock[] = [
+    ...(index === 0 || coreSection(index - 1).id !== section.id
+      ? [sectionScene(prefix, section.id)] : []),
     { id: block(prefix, "entry"), type: "survey", heading: "Einstieg · Ihre Position", prompt: `Wie wichtig ist das Thema „${chapter.title}“ in Ihrem Alltag? Begründen Sie Ihre Wahl mündlich mit einem Beispiel.`, lowLabel: "kaum relevant", highLabel: "sehr relevant", scale: 5, completion: "interact" },
     ...(index === 9 ? [{ id: block(prefix, "people"), type: "carousel" as const, heading: "Einstieg · Leben wir zu digital?", items: [
       { title: "Lena", body: "Lena prüft ihre sozialen Medien sehr oft. Sie fühlt sich informiert, aber manchmal auch unter Druck gesetzt." },
@@ -341,6 +353,7 @@ function examLesson(unit: ExamUnit, index: number, track: "goethe" | "telc"): Ac
   const section = track === "goethe" ? sections[6] : sections[7];
   const officialUrl = track === "goethe" ? goetheUrl : telcUrl;
   const blocks: LessonBlock[] = [
+    ...(index === 0 ? [sectionScene(prefix, section.id)] : []),
     { id: block(prefix, "focus"), type: "callout", heading: "Format und Ziel", body: unit.focus, tone: track === "goethe" ? "blue" : "navy" },
     { id: block(prefix, "strategy"), type: "text", heading: "Prüfungsstrategie", paragraphs: [unit.strategy, "Die folgenden Aufgaben sind eigens für ScienceDojo verfasst. Vergleichen Sie sie anschließend mit offiziellen Modellaufgaben."] },
     { id: block(prefix, "source"), type: "text", heading: "Trainingsmaterial", paragraphs: chapter.reading.split("\n\n") },
@@ -460,13 +473,14 @@ export const germanB2Course: AcademyCourse = migrateAcademyCourse({
   title: "Deutsch B2 komplett: selbstständig kommunizieren und Prüfungen meistern",
   shortTitle: "Deutsch B2 komplett",
   description: "18 thematische B2-Kapitel mit Lesen, Hören, Sprachlabor, Schreiben, Sprechen und Interaktion. Nach dem gemeinsamen Abschlusstest wählen Lernende eigenständig den Goethe-Zertifikat-B2- oder telc-Deutsch-B2-Prüfungsweg.",
+  heroImage: germanB2HeroImage,
   estimatedMinutes: core.reduce((sum, lesson) => sum + lesson.durationMinutes, 0) + goethe.reduce((sum, lesson) => sum + lesson.durationMinutes, 0),
   audienceRoles: ["student"], passMark: 70, quizRevision: 1, sections,
   examTracks: [
     { id: "goethe", title: "Goethe-Zertifikat B2", description: `Vier Module und offizielle Modellübungen: ${goetheUrl}` },
     { id: "telc", title: "telc Deutsch B2", description: `Leseverstehen, Sprachbausteine, Hören, Schreiben und Sprechen: ${telcUrl}` },
   ],
-  theme: { preset: "journey", accent: "violet-mint", typography: "friendly-sans", density: "comfortable", coverStyle: "minimal", lessonHeaderStyle: "editorial" },
+  theme: { preset: "journey", accent: "violet-mint", typography: "friendly-sans", density: "comfortable", coverStyle: "split-image", lessonHeaderStyle: "media-led" },
   rules: { navigation: "linear", lessonCompletion: "required-blocks", requireFinalAssessment: true, attemptLimit: null, feedbackTiming: "after-submit" },
   lessons: [...core, ...goethe, ...telc], quiz: finalQuiz,
 });

@@ -2,6 +2,7 @@ import Image from "next/image";
 import { Clock } from "lucide-react";
 import { resolveAcademyTheme } from "@/lib/academy-theme";
 import { isGermanAcademyCourse } from "@/lib/german-academy-course";
+import { germanB2HeroImage, germanB2SectionScenes } from "@/lib/german-b2-visuals";
 import type { AcademyCourse, AcademyLesson } from "@/lib/tutor-academy";
 
 export default function AcademyLessonHeader({
@@ -18,9 +19,17 @@ export default function AcademyLessonHeader({
   nextStepLabel?: string;
 }) {
   const theme = resolveAcademyTheme(course);
-  const mediaLed = theme.lessonHeaderStyle === "media-led";
+  const b2 = course.key === "german-b2-complete";
+  const mediaLed = theme.lessonHeaderStyle === "media-led" ||
+    (b2 && theme.lessonHeaderStyle === "editorial");
   const german = isGermanAcademyCourse(course.key);
+  const scene = b2 ? germanB2SectionScenes[lesson.sectionId || ""] : undefined;
+  const headerImage = b2
+    ? scene?.src || germanB2HeroImage
+    : course.heroImage || "/images/home/8.professional-online-teacher.jpg";
   const journey = sequence || course.lessons;
+  const sectionStart = index === 0 || journey[index - 1]?.sectionId !== lesson.sectionId;
+  const hasSceneBlock = lesson.blocks.some((item) => item.type === "image" && item.id?.endsWith("-section-scene"));
   const following = journey[index + 1];
   const nextText = nextStepLabel || (following
     ? `${german ? "Als Nächstes" : "Next"}: ${following.title}`
@@ -38,16 +47,14 @@ export default function AcademyLessonHeader({
       {mediaLed ? (
         <>
           <Image
-            src={
-              course.heroImage ||
-              "/images/home/8.professional-online-teacher.jpg"
-            }
+            src={headerImage}
             alt=""
             fill
             sizes="100vw"
-            className="object-cover opacity-35"
+            loading={b2 ? "eager" : "lazy"}
+            className={`object-cover ${b2 ? "opacity-100" : "opacity-35"}`}
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/55 to-black/20" />
+          <div className={`absolute inset-0 ${b2 ? "bg-[#14112B]/70 md:bg-gradient-to-r md:from-[#14112B]/90 md:via-[#14112B]/70 md:to-[#14112B]/15" : "bg-gradient-to-r from-black/80 via-black/55 to-black/20"}`} />
         </>
       ) : null}
       <div className="relative mx-auto max-w-[728px]">
@@ -74,6 +81,11 @@ export default function AcademyLessonHeader({
         >
           {lesson.summary}
         </p>
+        {scene && sectionStart && !hasSceneBlock ? (
+          <p className="mt-6 border-l-2 border-[var(--academy-spark)] pl-4 text-sm leading-6 text-white/90">
+            <span className="font-bold">Bildimpuls · </span>{scene.prompt}
+          </p>
+        ) : null}
         {theme.preset === "journey" ? (
           <div className={`mt-8 flex flex-wrap items-center gap-3 rounded-xl p-4 text-sm ${mediaLed ? "bg-white/15 text-white" : "bg-[var(--academy-accent-soft)] text-[var(--academy-accent-ink)]"}`}>
             <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[var(--academy-spark)] font-bold text-[#17202C]">{index + 1}</span>

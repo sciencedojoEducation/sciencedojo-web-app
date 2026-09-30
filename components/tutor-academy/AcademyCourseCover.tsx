@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { resolveAcademyTheme } from "@/lib/academy-theme";
+import { germanB2HeroImage } from "@/lib/german-b2-visuals";
 import type { AcademyCourse } from "@/lib/tutor-academy";
 
 export default function AcademyCourseCover({
@@ -13,21 +14,32 @@ export default function AcademyCourseCover({
   ctaHref: string;
   ctaLabel: string;
 }) {
-  const theme = resolveAcademyTheme(course);
+  const b2 = course.key === "german-b2-complete";
+  const theme = {
+    ...resolveAcademyTheme(course),
+    ...(b2 && course.theme?.coverStyle === "minimal"
+      ? { coverStyle: "split-image" as const } : {}),
+  };
   const image =
-    course.heroImage || "/images/home/8.professional-online-teacher.jpg";
+    course.heroImage || (b2 ? germanB2HeroImage : undefined) ||
+    "/images/home/8.professional-online-teacher.jpg";
   const usesImage = theme.coverStyle !== "minimal";
   const overlaysImage = theme.coverStyle === "full-image";
   const splitImage = theme.coverStyle === "split-image";
   const journey = theme.preset === "journey";
+  const actionLabel = b2
+    ? ctaLabel === "Start course" ? "Kurs starten"
+      : ctaLabel === "Continue course" ? "Kurs fortsetzen" : ctaLabel
+    : ctaLabel;
 
   return (
     <section
       style={
         splitImage
           ? {
-              backgroundImage:
-                "linear-gradient(135deg, #eaf3fa 0%, #dfecf5 54%, #f3e8d3 100%)",
+              backgroundImage: b2
+                ? "linear-gradient(135deg, #f8f4ff 0%, #eee7fb 54%, #e8f5ef 100%)"
+                : "linear-gradient(135deg, #eaf3fa 0%, #dfecf5 54%, #f3e8d3 100%)",
               boxShadow: "0 20px 50px -34px rgba(15, 42, 70, 0.62)",
             }
           : undefined
@@ -62,14 +74,14 @@ export default function AcademyCourseCover({
             src={image}
             alt=""
             fill
-            priority
-            sizes="100vw"
+            preload
+            sizes={splitImage ? "(min-width: 768px) 50vw, 100vw" : "100vw"}
             className="object-cover"
           />
           {splitImage ? (
             <div
               aria-hidden="true"
-              className="absolute inset-y-0 left-0 hidden w-16 bg-gradient-to-r from-[#EEF5FA] to-transparent md:block"
+              className={`absolute inset-y-0 left-0 hidden w-16 bg-gradient-to-r to-transparent md:block ${b2 ? "from-[#F0EAFB]" : "from-[#EEF5FA]"}`}
             />
           ) : null}
         </div>
@@ -104,12 +116,12 @@ export default function AcademyCourseCover({
             href={ctaHref}
             className={`mt-8 inline-flex min-h-11 items-center gap-2 rounded-full px-7 text-xs font-black uppercase tracking-[0.1em] outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ${overlaysImage ? "bg-white text-[#101010] focus-visible:ring-white" : "bg-[var(--academy-accent)] text-white focus-visible:ring-[var(--academy-accent)]"}`}
           >
-            {ctaLabel}
+            {actionLabel}
             <ArrowRight size={16} aria-hidden="true" />
           </Link>
           {journey ? (
             <p className={`mt-5 inline-flex items-center rounded-full bg-[var(--academy-spark)] px-4 py-2 text-xs font-bold text-[#17202C] ${overlaysImage ? "shadow-lg" : ""}`}>
-              Learn a little · Try it · See your progress
+              {b2 ? "Lernen · Anwenden · Fortschritt sehen" : "Learn a little · Try it · See your progress"}
             </p>
           ) : null}
         </div>
