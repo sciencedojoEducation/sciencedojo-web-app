@@ -24,7 +24,7 @@ export async function renderChooseAcademyExamPage(
     <AcademyThemeScope course={course} className="min-h-screen bg-[#FBFCFD] px-5 py-12 text-[#17202C] sm:py-20">
       <main className="mx-auto max-w-[900px]">
         <p className="text-xs font-bold uppercase tracking-[0.17em] text-[var(--academy-accent)]">Prüfungsvorbereitung</p>
-        <h1 className="mt-4 text-3xl font-bold sm:text-5xl">Welche A1-Prüfung möchten Sie vorbereiten?</h1>
+        <h1 className="mt-4 text-3xl font-bold sm:text-5xl">Welche Prüfung möchten Sie vorbereiten?</h1>
         <p className="mt-5 max-w-2xl text-base leading-7 text-[#435164]">
           Beide Wege nutzen das gleiche Deutschwissen. Wählen Sie das Format Ihrer geplanten Prüfung.
           Ihre Wahl und Ihr Lernfortschritt werden gespeichert.

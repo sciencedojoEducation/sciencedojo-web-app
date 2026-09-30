@@ -90,7 +90,7 @@ export default async function AcademyTemplatePreviewPage({
             index={course.lessons.indexOf(lesson)}
           />
           <div className="mx-auto max-w-[728px] px-6 py-14">
-            <AcademyLessonBlocks blocks={lesson.blocks} />
+            <AcademyLessonBlocks blocks={lesson.blocks} courseKey={course.key} />
             <div className="mt-14 flex flex-wrap gap-3 border-t border-black/10 pt-6">
               <Link
                 href={href("cover")}

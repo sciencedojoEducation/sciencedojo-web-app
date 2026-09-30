@@ -1,0 +1,472 @@
+import { migrateAcademyCourse } from "./academy-schema.ts";
+import { germanB2Chapters, type B2Chapter } from "./german-b2-curriculum.ts";
+import { germanB2Lexicon } from "./german-b2-lexicon.ts";
+import { germanB2AdvancedListening } from "./german-b2-advanced-listening.ts";
+import { germanB2ExamGlimpses } from "./german-b2-exam-glimpses.ts";
+import { germanB2GrammarPractice } from "./german-b2-grammar-practice.ts";
+import type { AcademyCourse, AcademyLesson, LessonBlock, QuizQuestion } from "./tutor-academy.ts";
+
+export const GERMAN_B2_COURSE_KEY = "german-b2-complete";
+const goetheUrl = "https://www.goethe.de/en/spr/prf/ueb/pb2.html";
+const telcUrl = "https://www.telc.net/en/language-examinations/certificate-exams/german/telc-german-b2/";
+const n = (index: number) => String(index + 1).padStart(2, "0");
+const block = (prefix: string, suffix: string) => `${prefix}-${suffix}`;
+
+function choice(id: string, prompt: string, answer: string, wrong: [string, string], explanation: string): QuizQuestion {
+  let hash = 2166136261;
+  for (const character of id) hash = Math.imul(hash ^ character.charCodeAt(0), 16777619);
+  const correctIndex = (hash >>> 0) % 3;
+  const labels = [...wrong];
+  labels.splice(correctIndex, 0, answer);
+  const optionIds = ["a", "b", "c"];
+  return {
+    id, type: "single-choice", prompt,
+    options: labels.map((label, index) => ({ id: optionIds[index], label })),
+    correctOptionId: optionIds[correctIndex], explanation,
+  };
+}
+
+const sections = [
+  { id: "b2-bridge", title: "Von B1 zu B2" },
+  { id: "b2-life", title: "Leben und Gesellschaft" },
+  { id: "b2-work", title: "Bildung und Beruf" },
+  { id: "b2-ideas", title: "Ideen, Medien und Argumente" },
+  { id: "b2-communication", title: "Fortgeschrittene Kommunikation" },
+  { id: "b2-mastery", title: "B2 in der Praxis" },
+  { id: "b2-goethe", title: "Goethe-Zertifikat B2" },
+  { id: "b2-telc", title: "telc Deutsch B2" },
+];
+
+const grammarSpine = [
+  "B1-Brücke: Wiederholen Sie Fälle, Präsens, Perfekt, Präteritum und Plusquamperfekt. Für Zukünftiges vergleichen Sie Präsens mit Zeitangabe und werden + Infinitiv. Im Mittelfeld stehen Pronomen und Angaben in passender Reihenfolge. Stellen Sie im Nebensatz das finite Verb ans Ende; prüfen Sie danach die Verbposition im folgenden Hauptsatz.",
+  "N-Deklination: der Kollege → mit dem Kollegen; der Student → die Meinung des Studenten. Verbinden Sie eine Personenbeschreibung mit einem Relativsatz samt Präposition.",
+  "Vergleich: je … desto, sowohl … als auch und weder … noch. Formen Sie eine verbale Aussage zusätzlich in eine Nominalgruppe um.",
+  "Vorgangspassiv: Die Stadt baut das Haus um. → Das Haus wird umgebaut. Zustandspassiv: Nach dem Umbau ist das Haus geöffnet. Prüfen Sie, ob Handlung oder Zustand gemeint ist.",
+  "Konjunktiv II: Wenn die Schichten kürzer wären, hätten mehr Menschen Zeit für Pausen. Unterscheiden Sie müssen als Notwendigkeit von dürfte als vorsichtiger Vermutung; Modalverben können objektive und subjektive Bedeutung tragen.",
+  "Infinitivgruppen: um … zu nennt ein Ziel; ohne … zu nennt das Ausbleiben einer Handlung; anstatt … zu nennt eine Alternative. Achten Sie auf das gemeinsame Subjekt.",
+  "Formelles Register: würden/könnten statt direkter Forderungen. Wiederholen Sie Vorgangspassiv und den Unterschied zwischen persönlicher und unpersönlicher Formulierung.",
+  "Kausal und konzessiv: weil/da nennt einen Grund; obwohl räumt einen Gegensatz ein; zumal ergänzt einen weiteren gewichtigen Grund. Funktionsverbgefüge wie eine Entscheidung treffen tragen oft formellen Stil.",
+  "Präpositionalverben: abhängen von, sich einstellen auf. Ersetzen Sie eine Sache mit davon/darauf; bei Personen bleibt die Präposition mit Pronomen erhalten.",
+  "Korrelative Strukturen: einerseits … andererseits und zwar … aber. Setzen Sie dennoch in einen Hauptsatz und obwohl in einen Nebensatz. Falls und sofern drücken Bedingungen aus; indem beschreibt ein Mittel.",
+  "Indirekte Rede: Er sagt, die Bibliothek sei geöffnet. Konjunktiv I kennzeichnet die Wiedergabe; ist die Form identisch, kann eine Ersatzform nötig sein.",
+  "Passivalternativen: Die Kosten können gesenkt werden. → Die Kosten lassen sich senken. Mit sodass beschreiben Sie eine Folge.",
+  "Partizipien als Adjektive: die beeindruckende Ausstellung; die sorgfältig gestalteten Bilder. Unterscheiden Sie laufende Handlung und abgeschlossenes Ergebnis.",
+  "Wortbildung: Teilhabe, teilnehmen, Teilnehmerin. Nutzen Sie trotz und obwohl passend; vergleichen Sie außerdem nicht nur … sondern auch.",
+  "Diskursmarker und Abschwächung: meines Erachtens, vermutlich, allerdings. Formulieren Sie einen Einwand fair, bevor Sie ihm widersprechen.",
+  "Nominalstil und Kohäsion: weil die Lieferung spät kam → aufgrund der verspäteten Lieferung. Beziehen Sie sich mit diese Entscheidung eindeutig auf den vorigen Satz.",
+  "Zeitliche Verknüpfung und Gesprächsführung: nachdem, bevor, während. Verwenden Sie Verweiswörter wie dazu oder darauf nur mit klarem Bezug.",
+  "Konsolidierung: Vergleichen Sie Bericht und Interview mit während, sodass und dennoch. Wählen Sie Register, Tempus und Wortverbindung nach Kommunikationsziel.",
+];
+
+const speakingModels = [
+  "Mein wichtigstes Ziel ist, in längeren Gesprächen klarer zu argumentieren. Dafür lese ich jede Woche einen Kommentar und fasse seine Position mündlich zusammen. Danach nehme ich eine eigene Antwort auf und verbessere unklare Stellen.",
+  "Eine frühere Kollegin hat mich geprägt, weil sie auch in schwierigen Situationen aufmerksam zuhörte. Von ihr habe ich gelernt, Kritik sachlich zu formulieren und zuerst nachzufragen, bevor ich eine Entscheidung bewerte.",
+  "Früher plante ich jede Stunde fest. Heute halte ich einige Zeiten frei, damit Unerwartetes Platz hat. Ein klarer Plan hilft mir zwar, aber zu viel Planung kann ebenfalls Druck erzeugen.",
+  "In meiner Stadt könnten leer stehende Bürohäuser zu Wohnungen werden. Das schafft Wohnraum, kann aber Mieten im Viertel beeinflussen. Deshalb sollten bezahlbare Wohnungen und öffentliche Räume verbindlich vorgesehen werden.",
+  "Eine kurze Pause nach langen Besprechungen hilft mir, konzentriert zu bleiben. Das ist jedoch nur möglich, wenn die Arbeitsabläufe solche Pausen zulassen. Bei dauerhafter Überlastung muss auch das Team die Aufgabenverteilung prüfen.",
+  "Ich möchte meine digitalen Fähigkeiten vertiefen, damit ich Informationen zuverlässiger prüfen kann. Ein Kurs mit gemeinsamen Treffen wäre für mich geeignet, weil ich dort Fragen stellen und anschließend selbstständig weiterüben könnte.",
+  "In meinem Wunschberuf sind Fachkenntnisse wichtig, aber auch klare Kommunikation. Wer Verantwortung übernimmt, sollte Termine zuverlässig einhalten und Probleme frühzeitig ansprechen, statt auf eine perfekte Lösung zu warten.",
+  "Vor einem größeren Kauf vergleiche ich nicht nur den Preis. Ich prüfe auch Reparaturmöglichkeiten und laufende Kosten. Ein günstiges Gerät kann langfristig teuer werden, wenn Ersatzteile schwer zu bekommen sind.",
+  "Für eine kurze Reise ist der Zug oft praktisch, weil ich unterwegs arbeiten kann. Bei mehreren Umstiegen steigt allerdings das Risiko einer Verspätung. Deshalb vergleiche ich vor der Buchung Zeit, Preis und Alternativen.",
+  "Ich würde Smartphones im Unterricht nicht vollständig verbieten. Sie können beim Recherchieren helfen, sofern klare Regeln gelten. Gleichzeitig müssen Lernende Quellen überprüfen und wissen, welche persönlichen Daten gespeichert werden.",
+  "Eine zuverlässige Nachricht nennt eine überprüfbare Quelle und trennt Fakten von Meinung. Wenn ein Beitrag überraschend klingt, schaue ich auf Datum und Ursprung, bevor ich ihn weitergebe.",
+  "Individuelle Entscheidungen können Ressourcen sparen, aber ihre Wirkung hängt vom Umfeld ab. Ein guter öffentlicher Verkehr erleichtert etwa den Verzicht auf das Auto. Deshalb sollten persönliche und politische Maßnahmen zusammen gedacht werden.",
+  "Die Ausstellung hat mich vor allem durch die Stimmen älterer Bewohner beeindruckt. Einige technische Erklärungen waren allerdings zu knapp. Trotzdem würde ich sie empfehlen, weil sie Stadtgeschichte aus einer ungewohnten Perspektive zeigt.",
+  "In vielen Städten wird öffentlicher Raum neu verteilt. Das bietet Chancen für Begegnungen, führt aber auch zu Konflikten. Entscheidend ist, dass verschiedene Gruppen gehört und Kosten nachvollziehbar erklärt werden.",
+  "Ich befürworte eine begrenzte Sonntagsöffnung der Bibliothek. Berufstätige hätten mehr Lernzeit. Ihr Einwand zu den Beschäftigten ist berechtigt; deshalb schlage ich eine freiwillige Testphase mit anschließender Auswertung vor.",
+  "Bei einer formellen Nachricht nenne ich zuerst den Anlass und dann die konkreten Folgen. Anschließend formuliere ich eine höfliche Bitte. Umgangssprachliche Vorwürfe vermeide ich, damit mein Anliegen sachlich und lösbar bleibt.",
+  "Zunächst möchte ich zwei Möglichkeiten vorstellen: einen offenen Lernabend und eine digitale Gruppe. Der Lernabend fördert den persönlichen Austausch, die digitale Gruppe ist flexibler. Für unseren Stadtteil würde ich eine Kombination testen.",
+  "Ich empfehle eine sechsmonatige Testphase für das Begegnungszentrum. Vereine brauchen Räume, während Anwohner Verkehr befürchten. Deshalb sollten Kosten, Besucherzahlen und Beschwerden regelmäßig veröffentlicht werden.",
+];
+
+const communicationFunctions = [
+  "set goals and explain strategies", "describe and compare people", "compare lifestyles", "evaluate a proposal",
+  "give cautious advice", "recommend a learning route", "make a formal request", "evaluate consumer choices",
+  "explain consequences", "weigh advantages and disadvantages", "report and verify claims", "recommend measures",
+  "review and evaluate", "mediate perspectives", "argue and counterargue", "complain and request a solution",
+  "present and negotiate", "synthesize and recommend",
+];
+const chapterDomains: Array<NonNullable<LessonBlock["curriculum"]>["domain"]> = [
+  "educational", "personal", "personal", "public", "personal", "educational", "occupational", "public", "public",
+  "public", "public", "public", "public", "public", "public", "occupational", "public", "public",
+];
+
+function writingStage(index: number, chapter: B2Chapter) {
+  if (index < 4) return {
+    title: "Starke Sätze bauen", minWords: 30, maxWords: 70,
+    prompt: `Schreiben Sie zum Thema „${chapter.title}“ drei bis vier präzise Sätze: Aussage, Grund, Beispiel und Einschränkung. Prüfen Sie die Verbposition und verwenden Sie eine passende Verbindung.`,
+    steps: [
+      { title: "Aussage", body: "Formulieren Sie eine klare Hauptaussage zum Kapitelthema." },
+      { title: "Grund und Beispiel", body: "Erklären Sie die Aussage und machen Sie sie an einer konkreten Situation sichtbar." },
+      { title: "Einschränkung", body: "Ergänzen Sie einen Gegensatz oder eine Bedingung und prüfen Sie die Wortstellung." },
+    ],
+    checklist: ["Jeder Satz hat eine klare Funktion", "Grund und Beispiel sind konkret", "Verbposition und Verbindung stimmen"],
+  };
+  if (index < 7) return {
+    title: "Einen Absatz verknüpfen", minWords: 55, maxWords: 100,
+    prompt: `Schreiben Sie zum Thema „${chapter.title}“ einen zusammenhängenden Absatz: Thema, zwei begründete Punkte und ein Satz mit Einschränkung oder Folgerung.`,
+    steps: [
+      { title: "Themensatz", body: "Nennen Sie das Thema und Ihre Absicht gleich zu Beginn." },
+      { title: "Gedanken verbinden", body: "Führen Sie zwei Punkte mit einem passenden Verknüpfungsmittel weiter." },
+      { title: "Abrunden", body: "Schließen Sie mit einer Folgerung oder einer begründeten Einschränkung." },
+    ],
+    checklist: ["Ein klarer Themensatz", "Zwei verbundene Gedanken", "Passende Folgerung oder Einschränkung"],
+  };
+  if (index < 10) return {
+    title: "Argument und Gegenargument", minWords: 75, maxWords: 125,
+    prompt: `Entwickeln Sie zum Thema „${chapter.title}“ ein kurzes Argument mit Grund und Beispiel. Nehmen Sie anschließend einen möglichen Einwand auf und beantworten Sie ihn.`,
+    steps: [
+      { title: "Position", body: "Stellen Sie eine konkrete Behauptung auf und begründen Sie sie." },
+      { title: "Beleg", body: "Nennen Sie ein Beispiel oder eine nachvollziehbare Folge." },
+      { title: "Einwand", body: "Zeigen Sie, welche Sorge eine andere Person haben könnte, und reagieren Sie sachlich." },
+    ],
+    checklist: ["Position und Grund erkennbar", "Konkretes Beispiel", "Fairer Einwand mit Antwort"],
+  };
+  if (index < 13) return {
+    title: "Zwei Absätze mit rotem Faden", minWords: 95, maxWords: 150,
+    prompt: `Schreiben Sie zum Thema „${chapter.title}“ zwei Absätze: zuerst Sachverhalt und Position, danach Begründung, Gegenperspektive und Schluss. Verwenden Sie einen eindeutigen Rückverweis.`,
+    steps: [
+      { title: "Absatz 1", body: "Ordnen Sie das Thema ein und formulieren Sie Ihre Hauptaussage." },
+      { title: "Absatz 2", body: "Begründen Sie die Position, berücksichtigen Sie eine andere Sicht und ziehen Sie eine Folgerung." },
+      { title: "Kohäsion", body: "Prüfen Sie, worauf Wörter wie ›diese Entscheidung‹ oder ›dazu‹ verweisen." },
+    ],
+    checklist: ["Zwei Absätze mit unterschiedlichen Aufgaben", "Gegenperspektive berücksichtigt", "Rückverweise eindeutig"],
+  };
+  if (index < 16) return {
+    title: "Vollständigen B2-Text planen",
+    steps: [
+      { title: "Anlass und Adressat", body: "Entscheiden Sie vor dem Schreiben über Textsorte, Register und Kernbotschaft." },
+      { title: "Absätze", body: "Planen Sie Einleitung, Argumente beziehungsweise Inhaltspunkte und einen klaren Schluss." },
+      { title: "Überarbeiten", body: "Prüfen Sie Textbezüge, Wortverbindungen, Gegenperspektive und Ton." },
+    ],
+  };
+  return {
+    title: "Unter Zeitdruck produzieren",
+    steps: [
+      { title: "Zeit setzen", body: index === 16 ? "Stellen Sie für die Präsentationsgliederung zwölf Minuten ein." : "Stellen Sie für die integrierte Empfehlung 35 Minuten ein." },
+      { title: "Planen und schreiben", body: "Nutzen Sie wenige Stichpunkte und beginnen Sie rechtzeitig mit dem vollständigen Text." },
+      { title: "Endkontrolle", body: "Reservieren Sie die letzten Minuten für Inhaltspunkte, Register und Verknüpfungen." },
+    ],
+  };
+}
+
+function blockSkills(item: LessonBlock): NonNullable<LessonBlock["curriculum"]>["skills"] {
+  const heading = "heading" in item ? item.heading : undefined;
+  if (item.type === "audio") return ["listening"];
+  if (item.type === "writing-practice") return ["writing"];
+  if (item.type === "speaking-practice") return ["speaking"];
+  if (item.type === "flashcards") return ["vocabulary"];
+  if (heading?.includes("Wortfamilie") || heading?.includes("Register") || heading?.includes("Redemittel")) return ["vocabulary"];
+  if (item.type === "worked-example") return ["grammar"];
+  if (item.type === "process") return ["interaction", "mediation"];
+  if (item.type === "knowledge-check") {
+    if (heading?.includes("Hör")) return ["listening"];
+    if (heading?.includes("Wortschatz")) return ["vocabulary"];
+    if (heading?.includes("Sprachlabor · Anwendung") || heading?.includes("Sprachbausteine · Grammatik") || heading?.includes("Sprachbausteine · Satzverbindung")) return ["grammar"];
+    if (heading?.includes("Sprachbausteine · Kollokation") || heading?.includes("Sprachbausteine · Bedeutung")) return ["vocabulary"];
+    return ["reading"];
+  }
+  if (heading?.includes("Sprachstruktur")) return ["grammar"];
+  if (heading?.includes("Lesen") || heading?.includes("Trainingsmaterial")) return ["reading"];
+  return ["interaction"];
+}
+
+function coreSection(index: number) {
+  if (index === 0) return sections[0];
+  if (index < 5) return sections[1];
+  if (index < 9) return sections[2];
+  if (index < 14) return sections[3];
+  if (index < 17) return sections[4];
+  return sections[5];
+}
+
+function coreLesson(chapter: B2Chapter, index: number): AcademyLesson {
+  const prefix = `de-b2-${n(index)}`;
+  const section = coreSection(index);
+  const previous = index ? germanB2Chapters[index - 1] : null;
+  const lexicon = germanB2Lexicon[index];
+  const advancedListening = germanB2AdvancedListening.find((item) => item.chapterIndex === index);
+  const examGlimpse = germanB2ExamGlimpses[index];
+  const grammarPractice = germanB2GrammarPractice[index];
+  const writing = writingStage(index, chapter);
+  const fullWritingRange: [number, number] = index === 0 ? [120, 160] : index === 16 ? [60, 120]
+    : index === 17 ? [180, 220] : index < 4 ? [100, 180] : index < 10 ? [130, 210] : [160, 240];
+  const writingScaffold: LessonBlock[] = writing.prompt !== undefined && writing.minWords !== undefined &&
+    writing.maxWords !== undefined && writing.checklist !== undefined ? [{
+      id: block(prefix, "writing-scaffold"), type: "writing-practice",
+      heading: `Schreiben · ${writing.title}`, prompt: writing.prompt,
+      minWords: writing.minWords, maxWords: writing.maxWords, checklist: writing.checklist,
+      modelAnswer: `Ein möglicher sprachlicher Baustein aus diesem Kapitel; Ihre Übung soll die angegebene Wortspanne erreichen.\n\n${chapter.writingModel}`,
+      completion: "interact",
+    }] : [];
+  const readingCheck = choice(block(prefix, "reading-q"), chapter.readingQuestion,
+    chapter.readingAnswer, chapter.readingDistractors,
+    `Im Text steht beziehungsweise folgt: ${chapter.readingAnswer}`);
+  const listeningCheck = choice(block(prefix, "listening-q"), chapter.listeningQuestion,
+    chapter.listeningAnswer, chapter.listeningDistractors,
+    `Im Hörtext wird deutlich: ${chapter.listeningAnswer}`);
+  const blocks: LessonBlock[] = [
+    { id: block(prefix, "entry"), type: "survey", heading: "Einstieg · Ihre Position", prompt: `Wie wichtig ist das Thema „${chapter.title}“ in Ihrem Alltag? Begründen Sie Ihre Wahl mündlich mit einem Beispiel.`, lowLabel: "kaum relevant", highLabel: "sehr relevant", scale: 5, completion: "interact" },
+    ...(index === 9 ? [{ id: block(prefix, "people"), type: "carousel" as const, heading: "Einstieg · Leben wir zu digital?", items: [
+      { title: "Lena", body: "Lena prüft ihre sozialen Medien sehr oft. Sie fühlt sich informiert, aber manchmal auch unter Druck gesetzt." },
+      { title: "Thomas", body: "Thomas nutzt keine sozialen Medien. Er bevorzugt persönliche Gespräche, verpasst jedoch gelegentlich Einladungen." },
+      { title: "Amir", body: "Amir nutzt KI beim Lernen. Er schätzt schnelle Erklärungen, kontrolliert aber nicht immer die Quellen." },
+      { title: "Sarah", body: "Sarah macht sich Sorgen um die Daten ihrer Kinder und fordert klare Regeln für digitale Angebote." },
+    ], completion: "interact" as const } satisfies LessonBlock] : []),
+    { id: block(prefix, "goal"), type: "callout", heading: "Ihr Ziel", body: chapter.outcome, tone: "blue" },
+    { id: block(prefix, "vocabulary"), type: "flashcards", heading: "Wortschatz in Verbindungen", items: chapter.collocations.map((item, i) => {
+      const [title, body] = item.split(" — ");
+      return { id: block(prefix, `word-${i}`), title, body: `${body}. Bilden Sie einen eigenen Satz mit dieser Verbindung.` };
+    }), completion: "interact" },
+    { id: block(prefix, "topic-words"), type: "flashcards", heading: "Themenwortschatz im Zusammenhang", items: lexicon.terms.map(([title, body], i) => ({
+      id: block(prefix, `topic-word-${i}`), title, body: `${body}. Verwenden Sie das Wort in einem eigenen Satz zum Kapitelthema.`,
+    })), completion: "interact" },
+    { id: block(prefix, "lexical-depth"), type: "comparison-table", heading: "Wortfamilie und Register", columns: ["Wortfamilie: Verb", "Nomen", "Adjektiv"], rows: [lexicon.wordFamily] },
+    { id: block(prefix, "register"), type: "comparison-table", heading: "Register: dieselbe Absicht anders ausdrücken", columns: ["Umgangssprachlich", "Neutral", "Formell"], rows: [lexicon.register] },
+    { id: block(prefix, "phrases"), type: "callout", heading: "Redemittel für B2", body: `Funktion: ${lexicon.functionPhrase} Diskussion: ${lexicon.discussionPhrase}`, tone: "teal" },
+    { id: block(prefix, "register-check"), type: "knowledge-check", heading: "Wortschatz · passendes Register", question: choice(block(prefix, "register-q"),
+      "Welche der folgenden Formulierungen passt am besten in einen formellen Text?", lexicon.register[2],
+      [lexicon.register[0], lexicon.register[1]], `Für formelle Kommunikation eignet sich hier: ${lexicon.register[2]}`), completion: "pass" },
+    ...(index === 9 ? [{ id: block(prefix, "digital-vocabulary"), type: "flashcards" as const, heading: "Digitaler Wortschatz und Wortfamilien", items: [
+      ["der Datenschutz", "Schutz persönlicher Informationen"], ["die künstliche Intelligenz", "Technik, die aus Daten Muster erkennt"],
+      ["die Bildschirmzeit", "Zeit vor digitalen Bildschirmen"], ["der Algorithmus", "Regeln zur Verarbeitung von Daten"],
+      ["die Datensicherheit", "Schutz vor Verlust und unbefugtem Zugriff"], ["die Abhängigkeit", "Schwierigkeit, auf etwas zu verzichten"],
+      ["Informationen verbreiten", "Nachrichten an viele Menschen weitergeben"], ["Daten speichern", "Informationen dauerhaft aufbewahren"],
+      ["entscheiden → Entscheidung", "eine Entscheidung treffen"], ["beeinflussen → Einfluss", "Einfluss auf etwas haben"],
+    ].map(([title, body], i) => ({ id: block(prefix, `digital-word-${i}`), title, body })), completion: "interact" as const } satisfies LessonBlock] : []),
+    { id: block(prefix, "reading"), type: "text", heading: "Lesen · Verstehen und einordnen", paragraphs: ["Lesen Sie zuerst für die Hauptaussage. Lesen Sie dann erneut und markieren Sie Belege für die folgende Frage.", ...chapter.reading.split("\n\n")] },
+    { id: block(prefix, "reading-check"), type: "knowledge-check", heading: "Lesen · Beleg finden", question: readingCheck, completion: "pass" },
+    ...(index === 9 ? [
+      { id: block(prefix, "global-check"), type: "knowledge-check" as const, heading: "Lesen · Hauptgedanke", question: choice(block(prefix, "global-q"), "Worum geht es im Schulbericht hauptsächlich?", "Um einen begrenzten Versuch mit digitalen Lernhilfen und offene Bedingungen.", ["Um ein endgültiges Verbot aller Technik.", "Um den Kauf neuer Smartphones für alle."], "Die Schule testet Werkzeuge und prüft Lernfortschritt, Zugang und Datenschutz."), completion: "pass" as const },
+      { id: block(prefix, "stance-check"), type: "knowledge-check" as const, heading: "Lesen · Haltung und Schlussfolgerung", question: choice(block(prefix, "stance-q"), "Welche Schlussfolgerung stützt der Text?", "Ein dauerhafter Einsatz braucht Regeln, Zugang und eine Auswertung.", ["Einzelne gute Antworten beweisen den Nutzen für alle.", "Datenschutz ist bereits vollständig geklärt."], "Der Text nennt mehrere Bedingungen für eine Entscheidung nach der Testphase."), completion: "pass" as const },
+    ] satisfies LessonBlock[] : []),
+    { id: block(prefix, "listening-guide"), type: "text", heading: "Hören · Erst Überblick, dann Detail", paragraphs: ["Hören Sie zuerst ohne Transcript und notieren Sie Thema und Haltung. Hören Sie erneut für die konkrete Information. Öffnen Sie das Transcript erst nach Ihrer Antwort."] },
+    { id: block(prefix, "audio"), type: "audio", heading: "Hören · Originaler Übungstext", url: `/audio/german-b2/${prefix}.m4a`, caption: "Synthetisch gesprochener, eigens verfasster Übungstext. Hören Sie ohne Transcript und überprüfen Sie erst danach.", transcript: chapter.listening },
+    { id: block(prefix, "listening-check"), type: "knowledge-check", heading: "Hören · Aussage prüfen", question: listeningCheck, completion: "pass" },
+    ...(advancedListening ? [
+      { id: block(prefix, "advanced-listening-guide"), type: "text" as const, heading: `Hören · ${advancedListening.genre}`, paragraphs: ["Hören Sie zunächst für Thema und Haltungen. Hören Sie dann erneut und unterscheiden Sie zentrale Aussage, Details und mögliche Einschränkungen."] },
+      { id: block(prefix, "advanced-audio"), type: "audio" as const, heading: advancedListening.title,
+        url: `/audio/german-b2/${prefix}-advanced.m4a`,
+        caption: "Längerer, eigens verfasster Hörbeitrag mit mehreren synthetischen Stimmen. Das Transcript dient der nachträglichen Kontrolle.",
+        transcript: advancedListening.segments.map((segment) => `${segment.speaker}: ${segment.text}`).join("\n\n") },
+      { id: block(prefix, "advanced-main"), type: "knowledge-check" as const, heading: "Hören · Hauptaussage und Haltung",
+        question: choice(block(prefix, "advanced-main-q"), advancedListening.mainQuestion, advancedListening.mainAnswer, advancedListening.mainDistractors, advancedListening.mainAnswer), completion: "pass" as const },
+      { id: block(prefix, "advanced-detail"), type: "knowledge-check" as const, heading: "Hören · Detail und Schlussfolgerung",
+        question: choice(block(prefix, "advanced-detail-q"), advancedListening.detailQuestion, advancedListening.detailAnswer, advancedListening.detailDistractors, advancedListening.detailAnswer), completion: "pass" as const },
+    ] satisfies LessonBlock[] : []),
+    { id: block(prefix, "language"), type: "worked-example", heading: "Sprachlabor", problem: chapter.language, steps: [
+      { title: "Im Kontext entdecken", body: chapter.languageExample },
+      { title: "Wirkung benennen", body: "Welche Beziehung oder Nuance drückt die Struktur aus? Erklären Sie sie mit eigenen Worten." },
+      { title: "Übertragen", body: `Formulieren Sie eine eigene Aussage zum Thema „${chapter.title}“ mit derselben Struktur.` },
+    ], answer: chapter.languageExample },
+    { id: block(prefix, "grammar-map"), type: "text", heading: "Sprachstruktur vertiefen", paragraphs: [grammarSpine[index], `Schreiben Sie zwei eigene Sätze zu „${chapter.title}“ und prüfen Sie Form und Bedeutung.`] },
+    { id: block(prefix, "grammar-check"), type: "knowledge-check", heading: "Sprachlabor · Anwendung",
+      question: choice(block(prefix, "grammar-q"), grammarPractice.prompt, grammarPractice.answer,
+        grammarPractice.distractors, grammarPractice.explanation), completion: "pass" },
+    { id: block(prefix, "writing-steps"), type: "process", heading: `Schreibwerkstatt · ${writing.title}`, items: writing.steps },
+    ...writingScaffold,
+    { id: block(prefix, "writing"), type: "writing-practice", heading: "Schreiben · Eigenständiger Text",
+      prompt: index === 16 ? `${chapter.writing} Bearbeiten Sie die Gliederung in zwölf Minuten.`
+        : index === 17 ? `${chapter.writing} Stellen Sie 35 Minuten ein und reservieren Sie Zeit für die Endkontrolle.` : chapter.writing,
+      minWords: fullWritingRange[0], maxWords: fullWritingRange[1],
+      checklist: ["Klare Position oder Absicht", "Begründung und konkretes Beispiel", "Gegenperspektive oder Einschränkung", "Passendes Register und überprüfte Verknüpfungen"],
+      modelAnswer: `Kurzbeispiel für Aufbau und Formulierungen; Ihre eigene Antwort soll die angegebene Wortspanne erreichen.\n\n${chapter.writingModel}`, completion: "interact" },
+    { id: block(prefix, "speaking"), type: "speaking-practice", heading: "Sprechen · Eigene Position", prompt: chapter.speaking,
+      preparationSeconds: 60, targetSeconds: 120,
+      checklist: ["Einleitung und roter Faden", "Mindestens zwei konkrete Punkte", "Ein Beispiel oder Einwand", "Verständlicher Abschluss"], modelAnswer: speakingModels[index], completion: "interact" },
+    { id: block(prefix, "interaction"), type: "process", heading: "Interaktion und Vermittlung", items: [
+      { title: "Situation", body: chapter.interaction },
+      { title: "Zuhören", body: "Fassen Sie die andere Position fair zusammen, bevor Sie antworten." },
+      { title: "Aushandeln", body: "Nennen Sie Ihren Vorschlag, fragen Sie nach Bedenken und halten Sie das gemeinsame Ergebnis fest." },
+    ] },
+    { id: block(prefix, "mission"), type: "callout", heading: "Mission in der echten Welt", body: chapter.mission, tone: "teal" },
+    { id: block(prefix, "exam"), type: "text", heading: `Prüfungsblick · ${examGlimpse.track === "goethe" ? "Goethe" : "telc"}`,
+      paragraphs: [`${examGlimpse.format}. Diese kurze Originalaufgabe zeigt einen möglichen Prüfungsfokus. Die vollständige Vorbereitung folgt im jeweiligen Prüfungsweg.`] },
+    { id: block(prefix, "exam-check"), type: "knowledge-check", heading: `Prüfungsblick · ${examGlimpse.format}`,
+      question: choice(block(prefix, "exam-q"), examGlimpse.prompt, examGlimpse.answer, examGlimpse.distractors, examGlimpse.explanation),
+      completion: "pass" },
+    { id: block(prefix, "retrieval"), type: "knowledge-check", heading: "Wiederholen und vernetzen", question: choice(block(prefix, "retrieval-q"),
+      previous ? `Welche Verbindung stammt aus dem vorigen Kapitel „${previous.title}“?` : "Welche Verbindung bedeutet „to pursue a goal“?",
+      previous ? previous.collocations[0].split(" — ")[0] : chapter.collocations[0].split(" — ")[0],
+      [chapter.collocations[1].split(" — ")[0], chapter.collocations[2].split(" — ")[0]],
+      previous ? `Wiederholen Sie: ${previous.collocations[0]}.` : `Wiederholen Sie: ${chapter.collocations[0]}.`), completion: "pass" },
+    { id: block(prefix, "challenge"), type: "numbered-list", heading: "Kapitel-Challenge · Selbstcheck", items: [
+      { title: "Verstehen", body: "Können Sie die Hauptaussagen aus Text und Hörbeitrag ohne Transcript wiedergeben?" },
+      { title: "Ausdrücken", body: "Können Sie zwei der neuen Verbindungen und die Sprachstruktur passend verwenden?" },
+      { title: "Verbessern", body: "Lesen beziehungsweise hören Sie Ihre Produktion erneut und notieren Sie eine konkrete Verbesserung." },
+    ] },
+  ];
+  return { id: `${prefix}-lesson`, sectionId: section.id, section: section.title,
+    slug: `${prefix}-${chapter.title.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/-$/, "")}`,
+    title: `${index + 1}. ${chapter.title}`, summary: chapter.outcome,
+    durationMinutes: index < 13 ? 130 : 115, blocks: blocks.map((item) => ({ ...item, curriculum: {
+      cefr: "B2", domain: chapterDomains[index], topic: chapter.title,
+      skills: blockSkills(item), functions: [communicationFunctions[index]], grammar: [chapter.language],
+    } })) };
+}
+
+type ExamUnit = { title: string; focus: string; chapter: number; task: string; model: string; strategy: string };
+
+const goetheUnits: ExamUnit[] = [
+  { title: "G1 · Die Prüfung verstehen", focus: "Vier Module: Lesen 65, Hören etwa 40, Schreiben 75 und Sprechen etwa 15 Minuten; mündlich mit 15 Minuten Vorbereitung.", chapter: 17, task: "Erstellen Sie einen persönlichen Prüfungsplan: Welche Fertigkeit ist aktuell am stärksten, welche braucht wöchentliches Training?", model: "Ich plane zunächst zwei Leseeinheiten und eine Schreibaufgabe pro Woche. Nach vier Wochen prüfe ich, ob meine Antworten genauer und meine Texte klarer geworden sind.", strategy: "Öffnen Sie den offiziellen Modelltest und vergleichen Sie Aufgaben und Zeitvorgaben mit Ihrem Plan." },
+  { title: "G2 · Lesen: Strategie und Textbelege", focus: "Forumsbeiträge, Artikel und Kommentare: Hauptaussage, Details, Haltung und Schlussfolgerung unterscheiden.", chapter: 13, task: "Lesen Sie den Text über die Sonntagsöffnung. Formulieren Sie die Positionen beider Seiten, einen gemeinsamen Punkt und eine Schlussfolgerung, die der Text stützt.", model: "Die erste Stimme befürwortet eine Testphase, die zweite bevorzugt längere Werktage. Beide sehen die Bibliothek als wichtigen öffentlichen Ort. Eine Entscheidung sollte Nutzung und Arbeitsbedingungen berücksichtigen.", strategy: "Lesen Sie zuerst die Aufgabenstellung. Belegen Sie Hauptaussage, Detail und Schlussfolgerung mit unterschiedlichen Textstellen." },
+  { title: "G3 · Hören: Strategie und Sprecherhaltung", focus: "Interviews, Gespräche und Radiobeiträge: zuerst Thema und Haltung, dann Details und Einschränkungen.", chapter: 9, task: "Hören Sie den Podcast über Bildschirmzeit ohne Transcript. Notieren Sie Thema, Sprecherhaltung und zwei Belege. Prüfen Sie danach Ihre Notizen.", model: "Die Sprecherin bewertet Bildschirmzeit differenziert. Sie unterscheidet zwischen zielgerichteter Nutzung und gedankenlosem Scrollen und nennt bewusste Pausen.", strategy: "Lesen Sie vor dem Hören die Frage; erwarten Sie Paraphrasen statt wortgleicher Sätze." },
+  { title: "G4 · Schreiben: Forumbeitrag", focus: "Eine aktuelle gesellschaftliche Frage mit Position, Gründen, Beispiel und Gegenargument bearbeiten.", chapter: 9, task: "Schreiben Sie einen Forumbeitrag: Sollten Schulen KI-Werkzeuge zulassen? Nennen Sie Vorteile, Bedenken, eigene Position und einen Vorschlag.", model: "KI-Werkzeuge können schwierige Inhalte verständlich erklären. Allerdings besteht die Gefahr, Antworten ungeprüft zu übernehmen. Deshalb befürworte ich ihren Einsatz nur mit klaren Regeln: Lernende sollten Quellen prüfen und offenlegen, wobei sie Hilfe genutzt haben. So bleibt die eigene Leistung erkennbar.", strategy: "Planen Sie Absätze und kontrollieren Sie am Ende, ob jeder Inhaltspunkt sichtbar beantwortet ist." },
+  { title: "G5 · Schreiben: formelle Nachricht", focus: "Berufliche Nachricht mit Anlass, Bitte, Begründung und angemessenem Schluss.", chapter: 6, task: "Sie können einen vereinbarten beruflichen Termin nicht wahrnehmen. Schreiben Sie eine formelle Nachricht mit Grund, Alternativtermin und höflicher Bitte.", model: "Sehr geehrte Frau Berger, leider kann ich den vereinbarten Termin am Dienstag wegen einer unaufschiebbaren Verpflichtung nicht wahrnehmen. Wäre ein Gespräch am Donnerstagvormittag möglich? Über eine kurze Rückmeldung würde ich mich freuen. Mit freundlichen Grüßen", strategy: "Prüfen Sie Anrede, Betreff, Sie-Form, konkrete Bitte und Schlussformel." },
+  { title: "G6 · Sprechen: Kurzvortrag", focus: "Vortrag strukturieren, Beispiele nennen und eine Rückfrage beantworten.", chapter: 16, task: "Bereiten Sie einen Kurzvortrag über ein neues Angebot in Ihrem Stadtteil vor. Erläutern Sie zwei Möglichkeiten, bewerten Sie diese und beantworten Sie eine Nachfrage.", model: "Ich möchte zwei Angebote vergleichen. Ein offener Lernabend fördert Austausch, während eine digitale Gruppe flexibler ist. Für unseren Stadtteil wäre zunächst ein zweiwöchentlicher Lernabend sinnvoll, weil viele Menschen einen ruhigen Treffpunkt suchen.", strategy: "Nutzen Sie Stichpunkte für Einleitung, zwei Hauptpunkte und Schluss; lesen Sie keinen ausformulierten Text ab." },
+  { title: "G7 · Sprechen: Diskussion", focus: "Standpunkte austauschen, auf Einwände reagieren und höflich nachfragen.", chapter: 13, task: "Diskutieren Sie mit einer Partnerin die Sonntagsöffnung der Bibliothek. Vertreten Sie eine Position und reagieren Sie auf ihre stärkste Sorge.", model: "Ihr Einwand zu den Arbeitszeiten ist berechtigt. Deshalb schlage ich zunächst zwei freiwillig besetzte Testtermine pro Monat vor. Wäre das für Sie ein gangbarer Weg?", strategy: "Greifen Sie den Gedanken der anderen Person auf und verbinden Sie Ihre Antwort mit einem konkreten Vorschlag." },
+  { title: "G8 · Zeittraining nach Fertigkeiten", focus: "Lesen, Hören, Schreiben und Sprechen in kurzen, getrennten Durchgängen mit Uhr trainieren.", chapter: 17, task: "Bearbeiten Sie den Lesetext in acht Minuten und den Hörtext in sechs Minuten ohne Transcript. Schreiben Sie danach in zwölf Minuten eine begründete Empfehlung zum Begegnungszentrum und nehmen Sie in zwei Minuten Ihre mündliche Position auf. Protokollieren Sie Zeit und Fehler.", model: "Lesen: Hauptaussage und zwei Belege gefunden. Hören: die Kostenbedingung übersehen. Schreiben: Gegenargument ergänzt. Sprechen: Schluss nach zwei Minuten erreicht. Nächster Schritt: Einschränkungen im Hörtext gezielt markieren.", strategy: "Stoppen Sie jede Fertigkeit getrennt. Diese kurzen Trainingszeiten sind keine offiziellen Modulzeiten." },
+  { title: "G9 · Vollständiger offizieller Modelltest", focus: "Vier Goethe-Module mit offiziellem Modellmaterial und den aktuellen Zeitvorgaben simulieren.", chapter: 17, task: "Bearbeiten Sie den vollständigen offiziellen Goethe-Modelltest mit Originalaudio und Antwortbogen. Dokumentieren Sie pro Modul Zeit, Ergebnis und Unsicherheiten.", model: "Lesen: 65 Minuten, vier unsichere Antworten. Hören: etwa 40 Minuten, Details in Teilaufgabe 2 verpasst. Schreiben: alle Inhaltspunkte vorhanden, Register noch prüfen. Sprechen: Vortrag mit Partnergespräch geübt.", strategy: "Nutzen Sie für die vollständige Simulation das offizielle Material; die Aufgaben dieses Kurses sind kürzere, selbst erstellte Trainingsaufgaben." },
+  { title: "G10 · Fehleranalyse und Prüfungstag", focus: "Auswertung des Modelltests und gezielter letzter Trainingsplan.", chapter: 17, task: "Ordnen Sie jeden Fehler einer Ursache zu: Textbeleg, Wortschatz, Zeit, Aufgabenverständnis oder Produktion. Schreiben Sie einen Plan für die letzten sieben Tage.", model: "Meine falschen Leseantworten kamen meist von zu schnellem Schlussfolgern. Ich übe drei kurze Texte und markiere zu jeder Antwort die Belegstelle. Beim Schreiben prüfe ich nach 60 Minuten Inhalt und Register.", strategy: "Wiederholen Sie nur Aufgaben mit einer klaren Fehlerursache und planen Sie Erholung vor dem Prüfungstag ein." },
+];
+
+const telcUnits: ExamUnit[] = [
+  { title: "T1 · Die Prüfung verstehen", focus: "Lesen und Sprachbausteine zusammen 90 Minuten, Hören etwa 20, Schreiben 30, Sprechen etwa 15 Minuten mit 20 Minuten Vorbereitung.", chapter: 17, task: "Skizzieren Sie den telc-Ablauf und markieren Sie, welche Teile Sie zuerst gezielt trainieren müssen.", model: "Ich trainiere zunächst Sprachbausteine, weil ich bei Wortverbindungen unsicher bin. Danach simuliere ich Lesen und Sprachbausteine gemeinsam mit 90 Minuten Zeit.", strategy: "Vergleichen Sie Ihre Planung mit dem offiziellen telc-Übungstest." },
+  { title: "T2 · Leseverstehen: alle drei Teile", focus: "Hauptaussagen, Einzelinformationen und passende Angebote anhand genauer Kriterien finden.", chapter: 11, task: "Lesen Sie den Text zur Bibliotheksmeldung. Geben Sie eine passende Überschrift, zwei überprüfte Fakten und eine Information an, die der Text ausdrücklich nicht behauptet.", model: "Passende Überschrift: ›Renovierung statt dauerhafter Schließung‹. Die Bibliothek schließt nur vorübergehend; ein Ausweichstandort ist vorgesehen. Eine endgültige Schließung wird nicht bestätigt.", strategy: "Suchen Sie zuerst die Kernaussage; unterstreichen Sie danach genaue Bedingungen und Textbelege." },
+  { title: "T3 · Sprachbausteine: Grammatik", focus: "Satzbeziehungen, Verbformen, Artikel und Präpositionen im Kontext wählen.", chapter: 5, task: "Ergänzen Sie: Viele besuchen einen Kurs, ___ sich beruflich weiterzuentwickeln. Erklären Sie die Konstruktion.", model: "um — ›um … zu‹ drückt hier einen Zweck aus: Man besucht den Kurs mit dem Ziel beruflicher Weiterentwicklung.", strategy: "Lesen Sie den ganzen Satz und bestimmen Sie zuerst die Bedeutung, dann die Form." },
+  { title: "T4 · Sprachbausteine: Lexik", focus: "Kollokationen, Register und passende Wörter im Textzusammenhang.", chapter: 7, task: "Ergänzen Sie: ›eine Entscheidung ___‹ und ›Kosten in Kauf ___‹. Schreiben Sie mit beiden Wendungen einen Satz.", model: "Eine Entscheidung treffen; Kosten in Kauf nehmen. Bevor ich eine Entscheidung treffe, prüfe ich, welche Folgekosten ich in Kauf nehmen muss.", strategy: "Lernen Sie Wortverbindungen als Einheit und vergleichen Sie ähnliche Ausdrücke im Kontext." },
+  { title: "T5 · Hörverstehen", focus: "Globales, detailliertes und selektives Verstehen in drei Aufgabentypen.", chapter: 8, task: "Hören Sie die Ansage zur Zugstörung. Notieren Sie Hauptproblem, neuen Verkehrsträger und Handlungsanweisung für einen bestimmten Anschluss.", model: "Der Zug endet wegen einer Störung früher. Ein Ersatzbus fährt weiter. Fahrgäste nach Bremerhaven sollen das Servicepersonal ansprechen.", strategy: "Achten Sie auf Korrekturen und Einschränkungen; entscheiden Sie erst nach dem ganzen Hörabschnitt." },
+  { title: "T6 · Schriftlicher Ausdruck", focus: "Halbformelle E-Mail mit allen Inhaltspunkten in 30 Minuten.", chapter: 15, task: "Sie haben einen Workshop gebucht, der Ort wurde kurzfristig geändert. Schreiben Sie an den Veranstalter: Situation, Folge, Bitte um Lösung und Rückfrage.", model: "Guten Tag, für Samstag habe ich Ihren Workshop gebucht. Leider wurde der Ort erst gestern geändert; der neue Standort ist für mich kaum erreichbar. Könnte ich an einem späteren Termin am ursprünglichen Ort teilnehmen? Falls das nicht möglich ist, bitte ich um Erstattung. Wann kann ich mit einer Antwort rechnen? Freundliche Grüße", strategy: "Reservieren Sie Zeit für Planung und Endkontrolle; prüfen Sie jeden geforderten Inhaltspunkt." },
+  { title: "T7 · Sprechen: über Erfahrungen", focus: "Eine persönliche Erfahrung erzählen und Nachfragen beantworten.", chapter: 2, task: "Berichten Sie über eine Veränderung Ihrer Arbeits- oder Alltagsroutine. Was war der Anlass, was lief gut, was würden Sie anders machen?", model: "Ich habe vor einigen Monaten meine Woche anders organisiert. Anfangs wollte ich zu viel auf einmal ändern. Erst nachdem ich Prioritäten gesetzt hatte, wurde der Plan alltagstauglich. Heute würde ich früher mit kleinen Schritten beginnen.", strategy: "Erzählen Sie eine konkrete Situation statt allgemeiner Behauptungen und halten Sie Anschlussfragen offen." },
+  { title: "T8 · Sprechen: Diskussion", focus: "Eine Aussage bewerten, Gründe austauschen und höflich widersprechen.", chapter: 13, task: "Diskutieren Sie: ›Bibliotheken sollten auch sonntags öffnen.‹ Begründen Sie Ihre Haltung und reagieren Sie auf Kosten und Arbeitsbedingungen.", model: "Ich sehe den Bedarf, besonders für Berufstätige. Ihr Kostenargument ist jedoch berechtigt. Vielleicht können wir zunächst einen begrenzten Test durchführen und die Nutzung messen.", strategy: "Zeigen Sie, dass Sie zugehört haben, und entwickeln Sie das Gespräch mit einer Rückfrage weiter." },
+  { title: "T9 · Sprechen: gemeinsam planen", focus: "Ein Vorhaben mit einer Partnerperson realistisch organisieren.", chapter: 16, task: "Planen Sie einen Kulturabend: Zielgruppe, Ort, Budget, Werbung und Aufgabenverteilung. Finden Sie eine gemeinsame Lösung.", model: "Wie wäre ein Abend in der Bibliothek? Der Raum ist günstig. Sie könnten die Werbung übernehmen, während ich das Programm organisiere. Für Getränke sollten wir ein kleines Budget reservieren. Sind Sie damit einverstanden?", strategy: "Machen Sie Vorschläge, fragen Sie nach Alternativen und halten Sie am Ende eine gemeinsame Entscheidung fest." },
+  { title: "T10 · Zeittraining nach Prüfungsteilen", focus: "Lesen und Sprachbausteine, Hören, Schreiben und Sprechen in kurzen Durchgängen mit Uhr trainieren.", chapter: 17, task: "Bearbeiten Sie den Lesetext und zwei Sprachbausteine in zehn Minuten, den Hörtext in sechs Minuten und eine kurze E-Mail in zwölf Minuten. Fassen Sie danach Ihren Plan mit einer Partnerperson in zwei Minuten zusammen und notieren Sie Fehlerquellen.", model: "Lesen und Sprachbausteine: eine falsche Kollokation; Hören: die Bedingung erkannt; Schreiben: vier Inhaltspunkte vorhanden; Sprechen: Aufgaben verteilt. Nächster Schritt: feste Wendungen im Kontext üben.", strategy: "Stoppen Sie jeden Teil getrennt. Diese kurzen Trainingszeiten sind keine offiziellen Prüfungszeiten." },
+  { title: "T11 · Vollständiger offizieller Übungstest", focus: "Alle telc-Teile mit Originalmaterial und den aktuellen Zeitvorgaben simulieren.", chapter: 17, task: "Bearbeiten Sie den vollständigen offiziellen telc-Übungstest mit Originalaudio und Antwortbogen. Dokumentieren Sie Treffer und offene Fragen für jeden Teil.", model: "Lesen und Sprachbausteine: 90 Minuten; besonders schwierig war Lexik. Beim Hören habe ich zwei Einschränkungen übersehen. Schreiben und Sprechen habe ich mit einer Partnerperson anhand der Bewertungshinweise besprochen.", strategy: "Verwenden Sie den offiziellen Übungstest für eine vollständige Simulation; die Aufgaben hier dienen als kürzere Vorbereitung." },
+  { title: "T12 · Auswertung und letzte Vorbereitung", focus: "Fehlerursachen erkennen und einen gezielten Wiederholungsplan erstellen.", chapter: 17, task: "Sortieren Sie Fehler nach Lesen, Grammatik, Lexik, Hören, Schreiben und Sprechen. Planen Sie drei konkrete Wiederholungsaktionen.", model: "Bei Sprachbausteinen verwechsle ich feste Verbindungen. Ich wiederhole täglich zehn Kollokationen im Satz. Beim Schreiben plane ich zuerst die Inhaltspunkte. Für Sprechen übe ich zwei Partnergespräche mit Zeitlimit.", strategy: "Bearbeiten Sie die schwierigen Teile erneut und vergleichen Sie Ihre Antworten mit den offiziellen Lösungen." },
+];
+
+function examLesson(unit: ExamUnit, index: number, track: "goethe" | "telc"): AcademyLesson {
+  const prefix = `de-b2-${track}-${n(index)}`;
+  const chapter = germanB2Chapters[unit.chapter];
+  const section = track === "goethe" ? sections[6] : sections[7];
+  const officialUrl = track === "goethe" ? goetheUrl : telcUrl;
+  const blocks: LessonBlock[] = [
+    { id: block(prefix, "focus"), type: "callout", heading: "Format und Ziel", body: unit.focus, tone: track === "goethe" ? "blue" : "navy" },
+    { id: block(prefix, "strategy"), type: "text", heading: "Prüfungsstrategie", paragraphs: [unit.strategy, "Die folgenden Aufgaben sind eigens für ScienceDojo verfasst. Vergleichen Sie sie anschließend mit offiziellen Modellaufgaben."] },
+    { id: block(prefix, "source"), type: "text", heading: "Trainingsmaterial", paragraphs: chapter.reading.split("\n\n") },
+    { id: block(prefix, "reading-check"), type: "knowledge-check", heading: "Verstehen", question: choice(block(prefix, "reading-q"), chapter.readingQuestion, chapter.readingAnswer, chapter.readingDistractors, chapter.readingAnswer), completion: "pass" },
+    { id: block(prefix, "audio"), type: "audio", heading: "Hörtraining", url: `/audio/german-b2/de-b2-${n(unit.chapter)}.m4a`, caption: "Eigens verfasster, synthetisch gesprochener Übungstext.", transcript: chapter.listening },
+    { id: block(prefix, "listening-check"), type: "knowledge-check", heading: "Höraufgabe", question: choice(block(prefix, "listening-q"), chapter.listeningQuestion, chapter.listeningAnswer, chapter.listeningDistractors, chapter.listeningAnswer), completion: "pass" },
+    ...(track === "telc" && index === 2 ? [
+      { id: block(prefix, "grammar-cloze-1"), type: "knowledge-check" as const, heading: "Sprachbausteine · Grammatik", question: choice(block(prefix, "grammar-cloze-q1"), "Ergänzen Sie: Viele besuchen einen Kurs, ___ sich beruflich weiterzuentwickeln.", "um", ["ohne", "anstatt"], "Die Infinitivgruppe ›um … zu‹ drückt hier einen Zweck aus."), completion: "pass" as const },
+      { id: block(prefix, "grammar-cloze-2"), type: "knowledge-check" as const, heading: "Sprachbausteine · Satzverbindung", question: choice(block(prefix, "grammar-cloze-q2"), "Ergänzen Sie: ___ die Teilnehmerin wenig Zeit hatte, besuchte sie den Abendkurs.", "Obwohl", ["Sodass", "Denn"], "›Obwohl‹ leitet einen konzessiven Nebensatz ein."), completion: "pass" as const },
+    ] satisfies LessonBlock[] : []),
+    ...(track === "telc" && index === 3 ? [
+      { id: block(prefix, "lexical-cloze-1"), type: "knowledge-check" as const, heading: "Sprachbausteine · Kollokation", question: choice(block(prefix, "lexical-cloze-q1"), "Ergänzen Sie: Vor dem Kauf sollte man eine fundierte Entscheidung ___.", "treffen", ["machen", "nehmen"], "Die feste Wortverbindung lautet ›eine Entscheidung treffen‹."), completion: "pass" as const },
+      { id: block(prefix, "lexical-cloze-2"), type: "knowledge-check" as const, heading: "Sprachbausteine · Bedeutung", question: choice(block(prefix, "lexical-cloze-q2"), "Ergänzen Sie: Der günstige Preis kann erhebliche Folgekosten ___.", "verbergen", ["begegnen", "verfügen"], "Ein Preis kann Kosten verbergen; die anderen Verben passen weder grammatisch noch semantisch."), completion: "pass" as const },
+    ] satisfies LessonBlock[] : []),
+    ...((track === "goethe" && index === 7) || (track === "telc" && index === 9) ? [
+      { id: block(prefix, "timed-routine"), type: "process" as const, heading: "Kurze Zeitläufe · eigene Aufgaben", items: track === "goethe" ? [
+        { title: "Lesen · 8 Minuten", body: "Lesen Sie das Trainingsmaterial und beantworten Sie die Frage mit Textbeleg ohne Wörterbuch." },
+        { title: "Hören · 6 Minuten", body: "Hören Sie den Beitrag ohne Transcript und beantworten Sie die Hörfrage. Prüfen Sie erst danach den Wortlaut." },
+        { title: "Schreiben · 12 Minuten", body: "Formulieren Sie eine kurze Empfehlung mit Position, Begründung, Einwand und Schluss." },
+        { title: "Sprechen · 2 Minuten", body: "Nehmen Sie Ihre Position auf und reagieren Sie auf eine mögliche Gegenfrage." },
+      ] : [
+        { title: "Lesen und Sprachbausteine · 10 Minuten", body: "Lösen Sie die Lese- und Wortverbindungsaufgabe ohne Hilfsmittel; notieren Sie die Belegstelle." },
+        { title: "Hören · 6 Minuten", body: "Hören Sie die Aufgabe ohne Transcript und achten Sie auf eine Einschränkung oder Korrektur." },
+        { title: "Schreiben · 12 Minuten", body: "Schreiben Sie eine kurze halbformelle Nachricht mit allen Inhaltspunkten." },
+        { title: "Sprechen · 2 Minuten", body: "Planen Sie mit einer Partnerperson ein kleines Vorhaben und halten Sie Zuständigkeiten fest." },
+      ] },
+    ] satisfies LessonBlock[] : []),
+    ...(track === "telc" && index === 9 ? [
+      { id: block(prefix, "timed-grammar"), type: "knowledge-check" as const, heading: "Zeittraining · Sprachbausteine Grammatik",
+        question: choice(block(prefix, "timed-grammar-q"), "Ergänzen Sie: Die Stadt entscheidet erst, ___ die Ergebnisse der Testphase vorliegen.", "wenn", ["denn", "trotzdem"], "›Wenn‹ leitet hier einen Nebensatz mit einer Bedingung ein."), completion: "pass" as const },
+      { id: block(prefix, "timed-lexik"), type: "knowledge-check" as const, heading: "Zeittraining · Sprachbausteine Lexik",
+        question: choice(block(prefix, "timed-lexik-q"), "Ergänzen Sie: Die Verwaltung möchte aus den Rückmeldungen Schlussfolgerungen ___.", "ziehen", ["treffen", "nehmen"], "Die feste Verbindung lautet ›Schlussfolgerungen ziehen‹."), completion: "pass" as const },
+    ] satisfies LessonBlock[] : []),
+    ...((track === "goethe" && index === 7) || (track === "telc" && index === 9) ? [
+      { id: block(prefix, "timed-writing"), type: "writing-practice" as const, heading: "Zeittraining · Schreiben",
+        prompt: track === "goethe"
+          ? "Sie kommentieren den Vorschlag für ein Begegnungszentrum. Schreiben Sie in zwölf Minuten eine kurze Empfehlung mit Position, Grund, konkretem Beispiel, Einwand und Schluss."
+          : "Ein geplanter Lernabend wurde kurzfristig verlegt. Schreiben Sie in zwölf Minuten eine halbformelle E-Mail an das Organisationsteam: Buchung, Folge für Sie, konkrete Bitte und Rückfrage.",
+        minWords: 80, maxWords: 150,
+        checklist: ["Alle Inhaltspunkte vorhanden", "Nachvollziehbare Verknüpfung", "Passendes Register", "Zeit eingehalten"],
+        modelAnswer: track === "goethe"
+          ? "Ich befürworte eine sechsmonatige Testphase, weil Vereine dringend bezahlbare Räume brauchen. Beispielsweise könnten Sprachkurse am Abend stattfinden. Allerdings sind die laufenden Kosten noch unklar und manche Anwohnende befürchten mehr Verkehr. Daher sollte die Stadt Besucherzahlen, Ausgaben und Beschwerden monatlich veröffentlichen. Erst danach wäre eine Entscheidung über den vollständigen Umbau sinnvoll."
+          : "Guten Tag, ich habe mich für den Lernabend am Freitag angemeldet. Heute habe ich erfahren, dass der Veranstaltungsort kurzfristig verlegt wurde. Der neue Raum ist für mich nur schwer erreichbar. Könnten Sie mir einen Ersatztermin am ursprünglichen Ort anbieten? Bitte teilen Sie mir außerdem mit, bis wann ich mich entscheiden muss. Vielen Dank und freundliche Grüße",
+        completion: "interact" as const },
+      { id: block(prefix, "timed-speaking"), type: "speaking-practice" as const, heading: "Zeittraining · Sprechen",
+        prompt: track === "goethe"
+          ? "Stellen Sie Ihre Empfehlung zum Begegnungszentrum in zwei Minuten vor. Reagieren Sie anschließend auf den Einwand, dass die laufenden Kosten nicht bekannt sind."
+          : "Planen Sie mit einer Partnerperson einen Lernabend. Einigen Sie sich in zwei Minuten auf Termin, Raum und Aufgabenverteilung und stellen Sie eine Rückfrage.",
+        preparationSeconds: track === "goethe" ? 60 : 120, targetSeconds: 120,
+        checklist: ["Struktur und Abschluss", "Auf Einwand oder Vorschlag reagieren", "Konkrete Entscheidung nennen"],
+        modelAnswer: track === "goethe"
+          ? "Ich würde das Erdgeschoss zunächst sechs Monate öffnen. Vereine hätten einen verlässlichen Treffpunkt. Die unklaren Kosten sind ein berechtigter Einwand; deshalb sollten tatsächliche Ausgaben während der Testphase dokumentiert werden. So kann die Stadt später auf einer besseren Grundlage entscheiden."
+          : "Ich schlage einen Termin am Freitag um 18 Uhr in der Bibliothek vor. Sie könnten die Einladung vorbereiten, während ich den Raum anfrage. Wäre diese Aufteilung für Sie passend? Dann prüfen wir nächste Woche die Anmeldungen.",
+        completion: "interact" as const },
+    ] satisfies LessonBlock[] : []),
+    ...((track === "goethe" && index === 8) || (track === "telc" && index === 10) ? [
+      { id: block(prefix, "mock-guide"), type: "text" as const, heading: "Vollständige Prüfungssimulation", paragraphs: [
+        "Die kurzen ScienceDojo-Aufgaben in dieser Lektion sind Übung, kein vollständiger Modelltest und keine verlässliche Bestehensprognose. Für die volle Simulation öffnen Sie das offizielle Material des Prüfungsanbieters unten.",
+        "Bearbeiten Sie Aufgaben, Audio und Antwortbogen ohne Transcript, Lösungen oder Wörterbuch. Prüfen Sie die jeweils aktuellen Zeitvorgaben im offiziellen Material.",
+      ] },
+      { id: block(prefix, "mock-routine"), type: "process" as const, heading: "Den offiziellen Übungstest durchführen", items: track === "goethe" ? [
+        { title: "Lesen · 65 Minuten", body: "Bearbeiten Sie alle Leseteile und übertragen Sie die Antworten innerhalb der offiziellen Zeit." },
+        { title: "Hören · etwa 40 Minuten", body: "Verwenden Sie das Originalaudio und folgen Sie den Abspielanweisungen des Modellsatzes." },
+        { title: "Schreiben · 75 Minuten", body: "Verfassen Sie Forumbeitrag und formelle Nachricht; prüfen Sie Inhalt, Aufbau und Register." },
+        { title: "Sprechen · Vorbereitung und Prüfung", body: "Planen Sie rund 15 Minuten Vorbereitung und simulieren Sie Kurzvortrag und Diskussion mit einer zweiten Person. Prüfen Sie die aktuelle Dauer beim Anbieter." },
+        { title: "Auswerten", body: "Vergleichen Sie objektive Antworten mit dem offiziellen Schlüssel. Lassen Sie Schreiben und Sprechen nach den Bewertungshinweisen möglichst von einer Lehrperson oder Übungspartnerin prüfen." },
+      ] : [
+        { title: "Lesen und Sprachbausteine · 90 Minuten", body: "Bearbeiten Sie die drei Leseteile und beide Sprachbaustein-Teile; übertragen Sie Antworten fristgerecht." },
+        { title: "Hören · etwa 20 Minuten", body: "Nutzen Sie das Originalaudio und befolgen Sie die Abspielanweisungen des Übungstests." },
+        { title: "Schreiben · 30 Minuten", body: "Verfassen Sie die E-Mail mit allen geforderten Punkten und prüfen Sie das Register." },
+        { title: "Sprechen · Vorbereitung und Prüfung", body: "Planen Sie rund 20 Minuten Vorbereitung und simulieren Sie Erfahrung, Diskussion und gemeinsame Planung mit einer zweiten Person. Prüfen Sie die aktuelle Dauer beim Anbieter." },
+        { title: "Auswerten", body: "Vergleichen Sie objektive Antworten mit dem offiziellen Schlüssel. Lassen Sie Schreiben und Sprechen nach den Bewertungshinweisen möglichst von einer Lehrperson oder Übungspartnerin prüfen." },
+      ] },
+    ] satisfies LessonBlock[] : []),
+    { id: block(prefix, "task"), type: "writing-practice", heading: "Ihre Prüfungsaufgabe", prompt: unit.task, minWords: 70, maxWords: 240,
+      checklist: ["Alle geforderten Punkte bearbeiten", "Aussagen begründen oder belegen", "Passendes Register wählen", "Zeit und Verständlichkeit prüfen"],
+      modelAnswer: `Kurzbeispiel für Aufbau und Formulierungen; bearbeiten Sie in Ihrer eigenen Antwort alle geforderten Punkte.\n\n${unit.model}`, completion: "interact" },
+    { id: block(prefix, "speak"), type: "speaking-practice", heading: "Mündlicher Transfer", prompt: `Erläutern Sie Ihre Antwort auf die Aufgabe „${unit.title}“ mündlich und reagieren Sie auf eine mögliche Rückfrage.`, preparationSeconds: 60, targetSeconds: 120,
+      checklist: ["Aussage verständlich strukturieren", "Beispiel nennen", "Auf eine Rückfrage eingehen"], modelAnswer: unit.model, completion: "interact" },
+    { id: block(prefix, "official"), type: "resources", heading: "Offizielles Prüfungsmaterial", items: [{ title: track === "goethe" ? "Goethe B2 · offizielle Übungen" : "telc Deutsch B2 · Übungstest und Format", description: "Format, Modellaufgaben und Lösungen direkt beim Prüfungsanbieter prüfen.", url: officialUrl }] },
+  ];
+  return { id: `${prefix}-lesson`, slug: prefix, sectionId: section.id, section: section.title, examTrack: track,
+    title: unit.title, summary: unit.focus,
+    durationMinutes: index === (track === "goethe" ? 8 : 10) ? (track === "goethe" ? 225 : 190)
+      : index === (track === "goethe" ? 7 : 9) ? 95 : 65,
+    blocks: blocks.map((item) => ({ ...item, curriculum: {
+      cefr: "B2", domain: chapterDomains[unit.chapter], topic: chapter.title,
+      skills: blockSkills(item), functions: [communicationFunctions[unit.chapter]],
+      grammar: [chapter.language], examTrack: track,
+    } })) };
+}
+
+const core = germanB2Chapters.map(coreLesson);
+const goethe = goetheUnits.map((unit, index) => examLesson(unit, index, "goethe"));
+const telc = telcUnits.map((unit, index) => examLesson(unit, index, "telc"));
+
+const readingAssessment: QuizQuestion[] = germanB2Chapters.slice(0, 6).map((chapter, index) =>
+  choice(`de-b2-final-read-${n(index)}`, `Lesen Sie den folgenden Text und beantworten Sie die Frage.\n\n${chapter.reading}\n\n${chapter.readingQuestion}`,
+    chapter.readingAnswer, chapter.readingDistractors, chapter.readingAnswer));
+const listeningAssessment: QuizQuestion[] = germanB2Chapters.slice(6, 12).map((chapter, offset) => ({
+  ...choice(`de-b2-final-listen-${n(offset)}`, chapter.listeningQuestion,
+    chapter.listeningAnswer, chapter.listeningDistractors, chapter.listeningAnswer),
+  audioUrl: `/audio/german-b2/de-b2-${n(offset + 6)}.m4a`, audioTranscript: chapter.listening,
+}));
+const grammarAssessment: QuizQuestion[] = [
+  choice("de-b2-final-grammar-01", "Welche Formulierung gibt einen Gegensatz korrekt wieder?", "Zwar ist der Umbau teuer, aber er schafft Raum für alle.", ["Zwar der Umbau ist teuer, aber schafft er Raum.", "Obwohl der Umbau teuer, aber er schafft Raum."], "Zwar … aber verbindet zwei gegensätzliche Aussagen."),
+  choice("de-b2-final-grammar-02", "Welche Form der indirekten Rede markiert eine berichtete Aussage?", "Die Sprecherin erklärt, die Bibliothek sei geöffnet.", ["Die Sprecherin erklärt, die Bibliothek ist geöffnet gewesen sei.", "Die Sprecherin erklärt, geöffnet sei die Bibliothek ist."], "Konjunktiv I: ›die Bibliothek sei‹."),
+  choice("de-b2-final-grammar-03", "Welche Verbindung ist idiomatisch?", "eine Entscheidung treffen", ["eine Entscheidung machen", "eine Entscheidung nehmen"], "Die feste Wortverbindung lautet ›eine Entscheidung treffen‹."),
+  choice("de-b2-final-grammar-04", "Welche Formulierung passt zu einer höflichen beruflichen Bitte?", "Könnten Sie mir den Termin bitte bestätigen?", ["Bestätige mir den Termin sofort!", "Du musst mir den Termin bestätigen."], "Konjunktiv II und Sie-Form passen zum formellen Register."),
+  choice("de-b2-final-grammar-05", "Welche Konstruktion bezeichnet einen Zweck?", "Ich lese den Bericht, um die Folgen besser zu verstehen.", ["Ich lese den Bericht, ohne die Folgen besser verstehen.", "Ich lese den Bericht, trotzdem die Folgen besser zu verstehen."], "›um … zu‹ nennt das Ziel einer Handlung."),
+  choice("de-b2-final-grammar-06", "Welche Verknüpfung beschreibt eine Folge?", "Die Räume sind knapp, sodass nicht alle Gruppen teilnehmen können.", ["Die Räume sind knapp, obwohl nicht alle Gruppen teilnehmen können.", "Die Räume sind knapp, während nicht alle Gruppen teilnehmen können."], "›sodass‹ leitet hier die Folge der knappen Räume ein."),
+];
+const finalQuiz: QuizQuestion[] = [...readingAssessment, ...listeningAssessment, ...grammarAssessment];
+
+export const germanB2Course: AcademyCourse = migrateAcademyCourse({
+  key: GERMAN_B2_COURSE_KEY,
+  title: "Deutsch B2 komplett: selbstständig kommunizieren und Prüfungen meistern",
+  shortTitle: "Deutsch B2 komplett",
+  description: "18 thematische B2-Kapitel mit Lesen, Hören, Sprachlabor, Schreiben, Sprechen und Interaktion. Nach dem gemeinsamen Abschlusstest wählen Lernende eigenständig den Goethe-Zertifikat-B2- oder telc-Deutsch-B2-Prüfungsweg.",
+  estimatedMinutes: core.reduce((sum, lesson) => sum + lesson.durationMinutes, 0) + goethe.reduce((sum, lesson) => sum + lesson.durationMinutes, 0),
+  audienceRoles: ["student"], passMark: 70, quizRevision: 1, sections,
+  examTracks: [
+    { id: "goethe", title: "Goethe-Zertifikat B2", description: `Vier Module und offizielle Modellübungen: ${goetheUrl}` },
+    { id: "telc", title: "telc Deutsch B2", description: `Leseverstehen, Sprachbausteine, Hören, Schreiben und Sprechen: ${telcUrl}` },
+  ],
+  theme: { preset: "journey", accent: "violet-mint", typography: "friendly-sans", density: "comfortable", coverStyle: "minimal", lessonHeaderStyle: "editorial" },
+  rules: { navigation: "linear", lessonCompletion: "required-blocks", requireFinalAssessment: true, attemptLimit: null, feedbackTiming: "after-submit" },
+  lessons: [...core, ...goethe, ...telc], quiz: finalQuiz,
+});

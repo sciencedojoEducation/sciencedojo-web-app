@@ -54,7 +54,7 @@ export default function AcademyQuiz({
           <Trophy size={31} />
         </span>
         <p className="mt-6 text-[11px] font-bold uppercase tracking-[0.18em] text-[#1E5AA8]">
-          {hasExamTracks ? "Shared A1 check passed" : "Course complete"}
+          {hasExamTracks ? "Shared course check passed" : "Course complete"}
         </p>
         <h2 className="mt-3 text-3xl font-bold tracking-[-0.02em] text-[#101010]">
           You scored {state.score}%

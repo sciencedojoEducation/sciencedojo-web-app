@@ -48,7 +48,7 @@ export default async function AcademyReviewPage({
           </nav>
           <AcademyLessonHeader course={course} lesson={lesson} index={course.lessons.indexOf(lesson)} />
           <div className="mx-auto max-w-[728px] px-6 py-12">
-            <AcademyLessonBlocks blocks={lesson.blocks} />
+            <AcademyLessonBlocks blocks={lesson.blocks} courseKey={course.key} />
           </div>
         </main>
         <AcademyReviewerComments

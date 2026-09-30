@@ -511,7 +511,7 @@ export async function submitTutorAcademyQuiz(
     status: result.passed ? "passed" : "failed",
     message: result.passed
       ? course.examTracks?.length
-        ? `You passed the shared A1 knowledge check. Choose your Goethe or telc exam route next.`
+        ? `You passed the shared course knowledge check. Choose your Goethe or telc exam route next.`
         : `You passed ${course.shortTitle}. Your completion has been saved.`
       : `You have not reached ${course.passMark || 80}% yet. Review the course and try again when you are ready.`,
     score: result.score,

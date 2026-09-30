@@ -8,6 +8,7 @@ import AcademyThemeScope from "@/components/tutor-academy/AcademyThemeScope";
 import { completeAcademyLesson } from "@/app/dashboard/tutor/academy/actions";
 import { getAcademyJourneyLessonState } from "@/lib/academy-journey";
 import { getAcademyLessonOutline } from "@/lib/academy-lesson-outline";
+import { isGermanAcademyCourse } from "@/lib/german-academy-course";
 import { getPublishedAcademyCourse } from "@/lib/academy-courses";
 import {
   getAcademyLesson,
@@ -40,9 +41,9 @@ export async function renderAcademyCourseLessonPage(
     getAcademyQuizProgressState(progress, course) !== "completed";
   const nextStepLabel = !lesson.examTrack && finalCheckPending &&
     !requiredLessons.slice(pathIndex + 1).some((item) => !item.examTrack)
-      ? course.key === "deutsch-a1-komplett" ? "Als Nächstes: Abschlusstest" : "Next: final knowledge check"
+      ? isGermanAcademyCourse(course.key) ? "Als Nächstes: Abschlusstest" : "Next: final knowledge check"
       : !nextLesson && lesson.examTrack
-        ? course.key === "deutsch-a1-komplett" ? "Letzter Schritt auf Ihrem Prüfungsweg" : "Final step in your exam route"
+        ? isGermanAcademyCourse(course.key) ? "Letzter Schritt auf Ihrem Prüfungsweg" : "Final step in your exam route"
         : undefined;
   if (lesson.examTrack && lesson.examTrack !== progress.selectedExamTrack)
     redirect(`${basePath}/choose-exam`);
