@@ -1,6 +1,7 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { Merriweather } from "next/font/google";
+import { academyBodyFont } from "@/lib/academy-fonts";
 import AcademyCourseNavigation from "@/components/tutor-academy/AcademyCourseNavigation";
 import { isFeatureEnabled } from "@/lib/feature-flags";
 import { getPublishedAcademyCourse } from "@/lib/academy-courses";
@@ -37,7 +38,7 @@ export default async function AcademyLayout({
   };
   return (
     <div
-      className={`${academySerif.variable} h-full min-h-0 bg-white text-[#101010]`}
+      className={`${academySerif.variable} ${academyBodyFont.variable} academy-course-typography h-full min-h-0 bg-white text-[#101010]`}
       style={academyThemeStyle(course)}
     >
       <AcademyCourseNavigation

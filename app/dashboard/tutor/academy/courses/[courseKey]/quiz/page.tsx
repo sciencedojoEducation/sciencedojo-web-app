@@ -43,7 +43,7 @@ export async function renderAcademyCourseQuizPage(
             Show what you know.
           </h1>
           <div className="mt-5 h-1 w-12 bg-[#1E5AA8]" />
-          <p className="mt-6 font-[family-name:var(--font-academy-serif)] text-[17px] leading-[33px] text-[#4A4B4E]">
+          <p className="mt-6 font-[family-name:var(--font-academy-body)] text-[17px] leading-[33px] text-[#4A4B4E]">
             Answer every question. You need {course.passMark || 80}% to {course.examTracks?.length
               ? "unlock your Goethe or telc exam route."
               : "complete this course."}

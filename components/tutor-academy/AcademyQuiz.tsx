@@ -59,7 +59,7 @@ export default function AcademyQuiz({
         <h2 className="mt-3 text-3xl font-bold tracking-[-0.02em] text-[#101010]">
           You scored {state.score}%
         </h2>
-        <p className="mx-auto mt-4 max-w-xl font-[family-name:var(--font-academy-serif)] text-[16px] leading-8 text-[#27313B]">
+        <p className="mx-auto mt-4 max-w-xl font-[family-name:var(--font-academy-body)] text-[16px] leading-8 text-[#27313B]">
           {state.message}
         </p>
         <div className="mt-7 flex flex-col justify-center gap-3 sm:flex-row">
@@ -144,7 +144,7 @@ export default function AcademyQuiz({
                 name={question.id}
                 required
                 rows={5}
-                className="mt-5 w-full border border-[#DEDFE1] p-4 font-[family-name:var(--font-academy-serif)] text-sm leading-6"
+                className="mt-5 w-full border border-[#DEDFE1] p-4 font-[family-name:var(--font-academy-body)] text-sm leading-6"
                 placeholder="Write your reflection…"
               />
             ) : (
@@ -152,7 +152,7 @@ export default function AcademyQuiz({
                 {question.options.map((option) => (
                   <label
                     key={option.id}
-                    className="flex cursor-pointer items-start gap-3 border border-[#DEDFE1] px-4 py-4 font-[family-name:var(--font-academy-serif)] text-sm leading-6 text-[#4A4B4E] transition-colors hover:border-[#1E5AA8] has-[:checked]:border-[#1E5AA8] has-[:checked]:bg-[#F1F6FC] has-[:checked]:text-[#173A63] motion-reduce:transition-none"
+                    className="flex cursor-pointer items-start gap-3 border border-[#DEDFE1] px-4 py-4 font-[family-name:var(--font-academy-body)] text-sm leading-6 text-[#4A4B4E] transition-colors hover:border-[#1E5AA8] has-[:checked]:border-[#1E5AA8] has-[:checked]:bg-[#F1F6FC] has-[:checked]:text-[#173A63] motion-reduce:transition-none"
                   >
                     <input
                       type={

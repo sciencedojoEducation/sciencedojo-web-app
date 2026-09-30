@@ -79,7 +79,7 @@ function renderNode(node: RichNode, key: string): React.ReactNode {
     return (
       <p
         key={key}
-        className="font-[family-name:var(--font-academy-serif)] text-[17px] font-medium leading-[30px] text-[#17202C] sm:leading-[33px]"
+        className="font-[family-name:var(--font-academy-body)] text-[17px] font-medium leading-[30px] text-[#17202C] sm:leading-[33px]"
       >
         {children}
       </p>
@@ -88,7 +88,7 @@ function renderNode(node: RichNode, key: string): React.ReactNode {
     return (
       <ul
         key={key}
-        className="list-disc space-y-2 pl-6 font-[family-name:var(--font-academy-serif)] text-[17px] font-medium leading-8 text-[#17202C]"
+        className="list-disc space-y-2 pl-6 font-[family-name:var(--font-academy-body)] text-[17px] font-medium leading-8 text-[#17202C]"
       >
         {children}
       </ul>
@@ -97,7 +97,7 @@ function renderNode(node: RichNode, key: string): React.ReactNode {
     return (
       <ol
         key={key}
-        className="list-decimal space-y-2 pl-6 font-[family-name:var(--font-academy-serif)] text-[17px] font-medium leading-8 text-[#17202C]"
+        className="list-decimal space-y-2 pl-6 font-[family-name:var(--font-academy-body)] text-[17px] font-medium leading-8 text-[#17202C]"
       >
         {children}
       </ol>

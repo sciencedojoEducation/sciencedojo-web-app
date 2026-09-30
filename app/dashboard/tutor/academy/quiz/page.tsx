@@ -45,7 +45,7 @@ export default async function TutorAcademyQuizPage() {
             Show what you know.
           </h1>
           <div className="mt-5 h-1 w-12 bg-[#1E5AA8]" aria-hidden="true" />
-          <p className="mt-6 max-w-[660px] font-[family-name:var(--font-academy-serif)] text-[17px] leading-[30px] text-[#4A4B4E] sm:leading-[33px]">
+          <p className="mt-6 max-w-[660px] font-[family-name:var(--font-academy-body)] text-[17px] leading-[30px] text-[#4A4B4E] sm:leading-[33px]">
             Answer all ten questions. You need 80% to complete Tutor
             Foundations, and you can retry whenever you are ready.
           </p>
@@ -70,7 +70,7 @@ export default async function TutorAcademyQuizPage() {
               <h2 className="mt-3 text-3xl font-bold tracking-[-0.02em] text-[#101010]">
                 Best score: {progress.bestScore}%
               </h2>
-              <p className="mx-auto mt-4 max-w-xl font-[family-name:var(--font-academy-serif)] text-[16px] leading-8 text-[#4A4B4E]">
+              <p className="mx-auto mt-4 max-w-xl font-[family-name:var(--font-academy-body)] text-[16px] leading-8 text-[#4A4B4E]">
                 Your completion is saved. Revisit the lessons whenever you need
                 a refresher on ScienceDojo teaching and platform standards.
               </p>
@@ -94,7 +94,7 @@ export default async function TutorAcademyQuizPage() {
               <h2 className="text-2xl font-bold text-[#4A3A1C]">
                 Finish the lessons first
               </h2>
-              <p className="mx-auto mt-3 max-w-xl font-[family-name:var(--font-academy-serif)] text-[16px] leading-8 text-[#59451F]">
+              <p className="mx-auto mt-3 max-w-xl font-[family-name:var(--font-academy-body)] text-[16px] leading-8 text-[#59451F]">
                 The knowledge check unlocks after all six lessons have been
                 completed.
               </p>
