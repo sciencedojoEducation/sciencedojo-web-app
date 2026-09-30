@@ -1,6 +1,7 @@
 import Image from "next/image";
 import { Clock } from "lucide-react";
 import { resolveAcademyTheme } from "@/lib/academy-theme";
+import { isGermanAcademyCourse } from "@/lib/german-academy-course";
 import type { AcademyCourse, AcademyLesson } from "@/lib/tutor-academy";
 
 export default function AcademyLessonHeader({
@@ -18,7 +19,7 @@ export default function AcademyLessonHeader({
 }) {
   const theme = resolveAcademyTheme(course);
   const mediaLed = theme.lessonHeaderStyle === "media-led";
-  const german = course.key === "deutsch-a1-komplett";
+  const german = isGermanAcademyCourse(course.key);
   const journey = sequence || course.lessons;
   const following = journey[index + 1];
   const nextText = nextStepLabel || (following

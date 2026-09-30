@@ -9,6 +9,7 @@ import AcademyLessonHeader from "@/components/tutor-academy/AcademyLessonHeader"
 import AcademyThemeScope from "@/components/tutor-academy/AcademyThemeScope";
 import { getAcademyCourseDraft, getAcademySnapshotContent } from "@/lib/academy-courses";
 import { emptyAcademyProgress } from "@/lib/tutor-academy";
+import { isGermanAcademyCourse } from "@/lib/german-academy-course";
 
 const academySerif = Merriweather({
   subsets: ["latin"],
@@ -99,7 +100,7 @@ export default async function AcademyDraftPreviewPage({
           <div className="mx-auto max-w-[728px] px-6 py-14">
             <AcademyLessonBlocks
               blocks={lesson.blocks}
-              uiLanguage={course.key === "deutsch-a1-komplett" ? "de" : "en"}
+              uiLanguage={isGermanAcademyCourse(course.key) ? "de" : "en"}
             />
           </div>
         </main>

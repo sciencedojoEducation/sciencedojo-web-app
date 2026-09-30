@@ -10,6 +10,7 @@ import type {
   AcademyMediaCaptionItem,
   LessonBlock,
 } from "@/lib/tutor-academy";
+import { isGermanAcademyCourse } from "@/lib/german-academy-course";
 import AcademyCarousel from "./AcademyCarousel";
 import AcademyRichText from "./AcademyRichText";
 import AcademyMath from "./AcademyMath";
@@ -100,7 +101,7 @@ export default function AcademyLessonBlocks({
   lessonId?: string;
   uiLanguage?: "de" | "en";
 }) {
-  const activityLanguage = uiLanguage || (courseKey === "deutsch-a1-komplett" ? "de" : "en");
+  const activityLanguage = uiLanguage || (isGermanAcademyCourse(courseKey) ? "de" : "en");
   return (
     <div className="academy-block-stack flex flex-col">
       {blocks.map((block, blockIndex) => {
