@@ -12,14 +12,16 @@ const n = (index: number) => String(index + 1).padStart(2, "0");
 const block = (prefix: string, suffix: string) => `${prefix}-${suffix}`;
 
 function choice(id: string, prompt: string, answer: string, wrong: [string, string], explanation: string): QuizQuestion {
+  let hash = 2166136261;
+  for (const character of id) hash = Math.imul(hash ^ character.charCodeAt(0), 16777619);
+  const correctIndex = (hash >>> 0) % 3;
+  const labels = [...wrong];
+  labels.splice(correctIndex, 0, answer);
+  const optionIds = ["a", "b", "c"];
   return {
     id, type: "single-choice", prompt,
-    options: [
-      { id: "a", label: wrong[0] },
-      { id: "b", label: answer },
-      { id: "c", label: wrong[1] },
-    ],
-    correctOptionId: "b", explanation,
+    options: labels.map((label, index) => ({ id: optionIds[index], label })),
+    correctOptionId: optionIds[correctIndex], explanation,
   };
 }
 

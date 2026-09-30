@@ -59,8 +59,12 @@ test("B2 course has complete shared and distinct Goethe/telc routes", () => {
 
 test("B2 final assessment contains the evidence needed to answer each question", () => {
   assert.equal(germanB2Course.quiz.length, 18);
+  const correctPositions = germanB2Course.quiz.map((question) => question.correctOptionId);
+  assert.deepEqual(new Set(correctPositions), new Set(["a", "b", "c"]));
+  assert.ok(Math.max(...["a", "b", "c"].map((id) => correctPositions.filter((position) => position === id).length)) <= 9);
   for (const question of germanB2Course.quiz) {
     assert.ok(question.options.some((option) => option.id === question.correctOptionId));
+    assert.equal(new Set(question.options.map((option) => option.label)).size, question.options.length);
     if (question.id.includes("final-read")) assert.ok(question.prompt.length > 300);
     if (question.id.includes("final-listen")) {
       assert.ok(question.audioTranscript?.length > 100);
