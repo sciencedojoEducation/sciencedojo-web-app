@@ -2,6 +2,7 @@ import { migrateAcademyCourse } from "./academy-schema.ts";
 import { germanB2Chapters, type B2Chapter } from "./german-b2-curriculum.ts";
 import { germanB2Lexicon } from "./german-b2-lexicon.ts";
 import { germanB2AdvancedListening } from "./german-b2-advanced-listening.ts";
+import { germanB2ExamGlimpses } from "./german-b2-exam-glimpses.ts";
 import type { AcademyCourse, AcademyLesson, LessonBlock, QuizQuestion } from "./tutor-academy.ts";
 
 export const GERMAN_B2_COURSE_KEY = "german-b2-complete";
@@ -123,6 +124,7 @@ function coreLesson(chapter: B2Chapter, index: number): AcademyLesson {
   const previous = index ? germanB2Chapters[index - 1] : null;
   const lexicon = germanB2Lexicon[index];
   const advancedListening = germanB2AdvancedListening.find((item) => item.chapterIndex === index);
+  const examGlimpse = germanB2ExamGlimpses[index];
   const readingCheck = choice(block(prefix, "reading-q"), chapter.readingQuestion,
     chapter.readingAnswer, chapter.readingDistractors,
     `Im Text steht beziehungsweise folgt: ${chapter.readingAnswer}`);
@@ -204,9 +206,11 @@ function coreLesson(chapter: B2Chapter, index: number): AcademyLesson {
       { title: "Aushandeln", body: "Nennen Sie Ihren Vorschlag, fragen Sie nach Bedenken und halten Sie das gemeinsame Ergebnis fest." },
     ] },
     { id: block(prefix, "mission"), type: "callout", heading: "Mission in der echten Welt", body: chapter.mission, tone: "teal" },
-    { id: block(prefix, "exam"), type: "text", heading: "Prüfungsblick", paragraphs: [
-      `Prüfen Sie beim Lesen und Hören die Textbelege. Geben Sie beim Schreiben und Sprechen Ihre Position mit Grund, Beispiel und Einordnung an. Diese Strategien brauchen Sie später in beiden B2-Prüfungswegen.`,
-    ] },
+    { id: block(prefix, "exam"), type: "text", heading: `Prüfungsblick · ${examGlimpse.track === "goethe" ? "Goethe" : "telc"}`,
+      paragraphs: [`${examGlimpse.format}. Diese kurze Originalaufgabe zeigt einen möglichen Prüfungsfokus. Die vollständige Vorbereitung folgt im jeweiligen Prüfungsweg.`] },
+    { id: block(prefix, "exam-check"), type: "knowledge-check", heading: `Prüfungsblick · ${examGlimpse.format}`,
+      question: choice(block(prefix, "exam-q"), examGlimpse.prompt, examGlimpse.answer, examGlimpse.distractors, examGlimpse.explanation),
+      completion: "pass" },
     { id: block(prefix, "retrieval"), type: "knowledge-check", heading: "Wiederholen und vernetzen", question: choice(block(prefix, "retrieval-q"),
       previous ? `Welche Verbindung stammt aus dem vorigen Kapitel „${previous.title}“?` : "Welche Verbindung bedeutet „to pursue a goal“?",
       previous ? previous.collocations[0].split(" — ")[0] : chapter.collocations[0].split(" — ")[0],

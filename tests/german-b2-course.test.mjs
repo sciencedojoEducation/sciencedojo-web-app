@@ -7,6 +7,7 @@ import { germanB2Course } from "../lib/german-b2-course.ts";
 import { germanB2Chapters } from "../lib/german-b2-curriculum.ts";
 import { germanB2Lexicon } from "../lib/german-b2-lexicon.ts";
 import { germanB2AdvancedListening } from "../lib/german-b2-advanced-listening.ts";
+import { germanB2ExamGlimpses } from "../lib/german-b2-exam-glimpses.ts";
 
 test("B2 course has complete shared and distinct Goethe/telc routes", () => {
   const result = validateAcademyCourse(germanB2Course);
@@ -14,6 +15,8 @@ test("B2 course has complete shared and distinct Goethe/telc routes", () => {
   assert.equal(germanB2Chapters.length, 18);
   assert.equal(germanB2Lexicon.length, 18);
   assert.equal(germanB2AdvancedListening.length, 6);
+  assert.equal(germanB2ExamGlimpses.length, 18);
+  assert.deepEqual(new Set(germanB2ExamGlimpses.map((item) => item.track)), new Set(["goethe", "telc"]));
   assert.ok(germanB2AdvancedListening.every((item) => item.segments.length >= 4 && item.segments.reduce((sum, segment) => sum + segment.text.split(/\s+/).length, 0) >= 175));
   assert.ok(germanB2Lexicon.every((set) => set.terms.length >= 5 && set.functionPhrase && set.discussionPhrase && set.wordFamily.length === 3 && set.register.length === 3));
   const core = germanB2Course.lessons.filter((lesson) => !lesson.examTrack);
@@ -30,6 +33,7 @@ test("B2 course has complete shared and distinct Goethe/telc routes", () => {
   assert.ok(germanB2Course.lessons.every((lesson) => lesson.blocks.filter((block) =>
     block.type === "writing-practice" || block.type === "speaking-practice").every((block) => block.completion === "interact")));
   assert.ok(core.every((lesson) => lesson.blocks.some((block) => block.heading === "Themenwortschatz im Zusammenhang" && block.items.length >= 5)));
+  assert.ok(core.every((lesson) => lesson.blocks.some((block) => block.heading?.startsWith("Prüfungsblick ·") && block.type === "knowledge-check" && block.completion === "pass")));
   assert.ok(germanB2Course.lessons.every((lesson) => lesson.blocks.every((block) =>
     block.curriculum?.cefr === "B2" && block.curriculum.topic && block.curriculum.skills.length)));
   assert.ok(germanB2Chapters.every((chapter) => chapter.reading.trim().split(/\s+/).length >= 150));
