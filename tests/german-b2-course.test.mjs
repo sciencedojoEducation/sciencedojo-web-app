@@ -5,11 +5,14 @@ import { test } from "node:test";
 import { validateAcademyCourse } from "../lib/academy-course-validation.ts";
 import { germanB2Course } from "../lib/german-b2-course.ts";
 import { germanB2Chapters } from "../lib/german-b2-curriculum.ts";
+import { germanB2Lexicon } from "../lib/german-b2-lexicon.ts";
 
 test("B2 course has complete shared and distinct Goethe/telc routes", () => {
   const result = validateAcademyCourse(germanB2Course);
   assert.deepEqual(result.errors, []);
   assert.equal(germanB2Chapters.length, 18);
+  assert.equal(germanB2Lexicon.length, 18);
+  assert.ok(germanB2Lexicon.every((set) => set.terms.length >= 5 && set.functionPhrase && set.discussionPhrase && set.wordFamily.length === 3 && set.register.length === 3));
   const core = germanB2Course.lessons.filter((lesson) => !lesson.examTrack);
   const goethe = germanB2Course.lessons.filter((lesson) => lesson.examTrack === "goethe");
   const telc = germanB2Course.lessons.filter((lesson) => lesson.examTrack === "telc");
@@ -21,6 +24,9 @@ test("B2 course has complete shared and distinct Goethe/telc routes", () => {
   assert.ok(telc.some((lesson) => lesson.title.includes("gemeinsam planen")));
   assert.ok(core.every((lesson) => ["audio", "writing-practice", "speaking-practice", "knowledge-check", "process"].every((type) =>
     lesson.blocks.some((block) => block.type === type))));
+  assert.ok(germanB2Course.lessons.every((lesson) => lesson.blocks.filter((block) =>
+    block.type === "writing-practice" || block.type === "speaking-practice").every((block) => block.completion === "interact")));
+  assert.ok(core.every((lesson) => lesson.blocks.some((block) => block.heading === "Themenwortschatz im Zusammenhang" && block.items.length >= 5)));
   assert.ok(germanB2Course.lessons.every((lesson) => lesson.blocks.every((block) =>
     block.curriculum?.cefr === "B2" && block.curriculum.topic && block.curriculum.skills.length)));
   assert.ok(germanB2Chapters.every((chapter) => chapter.reading.trim().split(/\s+/).length >= 150));

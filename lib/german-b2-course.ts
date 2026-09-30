@@ -1,5 +1,6 @@
 import { migrateAcademyCourse } from "./academy-schema.ts";
 import { germanB2Chapters, type B2Chapter } from "./german-b2-curriculum.ts";
+import { germanB2Lexicon } from "./german-b2-lexicon.ts";
 import type { AcademyCourse, AcademyLesson, LessonBlock, QuizQuestion } from "./tutor-academy.ts";
 
 export const GERMAN_B2_COURSE_KEY = "german-b2-complete";
@@ -91,10 +92,12 @@ function blockSkills(item: LessonBlock): NonNullable<LessonBlock["curriculum"]>[
   if (item.type === "writing-practice") return ["writing"];
   if (item.type === "speaking-practice") return ["speaking"];
   if (item.type === "flashcards") return ["vocabulary"];
+  if (heading?.includes("Wortfamilie") || heading?.includes("Register") || heading?.includes("Redemittel")) return ["vocabulary"];
   if (item.type === "worked-example") return ["grammar"];
   if (item.type === "process") return ["interaction", "mediation"];
   if (item.type === "knowledge-check") {
     if (heading?.includes("Hör")) return ["listening"];
+    if (heading?.includes("Wortschatz")) return ["vocabulary"];
     if (heading?.includes("Sprachbausteine · Grammatik") || heading?.includes("Sprachbausteine · Satzverbindung")) return ["grammar"];
     if (heading?.includes("Sprachbausteine · Kollokation") || heading?.includes("Sprachbausteine · Bedeutung")) return ["vocabulary"];
     return ["reading"];
@@ -117,6 +120,7 @@ function coreLesson(chapter: B2Chapter, index: number): AcademyLesson {
   const prefix = `de-b2-${n(index)}`;
   const section = coreSection(index);
   const previous = index ? germanB2Chapters[index - 1] : null;
+  const lexicon = germanB2Lexicon[index];
   const readingCheck = choice(block(prefix, "reading-q"), chapter.readingQuestion,
     chapter.readingAnswer, chapter.readingDistractors,
     `Im Text steht beziehungsweise folgt: ${chapter.readingAnswer}`);
@@ -136,6 +140,15 @@ function coreLesson(chapter: B2Chapter, index: number): AcademyLesson {
       const [title, body] = item.split(" — ");
       return { id: block(prefix, `word-${i}`), title, body: `${body}. Bilden Sie einen eigenen Satz mit dieser Verbindung.` };
     }), completion: "interact" },
+    { id: block(prefix, "topic-words"), type: "flashcards", heading: "Themenwortschatz im Zusammenhang", items: lexicon.terms.map(([title, body], i) => ({
+      id: block(prefix, `topic-word-${i}`), title, body: `${body}. Verwenden Sie das Wort in einem eigenen Satz zum Kapitelthema.`,
+    })), completion: "interact" },
+    { id: block(prefix, "lexical-depth"), type: "comparison-table", heading: "Wortfamilie und Register", columns: ["Wortfamilie: Verb", "Nomen", "Adjektiv"], rows: [lexicon.wordFamily] },
+    { id: block(prefix, "register"), type: "comparison-table", heading: "Register: dieselbe Absicht anders ausdrücken", columns: ["Umgangssprachlich", "Neutral", "Formell"], rows: [lexicon.register] },
+    { id: block(prefix, "phrases"), type: "callout", heading: "Redemittel für B2", body: `Funktion: ${lexicon.functionPhrase} Diskussion: ${lexicon.discussionPhrase}`, tone: "teal" },
+    { id: block(prefix, "register-check"), type: "knowledge-check", heading: "Wortschatz · passendes Register", question: choice(block(prefix, "register-q"),
+      "Welche der folgenden Formulierungen passt am besten in einen formellen Text?", lexicon.register[2],
+      [lexicon.register[0], lexicon.register[1]], `Für formelle Kommunikation eignet sich hier: ${lexicon.register[2]}`), completion: "pass" },
     ...(index === 9 ? [{ id: block(prefix, "digital-vocabulary"), type: "flashcards" as const, heading: "Digitaler Wortschatz und Wortfamilien", items: [
       ["der Datenschutz", "Schutz persönlicher Informationen"], ["die künstliche Intelligenz", "Technik, die aus Daten Muster erkennt"],
       ["die Bildschirmzeit", "Zeit vor digitalen Bildschirmen"], ["der Algorithmus", "Regeln zur Verarbeitung von Daten"],
@@ -168,10 +181,10 @@ function coreLesson(chapter: B2Chapter, index: number): AcademyLesson {
       minWords: index < 4 ? 100 : index < 10 ? 130 : 160,
       maxWords: index < 4 ? 180 : index < 10 ? 210 : 240,
       checklist: ["Klare Position oder Absicht", "Begründung und konkretes Beispiel", "Gegenperspektive oder Einschränkung", "Passendes Register und überprüfte Verknüpfungen"],
-      modelAnswer: `Kurzbeispiel für Aufbau und Formulierungen; Ihre eigene Antwort soll die angegebene Wortspanne erreichen.\n\n${chapter.writingModel}` },
+      modelAnswer: `Kurzbeispiel für Aufbau und Formulierungen; Ihre eigene Antwort soll die angegebene Wortspanne erreichen.\n\n${chapter.writingModel}`, completion: "interact" },
     { id: block(prefix, "speaking"), type: "speaking-practice", heading: "Sprechen · Eigene Position", prompt: chapter.speaking,
       preparationSeconds: 60, targetSeconds: 120,
-      checklist: ["Einleitung und roter Faden", "Mindestens zwei konkrete Punkte", "Ein Beispiel oder Einwand", "Verständlicher Abschluss"], modelAnswer: speakingModels[index] },
+      checklist: ["Einleitung und roter Faden", "Mindestens zwei konkrete Punkte", "Ein Beispiel oder Einwand", "Verständlicher Abschluss"], modelAnswer: speakingModels[index], completion: "interact" },
     { id: block(prefix, "interaction"), type: "process", heading: "Interaktion und Vermittlung", items: [
       { title: "Situation", body: chapter.interaction },
       { title: "Zuhören", body: "Fassen Sie die andere Position fair zusammen, bevor Sie antworten." },
@@ -253,9 +266,9 @@ function examLesson(unit: ExamUnit, index: number, track: "goethe" | "telc"): Ac
     ] satisfies LessonBlock[] : []),
     { id: block(prefix, "task"), type: "writing-practice", heading: "Ihre Prüfungsaufgabe", prompt: unit.task, minWords: 70, maxWords: 240,
       checklist: ["Alle geforderten Punkte bearbeiten", "Aussagen begründen oder belegen", "Passendes Register wählen", "Zeit und Verständlichkeit prüfen"],
-      modelAnswer: `Kurzbeispiel für Aufbau und Formulierungen; bearbeiten Sie in Ihrer eigenen Antwort alle geforderten Punkte.\n\n${unit.model}` },
+      modelAnswer: `Kurzbeispiel für Aufbau und Formulierungen; bearbeiten Sie in Ihrer eigenen Antwort alle geforderten Punkte.\n\n${unit.model}`, completion: "interact" },
     { id: block(prefix, "speak"), type: "speaking-practice", heading: "Mündlicher Transfer", prompt: `Erläutern Sie Ihre Antwort auf die Aufgabe „${unit.title}“ mündlich und reagieren Sie auf eine mögliche Rückfrage.`, preparationSeconds: 60, targetSeconds: 120,
-      checklist: ["Aussage verständlich strukturieren", "Beispiel nennen", "Auf eine Rückfrage eingehen"], modelAnswer: unit.model },
+      checklist: ["Aussage verständlich strukturieren", "Beispiel nennen", "Auf eine Rückfrage eingehen"], modelAnswer: unit.model, completion: "interact" },
     { id: block(prefix, "official"), type: "resources", heading: "Offizielles Prüfungsmaterial", items: [{ title: track === "goethe" ? "Goethe B2 · offizielle Übungen" : "telc Deutsch B2 · Übungstest und Format", description: "Format, Modellaufgaben und Lösungen direkt beim Prüfungsanbieter prüfen.", url: officialUrl }] },
   ];
   return { id: `${prefix}-lesson`, slug: prefix, sectionId: section.id, section: section.title, examTrack: track,
