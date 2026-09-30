@@ -3,6 +3,7 @@ import { germanB2Chapters, type B2Chapter } from "./german-b2-curriculum.ts";
 import { germanB2Lexicon } from "./german-b2-lexicon.ts";
 import { germanB2AdvancedListening } from "./german-b2-advanced-listening.ts";
 import { germanB2ExamGlimpses } from "./german-b2-exam-glimpses.ts";
+import { germanB2GrammarPractice } from "./german-b2-grammar-practice.ts";
 import type { AcademyCourse, AcademyLesson, LessonBlock, QuizQuestion } from "./tutor-academy.ts";
 
 export const GERMAN_B2_COURSE_KEY = "german-b2-complete";
@@ -37,16 +38,16 @@ const sections = [
 ];
 
 const grammarSpine = [
-  "B1-Brücke: Wiederholen Sie Fälle, Präsens, Perfekt, Präteritum und Plusquamperfekt. Stellen Sie in einem Nebensatz das finite Verb ans Ende; prüfen Sie danach die Verbposition im folgenden Hauptsatz.",
+  "B1-Brücke: Wiederholen Sie Fälle, Präsens, Perfekt, Präteritum und Plusquamperfekt. Für Zukünftiges vergleichen Sie Präsens mit Zeitangabe und werden + Infinitiv. Im Mittelfeld stehen Pronomen und Angaben in passender Reihenfolge. Stellen Sie im Nebensatz das finite Verb ans Ende; prüfen Sie danach die Verbposition im folgenden Hauptsatz.",
   "N-Deklination: der Kollege → mit dem Kollegen; der Student → die Meinung des Studenten. Verbinden Sie eine Personenbeschreibung mit einem Relativsatz samt Präposition.",
   "Vergleich: je … desto, sowohl … als auch und weder … noch. Formen Sie eine verbale Aussage zusätzlich in eine Nominalgruppe um.",
   "Vorgangspassiv: Die Stadt baut das Haus um. → Das Haus wird umgebaut. Zustandspassiv: Nach dem Umbau ist das Haus geöffnet. Prüfen Sie, ob Handlung oder Zustand gemeint ist.",
-  "Konjunktiv II: Wenn die Schichten kürzer wären, hätten mehr Menschen Zeit für Pausen. Mit dürfte lässt sich eine vorsichtige Vermutung formulieren.",
+  "Konjunktiv II: Wenn die Schichten kürzer wären, hätten mehr Menschen Zeit für Pausen. Unterscheiden Sie müssen als Notwendigkeit von dürfte als vorsichtiger Vermutung; Modalverben können objektive und subjektive Bedeutung tragen.",
   "Infinitivgruppen: um … zu nennt ein Ziel; ohne … zu nennt das Ausbleiben einer Handlung; anstatt … zu nennt eine Alternative. Achten Sie auf das gemeinsame Subjekt.",
   "Formelles Register: würden/könnten statt direkter Forderungen. Wiederholen Sie Vorgangspassiv und den Unterschied zwischen persönlicher und unpersönlicher Formulierung.",
-  "Kausal und konzessiv: weil/da nennt einen Grund; obwohl räumt einen Gegensatz ein. Funktionsverbgefüge wie eine Entscheidung treffen tragen oft formellen Stil.",
+  "Kausal und konzessiv: weil/da nennt einen Grund; obwohl räumt einen Gegensatz ein; zumal ergänzt einen weiteren gewichtigen Grund. Funktionsverbgefüge wie eine Entscheidung treffen tragen oft formellen Stil.",
   "Präpositionalverben: abhängen von, sich einstellen auf. Ersetzen Sie eine Sache mit davon/darauf; bei Personen bleibt die Präposition mit Pronomen erhalten.",
-  "Korrelative Strukturen: einerseits … andererseits und zwar … aber. Setzen Sie dennoch in einen Hauptsatz und obwohl in einen Nebensatz.",
+  "Korrelative Strukturen: einerseits … andererseits und zwar … aber. Setzen Sie dennoch in einen Hauptsatz und obwohl in einen Nebensatz. Falls und sofern drücken Bedingungen aus; indem beschreibt ein Mittel.",
   "Indirekte Rede: Er sagt, die Bibliothek sei geöffnet. Konjunktiv I kennzeichnet die Wiedergabe; ist die Form identisch, kann eine Ersatzform nötig sein.",
   "Passivalternativen: Die Kosten können gesenkt werden. → Die Kosten lassen sich senken. Mit sodass beschreiben Sie eine Folge.",
   "Partizipien als Adjektive: die beeindruckende Ausstellung; die sorgfältig gestalteten Bilder. Unterscheiden Sie laufende Handlung und abgeschlossenes Ergebnis.",
@@ -161,7 +162,7 @@ function blockSkills(item: LessonBlock): NonNullable<LessonBlock["curriculum"]>[
   if (item.type === "knowledge-check") {
     if (heading?.includes("Hör")) return ["listening"];
     if (heading?.includes("Wortschatz")) return ["vocabulary"];
-    if (heading?.includes("Sprachbausteine · Grammatik") || heading?.includes("Sprachbausteine · Satzverbindung")) return ["grammar"];
+    if (heading?.includes("Sprachlabor · Anwendung") || heading?.includes("Sprachbausteine · Grammatik") || heading?.includes("Sprachbausteine · Satzverbindung")) return ["grammar"];
     if (heading?.includes("Sprachbausteine · Kollokation") || heading?.includes("Sprachbausteine · Bedeutung")) return ["vocabulary"];
     return ["reading"];
   }
@@ -186,6 +187,7 @@ function coreLesson(chapter: B2Chapter, index: number): AcademyLesson {
   const lexicon = germanB2Lexicon[index];
   const advancedListening = germanB2AdvancedListening.find((item) => item.chapterIndex === index);
   const examGlimpse = germanB2ExamGlimpses[index];
+  const grammarPractice = germanB2GrammarPractice[index];
   const writing = writingStage(index, chapter);
   const fullWritingRange: [number, number] = index === 0 ? [120, 160] : index === 16 ? [60, 120]
     : index === 17 ? [180, 220] : index < 4 ? [100, 180] : index < 10 ? [130, 210] : [160, 240];
@@ -258,6 +260,9 @@ function coreLesson(chapter: B2Chapter, index: number): AcademyLesson {
       { title: "Übertragen", body: `Formulieren Sie eine eigene Aussage zum Thema „${chapter.title}“ mit derselben Struktur.` },
     ], answer: chapter.languageExample },
     { id: block(prefix, "grammar-map"), type: "text", heading: "Sprachstruktur vertiefen", paragraphs: [grammarSpine[index], `Schreiben Sie zwei eigene Sätze zu „${chapter.title}“ und prüfen Sie Form und Bedeutung.`] },
+    { id: block(prefix, "grammar-check"), type: "knowledge-check", heading: "Sprachlabor · Anwendung",
+      question: choice(block(prefix, "grammar-q"), grammarPractice.prompt, grammarPractice.answer,
+        grammarPractice.distractors, grammarPractice.explanation), completion: "pass" },
     { id: block(prefix, "writing-steps"), type: "process", heading: `Schreibwerkstatt · ${writing.title}`, items: writing.steps },
     ...writingScaffold,
     { id: block(prefix, "writing"), type: "writing-practice", heading: "Schreiben · Eigenständiger Text",

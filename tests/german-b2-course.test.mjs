@@ -8,6 +8,7 @@ import { germanB2Chapters } from "../lib/german-b2-curriculum.ts";
 import { germanB2Lexicon } from "../lib/german-b2-lexicon.ts";
 import { germanB2AdvancedListening } from "../lib/german-b2-advanced-listening.ts";
 import { germanB2ExamGlimpses } from "../lib/german-b2-exam-glimpses.ts";
+import { germanB2GrammarPractice } from "../lib/german-b2-grammar-practice.ts";
 
 test("B2 course has complete shared and distinct Goethe/telc routes", () => {
   const result = validateAcademyCourse(germanB2Course);
@@ -16,6 +17,7 @@ test("B2 course has complete shared and distinct Goethe/telc routes", () => {
   assert.equal(germanB2Lexicon.length, 18);
   assert.equal(germanB2AdvancedListening.length, 6);
   assert.equal(germanB2ExamGlimpses.length, 18);
+  assert.equal(germanB2GrammarPractice.length, 18);
   assert.deepEqual(new Set(germanB2ExamGlimpses.map((item) => item.track)), new Set(["goethe", "telc"]));
   assert.ok(germanB2AdvancedListening.every((item) => item.segments.length >= 4 && item.segments.reduce((sum, segment) => sum + segment.text.split(/\s+/).length, 0) >= 175));
   assert.ok(germanB2Lexicon.every((set) => set.terms.length >= 5 && set.functionPhrase && set.discussionPhrase && set.wordFamily.length === 3 && set.register.length === 3));
@@ -40,6 +42,7 @@ test("B2 course has complete shared and distinct Goethe/telc routes", () => {
   assert.ok(germanB2Course.lessons.every((lesson) => lesson.blocks.filter((block) =>
     block.type === "writing-practice" || block.type === "speaking-practice").every((block) => block.completion === "interact")));
   assert.ok(core.every((lesson) => lesson.blocks.some((block) => block.heading === "Themenwortschatz im Zusammenhang" && block.items.length >= 5)));
+  assert.ok(core.every((lesson) => lesson.blocks.some((block) => block.id.endsWith("grammar-check") && block.completion === "pass" && block.curriculum.skills.includes("grammar"))));
   assert.equal(core.filter((lesson) => lesson.blocks.some((block) => block.id.endsWith("writing-scaffold"))).length, 13);
   assert.ok(core.every((lesson) => lesson.blocks.some((block) => block.id.endsWith("writing-steps") && block.items.length === 3)));
   assert.deepEqual(core.slice(0, 13).map((lesson) => lesson.blocks.find((block) => block.id.endsWith("writing-scaffold"))?.minWords),
