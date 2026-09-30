@@ -40,6 +40,11 @@ test("B2 course has complete shared and distinct Goethe/telc routes", () => {
   assert.ok(germanB2Course.lessons.every((lesson) => lesson.blocks.filter((block) =>
     block.type === "writing-practice" || block.type === "speaking-practice").every((block) => block.completion === "interact")));
   assert.ok(core.every((lesson) => lesson.blocks.some((block) => block.heading === "Themenwortschatz im Zusammenhang" && block.items.length >= 5)));
+  assert.equal(core.filter((lesson) => lesson.blocks.some((block) => block.id.endsWith("writing-scaffold"))).length, 13);
+  assert.ok(core.every((lesson) => lesson.blocks.some((block) => block.id.endsWith("writing-steps") && block.items.length === 3)));
+  assert.deepEqual(core.slice(0, 13).map((lesson) => lesson.blocks.find((block) => block.id.endsWith("writing-scaffold"))?.minWords),
+    [30, 30, 30, 30, 55, 55, 55, 75, 75, 75, 95, 95, 95]);
+  assert.ok(core[17].blocks.some((block) => block.id.endsWith("writing") && block.prompt.includes("35 Minuten") && block.minWords === 180));
   assert.ok(core.every((lesson) => lesson.blocks.some((block) => block.heading?.startsWith("Prüfungsblick ·") && block.type === "knowledge-check" && block.completion === "pass")));
   assert.ok(germanB2Course.lessons.every((lesson) => lesson.blocks.every((block) =>
     block.curriculum?.cefr === "B2" && block.curriculum.topic && block.curriculum.skills.length)));

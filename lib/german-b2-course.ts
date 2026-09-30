@@ -88,6 +88,65 @@ const chapterDomains: Array<NonNullable<LessonBlock["curriculum"]>["domain"]> = 
   "public", "public", "public", "public", "public", "public", "occupational", "public", "public",
 ];
 
+function writingStage(index: number, chapter: B2Chapter) {
+  if (index < 4) return {
+    title: "Starke Sätze bauen", minWords: 30, maxWords: 70,
+    prompt: `Schreiben Sie zum Thema „${chapter.title}“ drei bis vier präzise Sätze: Aussage, Grund, Beispiel und Einschränkung. Prüfen Sie die Verbposition und verwenden Sie eine passende Verbindung.`,
+    steps: [
+      { title: "Aussage", body: "Formulieren Sie eine klare Hauptaussage zum Kapitelthema." },
+      { title: "Grund und Beispiel", body: "Erklären Sie die Aussage und machen Sie sie an einer konkreten Situation sichtbar." },
+      { title: "Einschränkung", body: "Ergänzen Sie einen Gegensatz oder eine Bedingung und prüfen Sie die Wortstellung." },
+    ],
+    checklist: ["Jeder Satz hat eine klare Funktion", "Grund und Beispiel sind konkret", "Verbposition und Verbindung stimmen"],
+  };
+  if (index < 7) return {
+    title: "Einen Absatz verknüpfen", minWords: 55, maxWords: 100,
+    prompt: `Schreiben Sie zum Thema „${chapter.title}“ einen zusammenhängenden Absatz: Thema, zwei begründete Punkte und ein Satz mit Einschränkung oder Folgerung.`,
+    steps: [
+      { title: "Themensatz", body: "Nennen Sie das Thema und Ihre Absicht gleich zu Beginn." },
+      { title: "Gedanken verbinden", body: "Führen Sie zwei Punkte mit einem passenden Verknüpfungsmittel weiter." },
+      { title: "Abrunden", body: "Schließen Sie mit einer Folgerung oder einer begründeten Einschränkung." },
+    ],
+    checklist: ["Ein klarer Themensatz", "Zwei verbundene Gedanken", "Passende Folgerung oder Einschränkung"],
+  };
+  if (index < 10) return {
+    title: "Argument und Gegenargument", minWords: 75, maxWords: 125,
+    prompt: `Entwickeln Sie zum Thema „${chapter.title}“ ein kurzes Argument mit Grund und Beispiel. Nehmen Sie anschließend einen möglichen Einwand auf und beantworten Sie ihn.`,
+    steps: [
+      { title: "Position", body: "Stellen Sie eine konkrete Behauptung auf und begründen Sie sie." },
+      { title: "Beleg", body: "Nennen Sie ein Beispiel oder eine nachvollziehbare Folge." },
+      { title: "Einwand", body: "Zeigen Sie, welche Sorge eine andere Person haben könnte, und reagieren Sie sachlich." },
+    ],
+    checklist: ["Position und Grund erkennbar", "Konkretes Beispiel", "Fairer Einwand mit Antwort"],
+  };
+  if (index < 13) return {
+    title: "Zwei Absätze mit rotem Faden", minWords: 95, maxWords: 150,
+    prompt: `Schreiben Sie zum Thema „${chapter.title}“ zwei Absätze: zuerst Sachverhalt und Position, danach Begründung, Gegenperspektive und Schluss. Verwenden Sie einen eindeutigen Rückverweis.`,
+    steps: [
+      { title: "Absatz 1", body: "Ordnen Sie das Thema ein und formulieren Sie Ihre Hauptaussage." },
+      { title: "Absatz 2", body: "Begründen Sie die Position, berücksichtigen Sie eine andere Sicht und ziehen Sie eine Folgerung." },
+      { title: "Kohäsion", body: "Prüfen Sie, worauf Wörter wie ›diese Entscheidung‹ oder ›dazu‹ verweisen." },
+    ],
+    checklist: ["Zwei Absätze mit unterschiedlichen Aufgaben", "Gegenperspektive berücksichtigt", "Rückverweise eindeutig"],
+  };
+  if (index < 16) return {
+    title: "Vollständigen B2-Text planen",
+    steps: [
+      { title: "Anlass und Adressat", body: "Entscheiden Sie vor dem Schreiben über Textsorte, Register und Kernbotschaft." },
+      { title: "Absätze", body: "Planen Sie Einleitung, Argumente beziehungsweise Inhaltspunkte und einen klaren Schluss." },
+      { title: "Überarbeiten", body: "Prüfen Sie Textbezüge, Wortverbindungen, Gegenperspektive und Ton." },
+    ],
+  };
+  return {
+    title: "Unter Zeitdruck produzieren",
+    steps: [
+      { title: "Zeit setzen", body: index === 16 ? "Stellen Sie für die Präsentationsgliederung zwölf Minuten ein." : "Stellen Sie für die integrierte Empfehlung 35 Minuten ein." },
+      { title: "Planen und schreiben", body: "Nutzen Sie wenige Stichpunkte und beginnen Sie rechtzeitig mit dem vollständigen Text." },
+      { title: "Endkontrolle", body: "Reservieren Sie die letzten Minuten für Inhaltspunkte, Register und Verknüpfungen." },
+    ],
+  };
+}
+
 function blockSkills(item: LessonBlock): NonNullable<LessonBlock["curriculum"]>["skills"] {
   const heading = "heading" in item ? item.heading : undefined;
   if (item.type === "audio") return ["listening"];
@@ -125,6 +184,17 @@ function coreLesson(chapter: B2Chapter, index: number): AcademyLesson {
   const lexicon = germanB2Lexicon[index];
   const advancedListening = germanB2AdvancedListening.find((item) => item.chapterIndex === index);
   const examGlimpse = germanB2ExamGlimpses[index];
+  const writing = writingStage(index, chapter);
+  const fullWritingRange: [number, number] = index === 0 ? [120, 160] : index === 16 ? [60, 120]
+    : index === 17 ? [180, 220] : index < 4 ? [100, 180] : index < 10 ? [130, 210] : [160, 240];
+  const writingScaffold: LessonBlock[] = writing.prompt !== undefined && writing.minWords !== undefined &&
+    writing.maxWords !== undefined && writing.checklist !== undefined ? [{
+      id: block(prefix, "writing-scaffold"), type: "writing-practice",
+      heading: `Schreiben · ${writing.title}`, prompt: writing.prompt,
+      minWords: writing.minWords, maxWords: writing.maxWords, checklist: writing.checklist,
+      modelAnswer: `Ein möglicher sprachlicher Baustein aus diesem Kapitel; Ihre Übung soll die angegebene Wortspanne erreichen.\n\n${chapter.writingModel}`,
+      completion: "interact",
+    }] : [];
   const readingCheck = choice(block(prefix, "reading-q"), chapter.readingQuestion,
     chapter.readingAnswer, chapter.readingDistractors,
     `Im Text steht beziehungsweise folgt: ${chapter.readingAnswer}`);
@@ -186,15 +256,12 @@ function coreLesson(chapter: B2Chapter, index: number): AcademyLesson {
       { title: "Übertragen", body: `Formulieren Sie eine eigene Aussage zum Thema „${chapter.title}“ mit derselben Struktur.` },
     ], answer: chapter.languageExample },
     { id: block(prefix, "grammar-map"), type: "text", heading: "Sprachstruktur vertiefen", paragraphs: [grammarSpine[index], `Schreiben Sie zwei eigene Sätze zu „${chapter.title}“ und prüfen Sie Form und Bedeutung.`] },
-    ...(index === 9 ? [{ id: block(prefix, "writing-steps"), type: "process" as const, heading: "Vom Satz zum B2-Text", items: [
-      { title: "Position", body: "Formulieren Sie Ihre Haltung in einem präzisen Satz." },
-      { title: "Grund und Beispiel", body: "Begründen Sie sie und nennen Sie eine konkrete Situation." },
-      { title: "Gegenargument", body: "Nehmen Sie einen berechtigten Einwand auf und ordnen Sie ihn ein." },
-      { title: "Schluss", body: "Ziehen Sie eine Folgerung oder machen Sie einen umsetzbaren Vorschlag." },
-    ] } satisfies LessonBlock] : []),
-    { id: block(prefix, "writing"), type: "writing-practice", heading: "Schreiben · Vom Argument zum Text", prompt: chapter.writing,
-      minWords: index < 4 ? 100 : index < 10 ? 130 : 160,
-      maxWords: index < 4 ? 180 : index < 10 ? 210 : 240,
+    { id: block(prefix, "writing-steps"), type: "process", heading: `Schreibwerkstatt · ${writing.title}`, items: writing.steps },
+    ...writingScaffold,
+    { id: block(prefix, "writing"), type: "writing-practice", heading: "Schreiben · Eigenständiger Text",
+      prompt: index === 16 ? `${chapter.writing} Bearbeiten Sie die Gliederung in zwölf Minuten.`
+        : index === 17 ? `${chapter.writing} Stellen Sie 35 Minuten ein und reservieren Sie Zeit für die Endkontrolle.` : chapter.writing,
+      minWords: fullWritingRange[0], maxWords: fullWritingRange[1],
       checklist: ["Klare Position oder Absicht", "Begründung und konkretes Beispiel", "Gegenperspektive oder Einschränkung", "Passendes Register und überprüfte Verknüpfungen"],
       modelAnswer: `Kurzbeispiel für Aufbau und Formulierungen; Ihre eigene Antwort soll die angegebene Wortspanne erreichen.\n\n${chapter.writingModel}`, completion: "interact" },
     { id: block(prefix, "speaking"), type: "speaking-practice", heading: "Sprechen · Eigene Position", prompt: chapter.speaking,
@@ -225,7 +292,7 @@ function coreLesson(chapter: B2Chapter, index: number): AcademyLesson {
   return { id: `${prefix}-lesson`, sectionId: section.id, section: section.title,
     slug: `${prefix}-${chapter.title.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/-$/, "")}`,
     title: `${index + 1}. ${chapter.title}`, summary: chapter.outcome,
-    durationMinutes: 115, blocks: blocks.map((item) => ({ ...item, curriculum: {
+    durationMinutes: index < 13 ? 130 : 115, blocks: blocks.map((item) => ({ ...item, curriculum: {
       cefr: "B2", domain: chapterDomains[index], topic: chapter.title,
       skills: blockSkills(item), functions: [communicationFunctions[index]], grammar: [chapter.language],
     } })) };
