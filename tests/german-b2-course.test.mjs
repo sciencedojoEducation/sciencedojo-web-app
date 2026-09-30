@@ -6,12 +6,15 @@ import { validateAcademyCourse } from "../lib/academy-course-validation.ts";
 import { germanB2Course } from "../lib/german-b2-course.ts";
 import { germanB2Chapters } from "../lib/german-b2-curriculum.ts";
 import { germanB2Lexicon } from "../lib/german-b2-lexicon.ts";
+import { germanB2AdvancedListening } from "../lib/german-b2-advanced-listening.ts";
 
 test("B2 course has complete shared and distinct Goethe/telc routes", () => {
   const result = validateAcademyCourse(germanB2Course);
   assert.deepEqual(result.errors, []);
   assert.equal(germanB2Chapters.length, 18);
   assert.equal(germanB2Lexicon.length, 18);
+  assert.equal(germanB2AdvancedListening.length, 6);
+  assert.ok(germanB2AdvancedListening.every((item) => item.segments.length >= 4 && item.segments.reduce((sum, segment) => sum + segment.text.split(/\s+/).length, 0) >= 175));
   assert.ok(germanB2Lexicon.every((set) => set.terms.length >= 5 && set.functionPhrase && set.discussionPhrase && set.wordFamily.length === 3 && set.register.length === 3));
   const core = germanB2Course.lessons.filter((lesson) => !lesson.examTrack);
   const goethe = germanB2Course.lessons.filter((lesson) => lesson.examTrack === "goethe");
@@ -55,7 +58,7 @@ test("every referenced B2 listening recording is present and nonempty", () => {
     ...germanB2Course.lessons.flatMap((lesson) => lesson.blocks.filter((block) => block.type === "audio").map((block) => block.url)),
     ...germanB2Course.quiz.flatMap((question) => question.audioUrl ? [question.audioUrl] : []),
   ]);
-  assert.equal(urls.size, 18);
+  assert.equal(urls.size, 24);
   for (const url of urls) {
     const path = resolve(import.meta.dirname, "../public", url.slice(1));
     assert.ok(existsSync(path), `${url} is missing`);

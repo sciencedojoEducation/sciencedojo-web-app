@@ -1,6 +1,7 @@
 import { migrateAcademyCourse } from "./academy-schema.ts";
 import { germanB2Chapters, type B2Chapter } from "./german-b2-curriculum.ts";
 import { germanB2Lexicon } from "./german-b2-lexicon.ts";
+import { germanB2AdvancedListening } from "./german-b2-advanced-listening.ts";
 import type { AcademyCourse, AcademyLesson, LessonBlock, QuizQuestion } from "./tutor-academy.ts";
 
 export const GERMAN_B2_COURSE_KEY = "german-b2-complete";
@@ -121,6 +122,7 @@ function coreLesson(chapter: B2Chapter, index: number): AcademyLesson {
   const section = coreSection(index);
   const previous = index ? germanB2Chapters[index - 1] : null;
   const lexicon = germanB2Lexicon[index];
+  const advancedListening = germanB2AdvancedListening.find((item) => item.chapterIndex === index);
   const readingCheck = choice(block(prefix, "reading-q"), chapter.readingQuestion,
     chapter.readingAnswer, chapter.readingDistractors,
     `Im Text steht beziehungsweise folgt: ${chapter.readingAnswer}`);
@@ -165,6 +167,17 @@ function coreLesson(chapter: B2Chapter, index: number): AcademyLesson {
     { id: block(prefix, "listening-guide"), type: "text", heading: "Hören · Erst Überblick, dann Detail", paragraphs: ["Hören Sie zuerst ohne Transcript und notieren Sie Thema und Haltung. Hören Sie erneut für die konkrete Information. Öffnen Sie das Transcript erst nach Ihrer Antwort."] },
     { id: block(prefix, "audio"), type: "audio", heading: "Hören · Originaler Übungstext", url: `/audio/german-b2/${prefix}.m4a`, caption: "Synthetisch gesprochener, eigens verfasster Übungstext. Hören Sie ohne Transcript und überprüfen Sie erst danach.", transcript: chapter.listening },
     { id: block(prefix, "listening-check"), type: "knowledge-check", heading: "Hören · Aussage prüfen", question: listeningCheck, completion: "pass" },
+    ...(advancedListening ? [
+      { id: block(prefix, "advanced-listening-guide"), type: "text" as const, heading: `Hören · ${advancedListening.genre}`, paragraphs: ["Hören Sie zunächst für Thema und Haltungen. Hören Sie dann erneut und unterscheiden Sie zentrale Aussage, Details und mögliche Einschränkungen."] },
+      { id: block(prefix, "advanced-audio"), type: "audio" as const, heading: advancedListening.title,
+        url: `/audio/german-b2/${prefix}-advanced.m4a`,
+        caption: "Längerer, eigens verfasster Hörbeitrag mit mehreren synthetischen Stimmen. Das Transcript dient der nachträglichen Kontrolle.",
+        transcript: advancedListening.segments.map((segment) => `${segment.speaker}: ${segment.text}`).join("\n\n") },
+      { id: block(prefix, "advanced-main"), type: "knowledge-check" as const, heading: "Hören · Hauptaussage und Haltung",
+        question: choice(block(prefix, "advanced-main-q"), advancedListening.mainQuestion, advancedListening.mainAnswer, advancedListening.mainDistractors, advancedListening.mainAnswer), completion: "pass" as const },
+      { id: block(prefix, "advanced-detail"), type: "knowledge-check" as const, heading: "Hören · Detail und Schlussfolgerung",
+        question: choice(block(prefix, "advanced-detail-q"), advancedListening.detailQuestion, advancedListening.detailAnswer, advancedListening.detailDistractors, advancedListening.detailAnswer), completion: "pass" as const },
+    ] satisfies LessonBlock[] : []),
     { id: block(prefix, "language"), type: "worked-example", heading: "Sprachlabor", problem: chapter.language, steps: [
       { title: "Im Kontext entdecken", body: chapter.languageExample },
       { title: "Wirkung benennen", body: "Welche Beziehung oder Nuance drückt die Struktur aus? Erklären Sie sie mit eigenen Worten." },
