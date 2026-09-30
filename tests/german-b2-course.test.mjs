@@ -1,0 +1,58 @@
+import assert from "node:assert/strict";
+import { existsSync, statSync } from "node:fs";
+import { resolve } from "node:path";
+import { test } from "node:test";
+import { validateAcademyCourse } from "../lib/academy-course-validation.ts";
+import { germanB2Course } from "../lib/german-b2-course.ts";
+import { germanB2Chapters } from "../lib/german-b2-curriculum.ts";
+
+test("B2 course has complete shared and distinct Goethe/telc routes", () => {
+  const result = validateAcademyCourse(germanB2Course);
+  assert.deepEqual(result.errors, []);
+  assert.equal(germanB2Chapters.length, 18);
+  const core = germanB2Course.lessons.filter((lesson) => !lesson.examTrack);
+  const goethe = germanB2Course.lessons.filter((lesson) => lesson.examTrack === "goethe");
+  const telc = germanB2Course.lessons.filter((lesson) => lesson.examTrack === "telc");
+  assert.equal(core.length, 18);
+  assert.equal(goethe.length, 10);
+  assert.equal(telc.length, 12);
+  assert.ok(goethe.some((lesson) => lesson.title.includes("Forumbeitrag")));
+  assert.ok(telc.some((lesson) => lesson.title.includes("Sprachbausteine")));
+  assert.ok(telc.some((lesson) => lesson.title.includes("gemeinsam planen")));
+  assert.ok(core.every((lesson) => ["audio", "writing-practice", "speaking-practice", "knowledge-check", "process"].every((type) =>
+    lesson.blocks.some((block) => block.type === type))));
+  assert.ok(germanB2Course.lessons.every((lesson) => lesson.blocks.every((block) =>
+    block.curriculum?.cefr === "B2" && block.curriculum.topic && block.curriculum.skills.length)));
+  assert.ok(germanB2Chapters.every((chapter) => chapter.reading.trim().split(/\s+/).length >= 150));
+  assert.ok(germanB2Chapters.every((chapter) => chapter.listening.trim().split(/\s+/).length >= 80));
+  const technology = core[9];
+  assert.equal(technology.blocks.find((block) => block.id === "de-b2-10-people")?.items.length, 4);
+  assert.ok(technology.blocks.filter((block) => block.type === "knowledge-check" && block.heading?.startsWith("Lesen")).length >= 3);
+  assert.ok(telc[3].blocks.some((block) => block.heading?.includes("Sprachbausteine · Grammatik")));
+  assert.ok(telc[4].blocks.some((block) => block.heading?.includes("Sprachbausteine · Kollokation")));
+});
+
+test("B2 final assessment contains the evidence needed to answer each question", () => {
+  assert.equal(germanB2Course.quiz.length, 18);
+  for (const question of germanB2Course.quiz) {
+    assert.ok(question.options.some((option) => option.id === question.correctOptionId));
+    if (question.id.includes("final-read")) assert.ok(question.prompt.length > 300);
+    if (question.id.includes("final-listen")) {
+      assert.ok(question.audioTranscript?.length > 100);
+      assert.ok(question.audioUrl);
+    }
+  }
+});
+
+test("every referenced B2 listening recording is present and nonempty", () => {
+  const urls = new Set([
+    ...germanB2Course.lessons.flatMap((lesson) => lesson.blocks.filter((block) => block.type === "audio").map((block) => block.url)),
+    ...germanB2Course.quiz.flatMap((question) => question.audioUrl ? [question.audioUrl] : []),
+  ]);
+  assert.equal(urls.size, 18);
+  for (const url of urls) {
+    const path = resolve(import.meta.dirname, "../public", url.slice(1));
+    assert.ok(existsSync(path), `${url} is missing`);
+    assert.ok(statSync(path).size > 10_000, `${url} is empty`);
+  }
+});

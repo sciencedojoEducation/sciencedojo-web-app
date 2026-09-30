@@ -36,6 +36,15 @@ type AcademyBlockIdentity = {
   schemaVersion?: number;
   completion?: AcademyBlockCompletion;
   appearance?: AcademyBlockAppearance;
+  curriculum?: {
+    cefr: string;
+    domain: "personal" | "public" | "educational" | "occupational";
+    topic: string;
+    skills: Array<"reading" | "listening" | "writing" | "speaking" | "interaction" | "mediation" | "grammar" | "vocabulary">;
+    functions: string[];
+    grammar: string[];
+    examTrack?: string;
+  };
 };
 
 export type AcademyMediaItem = {

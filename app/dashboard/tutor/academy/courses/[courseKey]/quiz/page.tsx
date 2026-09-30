@@ -60,7 +60,7 @@ export async function renderAcademyCourseQuizPage(
           {completed ? (
             <section className="border-y border-[#DEDFE1] py-10 text-center">
               <Award className="mx-auto text-[#1E5AA8]" size={48} />
-              <h2 className="mt-5 text-3xl font-bold">{course.examTracks?.length ? "Shared A1 check passed" : "Course complete"}</h2>
+              <h2 className="mt-5 text-3xl font-bold">{course.examTracks?.length ? "Shared course check passed" : "Course complete"}</h2>
               <p className="mt-3 text-[#717376]">
                 Best score: {progress.bestScore}%
               </p>
