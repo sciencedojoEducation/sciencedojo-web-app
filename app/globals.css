@@ -1184,13 +1184,17 @@ input::placeholder, textarea::placeholder {
 }
 
 /* Academy themes are deliberately scoped so author choices never leak into the dashboard. */
+.academy-course-typography :where(p, td, textarea, input, figcaption, .academy-reading-copy) {
+  font-family: var(--font-academy-body), Arial, sans-serif;
+}
+
 .academy-theme-editorial .academy-reading-copy {
-  font-family: var(--font-academy-serif), Georgia, serif;
+  font-family: var(--font-academy-body), Arial, sans-serif;
 }
 
 .academy-theme-modern .academy-reading-copy,
 .academy-theme-friendly .academy-reading-copy {
-  font-family: inherit;
+  font-family: var(--font-academy-body), Arial, sans-serif;
 }
 
 .academy-theme-friendly {
@@ -1257,7 +1261,7 @@ input::placeholder, textarea::placeholder {
 }
 
 [data-block-variant="editorial"] :is(.ProseMirror, p, li) {
-  font-family: var(--font-academy-serif), Charter, Georgia, serif;
+  font-family: var(--font-academy-body), Arial, sans-serif;
   font-size: 1.075rem;
   line-height: 1.95;
 }
