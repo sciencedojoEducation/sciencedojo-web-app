@@ -1,0 +1,14 @@
+{
+  "id": "de-b2-03-pronunciation",
+  "kind": "pronunciation",
+  "model": "gemini-3.8-flash-lite-tts",
+  "voices": [
+    "de-de-assistant-11"
+  ],
+  "fingerprint": "009266d86fbb46d4faea5a67bd95bb405cd918ad95e0dfa49e4d61ae3383df71",
+  "sha256": "6406efc6afdf624e344b11bcd54571fe52b728c3f10ab25535765dcd5074ce2a",
+  "seconds": 6.48,
+  "words": 17,
+  "wpm": 157,
+  "bytes": 85424
+}

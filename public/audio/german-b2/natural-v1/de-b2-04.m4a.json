@@ -1,0 +1,14 @@
+{
+  "id": "de-b2-04",
+  "kind": "listening",
+  "model": "gemini-3.8-flash-tts",
+  "voices": [
+    "de-de-assistant-11"
+  ],
+  "fingerprint": "9d25f78e29ccad9cd2f785e6739746c58c5a67fdbf12dcf92e345b23a9c1f2aa",
+  "sha256": "ab4b79ad574b0c08e28eb9fe64fda875addf730678a0d0506897e6e53e90d343",
+  "seconds": 39.99,
+  "words": 97,
+  "wpm": 146,
+  "bytes": 518819
+}

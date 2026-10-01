@@ -1,0 +1,14 @@
+{
+  "id": "de-b2-16-pronunciation",
+  "kind": "pronunciation",
+  "model": "gemini-3.1-flash-tts-preview",
+  "voices": [
+    "Charon"
+  ],
+  "fingerprint": "b5e5419f537df3a17ae16dafa541c1d7c485e0ed1e1a05e8feb84f56f192dcee",
+  "sha256": "5d2111a3aac189f89f247258dff8722a7222e3c70bb93c754484d93ef39c21b0",
+  "seconds": 4.44,
+  "words": 10,
+  "wpm": 135,
+  "bytes": 58956
+}

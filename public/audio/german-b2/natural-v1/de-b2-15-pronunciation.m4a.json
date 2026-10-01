@@ -1,0 +1,14 @@
+{
+  "id": "de-b2-15-pronunciation",
+  "kind": "pronunciation",
+  "model": "gemini-3.1-flash-tts-preview",
+  "voices": [
+    "Kore"
+  ],
+  "fingerprint": "fee802c6991c33b2a012f23e63919efd3e10adbe41941c9601289e904bfc9c05",
+  "sha256": "97e13b1412d9137703aaaa911175f5e4a3cdeafb1b0a5e7baa87a5093618a34d",
+  "seconds": 6.16,
+  "words": 13,
+  "wpm": 127,
+  "bytes": 80285
+}
