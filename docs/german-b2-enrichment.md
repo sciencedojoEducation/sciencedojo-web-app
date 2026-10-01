@@ -35,3 +35,13 @@ The Goethe route continues to use the four skill modules and links to [Goethe's 
 Each of the 22 exam-track lessons also ends with a short, task-specific confidence check and a reminder of the strategy to repeat when needed.
 
 Publication should retain all 40 lesson IDs and the 18-question final assessment. The new inference tasks are unscored answer reveals, so they do not change the inline assessment fingerprint. The 18 new pronunciation audio files and three chart assets must be deployed before their references enter the Academy published version. Existing Academy audio URLs may point to storage and must be preserved when updating that version.
+
+## Publication command
+
+Run `npm run academy:german-b2:publish-enrichment` for a read-only preview against the current Academy version. After the PR is merged and the site deployment is live, check that the preview still reports the expected version and draft revision. Then run:
+
+```sh
+npm run academy:german-b2:publish-enrichment -- --apply --expect-version=<preview version> --expect-draft-revision=<preview revision> --asset-origin=https://<deployed-site>
+```
+
+The command checks all 21 new assets on the deployed site before writing, preserves published blocks and their stored media URLs, and rejects a changed draft or assessment fingerprint. Verify the new published version in Academy after activation.
