@@ -1,5 +1,7 @@
 const GERMAN_ACADEMY_COURSE_KEYS = new Set([
   "deutsch-a1-komplett",
+  "german-a2-complete",
+  "german-b1-complete",
   "german-b2-complete",
 ]);
 

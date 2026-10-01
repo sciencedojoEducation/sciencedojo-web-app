@@ -1201,9 +1201,32 @@ input::placeholder, textarea::placeholder {
   letter-spacing: 0.005em;
 }
 
+/* Reading copy is deliberately larger than navigation, captions and status text. */
+.academy-prose :where(p, li),
+.academy-reading-copy {
+  font-family: var(--font-academy-body), Arial, sans-serif;
+  font-size: 1.125rem;
+  line-height: 1.8;
+  max-width: 68ch;
+}
+
+.academy-prose > p + p { margin-top: 1.5rem; }
+
+@media (min-width: 640px) {
+  .academy-prose :where(p, li),
+  .academy-reading-copy {
+    font-size: 1.25rem;
+    line-height: 1.8;
+  }
+  .academy-prose > p + p { margin-top: 1.75rem; }
+}
+
 .academy-block-stack {
   gap: var(--academy-block-gap, 3.5rem);
 }
+
+/* Topic navigation hides, rather than unmounts, learner responses and recordings. */
+.academy-topic-content[hidden] { display: none; }
 
 .academy-block-surface-subtle {
   background: var(--academy-accent-soft, #eef4fb);
@@ -1264,6 +1287,18 @@ input::placeholder, textarea::placeholder {
   font-family: var(--font-academy-body), Arial, sans-serif;
   font-size: 1.075rem;
   line-height: 1.95;
+}
+
+/* Learner reading comfort takes precedence over compact/editorial author presets. */
+[data-academy-lesson] [data-block-variant] .academy-prose :where(p, li),
+[data-academy-lesson] [data-block-variant] .academy-reading-copy {
+  font-size: 1.125rem;
+  line-height: 1.8;
+}
+
+@media (min-width: 640px) {
+  [data-academy-lesson] [data-block-variant] .academy-prose :where(p, li),
+  [data-academy-lesson] [data-block-variant] .academy-reading-copy { font-size: 1.25rem; }
 }
 
 [data-block-variant="editorial"] :is(.ProseMirror h2, .ProseMirror h3, h2, h3) {

@@ -38,19 +38,22 @@ export default function AcademyLanguagePractice({
 function Frame({
   block,
   children,
+  recording = false,
 }: {
   block: PracticeBlock;
   children: React.ReactNode;
+  recording?: boolean;
 }) {
   return (
-    <section className="border border-[#C9D5E2] bg-[#F7FAFD] p-6 sm:p-8">
-      <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[var(--academy-accent)]">
-        Privates Lernportfolio
+    <section data-academy-recording={recording} className="rounded-2xl border border-[#BFDCD0] bg-linear-to-br from-[#EAF6EF] to-white p-6 sm:p-8">
+      <p className="flex items-center gap-2 text-sm font-bold text-[#245444]">
+        {block.type === "speaking-practice" ? <Mic size={19} aria-hidden="true" /> : <Save size={19} aria-hidden="true" />}
+        {block.type === "speaking-practice" ? "Sprechen" : "Schreiben"} · Privates Lernportfolio
       </p>
       <h2 className="mt-2 text-[28px] font-bold text-[#101010] sm:text-[32px]">
         {block.heading || (block.type === "writing-practice" ? "Schreiben" : "Sprechen")}
       </h2>
-      <p className="mt-4 font-[family-name:var(--font-academy-body)] text-[17px] leading-8 text-[#202733]">
+      <p className="academy-reading-copy mt-4 font-[family-name:var(--font-academy-body)] text-[17px] leading-8 text-[#202733]">
         {block.prompt}
       </p>
       {children}
@@ -73,11 +76,11 @@ function Checklist({ items }: { items: string[] }) {
 
 function ModelAnswer({ answer }: { answer: string }) {
   return (
-    <details className="mt-6 border-t border-[#C9D5E2] pt-4">
+    <details className="mt-6 rounded-xl border border-[#C9D5E2] bg-white p-4">
       <summary className="cursor-pointer font-bold text-[var(--academy-accent)]">
         Mögliche Antwort ansehen
       </summary>
-      <p className="mt-3 whitespace-pre-wrap text-sm leading-7 text-[#4A4B4E]">{answer}</p>
+      <p className="academy-reading-copy mt-3 whitespace-pre-wrap text-sm leading-7 text-[#4A4B4E]">{answer}</p>
     </details>
   );
 }
@@ -116,7 +119,7 @@ function WritingPractice({
         value={text}
         onChange={(event) => { setText(event.target.value.slice(0, 5000)); setSaved(false); }}
         rows={8}
-        className="mt-6 w-full border border-[#AFC8E7] bg-white p-4 text-sm leading-7 outline-none focus:border-[var(--academy-accent)] focus:ring-2 focus:ring-[var(--academy-accent-soft)]"
+        className="academy-reading-copy mt-6 w-full border border-[#AFC8E7] bg-white p-4 text-sm leading-7 outline-none focus:border-[var(--academy-accent)] focus:ring-2 focus:ring-[var(--academy-accent-soft)]"
         placeholder="Schreiben Sie hier …"
       />
       <div className="mt-2 flex flex-wrap items-center justify-between gap-3 text-xs text-[#65717D]">
@@ -136,7 +139,7 @@ function WritingPractice({
         </button>
       </div>
       {message ? <p role="status" className="mt-3 text-sm font-semibold text-[#244743]">{message}</p> : null}
-      {saved ? <ModelAnswer answer={block.modelAnswer} /> : null}
+      {saved ? <><p role="status" className="mt-4 rounded-xl bg-[#D6EEDF] p-3 text-sm text-[#245444]">Antwort gespeichert · Vergleichen Sie mit dem Beispiel und prüfen Sie Ihre Checkliste. Diese Aufgabe wird selbst eingeschätzt, nicht automatisch benotet.</p><ModelAnswer answer={block.modelAnswer} /></> : null}
     </Frame>
   );
 }
@@ -222,7 +225,7 @@ function SpeakingPractice({
     setRecording(false);
   };
   return (
-    <Frame block={block}>
+    <Frame block={block} recording={recording}>
       <p className="mt-3 text-xs font-semibold text-[#65717D]">
         Vorbereitung: {block.preparationSeconds} Sek. · Sprechzeit: ca. {block.targetSeconds} Sek. · Maximal 3 Minuten
       </p>
@@ -307,7 +310,7 @@ function SpeakingPractice({
           Zum Abschließen des Kapitels: Aufnahme stoppen und „Aufnahme speichern“ wählen. Erst danach ist „Weiter“ möglich.
         </p>
       ) : null}
-      {saved ? <ModelAnswer answer={block.modelAnswer} /> : null}
+      {saved ? <><p role="status" className="mt-4 rounded-xl bg-[#D6EEDF] p-3 text-sm text-[#245444]">Aufnahme gespeichert · Hören Sie sie an und prüfen Sie Ihre Checkliste. Diese Aufgabe wird selbst eingeschätzt, nicht automatisch benotet.</p><ModelAnswer answer={block.modelAnswer} /></> : null}
     </Frame>
   );
 }

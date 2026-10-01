@@ -10,6 +10,7 @@ import AcademyThemeScope from "@/components/tutor-academy/AcademyThemeScope";
 import { getAcademyCourseDraft, getAcademySnapshotContent } from "@/lib/academy-courses";
 import { emptyAcademyProgress } from "@/lib/tutor-academy";
 import { isGermanAcademyCourse } from "@/lib/german-academy-course";
+import { academyPreviewContentClass, academyPreviewHeaderClass } from "@/lib/academy-preview-layout";
 
 const academySerif = Merriweather({
   subsets: ["latin"],
@@ -96,8 +97,9 @@ export default async function AcademyDraftPreviewPage({
             course={course}
             lesson={lesson}
             index={lessonIndex}
+            contentWidthClass={academyPreviewHeaderClass}
           />
-          <div className="mx-auto max-w-[728px] px-6 py-14">
+          <div className={`${academyPreviewContentClass} py-14`}>
             <AcademyLessonBlocks
               blocks={lesson.blocks}
               uiLanguage={isGermanAcademyCourse(course.key) ? "de" : "en"}
@@ -107,7 +109,7 @@ export default async function AcademyDraftPreviewPage({
       ) : null}
 
       {view === "quiz" ? (
-        <main className="mx-auto max-w-[760px] px-6 py-14 sm:py-20">
+        <main className={`${academyPreviewContentClass} py-14 sm:py-20`}>
           <p className="text-xs font-black uppercase tracking-[0.16em] text-[var(--academy-accent)]">
             Final assessment
           </p>

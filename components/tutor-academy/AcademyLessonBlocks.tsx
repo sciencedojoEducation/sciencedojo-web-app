@@ -1,6 +1,9 @@
 import Image from "next/image";
 import {
   Check,
+  BookOpen,
+  Headphones,
+  Layers,
   ExternalLink,
   FileText,
   Lightbulb,
@@ -11,11 +14,18 @@ import type {
   LessonBlock,
 } from "@/lib/tutor-academy";
 import { isGermanAcademyCourse } from "@/lib/german-academy-course";
+import { academyTableColumnPresentation } from "@/lib/academy-table-presentation";
 import AcademyCarousel from "./AcademyCarousel";
 import AcademyRichText from "./AcademyRichText";
 import AcademyMath from "./AcademyMath";
 import AcademyLanguagePractice from "./AcademyLanguagePractice";
 import AcademyBlockBackground from "./AcademyBlockBackground";
+import AcademySectionTransition from "./AcademySectionTransition";
+import AcademyLessonRoadmap, { AcademyPhaseMarker } from "./AcademyLessonRoadmap";
+import AcademyLessonJourney from "./AcademyLessonJourney";
+import AcademyActivityTracker from "./AcademyActivityTracker";
+import { isAcademyBlockRequiredForCompletion } from "@/lib/tutor-academy";
+import { academyBlockAnchor, academyLessonRoadmap, academyLessonJourneySteps } from "@/lib/academy-lesson-roadmap";
 import {
   AcademyAccordion,
   AcademyFlashcards,
@@ -96,15 +106,26 @@ export default function AcademyLessonBlocks({
   courseKey,
   lessonId,
   uiLanguage,
+  completedBlockIds = [],
+  resumeAnchor,
 }: {
   blocks: LessonBlock[];
   courseKey?: string;
   lessonId?: string;
   uiLanguage?: "de" | "en";
+  completedBlockIds?: string[];
+  resumeAnchor?: string;
 }) {
   const activityLanguage = uiLanguage || (isGermanAcademyCourse(courseKey) ? "de" : "en");
+  const roadmap = academyLessonRoadmap(blocks);
   return (
-    <div className="academy-block-stack flex flex-col">
+    <AcademyLessonJourney steps={academyLessonJourneySteps(blocks, activityLanguage === "de" ? "Einstieg" : "Getting started", activityLanguage === "de")}
+      anchors={blocks.map(academyBlockAnchor)} completedIds={completedBlockIds} german={activityLanguage === "de"}
+      canCompleteLesson={!!courseKey && !!lessonId}
+      resumeAnchor={resumeAnchor}
+      tracker={<AcademyActivityTracker key="activity-tracker" courseKey={courseKey} lessonId={lessonId} german={activityLanguage === "de"} completedIds={completedBlockIds}
+        activities={blocks.flatMap((block) => block.id ? [{ id: block.id, label: ("heading" in block && block.heading) || (block.type === "knowledge-check" ? block.question.prompt : block.type === "divider" ? block.label || (activityLanguage === "de" ? "Abschnitt" : "Section") : block.type), required: isAcademyBlockRequiredForCompletion(block) }] : [])} />}
+      roadmap={<AcademyLessonRoadmap key="lesson-roadmap" sections={roadmap.sections} phases={roadmap.phases} german={activityLanguage === "de"} completedIds={completedBlockIds} />}>
       {blocks.map((block, blockIndex) => {
         const content = (() => {
         if (block.type === "text") {
@@ -124,7 +145,7 @@ export default function AcademyLessonBlocks({
           return (
             <section
               key={blockIndex}
-              className={`space-y-5 ${block.layout === "two-column" ? "md:columns-2 md:gap-10 [&>*]:break-inside-avoid" : ""}`}
+              className={`academy-prose space-y-6 ${block.layout === "two-column" ? "md:columns-2 md:gap-10 [&>*]:break-inside-avoid" : ""}`}
             >
               {block.heading && (
                 <h2 className="text-[28px] font-bold leading-9 tracking-[-0.02em] text-[#101010] sm:text-[32px] sm:leading-10">
@@ -207,7 +228,7 @@ export default function AcademyLessonBlocks({
                   <h2 className="text-xl font-bold tracking-[-0.01em]">
                     {block.heading}
                   </h2>
-                  <p className="mt-2 font-[family-name:var(--font-academy-body)] text-[15px] leading-7">
+                  <p className="academy-reading-copy mt-2 font-[family-name:var(--font-academy-body)] text-[15px] leading-7">
                     {block.body}
                   </p>
                 </div>
@@ -241,7 +262,7 @@ export default function AcademyLessonBlocks({
                       <h3 className="text-lg font-bold text-[#252629]">
                         {item.title}
                       </h3>
-                      <p className="mt-2 font-[family-name:var(--font-academy-body)] text-[15px] leading-7 text-[#27313B]">
+                      <p className="academy-reading-copy mt-2 font-[family-name:var(--font-academy-body)] text-[15px] leading-7 text-[#27313B]">
                         {item.body}
                       </p>
                     </div>
@@ -305,6 +326,9 @@ export default function AcademyLessonBlocks({
         }
 
         if (block.type === "divider") {
+          if (block.label) {
+            return <AcademySectionTransition key={block.id || blockIndex} label={block.label} />;
+          }
           return (
             <div
               key={block.id || blockIndex}
@@ -470,7 +494,7 @@ export default function AcademyLessonBlocks({
                     <h3 className="text-lg font-bold text-[#252629]">
                       {item.title}
                     </h3>
-                    <p className="mt-2 font-[family-name:var(--font-academy-body)] text-[15px] leading-7 text-[#27313B]">
+                    <p className="academy-reading-copy mt-2 font-[family-name:var(--font-academy-body)] text-[15px] leading-7 text-[#27313B]">
                       {item.body}
                     </p>
                   </li>
@@ -593,7 +617,7 @@ export default function AcademyLessonBlocks({
                   <summary className="cursor-pointer font-bold text-[var(--academy-accent)]">
                     {activityLanguage === "de" ? "Transkript lesen" : "Read transcript"}
                   </summary>
-                  <p className="mt-3 whitespace-pre-wrap font-[family-name:var(--font-academy-body)] text-[15px] leading-7 text-[#27313B]">
+                  <p className="academy-reading-copy mt-3 whitespace-pre-wrap font-[family-name:var(--font-academy-body)] text-[15px] leading-7 text-[#27313B]">
                     {block.transcript}
                   </p>
                 </details>
@@ -613,7 +637,7 @@ export default function AcademyLessonBlocks({
                   {block.heading}
                 </h2>
               ) : null}
-              <p className="mt-5 font-[family-name:var(--font-academy-body)] text-[17px] leading-8">
+              <p className="academy-reading-copy mt-5 font-[family-name:var(--font-academy-body)] text-[17px] leading-8">
                 {block.problem}
               </p>
               {block.latex ? (
@@ -702,21 +726,24 @@ export default function AcademyLessonBlocks({
                   <tbody className="divide-y divide-secondary/8">
                     {block.rows.map((row, rowIndex) => (
                       <tr key={rowIndex} className="align-top">
-                        {row.map((cell, cellIndex) => (
-                          <td
-                            key={cellIndex}
-                            className={`px-5 py-4 text-sm leading-6 ${cellIndex === 0 ? "font-bold text-[#252629]" : "font-[family-name:var(--font-academy-body)] text-[#27313B]"}`}
-                          >
-                            {cellIndex > 0 && (
-                              <Check
-                                size={15}
-                                className="mr-2 inline text-[var(--academy-accent)]"
-                                aria-hidden="true"
-                              />
-                            )}
-                            {cell}
-                          </td>
-                        ))}
+                        {row.map((cell, cellIndex) => {
+                          const { isLabel, showCheck } = academyTableColumnPresentation(block.columns, cellIndex);
+                          return (
+                            <td
+                              key={cellIndex}
+                              className={`px-5 py-4 font-[family-name:var(--font-academy-body)] text-sm leading-6 ${isLabel ? "font-bold text-[#252629]" : "text-[#27313B]"}`}
+                            >
+                              {showCheck && (
+                                <Check
+                                  size={15}
+                                  className="mr-2 inline text-[var(--academy-accent)]"
+                                  aria-hidden="true"
+                                />
+                              )}
+                              {cell}
+                            </td>
+                          );
+                        })}
                       </tr>
                     ))}
                   </tbody>
@@ -739,19 +766,28 @@ export default function AcademyLessonBlocks({
             : appearance.width === "wide"
               ? "relative left-1/2 w-[calc(100vw-48px)] max-w-[1000px] -translate-x-1/2 lg:w-[calc(100vw-328px)]"
               : "w-full";
+        const activity = block.type === "audio" ? { Icon: Headphones, label: activityLanguage === "de" ? "Hören" : "Listening", style: "border-[#C7D9E9] bg-[#F2F7FC]" }
+          : block.type === "flashcards" ? { Icon: Layers, label: activityLanguage === "de" ? "Wortschatz" : "Vocabulary", style: "border-[#D5CBEB] bg-[#F7F4FC]" }
+          : block.type === "text" && /lesen|lesetext|reading/i.test(block.heading || "") ? { Icon: BookOpen, label: activityLanguage === "de" ? "Lesen" : "Reading", style: "border-[#BFDCD0] bg-[#F2F9F5]" } : null;
         return (
           <AcademyBlockBackground
             key={block.id || blockIndex}
-            id={block.id ? `academy-block-${block.id}` : undefined}
+            id={academyBlockAnchor(block, blockIndex)}
             appearance={appearance}
             variant={appearance.variant}
-            className={`${widthClass} scroll-mt-24 academy-block-surface-${appearance.surface} academy-block-spacing-${appearance.spacing}`}
+            className={`${widthClass} scroll-mt-64 academy-block-surface-${appearance.surface} academy-block-spacing-${appearance.spacing}`}
           >
-            {content}
+            {roadmap.phases.filter((phase) => phase.index === blockIndex).map(({ phase }) => (
+              <AcademyPhaseMarker key={phase} phase={phase} german={activityLanguage === "de"} />
+            ))}
+            {activity ? <div className={`rounded-2xl border p-5 sm:p-6 ${activity.style}`}>
+              <p className="mb-4 flex items-center gap-2 text-sm font-bold text-[#344B60]"><activity.Icon size={19} aria-hidden="true" />{activity.label}</p>
+              {content}
+            </div> : content}
           </AcademyBlockBackground>
         );
       })}
-    </div>
+    </AcademyLessonJourney>
   );
 }
 

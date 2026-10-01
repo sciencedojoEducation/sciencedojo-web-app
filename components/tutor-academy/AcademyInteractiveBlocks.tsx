@@ -8,10 +8,12 @@ import {
   ArrowRight,
   Check,
   CheckCircle2,
+  CircleHelp,
   Play,
   RotateCcw,
 } from "lucide-react";
 import type { QuizQuestion } from "@/lib/tutor-academy";
+import { germanA1VocabularyImage } from "@/lib/german-a1-vocabulary-image";
 import { recordAcademyBlockCompletion } from "@/app/dashboard/tutor/academy/actions";
 
 type Item = { id?: string; title: string; body: string };
@@ -35,6 +37,35 @@ type Tracking = {
 
 function FlashcardVisual({ item }: { item: FlashcardItem }) {
   if (!item.src) return null;
+  const illustration = item.sprite ? null : germanA1VocabularyImage(item.src);
+  if (illustration) {
+    return (
+      <span className="relative mx-auto flex aspect-square w-44 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-[#D8E2EA] bg-[#EAF1F7]">
+        <span
+          className="relative block overflow-hidden"
+          style={{
+            width: `${Math.min(1, illustration.width / illustration.height) * 100}%`,
+            aspectRatio: `${illustration.width} / ${illustration.height}`,
+          }}
+        >
+          <Image
+            src={illustration.src}
+            alt={item.alt || ""}
+            width={illustration.sheetWidth}
+            height={illustration.sheetHeight}
+            unoptimized
+            className="absolute block max-w-none"
+            style={{
+              width: `${(illustration.sheetWidth / illustration.width) * 100}%`,
+              height: `${(illustration.sheetHeight / illustration.height) * 100}%`,
+              left: `${(-illustration.left / illustration.width) * 100}%`,
+              top: `${(-illustration.top / illustration.height) * 100}%`,
+            }}
+          />
+        </span>
+      </span>
+    );
+  }
   return (
     <span
       className="relative mx-auto block aspect-square w-44 shrink-0 overflow-hidden rounded-2xl border border-[#D8E2EA] bg-[#EAF1F7]"
@@ -79,11 +110,11 @@ export function AcademyTabs({
   const [active, setActive] = useState(0);
   const baseId = useId();
   return (
-    <div className="border border-[#DEDFE1] bg-white">
+    <div className="overflow-hidden rounded-2xl border border-[#C7D9E9] bg-white shadow-[0_4px_18px_rgba(23,58,99,0.05)]">
       <div
         role="tablist"
         aria-label={tracking.uiLanguage === "de" ? "Inhaltsbereiche" : "Content tabs"}
-        className="flex overflow-x-auto border-b border-[#DEDFE1] bg-[#F7F8FA]"
+        className="flex gap-2 overflow-x-auto border-b border-[#D8E5F0] bg-linear-to-r from-[#EAF3FB] to-[#F2F7FC] p-3 sm:p-4"
       >
         {items.map((item, index) => (
           <button
@@ -96,7 +127,7 @@ export function AcademyTabs({
               setActive(index);
               record(tracking);
             }}
-            className={`min-h-12 shrink-0 border-b-2 px-5 text-sm font-bold ${active === index ? "border-[var(--academy-accent)] bg-white text-[var(--academy-accent)]" : "border-transparent text-[#717376]"}`}
+            className={`min-h-12 shrink-0 rounded-xl border px-5 text-base font-bold outline-none transition-colors focus-visible:ring-2 focus-visible:ring-[var(--academy-accent)] focus-visible:ring-offset-2 motion-reduce:transition-none ${active === index ? "border-[var(--academy-accent)] bg-[var(--academy-accent)] text-white shadow-sm" : "border-transparent text-[#344B60] hover:border-[#C7D9E9] hover:bg-white"}`}
           >
             {item.title}
           </button>
@@ -106,7 +137,7 @@ export function AcademyTabs({
         id={`${baseId}-panel-${active}`}
         role="tabpanel"
         aria-labelledby={`${baseId}-tab-${active}`}
-        className="p-6 font-[family-name:var(--font-academy-body)] text-[16px] leading-8 text-[#27313B]"
+        className="academy-reading-copy min-h-28 p-6 font-[family-name:var(--font-academy-body)] text-[17px] leading-8 text-[#27313B] sm:p-8"
       >
         {items[active]?.body}
       </div>
@@ -119,26 +150,26 @@ export function AcademyAccordion({
   ...tracking
 }: { items: Item[] } & Tracking) {
   return (
-    <div className="border-y border-[#DEDFE1] bg-white">
+    <div className="space-y-3">
       {items.map((item, index) => (
         <details
           key={item.id || item.title}
-          className="group"
+          className="group overflow-hidden rounded-2xl border border-[#D5E1EB] bg-white shadow-[0_2px_10px_rgba(23,58,99,0.03)] open:border-[#AFC8E7] open:bg-[#F2F7FC]"
           open={index === 0}
           onToggle={(event) => {
             if (event.currentTarget.open) record(tracking);
           }}
         >
-          <summary className="flex cursor-pointer list-none items-center justify-between gap-4 border-b border-[#DEDFE1] px-1 py-5 font-bold text-[#252629] outline-none hover:text-[var(--academy-accent)] focus-visible:ring-2 focus-visible:ring-[var(--academy-accent)]">
-            <span>{item.title}</span>
+          <summary className="flex min-h-16 cursor-pointer list-none items-center justify-between gap-4 px-5 py-4 text-base font-bold text-[#252629] outline-none hover:bg-[#F2F7FC] focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--academy-accent)] sm:px-6">
+            <span className="flex items-center gap-3"><span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#E4EEF8] text-sm text-[#173A63]" aria-hidden="true">{index + 1}</span>{item.title}</span>
             <span
-              className="text-xl text-primary transition-transform group-open:rotate-45"
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#E4EEF8] text-xl text-[#173A63] transition-transform group-open:rotate-45 motion-reduce:transition-none"
               aria-hidden="true"
             >
               +
             </span>
           </summary>
-          <p className="border-b border-[#DEDFE1] px-1 pb-6 font-[family-name:var(--font-academy-body)] text-[15px] leading-7 text-[#27313B]">
+          <p className="academy-reading-copy px-5 pb-6 font-[family-name:var(--font-academy-body)] text-[17px] leading-8 text-[#27313B] sm:px-6">
             {item.body}
           </p>
         </details>
@@ -255,7 +286,7 @@ export function AcademyProcess({
           <h3 className="mt-3 text-2xl font-black text-[#252629]">
             {heading || (german ? "Diese Schritte entdecken" : "Explore this process")}
           </h3>
-          <p className="mt-3 max-w-lg font-[family-name:var(--font-academy-body)] text-[16px] leading-8 text-[#27313B]">
+          <p className="academy-reading-copy mt-3 max-w-lg font-[family-name:var(--font-academy-body)] text-[16px] leading-8 text-[#27313B]">
             {german ? "Gehen Sie die Schritte in Ihrem Tempo durch." : "Move through each step at your own pace."}
           </p>
           <button
@@ -277,7 +308,7 @@ export function AcademyProcess({
             <h3 className="mt-3 text-2xl font-black text-[#252629]">
               {item.title}
             </h3>
-            <p className="mt-4 max-w-2xl font-[family-name:var(--font-academy-body)] text-[17px] leading-8 text-[#27313B]">
+            <p className="academy-reading-copy mt-4 max-w-2xl font-[family-name:var(--font-academy-body)] text-[17px] leading-8 text-[#27313B]">
               {item.body}
             </p>
           </div>
@@ -387,7 +418,7 @@ export function AcademyProcessBuildUp({
                 <span className="sr-only">{german ? `Schritt ${index + 1} von ${items.length}: ` : `Step ${index + 1} of ${items.length}: `}</span>
                 {item.title}
               </h4>
-              <p className="mt-2 whitespace-pre-wrap font-[family-name:var(--font-academy-body)] text-[15px] leading-7 text-[#27313B]">
+              <p className="academy-reading-copy mt-2 whitespace-pre-wrap font-[family-name:var(--font-academy-body)] text-[15px] leading-7 text-[#27313B]">
                 {item.body}
               </p>
             </div>
@@ -514,6 +545,7 @@ export function AcademyKnowledgeCheck({
   const [reflection, setReflection] = useState("");
   const [submitted, setSubmitted] = useState(false);
   const [saveError, setSaveError] = useState("");
+  const [progressSaved, setProgressSaved] = useState(false);
   const [pending, setPending] = useState(false);
   const router = useRouter();
   const type = question.type || "single-choice";
@@ -531,7 +563,7 @@ export function AcademyKnowledgeCheck({
     try {
       const result = await recordAcademyBlockCompletion(tracking.courseKey, tracking.blockId, answer);
       if (result.error) setSaveError(result.error);
-      else router.refresh();
+      else { setProgressSaved(true); router.refresh(); }
     } catch {
       setSaveError(german
         ? "Der Lernfortschritt konnte nicht gespeichert werden. Bitte versuchen Sie es noch einmal."
@@ -571,21 +603,26 @@ export function AcademyKnowledgeCheck({
       </div>
     );
   return (
-    <div className="border border-[#DEDFE1] bg-white p-6">
-      <p className="text-lg font-bold text-[#252629]">{question.prompt}</p>
-      <div className="mt-4 space-y-2">
+    <div className="overflow-hidden rounded-2xl border border-[#D9DEC8] bg-linear-to-br from-[#FFF9E7] via-[#FFFCF3] to-white p-5 shadow-[0_4px_18px_rgba(89,69,31,0.05)] sm:p-7">
+      <div className="mb-4 flex items-center gap-2 text-sm font-bold text-[#59451F]">
+        <CircleHelp size={20} aria-hidden="true" /> {german ? "Kurz üben" : "Quick practice"}
+      </div>
+      <p className="text-lg font-bold leading-7 text-[#252629]">{question.prompt}</p>
+      <div className="mt-5 space-y-3">
         {question.options.map((option) => (
           <label
             key={option.id}
-            className="flex cursor-pointer gap-3 border border-[#DEDFE1] p-3 text-sm font-semibold"
+            className={`flex min-h-14 cursor-pointer items-center gap-3 rounded-xl border p-4 font-[family-name:var(--font-academy-body)] text-base text-[#27313B] transition-colors focus-within:ring-2 focus-within:ring-[var(--academy-accent)] motion-reduce:transition-none ${answers.includes(option.id) ? "border-[var(--academy-accent)] bg-[#EAF3FB] shadow-[0_0_0_1px_var(--academy-accent)]" : "border-[#D9DFE4] bg-white hover:border-[#AFC8E7] hover:bg-[#F2F7FC]"}`}
           >
             <input
               type={type === "multiple-response" ? "checkbox" : "radio"}
               name={question.id}
+              className="h-5 w-5 shrink-0 accent-[var(--academy-accent)]"
               checked={answers.includes(option.id)}
               onChange={() => {
                 setSubmitted(false);
                 setSaveError("");
+                setProgressSaved(false);
                 setAnswers((current) =>
                   type === "multiple-response"
                     ? current.includes(option.id)
@@ -599,7 +636,7 @@ export function AcademyKnowledgeCheck({
           </label>
         ))}
       </div>
-      <div className="mt-4 flex gap-2">
+      <div className="mt-5 flex flex-wrap gap-3">
         <button
           type="button"
           disabled={!answers.length || pending}
@@ -608,7 +645,7 @@ export function AcademyKnowledgeCheck({
             if (tracking.completion === "interact" || correct)
               void saveCompletion(type === "multiple-response" ? answers : answers[0]);
           }}
-          className="bg-[var(--academy-accent)] px-5 py-2.5 text-xs font-bold uppercase text-white disabled:opacity-40"
+          className="min-h-11 rounded-full bg-[var(--academy-accent)] px-6 py-3 text-sm font-bold text-white outline-none focus-visible:ring-2 focus-visible:ring-[var(--academy-accent)] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:bg-[#DCE5EE] disabled:text-[#52677B]"
         >
           {german ? "Antwort prüfen" : "Check answer"}
         </button>
@@ -618,8 +655,9 @@ export function AcademyKnowledgeCheck({
             onClick={() => {
               setAnswers([]);
               setSubmitted(false);
+              setProgressSaved(false);
             }}
-            className="inline-flex items-center gap-2 border px-4 text-xs font-bold"
+            className="inline-flex min-h-11 items-center gap-2 rounded-full border border-[#B8CADA] bg-white px-4 text-sm font-bold text-[#344B60] outline-none focus-visible:ring-2 focus-visible:ring-[var(--academy-accent)]"
           >
             <RotateCcw size={14} />
             {german ? "Erneut versuchen" : "Try again"}
@@ -630,7 +668,7 @@ export function AcademyKnowledgeCheck({
       {submitted ? (
         <div
           role="status"
-          className={`mt-4 border-l-4 p-4 text-sm ${correct ? "border-emerald-600 bg-emerald-50 text-emerald-900" : "border-amber-600 bg-amber-50 text-amber-950"}`}
+          className={`mt-5 rounded-xl border-l-4 p-4 font-[family-name:var(--font-academy-body)] text-base ${correct ? "border-emerald-600 bg-emerald-50 text-emerald-900" : "border-amber-600 bg-amber-50 text-amber-950"}`}
         >
           <p className="flex items-center gap-2 font-bold">
             {correct ? <CheckCircle2 size={17} /> : null}
@@ -639,6 +677,10 @@ export function AcademyKnowledgeCheck({
               : german ? "Noch nicht ganz" : "Not quite yet"}
           </p>
           <p className="mt-1">{question.explanation}</p>
+          <p className="mt-3 text-sm">{pending ? german ? "Fortschritt wird gespeichert …" : "Saving progress …" : progressSaved
+            ? german ? "Fortschritt gespeichert. Weiter mit der nächsten Aktivität." : "Progress saved. Continue with the next activity."
+            : correct ? german ? "Weiter mit der nächsten Aktivität." : "Continue with the next activity."
+            : german ? "Lesen Sie den Hinweis und versuchen Sie es erneut." : "Read the explanation and try again."}</p>
         </div>
       ) : null}
     </div>

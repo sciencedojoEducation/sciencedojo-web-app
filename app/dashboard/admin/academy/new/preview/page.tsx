@@ -8,6 +8,7 @@ import AcademyCourseContents from "@/components/tutor-academy/AcademyCourseConte
 import AcademyCourseCover from "@/components/tutor-academy/AcademyCourseCover";
 import AcademyLessonBlocks from "@/components/tutor-academy/AcademyLessonBlocks";
 import AcademyLessonHeader from "@/components/tutor-academy/AcademyLessonHeader";
+import { academyPreviewContentClass, academyPreviewHeaderClass } from "@/lib/academy-preview-layout";
 import AcademyThemeScope from "@/components/tutor-academy/AcademyThemeScope";
 import { academyTemplates } from "@/lib/academy-templates";
 import { isFeatureEnabled } from "@/lib/feature-flags";
@@ -88,8 +89,9 @@ export default async function AcademyTemplatePreviewPage({
             course={course}
             lesson={lesson}
             index={course.lessons.indexOf(lesson)}
+            contentWidthClass={academyPreviewHeaderClass}
           />
-          <div className="mx-auto max-w-[728px] px-6 py-14">
+          <div className={`${academyPreviewContentClass} py-14`}>
             <AcademyLessonBlocks blocks={lesson.blocks} courseKey={course.key} />
             <div className="mt-14 flex flex-wrap gap-3 border-t border-black/10 pt-6">
               <Link
@@ -121,7 +123,7 @@ export default async function AcademyTemplatePreviewPage({
         </main>
       ) : null}
       {view === "quiz" ? (
-        <main className="mx-auto max-w-[760px] px-6 py-16">
+        <main className={`${academyPreviewContentClass} py-16`}>
           <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">
             Template assessment preview
           </p>

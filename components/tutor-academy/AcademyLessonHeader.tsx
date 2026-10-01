@@ -11,12 +11,14 @@ export default function AcademyLessonHeader({
   index,
   sequence,
   nextStepLabel,
+  contentWidthClass = "max-w-[728px]",
 }: {
   course: AcademyCourse;
   lesson: AcademyLesson;
   index: number;
   sequence?: AcademyLesson[];
   nextStepLabel?: string;
+  contentWidthClass?: string;
 }) {
   const theme = resolveAcademyTheme(course);
   const b2 = course.key === "german-b2-complete";
@@ -57,7 +59,7 @@ export default function AcademyLessonHeader({
           <div className={`absolute inset-0 ${b2 ? "bg-[#14112B]/70 md:bg-gradient-to-r md:from-[#14112B]/90 md:via-[#14112B]/70 md:to-[#14112B]/15" : "bg-gradient-to-r from-black/80 via-black/55 to-black/20"}`} />
         </>
       ) : null}
-      <div className="relative mx-auto max-w-[728px]">
+      <div className={`relative mx-auto ${contentWidthClass}`}>
         <div
           className={`flex flex-wrap gap-3 text-[13px] font-semibold ${mediaLed ? "text-white/75" : "text-[#717376]"}`}
         >

@@ -151,7 +151,7 @@ export default function AcademyRichText({
   className?: string;
 }) {
   return (
-    <div className={`space-y-5 ${className}`}>
+    <div className={`academy-prose space-y-6 ${className}`}>
       {renderChildren(document.content as RichNode[] | undefined, "root")}
     </div>
   );

@@ -1,13 +1,11 @@
 import { existsSync, mkdirSync } from "node:fs";
 import { spawnSync } from "node:child_process";
 import { join, resolve } from "node:path";
+import { germanA1VocabularyImage } from "../lib/german-a1-vocabulary-image.ts";
 
 const root = resolve(import.meta.dirname, "..");
 const sourceDirectory = join(root, "public", "images", "academy", "german-a1", "wortschatz");
 const outputDirectory = join(root, "public", "images", "academy", "german-a1", "word-cards");
-const sheetSize = 1254;
-const gridSize = 5;
-const inset = 6;
 
 mkdirSync(outputDirectory, { recursive: true });
 
@@ -17,13 +15,10 @@ for (let chapter = 1; chapter <= 32; chapter += 1) {
   if (!existsSync(source)) throw new Error(`Missing vocabulary sheet: ${source}`);
 
   for (let index = 0; index < 25; index += 1) {
-    const row = Math.floor(index / gridSize);
-    const column = index % gridSize;
-    const left = Math.round((column * sheetSize) / gridSize) + inset;
-    const top = Math.round((row * sheetSize) / gridSize) + inset;
-    const right = Math.round(((column + 1) * sheetSize) / gridSize) - inset;
-    const bottom = Math.round(((row + 1) * sheetSize) / gridSize) - inset;
-    const size = Math.min(right - left, bottom - top);
+    const illustration = germanA1VocabularyImage(
+      `/images/academy/german-a1/word-cards/chapter-${chapterNumber}-${String(index + 1).padStart(2, "0")}.jpg`,
+    );
+    if (!illustration) throw new Error(`Missing measured bounds for chapter ${chapterNumber}, card ${index + 1}`);
     const output = join(
       outputDirectory,
       `chapter-${chapterNumber}-${String(index + 1).padStart(2, "0")}.jpg`,
@@ -32,11 +27,11 @@ for (let chapter = 1; chapter <= 32; chapter += 1) {
       "/usr/bin/sips",
       [
         "--cropToHeightWidth",
-        String(size),
-        String(size),
+        String(illustration.height),
+        String(illustration.width),
         "--cropOffset",
-        String(top),
-        String(left),
+        String(illustration.top),
+        String(illustration.left),
         "--setProperty",
         "formatOptions",
         "82",
@@ -50,4 +45,4 @@ for (let chapter = 1; chapter <= 32; chapter += 1) {
   }
 }
 
-console.log(`Created 800 centred vocabulary images in ${outputDirectory}`);
+console.log(`Created 800 proportion-preserving vocabulary images using measured sheet boundaries in ${outputDirectory}`);

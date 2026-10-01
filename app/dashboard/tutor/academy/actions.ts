@@ -18,6 +18,24 @@ import { normalizeAcademyProgress, requireTutorAcademyUser } from "@/lib/tutor-a
 import { getPublishedAcademyCourse } from "@/lib/academy-courses";
 import { getAcademyExamTrackResumeLesson, getAcademyJourneyLessonState } from "@/lib/academy-journey";
 import { resolveAcademyCourseBasePath } from "@/lib/academy-route-paths";
+import { resolveAcademyResumePosition } from "@/lib/academy-resume-position";
+
+export async function saveAcademyResumePosition(courseKey: string, lessonId: string, blockId: string) {
+  if ([courseKey, lessonId, blockId].some((value) => typeof value !== "string" || !value || value.length > 200))
+    return { error: "Invalid resume position." };
+  const course = await getPublishedAcademyCourse(courseKey);
+  if (!course) return { error: "Course not found." };
+  const { supabase, user } = await requireTutorAcademyUser(courseKey);
+  const { data, error } = await loadProgressRow(supabase, user.id, courseKey);
+  if (error) return { error: "Resume position could not be saved." };
+  const updatedAt = new Date().toISOString();
+  if (!resolveAcademyResumePosition(course, normalizeAcademyProgress(data), { lessonId, blockId, updatedAt }))
+    return { error: "This activity is missing or locked." };
+  const result = await supabase.from("academy_learner_positions").upsert({
+    user_id: user.id, course_key: courseKey, lesson_id: lessonId, block_id: blockId, updated_at: updatedAt,
+  }, { onConflict: "user_id,course_key" });
+  return result.error ? { error: "Resume position could not be saved. Please retry." } : { ok: true, updatedAt };
+}
 
 export type QuizActionState = {
   status: "idle" | "error" | "failed" | "passed";

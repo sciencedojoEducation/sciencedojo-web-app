@@ -7,7 +7,6 @@ import AcademyLessonTracker from "@/components/tutor-academy/AcademyLessonTracke
 import AcademyThemeScope from "@/components/tutor-academy/AcademyThemeScope";
 import { completeAcademyLesson } from "@/app/dashboard/tutor/academy/actions";
 import { getAcademyJourneyLessonState } from "@/lib/academy-journey";
-import { getAcademyLessonOutline } from "@/lib/academy-lesson-outline";
 import { isGermanAcademyCourse } from "@/lib/german-academy-course";
 import { getPublishedAcademyCourse } from "@/lib/academy-courses";
 import {
@@ -20,6 +19,8 @@ import {
   isAcademyPracticeSubmissionSaved,
 } from "@/lib/tutor-academy";
 import { getTutorAcademyProgress, requireTutorAcademyUser } from "@/lib/tutor-academy-progress";
+import { getAcademyLearnerPosition } from "@/lib/academy-learner-position";
+import { resolveAcademyResumePosition } from "@/lib/academy-resume-position";
 
 export async function renderAcademyCourseLessonPage(
   courseKey: string,
@@ -55,6 +56,8 @@ export async function renderAcademyCourseLessonPage(
     getAcademyLessonProgressState(progress, lesson.slug, lesson.id) ===
     "completed";
   const completedBlockIds = new Set(progress.completedBlockIds);
+  const savedPosition = await getAcademyLearnerPosition(course.key);
+  const resume = resolveAcademyResumePosition(course, progress, savedPosition);
   const requiredPracticeIds = lesson.blocks
     .filter((block) => block.id && isAcademyBlockRequiredForCompletion(block) &&
       (block.type === "writing-practice" || block.type === "speaking-practice"))
@@ -78,7 +81,6 @@ export async function renderAcademyCourseLessonPage(
           !isAcademyPracticeSubmissionSaved(block, savedPracticeById.get(block.id))),
       )
     : [];
-  const outline = getAcademyLessonOutline(lesson);
   const completeAction = completeAcademyLesson.bind(
     null,
     course.key,
@@ -132,25 +134,9 @@ export async function renderAcademyCourseLessonPage(
               </a>
             </div>
           ) : null}
-          {outline.length ? (
-            <nav aria-label="In diesem Kapitel" className="mb-10 border border-[#C9D5E2] bg-[#F7FAFD] p-5 sm:p-6">
-              <details>
-                <summary className="cursor-pointer text-sm font-bold text-[#17202C]">
-                  In diesem Kapitel · {outline.length} Abschnitte und Aufgaben
-                </summary>
-                <ol className="mt-4 grid gap-x-6 gap-y-2 text-sm sm:grid-cols-2">
-                  {outline.map((item) => (
-                    <li key={item.id}>
-                      <a className="block rounded py-1 text-[var(--academy-accent)] underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--academy-accent)]" href={`#academy-block-${item.id}`}>
-                        {item.label}
-                      </a>
-                    </li>
-                  ))}
-                </ol>
-              </details>
-            </nav>
-          ) : null}
-          <AcademyLessonBlocks blocks={lesson.blocks} courseKey={course.key} lessonId={lesson.id} />
+          <AcademyLessonBlocks blocks={lesson.blocks} courseKey={course.key} lessonId={lesson.id}
+            resumeAnchor={resume && resume.lesson.id === lesson.id ? `academy-block-${resume.block.id}` : undefined}
+            completedBlockIds={progress.completedBlockIds.filter((id) => !missingRequiredBlocks.some((block) => block.id === id))} />
           <footer className="mt-16 flex flex-col justify-between gap-3 border-t border-[#DEDFE1] pt-7 sm:flex-row">
             {previousLesson ? (
               <Link
