@@ -1,0 +1,15 @@
+{
+  "id": "de-b2-10-advanced",
+  "kind": "advanced",
+  "model": "gemini-3.8-flash-tts",
+  "voices": [
+    "de-de-assistant-11",
+    "de-de-assistant-8"
+  ],
+  "fingerprint": "58191d32beffe446e2942e5ff4c54c48ee735aa72d6e2b7cb24b160baefa16ba",
+  "sha256": "4cdfd3997d56b2d12c680d1996cfdeef201d6ff111dd0c7d063248c7e1ef21ad",
+  "seconds": 77.85,
+  "words": 186,
+  "wpm": 143,
+  "bytes": 990912
+}

@@ -280,7 +280,7 @@ function coreLesson(chapter: B2Chapter, index: number): AcademyLesson {
       { id: block(prefix, "stance-check"), type: "knowledge-check" as const, heading: "Lesen · Haltung und Schlussfolgerung", question: choice(block(prefix, "stance-q"), "Welche Schlussfolgerung stützt der Text?", "Ein dauerhafter Einsatz braucht Regeln, Zugang und eine Auswertung.", ["Einzelne gute Antworten beweisen den Nutzen für alle.", "Datenschutz ist bereits vollständig geklärt."], "Der Text nennt mehrere Bedingungen für eine Entscheidung nach der Testphase."), completion: "pass" as const },
     ] satisfies LessonBlock[] : []),
     { id: block(prefix, "listening-guide"), type: "text", heading: "Hören · Erst Überblick, dann Detail", paragraphs: ["Hören Sie zuerst ohne Transcript und notieren Sie Thema und Haltung. Hören Sie erneut für die konkrete Information. Öffnen Sie das Transcript erst nach Ihrer Antwort."] },
-    { id: block(prefix, "audio"), type: "audio", heading: "Hören · Originaler Übungstext", url: `/audio/german-b2/${prefix}.m4a`, caption: "Synthetisch gesprochener, eigens verfasster Übungstext. Hören Sie ohne Transcript und überprüfen Sie erst danach.", transcript: chapter.listening },
+    { id: block(prefix, "audio"), type: "audio", heading: "Hören · Originaler Übungstext", url: `/audio/german-b2/natural-v1/${prefix}.m4a`, caption: "Synthetisch gesprochener, eigens verfasster Übungstext. Hören Sie ohne Transcript und überprüfen Sie erst danach.", transcript: chapter.listening },
     { id: block(prefix, "listening-check"), type: "knowledge-check", heading: "Hören · Aussage prüfen", question: listeningCheck, completion: "pass" },
     { id: block(prefix, "listening-notes"), type: "writing-practice", heading: "Hören · Gezielte Notizen",
       prompt: `Hören Sie den vorigen Beitrag noch einmal ohne Transcript. ${workbook.listeningTask} Formulieren Sie aus den Stichpunkten eine kurze Zusammenfassung.`,
@@ -290,7 +290,7 @@ function coreLesson(chapter: B2Chapter, index: number): AcademyLesson {
     ...(advancedListening ? [
       { id: block(prefix, "advanced-listening-guide"), type: "text" as const, heading: `Hören · ${advancedListening.genre}`, paragraphs: ["Hören Sie zunächst für Thema und Haltungen. Hören Sie dann erneut und unterscheiden Sie zentrale Aussage, Details und mögliche Einschränkungen."] },
       { id: block(prefix, "advanced-audio"), type: "audio" as const, heading: advancedListening.title,
-        url: `/audio/german-b2/${prefix}-advanced.m4a`,
+        url: `/audio/german-b2/natural-v1/${prefix}-advanced.m4a`,
         caption: "Längerer, eigens verfasster Hörbeitrag mit mehreren synthetischen Stimmen. Das Transcript dient der nachträglichen Kontrolle.",
         transcript: advancedListening.segments.map((segment) => `${segment.speaker}: ${segment.text}`).join("\n\n") },
       { id: block(prefix, "advanced-main"), type: "knowledge-check" as const, heading: "Hören · Hauptaussage und Haltung",
@@ -319,7 +319,7 @@ function coreLesson(chapter: B2Chapter, index: number): AcademyLesson {
       preparationSeconds: 60, targetSeconds: 120,
       checklist: ["Einleitung und roter Faden", "Mindestens zwei konkrete Punkte", "Ein Beispiel oder Einwand", "Verständlicher Abschluss"], modelAnswer: speakingModels[index], completion: "interact" },
     { id: block(prefix, "pronunciation-audio"), type: "audio", heading: "Aussprache · Hörmodell",
-      url: `/audio/german-b2/${prefix}-pronunciation.m4a`,
+      url: `/audio/german-b2/natural-v1/${prefix}-pronunciation.m4a`,
       caption: "Synthetisch gesprochenes Modell für Satzakzent und Sprechpausen.",
       transcript: workbook.pronunciationLine },
     { id: block(prefix, "pronunciation"), type: "speaking-practice", heading: `Aussprache · ${workbook.pronunciationFocus}`,
@@ -402,7 +402,7 @@ function examLesson(unit: ExamUnit, index: number, track: "goethe" | "telc"): Ac
     { id: block(prefix, "strategy"), type: "text", heading: "Prüfungsstrategie", paragraphs: [unit.strategy, "Die folgenden Aufgaben sind eigens für ScienceDojo verfasst. Vergleichen Sie sie anschließend mit offiziellen Modellaufgaben."] },
     { id: block(prefix, "source"), type: "text", heading: "Trainingsmaterial", paragraphs: chapter.reading.split("\n\n") },
     { id: block(prefix, "reading-check"), type: "knowledge-check", heading: "Verstehen", question: choice(block(prefix, "reading-q"), chapter.readingQuestion, chapter.readingAnswer, chapter.readingDistractors, chapter.readingAnswer), completion: "pass" },
-    { id: block(prefix, "audio"), type: "audio", heading: "Hörtraining", url: `/audio/german-b2/de-b2-${n(unit.chapter)}.m4a`, caption: "Eigens verfasster, synthetisch gesprochener Übungstext.", transcript: chapter.listening },
+    { id: block(prefix, "audio"), type: "audio", heading: "Hörtraining", url: `/audio/german-b2/natural-v1/de-b2-${n(unit.chapter)}.m4a`, caption: "Eigens verfasster, synthetisch gesprochener Übungstext.", transcript: chapter.listening },
     { id: block(prefix, "listening-check"), type: "knowledge-check", heading: "Höraufgabe", question: choice(block(prefix, "listening-q"), chapter.listeningQuestion, chapter.listeningAnswer, chapter.listeningDistractors, chapter.listeningAnswer), completion: "pass" },
     ...(track === "telc" && index === 2 ? [
       { id: block(prefix, "grammar-cloze-1"), type: "knowledge-check" as const, heading: "Sprachbausteine · Grammatik", question: choice(block(prefix, "grammar-cloze-q1"), "Ergänzen Sie: Viele besuchen einen Kurs, ___ sich beruflich weiterzuentwickeln.", "um", ["ohne", "anstatt"], "Die Infinitivgruppe ›um … zu‹ drückt hier einen Zweck aus."), completion: "pass" as const },
@@ -503,7 +503,7 @@ const readingAssessment: QuizQuestion[] = germanB2Chapters.slice(0, 6).map((chap
 const listeningAssessment: QuizQuestion[] = germanB2Chapters.slice(6, 12).map((chapter, offset) => ({
   ...choice(`de-b2-final-listen-${n(offset)}`, chapter.listeningQuestion,
     chapter.listeningAnswer, chapter.listeningDistractors, chapter.listeningAnswer),
-  audioUrl: `/audio/german-b2/de-b2-${n(offset + 6)}.m4a`, audioTranscript: chapter.listening,
+  audioUrl: `/audio/german-b2/natural-v1/de-b2-${n(offset + 6)}.m4a`, audioTranscript: chapter.listening,
 }));
 const grammarAssessment: QuizQuestion[] = [
   choice("de-b2-final-grammar-01", "Welche Formulierung gibt einen Gegensatz korrekt wieder?", "Zwar ist der Umbau teuer, aber er schafft Raum für alle.", ["Zwar der Umbau ist teuer, aber schafft er Raum.", "Obwohl der Umbau teuer, aber er schafft Raum."], "Zwar … aber verbindet zwei gegensätzliche Aussagen."),

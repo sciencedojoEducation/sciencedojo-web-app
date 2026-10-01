@@ -1,0 +1,16 @@
+{
+  "id": "de-b2-14-advanced",
+  "kind": "advanced",
+  "model": "gemini-2.5-flash-preview-tts",
+  "voices": [
+    "Kore",
+    "Charon",
+    "Puck"
+  ],
+  "fingerprint": "026e95e5b1faf543d0962d8da3520ed67c202049bb6f96cc5e51c490fa3fcd59",
+  "sha256": "9182490fffab804f898c4aaa48803194199d4f189c1ff41b7403d109c706d39e",
+  "seconds": 75.65,
+  "words": 195,
+  "wpm": 155,
+  "bytes": 1008972
+}
