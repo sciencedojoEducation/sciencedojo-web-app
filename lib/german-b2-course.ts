@@ -5,6 +5,8 @@ import { germanB2AdvancedListening } from "./german-b2-advanced-listening.ts";
 import { germanB2ExamGlimpses } from "./german-b2-exam-glimpses.ts";
 import { germanB2GrammarPractice } from "./german-b2-grammar-practice.ts";
 import { germanB2HeroImage, germanB2SectionScenes } from "./german-b2-visuals.ts";
+import { germanB2WorkbookUnits } from "./german-b2-workbook.ts";
+import { germanB2ChartTasks } from "./german-b2-chart-tasks.ts";
 import type { AcademyCourse, AcademyLesson, LessonBlock, QuizQuestion } from "./tutor-academy.ts";
 
 export const GERMAN_B2_COURSE_KEY = "german-b2-complete";
@@ -162,6 +164,9 @@ function writingStage(index: number, chapter: B2Chapter) {
 
 function blockSkills(item: LessonBlock): NonNullable<LessonBlock["curriculum"]>["skills"] {
   const heading = "heading" in item ? item.heading : undefined;
+  if (item.id?.endsWith("-listening-notes")) return ["listening", "writing"];
+  if (item.id?.endsWith("-chart-response")) return ["reading", "writing"];
+  if (item.id?.endsWith("-chart")) return ["reading"];
   if (item.type === "audio") return ["listening"];
   if (item.type === "writing-practice") return ["writing"];
   if (item.type === "speaking-practice") return ["speaking"];
@@ -198,6 +203,8 @@ function coreLesson(chapter: B2Chapter, index: number): AcademyLesson {
   const advancedListening = germanB2AdvancedListening.find((item) => item.chapterIndex === index);
   const examGlimpse = germanB2ExamGlimpses[index];
   const grammarPractice = germanB2GrammarPractice[index];
+  const workbook = germanB2WorkbookUnits[index];
+  const chart = germanB2ChartTasks.find((item) => item.chapterIndex === index);
   const writing = writingStage(index, chapter);
   const fullWritingRange: [number, number] = index === 0 ? [120, 160] : index === 16 ? [60, 120]
     : index === 17 ? [180, 220] : index < 4 ? [100, 180] : index < 10 ? [130, 210] : [160, 240];
@@ -215,6 +222,8 @@ function coreLesson(chapter: B2Chapter, index: number): AcademyLesson {
   const listeningCheck = choice(block(prefix, "listening-q"), chapter.listeningQuestion,
     chapter.listeningAnswer, chapter.listeningDistractors,
     `Im Hörtext wird deutlich: ${chapter.listeningAnswer}`);
+  const genreCheck = choice(block(prefix, "genre-q"), workbook.question,
+    workbook.answer, workbook.distractors, workbook.explanation);
   const blocks: LessonBlock[] = [
     ...(index === 0 || coreSection(index - 1).id !== section.id
       ? [sectionScene(prefix, section.id)] : []),
@@ -248,6 +257,24 @@ function coreLesson(chapter: B2Chapter, index: number): AcademyLesson {
     ].map(([title, body], i) => ({ id: block(prefix, `digital-word-${i}`), title, body })), completion: "interact" as const } satisfies LessonBlock] : []),
     { id: block(prefix, "reading"), type: "text", heading: "Lesen · Verstehen und einordnen", paragraphs: ["Lesen Sie zuerst für die Hauptaussage. Lesen Sie dann erneut und markieren Sie Belege für die folgende Frage.", ...chapter.reading.split("\n\n")] },
     { id: block(prefix, "reading-check"), type: "knowledge-check", heading: "Lesen · Beleg finden", question: readingCheck, completion: "pass" },
+    { id: block(prefix, "genre-reading"), type: "text", heading: `Lesen · ${workbook.genre}`, paragraphs: [
+      "Lesen Sie diesen eigens verfassten Text als zweite Textsorte. Entscheiden Sie erst selbst, welche Deutung der Text trägt, und öffnen Sie danach die Lösung.",
+      workbook.text,
+      workbook.question,
+      ...genreCheck.options.map((option) => `${option.id.toUpperCase()}. ${option.label}`),
+    ] },
+    { id: block(prefix, "genre-solution"), type: "accordion", heading: "Lesen · Lösung und Textbeleg", items: [
+      { id: block(prefix, "genre-answer"), title: "Antwort erst nach eigener Entscheidung öffnen", body: `${genreCheck.correctOptionId.toUpperCase()}. ${workbook.answer} ${workbook.explanation}` },
+    ] },
+    ...(chart ? [
+      { id: block(prefix, "chart"), type: "image" as const, src: chart.src, alt: chart.alt,
+        caption: `${chart.title}. Die Werte sind ausschließlich für diese Übung erfunden.`, width: "reading" as const, aspect: "wide" as const },
+      { id: block(prefix, "chart-response"), type: "writing-practice" as const,
+        heading: "Daten beschreiben und einordnen", prompt: chart.prompt,
+        minWords: 75, maxWords: 110,
+        checklist: ["Größte und kleinste Gruppe korrekt genannt", "Vergleich in Prozentpunkten korrekt", "Grenze der fiktiven Daten erläutert"],
+        modelAnswer: chart.modelAnswer, completion: "interact" as const },
+    ] satisfies LessonBlock[] : []),
     ...(index === 9 ? [
       { id: block(prefix, "global-check"), type: "knowledge-check" as const, heading: "Lesen · Hauptgedanke", question: choice(block(prefix, "global-q"), "Worum geht es im Schulbericht hauptsächlich?", "Um einen begrenzten Versuch mit digitalen Lernhilfen und offene Bedingungen.", ["Um ein endgültiges Verbot aller Technik.", "Um den Kauf neuer Smartphones für alle."], "Die Schule testet Werkzeuge und prüft Lernfortschritt, Zugang und Datenschutz."), completion: "pass" as const },
       { id: block(prefix, "stance-check"), type: "knowledge-check" as const, heading: "Lesen · Haltung und Schlussfolgerung", question: choice(block(prefix, "stance-q"), "Welche Schlussfolgerung stützt der Text?", "Ein dauerhafter Einsatz braucht Regeln, Zugang und eine Auswertung.", ["Einzelne gute Antworten beweisen den Nutzen für alle.", "Datenschutz ist bereits vollständig geklärt."], "Der Text nennt mehrere Bedingungen für eine Entscheidung nach der Testphase."), completion: "pass" as const },
@@ -255,6 +282,11 @@ function coreLesson(chapter: B2Chapter, index: number): AcademyLesson {
     { id: block(prefix, "listening-guide"), type: "text", heading: "Hören · Erst Überblick, dann Detail", paragraphs: ["Hören Sie zuerst ohne Transcript und notieren Sie Thema und Haltung. Hören Sie erneut für die konkrete Information. Öffnen Sie das Transcript erst nach Ihrer Antwort."] },
     { id: block(prefix, "audio"), type: "audio", heading: "Hören · Originaler Übungstext", url: `/audio/german-b2/${prefix}.m4a`, caption: "Synthetisch gesprochener, eigens verfasster Übungstext. Hören Sie ohne Transcript und überprüfen Sie erst danach.", transcript: chapter.listening },
     { id: block(prefix, "listening-check"), type: "knowledge-check", heading: "Hören · Aussage prüfen", question: listeningCheck, completion: "pass" },
+    { id: block(prefix, "listening-notes"), type: "writing-practice", heading: "Hören · Gezielte Notizen",
+      prompt: `Hören Sie den vorigen Beitrag noch einmal ohne Transcript. ${workbook.listeningTask} Formulieren Sie aus den Stichpunkten eine kurze Zusammenfassung.`,
+      minWords: 25, maxWords: 80,
+      checklist: ["Aufgabenpunkte aus dem Hörbeitrag erfasst", "Wichtige Einschränkungen nicht ausgelassen", "Eigene Wörter statt Abschrift verwendet"],
+      modelAnswer: workbook.listeningModel, completion: "interact" },
     ...(advancedListening ? [
       { id: block(prefix, "advanced-listening-guide"), type: "text" as const, heading: `Hören · ${advancedListening.genre}`, paragraphs: ["Hören Sie zunächst für Thema und Haltungen. Hören Sie dann erneut und unterscheiden Sie zentrale Aussage, Details und mögliche Einschränkungen."] },
       { id: block(prefix, "advanced-audio"), type: "audio" as const, heading: advancedListening.title,
@@ -286,6 +318,15 @@ function coreLesson(chapter: B2Chapter, index: number): AcademyLesson {
     { id: block(prefix, "speaking"), type: "speaking-practice", heading: "Sprechen · Eigene Position", prompt: chapter.speaking,
       preparationSeconds: 60, targetSeconds: 120,
       checklist: ["Einleitung und roter Faden", "Mindestens zwei konkrete Punkte", "Ein Beispiel oder Einwand", "Verständlicher Abschluss"], modelAnswer: speakingModels[index], completion: "interact" },
+    { id: block(prefix, "pronunciation-audio"), type: "audio", heading: "Aussprache · Hörmodell",
+      url: `/audio/german-b2/${prefix}-pronunciation.m4a`,
+      caption: "Synthetisch gesprochenes Modell für Satzakzent und Sprechpausen.",
+      transcript: workbook.pronunciationLine },
+    { id: block(prefix, "pronunciation"), type: "speaking-practice", heading: `Aussprache · ${workbook.pronunciationFocus}`,
+      prompt: `Hören Sie das Hörmodell direkt zuvor und achten Sie auf Pausen und betonte Wörter. Sprechen Sie den Satz dann zweimal: zuerst langsam, dann in natürlichem Tempo. ${workbook.pronunciationLine}`,
+      preparationSeconds: 30, targetSeconds: 45,
+      checklist: ["Sinnabschnitte hörbar getrennt", "Wichtige Wörter betont", "Zweite Aufnahme flüssiger und verständlich"],
+      modelAnswer: workbook.pronunciationLine, completion: "interact" },
     { id: block(prefix, "interaction"), type: "process", heading: "Interaktion und Vermittlung", items: [
       { title: "Situation", body: chapter.interaction },
       { title: "Zuhören", body: "Fassen Sie die andere Position fair zusammen, bevor Sie antworten." },
@@ -307,11 +348,14 @@ function coreLesson(chapter: B2Chapter, index: number): AcademyLesson {
       { title: "Ausdrücken", body: "Können Sie zwei der neuen Verbindungen und die Sprachstruktur passend verwenden?" },
       { title: "Verbessern", body: "Lesen beziehungsweise hören Sie Ihre Produktion erneut und notieren Sie eine konkrete Verbesserung." },
     ] },
+    { id: block(prefix, "can-do"), type: "survey", heading: "Selbsteinschätzung · Ich kann …",
+      prompt: `${workbook.canDo} Wie sicher gelingt Ihnen das bereits? ${workbook.nextStep}`,
+      lowLabel: "noch üben", highLabel: "selbstständig", scale: 5, completion: "interact" },
   ];
   return { id: `${prefix}-lesson`, sectionId: section.id, section: section.title,
     slug: `${prefix}-${chapter.title.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/-$/, "")}`,
     title: `${index + 1}. ${chapter.title}`, summary: chapter.outcome,
-    durationMinutes: index < 13 ? 130 : 115, blocks: blocks.map((item) => ({ ...item, curriculum: {
+    durationMinutes: index < 13 ? 145 : 130, blocks: blocks.map((item) => ({ ...item, curriculum: {
       cefr: "B2", domain: chapterDomains[index], topic: chapter.title,
       skills: blockSkills(item), functions: [communicationFunctions[index]], grammar: [chapter.language],
     } })) };
@@ -433,12 +477,15 @@ function examLesson(unit: ExamUnit, index: number, track: "goethe" | "telc"): Ac
       modelAnswer: `Kurzbeispiel für Aufbau und Formulierungen; bearbeiten Sie in Ihrer eigenen Antwort alle geforderten Punkte.\n\n${unit.model}`, completion: "interact" },
     { id: block(prefix, "speak"), type: "speaking-practice", heading: "Mündlicher Transfer", prompt: `Erläutern Sie Ihre Antwort auf die Aufgabe „${unit.title}“ mündlich und reagieren Sie auf eine mögliche Rückfrage.`, preparationSeconds: 60, targetSeconds: 120,
       checklist: ["Aussage verständlich strukturieren", "Beispiel nennen", "Auf eine Rückfrage eingehen"], modelAnswer: unit.model, completion: "interact" },
+    { id: block(prefix, "exam-progress"), type: "survey", heading: "Prüfungsweg · Selbsteinschätzung",
+      prompt: `Wie sicher können Sie die Aufgabe „${unit.title}“ inzwischen selbstständig bearbeiten? Wenn Sie noch unsicher sind, wiederholen Sie die Strategie: ${unit.strategy}`,
+      lowLabel: "noch üben", highLabel: "prüfungsnah sicher", scale: 5, completion: "interact" },
     { id: block(prefix, "official"), type: "resources", heading: "Offizielles Prüfungsmaterial", items: [{ title: track === "goethe" ? "Goethe B2 · offizielle Übungen" : "telc Deutsch B2 · Übungstest und Format", description: "Format, Modellaufgaben und Lösungen direkt beim Prüfungsanbieter prüfen.", url: officialUrl }] },
   ];
   return { id: `${prefix}-lesson`, slug: prefix, sectionId: section.id, section: section.title, examTrack: track,
     title: unit.title, summary: unit.focus,
-    durationMinutes: index === (track === "goethe" ? 8 : 10) ? (track === "goethe" ? 225 : 190)
-      : index === (track === "goethe" ? 7 : 9) ? 95 : 65,
+    durationMinutes: index === (track === "goethe" ? 8 : 10) ? (track === "goethe" ? 230 : 195)
+      : index === (track === "goethe" ? 7 : 9) ? 100 : 70,
     blocks: blocks.map((item) => ({ ...item, curriculum: {
       cefr: "B2", domain: chapterDomains[unit.chapter], topic: chapter.title,
       skills: blockSkills(item), functions: [communicationFunctions[unit.chapter]],
