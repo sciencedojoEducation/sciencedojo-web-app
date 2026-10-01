@@ -1,0 +1,18 @@
+{
+  "id": "b1-fresh-discussion",
+  "model": "gemini-3.8-flash-tts",
+  "speakers": [
+    "Puck",
+    "Kore",
+    "Puck",
+    "Kore",
+    "Puck"
+  ],
+  "fingerprint": "f0daa32f330991be6b850ee32d647b86b6ec19a9a39d1d88ad186fb3f712d1ca",
+  "sha256": "a4d4ee44037a809190c3ebb928b7ed78cd64dec60692f0f662401730beb38174",
+  "seconds": 44.70491666666667,
+  "words": 110,
+  "wordsPerMinute": 148,
+  "bytes": 2149932,
+  "generatedAt": "2026-10-01T15:56:33.696Z"
+}

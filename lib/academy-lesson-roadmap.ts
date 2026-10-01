@@ -46,10 +46,17 @@ export function academyLessonJourneySteps(blocks: LessonBlock[], introLabel: str
     requiredIds: blocks.slice(phase.index, ordered[index + 1]?.index ?? blocks.length)
       .filter((block) => block.id && isAcademyBlockRequiredForCompletion(block)).map((block) => block.id!),
   }));
-  const entries = sections.length ? sections : phaseSections.length > 1 ? phaseSections : [];
+  // Some exam/review lessons have no numbered dividers or multiple phase markers.
+  // Their existing block headings still provide real topics for navigation.
+  const headingSections = blocks.flatMap((block, index) => "heading" in block && block.heading?.trim()
+    ? [{ id: academyBlockAnchor(block, index), label: block.heading, requiredIds: [] as string[] }] : []);
+  const entries = sections.length ? sections : phaseSections.length > 1 ? phaseSections : headingSections.length > 1 ? headingSections : [];
   if (!entries.length) return [];
   const starts = entries.map((section) => ({ ...section, start: blocks.findIndex((block, index) => academyBlockAnchor(block, index) === section.id) }));
   if (starts[0].start > 0) starts.unshift({ id: academyBlockAnchor(blocks[0], 0), label: introLabel, start: 0,
     requiredIds: blocks.slice(0, starts[0].start).filter((block) => block.id && isAcademyBlockRequiredForCompletion(block)).map((block) => block.id!) });
-  return starts.map((step, index) => ({ ...step, end: starts[index + 1]?.start ?? blocks.length }));
+  return starts.map((step, index) => ({ ...step, end: starts[index + 1]?.start ?? blocks.length,
+    requiredIds: blocks.slice(step.start, starts[index + 1]?.start ?? blocks.length)
+      .filter((block) => block.id && isAcademyBlockRequiredForCompletion(block)).map((block) => block.id!),
+  }));
 }

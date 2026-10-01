@@ -1,0 +1,14 @@
+{
+  "id": "b1-fresh-message",
+  "model": "gemini-3.8-flash-tts",
+  "speakers": [
+    "Kore"
+  ],
+  "fingerprint": "c9640f7311881aa48c5ceb7992c20fa21c1f08e8e52372dd7391751a29c9d286",
+  "sha256": "4a51afd98ab4ed5790df2243f68ef5d25e740ed458332cbf36febaf85d1bf299",
+  "seconds": 30.97475,
+  "words": 98,
+  "wordsPerMinute": 190,
+  "bytes": 1490884,
+  "generatedAt": "2026-10-01T15:37:48.684Z"
+}

@@ -2,7 +2,8 @@
 
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
+import { animateAcademyPanel, observeAcademyDisclosure } from "@/lib/academy-interaction-motion";
 import {
   ArrowLeft,
   ArrowRight,
@@ -109,8 +110,16 @@ export function AcademyTabs({
 }: { items: Item[] } & Tracking) {
   const [active, setActive] = useState(0);
   const baseId = useId();
+  const panel = useRef<HTMLDivElement>(null);
+  const previous = useRef(active);
+  useLayoutEffect(() => {
+    const direction = Math.sign(active - previous.current);
+    previous.current = active;
+    if (direction && panel.current) return animateAcademyPanel(panel.current, direction);
+  }, [active]);
+  const selectTab = (index: number) => { setActive(index); record(tracking); };
   return (
-    <div className="overflow-hidden rounded-2xl border border-[#C7D9E9] bg-white shadow-[0_4px_18px_rgba(23,58,99,0.05)]">
+    <div className="academy-tabs overflow-hidden rounded-2xl border border-[#C7D9E9] bg-white shadow-[0_4px_18px_rgba(23,58,99,0.05)]">
       <div
         role="tablist"
         aria-label={tracking.uiLanguage === "de" ? "Inhaltsbereiche" : "Content tabs"}
@@ -123,9 +132,16 @@ export function AcademyTabs({
             role="tab"
             aria-selected={active === index}
             aria-controls={`${baseId}-panel-${index}`}
-            onClick={() => {
-              setActive(index);
-              record(tracking);
+            tabIndex={active === index ? 0 : -1}
+            onClick={() => selectTab(index)}
+            onKeyDown={(event) => {
+              const next = event.key === "ArrowRight" ? (index + 1) % items.length
+                : event.key === "ArrowLeft" ? (index + items.length - 1) % items.length
+                : event.key === "Home" ? 0 : event.key === "End" ? items.length - 1 : null;
+              if (next === null) return;
+              event.preventDefault();
+              selectTab(next);
+              document.getElementById(`${baseId}-tab-${next}`)?.focus({ preventScroll: true });
             }}
             className={`min-h-12 shrink-0 rounded-xl border px-5 text-base font-bold outline-none transition-colors focus-visible:ring-2 focus-visible:ring-[var(--academy-accent)] focus-visible:ring-offset-2 motion-reduce:transition-none ${active === index ? "border-[var(--academy-accent)] bg-[var(--academy-accent)] text-white shadow-sm" : "border-transparent text-[#344B60] hover:border-[#C7D9E9] hover:bg-white"}`}
           >
@@ -133,13 +149,22 @@ export function AcademyTabs({
           </button>
         ))}
       </div>
-      <div
-        id={`${baseId}-panel-${active}`}
-        role="tabpanel"
-        aria-labelledby={`${baseId}-tab-${active}`}
-        className="academy-reading-copy min-h-28 p-6 font-[family-name:var(--font-academy-body)] text-[17px] leading-8 text-[#27313B] sm:p-8"
-      >
-        {items[active]?.body}
+      <div className="grid">
+        {items.map((item, index) => (
+          <div
+            key={item.id || index}
+            ref={active === index ? panel : undefined}
+            id={`${baseId}-panel-${index}`}
+            role="tabpanel"
+            tabIndex={active === index ? 0 : -1}
+            aria-hidden={active !== index}
+            inert={active !== index}
+            aria-labelledby={`${baseId}-tab-${index}`}
+            className={`academy-reading-copy min-h-28 col-start-1 row-start-1 p-6 font-[family-name:var(--font-academy-body)] text-[17px] leading-8 text-[#27313B] sm:p-8 ${active !== index ? "invisible" : ""}`}
+          >
+            {item.body}
+          </div>
+        ))}
       </div>
     </div>
   );
@@ -149,8 +174,13 @@ export function AcademyAccordion({
   items,
   ...tracking
 }: { items: Item[] } & Tracking) {
+  const container = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const cleanups = Array.from(container.current?.querySelectorAll("details") || []).map(observeAcademyDisclosure);
+    return () => cleanups.forEach((cleanup) => cleanup());
+  }, [items]);
   return (
-    <div className="space-y-3">
+    <div ref={container} className="academy-accordion space-y-3">
       {items.map((item, index) => (
         <details
           key={item.id || item.title}
@@ -189,7 +219,8 @@ export function AcademyFlashcards({
   const [flipped, setFlipped] = useState<Set<number>>(new Set());
   return (
     <div
-      className={`grid gap-5 ${variant === "stack" ? "mx-auto max-w-2xl grid-cols-1" : "sm:grid-cols-2"}`}
+      className={`academy-flashcards grid gap-5 ${variant === "stack" ? "mx-auto max-w-2xl grid-cols-1" : "sm:grid-cols-2"}`}
+      data-card-layout={variant}
     >
       {items.map((item, index) => {
         if (variant === "picture-grid")
@@ -219,12 +250,12 @@ export function AcademyFlashcards({
               });
               record(tracking);
             }}
-            className="group relative min-h-80 [perspective:1000px] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--academy-accent)] focus-visible:ring-offset-4"
+            className="academy-flashcard group relative min-h-80 [perspective:1000px] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--academy-accent)] focus-visible:ring-offset-4"
           >
             <span
-              className={`absolute inset-0 block transition-transform duration-500 [transform-style:preserve-3d] motion-reduce:transition-none ${open ? "[transform:rotateY(180deg)]" : ""}`}
+              className={`relative grid [min-height:inherit] transition-transform duration-500 [transform-style:preserve-3d] motion-reduce:transition-none ${open ? "[transform:rotateY(180deg)]" : ""}`}
             >
-              <span className="absolute inset-0 flex flex-col overflow-hidden border border-[#DEDFE1] bg-white text-left shadow-[0_10px_30px_rgba(20,35,60,0.08)] [backface-visibility:hidden]">
+              <span className="col-start-1 row-start-1 flex min-w-0 flex-col overflow-hidden border border-[#DEDFE1] bg-white text-left shadow-[0_10px_30px_rgba(20,35,60,0.08)] [backface-visibility:hidden]">
                 {item.src ? (
                   <span className="mt-5 block">
                     <FlashcardVisual item={item} />
@@ -242,7 +273,7 @@ export function AcademyFlashcards({
                   </span>
                 </span>
               </span>
-              <span className="absolute inset-0 flex flex-col justify-between border border-[var(--academy-accent)] bg-[var(--academy-accent-ink)] p-6 text-left text-white shadow-[0_10px_30px_rgba(20,35,60,0.14)] [backface-visibility:hidden] [transform:rotateY(180deg)]">
+              <span className="col-start-1 row-start-1 flex min-w-0 flex-col justify-between gap-4 border border-[var(--academy-accent)] bg-[var(--academy-accent-ink)] p-6 text-left text-white shadow-[0_10px_30px_rgba(20,35,60,0.14)] [backface-visibility:hidden] [transform:rotateY(180deg)]">
                 <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-white/65">
                   Laut sprechen
                 </span>
@@ -274,12 +305,12 @@ export function AcademyProcess({
     if (next > 0) record(tracking);
   };
   return (
-    <div className="overflow-hidden border border-[#DEDFE1] bg-[#F6F7F8]">
+    <div className="academy-process overflow-hidden border border-[#DEDFE1] bg-[#F6F7F8]">
       <div
-        className="flex transition-transform duration-500 ease-out motion-reduce:transition-none"
+        className="flex transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none"
         style={{ transform: `translateX(-${step * 100}%)` }}
       >
-        <div className="flex min-h-72 w-full shrink-0 flex-col items-center justify-center bg-white p-8 text-center sm:p-12">
+        <div inert={step !== 0} aria-hidden={step !== 0} className="flex min-h-72 w-full shrink-0 flex-col items-center justify-center bg-white p-8 text-center sm:p-12">
           <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[var(--academy-accent)]">
             {german ? "Lernschritte" : "Guided process"}
           </p>
@@ -300,6 +331,8 @@ export function AcademyProcess({
         {items.map((item, index) => (
           <div
             key={item.id || index}
+            inert={step !== index + 1}
+            aria-hidden={step !== index + 1}
             className="flex min-h-72 w-full shrink-0 flex-col justify-center bg-white p-8 sm:p-12"
           >
             <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[var(--academy-accent)]">
@@ -324,7 +357,7 @@ export function AcademyProcess({
         >
           <ArrowLeft size={18} />
         </button>
-        <div className="flex items-center gap-2" aria-label={german ? `Position ${step + 1} von ${total}` : `Process position ${step + 1} of ${total}`}>
+        <div className="academy-process-pagination flex min-w-0 flex-1 flex-wrap justify-center gap-1" aria-label={german ? `Position ${step + 1} von ${total}` : `Process position ${step + 1} of ${total}`}>
           {Array.from({ length: total }, (_, index) => (
             <button
               key={index}
@@ -334,10 +367,11 @@ export function AcademyProcess({
                 ? german ? "Einführung" : "Process introduction"
                 : german ? `Schritt ${index}` : `Process step ${index}`}
               aria-current={step === index ? "step" : undefined}
-              className={`h-2.5 rounded-full transition-all motion-reduce:transition-none ${step === index ? "w-7 bg-[var(--academy-accent)]" : "w-2.5 bg-[#CED1D5]"}`}
-            />
+              className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full focus-visible:outline-2 focus-visible:outline-[var(--academy-accent)]"
+            ><span aria-hidden="true" className={`h-2.5 rounded-full transition-all motion-reduce:transition-none ${step === index ? "w-7 bg-[var(--academy-accent)]" : "w-2.5 bg-[#CED1D5]"}`} /></button>
           ))}
         </div>
+        <span className="academy-process-count hidden text-sm font-semibold text-[#435164]" aria-live="polite">{step + 1} / {total}</span>
         <button
           type="button"
           onClick={() => goTo(step + 1)}
@@ -487,7 +521,7 @@ export function AcademySurvey({
   const [submitted, setSubmitted] = useState(false);
   return (
     <div
-      className={`border border-[#DEDFE1] bg-white ${variant === "compact" ? "p-5 sm:p-6" : "p-6 sm:p-9"}`}
+      className={`academy-rating-card border border-[#DEDFE1] bg-white ${variant === "compact" ? "p-5 sm:p-6" : "p-6 sm:p-9"}`}
     >
       <p className="text-xl font-bold text-[#252629]">{prompt}</p>
       <fieldset className="mt-7">
@@ -547,6 +581,10 @@ export function AcademyKnowledgeCheck({
   const [saveError, setSaveError] = useState("");
   const [progressSaved, setProgressSaved] = useState(false);
   const [pending, setPending] = useState(false);
+  const feedback = useRef<HTMLDivElement>(null);
+  useLayoutEffect(() => {
+    if (submitted && feedback.current) return animateAcademyPanel(feedback.current);
+  }, [submitted]);
   const router = useRouter();
   const type = question.type || "single-choice";
   const correct =
@@ -603,7 +641,7 @@ export function AcademyKnowledgeCheck({
       </div>
     );
   return (
-    <div className="overflow-hidden rounded-2xl border border-[#D9DEC8] bg-linear-to-br from-[#FFF9E7] via-[#FFFCF3] to-white p-5 shadow-[0_4px_18px_rgba(89,69,31,0.05)] sm:p-7">
+    <div className="academy-knowledge-card overflow-hidden rounded-2xl border border-[#D9DEC8] bg-linear-to-br from-[#FFF9E7] via-[#FFFCF3] to-white p-5 shadow-[0_4px_18px_rgba(89,69,31,0.05)] sm:p-7">
       <div className="mb-4 flex items-center gap-2 text-sm font-bold text-[#59451F]">
         <CircleHelp size={20} aria-hidden="true" /> {german ? "Kurz üben" : "Quick practice"}
       </div>
@@ -667,6 +705,7 @@ export function AcademyKnowledgeCheck({
       {saveError ? <p role="alert" className="mt-3 text-sm font-semibold text-red-700">{saveError}</p> : null}
       {submitted ? (
         <div
+          ref={feedback}
           role="status"
           className={`mt-5 rounded-xl border-l-4 p-4 font-[family-name:var(--font-academy-body)] text-base ${correct ? "border-emerald-600 bg-emerald-50 text-emerald-900" : "border-amber-600 bg-amber-50 text-amber-950"}`}
         >

@@ -54,7 +54,8 @@ export default async function DashboardLayout({
     pathname === "/dashboard/internal" ||
     pathname.startsWith("/dashboard/internal/") ||
     pathname.startsWith("/dashboard/projects/") ||
-    pathname.startsWith("/dashboard/messages");
+    pathname.startsWith("/dashboard/messages") ||
+    pathname === "/dashboard/academy" || pathname.startsWith("/dashboard/academy/");
 
   if (activeInternalMember && user) {
     role = "internal";
@@ -75,7 +76,8 @@ export default async function DashboardLayout({
 
   const isUserAllowedRoute =
     pathname === "/dashboard/user" ||
-    pathname.startsWith("/dashboard/support");
+    pathname.startsWith("/dashboard/support") ||
+    pathname === "/dashboard/academy" || pathname.startsWith("/dashboard/academy/");
 
   if (role === "user" && pathname.startsWith("/dashboard") && !isUserAllowedRoute) {
     redirect("/dashboard/user");

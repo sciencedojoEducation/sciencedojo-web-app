@@ -1,3 +1,4 @@
+import { createPublicClient } from "@/utils/supabase/public";
 import type { MetadataRoute } from "next";
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { learningArticles, learningHubUrl } from "@/lib/learning-hub";
@@ -12,7 +13,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     getPublishedExamUpdates(100),
   ]);
 
+  const pilot = await createPublicClient().rpc("course_pilot_catalog");
+  const pilotCourses = !pilot.error && Array.isArray(pilot.data) ? pilot.data as { key: string }[] : [];
+
   return [
+    ...(pilotCourses.length ? ["/courses", ...pilotCourses.map(c => `/courses/${c.key}`)].map(path => ({ url: `${siteUrl}${path}`, lastModified: now, changeFrequency: "weekly" as const, priority: 0.85 })) : []),
     {
       url: siteUrl,
       lastModified: now,

@@ -1,0 +1,16 @@
+{
+  "id": "a2-mastery-trip",
+  "model": "gemini-3.8-flash-lite-tts",
+  "speakers": [
+    "de-de-assistant-11"
+  ],
+  "fingerprint": "e245320ea9c82712e892b41210e325e46b95c3c7d518962a774d7b088e14d8f5",
+  "sha256": "8379a929d59a1b0d3acd858786699b354ef13f558ef001c286fd8cbc5ef8ffc7",
+  "sourceSeconds": 19.179291666666668,
+  "tempo": 1,
+  "seconds": 19.179291666666668,
+  "words": 47,
+  "wordsPerMinute": 147,
+  "bytes": 250746,
+  "generatedAt": "2026-10-01T14:42:54.771Z"
+}

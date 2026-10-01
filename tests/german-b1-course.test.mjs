@@ -76,7 +76,7 @@ test("all B1 audio exists, has transcripts and uses German multi-speaker exam re
   const blocks = germanB1Course.lessons.flatMap((lesson) => lesson.blocks).filter((block) => block.type === "audio");
   assert.ok(blocks.every((block) => block.transcript?.length > 150));
   const urls = new Set([...blocks.map((block) => block.url), ...germanB1Course.quiz.flatMap((question) => question.audioUrl ? [question.audioUrl] : [])]);
-  assert.equal(urls.size, 20);
+  assert.equal(urls.size, 24);
   for (const url of urls) {
     const path = resolve(import.meta.dirname, "../public", url.slice(1));
     assert.ok(existsSync(path), `${url} missing`);

@@ -1,3 +1,4 @@
+import { formatCourseDuration } from "@/lib/formatTime";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { ArrowLeft, ArrowRight, CheckCircle2, Clock } from "lucide-react";
@@ -66,8 +67,7 @@ export default async function TutorAcademyLessonPage({
             </span>
             <span aria-hidden="true">·</span>
             <span className="inline-flex items-center gap-1.5">
-              <Clock size={14} aria-hidden="true" /> {lesson.durationMinutes}{" "}
-              min
+              <Clock size={14} aria-hidden="true" /> {formatCourseDuration(lesson.durationMinutes)}
             </span>
           </div>
           <h1 className="mt-5 text-[32px] font-bold leading-[1.2] tracking-[-0.025em] text-[#101010] sm:text-[40px] sm:leading-[48px]">

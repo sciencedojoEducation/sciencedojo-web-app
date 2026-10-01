@@ -15,12 +15,18 @@ import { germanA1AudioManifest } from "../lib/german-a1-course.ts";
 import { germanA1SpeakerProfiles } from "../lib/german-a1-audio.ts";
 import { germanA1RestructuredCourse } from "../lib/german-a1-restructured-course.ts";
 import { germanA1FinalListening } from "../lib/german-a1-final-listening.ts";
+import { germanA1PronunciationManifest } from "../lib/german-a1-pronunciation.ts";
+import { germanA1FullMockAudioManifest } from "../lib/german-a1-full-mock.ts";
 
 const root = resolve(import.meta.dirname, "..");
 const outputDirectory = join(root, "public", "audio", "german-a1");
 const restructured = process.argv.includes("--restructured");
 const finalAssessment = process.argv.includes("--final-assessment");
-const manifest = finalAssessment
+const pronunciation = process.argv.includes("--pronunciation");
+const fullMock = process.argv.includes("--full-mock");
+if ([pronunciation, finalAssessment, restructured, fullMock].filter(Boolean).length > 1)
+  throw new Error("Choose one audio manifest at a time.");
+const manifest = fullMock ? germanA1FullMockAudioManifest : pronunciation ? germanA1PronunciationManifest : finalAssessment
   ? germanA1FinalListening.map((item, index) => ({
       lessonId: "final-assessment",
       slug: `final-hoeren-${String(index + 1).padStart(2, "0")}`,
@@ -51,8 +57,11 @@ const limit = limitArgument ? Number(limitArgument.split("=")[1]) : manifest.len
 if (!new Set(["gemini", "openai", "system"]).has(engine))
   throw new Error(`Unsupported audio engine: ${engine}`);
 const openai = engine === "openai" ? new OpenAI() : null;
-const geminiApiKey = process.env.GEMINI_API_KEY;
-if (engine === "gemini" && !geminiApiKey) throw new Error("GEMINI_API_KEY is required.");
+const geminiKeyEnvironment = process.argv.find((argument) => argument.startsWith("--gemini-key-env="))?.split("=")[1] || "GEMINI_API_KEY";
+if (!/^GEMINI_API_KEY\d*$/.test(geminiKeyEnvironment)) throw new Error("Invalid Gemini key environment variable name.");
+const geminiApiKey = process.env[geminiKeyEnvironment];
+if (engine === "gemini" && !geminiApiKey) throw new Error(`${geminiKeyEnvironment} is required.`);
+const geminiAttempts = process.argv.includes("--single-attempt") ? 1 : 8;
 mkdirSync(outputDirectory, { recursive: true });
 
 function run(command, args) {
@@ -119,7 +128,9 @@ function performanceInstructions(profile, isReview) {
     "Read only the supplied German text, without speaker labels or extra words.",
     "Speak native Standard German as a real adult in a friendly, everyday conversation at a language-school reception.",
     profile.performance,
-    "Use warm, natural intonation and connected phrases at an unhurried beginner-friendly pace. Never sound robotic or artificially stretch syllables.",
+    isReview
+      ? "Use warm, natural intonation at normal conversational speed, with clear phrasing. Never sound robotic or artificially stretch syllables."
+      : "Use warm, natural intonation and connected phrases at an unhurried beginner-friendly pace. Never sound robotic or artificially stretch syllables.",
     "Pronounce spelled letters with their German alphabet names. Read telephone digits individually, with brief natural pauses between the written groups.",
     "Keep a consistent voice across turns. No music, sound effects, or theatrical acting.",
   ].join(" ");
@@ -168,7 +179,7 @@ async function requestGeminiSpeech(parts, speakerProfiles) {
     },
   };
   let response;
-  for (let attempt = 1; attempt <= 8; attempt += 1) {
+  for (let attempt = 1; attempt <= geminiAttempts; attempt += 1) {
     response = await fetch(
       "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash-tts:generateContent",
       {
@@ -184,11 +195,11 @@ async function requestGeminiSpeech(parts, speakerProfiles) {
     const details = await response.text();
     if (details.includes("GenerateRequestsPerDay"))
       throw new Error(`Gemini daily speech quota is exhausted. Resume this command after the quota resets.\n${details}`);
-    if (response.status !== 429 || attempt === 8)
+    if (response.status !== 429 || attempt === geminiAttempts)
       throw new Error(`Gemini speech generation failed (${response.status}): ${details}`);
     const retrySeconds = Number(details.match(/retry(?:Delay| in)[^0-9]*(\d+)/i)?.[1] || 40);
     const retryMilliseconds = Math.min(55, Math.max(5, retrySeconds + 2)) * 1000;
-    console.log(`  Rate limit reached; retrying in ${retryMilliseconds / 1000} seconds (attempt ${attempt + 1}/8).`);
+    console.log(`  Rate limit reached; retrying in ${retryMilliseconds / 1000} seconds (attempt ${attempt + 1}/${geminiAttempts}).`);
     await new Promise((resolvePromise) => setTimeout(resolvePromise, retryMilliseconds));
   }
   if (!response?.ok) throw new Error("Gemini speech generation failed without a response.");
@@ -248,7 +259,7 @@ for (const [relativeIndex, item] of manifest.slice(start, start + limit).entries
   const outputPath = outputSuffix ? item.outputPath.replace(/\.m4a$/, `-${outputSuffix}.m4a`) : item.outputPath;
   const output = join(root, "public", outputPath.replace(/^\//, ""));
   if (!force && existsSync(output) && statSync(output).size > 0) continue;
-  const isReview = finalAssessment || index >= 32;
+  const isReview = fullMock || finalAssessment || index >= 32 || (pronunciation && index === 14);
   const rate = isReview ? "165" : "145";
   const lines = item.transcript.split("\n").filter(Boolean).map((line) => {
     const match = line.match(/^([^:]+):\s*(.+)$/);
@@ -289,4 +300,9 @@ for (const [relativeIndex, item] of manifest.slice(start, start + limit).entries
   }
 }
 
-console.log(`German A1 ${engine} audio ready: ${manifest.length} tracks in ${outputDirectory}`);
+const readyCount = manifest.filter((item) => {
+  const path = outputSuffix ? item.outputPath.replace(/\.m4a$/, `-${outputSuffix}.m4a`) : item.outputPath;
+  const file = join(root, "public", path.replace(/^\//, ""));
+  return existsSync(file) && statSync(file).size > 0;
+}).length;
+console.log(`German A1 ${engine} audio ready: ${readyCount}/${manifest.length} tracks in ${outputDirectory}`);

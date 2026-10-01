@@ -19,6 +19,7 @@ export const FEATURE_FLAG_CATEGORIES = [
 export type FeatureFlagCategory = (typeof FEATURE_FLAG_CATEGORIES)[number];
 
 export const FEATURE_FLAG_DEFINITIONS = [
+  { key: "course_pilot_enabled", label: "Public course pilot", description: "Public courses, ten free places, and learner community.", category: "Growth / Beta", defaultEnabled: false },
   {
     key: "tutor_marketplace_enabled",
     label: "Tutor marketplace",

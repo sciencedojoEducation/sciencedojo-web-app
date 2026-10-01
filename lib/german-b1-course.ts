@@ -1,8 +1,10 @@
+import { b1AudioUrl } from "./german-b1-audio.ts";
 import { migrateAcademyCourse } from "./academy-schema.ts";
 import { germanB1Chapters, germanB1Sources, type B1Chapter, type B1Question } from "./german-b1-curriculum.ts";
 import { b1ExamReading, b1ExamReadingQuestions, b1ExamListening, b1LanguageElements, b1ExamWriting } from "./german-b1-exam-practice.ts";
 import { b1ChapterMastery } from "./german-b1-mastery.ts";
 import { styleGermanB1Course } from "./german-b1-visual-design.ts";
+import { upgradeGermanB1Resources } from "./german-b1-resource-upgrade.ts";
 import type { AcademyCourse, AcademyLesson, LessonBlock, QuizQuestion } from "./tutor-academy.ts";
 
 export const GERMAN_B1_COURSE_KEY = "german-b1-complete";
@@ -63,7 +65,7 @@ function coreLesson(chapter: B1Chapter, index: number): AcademyLesson {
   if (!index) blocks.push(...diagnostic(chapter));
   add({ id: `${id}-words`, type: "flashcards", heading: "2 · Wortschatz im Kontext", completion: "interact", items: chapter.vocabulary.map(([title, meaning, example], i) => ({ id: `${id}-word-${i}`, title, body: `${meaning}. ${example} Bilden Sie danach einen eigenen Satz.` })) }, ["vocabulary"]);
   add({ id: `${id}-audio-guide`, type: "text", heading: "3 · Hören: Überblick vor Details", paragraphs: ["Hören Sie zunächst ohne Transcript: Wer spricht, worum geht es und was soll die Person tun? Hören Sie danach erneut für Zahlen, Gründe und Änderungen. Öffnen Sie das Transcript erst zur Kontrolle."] }, ["listening"]);
-  add({ id: `${id}-audio`, type: "audio", heading: "Hören · Nachricht aus dem Alltag", url: `/audio/german-b1/${id}.m4a`, caption: "Originaler ScienceDojo-Übungstext mit synthetischer deutscher Stimme. Training, keine offizielle Prüfungsaufnahme.", transcript: chapter.listening }, ["listening"]);
+  add({ id: `${id}-audio`, type: "audio", heading: "Hören · Nachricht aus dem Alltag", url: b1AudioUrl(id), caption: "Originaler ScienceDojo-Übungstext mit synthetischer deutscher Stimme. Training, keine offizielle Prüfungsaufnahme.", transcript: chapter.listening }, ["listening"]);
   add(check(`${id}-listening-check`, "Hören · Informationen unterscheiden", chapter.listeningCheck), ["listening"]);
   add({ id: `${id}-reading`, type: "text", heading: "4 · Lesen: Hauptaussage und Beleg", paragraphs: ["Lesen Sie zuerst für das Thema. Markieren Sie beim zweiten Lesen die Textstelle, die Ihre Antwort belegt.", chapter.reading] }, ["reading"]);
   add(check(`${id}-reading-check`, "Lesen · den passenden Beleg finden", chapter.readingCheck), ["reading"]);
@@ -117,7 +119,7 @@ function examLesson(track: Track, index: number): AcademyLesson {
   const listening = () => {
     text("listening-guide", "Hörstrategie und Aufgabenformate", track === "goethe" ? ["Teil 1: kurze Texte zweimal, Richtig/Falsch und Auswahl. Teil 2: ein längerer Beitrag einmal, Auswahl. Teil 3: Gespräch einmal, Richtig/Falsch. Teil 4: Diskussion zweimal, Aussagen den sprechenden Personen zuordnen.", "Unsere kurzen Aufnahmen trainieren diese Fertigkeiten. Sie bilden keine vollständige offizielle Hörprüfung ab. Spielen Sie Teil 1 und 4 zweimal, Teil 2 und 3 einmal; benutzen Sie das Transcript erst zur Analyse."] : ["Teil 1: globales Verstehen kurzer Beiträge. Teil 2: Detailverstehen eines längeren Gesprächs. Teil 3: selektives Verstehen von Ansagen und Nachrichten. Die offiziellen Aufnahmen und Anweisungen legen die Wiederholungen fest.", "Im Training hören Sie zunächst einmal für die Hauptaussage und danach bei Bedarf für Details. Für die spätere Prüfungssimulation folgen Sie ausschließlich den offiziellen Abspielanweisungen."], ["listening"]);
     b1ExamListening.forEach((recording, i) => {
-      add({ id: `${id}-audio-${i}`, type: "audio", heading: recording.title, url: `/audio/german-b1/${recording.id}.m4a`, caption: "Originales Training mit synthetischen deutschen Stimmen. Transcript erst nach dem Antworten öffnen.", transcript: recording.segments.map((part) => part.text).join("\n\n") }, ["listening"]);
+      add({ id: `${id}-audio-${i}`, type: "audio", heading: recording.title, url: b1AudioUrl(recording.id), caption: "Originales Training mit synthetischen deutschen Stimmen. Transcript erst nach dem Antworten öffnen.", transcript: recording.segments.map((part) => part.text).join("\n\n") }, ["listening"]);
       recording.questions.forEach((question, j) => add(check(`${id}-listen-${i}-${j}`, "Hören · Hauptaussage und Details", question), ["listening"]));
     });
   };
@@ -175,11 +177,11 @@ const goethe = trackNames.goethe.map((_, index) => examLesson("goethe", index));
 const telc = trackNames.telc.map((_, index) => examLesson("telc", index));
 const quiz: QuizQuestion[] = [
   ...germanB1Chapters.slice(0, 6).map((chapter, i) => b1Choice(`b1-final-read-${number(i)}`, { ...chapter.readingCheck, prompt: `${chapter.reading}\n\n${chapter.readingCheck.prompt}` })),
-  ...germanB1Chapters.slice(6, 12).map((chapter, i) => ({ ...b1Choice(`b1-final-listen-${number(i)}`, chapter.listeningCheck), audioUrl: `/audio/german-b1/de-b1-${number(i + 6)}.m4a`, audioTranscript: chapter.listening })),
+  ...germanB1Chapters.slice(6, 12).map((chapter, i) => ({ ...b1Choice(`b1-final-listen-${number(i)}`, chapter.listeningCheck), audioUrl: b1AudioUrl(`de-b1-${number(i + 6)}`), audioTranscript: chapter.listening })),
   ...germanB1Chapters.slice(10, 16).map((chapter, i) => b1Choice(`b1-final-language-${number(i)}`, chapter.grammarCheck)),
 ];
 
-export const germanB1Course: AcademyCourse = migrateAcademyCourse(styleGermanB1Course({
+export const germanB1Course: AcademyCourse = migrateAcademyCourse(styleGermanB1Course(upgradeGermanB1Resources({
   key: GERMAN_B1_COURSE_KEY, title: "Deutsch B1 komplett: selbstständig im Alltag, sicher zur Prüfung", shortTitle: "Deutsch B1 komplett",
   description: "16 thematische Kapitel von der A2-Brücke bis zur B1-Mastery: Wortschatz, Hören, Lesen, Grammatik, Konnektoren, Redemittel, Schreiben, Sprechen und echte Alltagsszenarien. Nach dem gemeinsamen Abschlusstest wählen Sie Goethe-Zertifikat B1 oder telc Deutsch B1 mit eigenem Training, Mini-Mock, Fehleranalyse und offizieller Prüfungschallenge. Voraussetzung: Deutsch auf A2-Niveau.",
   estimatedMinutes: core.reduce((sum, lesson) => sum + lesson.durationMinutes, 0) + Math.min(...[goethe, telc].map((lessons) => lessons.reduce((sum, lesson) => sum + lesson.durationMinutes, 0))),
@@ -188,4 +190,4 @@ export const germanB1Course: AcademyCourse = migrateAcademyCourse(styleGermanB1C
   theme: { preset: "journey", accent: "blue-citrus", typography: "friendly-sans", density: "comfortable", coverStyle: "minimal", lessonHeaderStyle: "editorial" },
   rules: { navigation: "linear", lessonCompletion: "required-blocks", requireFinalAssessment: true, attemptLimit: null, feedbackTiming: "after-submit" },
   lessons: [...core, ...goethe, ...telc], quiz,
-}));
+})));

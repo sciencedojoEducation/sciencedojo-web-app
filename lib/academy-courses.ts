@@ -127,6 +127,9 @@ export async function getPublishedAcademyCourse(
   courseKey: string,
 ): Promise<AcademyCourse | null> {
   const supabase = await createClient();
+  const pilot = await supabase.rpc("course_pilot_access", { target_key: courseKey });
+  if (pilot.error && !["PGRST202", "42883"].includes(pilot.error.code)) throw new Error("Unable to check course access");
+  if (pilot.data?.managed && !pilot.data.allowed) return null;
   const { data: courseRow, error } = await supabase
     .from("academy_courses")
     .select(
@@ -203,16 +206,24 @@ export async function getEligibleAcademyCourses(): Promise<AcademyCourse[]> {
   const courses = await Promise.all(
     (data || []).map((row) => getPublishedAcademyCourse(row.course_key)),
   );
+  const enrolled = user ? await supabase.from("course_pilot_memberships").select("course_id, academy_courses(course_key)").eq("user_id", user.id).eq("status", "enrolled") : null;
+  if (enrolled?.error && !["PGRST205", "42P01"].includes(enrolled.error.code)) throw new Error("Unable to load enrollments");
+  const enrolledKeys = new Set((enrolled?.data || []).flatMap((row) => {
+    const linked = row.academy_courses as unknown as { course_key: string } | null;
+    return linked ? [linked.course_key] : [];
+  }));
   const available = courses
     .filter((course): course is AcademyCourse => Boolean(course))
     .filter((course) =>
-      (course.audienceRoles || []).some((role) => audienceRoles.has(role)),
+      enrolledKeys.has(course.key) || (course.audienceRoles || []).some((role) => audienceRoles.has(role)),
     );
   if (
     isTutor &&
     !available.some((course) => course.key === TUTOR_ACADEMY_COURSE_KEY)
-  )
-    available.unshift(tutorAcademyCourse);
+  ) {
+    const foundations = await getPublishedAcademyCourse(TUTOR_ACADEMY_COURSE_KEY);
+    if (foundations) available.unshift(foundations);
+  }
   return available;
 }
 

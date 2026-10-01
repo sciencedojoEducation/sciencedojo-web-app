@@ -1,0 +1,14 @@
+{
+  "id": "de-b1-08",
+  "model": "gemini-3.8-flash-tts",
+  "speakers": [
+    "Puck"
+  ],
+  "fingerprint": "93ac69d4986df6b69b63c2fa8adc0b76b836fed7fcf4ac6f64470d4995f669f7",
+  "sha256": "ffdaa99adbaeae727e5a0b15363ac61f7497c082d962b4ad26839ba1939792b9",
+  "seconds": 33.55970833333333,
+  "words": 99,
+  "wordsPerMinute": 177,
+  "bytes": 1614962,
+  "generatedAt": "2026-10-01T15:26:52.040Z"
+}

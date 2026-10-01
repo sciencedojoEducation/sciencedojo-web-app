@@ -1,0 +1,16 @@
+{
+  "id": "a2-mastery-home",
+  "model": "gemini-3.8-flash-lite-tts",
+  "speakers": [
+    "de-de-assistant-11"
+  ],
+  "fingerprint": "1266c1bd6ccda8e0e935450d5a848eb78a057a9e0cd4c0437690ff930edb646e",
+  "sha256": "513aa6ca85a397dcc38cf3b66a5f55ad21575f4b25771cb7d52c380cdcb421f0",
+  "sourceSeconds": 15.871333333333334,
+  "tempo": 0.8723605200945626,
+  "seconds": 18.193548387096776,
+  "words": 47,
+  "wordsPerMinute": 155,
+  "bytes": 237034,
+  "generatedAt": "2026-10-01T14:42:32.738Z"
+}

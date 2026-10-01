@@ -1,3 +1,4 @@
+import { formatCourseDuration } from "@/lib/formatTime";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -82,6 +83,7 @@ export default async function AdminAcademyPage({
           </div>
           <div className="flex flex-wrap gap-2">
             <AcademyWelcomeGuide />
+            <Link href="/dashboard/admin/course-pilot" className="inline-flex min-h-11 items-center rounded-full border px-5 text-xs font-semibold">Public course pilot</Link>
             <Link
               href="/dashboard/admin/academy/new"
               className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full bg-[#18212B] px-5 text-xs font-semibold text-white hover:bg-primary"
@@ -150,7 +152,7 @@ export default async function AdminAcademyPage({
                     <h2 className="academy-studio-heading text-[24px] leading-tight text-[#18212B]">{course.title}</h2>
                     <p className="academy-editorial-copy mt-2 line-clamp-2 min-h-12 text-[14px] leading-6 text-secondary/55">{course.draft.description}</p>
                     <div className="mt-4 flex flex-wrap gap-x-4 gap-y-2 border-t border-secondary/8 pt-4 text-[11px] font-semibold text-secondary/45">
-                      <span className="inline-flex items-center gap-1.5"><Clock3 size={13} />{course.draft.estimatedMinutes} min</span>
+                      <span className="inline-flex items-center gap-1.5"><Clock3 size={13} />{formatCourseDuration(course.draft.estimatedMinutes)}</span>
                       <span className="inline-flex items-center gap-1.5"><Layers3 size={13} />{course.draft.sections?.length || 1} sections</span>
                       <span className="inline-flex items-center gap-1.5"><Users size={13} />{course.audienceRoles.length} audiences</span>
                     </div>

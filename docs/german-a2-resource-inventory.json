@@ -1,0 +1,86 @@
+[
+  {
+    "id": 1,
+    "filename": "A 2 sprechen Teil 3 Beispiel 2.pdf",
+    "sha256": "4352b2f7a970d4a567cf468fa37463ba1e3f3cee0724f1300a22252d0241da69",
+    "pages": 2
+  },
+  {
+    "id": 2,
+    "filename": "A 2 sprechen Teil 3 Beispiel.pdf",
+    "sha256": "4352b2f7a970d4a567cf468fa37463ba1e3f3cee0724f1300a22252d0241da69",
+    "pages": 2
+  },
+  {
+    "id": 3,
+    "filename": "A2 recall I July 2025 2.pdf",
+    "sha256": "6a4293e2e7270079ca8f3ea3c1c5fcfb51e998db023a938ff76ff95614baf91b",
+    "pages": 3
+  },
+  {
+    "id": 4,
+    "filename": "A2 recall I July 2025.pdf",
+    "sha256": "462c254a6b2529acbd04c50198b4bd99a426082a1bf6dc01cad14c5a502af5bc",
+    "pages": 1
+  },
+  {
+    "id": 5,
+    "filename": "A2 Redemittel Sprechen Teil 3.pdf",
+    "sha256": "f3bf4df3a9b9c6e4dfcdc5c1ffda8ee851ce93bc2852c40d45a591d504b06b99",
+    "pages": 9
+  },
+  {
+    "id": 6,
+    "filename": "A2 sprechen Teil 2 - wichtige Wörter.pdf",
+    "sha256": "c5cb6feeda9b8fe513538504edf7c7494233b579bf34cb157f8c27b8d199d7d9",
+    "pages": 1
+  },
+  {
+    "id": 7,
+    "filename": "A2 sprechen Teil 2 Übungen.pdf",
+    "sha256": "4600dd0239a659ec6fb5a944752ea5a759457caae435d31d998c8522bbefbcb7",
+    "pages": 3
+  },
+  {
+    "id": 8,
+    "filename": "A2 Sprechen Teil 3 Übungen.pdf",
+    "sha256": "b232f69b92a9d2fa3741da32f4cbdd1ef97ae8e9a210738822dd253582f44940",
+    "pages": 12
+  },
+  {
+    "id": 9,
+    "filename": "A2 Sprechen Teil 03.pdf",
+    "sha256": "b2e5b242cd9cb2d58a6990c5c1934a85bc7436139bd8e0828272a200414c1ec1",
+    "pages": 9
+  },
+  {
+    "id": 10,
+    "filename": "A2_Modellsatz_Erwachsene.pdf",
+    "sha256": "6fbc1906f01623fb2fe5a028f1973772b5abfda77e24b79b4446285cb21932db",
+    "pages": 48
+  },
+  {
+    "id": 11,
+    "filename": "A2_Uebungssatz_Erwachsene.pdf",
+    "sha256": "ba25d91450d255bb37e899d753240fa8cde5dd7fa8617ecd91ab246dcd3b5f83",
+    "pages": 48
+  },
+  {
+    "id": 12,
+    "filename": "A2.docx",
+    "sha256": "84da49f3ac380a5c93842adf708551875649ebe5716342fc7b1af98905022960",
+    "pages": 5
+  },
+  {
+    "id": 13,
+    "filename": "Open folder Learning with extended reality.pdf",
+    "sha256": "d1e5d327fd7666d7e18fddd43d871b478d3313bc6eb0dc1474c6b61b9407044d",
+    "pages": 48
+  },
+  {
+    "id": 14,
+    "filename": "Screenshot 2025-10-24 at 19.45.59.pdf",
+    "sha256": "24fdef734a103057182cab753e67de36350658a5a939bca7bb65d65b51610748",
+    "pages": 48
+  }
+]

@@ -1,3 +1,4 @@
+import { formatCourseDuration } from "@/lib/formatTime";
 import AcademyCourseEditor from "@/components/admin/AcademyCourseEditor";
 import AcademyCourseEditorLegacy from "@/components/admin/AcademyCourseEditorLegacy";
 import Image from "next/image";
@@ -157,7 +158,7 @@ export default async function NewAcademyCoursePage({
                 <p className="mt-3 text-[11px] font-medium text-[#59636E]"><span className="font-semibold text-[#18212B]">Pattern:</span> {item.learningPattern}</p>
                 {item.curriculumLabel ? <p className="mt-1 text-[11px] font-semibold text-primary">{item.curriculumLabel}</p> : null}
                 <div className="mt-5 flex flex-wrap gap-x-5 gap-y-2 border-y border-black/8 py-3 text-[11px] font-semibold text-[#68727C]">
-                  <span className="inline-flex items-center gap-1.5"><Clock3 size={14} /> {item.course.estimatedMinutes} min</span>
+                  <span className="inline-flex items-center gap-1.5"><Clock3 size={14} /> {formatCourseDuration(item.course.estimatedMinutes)}</span>
                   <span className="inline-flex items-center gap-1.5"><BookOpen size={14} /> {item.course.lessons.length} lessons</span>
                   <span className="inline-flex items-center gap-1.5"><Layers3 size={14} /> {item.course.lessons.reduce((total, lesson) => total + lesson.blocks.length, 0)} blocks</span>
                 </div>

@@ -59,7 +59,16 @@ export async function requireTutorAcademyUser(
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) redirect("/login?next=/dashboard/tutor/academy");
+  if (!user) redirect(`/login?next=${encodeURIComponent(`/dashboard/academy/${courseKey}`)}`);
+
+  const pilotAccess = await supabase.rpc("course_pilot_access", { target_key: courseKey });
+  // Older deployments without the pilot migration keep their original Academy behavior.
+  if (pilotAccess.error && !["PGRST202", "42883"].includes(pilotAccess.error.code))
+    throw new Error("Unable to check course access");
+  if (pilotAccess.data?.managed) {
+    if (!pilotAccess.data.allowed) redirect(`/courses/${courseKey}`);
+    return { supabase, user };
+  }
 
   const [{ data: profile }, { data: application }] = await Promise.all([
     supabase.from("profiles").select("role").eq("id", user.id).maybeSingle(),

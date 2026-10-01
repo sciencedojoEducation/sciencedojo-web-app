@@ -1,0 +1,14 @@
+{
+  "id": "b1-exam-talk",
+  "model": "gemini-3.8-flash-tts",
+  "speakers": [
+    "Puck"
+  ],
+  "fingerprint": "34e7946aa92a60d970b57140af1fdf1bd27d5da7138d49944d35f8716fd7a8d3",
+  "sha256": "7192b6dd166b0a399f1a649af20acf4e6ceba5a6380d90259ed390ad2fe8e85f",
+  "seconds": 41.18654166666666,
+  "words": 117,
+  "wordsPerMinute": 170,
+  "bytes": 1981050,
+  "generatedAt": "2026-10-01T15:37:18.948Z"
+}

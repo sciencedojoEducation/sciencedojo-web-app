@@ -1,0 +1,59 @@
+  .layout { --outline-width: min(16rem, 85vw); overflow-x: clip; }
+  .outline {
+    display: block;
+    position: fixed;
+    left: 0;
+    top: 3rem;
+    bottom: 0;
+    width: var(--outline-width);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    border-right: 1px solid #dde1e5;
+    background: #fff;
+    z-index: 20;
+    transform: translateX(0);
+    visibility: visible;
+    transition: transform 280ms cubic-bezier(0.22, 1, 0.36, 1), visibility 0s;
+  }
+  .flush .outline { top: 0; }
+  .content { min-width: 0; width: 100%; margin-left: var(--outline-width); overflow-x: clip; transition: margin-left 280ms cubic-bezier(0.22, 1, 0.36, 1); }
+  .closed .content { margin-left: 0; }
+  .closed .outline { transform: translateX(-100%); visibility: hidden; transition: transform 280ms cubic-bezier(0.22, 1, 0.36, 1), visibility 0s 280ms; }
+  .toggle {
+    display: flex;
+    position: fixed;
+    top: 4rem;
+    left: calc(var(--outline-width) + 0.5rem);
+    width: 2.25rem;
+    height: 2.25rem;
+    align-items: center;
+    justify-content: center;
+    border: 0;
+    border-radius: 0.375rem;
+    background: #fff;
+    color: #173a63;
+    z-index: 21;
+    cursor: pointer;
+    transition: left 280ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .toggle:hover { background: #eef4fb; }
+  .toggle:focus-visible { outline: 2px solid var(--academy-accent, #1e5aa8); outline-offset: 3px; }
+  .closed .toggle { left: 1rem; }
+  .flush .toggle { top: 1rem; }
+  .layout :global(.academy-topic-nav) { display: none; }
+  .skip { position: fixed; left: 1rem; top: 3rem; z-index: 22; padding: 0.75rem; background: white; color: #173a63; transform: translateY(-200%); }
+  .skip:focus { transform: translateY(0); }
+  .flush .skip { top: 0; }
+
+@media (pointer: coarse) {
+  .toggle { width: 2.75rem; height: 2.75rem; }
+}
+
+/* Small screens slide the full-width page aside; wide screens reflow beside it. */
+@media (min-width: 900px) {
+  .content { width: auto; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .outline, .closed .outline, .content, .toggle { transition: none; }
+}

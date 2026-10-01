@@ -14,3 +14,25 @@ export function formatDurationLabel(totalSeconds: number): string {
   const rest = minutes % 60;
   return rest === 0 ? `${hours} hr` : `${hours} hr ${rest} min`;
 }
+
+/** Display a course or lesson estimate stored in minutes as hours and minutes. */
+export function formatCourseDuration(
+  totalMinutes: number,
+  language: "en" | "de" = "en",
+): string {
+  const minutes = Number.isFinite(totalMinutes)
+    ? Math.max(0, Math.round(totalMinutes))
+    : 0;
+  const hours = Math.floor(minutes / 60);
+  const remainingMinutes = minutes % 60;
+  const parts: string[] = [];
+  if (hours)
+    parts.push(
+      `${hours} ${language === "de" ? (hours === 1 ? "Stunde" : "Stunden") : hours === 1 ? "hour" : "hours"}`,
+    );
+  if (remainingMinutes || !hours)
+    parts.push(
+      `${remainingMinutes} ${language === "de" ? (remainingMinutes === 1 ? "Minute" : "Minuten") : remainingMinutes === 1 ? "minute" : "minutes"}`,
+    );
+  return parts.join(" ");
+}

@@ -13,7 +13,7 @@ test("course body font has regular, bold and italic Atkinson Hyperlegible faces"
 });
 
 test("learner routes and shared previews supply the body font without replacing headings", () => {
-  for (const path of ["app/dashboard/academy/layout.tsx", "app/dashboard/tutor/academy/layout.tsx",
+  for (const path of ["app/dashboard/academy/[courseKey]/layout.tsx", "app/dashboard/tutor/academy/layout.tsx",
     "components/tutor-academy/AcademyThemeScope.tsx"]) {
     const source = read(path);
     assert.match(source, /academyBodyFont\.variable/, path);

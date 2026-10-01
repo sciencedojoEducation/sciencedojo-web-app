@@ -17,7 +17,7 @@ export const phaseDesign = {
 export function AcademyPhaseMarker({ phase, german }: { phase: LessonPhase; german: boolean }) {
   const design = phaseDesign[phase];
   const Icon = design.icon;
-  return <div className={`mb-6 flex min-h-28 items-center justify-between gap-4 rounded-2xl border px-4 py-3 sm:px-6 ${design.className}`}>
+  return <div className={`academy-phase-marker mb-6 flex min-h-28 items-center justify-between gap-4 rounded-2xl border px-4 py-3 sm:px-6 ${design.className}`}>
     <div className="flex min-w-0 items-center gap-3">
       <Icon size={22} className="shrink-0" aria-hidden="true" />
       <span className="text-lg font-bold sm:text-xl">{german ? design.de : design.en}</span>
@@ -49,7 +49,7 @@ export default function AcademyLessonRoadmap({ sections, phases, german, complet
   }, [sections, phases]);
   if (!phases.length && !sections.length) return null;
   return <nav aria-label={german ? "Ihr Weg durch dieses Kapitel" : "Your path through this lesson"}
-    className="rounded-3xl border border-[#C7D9E9] bg-linear-to-br from-[#F0F6FC] to-[#F6FAF8] p-5 shadow-[0_6px_24px_rgba(23,58,99,0.05)] sm:p-7">
+    className="academy-lesson-roadmap rounded-3xl border border-[#C7D9E9] bg-linear-to-br from-[#F0F6FC] to-[#F6FAF8] p-5 shadow-[0_6px_24px_rgba(23,58,99,0.05)] sm:p-7">
     <div className="mb-5 flex flex-wrap items-baseline justify-between gap-2">
       <h2 className="text-xl font-bold text-[#173A63]">{german ? "Ihr Lernweg" : "Your learning journey"}</h2>
       <span className="text-sm text-[#435164]">{german ? "Direkt zum Abschnitt springen" : "Jump to a section"}</span>
@@ -62,7 +62,7 @@ export default function AcademyLessonRoadmap({ sections, phases, german, complet
         </a></li>;
       })}
     </ol>
-    {sections.length ? <details open className="mt-5 border-t border-[#D5E1EB] pt-4">
+    {sections.length ? <details open={sections.length <= 4} className="mt-5 border-t border-[#D5E1EB] pt-4">
       <summary className="cursor-pointer text-sm font-bold text-[#344B60]">{german ? "Alle Unterthemen" : "All topics"} · {sections.length}</summary>
       <ol className="mt-4 grid gap-2 sm:grid-cols-2">
         {sections.map((section, index) => {

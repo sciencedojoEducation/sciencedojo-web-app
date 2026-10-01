@@ -1,6 +1,5 @@
-import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { ArrowLeft, ArrowRight, CheckCircle2 } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import AcademyLessonBlocks from "@/components/tutor-academy/AcademyLessonBlocks";
 import AcademyLessonHeader from "@/components/tutor-academy/AcademyLessonHeader";
 import AcademyLessonTracker from "@/components/tutor-academy/AcademyLessonTracker";
@@ -52,9 +51,7 @@ export async function renderAcademyCourseLessonPage(
     redirect(previousLesson
       ? `${basePath}/lessons/${previousLesson.slug}`
       : basePath);
-  const completed =
-    getAcademyLessonProgressState(progress, lesson.slug, lesson.id) ===
-    "completed";
+  const completed = getAcademyLessonProgressState(progress, lesson.slug, lesson.id) === "completed";
   const completedBlockIds = new Set(progress.completedBlockIds);
   const savedPosition = await getAcademyLearnerPosition(course.key);
   const resume = resolveAcademyResumePosition(course, progress, savedPosition);
@@ -136,26 +133,8 @@ export async function renderAcademyCourseLessonPage(
           ) : null}
           <AcademyLessonBlocks blocks={lesson.blocks} courseKey={course.key} lessonId={lesson.id}
             resumeAnchor={resume && resume.lesson.id === lesson.id ? `academy-block-${resume.block.id}` : undefined}
-            completedBlockIds={progress.completedBlockIds.filter((id) => !missingRequiredBlocks.some((block) => block.id === id))} />
-          <footer className="mt-16 flex flex-col justify-between gap-3 border-t border-[#DEDFE1] pt-7 sm:flex-row">
-            {previousLesson ? (
-              <Link
-                href={`${basePath}/lessons/${previousLesson.slug}`}
-                className="inline-flex min-h-11 items-center justify-center gap-2 border border-[#C9CDD2] px-6 text-xs font-bold uppercase"
-              >
-                <ArrowLeft size={16} />
-                Previous
-              </Link>
-            ) : (
-              <Link
-                href={basePath}
-                className="inline-flex min-h-11 items-center justify-center gap-2 border border-[#C9CDD2] px-6 text-xs font-bold uppercase"
-              >
-                <ArrowLeft size={16} />
-                Course home
-              </Link>
-            )}
-            {missingRequiredBlocks.length ? (
+            completedBlockIds={progress.completedBlockIds.filter((id) => !missingRequiredBlocks.some((block) => block.id === id))}
+            lessonEnd={missingRequiredBlocks.length ? (
               <div className="w-full border-l-4 border-amber-500 bg-amber-50 p-4 text-sm text-amber-950 sm:max-w-sm">
                 <p className="font-bold">Noch {missingRequiredBlocks.length} Pflicht{missingRequiredBlocks.length === 1 ? "aufgabe" : "aufgaben"} offen</p>
                 <p className="mt-1">
@@ -171,26 +150,16 @@ export async function renderAcademyCourseLessonPage(
               </div>
             ) : (
               <form action={completeAction}>
-                <button className="inline-flex min-h-11 w-full items-center justify-center gap-2 bg-[var(--academy-accent)] px-7 text-xs font-bold uppercase text-white">
-                  {completed ? <CheckCircle2 size={17} /> : null}
+                <button className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-full bg-[var(--academy-accent)] px-5 text-sm font-bold text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--academy-accent)]">
                   {nextLesson
-                    ? completed
-                      ? "Continue"
-                      : "Complete and continue"
-                    : lesson.examTrack
-                      ? completed
-                        ? "Return to course"
-                        : "Complete exam route"
-                    : course.rules?.requireFinalAssessment === false
-                      ? completed
-                        ? "Return to course"
-                        : "Complete course"
-                      : "Complete and take final check"}
+                    ? isGermanAcademyCourse(course.key) ? "Nächstes Kapitel" : "Next chapter"
+                    : !lesson.examTrack && course.rules?.requireFinalAssessment !== false
+                      ? isGermanAcademyCourse(course.key) ? "Zum Abschlusstest" : "Next: final check"
+                      : isGermanAcademyCourse(course.key) ? "Kurs abschließen" : "Finish course"}
                   <ArrowRight size={16} />
                 </button>
               </form>
-            )}
-          </footer>
+            )} />
         </div>
       </div>
     </article>

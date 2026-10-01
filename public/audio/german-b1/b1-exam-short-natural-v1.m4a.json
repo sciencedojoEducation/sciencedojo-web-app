@@ -1,0 +1,14 @@
+{
+  "id": "b1-exam-short",
+  "model": "gemini-3.8-flash-tts",
+  "speakers": [
+    "Kore"
+  ],
+  "fingerprint": "fe26903a4eafaf31a8ed5370ac1767938efc3be4222cf151b6716ddd3851b52b",
+  "sha256": "e6c0ff9c42b1fb6df9db0a7dd5cf1490271eb10092640ae58d82742385f23de3",
+  "seconds": 31.11475,
+  "words": 94,
+  "wordsPerMinute": 181,
+  "bytes": 1497604,
+  "generatedAt": "2026-10-01T15:37:03.988Z"
+}

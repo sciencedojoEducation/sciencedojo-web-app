@@ -5,6 +5,8 @@ import AcademyDraftQuizPreview from "@/components/admin/academy-builder/AcademyD
 import AcademyCourseContents from "@/components/tutor-academy/AcademyCourseContents";
 import AcademyCourseCover from "@/components/tutor-academy/AcademyCourseCover";
 import AcademyLessonBlocks from "@/components/tutor-academy/AcademyLessonBlocks";
+import AcademyCourseOutline from "@/components/tutor-academy/AcademyCourseOutline";
+import AcademyDesktopPreviewLayout from "@/components/admin/academy-builder/AcademyDesktopPreviewLayout";
 import AcademyLessonHeader from "@/components/tutor-academy/AcademyLessonHeader";
 import AcademyThemeScope from "@/components/tutor-academy/AcademyThemeScope";
 import { getAcademyCourseDraft, getAcademySnapshotContent } from "@/lib/academy-courses";
@@ -71,6 +73,7 @@ export default async function AcademyDraftPreviewPage({
         </p>
       </div>
 
+      <AcademyDesktopPreviewLayout outline={<AcademyCourseOutline course={course} progress={emptyAcademyProgress} activeLessonSlug={view === "lesson" ? lesson?.slug || "" : ""} lessonHref={(slug) => previewHref("lesson", slug)} quizHref={previewHref("quiz")} preview />}>
       {view === "cover" ? (
         <main>
           <AcademyCourseCover
@@ -83,6 +86,7 @@ export default async function AcademyDraftPreviewPage({
             ctaLabel="Start course"
           />
           <AcademyCourseContents
+            preview
             course={course}
             progress={emptyAcademyProgress}
             lessonHref={(slug) => previewHref("lesson", slug)}
@@ -102,6 +106,7 @@ export default async function AcademyDraftPreviewPage({
           <div className={`${academyPreviewContentClass} py-14`}>
             <AcademyLessonBlocks
               blocks={lesson.blocks}
+              presentationCourseKey={course.key}
               uiLanguage={isGermanAcademyCourse(course.key) ? "de" : "en"}
             />
           </div>
@@ -125,6 +130,7 @@ export default async function AcademyDraftPreviewPage({
           </div>
         </main>
       ) : null}
+      </AcademyDesktopPreviewLayout>
     </AcademyThemeScope>
   );
 }

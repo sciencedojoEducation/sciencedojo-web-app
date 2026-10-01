@@ -4,8 +4,8 @@ import Link from "next/link";
 import { useState } from "react";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import AcademyPreviewDevicePicker from "./AcademyPreviewDevicePicker";
+import AcademyPreviewFrame from "./AcademyPreviewFrame";
 import {
-  academyPreviewDevices,
   type AcademyPreviewDeviceId,
 } from "@/lib/academy-preview-devices";
 
@@ -23,7 +23,6 @@ export default function AcademyTemplatePreviewStudio({
   const [deviceId, setDeviceId] = useState<AcademyPreviewDeviceId>("desktop");
   const [view, setView] = useState<"cover" | "lesson" | "quiz">("cover");
   const [lessonSlug, setLessonSlug] = useState(lessons[0]?.slug || "");
-  const device = academyPreviewDevices.find((item) => item.id === deviceId)!;
   const query = new URLSearchParams({
     template: templateKey,
     embedded: "1",
@@ -32,7 +31,7 @@ export default function AcademyTemplatePreviewStudio({
   if (view === "lesson" && lessonSlug) query.set("lesson", lessonSlug);
 
   return (
-    <main className="flex min-h-screen flex-col bg-[#17191d] text-white">
+    <main className="flex h-[100dvh] min-h-0 flex-col bg-[#17191d] text-white">
       <header className="flex flex-wrap items-center gap-3 border-b border-white/10 bg-[#202329] px-4 py-3">
         <Link
           href="/dashboard/admin/academy/new"
@@ -78,15 +77,12 @@ export default function AcademyTemplatePreviewStudio({
           Use template <ArrowRight size={15} />
         </Link>
       </header>
-      <div className="flex flex-1 justify-center overflow-auto p-4 sm:p-6">
-        <iframe
-          key={`${view}-${lessonSlug}`}
+        <AcademyPreviewFrame
+          deviceId={deviceId}
+          previewKey={`${view}-${lessonSlug}`}
           title={`${templateName} ${view} preview`}
           src={`/dashboard/admin/academy/new/preview?${query.toString()}`}
-          className="shrink-0 border-0 bg-white shadow-2xl transition-[width,height] duration-200 motion-reduce:transition-none"
-          style={{ width: device.width, height: device.height }}
         />
-      </div>
     </main>
   );
 }

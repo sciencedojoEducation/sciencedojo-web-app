@@ -7,6 +7,8 @@ import AcademyTemplatePreviewStudio from "@/components/admin/academy-builder/Aca
 import AcademyCourseContents from "@/components/tutor-academy/AcademyCourseContents";
 import AcademyCourseCover from "@/components/tutor-academy/AcademyCourseCover";
 import AcademyLessonBlocks from "@/components/tutor-academy/AcademyLessonBlocks";
+import AcademyCourseOutline from "@/components/tutor-academy/AcademyCourseOutline";
+import AcademyDesktopPreviewLayout from "@/components/admin/academy-builder/AcademyDesktopPreviewLayout";
 import AcademyLessonHeader from "@/components/tutor-academy/AcademyLessonHeader";
 import { academyPreviewContentClass, academyPreviewHeaderClass } from "@/lib/academy-preview-layout";
 import AcademyThemeScope from "@/components/tutor-academy/AcademyThemeScope";
@@ -68,6 +70,7 @@ export default async function AcademyTemplatePreviewPage({
       course={course}
       className={`${academySerif.variable} min-h-screen bg-white text-[#18212B]`}
     >
+      <AcademyDesktopPreviewLayout banner={false} outline={<AcademyCourseOutline course={course} progress={emptyAcademyProgress} activeLessonSlug={view === "lesson" ? lesson?.slug || "" : ""} lessonHref={(slug) => href("lesson", slug)} quizHref={href("quiz")} preview />}>
       {view === "cover" ? (
         <main>
           <AcademyCourseCover
@@ -76,6 +79,7 @@ export default async function AcademyTemplatePreviewPage({
             ctaLabel="Explore lessons"
           />
           <AcademyCourseContents
+            preview
             course={course}
             progress={emptyAcademyProgress}
             lessonHref={(lessonSlug) => href("lesson", lessonSlug)}
@@ -149,6 +153,7 @@ export default async function AcademyTemplatePreviewPage({
           </Link>
         </main>
       ) : null}
+      </AcademyDesktopPreviewLayout>
     </AcademyThemeScope>
   );
 }

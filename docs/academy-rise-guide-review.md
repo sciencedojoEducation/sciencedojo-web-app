@@ -155,3 +155,72 @@ The guide covers a much larger product family than our internal builder. These a
 Use a fixture course containing all 18 block types, incomplete drafts, long copy, portrait/landscape images, empty and multi-slide carousels, every theme choice and each supported question type. Test save failure, stale revisions, nested Escape handling, return focus, keyboard-only navigation, and preview isolation. Check theme parity and responsive layouts with an authenticated admin session. Existing passing unit tests and production compilation should remain necessary checks, alongside these workflow checks.
 
 No application code, database, publication or deployment was changed during this research pass.
+
+## Preview runtime follow-up · 1 October 2026
+
+The initial follow-up was blocked by a locked Mac. Access was subsequently restored; the dated live observations and verification below supersede that blocker and the initial pending statuses in the comparison table. The table distinguishes supplied screenshots, official documentation, and implementation choices.
+
+### Evidence and adaptation
+
+| Area | Evidence | ScienceDojo adaptation/status |
+| --- | --- | --- |
+| Desktop canvas | Supplied desktop screenshot fills the browser area rather than using a device bezel. | Desktop iframe fills the available preview stage; tablet/phone retain scaled device frames. Implemented, visual QA pending. |
+| Course navigation | Screenshots show course title, progress, grouped lessons, completion circles and a separate active-lesson highlight. | Shared course outline uses actual saved learner state; draft/template preview shows zero progress rather than fabricated completions. Implemented, visual QA pending. |
+| Desktop toggle | User clarified that the hamburger hides/reopens the sidebar. Official [navigation documentation](https://www.articulatesupport.com/article/Rise-360-Control-Course-Navigation) says the sidebar starts open and can be closed. | Desktop outline defaults open; accessible toggle hides/reopens it with a content-width transition. Reduced motion and Escape/focus return supported. Implemented, visual QA pending. |
+| Small-device navigation | Official navigation documentation says small screens start collapsed to preserve reading space. | Tablet/phone outline starts collapsed; hamburger remains available from the beginning of the lesson. Implemented, visual QA pending. |
+| Sections | Official navigation documentation distinguishes sidebar sections from an overlay menu. | Native expandable section groups in the course outline; active course lesson highlighted independently of completion. Implemented. |
+| Entrance motion | Official [appearance documentation](https://www.articulatesupport.com/article/Rise-360-Personalize-the-Theme) says non-text blocks enter smoothly while scrolling. | Intersection-based, once-per-block entrances for media/interactions; ordinary text remains stable. Nested scrolling, reduced-motion preference changes and keyboard focus must remain safe. Exact movement/timing compared with the open Rise preview is pending. |
+| Typography | Supplied tablet comparison shows our headings/cards disproportionately large. | Tablet body 18px, block headings 22px, more compact card padding; larger desktop body and title families retained. Live comparison pending. |
+| Functional preview | Official [preview guide](https://www.articulatesupport.com/article/Rise-360-Preview-Content) requires responsiveness, actual interactions and navigation to be tested. | Draft and template studios use shared functional course rendering across cover/lesson/quiz. Browser QA is required in addition to source tests. |
+
+### Verification checklist used for this pass
+
+1. Inspect the currently open Rise course in desktop, tablet portrait/landscape and phone portrait/landscape; record the observed default outline state and exact toggle/reflow behaviour in each mode.
+2. Scroll slowly through text, section transitions, images, galleries, interactive cards and lesson boundaries. Distinguish block entrances from parallax, hover effects, sticky controls and media playback; do not infer these from still screenshots.
+3. Exercise outline section expansion, lesson navigation, completion indicators, previous/next controls and return-to-editor. Do not modify or publish the reference course.
+4. Compare our draft and starter-template previews for the same behaviours across all five device modes, including a representative A1, A2, B1 and B2 lesson.
+5. Check keyboard navigation, reduced motion, nested scrolling, menu focus, independent sidebar scroll, image fit, long headings and retained answers when changing device size.
+6. Run relevant tests, typecheck, lint and production compilation. Confirm no preview interaction writes real learner completion or submissions.
+
+No official Rise content, illustrations or recordings are being copied. Navigation and layout ideas are adapted to the Academy's existing structured content and completion rules.
+
+### Live observations after unlocking · 1 October 2026
+
+The Mac was unlocked and the open **Get to Know Articulate 360 AI** reference was inspected directly in Edge. All five device controls were exercised. These observations supersede the access blocker above, but do not close the remaining QA gates.
+
+- Desktop: hamburger toggles the left outline, leaving the lesson available. The outline shows course title, percentage, collapsible section headers and individual lesson indicators. The reference distinguished `Completed`, partially viewed percentages and `Unstarted`; active lesson identity is separate from those states.
+- Tablet portrait: the content is displayed in a portrait bezel with smaller, proportionate titles and a hamburger. Landscape uses a wider bezel and can show the outline beside the lesson. Device changes keep the reference's current lesson.
+- Phone portrait/landscape: both device modes are functional, and the hamburger opens the grouped course navigation. A previously collapsed section remained collapsed after orientation changes.
+- Scrolling within the reference's lesson kept the navigation control available. The image carousel has numbered slide controls, previous/next and captions. Selecting slide 2 changed the displayed caption and `2 of 3` position. The next-lesson link opened **Step 1: Create and customize training**. Viewing the reference updated its preview progress; this is not equivalent to Academy's saved required-activity completion.
+- A screenshot taken during a media entrance showed the image at reduced opacity while surrounding text remained stable. Exact animation timing, replay behaviour and parallax were not measured; the implementation uses independently chosen subtle entrance timings, not a claim of a pixel-identical Rise effect. Image zoom was exercised, but its overlay dismissal was not conclusively verified.
+
+**Academy browser checks:** A2 draft preview desktop outline was hidden and reopened successfully. In the course editor preview, `wohnt` was selected in Startdiagnose 1, then the device was changed desktop → tablet portrait → tablet landscape → phone portrait → phone landscape → desktop. The selected answer and active subsection remained intact. Phone outline opened, Escape closed it and returned focus to its toggle. The draft continued to show 0 saved required activities and disabled position saving.
+
+**Repair from this pass:** both preview studios now use one stable iframe at the same React position. The former desktop-specific return branch remounted the iframe when switching to a tablet/phone and could discard in-progress answers.
+
+**Build verification:** production compilation and its TypeScript phase passed. Unit and lint results are recorded separately; browser QA for starter templates, the other course levels, cover/assessment small-device navigation, and visual motion/image fit remains outstanding. In particular, the present small-device course menu is supplied by the lesson renderer, so cover/assessment parity needs a follow-up rather than being considered verified.
+
+### Responsive outline parity and final checks · 1 October 2026
+
+The follow-up above led to a second repair: draft and starter-template previews now own one responsive course outline across **cover, lesson and final assessment**. They no longer depend on the lesson-only navigator for small screens. The nested lesson course menu is hidden inside the preview shell, preventing duplicate navigation.
+
+- Desktop starts with the full-height outline open. The hamburger closes/reopens it and the content reflows. Tablet/phone start closed; landscape tablets reflow alongside the open outline, while narrow screens use an overlay with outside-click dismissal. Hidden navigation is inert. Escape returns focus to the hamburger. A skip link bypasses the outline.
+- Preview cover cards expose every lesson for author review, including alternative exam pathways. This does not change published learner prerequisites, exam-path selection, or saved completion rules.
+- A1, B1 and B2 first-lesson draft pages were opened directly in Edge. Each showed its own grouped course title/lessons, active lesson, zero saved progress, disabled position saving, and a working desktop outline toggle. A1's desktop hero/content layout was inspected visually. A2's five-device answer-retention check is recorded above.
+- The visual-story starter was exercised across all five device modes. Its desktop outline closes/reopens, and its outline assessment link opens the final reflection assessment. Phone assessment navigation starts closed; opening it and pressing Escape returns focus to the toggle. Draft cover and assessment phone navigation were also checked in the A2 editor preview.
+- Scroll entrances are independent Academy effects, not copied Rise timings: non-text blocks gently enter once; ordinary text remains stable. Unit tests cover nested visibility, reduced motion, focus cancellation and cleanup. This pass does not claim frame-by-frame visual matching or a comprehensive crop audit of every course asset.
+
+**Final local verification:** 215 tests passed; TypeScript and targeted lint passed; `git diff --check` passed. Production compilation, TypeScript and static-page generation passed on a network-enabled retry. The first build failed downloading the existing Google Fonts, not compiling the preview changes. Repository-wide lint still has pre-existing unrelated failures and is not reported as passing.
+
+No course was published or deployed. Preview navigation/answers remain local review interactions; no learner completion or private submission was saved. Exact Rise animation measurements, image-zoom parity and broader authoring priorities above remain optional future work, not features represented as implemented by this preview adaptation.
+
+### Shared block proportions · 1 October 2026
+
+Reviewed shared text, callouts, tables, tabs, accordions, flashcards, process steps, carousels, practice panels, section transitions and lesson roadmaps for narrow reading widths. The main issues were compounded background padding, an icon column squeezing callout paragraphs, desktop minimum heights, long pagination rows and fixed-height flashcard faces.
+
+- Blocks now use their actual available width for typography and compact padding, including inside background panels and beside the outline. Narrow callout headings are 20px; paragraphs are 16px with 1.6 line height and span the full card width below the heading. Mobile background padding is reduced separately.
+- Narrow activities, phase illustrations, lists, table cells and transitions use compact proportions. Long step pagination uses a position counter on narrow screens, preserving previous/next controls. Carousel pagination wraps. Flip cards grow with their content instead of clipping a long back face.
+- Long roadmap topic lists start collapsed and remain available through the native disclosure; short lists remain open. Phone phase links use compact horizontal icon/label rows.
+- A1 chapter 2's goal card and surrounding reading content were inspected in Edge in all five preview modes: desktop, tablet portrait/landscape and phone portrait/landscape. The paragraph remained visible without horizontal clipping. This is representative shared-renderer QA, not a claim that every authored block in every chapter was visually inspected. Further process clicking was interrupted by concurrent user interaction with Edge and was not counted as browser verification.
+
+Verification: TypeScript, 235 unit tests, targeted ESLint and diff whitespace checks passed. No production build was run for this sizing-only pass. Course content, publishing state, saved responses and completion rules were not changed.

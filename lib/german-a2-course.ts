@@ -1,8 +1,10 @@
+import { a2AudioUrl } from "./german-a2-audio.ts";
 import { migrateAcademyCourse } from "./academy-schema.ts";
 import { germanA2Chapters, germanA2Sources, type A2Chapter, type A2Question } from "./german-a2-curriculum.ts";
 import { a2ExamSets, type A2ExamSet } from "./german-a2-exam-practice.ts";
 import { a2MasteryMissions } from "./german-a2-mastery.ts";
 import { styleGermanA2Course } from "./german-a2-visual-design.ts";
+import { enrichGermanA2Course } from "./german-a2-resource-enrichment.ts";
 import type { AcademyCourse, AcademyLesson, LessonBlock, QuizQuestion } from "./tutor-academy.ts";
 
 export const GERMAN_A2_COURSE_KEY = "german-a2-complete";
@@ -57,7 +59,7 @@ function coreLesson(chapter: A2Chapter, index: number): AcademyLesson {
   }
   add({ id: `${id}-words`, type: "flashcards", heading: "2 · Wortschatz im Kontext", items: chapter.vocabulary.map(([title, meaning, example], i) => ({ id: `${id}-word-${i}`, title, body: `${meaning}. ${example} Sagen Sie danach einen eigenen Satz, ohne auf die Antwort zu schauen.` })), completion: "interact" }, ["vocabulary"]);
   add({ id: `${id}-listen-guide`, type: "text", heading: "3 · Hören", paragraphs: ["Hören Sie zuerst ohne Transcript: Wer spricht und worum geht es? Hören Sie dann für Zeiten, Zahlen, Änderungen und den nächsten Schritt. Antworten Sie vor dem Öffnen des Transcripts."] }, ["listening"]);
-  add({ id: `${id}-audio`, type: "audio", heading: "Eine Nachricht aus dem Alltag", url: `/audio/german-a2/${id}.m4a`, transcript: chapter.listening, caption: "Originaler ScienceDojo-Text mit synthetischer deutscher Stimme. Transcript erst zur Kontrolle öffnen." }, ["listening"]);
+  add({ id: `${id}-audio`, type: "audio", heading: "Eine Nachricht aus dem Alltag", url: a2AudioUrl(id), transcript: chapter.listening, caption: "Originaler ScienceDojo-Text mit synthetischer deutscher Stimme. Transcript erst zur Kontrolle öffnen." }, ["listening"]);
   add(check(`${id}-listen-check`, "Hören · Information und Beleg", chapter.listeningCheck), ["listening"]);
   add({ id: `${id}-read`, type: "text", heading: "4 · Lesen", paragraphs: [chapter.reading, "Markieren Sie den Beleg für Ihre Antwort. Achten Sie auf nicht, nur, erst und neue Zeitangaben."] }, ["reading"]);
   add(check(`${id}-read-check`, "Lesen · genau verstehen", chapter.readingCheck), ["reading"]);
@@ -87,7 +89,7 @@ function coreLesson(chapter: A2Chapter, index: number): AcademyLesson {
   if (index === 15) {
     for (const mission of a2MasteryMissions) {
       add({ id: `${mission.id}-read`, type: "text", heading: `Mastery-Mission · ${mission.title}`, paragraphs: [mission.reading] }, ["reading"]);
-      add({ id: `${mission.id}-audio`, type: "audio", heading: "Neue Information · ohne Transcript hören", url: `/audio/german-a2/${mission.id}.m4a`, transcript: mission.listening, caption: "Originaler Transferfall mit synthetischer deutscher Stimme." }, ["listening"]);
+      add({ id: `${mission.id}-audio`, type: "audio", heading: "Neue Information · ohne Transcript hören", url: a2AudioUrl(mission.id), transcript: mission.listening, caption: "Originaler Transferfall mit synthetischer deutscher Stimme." }, ["listening"]);
       add(check(`${mission.id}-check`, "Die nächste Handlung", mission.question), ["reading", "listening", "interaction"]);
       add({ id: `${mission.id}-write`, type: "writing-practice", heading: "Schriftlich reagieren", prompt: mission.writing, minWords: 40, maxWords: 85, checklist: ["Alle Inhaltspunkte", "Änderung berücksichtigt", "Konkrete Frage oder Bitte", "Passende Anrede und Schluss"], modelAnswer: mission.model, completion: "interact" }, ["writing"]);
       add({ id: `${mission.id}-speak`, type: "speaking-practice", heading: "Mündlich handeln", prompt: mission.interaction, preparationSeconds: 45, targetSeconds: 120, checklist: ["Fragen und antworten", "Auf neue Information reagieren", "Ergebnis bestätigen"], modelAnswer: mission.interactionModel, completion: "interact" }, ["speaking", "interaction"]);
@@ -121,7 +123,7 @@ function examLesson(track: Track, index: number): AcademyLesson {
     const order = track === "goethe" ? [0, 1, 2, 3] : [0, 2, 1];
     order.forEach((recordingIndex, i) => {
       const recording = set.audio[recordingIndex];
-      add({ id: `${id}-audio-${i}`, type: "audio", heading: `Teil ${i + 1} · ${recording.title}`, url: `/audio/german-a2/${recording.id}.m4a`, transcript: recording.segments.map((segment) => segment.text).join("\n\n"), caption: "Originaltraining mit synthetischen deutschen Stimmen. Keine offizielle Prüfungsaufnahme." }, ["listening"]);
+      add({ id: `${id}-audio-${i}`, type: "audio", heading: `Teil ${i + 1} · ${recording.title}`, url: a2AudioUrl(recording.id), transcript: recording.segments.map((segment) => segment.text).join("\n\n"), caption: "Originaltraining mit synthetischen deutschen Stimmen. Keine offizielle Prüfungsaufnahme." }, ["listening"]);
       if (track === "telc" && i === 0) {
         add({ id: `${id}-notes`, type: "writing-practice", heading: "Teil 1 · fünf Telefonnotizen", prompt: set.notePrompt, minWords: 5, maxWords: 25, modelAnswer: set.noteModel, checklist: ["Fünf Felder", "Zahlen und Namen genau", "Transcript erst nach dem Eintragen"], completion: "interact" }, ["listening", "writing"]);
       } else recording.questions.forEach((item, j) => add(check(`${id}-listen-${i}-${j}`, "Hören · gezielt entscheiden", item), ["listening"]));
@@ -179,10 +181,10 @@ const goethe = trackTitles.map((_, index) => examLesson("goethe", index));
 const telc = trackTitles.map((_, index) => examLesson("telc", index));
 const quiz: QuizQuestion[] = [
   ...germanA2Chapters.slice(0, 6).map((chapter, i) => a2Choice(`a2-final-read-${number(i)}`, { ...chapter.readingCheck, prompt: `${chapter.reading}\n\n${chapter.readingCheck.prompt}` })),
-  ...germanA2Chapters.slice(6, 12).map((chapter, i) => ({ ...a2Choice(`a2-final-listen-${number(i)}`, chapter.listeningCheck), audioUrl: `/audio/german-a2/de-a2-${number(i + 6)}.m4a`, audioTranscript: chapter.listening })),
+  ...germanA2Chapters.slice(6, 12).map((chapter, i) => ({ ...a2Choice(`a2-final-listen-${number(i)}`, chapter.listeningCheck), audioUrl: a2AudioUrl(`de-a2-${number(i + 6)}`), audioTranscript: chapter.listening })),
   ...germanA2Chapters.slice(10, 16).map((chapter, i) => a2Choice(`a2-final-language-${number(i)}`, chapter.grammarCheck)),
 ];
-export const germanA2Course: AcademyCourse = styleGermanA2Course(migrateAcademyCourse({
+export const germanA2Course: AcademyCourse = styleGermanA2Course(enrichGermanA2Course(migrateAcademyCourse({
   key: GERMAN_A2_COURSE_KEY, title: "Deutsch A2 komplett: Alltag meistern, Goethe und telc vorbereiten", shortTitle: "Deutsch A2 komplett",
   description: "Von A1 zu verbundenem Deutsch: 15 thematische Kapitel mit Wortschatz, Hören, Lesen, Grammatik, Redemitteln und vier Sprechmodi. A2 Mastery integriert Wohnung, Reise, Gesundheit und Bestellung. Nach dem gemeinsamen Abschlusstest wählen Sie einen eigenen Goethe-A2- oder telc-A2-Weg mit Intensivtraining, zwei Mini-Mocks, Fehleranalyse und offizieller Prüfungspraxis. Voraussetzung: Deutsch auf A1-Niveau.",
   estimatedMinutes: core.reduce((sum, lesson) => sum + lesson.durationMinutes, 0) + goethe.reduce((sum, lesson) => sum + lesson.durationMinutes, 0),
@@ -191,4 +193,4 @@ export const germanA2Course: AcademyCourse = styleGermanA2Course(migrateAcademyC
   theme: { preset: "journey", accent: "coral-navy", typography: "friendly-sans", density: "comfortable", coverStyle: "minimal", lessonHeaderStyle: "editorial" },
   rules: { navigation: "linear", lessonCompletion: "required-blocks", requireFinalAssessment: true, attemptLimit: null, feedbackTiming: "after-submit" },
   lessons: [...core, ...goethe, ...telc], quiz,
-}));
+})));

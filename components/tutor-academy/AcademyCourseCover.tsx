@@ -44,7 +44,7 @@ export default function AcademyCourseCover({
             }
           : undefined
       }
-      className={`relative overflow-hidden ${
+      className={`academy-course-cover relative overflow-hidden ${
         splitImage
           ? "grid min-h-[550px] border-b border-slate-300 md:grid-cols-2"
           : theme.coverStyle === "minimal"

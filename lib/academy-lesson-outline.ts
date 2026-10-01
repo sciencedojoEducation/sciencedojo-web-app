@@ -1,4 +1,5 @@
 import type { AcademyLesson, LessonBlock } from "./tutor-academy.ts";
+import { isAcademyBlockRequiredForCompletion } from "./tutor-academy.ts";
 
 export type AcademyLessonOutlineItem = { id: string; label: string };
 
@@ -16,6 +17,7 @@ export function getAcademyLessonOutline(lesson: AcademyLesson): AcademyLessonOut
       : []);
   if (dividers.length >= 3) {
     const capstones = lesson.blocks.flatMap((block) => {
+      if (!isAcademyBlockRequiredForCompletion(block)) return [];
       if (block.type === "writing-practice") return linkFor(block, "Direkt zu Schreiben") || [];
       if (block.type === "speaking-practice") return linkFor(block, "Direkt zu Sprechen") || [];
       return [];
@@ -27,8 +29,8 @@ export function getAcademyLessonOutline(lesson: AcademyLesson): AcademyLessonOut
     ["Hören", (block) => block.type === "audio"],
     ["Lesen", (block) => block.type === "text" && /^Lesen\b/.test(block.heading || "")],
     ["Wortschatz", (block) => block.type === "flashcards"],
-    ["Schreiben", (block) => block.type === "writing-practice"],
-    ["Sprechen", (block) => block.type === "speaking-practice"],
+    ["Schreiben", (block) => block.type === "writing-practice" && isAcademyBlockRequiredForCompletion(block)],
+    ["Sprechen", (block) => block.type === "speaking-practice" && isAcademyBlockRequiredForCompletion(block)],
     ["Alltags-Challenge", (block) => block.type === "text" && block.heading === "Alltags-Challenge"],
     ["Freiwilliger Wortschatz", (block) => block.type === "callout" && block.heading === "Freiwillige Wortschatz-Vertiefung"],
     ["Kapitelabschluss", (block) => block.type === "callout" && block.heading === "Kapitel geschafft"],

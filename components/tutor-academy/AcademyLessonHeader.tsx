@@ -1,3 +1,4 @@
+import { formatCourseDuration } from "@/lib/formatTime";
 import Image from "next/image";
 import { Clock } from "lucide-react";
 import { resolveAcademyTheme } from "@/lib/academy-theme";
@@ -40,7 +41,7 @@ export default function AcademyLessonHeader({
       : german ? "Letzter Schritt in diesem Kurs" : "Final step in this course");
   return (
     <header
-      className={`relative overflow-hidden border-b border-[#DEDFE1] px-6 sm:px-10 ${
+      className={`academy-lesson-header relative overflow-hidden border-b border-[#DEDFE1] px-6 sm:px-10 ${
         theme.lessonHeaderStyle === "compact"
           ? "pb-7 pt-8"
           : "pb-10 pt-12 sm:pt-16"
@@ -71,7 +72,7 @@ export default function AcademyLessonHeader({
           <span>·</span>
           <span className="inline-flex gap-1.5">
             <Clock size={14} aria-hidden="true" />
-            {lesson.durationMinutes} min
+            {formatCourseDuration(lesson.durationMinutes)}
           </span>
         </div>
         <h1 className="mt-5 text-[32px] font-bold leading-[1.2] sm:text-[40px] sm:leading-[48px]">

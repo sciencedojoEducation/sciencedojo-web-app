@@ -1,3 +1,4 @@
+import { formatCourseDuration } from "@/lib/formatTime";
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, BookOpen, Clock } from "lucide-react";
@@ -90,7 +91,7 @@ export default async function TutorAcademyWelcomePage() {
             </span>
             <span className="inline-flex items-center gap-2">
               <Clock size={15} aria-hidden="true" /> About{" "}
-              {course.estimatedMinutes} minutes
+              {formatCourseDuration(course.estimatedMinutes)}
             </span>
             {course.rules?.requireFinalAssessment !== false ? (
               <span>{course.passMark || 80}% final check</span>
@@ -154,7 +155,7 @@ export default async function TutorAcademyWelcomePage() {
                                 {lesson.title}
                               </span>
                               <span className="mt-0.5 block text-[11px] text-[#717376]">
-                                {lesson.durationMinutes} minutes
+                                {formatCourseDuration(lesson.durationMinutes)}
                               </span>
                             </span>
                             <AcademyProgressRing
@@ -220,8 +221,7 @@ export default async function TutorAcademyWelcomePage() {
                         {item.title}
                       </strong>
                       <span className="mt-1 block text-xs text-[#717376]">
-                        {item.lessons.length} lessons · {item.estimatedMinutes}{" "}
-                        minutes
+                        {item.lessons.length} lessons · {formatCourseDuration(item.estimatedMinutes)}
                       </span>
                     </span>
                     <ArrowRight size={17} className="text-[#717376]" />

@@ -18,6 +18,7 @@ export default function SignupPage({ searchParams }: { searchParams: Promise<{ [
   const nextParam = typeof resolvedParams?.next === "string" && resolvedParams.next.startsWith("/") && !resolvedParams.next.startsWith("//")
     ? resolvedParams.next
     : "";
+  const isCourseSignup = /^\/courses\/[a-z0-9]+(?:-[a-z0-9]+)*$/.test(nextParam);
   const restoredRole = initialRole === "user" || initialRole === "student" || initialRole === "parent" || initialRole === "tutor"
     ? initialRole
     : null;
@@ -42,7 +43,7 @@ export default function SignupPage({ searchParams }: { searchParams: Promise<{ [
   const googleHelperText = role === "parent"
     ? "Sign up faster with Google, then add your child’s details."
     : role === "user"
-      ? "Create a simple account for FocusDojo and ScienceDojo tools."
+      ? isCourseSignup ? "Create your ScienceDojo account to join the course and save your progress." : "Create a simple account for FocusDojo and ScienceDojo tools."
     : "Sign up faster with Google.";
 
   const handleGoogleSignup = () => {
@@ -56,7 +57,7 @@ export default function SignupPage({ searchParams }: { searchParams: Promise<{ [
   return (
     <AuthCard 
       title="Join the Dojo" 
-      subtitle="Create your account to get started"
+      subtitle={isCourseSignup ? "Create your account to join the course" : "Create your account to get started"}
       footer={
         <div className="space-y-4">
           <p className="text-xs font-bold text-navy/20 text-center">

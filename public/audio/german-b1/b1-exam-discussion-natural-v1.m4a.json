@@ -1,0 +1,17 @@
+{
+  "id": "b1-exam-discussion",
+  "model": "gemini-3.8-flash-tts",
+  "speakers": [
+    "Puck",
+    "Kore",
+    "Puck",
+    "Kore"
+  ],
+  "fingerprint": "9412d4f571c4f5f94ce9d3748f9df2cebfde18f1903895eaf3e18f43fb21f146",
+  "sha256": "b2785372c5c9bc387c9f63d72100d8a31232e90965f1515aae745cad219e5f44",
+  "seconds": 39.8585,
+  "words": 107,
+  "wordsPerMinute": 161,
+  "bytes": 1917304,
+  "generatedAt": "2026-10-01T15:37:36.511Z"
+}

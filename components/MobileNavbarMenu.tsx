@@ -15,6 +15,7 @@ const utilityLinkClass =
 type MobileNavbarMenuProps = {
   isLoggedIn?: boolean;
   dashboardHref?: string;
+  showCourses?: boolean;
   showTutorMarketplace?: boolean;
   showLearningHub?: boolean;
   showCommunity?: boolean;
@@ -26,6 +27,7 @@ type MobileNavbarMenuProps = {
 export default function MobileNavbarMenu({
   isLoggedIn = false,
   dashboardHref = "/dashboard/parent",
+  showCourses = false,
   showTutorMarketplace = true,
   showLearningHub = true,
   showCommunity = true,
@@ -50,10 +52,11 @@ export default function MobileNavbarMenu({
 
   useEffect(() => {
     routeClosingRef.current = true;
-    closeMenu();
-    window.requestAnimationFrame(() => {
+    const frame = window.requestAnimationFrame(() => {
+      closeMenu();
       routeClosingRef.current = false;
     });
+    return () => window.cancelAnimationFrame(frame);
   }, [pathname, closeMenu]);
 
   useEffect(() => {
@@ -61,6 +64,7 @@ export default function MobileNavbarMenu({
       return;
     }
 
+    const trigger = triggerRef.current;
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     getFocusableElements(drawerRef.current)[0]?.focus();
@@ -99,10 +103,10 @@ export default function MobileNavbarMenu({
       document.body.style.overflow = previousOverflow;
       document.removeEventListener("keydown", handleKeyDown);
       if (!routeClosingRef.current) {
-        triggerRef.current?.focus();
+        trigger?.focus();
       }
     };
-  }, [isOpen]);
+  }, [isOpen, closeMenu]);
 
   return (
     <details
@@ -148,6 +152,7 @@ export default function MobileNavbarMenu({
           className="mr-auto flex h-full min-h-full w-[min(82vw,24rem)] flex-col border-r border-secondary/10 bg-white px-4 pb-8 pt-6 shadow-2xl"
         >
           <nav className="grid gap-1.5" aria-label="Mobile primary navigation">
+            {showCourses && <Link href="/courses" onClick={closeMenu} className={navLinkClass}>Courses</Link>}
             {showTutorMarketplace && (
               <Link href="/find-tutors" onClick={closeMenu} className={navLinkClass}>
                 Find a Tutor

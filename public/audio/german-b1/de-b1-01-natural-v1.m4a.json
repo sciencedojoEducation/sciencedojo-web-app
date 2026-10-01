@@ -1,0 +1,14 @@
+{
+  "id": "de-b1-01",
+  "model": "gemini-3.8-flash-tts",
+  "speakers": [
+    "Kore"
+  ],
+  "fingerprint": "4b9511ca51e327320c10d5a64f89e62dfa251dbf4d936af7bca837dce6c11db6",
+  "sha256": "4f9414d514a02a25f53e5602ba72a0020bc4c5d854de7699f39ddbc9c0484d99",
+  "seconds": 38.565916666666666,
+  "words": 95,
+  "wordsPerMinute": 148,
+  "bytes": 1855260,
+  "generatedAt": "2026-10-01T15:25:01.189Z"
+}

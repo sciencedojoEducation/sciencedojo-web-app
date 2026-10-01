@@ -1,0 +1,38 @@
+{
+  "courseKey": "german-a2-complete",
+  "draftRevision": 20,
+  "recordingsReplaced": 32,
+  "audioReferencesChanged": 47,
+  "publishedVersionPreserved": "a5404079-957f-47cc-9f7d-91d07ed5bc67",
+  "models": {
+    "gemini-3.1-flash-tts-preview": 11,
+    "gemini-3.8-flash-lite-tts": 10,
+    "gemini-2.5-flash-preview-tts": 2,
+    "gemini-3.8-flash-tts": 9
+  },
+  "localChecks": {
+    "decodedAACFiles": 32,
+    "wordPaceRange": [
+      111,
+      163
+    ],
+    "hashesVerified": true,
+    "volumeAndDurationPassed": true
+  },
+  "validation": {
+    "courseAndAudioTestsPassed": 15,
+    "typescriptPassed": true,
+    "targetedLintPassed": true
+  },
+  "spokenTranscriptVerification": {
+    "status": "awaiting-user-permission",
+    "reason": "Automatic approval review rejected sending generated audio to Gemini for transcription. Only generation has been explicitly authorized."
+  },
+  "generator": "scripts/generate-german-a2-audio.mjs",
+  "replacementScript": "scripts/replace-german-a2-audio.mjs",
+  "notes": [
+    "Original system recordings retained for rollback.",
+    "Existing transcripts, answers, course structure and visual styling retained.",
+    "New audio remains in the draft; the published version was not modified."
+  ]
+}

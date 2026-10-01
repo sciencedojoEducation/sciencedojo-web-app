@@ -58,6 +58,7 @@ export default function NavbarClient({ flags }: { flags: PublicFlagMap }) {
             showCommunity={flags.community_enabled}
             showPracticeDojo={flags.practice_dojo_enabled}
             showFocusDojo={flags.focus_dojo_enabled}
+            showCourses={flags.course_pilot_enabled}
             showFreeAssessment={flags.free_assessment_enabled}
           />
           <Link href="/" className="hover:opacity-80 transition-opacity">
@@ -66,6 +67,7 @@ export default function NavbarClient({ flags }: { flags: PublicFlagMap }) {
         </div>
 
         <nav className="hidden items-center gap-5 xl:flex">
+          {flags.course_pilot_enabled && <Link href="/courses" className="text-sm font-medium text-secondary/70 hover:text-primary">Courses</Link>}
           {flags.tutor_marketplace_enabled && <Link href="/find-tutors" className="text-sm font-medium text-secondary/70 hover:text-primary transition-colors">Find a Tutor</Link>}
           <Link href="/how-it-works" className="text-sm font-medium text-secondary/70 hover:text-primary transition-colors">How It Works</Link>
           {flags.practice_dojo_enabled && <Link href="/ai-practice-studio" className="text-sm font-medium text-secondary/70 hover:text-primary transition-colors">Free Practice</Link>}

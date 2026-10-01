@@ -1,3 +1,4 @@
+import { formatCourseDuration } from "@/lib/formatTime";
 import Link from "next/link";
 import { BookOpen, Clock } from "lucide-react";
 import AcademyProgressRing from "./AcademyProgressRing";
@@ -18,16 +19,18 @@ export default function AcademyCourseContents({
   progress,
   lessonHref,
   quizHref,
+  preview = false,
 }: {
   course: AcademyCourse;
   progress: AcademyProgress;
   lessonHref: (slug: string) => string;
   quizHref: string;
+  preview?: boolean;
 }) {
   const progressPercent = getAcademyProgressPercent(progress, course);
   if (resolveAcademyTheme(course).preset === "journey")
-    return <AcademyJourneyContents course={course} progress={progress} lessonHref={lessonHref} quizHref={quizHref} />;
-  const requiredLessons = getAcademyRequiredLessons(course, progress);
+    return <AcademyJourneyContents course={course} progress={progress} lessonHref={lessonHref} quizHref={quizHref} preview={preview} />;
+  const requiredLessons = preview ? course.lessons : getAcademyRequiredLessons(course, progress);
   const sections = Array.from(
     new Set(requiredLessons.map((lesson) => lesson.section)),
   );
@@ -47,7 +50,7 @@ export default function AcademyCourseContents({
           </span>
           <span className="inline-flex gap-2">
             <Clock size={15} aria-hidden="true" />
-            About {requiredLessons.reduce((minutes, lesson) => minutes + lesson.durationMinutes, 0)} minutes
+            About {formatCourseDuration(requiredLessons.reduce((minutes, lesson) => minutes + lesson.durationMinutes, 0))}
           </span>
           {course.rules?.requireFinalAssessment !== false ? (
             <span>{course.passMark || 80}% pass mark</span>

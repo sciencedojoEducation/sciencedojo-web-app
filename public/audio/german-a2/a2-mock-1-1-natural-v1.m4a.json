@@ -1,0 +1,16 @@
+{
+  "id": "a2-mock-1-1",
+  "model": "gemini-3.1-flash-tts-preview",
+  "speakers": [
+    "Kore"
+  ],
+  "fingerprint": "2297968f0de9d023f56cff16126e3c7d86b24ff42973717418ea28d10eef0fdd",
+  "sha256": "4aca56b896d6fbb2b23513eb7231170e192b496be7d182d7c041054f99c509bc",
+  "sourceSeconds": 22.493541666666665,
+  "tempo": 1,
+  "seconds": 22.493541666666665,
+  "words": 46,
+  "wordsPerMinute": 123,
+  "bytes": 282663,
+  "generatedAt": "2026-10-01T14:46:42.811Z"
+}

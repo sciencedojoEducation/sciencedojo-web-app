@@ -1,0 +1,16 @@
+{
+  "id": "a2-mastery-order",
+  "model": "gemini-3.1-flash-tts-preview",
+  "speakers": [
+    "Kore"
+  ],
+  "fingerprint": "016870a410914bd29106d0156d6771aae0eaefdf5312d94ee323e0bf85bb588f",
+  "sha256": "b91cd81cb8a7603cfbc6d195875320301cebeedbbced515bb988a6a783d63092",
+  "sourceSeconds": 21.239041666666665,
+  "tempo": 1,
+  "seconds": 21.239041666666665,
+  "words": 46,
+  "wordsPerMinute": 130,
+  "bytes": 276210,
+  "generatedAt": "2026-10-01T14:45:13.829Z"
+}

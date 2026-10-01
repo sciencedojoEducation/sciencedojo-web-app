@@ -44,7 +44,11 @@ export default async function DashboardSidebar({ role }: { role: DashboardRole }
   const tutorAcademyEnabled = role === "tutor" || role === "parent" || role === "student"
     ? await isFeatureEnabled("tutor_academy_enabled")
     : false;
-  const sections = getDashboardNavSections(role, { tutorMarketplaceEnabled, tutorAcademyEnabled });
+  const sections = getDashboardNavSections(role, { tutorMarketplaceEnabled, tutorAcademyEnabled }).map(section => ({ ...section, items: [...section.items] }));
+  if (await isFeatureEnabled("course_pilot_enabled")) {
+    for (const section of sections) section.items = section.items.filter(item => item.href !== "/dashboard/academy");
+    sections.push({ title: "Courses", items: [{ name: "My Courses", href: "/dashboard/academy", iconName: "academy" }, { name: "Browse courses", href: "/courses", iconName: "academy" }] });
+  }
   const hasTour = role === "parent" || role === "student" || role === "tutor";
   const studentAppearance = role === "student";
 

@@ -1,0 +1,19 @@
+{
+  "id": "b1-fresh-dialogue",
+  "model": "gemini-3.8-flash-tts",
+  "speakers": [
+    "Kore",
+    "Puck",
+    "Kore",
+    "Puck",
+    "Kore",
+    "Puck"
+  ],
+  "fingerprint": "9b32c05394bb328b86643427b3f19e3235501c5b17125befd77ada8a8db430cd",
+  "sha256": "1ff30b7ae070a6dcf5fe0b3a0560d47f61a7e378bbe56afceace6b5fbbf60464",
+  "seconds": 36.94383333333333,
+  "words": 107,
+  "wordsPerMinute": 174,
+  "bytes": 1777400,
+  "generatedAt": "2026-10-01T15:39:05.863Z"
+}

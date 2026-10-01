@@ -2,7 +2,7 @@
 
 Course key: `german-b1-complete`. Entry requirement: A2 German. The course uses the existing academy builder, learner submissions, chapter progression and exam-choice flow used by A1/B2.
 
-The outcome is independent communication about familiar everyday, work, learning and travel situations: connected descriptions, reasons, opinions and collaborative decisions. There are 16 shared chapters, a shared 18-question assessment, and separate Goethe (9 lessons) and telc (10 lessons) routes. Core practice takes about 32.5 hours; exam-route practice is additional. These are activity estimates, not a claim that this alone supplies all instructional hours needed to reach B1.
+The outcome is independent communication about familiar everyday, work, learning and travel situations: connected descriptions, reasons, opinions and collaborative decisions. There are 16 shared chapters, a shared 18-question assessment, and separate Goethe (9 lessons) and telc (10 lessons) routes. After the resource upgrade, core practice takes about 39 hours 10 minutes; exam-route practice is additional. These are activity estimates, not a claim that this alone supplies all instructional hours needed to reach B1.
 
 ## Chapter and grammar coverage
 
@@ -57,7 +57,7 @@ Official resources checked on 30 September 2026:
 
 ## Authoring and deployment
 
-Content lives in `lib/german-b1-curriculum.ts`, `lib/german-b1-exam-practice.ts`, `lib/german-b1-mastery.ts` and `lib/german-b1-course.ts`. All teaching texts are original. There are 20 listening recordings: one per chapter and four provider-skills recordings, including two with German speaker changes. Audio is synthetic and labelled accordingly.
+Content lives in `lib/german-b1-curriculum.ts`, `lib/german-b1-exam-practice.ts`, `lib/german-b1-mastery.ts` and `lib/german-b1-course.ts`. All teaching texts are original. There are 24 listening recordings: one per chapter, four provider-skills recordings and four new transfer recordings. Dialogue and discussion recordings use two German voices. Audio is synthetic and labelled accordingly.
 
 `npm run academy:german-b1:audio` generates local recordings on macOS. An explicit German locale is used for the multilingual Eddy voice. Existing files are preserved unless `--force` is given; `--start` and `--count` support partial regeneration.
 
@@ -74,3 +74,34 @@ Soft section colours distinguish listening, reading, language, speaking, writing
 The admin builder and preview use `/dashboard/admin/academy/german-b1-complete` and `/dashboard/admin/academy/german-b1-complete/preview`. Learner visibility follows the existing publication workflow.
 
 Validation: B1 tests check document validity and IDs, chapter skills and model word ranges, distinct provider tasks, audio existence and speaker locale, assessment evidence and exam-branch progression. Run `node --experimental-strip-types --test tests/german-b1-course.test.mjs`, `npm run typecheck`, and targeted ESLint checks.
+
+## Resource-informed upgrade · 1 October 2026
+
+The uploaded **Grammatik aktiv A1–B1, second updated edition** was inspected visually: contents, B1 topic groupings and representative explanation/practice spreads (printed pp. 138–139, 162–163 and 186–187). The scanned PDF has no extractable text layer. The supplied **Zertifikat B1 neu · 15 Übungsprüfungen** (Hueber licence edition, 2014) was inspected for its examination overview, model-test structure, writing tasks and speaking progression (printed pp. 4–5 and 18–20). It is a Goethe-format resource; it is not used as evidence for telc task requirements. Current format checks use the official Goethe and telc resources above. No book pages, texts, exercise sets, illustrations or publisher audio are reproduced in the course or repository.
+
+The upgrade adds 189 original blocks while retaining all 35 lesson identities, existing authored blocks, images, media URLs, the final quiz and its revision. Sixteen chapter labs each add a three-row explanation table, four contextual decisions with feedback, a two-sentence repair task followed by personal production, and retrieval of earlier rules. Optional book references use unit numbers visible in the uploaded edition's contents:
+
+| Course chapter | Strengthened focus | Optional Grammatik aktiv units |
+| --- | --- | --- |
+| 1 | Negation, object pronouns, sentence frame | 16, 24, 52 |
+| 2 | Past narration, als/wenn, separable verbs | 54, 55, 57, 77 |
+| 3 | Reflexive accusative/dative, time prepositions | 56, 78, 83 |
+| 4 | Position/direction and relative cases | 35, 36, 67, 75, 76 |
+| 5 | Weak noun declension, indirect questions | 30, 69, 72 |
+| 6 | Infinitive with/without zu, purpose | 73, 74, 79 |
+| 7 | Fixed prepositions; person versus thing | 56, 58, 59 |
+| 8 | Earlier past and ordered events | 55, 72, 78 |
+| 9 | Adjective endings with/without articles, lassen | 40–43, 66, 84 |
+| 10 | Pronominal adverbs, ob/dass, contrast | 58, 59, 72 |
+| 11 | Present/past/modal passive versus future | 62–65 |
+| 12 | Paired connectors, adjectives as nouns | 70, 71, 76, 80 |
+| 13 | Genitive prepositions and participle adjectives | 68, 82, 84, 85 |
+| 14 | Hypothetical conditions, advice and wishes | 60, 61, 66 |
+| 15 | Je … desto and sentence linking | 45, 46, 81 |
+| 16 | Mixed structures in event planning | 55, 60–65, 76, 79, 80, 84 |
+
+Each existing Mini-Mock now also contains a **fresh transfer set** absent from earlier teaching: Goethe's five reading skills (12 checks) or telc's three reading skills (5 checks), four new audio scenarios (8 checks), new provider-specific writing and speaking tasks, and an evidence-based error journal. Telc additionally has a connected six-gap letter rather than isolated grammar sentences. These remain shortened skill checks: choices stand in for some official matching/binary interfaces, task counts differ, and feedback is available before the learner finishes. They do not provide an official exam score or a timed simulation. The existing guided rehearsal remains useful before the fresh set. New production review checklists support revision without claiming automated official marking.
+
+The Goethe challenge includes an optional plan for using untouched tests in the learner's own examination book. Its listening work requires the corresponding authorised publisher audio; the uploaded PDF does not supply playable recordings. A current official test remains the final assessment reference.
+
+`lib/german-b1-grammar-labs.ts`, `lib/german-b1-fresh-exam.ts` and `lib/german-b1-resource-upgrade.ts` define the addition. `npm run academy:german-b1:upgrade` previews the current remote draft; `-- --apply --expect-draft-sha256=…` applies against a fresh hash, uploads only new audio, snapshots the original, and guards the revision. Published content and status are preserved. Run the additional `tests/german-b1-resource-upgrade.test.mjs` to verify preservation, idempotence and fresh evidence.

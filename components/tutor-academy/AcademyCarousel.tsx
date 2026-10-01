@@ -50,7 +50,7 @@ export default function AcademyCarousel({
 
   return (
     <div
-      className="overflow-hidden border border-[#DEDFE1] bg-white"
+      className="academy-carousel overflow-hidden border border-[#DEDFE1] bg-white"
       role="region"
       aria-roledescription="carousel"
       aria-label="Content carousel"
@@ -81,20 +81,20 @@ export default function AcademyCarousel({
           {item.caption}
         </p>
       ) : null}
-      <div className="min-h-64 border-t-4 border-[var(--academy-accent)] p-7 sm:p-9">
+      <div className="academy-carousel-copy min-h-64 border-t-4 border-[var(--academy-accent)] p-7 sm:p-9">
         <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-[var(--academy-accent)]">
           {item.eyebrow || `Card ${safeIndex + 1}`}
         </p>
         <h3 className="mt-4 text-2xl font-bold tracking-[-0.02em] text-[#252629] sm:text-[28px]">
           {item.title}
         </h3>
-        <p className="mt-4 max-w-2xl font-[family-name:var(--font-academy-body)] text-[16px] leading-8 text-[#27313B]">
+        <p className="academy-reading-copy mt-4 max-w-2xl font-[family-name:var(--font-academy-body)] text-[16px] leading-8 text-[#27313B]">
           {item.body}
         </p>
       </div>
-      <div className="flex items-center justify-between border-t border-[#DEDFE1] bg-[#FAFAFA] px-5 py-4">
+      <div className="academy-carousel-controls flex flex-wrap items-center justify-between gap-2 border-t border-[#DEDFE1] bg-[#FAFAFA] px-5 py-4">
         <div
-          className="flex gap-0.5"
+          className="flex min-w-0 flex-wrap gap-0.5"
           role="tablist"
           aria-label="Choose a carousel slide"
         >

@@ -37,7 +37,7 @@ function colour(block: LessonBlock) {
   if (/Lesen|Lesetext|Lesestrategie/.test(heading)) return palette.reading;
   if (/Schreiben/.test(heading)) return palette.writing;
   if (/Sprechen/.test(heading)) return palette.speaking;
-  if (["flashcards", "worked-example"].includes(block.type) || /Grammatik|Sprachbausteine/.test(heading)) return palette.language;
+  if (["flashcards", "worked-example"].includes(block.type) || /Grammatik|Sprachlabor|Sprachbausteine/.test(heading)) return palette.language;
   return undefined;
 }
 

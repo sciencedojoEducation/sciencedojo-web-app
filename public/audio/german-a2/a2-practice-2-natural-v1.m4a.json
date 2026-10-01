@@ -1,0 +1,21 @@
+{
+  "id": "a2-practice-2",
+  "model": "gemini-3.8-flash-tts",
+  "speakers": [
+    "de-de-assistant-11",
+    "de-de-assistant-8",
+    "de-de-assistant-11",
+    "de-de-assistant-8",
+    "de-de-assistant-11",
+    "de-de-assistant-8"
+  ],
+  "fingerprint": "6a65c349914af409de6051b2699c608992fc0c70e193f3ebc62649ab4a4130d4",
+  "sha256": "fcf77100fe5cb59d56ef2a2d4e60a7d561e025ef09d4cb2675f6ab914fcbfed1",
+  "sourceSeconds": 24.407458333333334,
+  "tempo": 1,
+  "seconds": 24.407458333333334,
+  "words": 63,
+  "wordsPerMinute": 155,
+  "bytes": 299977,
+  "generatedAt": "2026-10-01T14:34:01.238Z"
+}

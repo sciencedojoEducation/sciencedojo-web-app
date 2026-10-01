@@ -1,0 +1,17 @@
+{
+  "id": "b1-exam-dialogue",
+  "model": "gemini-3.8-flash-tts",
+  "speakers": [
+    "Kore",
+    "Puck",
+    "Kore",
+    "Puck"
+  ],
+  "fingerprint": "27eb850e7ca96144ca11ac1df8cd6cbaad510d2e0ab8dacd3ea4b54597d56403",
+  "sha256": "9f7bd310c407f57651096623d84e07a7cbab68258a01eb54375424fb56fc1e03",
+  "seconds": 38.12445833333334,
+  "words": 101,
+  "wordsPerMinute": 159,
+  "bytes": 1834070,
+  "generatedAt": "2026-10-01T15:37:27.431Z"
+}

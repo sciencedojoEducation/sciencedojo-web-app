@@ -1,0 +1,16 @@
+{
+  "id": "a2-practice-1",
+  "model": "gemini-3.1-flash-tts-preview",
+  "speakers": [
+    "Kore"
+  ],
+  "fingerprint": "1f23e1c42f4a13a557832af5547da359023c02656d0f1f3b8621dd979e07091c",
+  "sha256": "444f0721b9a5281a892ad0cb37d556e75638c17c63f7b24a59fff73b43bd51ea",
+  "sourceSeconds": 26.488166666666668,
+  "tempo": 1,
+  "seconds": 26.488166666666668,
+  "words": 49,
+  "wordsPerMinute": 111,
+  "bytes": 337423,
+  "generatedAt": "2026-10-01T14:45:38.608Z"
+}

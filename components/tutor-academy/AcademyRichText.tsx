@@ -88,6 +88,7 @@ function renderNode(node: RichNode, key: string): React.ReactNode {
     return (
       <ul
         key={key}
+        data-academy-motion-list
         className="list-disc space-y-2 pl-6 font-[family-name:var(--font-academy-body)] text-[17px] font-medium leading-8 text-[#17202C]"
       >
         {children}
@@ -97,6 +98,7 @@ function renderNode(node: RichNode, key: string): React.ReactNode {
     return (
       <ol
         key={key}
+        data-academy-motion-list
         className="list-decimal space-y-2 pl-6 font-[family-name:var(--font-academy-body)] text-[17px] font-medium leading-8 text-[#17202C]"
       >
         {children}

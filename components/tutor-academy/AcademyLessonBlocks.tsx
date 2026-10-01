@@ -24,7 +24,8 @@ import AcademySectionTransition from "./AcademySectionTransition";
 import AcademyLessonRoadmap, { AcademyPhaseMarker } from "./AcademyLessonRoadmap";
 import AcademyLessonJourney from "./AcademyLessonJourney";
 import AcademyActivityTracker from "./AcademyActivityTracker";
-import { isAcademyBlockRequiredForCompletion } from "@/lib/tutor-academy";
+import AcademyScrollReveal from "./AcademyScrollReveal";
+import { isAcademyBlockRequiredForCompletion, TUTOR_ACADEMY_COURSE_KEY } from "@/lib/tutor-academy";
 import { academyBlockAnchor, academyLessonRoadmap, academyLessonJourneySteps } from "@/lib/academy-lesson-roadmap";
 import {
   AcademyAccordion,
@@ -104,25 +105,38 @@ function AcademyMediaCaption({
 export default function AcademyLessonBlocks({
   blocks,
   courseKey,
+  presentationCourseKey = courseKey,
   lessonId,
   uiLanguage,
   completedBlockIds = [],
   resumeAnchor,
+  courseOutline,
+  lessonEnd,
 }: {
   blocks: LessonBlock[];
   courseKey?: string;
+  /** Read-only course identity for previews; never used to save learner work. */
+  presentationCourseKey?: string;
   lessonId?: string;
   uiLanguage?: "de" | "en";
   completedBlockIds?: string[];
   resumeAnchor?: string;
+  courseOutline?: React.ReactNode;
+  /** Server-rendered, completion-gated next-chapter action. */
+  lessonEnd?: React.ReactNode;
 }) {
-  const activityLanguage = uiLanguage || (isGermanAcademyCourse(courseKey) ? "de" : "en");
-  const roadmap = academyLessonRoadmap(blocks);
+  const activityLanguage = uiLanguage || (isGermanAcademyCourse(presentationCourseKey) ? "de" : "en");
+  // Short induction lessons read as a single page, not invented learning phases.
+  const showLessonJourney = presentationCourseKey !== TUTOR_ACADEMY_COURSE_KEY;
+  const roadmap = showLessonJourney ? academyLessonRoadmap(blocks) : { sections: [], phases: [] };
   return (
-    <AcademyLessonJourney steps={academyLessonJourneySteps(blocks, activityLanguage === "de" ? "Einstieg" : "Getting started", activityLanguage === "de")}
+    <AcademyLessonJourney steps={showLessonJourney ? academyLessonJourneySteps(blocks, activityLanguage === "de" ? "Einstieg" : "Getting started", activityLanguage === "de") : []}
+      key={lessonId || blocks[0]?.id || courseKey}
       anchors={blocks.map(academyBlockAnchor)} completedIds={completedBlockIds} german={activityLanguage === "de"}
       canCompleteLesson={!!courseKey && !!lessonId}
       resumeAnchor={resumeAnchor}
+      courseOutline={courseOutline}
+      lessonEnd={lessonEnd}
       tracker={<AcademyActivityTracker key="activity-tracker" courseKey={courseKey} lessonId={lessonId} german={activityLanguage === "de"} completedIds={completedBlockIds}
         activities={blocks.flatMap((block) => block.id ? [{ id: block.id, label: ("heading" in block && block.heading) || (block.type === "knowledge-check" ? block.question.prompt : block.type === "divider" ? block.label || (activityLanguage === "de" ? "Abschnitt" : "Section") : block.type), required: isAcademyBlockRequiredForCompletion(block) }] : [])} />}
       roadmap={<AcademyLessonRoadmap key="lesson-roadmap" sections={roadmap.sections} phases={roadmap.phases} german={activityLanguage === "de"} completedIds={completedBlockIds} />}>
@@ -180,7 +194,7 @@ export default function AcademyLessonBlocks({
           return (
             <figure
               key={block.id || blockIndex}
-              className={`${widthClass} overflow-hidden border border-[#DEDFE1] bg-white`}
+              className={`academy-media-figure ${widthClass} overflow-hidden border border-[#DEDFE1] bg-white`}
             >
               <div className={`relative ${aspectClass} w-full bg-slate-100`}>
                 {block.src ? (
@@ -214,17 +228,17 @@ export default function AcademyLessonBlocks({
           return (
             <aside
               key={blockIndex}
-              className={`border-l-4 p-6 sm:p-7 ${calloutClasses[block.tone]}`}
+              className={`academy-callout border-l-4 p-6 sm:p-7 ${calloutClasses[block.tone]}`}
             >
-              <div className="flex items-start gap-4">
-                <span className="mt-0.5 inline-flex h-9 w-9 shrink-0 items-center justify-center text-[var(--academy-accent)]">
+              <div className="academy-callout-layout flex items-start gap-4">
+                <span className="academy-callout-icon mt-0.5 inline-flex h-9 w-9 shrink-0 items-center justify-center text-[var(--academy-accent)]">
                   {block.tone === "amber" ? (
                     <ShieldCheck size={21} />
                   ) : (
                     <Lightbulb size={21} />
                   )}
                 </span>
-                <div>
+                <div className="academy-callout-copy min-w-0">
                   <h2 className="text-xl font-bold tracking-[-0.01em]">
                     {block.heading}
                   </h2>
@@ -246,10 +260,10 @@ export default function AcademyLessonBlocks({
                   {block.heading}
                 </h2>
               )}
-              <ol className="border-t border-[#DEDFE1]">
+              <ol data-academy-motion-list className="border-t border-[#DEDFE1]">
                 {block.items.map((item, index) => (
                   <li
-                    key={item.title}
+                    key={`${index}-${item.title}`}
                     className="grid grid-cols-[44px_1fr] gap-4 border-b border-[#DEDFE1] py-6"
                   >
                     <span
@@ -775,15 +789,18 @@ export default function AcademyLessonBlocks({
             id={academyBlockAnchor(block, blockIndex)}
             appearance={appearance}
             variant={appearance.variant}
+            blockType={block.type}
             className={`${widthClass} scroll-mt-64 academy-block-surface-${appearance.surface} academy-block-spacing-${appearance.spacing}`}
           >
+            <AcademyScrollReveal disabled={block.type === "divider" || block.type === "numbered-list"} gentle={block.type === "knowledge-check" || block.type === "writing-practice" || block.type === "speaking-practice" || block.type === "audio"} media={block.type === "image" || block.type === "gallery"}>
             {roadmap.phases.filter((phase) => phase.index === blockIndex).map(({ phase }) => (
               <AcademyPhaseMarker key={phase} phase={phase} german={activityLanguage === "de"} />
             ))}
-            {activity ? <div className={`rounded-2xl border p-5 sm:p-6 ${activity.style}`}>
+            {activity ? <div className={`academy-activity-shell rounded-2xl border p-5 sm:p-6 ${activity.style}`}>
               <p className="mb-4 flex items-center gap-2 text-sm font-bold text-[#344B60]"><activity.Icon size={19} aria-hidden="true" />{activity.label}</p>
               {content}
             </div> : content}
+            </AcademyScrollReveal>
           </AcademyBlockBackground>
         );
       })}

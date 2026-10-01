@@ -1,3 +1,4 @@
+import { formatCourseDuration } from "@/lib/formatTime";
 import { Fragment } from "react";
 import Link from "next/link";
 import { ArrowRight, BookOpen, Check, Clock3, LockKeyhole, Sparkles } from "lucide-react";
@@ -17,13 +18,15 @@ export default function AcademyJourneyContents({
   progress,
   lessonHref,
   quizHref,
+  preview = false,
 }: {
   course: AcademyCourse;
   progress: AcademyProgress;
   lessonHref: (slug: string) => string;
   quizHref: string;
+  preview?: boolean;
 }) {
-  const requiredLessons = getAcademyRequiredLessons(course, progress);
+  const requiredLessons = preview ? course.lessons : getAcademyRequiredLessons(course, progress);
   const completedCount = requiredLessons.filter(
     (lesson) => getAcademyLessonProgressState(progress, lesson.slug, lesson.id) === "completed",
   ).length;
@@ -58,7 +61,7 @@ export default function AcademyJourneyContents({
           <div>
             <span className="inline-flex items-center gap-2 text-xs font-bold text-[var(--academy-accent-ink)]"><Sparkles size={16} aria-hidden="true" /> Your learning journey</span>
             <h2 className="mt-2 text-2xl font-bold leading-tight text-[#17202C] sm:text-3xl">Small steps, real progress</h2>
-            <p className="mt-2 text-sm text-[#384554]">{completedCount} of {requiredLessons.length} lessons complete · About {requiredLessons.reduce((minutes, lesson) => minutes + lesson.durationMinutes, 0)} minutes on your route</p>
+            <p className="mt-2 text-sm text-[#384554]">{completedCount} of {requiredLessons.length} lessons complete · About {formatCourseDuration(requiredLessons.reduce((minutes, lesson) => minutes + lesson.durationMinutes, 0))} on your route</p>
             {course.examTracks?.length && !progress.selectedExamTrack ? (
               <p className="mt-2 text-sm text-[#384554]">After the core chapters and final check, choose one exam route.</p>
             ) : null}
@@ -83,7 +86,7 @@ export default function AcademyJourneyContents({
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {requiredLessons.filter((lesson) => lesson.section === section).map((lesson) => {
                 const index = course.lessons.findIndex((candidate) => candidate.id === lesson.id || candidate.slug === lesson.slug);
-                const { status: state, locked } = getAcademyJourneyLessonState(course, progress, index)!;
+                const { status: state, locked } = preview ? { status: "unstarted", locked: false } : getAcademyJourneyLessonState(course, progress, index)!;
                 const card = (
                   <>
                     <div className="flex items-center justify-between gap-3">
@@ -93,7 +96,7 @@ export default function AcademyJourneyContents({
                     <h4 className="mt-5 text-lg font-bold leading-snug text-[#17202C]">{lesson.title}</h4>
                     <p className="mt-2 line-clamp-2 text-sm leading-6 text-[#4A5766]">{lesson.summary}</p>
                     <div className="mt-auto flex items-center justify-between gap-3 pt-5 text-xs font-semibold text-[#435164]">
-                      <span className="inline-flex items-center gap-1"><Clock3 size={14} aria-hidden="true" /> {lesson.durationMinutes} min</span>
+                      <span className="inline-flex items-center gap-1"><Clock3 size={14} aria-hidden="true" /> {formatCourseDuration(lesson.durationMinutes)}</span>
                       {locked ? <LockKeyhole size={16} aria-hidden="true" /> : <ArrowRight size={17} aria-hidden="true" />}
                     </div>
                   </>

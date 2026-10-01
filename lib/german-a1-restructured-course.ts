@@ -4,6 +4,8 @@ import { publicLifePracticeBlocks } from "./german-a1-public-life-practice.ts";
 import { lifePracticeBlocks } from "./german-a1-life-practice.ts";
 import { germanA1FinalListening } from "./german-a1-final-listening.ts";
 import { previousChapterRecall } from "./german-a1-retrieval.ts";
+import { enrichA1ChapterTwo } from "./german-a1-guided-practice.ts";
+import { enrichA1Production } from "./german-a1-production-labs.ts";
 import { styleGermanA1Lesson } from "./german-a1-visual-design.ts";
 import {
   germanA1Curriculum,
@@ -470,7 +472,9 @@ function chapterLesson(chapter: (typeof germanA1Curriculum)[number]): AcademyLes
   });
 
   if (chapter.number <= 3) {
-    const primary = structuredClone(sources[0].blocks);
+    const primary = chapter.number === 2
+      ? enrichA1ChapterTwo(structuredClone(sources[0].blocks))
+      : structuredClone(sources[0].blocks);
     if (topicBridge.length) {
       const listeningIndex = primary.findIndex((block) => block.type === "audio");
       if (listeningIndex < 0) throw new Error(`Missing listening sequence in A1 chapter ${chapter.number}`);
@@ -731,7 +735,7 @@ function masteryLesson(chapter: (typeof germanA1Curriculum)[number]): AcademyLes
 }
 
 const coreLessons = germanA1Curriculum.map((chapter) =>
-  chapter.number === 15 ? masteryLesson(chapter) : chapterLesson(chapter));
+  enrichA1Production(chapter.number === 15 ? masteryLesson(chapter) : chapterLesson(chapter), chapter.number));
 
 const examMiniMockListening = {
   goethe: {

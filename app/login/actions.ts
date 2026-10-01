@@ -128,7 +128,7 @@ export async function login(formData: FormData) {
     }
 
     revalidatePath('/', 'layout')
-    redirect('/dashboard/internal')
+    redirect(/^\/courses\/[a-z0-9]+(?:-[a-z0-9]+)*$/.test(nextPath) ? nextPath : '/dashboard/internal')
   }
 
   // PRIORITIZE Database Profile Role over Metadata

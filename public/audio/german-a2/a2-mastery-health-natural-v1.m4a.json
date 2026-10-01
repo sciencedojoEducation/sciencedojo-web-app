@@ -1,0 +1,16 @@
+{
+  "id": "a2-mastery-health",
+  "model": "gemini-3.1-flash-tts-preview",
+  "speakers": [
+    "Kore"
+  ],
+  "fingerprint": "7ea2c916b90b21b23ca81868b4441a725b4e77eaf2f4eb008695751d40dcf2ec",
+  "sha256": "05738444714a9f24520ae94ec2ee7d55d83166687d335375d79821ec4526b991",
+  "sourceSeconds": 23.458666666666666,
+  "tempo": 1,
+  "seconds": 23.458666666666666,
+  "words": 49,
+  "wordsPerMinute": 125,
+  "bytes": 293203,
+  "generatedAt": "2026-10-01T14:44:29.094Z"
+}

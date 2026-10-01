@@ -1,0 +1,290 @@
+[
+  {
+    "id": "de-a2-01",
+    "sha256": "486e405f89a12e397ee42a220bd37f2045ae70eef8e5c925a04827de461508ea",
+    "seconds": 24.405333333333335,
+    "wordsPerMinute": 155,
+    "peak": 26263,
+    "rms": 3409.805317514329,
+    "clippedSamples": 0
+  },
+  {
+    "id": "de-a2-02",
+    "sha256": "beacd18213119ec1be5b7c7acfd92b909b00629ebb19896dc9e33186fd11d0c5",
+    "seconds": 23.253333333333334,
+    "wordsPerMinute": 155,
+    "peak": 27911,
+    "rms": 3389.2654524275176,
+    "clippedSamples": 0
+  },
+  {
+    "id": "de-a2-03",
+    "sha256": "3b70fc9a1f5698cb966ff7cd904df4e92dc79a5e067cd564c7597747e7a544fe",
+    "seconds": 22.826666666666668,
+    "wordsPerMinute": 155,
+    "peak": 27770,
+    "rms": 3769.4578359872044,
+    "clippedSamples": 0
+  },
+  {
+    "id": "de-a2-04",
+    "sha256": "1b528b227eceacc16bd0050cb87e5a454da942452f7b008a97ad81a4bc0fbce3",
+    "seconds": 23.082666666666668,
+    "wordsPerMinute": 159,
+    "peak": 27349,
+    "rms": 3042.669292118335,
+    "clippedSamples": 0
+  },
+  {
+    "id": "de-a2-05",
+    "sha256": "8518cc730edbc80bb00ecd485dda6eab3f7d9ed888922e81630546155cc8e90e",
+    "seconds": 25.941333333333333,
+    "wordsPerMinute": 155,
+    "peak": 27324,
+    "rms": 3519.2234102408765,
+    "clippedSamples": 0
+  },
+  {
+    "id": "de-a2-06",
+    "sha256": "3af71bd9e1311ac56d342af6418960d396e3f242eae25ca2ddd77d5f73bd4b71",
+    "seconds": 26.581333333333333,
+    "wordsPerMinute": 151,
+    "peak": 26274,
+    "rms": 3180.621887575568,
+    "clippedSamples": 0
+  },
+  {
+    "id": "de-a2-07",
+    "sha256": "cd81405f3419e9307c44cc777e371e776b50030faec00c6babc6dd3af90cfa8d",
+    "seconds": 28.245333333333335,
+    "wordsPerMinute": 155,
+    "peak": 27940,
+    "rms": 3384.9062652005546,
+    "clippedSamples": 0
+  },
+  {
+    "id": "de-a2-08",
+    "sha256": "d41e7fee1e30fdd1724d6a20298afbc2b8f0444907e5f7f211f8f145f5f2f50f",
+    "seconds": 24.448,
+    "wordsPerMinute": 150,
+    "peak": 27424,
+    "rms": 3503.471262290125,
+    "clippedSamples": 0
+  },
+  {
+    "id": "de-a2-09",
+    "sha256": "1dd5eb271229a950b73ac5dd0eac56694c124c1035be08cbf13481c178cf16f0",
+    "seconds": 25.173333333333332,
+    "wordsPerMinute": 155,
+    "peak": 29332,
+    "rms": 4394.748935403712,
+    "clippedSamples": 0
+  },
+  {
+    "id": "de-a2-10",
+    "sha256": "74e3d764b404cfabcb03fd199bc9e413772b51f54e1f3662d87b77bcecc0c239",
+    "seconds": 25.557333333333332,
+    "wordsPerMinute": 155,
+    "peak": 26511,
+    "rms": 2663.260901060538,
+    "clippedSamples": 0
+  },
+  {
+    "id": "de-a2-11",
+    "sha256": "aeac4d2c3870280f7cd87c04f4cbfcdbdf557d0b2c2173b0394c859a8f766582",
+    "seconds": 24.277333333333335,
+    "wordsPerMinute": 163,
+    "peak": 27042,
+    "rms": 3156.729697612013,
+    "clippedSamples": 0
+  },
+  {
+    "id": "de-a2-12",
+    "sha256": "c07a6195bdeb494a33eca260a656db4e433fdf94cd8911ac1d1f3fdc60c62b15",
+    "seconds": 25.557333333333332,
+    "wordsPerMinute": 155,
+    "peak": 25258,
+    "rms": 3124.2716210045323,
+    "clippedSamples": 0
+  },
+  {
+    "id": "de-a2-13",
+    "sha256": "01261e81f81ac044382af22973988024fd2738c0851d79bb2296cac6552dcdca",
+    "seconds": 25.557333333333332,
+    "wordsPerMinute": 155,
+    "peak": 26691,
+    "rms": 3570.6806677400027,
+    "clippedSamples": 0
+  },
+  {
+    "id": "de-a2-14",
+    "sha256": "10ecc291d8039b86849f005e6133eed19eb39e0ecbfa6e863893c775d3325e1a",
+    "seconds": 24.917333333333332,
+    "wordsPerMinute": 161,
+    "peak": 28689,
+    "rms": 3454.134109841268,
+    "clippedSamples": 0
+  },
+  {
+    "id": "de-a2-15",
+    "sha256": "6663cb2b2651a970b3d54d2dd08fabc7817e8007c8aee3503cb13a5cb28074d5",
+    "seconds": 23.338666666666665,
+    "wordsPerMinute": 154,
+    "peak": 25975,
+    "rms": 3289.378526089082,
+    "clippedSamples": 0
+  },
+  {
+    "id": "de-a2-16",
+    "sha256": "a2d092f5dd8b51e08130af9a072d73d7ebb887b7700d3eab6453a68ebbf31dce",
+    "seconds": 25.173333333333332,
+    "wordsPerMinute": 157,
+    "peak": 27739,
+    "rms": 3008.5600036070787,
+    "clippedSamples": 0
+  },
+  {
+    "id": "a2-mastery-home",
+    "sha256": "513aa6ca85a397dcc38cf3b66a5f55ad21575f4b25771cb7d52c380cdcb421f0",
+    "seconds": 18.176,
+    "wordsPerMinute": 155,
+    "peak": 23665,
+    "rms": 3020.842434339789,
+    "clippedSamples": 0
+  },
+  {
+    "id": "a2-mastery-trip",
+    "sha256": "8379a929d59a1b0d3acd858786699b354ef13f558ef001c286fd8cbc5ef8ffc7",
+    "seconds": 19.2,
+    "wordsPerMinute": 147,
+    "peak": 22757,
+    "rms": 3087.0626293955115,
+    "clippedSamples": 0
+  },
+  {
+    "id": "a2-mastery-health",
+    "sha256": "05738444714a9f24520ae94ec2ee7d55d83166687d335375d79821ec4526b991",
+    "seconds": 23.466666666666665,
+    "wordsPerMinute": 125,
+    "peak": 26860,
+    "rms": 4215.561716537608,
+    "clippedSamples": 0
+  },
+  {
+    "id": "a2-mastery-order",
+    "sha256": "b91cd81cb8a7603cfbc6d195875320301cebeedbbced515bb988a6a783d63092",
+    "seconds": 21.248,
+    "wordsPerMinute": 130,
+    "peak": 29004,
+    "rms": 4538.462112665848,
+    "clippedSamples": 0
+  },
+  {
+    "id": "a2-practice-1",
+    "sha256": "444f0721b9a5281a892ad0cb37d556e75638c17c63f7b24a59fff73b43bd51ea",
+    "seconds": 26.496,
+    "wordsPerMinute": 111,
+    "peak": 27301,
+    "rms": 4546.384106487381,
+    "clippedSamples": 0
+  },
+  {
+    "id": "a2-practice-2",
+    "sha256": "fcf77100fe5cb59d56ef2a2d4e60a7d561e025ef09d4cb2675f6ab914fcbfed1",
+    "seconds": 24.405333333333335,
+    "wordsPerMinute": 155,
+    "peak": 28988,
+    "rms": 3025.0476311200505,
+    "clippedSamples": 0
+  },
+  {
+    "id": "a2-practice-3",
+    "sha256": "3ef6e00b0d48b07c8d5ce7f9c793606fb7b0de840112cc9b459f84072c2e5dd1",
+    "seconds": 26.24,
+    "wordsPerMinute": 142,
+    "peak": 28011,
+    "rms": 3903.4631360663248,
+    "clippedSamples": 0
+  },
+  {
+    "id": "a2-practice-4",
+    "sha256": "68f81a3a460e513fee06237b65759f0a9d41e277af96536547afbe0dd997f2b0",
+    "seconds": 29.226666666666667,
+    "wordsPerMinute": 134,
+    "peak": 28112,
+    "rms": 3584.848025818781,
+    "clippedSamples": 0
+  },
+  {
+    "id": "a2-mock-1-1",
+    "sha256": "4aca56b896d6fbb2b23513eb7231170e192b496be7d182d7c041054f99c509bc",
+    "seconds": 22.528,
+    "wordsPerMinute": 123,
+    "peak": 27355,
+    "rms": 4057.3508039293665,
+    "clippedSamples": 0
+  },
+  {
+    "id": "a2-mock-1-2",
+    "sha256": "c1dec17187323df3d4a8d0fa59eb7166830012c88cf150c26aa396ce25a4b745",
+    "seconds": 25.216,
+    "wordsPerMinute": 112,
+    "peak": 30251,
+    "rms": 3895.16862033594,
+    "clippedSamples": 0
+  },
+  {
+    "id": "a2-mock-1-3",
+    "sha256": "479ee25b7c833ade446ad0a61b6d432b7e923570885aeb182055e24e2b8cb3e1",
+    "seconds": 23.637333333333334,
+    "wordsPerMinute": 122,
+    "peak": 28699,
+    "rms": 4033.3548046935502,
+    "clippedSamples": 0
+  },
+  {
+    "id": "a2-mock-1-4",
+    "sha256": "c6f5ecaa4ada4bf50c059c1706a8f64ec06d45e6e6fd8f00ecce0f3aa97c902b",
+    "seconds": 23.466666666666665,
+    "wordsPerMinute": 136,
+    "peak": 26855,
+    "rms": 3865.2764060196946,
+    "clippedSamples": 0
+  },
+  {
+    "id": "a2-mock-2-1",
+    "sha256": "b4f652801c89c38b215553334fb170841254d8221201ee856d1c2c9cd9d2372e",
+    "seconds": 25.301333333333332,
+    "wordsPerMinute": 116,
+    "peak": 27310,
+    "rms": 3742.631287206525,
+    "clippedSamples": 0
+  },
+  {
+    "id": "a2-mock-2-2",
+    "sha256": "f3adac94029251174dccf17b2dfb47a580a75f279ba89ddabd52e109a589f831",
+    "seconds": 24.234666666666666,
+    "wordsPerMinute": 129,
+    "peak": 27028,
+    "rms": 3454.6714630399174,
+    "clippedSamples": 0
+  },
+  {
+    "id": "a2-mock-2-3",
+    "sha256": "57cfa417d24ab750f850edf546d16fefbd6ef418c7a374708f40a034e60e2ded",
+    "seconds": 23.21066666666667,
+    "wordsPerMinute": 155,
+    "peak": 29629,
+    "rms": 4253.184162900216,
+    "clippedSamples": 0
+  },
+  {
+    "id": "a2-mock-2-4",
+    "sha256": "7c1595d25784377c8a8fa5ec05a9126d81eeca32d72091c6541fb961f6d27496",
+    "seconds": 20.522666666666666,
+    "wordsPerMinute": 152,
+    "peak": 28244,
+    "rms": 4588.901153649229,
+    "clippedSamples": 0
+  }
+]

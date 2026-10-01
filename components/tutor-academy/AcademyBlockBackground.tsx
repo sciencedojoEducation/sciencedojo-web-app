@@ -8,12 +8,14 @@ export default function AcademyBlockBackground({
   children,
   id,
   variant,
+  blockType,
 }: {
   appearance: AcademyBlockAppearance;
   className: string;
   children: ReactNode;
   id?: string;
   variant?: string;
+  blockType?: string;
 }) {
   const background = appearance.background;
   const kind = background?.kind;
@@ -24,16 +26,17 @@ export default function AcademyBlockBackground({
     ...(customColor ? { "--academy-block-custom-color": customColor } : {}),
     ...(imageUrl ? {
       position: "relative", height: "auto", inset: "auto", overflow: "clip",
-      paddingTop: "clamp(7rem, 16vw, 11rem)", borderRadius: "1.5rem",
+      borderRadius: "1.5rem",
     } : {}),
   };
 
-  if (!kind) return <div id={id} data-block-variant={variant} className={className}>{children}</div>;
+  if (!kind) return <div id={id} data-block-variant={variant} data-academy-block-type={blockType} className={className}>{children}</div>;
 
   return (
     <div
       id={id}
       data-block-variant={variant}
+      data-academy-block-type={blockType}
       data-block-background={kind || "default"}
       className={`${className} academy-block-background academy-block-background-${kind} ${panel ? "academy-block-background-panel" : ""}`}
       style={style}

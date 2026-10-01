@@ -1,0 +1,16 @@
+{
+  "id": "de-a2-15",
+  "model": "gemini-3.8-flash-lite-tts",
+  "speakers": [
+    "de-de-assistant-11"
+  ],
+  "fingerprint": "a4fa0a9bb099d1491918bde4daf23666dc88ab8b73003f7aebf052590ee23c4d",
+  "sha256": "6663cb2b2651a970b3d54d2dd08fabc7817e8007c8aee3503cb13a5cb28074d5",
+  "sourceSeconds": 23.302791666666668,
+  "tempo": 1,
+  "seconds": 23.302791666666668,
+  "words": 60,
+  "wordsPerMinute": 154,
+  "bytes": 290003,
+  "generatedAt": "2026-10-01T14:41:52.949Z"
+}

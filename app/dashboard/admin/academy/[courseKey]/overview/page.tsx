@@ -1,3 +1,4 @@
+import { formatCourseDuration } from "@/lib/formatTime";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -62,7 +63,7 @@ export default async function AcademyCourseOverviewPage({
               <p className="academy-editorial-copy mt-7 max-w-2xl text-[17px] leading-8 text-white/70">{course.description}</p>
               <div className="mt-8 flex flex-wrap gap-x-6 gap-y-3 text-[12px] font-semibold text-white/65">
                 <span className="inline-flex items-center gap-2"><BookOpen size={15} />{course.lessons.length} lessons</span>
-                <span className="inline-flex items-center gap-2"><Clock3 size={15} />{course.estimatedMinutes} minutes</span>
+                <span className="inline-flex items-center gap-2"><Clock3 size={15} />{formatCourseDuration(course.estimatedMinutes)}</span>
                 <span className="inline-flex items-center gap-2"><Layers3 size={15} />{blockCount} blocks</span>
                 <span className="inline-flex items-center gap-2"><Users size={15} />{course.audienceRoles?.length || record.audienceRoles.length} audiences</span>
               </div>
@@ -109,7 +110,7 @@ export default async function AcademyCourseOverviewPage({
                           <div className="min-w-0">
                             <h4 className="text-[17px] font-semibold text-secondary">{lesson.title}</h4>
                             <p className="academy-editorial-copy mt-1 line-clamp-2 text-[13px] leading-6 text-secondary/50">{lesson.summary}</p>
-                            <div className="mt-2 flex flex-wrap gap-4 text-[10px] font-semibold text-secondary/40"><span>{lesson.durationMinutes} min</span><span>{lesson.blocks.length} blocks</span></div>
+                            <div className="mt-2 flex flex-wrap gap-4 text-[10px] font-semibold text-secondary/40"><span>{formatCourseDuration(lesson.durationMinutes)}</span><span>{lesson.blocks.length} blocks</span></div>
                           </div>
                           <Link href={`/dashboard/admin/academy/${courseKey}?lesson=${encodeURIComponent(lesson.id || lesson.slug)}`} className="inline-flex min-h-10 items-center justify-center gap-2 rounded-full border border-secondary/15 px-4 text-xs font-semibold text-secondary hover:border-primary hover:text-primary"><Pencil size={13} /> Edit lesson</Link>
                         </li>

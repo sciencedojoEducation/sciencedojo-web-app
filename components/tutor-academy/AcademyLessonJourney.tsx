@@ -1,11 +1,13 @@
 "use client";
 
-import { Children, useEffect, useId, useRef, useState, type ReactNode } from "react";
+import { Children, useEffect, useId, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { ArrowLeft, ArrowRight, CheckCircle2, List } from "lucide-react";
 import type { LessonJourneyStep } from "@/lib/academy-lesson-roadmap";
 import { AcademyJourneyContext } from "./AcademyJourneyContext";
+import AcademyTopicNavigator from "./AcademyTopicNavigator";
+import { academyScrollContainer } from "@/lib/academy-scroll-container";
 
-export default function AcademyLessonJourney({ children, roadmap, tracker, resumeAnchor, steps, anchors, completedIds, german, canCompleteLesson }: {
+export default function AcademyLessonJourney({ children, roadmap, tracker, resumeAnchor, steps, anchors, completedIds, german, canCompleteLesson, courseOutline, lessonEnd }: {
   children: ReactNode;
   roadmap: ReactNode;
   tracker?: ReactNode;
@@ -15,10 +17,13 @@ export default function AcademyLessonJourney({ children, roadmap, tracker, resum
   completedIds: string[];
   german: boolean;
   canCompleteLesson: boolean;
+  courseOutline?: ReactNode;
+  lessonEnd?: ReactNode;
 }) {
   const [active, setActive] = useState(0);
   const [whole, setWhole] = useState(false);
   const [notice, setNotice] = useState("");
+  const [scrollRequest, setScrollRequest] = useState<{ anchor?: string; focus: boolean } | null>(null);
   const root = useRef<HTMLDivElement>(null);
   const navigator = useRef<HTMLDivElement>(null);
   const topicStart = useRef<HTMLDivElement>(null);
@@ -39,7 +44,7 @@ export default function AcademyLessonJourney({ children, roadmap, tracker, resum
       if (index < 0) return;
       if (root.current?.querySelector('[data-academy-recording="true"]')) return;
       if (step >= 0) setActive(step);
-      requestAnimationFrame(() => document.getElementById(anchor)?.scrollIntoView({ block: "start" }));
+      setScrollRequest({ anchor, focus: false });
     };
     followHash();
     window.addEventListener("hashchange", followHash);
@@ -47,6 +52,7 @@ export default function AcademyLessonJourney({ children, roadmap, tracker, resum
   }, [anchors, steps, resumeAnchor]);
   useEffect(() => {
     if (!whole) return;
+    const container = root.current ? academyScrollContainer(root.current) : window;
     const followScroll = () => {
       const visible = steps.flatMap((step, index) => {
         const node = document.getElementById(step.id);
@@ -54,28 +60,47 @@ export default function AcademyLessonJourney({ children, roadmap, tracker, resum
       });
       if (visible.length) setActive(visible.at(-1)!);
     };
-    window.addEventListener("scroll", followScroll, { passive: true });
-    return () => window.removeEventListener("scroll", followScroll);
+    container.addEventListener("scroll", followScroll, { passive: true });
+    return () => container.removeEventListener("scroll", followScroll);
   }, [whole, steps]);
+  useLayoutEffect(() => {
+    if (!scrollRequest) return;
+    // Wait for React to show the destination before measuring it. Focusing the
+    // footer (or the hidden preview navigator) can otherwise retain the old scroll.
+    const scrollToDestination = () => {
+      const target = scrollRequest.anchor ? document.getElementById(scrollRequest.anchor) : topicStart.current;
+      target?.scrollIntoView({ block: "start", behavior: "instant" });
+      if (scrollRequest.focus) {
+        root.current?.querySelector<HTMLElement>('.academy-topic-content:not([hidden])')?.focus({ preventScroll: true });
+      }
+    };
+    scrollToDestination();
+    // Repeat once after browser scroll anchoring settles the changed page height.
+    const frame = requestAnimationFrame(scrollToDestination);
+    return () => cancelAnimationFrame(frame);
+  }, [scrollRequest]);
   const move = (index: number) => {
     if (!canNavigate()) return;
     root.current?.querySelectorAll<HTMLMediaElement>("audio, video").forEach((media) => media.pause());
     setActive(index);
     setWhole(false);
     window.history.replaceState(null, "", `#${steps[index].id}`);
-    requestAnimationFrame(() => {
-      topicStart.current?.scrollIntoView({ block: "start", behavior: "instant" });
-      navigator.current?.focus({ preventScroll: true });
-    });
+    setScrollRequest({ focus: true });
   };
-  if (steps.length < 2) return <div ref={root} data-academy-lesson className="academy-block-stack flex flex-col">{tracker}{roadmap}{nodes}</div>;
+  if (steps.length < 2 && courseOutline) return <div ref={root} data-academy-lesson className="academy-block-stack flex flex-col">
+    {tracker}{roadmap}
+    <div ref={topicStart} aria-hidden="true" className="h-0 scroll-mt-16" />
+    <AcademyTopicNavigator startRef={topicStart} navigatorRef={navigator} label={german ? "Kursübersicht" : "Course outline"} german={german} steps={[]} active={0} completedIds={completedIds} onSelect={() => {}} courseOutline={courseOutline}>{null}</AcademyTopicNavigator>
+    <div className="academy-topic-body academy-block-stack flex flex-col">{nodes}</div>{lessonEnd}
+  </div>;
+  if (steps.length < 2) return <div ref={root} data-academy-lesson className="academy-block-stack flex flex-col">{tracker}{roadmap}{nodes}{lessonEnd}</div>;
   const current = steps[active] || steps[0];
   const saved = current.requiredIds.filter((id) => completedIds.includes(id)).length;
   return <AcademyJourneyContext.Provider value={current.id}><div ref={root} data-academy-lesson className="space-y-6">
     {tracker}
     {roadmap}
     <div ref={topicStart} aria-hidden="true" className="h-0 scroll-mt-16" />
-    <div ref={navigator} tabIndex={-1} className="sticky top-16 z-20 scroll-mt-20 rounded-2xl border border-[#C7D9E9] bg-white/95 p-3 shadow-sm backdrop-blur-sm outline-none focus-visible:ring-2 focus-visible:ring-[var(--academy-accent)] sm:p-4">
+    <AcademyTopicNavigator startRef={topicStart} navigatorRef={navigator} label={current.label} german={german} steps={steps} active={active} completedIds={completedIds} onSelect={move} courseOutline={courseOutline}>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="min-w-0 flex-1 basis-48">
           <label htmlFor={selectId} className="block text-xs font-bold text-[#435164]">{german ? "Aktueller Abschnitt" : "Current section"} · {active + 1}/{steps.length}</label>
@@ -86,7 +111,7 @@ export default function AcademyLessonJourney({ children, roadmap, tracker, resum
         <button type="button" aria-pressed={whole} aria-controls={contentId} onClick={() => {
           if (!canNavigate()) return;
           setWhole(!whole);
-          if (whole) requestAnimationFrame(() => topicStart.current?.scrollIntoView({ block: "start", behavior: "instant" }));
+          if (whole) setScrollRequest({ focus: true });
         }} className="inline-flex min-h-11 items-center gap-2 rounded-full border border-[#B8CADA] px-4 text-sm font-bold text-[#173A63] focus-visible:outline-2 focus-visible:outline-[var(--academy-accent)]">
           <List size={18} aria-hidden="true" />{whole ? german ? "Einzelansicht" : "One topic" : german ? "Ganzes Kapitel" : "Whole chapter"}
         </button>
@@ -94,22 +119,24 @@ export default function AcademyLessonJourney({ children, roadmap, tracker, resum
       <p role="status" className="mt-2 text-sm text-[#435164]">{notice || (current.requiredIds.length
         ? `${saved}/${current.requiredIds.length} ${german ? "Pflichtaktivitäten gespeichert" : "required activities saved"}`
         : german ? "Lesen und entdecken · Weiter markiert keine Aktivität als abgeschlossen." : "Read and explore · Next does not mark activities complete.")}</p>
-    </div>
-    <div id={contentId} className="space-y-8">
-      {steps.map((step, index) => <div key={step.id} hidden={!whole && active !== index} className="academy-topic-content flex flex-col gap-8 sm:gap-10">
+    </AcademyTopicNavigator>
+    <div id={contentId} className="academy-topic-body space-y-8">
+      {steps.map((step, index) => <div key={step.id} hidden={!whole && active !== index} tabIndex={-1} className="academy-topic-content flex flex-col gap-8 focus:outline-none sm:gap-10">
         {nodes.slice(step.start, step.end)}
       </div>)}
     </div>
     <nav aria-label={german ? "Unterthemen wechseln" : "Topic navigation"} className="rounded-2xl border border-[#C7D9E9] bg-[#F0F6FC] p-5">
       <p className="mb-4 flex items-center gap-2 text-sm text-[#344B60]">
         {saved > 0 ? <CheckCircle2 size={18} aria-hidden="true" /> : null}
-        {active + 1 < steps.length ? `${german ? "Als Nächstes" : "Next"}: ${steps[active + 1].label}` : canCompleteLesson
+        {!whole && active + 1 < steps.length ? `${german ? "Als Nächstes" : "Next"}: ${steps[active + 1].label}` : lessonEnd
+          ? german ? "Letzter Abschnitt · Weiter zum nächsten Kapitel nach dem Speichern der Pflichtaktivitäten." : "Last section · Save required activities to move to the next chapter."
+          : canCompleteLesson
           ? german ? "Letzter Abschnitt. Zum Abschließen nutzen Sie die Kapitel-Schaltfläche unten." : "Last section. Use the lesson completion button below to finish."
           : german ? "Letzter Abschnitt · In der Vorschau wird kein Lernfortschritt gespeichert." : "Last section · Preview does not save learner progress."}
       </p>
-      <div className="flex flex-wrap justify-between gap-3">
-        <button type="button" disabled={active === 0} onClick={() => move(active - 1)} className="inline-flex min-h-11 items-center gap-2 rounded-full border border-[#B8CADA] bg-white px-5 text-sm font-bold text-[#173A63] disabled:opacity-40 focus-visible:outline-2 focus-visible:outline-[var(--academy-accent)]"><ArrowLeft size={18} aria-hidden="true" />{german ? "Zurück" : "Previous"}</button>
-        <button type="button" disabled={active + 1 >= steps.length} onClick={() => move(active + 1)} className="inline-flex min-h-11 items-center gap-2 rounded-full bg-[var(--academy-accent)] px-5 text-sm font-bold text-white disabled:opacity-40 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--academy-accent)]">{german ? "Nächstes Unterthema" : "Next topic"}<ArrowRight size={18} aria-hidden="true" /></button>
+      <div className="grid grid-cols-2 gap-3 sm:flex sm:justify-between">
+        <button type="button" disabled={active === 0} onClick={() => move(active - 1)} className="inline-flex min-h-11 min-w-0 items-center justify-center gap-2 rounded-full border border-[#B8CADA] bg-white px-3 text-sm font-bold text-[#173A63] disabled:opacity-40 focus-visible:outline-2 focus-visible:outline-[var(--academy-accent)] sm:px-5"><ArrowLeft className="shrink-0" size={18} aria-hidden="true" />{german ? "Zurück" : "Previous"}</button>
+        {lessonEnd && (whole || active + 1 >= steps.length) ? <div className="min-w-0 sm:max-w-sm">{lessonEnd}</div> : <button type="button" aria-label={german ? "Nächstes Unterthema" : "Next topic"} disabled={active + 1 >= steps.length} onClick={() => move(active + 1)} className="inline-flex min-h-11 min-w-0 items-center justify-center gap-2 rounded-full bg-[var(--academy-accent)] px-3 text-sm font-bold text-white disabled:opacity-40 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--academy-accent)] sm:px-5"><span className="sm:hidden">{german ? "Nächstes" : "Next"}</span><span className="hidden sm:inline">{german ? "Nächstes Unterthema" : "Next topic"}</span><ArrowRight className="shrink-0" size={18} aria-hidden="true" /></button>}
       </div>
     </nav>
   </div></AcademyJourneyContext.Provider>;

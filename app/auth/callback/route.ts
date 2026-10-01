@@ -1,3 +1,4 @@
+import { existingCourseSignupReturn } from '@/lib/course-pilot-auth'
 import { NextResponse } from 'next/server'
 import { createClient } from '@/utils/supabase/server'
 import { createAdminClient } from '@/utils/supabase/admin'
@@ -84,6 +85,8 @@ export async function GET(request: Request) {
   const next = searchParams.get('next') ?? '/'
   const oauthError = searchParams.get('error') || searchParams.get('error_description')
   const safeNextForNoCode = getSafeNextPath(next);
+  const courseReturnQuery = existingCourseSignupReturn(safeNextForNoCode, 'user', false)
+    ? `&next=${encodeURIComponent(safeNextForNoCode)}` : '';
 
   if (oauthError) {
     const cookieStore = await cookies();
@@ -91,7 +94,7 @@ export async function GET(request: Request) {
     if (safeNextForNoCode === '/reset-password' || authType === 'recovery') {
       return NextResponse.redirect(`${origin}/forgot-password?message=reset-link-invalid`)
     }
-    return NextResponse.redirect(`${origin}/signup?error=${encodeURIComponent('Google sign-up was cancelled or could not be completed. Please try again.')}`)
+    return NextResponse.redirect(`${origin}/signup?error=${encodeURIComponent('Google sign-up was cancelled or could not be completed. Please try again.')}${courseReturnQuery ? `&role=user${courseReturnQuery}` : ''}`)
   }
 
   const isTokenHashRecovery = Boolean(tokenHash && authType === 'recovery');
@@ -101,7 +104,7 @@ export async function GET(request: Request) {
       return NextResponse.redirect(`${origin}/forgot-password?internal=1&message=reset-link-invalid`);
     }
 
-    return NextResponse.redirect(`${origin}/login?error=${encodeURIComponent('The confirmation link was invalid or has expired. Please request a new link.')}`)
+    return NextResponse.redirect(`${origin}/login?error=${encodeURIComponent('The confirmation link was invalid or has expired. Please request a new link.')}${courseReturnQuery}`)
   }
 
   if (code || isTokenHashRecovery) {
@@ -161,6 +164,16 @@ export async function GET(request: Request) {
             currentProfile?.student_name,
           );
           const establishedRole = metadataRole || (isPlaceholderProfile ? null : profileRole);
+
+          const courseReturn = existingCourseSignupReturn(pendingNext, establishedRole, isPlaceholderProfile);
+          if (courseReturn) {
+            clearPendingSignupCookies(cookieStore);
+            if (establishedRole === 'internal' && !(await getActiveInternalMemberByUserId(supabase, user.id))) {
+              await supabase.auth.signOut();
+              return NextResponse.redirect(`${origin}/login/internal?error=${encodeURIComponent('Your internal access is inactive or has not been linked yet.')}`);
+            }
+            return NextResponse.redirect(`${origin}${courseReturn}`);
+          }
 
           if (metadataRole === 'admin' || profileRole === 'admin') {
             clearPendingSignupCookies(cookieStore);
@@ -331,7 +344,7 @@ export async function GET(request: Request) {
     if (safeNextForNoCode === '/reset-password' || authType === 'recovery') {
       return NextResponse.redirect(`${origin}/forgot-password?message=reset-link-invalid`)
     }
-    return NextResponse.redirect(`${origin}/login?error=${encodeURIComponent('The confirmation link was invalid or has expired. Please try logging in or requesting a new password.')}`)
+    return NextResponse.redirect(`${origin}/login?error=${encodeURIComponent('The confirmation link was invalid or has expired. Please try logging in or requesting a new password.')}${courseReturnQuery}`)
   }
-  return NextResponse.redirect(`${origin}/login?error=${encodeURIComponent('The confirmation link was invalid or has expired. Please request a new link.')}`)
+  return NextResponse.redirect(`${origin}/login?error=${encodeURIComponent('The confirmation link was invalid or has expired. Please request a new link.')}${courseReturnQuery}`)
 }

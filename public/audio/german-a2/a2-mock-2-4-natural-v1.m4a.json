@@ -1,0 +1,21 @@
+{
+  "id": "a2-mock-2-4",
+  "model": "gemini-2.5-flash-preview-tts",
+  "speakers": [
+    "Kore",
+    "Charon",
+    "Kore",
+    "Charon",
+    "Kore",
+    "Charon"
+  ],
+  "fingerprint": "e3d4da29b92d10c0dce5bb7a0b157d9fdd5dab6f72642ed9fcf29fa149ecbecb",
+  "sha256": "7c1595d25784377c8a8fa5ec05a9126d81eeca32d72091c6541fb961f6d27496",
+  "sourceSeconds": 20.505458333333333,
+  "tempo": 1,
+  "seconds": 20.505458333333333,
+  "words": 52,
+  "wordsPerMinute": 152,
+  "bytes": 268079,
+  "generatedAt": "2026-10-01T14:52:06.210Z"
+}

@@ -1,5 +1,6 @@
 "use client";
 
+import { formatCourseDuration } from "@/lib/formatTime";
 import type { Announcement } from "@/lib/announcement-queries";
 import type { PlatformAnnouncement } from "@/lib/platform-announcements";
 import type { AvailabilitySlot, Booking, TutorProfile } from "@/lib/supabase-queries";
@@ -251,7 +252,7 @@ export default function TutorHomeDashboardUI({
           {requested.length > 0 || todayLessons.length > 0 ? <HomeListRow href={nextActionHref} title={profileReadiness.recommendedNextAction.title} detail={profileReadiness.recommendedNextAction.cta.label} /> : null}
         </div>
         {tutorAcademyEnabled && <div className="home-surface sm:p-6">
-          <HomeSectionHeading eyebrow="Tutor Academy" title={academyProgress.completedAt ? "Foundations complete" : "Build your foundations"} description={academyProgress.completedAt ? "Revisit your lessons whenever you like." : `${tutorAcademyCourse.estimatedMinutes} minutes of safe-teaching and platform guidance.`} />
+          <HomeSectionHeading eyebrow="Tutor Academy" title={academyProgress.completedAt ? "Foundations complete" : "Build your foundations"} description={academyProgress.completedAt ? "Revisit your lessons whenever you like." : `${formatCourseDuration(tutorAcademyCourse.estimatedMinutes)} of safe-teaching and platform guidance.`} />
           <div className="mt-5 flex justify-between text-xs text-[var(--theme-muted)]"><span>{academyProgress.completedLessons.length} of {tutorAcademyCourse.lessons.length} lessons</span><span>{academyProgressPercent}%</span></div>
           <div className="mt-2 h-2 overflow-hidden rounded-full bg-[var(--theme-surface-soft)]"><div className="h-full rounded-full bg-[var(--theme-accent)]" style={{ width: `${academyProgressPercent}%` }} /></div>
           <Link href={getAcademyResumeHref(academyProgress)} className="home-text-link mt-5">{academyProgress.completedAt ? "Review course" : academyProgress.completedLessons.length > 0 ? "Continue course" : "Start course"} →</Link>

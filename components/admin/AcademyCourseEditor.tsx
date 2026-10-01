@@ -50,6 +50,7 @@ import AcademyBlockIcon from "@/components/admin/academy-builder/AcademyBlockIco
 import BlockInsertionTray from "@/components/admin/academy-builder/BlockInsertionTray";
 import AcademyMediaChooser from "@/components/admin/academy-builder/AcademyMediaChooser";
 import AcademyPreviewDevicePicker from "@/components/admin/academy-builder/AcademyPreviewDevicePicker";
+import AcademyPreviewFrame from "@/components/admin/academy-builder/AcademyPreviewFrame";
 import AcademyRichTextEditor, {
   paragraphsToRichText,
 } from "@/components/admin/AcademyRichTextEditor";
@@ -96,7 +97,6 @@ import type {
   AcademyReviewInvitation,
 } from "@/lib/academy-review";
 import {
-  academyPreviewDevices,
   type AcademyPreviewDeviceId,
 } from "@/lib/academy-preview-devices";
 import {
@@ -4886,7 +4886,6 @@ function AcademyPreviewStudio({
   initialLessonSlug?: string;
 }) {
   const [deviceId, setDeviceId] = useState<AcademyPreviewDeviceId>("desktop");
-  const device = academyPreviewDevices.find((item) => item.id === deviceId)!;
   const [view, setView] = useState<"cover" | "lesson" | "quiz">(
     initialLessonSlug ? "lesson" : "cover",
   );
@@ -4954,15 +4953,12 @@ function AcademyPreviewStudio({
           <X size={15} /> Return to editor
         </button>
       </header>
-      <div className="flex flex-1 justify-center overflow-auto bg-[#111317] p-3 sm:p-6">
-        <iframe
-          key={`${view}-${lessonSlug}`}
+        <AcademyPreviewFrame
+          deviceId={deviceId}
+          previewKey={`${view}-${lessonSlug}`}
           title={`${course.title} ${view} preview`}
           src={`/dashboard/admin/academy/${course.key}/preview?${query.toString()}`}
-          className="shrink-0 border-0 bg-white shadow-2xl transition-[width,height] duration-200 motion-reduce:transition-none"
-          style={{ width: device.width, height: device.height }}
         />
-      </div>
     </div>
   );
 }
