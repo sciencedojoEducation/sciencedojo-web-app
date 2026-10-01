@@ -9,6 +9,8 @@ import { germanB2Lexicon } from "../lib/german-b2-lexicon.ts";
 import { germanB2AdvancedListening } from "../lib/german-b2-advanced-listening.ts";
 import { germanB2ExamGlimpses } from "../lib/german-b2-exam-glimpses.ts";
 import { germanB2GrammarPractice } from "../lib/german-b2-grammar-practice.ts";
+import { germanB2WorkbookUnits } from "../lib/german-b2-workbook.ts";
+import { germanB2ChartTasks } from "../lib/german-b2-chart-tasks.ts";
 
 test("B2 course has complete shared and distinct Goethe/telc routes", () => {
   const result = validateAcademyCourse(germanB2Course);
@@ -76,12 +78,67 @@ test("B2 final assessment contains the evidence needed to answer each question",
   }
 });
 
+test("all shared chapters provide original genre, listening, pronunciation, and self-check practice", () => {
+  const core = germanB2Course.lessons.filter((lesson) => !lesson.examTrack);
+  assert.equal(germanB2WorkbookUnits.length, 18);
+  assert.equal(new Set(germanB2WorkbookUnits.map((unit) => unit.genre)).size, 18);
+  for (const [index, unit] of germanB2WorkbookUnits.entries()) {
+    assert.ok(unit.text.trim().split(/\s+/).length >= 70, `Chapter ${index + 1}: short genre text`);
+    assert.ok(unit.answer !== unit.distractors[0] && unit.answer !== unit.distractors[1]);
+    const blocks = core[index].blocks;
+    const genre = blocks.find((block) => block.id.endsWith("genre-reading"));
+    const solution = blocks.find((block) => block.id.endsWith("genre-solution"));
+    const notes = blocks.find((block) => block.id.endsWith("listening-notes"));
+    const model = blocks.find((block) => block.id.endsWith("pronunciation-audio"));
+    const practice = blocks.find((block) => block.id.endsWith("pronunciation"));
+    const selfCheck = blocks.find((block) => block.id.endsWith("can-do"));
+    assert.ok(genre?.paragraphs.includes(unit.text));
+    assert.ok(solution?.items[0].body.includes(unit.explanation));
+    assert.ok(notes?.prompt.includes(unit.listeningTask));
+    assert.equal(model?.transcript, unit.pronunciationLine);
+    assert.ok(practice?.prompt.includes(unit.pronunciationLine));
+    assert.ok(selfCheck?.prompt.includes(unit.canDo));
+    assert.ok(selfCheck?.prompt.includes(unit.nextStep));
+    assert.ok(!blocks.some((block) => block.id.endsWith("genre-check")), "Supplementary inference check should not reset assessment progress");
+  }
+});
+
+test("fictional charts have accurate accessible descriptions and practice tasks", () => {
+  assert.deepEqual(germanB2ChartTasks.map((chart) => chart.chapterIndex), [2, 7, 11]);
+  for (const chart of germanB2ChartTasks) {
+    assert.equal(chart.labels.reduce((sum, [, value]) => sum + value, 0), 100);
+    for (const [label, value] of chart.labels) {
+      assert.ok(chart.alt.toLocaleLowerCase("de").includes(label.toLocaleLowerCase("de")));
+      assert.ok(chart.alt.includes(String(value)));
+    }
+    const path = resolve(import.meta.dirname, "../public", chart.src.slice(1));
+    assert.ok(existsSync(path), `Missing chart ${chart.src}`);
+    const lesson = germanB2Course.lessons[chart.chapterIndex];
+    assert.equal(lesson.blocks.find((block) => block.id.endsWith("-chart"))?.src, chart.src);
+    assert.ok(lesson.blocks.find((block) => block.id.endsWith("chart-response"))?.prompt.includes("fiktiv"));
+  }
+});
+
+test("both exam routes end each unit with task-specific reflection and official practice", () => {
+  const examLessons = germanB2Course.lessons.filter((lesson) => lesson.examTrack);
+  assert.equal(examLessons.length, 22);
+  for (const lesson of examLessons) {
+    const reflection = lesson.blocks.find((block) => block.id.endsWith("exam-progress"));
+    const official = lesson.blocks.find((block) => block.id.endsWith("official"));
+    assert.equal(reflection?.type, "survey");
+    assert.ok(reflection?.prompt.includes(lesson.title));
+    assert.ok(reflection?.prompt.includes("Strategie"));
+    assert.equal(official?.type, "resources");
+    assert.ok(official?.items[0].url.startsWith("https://"));
+  }
+});
+
 test("every referenced B2 listening recording is present and nonempty", () => {
   const urls = new Set([
     ...germanB2Course.lessons.flatMap((lesson) => lesson.blocks.filter((block) => block.type === "audio").map((block) => block.url)),
     ...germanB2Course.quiz.flatMap((question) => question.audioUrl ? [question.audioUrl] : []),
   ]);
-  assert.equal(urls.size, 24);
+  assert.equal(urls.size, 42);
   for (const url of urls) {
     const path = resolve(import.meta.dirname, "../public", url.slice(1));
     assert.ok(existsSync(path), `${url} is missing`);

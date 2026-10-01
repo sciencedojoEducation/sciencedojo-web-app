@@ -1,4 +1,4 @@
-import { renderChooseAcademyExamPage } from "@/app/dashboard/tutor/academy/courses/[courseKey]/choose-exam/page";
+import { renderChooseAcademyExamPage } from "@/lib/academy-choose-exam-page";
 
 export default async function AcademyChooseExamPage({
   params,
