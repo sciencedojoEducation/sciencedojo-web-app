@@ -114,6 +114,10 @@ for (const path of assets) {
   const url = new URL(path, assetOrigin);
   const response = await fetch(url, { method: "HEAD" });
   check(response.ok, `New asset is not deployed: ${url} (${response.status}).`);
+  const contentType = response.headers.get("content-type")?.toLowerCase() || "";
+  const expectedMedia = path.endsWith(".svg") ? "image/svg+xml" : "audio/";
+  check(contentType.startsWith(expectedMedia),
+    `New asset returned ${contentType || "no content type"} instead of ${expectedMedia}: ${url}.`);
 }
 
 const now = new Date().toISOString();
