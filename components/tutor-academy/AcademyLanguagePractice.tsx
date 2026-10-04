@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { getAcademyRecordingFormat } from "@/lib/academy-recording";
+import { isGermanAcademyCourse } from "@/lib/german-academy-course";
+import AcademyPracticeFeedback from "./AcademyPracticeFeedback";
 import { CheckCircle2, Mic, Save, Square, Trash2 } from "lucide-react";
 import { isAcademyBlockRequiredForCompletion, type LessonBlock } from "@/lib/tutor-academy";
 import {
@@ -139,7 +141,8 @@ function WritingPractice({
         </button>
       </div>
       {message ? <p role="status" className="mt-3 text-sm font-semibold text-[#244743]">{message}</p> : null}
-      {saved ? <><p role="status" className="mt-4 rounded-xl bg-[#D6EEDF] p-3 text-sm text-[#245444]">Antwort gespeichert · Vergleichen Sie mit dem Beispiel und prüfen Sie Ihre Checkliste. Diese Aufgabe wird selbst eingeschätzt, nicht automatisch benotet.</p><ModelAnswer answer={block.modelAnswer} /></> : null}
+      {isGermanAcademyCourse(courseKey) ? <AcademyPracticeFeedback key={text} courseKey={courseKey} lessonId={lessonId} blockId={block.id!} text={text} /> : null}
+      {saved ? <><p role="status" className="mt-4 rounded-xl bg-[#D6EEDF] p-3 text-sm text-[#245444]">Antwort gespeichert · Nutzen Sie das Feedback und vergleichen Sie mit dem Beispiel. Diese Aufgabe wird nicht automatisch benotet.</p><ModelAnswer answer={block.modelAnswer} /></> : null}
     </Frame>
   );
 }
@@ -276,6 +279,7 @@ function SpeakingPractice({
       {localUrl || savedUrl ? (
         <audio controls preload="metadata" src={localUrl || savedUrl || undefined} className="mt-5 w-full" />
       ) : null}
+      {isGermanAcademyCourse(courseKey) && !recording && (blob || savedUrl) ? <AcademyPracticeFeedback key={localUrl || savedUrl} courseKey={courseKey} lessonId={lessonId} blockId={block.id!} audio={blob} savedAudio={!!savedUrl && !blob} /> : null}
       {saved ? (
         <><button
           type="button"
@@ -310,7 +314,7 @@ function SpeakingPractice({
           Zum Abschließen des Kapitels: Aufnahme stoppen und „Aufnahme speichern“ wählen. Erst danach ist „Weiter“ möglich.
         </p>
       ) : null}
-      {saved ? <><p role="status" className="mt-4 rounded-xl bg-[#D6EEDF] p-3 text-sm text-[#245444]">Aufnahme gespeichert · Hören Sie sie an und prüfen Sie Ihre Checkliste. Diese Aufgabe wird selbst eingeschätzt, nicht automatisch benotet.</p><ModelAnswer answer={block.modelAnswer} /></> : null}
+      {saved ? <><p role="status" className="mt-4 rounded-xl bg-[#D6EEDF] p-3 text-sm text-[#245444]">Aufnahme gespeichert · Nutzen Sie das Feedback, hören Sie die Aufnahme an und prüfen Sie Ihre Checkliste. Diese Aufgabe wird nicht automatisch benotet.</p><ModelAnswer answer={block.modelAnswer} /></> : null}
     </Frame>
   );
 }

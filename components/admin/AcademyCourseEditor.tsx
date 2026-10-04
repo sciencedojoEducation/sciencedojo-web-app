@@ -1469,6 +1469,7 @@ function BlockInspector({
                     <option value="wide">Wide</option>
                     <option value="landscape">Landscape</option>
                     <option value="square">Square</option>
+                    <option value="natural">Natural image proportions</option>
                   </select>
                 </Field>
                 <Field label="Focal point">
@@ -2593,7 +2594,7 @@ function BlockContentFields({
         <Field
           label={
             block.type === "video"
-              ? "YouTube or Vimeo URL"
+              ? "YouTube, Vimeo, or official DW clip URL"
               : "Uploaded MP3/M4A, Spotify, or SoundCloud URL"
           }
         >
@@ -2605,6 +2606,19 @@ function BlockContentFields({
             }
           />
         </Field>
+        {block.type === "video" ? (
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Scene start (seconds)">
+              <input type="number" min={0} step={1} className={inputClass} value={block.startSeconds ?? ""}
+                onChange={(event) => onChange({ ...block, startSeconds: event.target.value === "" ? undefined : Number(event.target.value) })} />
+            </Field>
+            <Field label="Scene end (seconds)">
+              <input type="number" min={(block.startSeconds ?? 0) + 1} step={1} className={inputClass} value={block.endSeconds ?? ""}
+                onChange={(event) => onChange({ ...block, endSeconds: event.target.value === "" ? undefined : Number(event.target.value) })} />
+            </Field>
+            <p className="col-span-2 text-xs text-secondary/60">Optional for YouTube and DW. Times are measured from the beginning of this video, not from the scene start.</p>
+          </div>
+        ) : null}
         {block.type === "audio" ? (
           <>
             <label className="inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-lg bg-primary px-4 text-xs font-black text-white">

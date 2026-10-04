@@ -1,4 +1,6 @@
 import Image from "next/image";
+import AcademyVideoPlayer from "./AcademyVideoPlayer";
+import { academyVideoEmbedUrl, isAcademyDwVideoUrl } from "@/lib/academy-video";
 import {
   Check,
   BookOpen,
@@ -196,8 +198,11 @@ export default function AcademyLessonBlocks({
               key={block.id || blockIndex}
               className={`academy-media-figure ${widthClass} overflow-hidden border border-[#DEDFE1] bg-white`}
             >
-              <div className={`relative ${aspectClass} w-full bg-slate-100`}>
-                {block.src ? (
+              <div className={`relative ${block.aspect === "natural" ? "" : aspectClass} w-full bg-slate-100`}>
+                {block.src && block.aspect === "natural" ? (
+                  <Image src={block.src} alt={block.decorative ? "" : block.alt} width={1000} height={200}
+                    sizes="(max-width: 1024px) 100vw, 1000px" className="h-auto w-full" />
+                ) : block.src ? (
                   <Image
                     src={block.src}
                     alt={block.decorative ? "" : block.alt}
@@ -578,7 +583,7 @@ export default function AcademyLessonBlocks({
         }
 
         if (block.type === "video" || block.type === "audio") {
-          const embed = getAcademyEmbedUrl(block.type, block.url);
+          const embed = block.type === "video" ? academyVideoEmbedUrl(block.url, block) : getAcademyEmbedUrl(block.type, block.url);
           const directAudio =
             block.type === "audio" && isDirectAcademyAudioUrl(block.url);
           return (
@@ -597,6 +602,8 @@ export default function AcademyLessonBlocks({
                 >
                   Ihr Browser unterstützt die Audiowiedergabe nicht.
                 </audio>
+              ) : block.type === "video" && (embed || isAcademyDwVideoUrl(block.url)) ? (
+                <AcademyVideoPlayer embedUrl={embed || undefined} sourceUrl={block.url} title={block.heading || "Video"} german={activityLanguage === "de"} startSeconds={block.startSeconds} endSeconds={block.endSeconds} />
               ) : embed ? (
                 <iframe
                   src={embed}
@@ -629,7 +636,9 @@ export default function AcademyLessonBlocks({
               {block.transcript ? (
                 <details className="mt-4 border-y border-[#DEDFE1] py-4">
                   <summary className="cursor-pointer font-bold text-[var(--academy-accent)]">
-                    {activityLanguage === "de" ? "Transkript lesen" : "Read transcript"}
+                    {block.type === "video" && isAcademyDwVideoUrl(block.url)
+                      ? activityLanguage === "de" ? "Szenenauszug lesen" : "Read scene excerpt"
+                      : activityLanguage === "de" ? "Transkript lesen" : "Read transcript"}
                   </summary>
                   <p className="academy-reading-copy mt-3 whitespace-pre-wrap font-[family-name:var(--font-academy-body)] text-[15px] leading-7 text-[#27313B]">
                     {block.transcript}
@@ -811,31 +820,6 @@ export default function AcademyLessonBlocks({
 function getAcademyEmbedUrl(type: "video" | "audio", value: string) {
   try {
     const url = new URL(value);
-    if (
-      type === "video" &&
-      (url.hostname === "youtube.com" ||
-        url.hostname === "www.youtube.com" ||
-        url.hostname === "youtu.be")
-    ) {
-      const id =
-        url.hostname === "youtu.be"
-          ? url.pathname.slice(1)
-          : url.searchParams.get("v") || url.pathname.split("/").pop();
-      return id
-        ? `https://www.youtube.com/embed/${encodeURIComponent(id)}`
-        : null;
-    }
-    if (
-      type === "video" &&
-      (url.hostname === "vimeo.com" ||
-        url.hostname === "www.vimeo.com" ||
-        url.hostname === "player.vimeo.com")
-    ) {
-      const id = url.pathname.split("/").filter(Boolean).pop();
-      return id
-        ? `https://player.vimeo.com/video/${encodeURIComponent(id)}`
-        : null;
-    }
     if (type === "audio" && url.hostname.endsWith("spotify.com"))
       return `https://open.spotify.com/embed${url.pathname.replace(/^\/embed/, "")}`;
     if (type === "audio" && url.hostname.endsWith("soundcloud.com"))

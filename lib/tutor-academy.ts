@@ -78,7 +78,7 @@ export type LessonBlock = AcademyBlockIdentity &
         alt: string;
         caption?: string;
         captionItems?: AcademyMediaCaptionItem[];
-        aspect?: "wide" | "landscape" | "square";
+        aspect?: "wide" | "landscape" | "square" | "natural";
         width?: "reading" | "wide" | "full";
         focalPoint?: string;
         decorative?: boolean;
@@ -113,6 +113,9 @@ export type LessonBlock = AcademyBlockIdentity &
         type: "video";
         heading?: string;
         url: string;
+        /** Absolute scene boundaries measured from the beginning of the video. */
+        startSeconds?: number;
+        endSeconds?: number;
         caption?: string;
         captionItems?: AcademyMediaCaptionItem[];
         transcript?: string;
