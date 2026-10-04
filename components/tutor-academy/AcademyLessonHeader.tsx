@@ -12,7 +12,7 @@ export default function AcademyLessonHeader({
   index,
   sequence,
   nextStepLabel,
-  contentWidthClass = "max-w-[728px]",
+  contentWidthClass = "max-w-[728px] lg:max-w-[1080px] xl:max-w-[1200px]",
 }: {
   course: AcademyCourse;
   lesson: AcademyLesson;

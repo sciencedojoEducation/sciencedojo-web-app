@@ -3,7 +3,8 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { AcademyCourseNavigationContext } from "./AcademyCourseNavigationContext";
 import { BookOpen, ChevronDown, ExternalLink, Menu, X } from "lucide-react";
 import {
   getAcademyLessonProgressState,
@@ -243,6 +244,8 @@ export default function AcademyCourseNavigation({
   const resolvedExitHref = exitHref === "/dashboard" && (dashboardRole === "student" || dashboardRole === "parent") ? `/dashboard/${dashboardRole}` : exitHref;
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const [desktopOpen, setDesktopOpen] = useState(true);
+  const railId = useId();
   const [startedLessons, setStartedLessons] = useState(
     initialProgress.startedLessons,
   );
@@ -315,7 +318,9 @@ export default function AcademyCourseNavigation({
   }
 
   return (
+    <AcademyCourseNavigationContext.Provider value={true}>
     <div className="flex h-full min-h-0 bg-white">
+      <div id={railId} className="academy-desktop-course-rail" data-open={desktopOpen} inert={!desktopOpen} aria-hidden={!desktopOpen}>
       <CourseRail
         course={course}
         progress={progress}
@@ -323,7 +328,12 @@ export default function AcademyCourseNavigation({
         exitHref={resolvedExitHref}
         onLessonNavigate={markLessonStarted}
       />
-      <div className="flex min-w-0 flex-1 flex-col">
+      </div>
+      <div className="relative flex min-w-0 flex-1 flex-col">
+        <button type="button" className="academy-course-outline-toggle" aria-controls={railId} aria-expanded={desktopOpen}
+          aria-label={desktopOpen ? "Hide course outline" : "Show course outline"}
+          title={desktopOpen ? "Hide course outline" : "Show course outline"}
+          onClick={() => setDesktopOpen(value => !value)}><Menu size={18} aria-hidden="true" /></button>
         <header className="flex h-14 shrink-0 items-center border-b border-[#DEDFE1] bg-white lg:hidden">
           <button
             ref={menuButtonRef}
@@ -423,5 +433,6 @@ export default function AcademyCourseNavigation({
         </div>
       ) : null}
     </div>
+    </AcademyCourseNavigationContext.Provider>
   );
 }

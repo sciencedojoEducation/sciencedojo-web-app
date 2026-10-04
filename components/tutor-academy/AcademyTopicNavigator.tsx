@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useId, useRef, useState, type ReactNode, type RefObject } from "react";
+import { useContext, useEffect, useId, useRef, useState, type ReactNode, type RefObject } from "react";
+import { AcademyCourseNavigationContext } from "./AcademyCourseNavigationContext";
 import { CheckCircle2, List, Menu, X } from "lucide-react";
 import type { LessonJourneyStep } from "@/lib/academy-lesson-roadmap";
 import { shouldCollapseAcademyTopicNavigator } from "@/lib/academy-topic-navigation";
@@ -20,6 +21,7 @@ export default function AcademyTopicNavigator({ children, startRef, navigatorRef
   courseOutline?: ReactNode;
 }) {
   const docked = true;
+  const courseShellOwnsNavigation = useContext(AcademyCourseNavigationContext);
   const [open, setOpen] = useState(false);
   const shell = useRef<HTMLDivElement>(null);
   const toggle = useRef<HTMLButtonElement>(null);
@@ -65,6 +67,7 @@ export default function AcademyTopicNavigator({ children, startRef, navigatorRef
     return () => { if (lesson) delete lesson.dataset.topicMenuOpen; };
   }, [docked, open, startRef]);
 
+  if (courseShellOwnsNavigation) return null;
   return <div className="academy-topic-nav-slot">
     <div ref={shell} className="academy-topic-nav" data-docked={docked} data-open={open} data-course-outline={!!courseOutline} onKeyDown={(event) => {
       if (event.key === "Escape" && docked && open) { event.stopPropagation(); close(true); }

@@ -19,7 +19,7 @@ test("both draft and template previews share the wider layout", () => {
   }
 });
 
-test("learner header width stays unchanged unless a preview requests the wider layout", () => {
+test("learner header widens on desktop while preserving preview width overrides", () => {
   const source = readFileSync(new URL("../components/tutor-academy/AcademyLessonHeader.tsx", import.meta.url), "utf8");
-  assert.match(source, /contentWidthClass = "max-w-\[728px\]"/);
+  assert.match(source, /contentWidthClass = "max-w-\[728px\] lg:max-w-\[1080px\] xl:max-w-\[1200px\]"/);
 });

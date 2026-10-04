@@ -58,7 +58,7 @@ export default async function TutorAcademyLessonPage({
     <article>
       <AcademyLessonTracker lessonSlug={lesson.slug} courseKey={course.key} />
       <header className="border-b border-[#DEDFE1] bg-white px-6 pb-10 pt-12 sm:px-10 sm:pb-12 sm:pt-16">
-        <div className="mx-auto max-w-[728px]">
+        <div className="mx-auto max-w-[728px] lg:max-w-[1080px] xl:max-w-[1200px]">
           <div className="flex flex-wrap items-center gap-3 text-[13px] font-semibold text-[#717376]">
             <span>{lesson.section}</span>
             <span aria-hidden="true">·</span>

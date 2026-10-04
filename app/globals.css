@@ -1229,6 +1229,52 @@ input::placeholder, textarea::placeholder {
 .academy-topic-content[hidden] { display: none; }
 
 /* A small side control replaces the persistent, full-width reading obstruction. */
+.academy-desktop-course-rail { display: none; }
+.academy-course-outline-toggle { display: none; }
+@media (min-width: 1024px) {
+  .academy-desktop-course-rail {
+    display: block;
+    flex-shrink: 0;
+    width: 280px;
+    min-width: 0;
+    min-height: 0;
+    height: 100%;
+    overflow: clip;
+    visibility: visible;
+    transition: width 280ms cubic-bezier(0.22, 1, 0.36, 1), visibility 0s;
+  }
+  .academy-desktop-course-rail[data-open="false"] {
+    width: 0;
+    visibility: hidden;
+    transition: width 280ms cubic-bezier(0.22, 1, 0.36, 1), visibility 0s 280ms;
+  }
+  .academy-course-outline-toggle {
+    position: absolute;
+    top: 4.5rem;
+    left: 1rem;
+    z-index: 40;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    border: 0;
+    border-radius: 0.375rem;
+    background: white;
+    color: #173a63;
+    cursor: pointer;
+  }
+  .academy-course-outline-toggle:hover { background: #eef4fb; }
+  .academy-course-outline-toggle:focus-visible { outline: 2px solid var(--academy-accent); outline-offset: 3px; }
+}
+@media (min-width: 1024px) and (pointer: coarse) {
+  .academy-course-outline-toggle { width: 2.75rem; height: 2.75rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .academy-desktop-course-rail,
+  .academy-desktop-course-rail[data-open="false"] { transition: none; }
+}
+
 .academy-topic-nav { width: 100%; }
 .academy-topic-nav-body { display: grid; grid-template-rows: 1fr; }
 .academy-topic-nav-clip { min-height: 0; }

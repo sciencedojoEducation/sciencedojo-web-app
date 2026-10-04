@@ -90,7 +90,7 @@ export async function renderAcademyCourseLessonPage(
       <AcademyLessonTracker lessonSlug={lesson.slug} courseKey={course.key} basePath={basePath} />
       <AcademyLessonHeader course={course} lesson={lesson} index={pathIndex} sequence={requiredLessons} nextStepLabel={nextStepLabel} />
       <div className="px-6 py-12 sm:px-10 sm:py-16">
-        <div className="mx-auto max-w-[728px]">
+        <div className="mx-auto max-w-[728px] lg:max-w-[1080px] xl:max-w-[1200px]">
           {error === "progress" ? (
             <div className="mb-8 border-l-4 border-red-700 bg-red-50 p-5 text-sm font-semibold text-red-900">
               Progress could not be saved. Please try again.
