@@ -1,13 +1,17 @@
 "use client";
 
 import { useEffect } from "react";
-import { useEditor, EditorContent } from "@tiptap/react";
+import { useEditor, EditorContent, Mark } from "@tiptap/react";
+import { academyTextColor, academyTextColors } from "@/lib/academy-text-colors";
 import StarterKit from "@tiptap/starter-kit";
 import Link from "@tiptap/extension-link";
 import Placeholder from "@tiptap/extension-placeholder";
 import Mathematics from "@tiptap/extension-mathematics";
+import Highlight from "@tiptap/extension-highlight";
 import {
   Bold,
+  Underline,
+  Highlighter,
   Code,
   Heading2,
   Italic,
@@ -18,6 +22,22 @@ import {
   Sigma,
 } from "lucide-react";
 import type { AcademyRichTextDocument } from "@/lib/tutor-academy";
+
+const TextColor = Mark.create({
+  name: "textStyle",
+  addAttributes() {
+    return { color: {
+      default: null,
+      parseHTML: (element) => academyTextColor(element.style.color) || null,
+      renderHTML: (attributes) => {
+        const color = academyTextColor(attributes.color);
+        return color ? { style: `color: ${color}` } : {};
+      },
+    } };
+  },
+  parseHTML() { return [{ tag: "span[style]", getAttrs: (element) => academyTextColor(element.style.color) ? {} : false }]; },
+  renderHTML({ HTMLAttributes }) { return ["span", HTMLAttributes, 0]; },
+});
 
 export function paragraphsToRichText(
   heading: string | undefined,
@@ -58,6 +78,8 @@ export default function AcademyRichTextEditor({
     immediatelyRender: false,
     extensions: [
       StarterKit,
+      TextColor,
+      Highlight.configure({ HTMLAttributes: { class: "rounded bg-[#FFF0B3] text-inherit" } }),
       Link.configure({ openOnClick: false, autolink: true }),
       Placeholder.configure({ placeholder: "Start writing…" }),
       Mathematics.configure({ katexOptions: { throwOnError: false } }),
@@ -96,6 +118,18 @@ export default function AcademyRichTextEditor({
       icon: Bold,
       active: editor.isActive("bold"),
       run: () => editor.chain().focus().toggleBold().run(),
+    },
+    {
+      label: "Underline",
+      icon: Underline,
+      active: editor.isActive("underline"),
+      run: () => editor.chain().focus().toggleUnderline().run(),
+    },
+    {
+      label: "Highlight",
+      icon: Highlighter,
+      active: editor.isActive("highlight"),
+      run: () => editor.chain().focus().toggleHighlight().run(),
     },
     {
       label: "Italic",
@@ -169,6 +203,18 @@ export default function AcademyRichTextEditor({
               <Icon size={16} />
             </button>
           ))}
+          {Object.entries(academyTextColors).map(([name, color]) => (
+            <button key={name} type="button" aria-label={`${name} text`} title={`${name} text`}
+              aria-pressed={editor.isActive("textStyle", { color })}
+              onMouseDown={(event) => event.preventDefault()}
+              onClick={() => editor.chain().focus().setMark("textStyle", { color }).run()}
+              className={`inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-lg font-bold outline-none focus-visible:ring-2 focus-visible:ring-primary ${editor.isActive("textStyle", { color }) ? "bg-slate-100 ring-2 ring-inset ring-slate-400" : "hover:bg-slate-100"}`}
+              style={{ color }}>A</button>
+          ))}
+          <button type="button" aria-label="Reset text colour" title="Reset text colour"
+            onMouseDown={(event) => event.preventDefault()}
+            onClick={() => editor.chain().focus().unsetMark("textStyle").run()}
+            className="h-11 shrink-0 rounded-lg px-3 text-xs font-semibold text-secondary/70 hover:bg-slate-100">Reset colour</button>
         </div>
       ) : null}
       <div

@@ -5,6 +5,7 @@ import type {
   QuizQuestion,
 } from "@/lib/tutor-academy";
 import { academyBlockBackgroundKinds, isSafeAcademyBackgroundImageUrl, isValidAcademyBackgroundColor } from "./academy-block-background.ts";
+import { academyVideoSceneError, academyVideoEmbedUrl, isAcademyDwVideoUrl } from "./academy-video.ts";
 
 const courseKeyPattern = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const allowedAudiences = new Set<AcademyAudienceRole>([
@@ -72,6 +73,7 @@ function isSafeContentUrl(
     const hostname = url.hostname.toLowerCase().replace(/^www\./, "");
     if (kind === "video")
       return (
+        isAcademyDwVideoUrl(value) ||
         hostname === "youtube.com" ||
         hostname === "youtu.be" ||
         hostname === "vimeo.com" ||
@@ -246,6 +248,12 @@ function validateBlock(
     (!hasText(block.url) || !isSafeContentUrl(block.url, block.type))
   )
     errors.push(`${label} needs an approved ${block.type} URL.`);
+  if (block.type === "video") {
+    const sceneError = academyVideoSceneError(block);
+    if (sceneError) errors.push(`${label}: ${sceneError}`);
+    if (!isAcademyDwVideoUrl(block.url) && !academyVideoEmbedUrl(block.url, block))
+      errors.push(`${label} needs a playable video URL; scene boundaries require YouTube or an official DW clip.`);
+  }
   if (
     (block.type === "video" || block.type === "audio") &&
     hasText(block.url) &&

@@ -1,5 +1,6 @@
 import type { AcademyRichTextDocument } from "@/lib/tutor-academy";
 import AcademyMath from "@/components/tutor-academy/AcademyMath";
+import { academyTextColor } from "@/lib/academy-text-colors";
 
 type RichNode = {
   type?: string;
@@ -34,6 +35,14 @@ function renderNode(node: RichNode, key: string): React.ReactNode {
     for (const mark of node.marks || []) {
       if (mark.type === "bold") content = <strong>{content}</strong>;
       if (mark.type === "italic") content = <em>{content}</em>;
+      if (mark.type === "underline")
+        content = <u className="decoration-teal-700 decoration-2 underline-offset-4">{content}</u>;
+      if (mark.type === "highlight")
+        content = <mark className="rounded bg-[#FFF0B3] py-0.5 text-inherit [box-decoration-break:clone]">{content}</mark>;
+      if (mark.type === "textStyle") {
+        const color = academyTextColor(mark.attrs?.color);
+        if (color) content = <span style={{ color }}>{content}</span>;
+      }
       if (mark.type === "strike") content = <s>{content}</s>;
       if (mark.type === "code")
         content = (
