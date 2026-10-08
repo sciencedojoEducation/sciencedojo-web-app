@@ -246,6 +246,7 @@ export default function AcademyCourseNavigation({
   const [open, setOpen] = useState(false);
   const [desktopOpen, setDesktopOpen] = useState(true);
   const railId = useId();
+  const mobileOutlineId = useId();
   const [startedLessons, setStartedLessons] = useState(
     initialProgress.startedLessons,
   );
@@ -329,18 +330,19 @@ export default function AcademyCourseNavigation({
         onLessonNavigate={markLessonStarted}
       />
       </div>
-      <div className="relative flex min-w-0 flex-1 flex-col">
+      <div className="relative flex min-h-0 min-w-0 flex-1 flex-col">
         <button type="button" className="academy-course-outline-toggle" aria-controls={railId} aria-expanded={desktopOpen}
           aria-label={desktopOpen ? "Hide course outline" : "Show course outline"}
           title={desktopOpen ? "Hide course outline" : "Show course outline"}
           onClick={() => setDesktopOpen(value => !value)}><Menu size={18} aria-hidden="true" /></button>
-        <header className="flex h-14 shrink-0 items-center border-b border-[#DEDFE1] bg-white lg:hidden">
+        <header className="sticky top-0 z-50 flex h-14 shrink-0 items-center border-b border-[#DEDFE1] bg-white lg:hidden">
           <button
             ref={menuButtonRef}
             type="button"
             onClick={() => setOpen(true)}
-            className="inline-flex h-14 w-14 items-center justify-center text-[#252629] focus-visible:outline-2 focus-visible:outline-offset-[-3px] focus-visible:outline-[var(--academy-accent)]"
+            className="inline-flex h-14 w-14 shrink-0 items-center justify-center text-[#252629] focus-visible:outline-2 focus-visible:outline-offset-[-3px] focus-visible:outline-[var(--academy-accent)]"
             aria-label="Open course contents"
+            aria-controls={open ? mobileOutlineId : undefined}
             aria-expanded={open}
           >
             <Menu size={21} aria-hidden="true" />
@@ -360,7 +362,7 @@ export default function AcademyCourseNavigation({
           <Link
             href={resolvedExitHref}
             aria-label="Exit to dashboard"
-            className="inline-flex h-14 w-12 items-center justify-center border-l border-[#DEDFE1] text-[#717376] focus-visible:outline-2 focus-visible:outline-offset-[-3px] focus-visible:outline-[var(--academy-accent)]"
+            className="inline-flex h-14 w-12 shrink-0 items-center justify-center border-l border-[#DEDFE1] text-[#717376] focus-visible:outline-2 focus-visible:outline-offset-[-3px] focus-visible:outline-[var(--academy-accent)]"
           >
             <ExternalLink size={17} aria-hidden="true" />
           </Link>
@@ -379,6 +381,7 @@ export default function AcademyCourseNavigation({
             className="absolute inset-0 bg-black/45"
           />
           <aside
+            id={mobileOutlineId}
             ref={drawerRef}
             role="dialog"
             aria-modal="true"
