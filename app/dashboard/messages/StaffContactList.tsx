@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { createConversation } from "./actions";
 
@@ -14,21 +14,30 @@ export type StaffContact = {
 
 export default function StaffContactList({ contacts }: { contacts: StaffContact[] }) {
   const router = useRouter();
+  const [navigating, startNavigation] = useTransition();
   const [pendingId, setPendingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   async function startChat(contactId: string) {
     setError(null);
     setPendingId(contactId);
-    const result = await createConversation(contactId);
-    setPendingId(null);
+    try {
+      const result = await createConversation(contactId);
 
-    if (result.error || !result.conversationId) {
-      setError(result.error || "Could not start that conversation.");
-      return;
+      if (result.error || !result.conversationId) {
+        setPendingId(null);
+        setError(result.error || "Could not start that conversation.");
+        return;
+      }
+
+      startNavigation(() => {
+        router.push(`/dashboard/messages?id=${result.conversationId}`);
+        setPendingId(null);
+      });
+    } catch {
+      setPendingId(null);
+      setError("Could not open that conversation. Please try again.");
     }
-
-    router.push(`/dashboard/messages?id=${result.conversationId}`);
   }
 
   if (contacts.length === 0) {
@@ -53,7 +62,7 @@ export default function StaffContactList({ contacts }: { contacts: StaffContact[
           <button
             key={contact.id}
             type="button"
-            disabled={pendingId === contact.id}
+            disabled={pendingId !== null || navigating}
             onClick={() => startChat(contact.id)}
             className="flex min-w-0 items-center gap-3 rounded-2xl border border-emerald-100 bg-white p-3 text-left shadow-sm transition-colors hover:border-emerald-200 hover:bg-emerald-50 disabled:opacity-60"
           >
@@ -71,7 +80,7 @@ export default function StaffContactList({ contacts }: { contacts: StaffContact[
               </p>
             </div>
             <span className="shrink-0 rounded-full bg-emerald-600 px-3 py-1 text-[9px] font-black uppercase tracking-[0.1em] text-white">
-              {pendingId === contact.id ? "Opening" : "Chat"}
+              {pendingId === contact.id ? "Opening…" : "Chat"}
             </span>
           </button>
         ))}

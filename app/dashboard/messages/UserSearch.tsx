@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import type { MessagingUserResult } from "@/lib/messaging-queries";
 import { createConversation, searchMessagingUsers } from "./actions";
 
 export default function UserSearch() {
   const router = useRouter();
+  const [navigating, startNavigation] = useTransition();
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<MessagingUserResult[]>([]);
   const [searching, setSearching] = useState(false);
@@ -37,13 +38,21 @@ export default function UserSearch() {
   async function startChat(userId: string) {
     setError(null);
     setPendingId(userId);
-    const result = await createConversation(userId);
-    setPendingId(null);
-    if (result.error || !result.conversationId) {
-      setError(result.error || "Could not start that conversation.");
-      return;
+    try {
+      const result = await createConversation(userId);
+      if (result.error || !result.conversationId) {
+        setPendingId(null);
+        setError(result.error || "Could not start that conversation.");
+        return;
+      }
+      startNavigation(() => {
+        router.push(`/dashboard/messages?id=${result.conversationId}`);
+        setPendingId(null);
+      });
+    } catch {
+      setPendingId(null);
+      setError("Could not open that conversation. Please try again.");
     }
-    router.push(`/dashboard/messages?id=${result.conversationId}`);
   }
 
   return (
@@ -81,7 +90,7 @@ export default function UserSearch() {
             <button
               key={user.id}
               type="button"
-              disabled={pendingId === user.id}
+              disabled={pendingId !== null || navigating}
               onClick={() => startChat(user.id)}
               className="flex min-w-0 items-center gap-3 rounded-2xl border border-secondary/10 bg-white p-3 text-left shadow-sm transition-colors hover:border-primary/20 hover:bg-primary/5 disabled:opacity-60"
             >
@@ -96,7 +105,7 @@ export default function UserSearch() {
                 </p>
               </div>
               <span className="shrink-0 rounded-full bg-primary px-3 py-1 text-[9px] font-black uppercase tracking-[0.1em] text-white">
-                {pendingId === user.id ? "Opening" : "Chat"}
+                {pendingId === user.id ? "Opening…" : "Chat"}
               </span>
             </button>
           ))}
