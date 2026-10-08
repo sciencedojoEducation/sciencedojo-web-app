@@ -263,12 +263,17 @@ export function AcademyFlashcards({
               });
               record(tracking);
             }}
-            className="academy-flashcard group relative min-h-80 [perspective:1000px] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--academy-accent)] focus-visible:ring-offset-4"
+            className="academy-flashcard group relative min-h-80 touch-manipulation [perspective:1000px] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--academy-accent)] focus-visible:ring-offset-4"
+            style={{ WebkitPerspective: "1000px" }}
           >
             <span
-              className={`relative grid [min-height:inherit] transition-transform duration-500 [transform-style:preserve-3d] motion-reduce:transition-none ${open ? "[transform:rotateY(180deg)]" : ""}`}
+              className="academy-flashcard-rotor relative grid [min-height:inherit] transition-transform duration-500 [transform-style:preserve-3d] motion-reduce:transition-none"
+              style={{
+                WebkitTransformStyle: "preserve-3d",
+                transform: `rotateY(${open ? 180 : 0}deg)`,
+              }}
             >
-              <span data-academy-card-face="front" className="col-start-1 row-start-1 flex min-w-0 flex-col overflow-hidden border border-[#DEDFE1] bg-white text-left shadow-[0_10px_30px_rgba(20,35,60,0.08)] [backface-visibility:hidden]">
+              <span data-academy-card-face="front" style={{ WebkitBackfaceVisibility: "hidden", transform: "rotateY(0deg) translateZ(1px)" }} className="col-start-1 row-start-1 flex min-w-0 flex-col overflow-hidden border border-[#DEDFE1] bg-white text-left shadow-[0_10px_30px_rgba(20,35,60,0.08)] [backface-visibility:hidden]">
                 {item.src ? (
                   <span className="mt-5 block">
                     <FlashcardVisual item={item} />
@@ -287,7 +292,7 @@ export function AcademyFlashcards({
                   </span>
                 </span>
               </span>
-              <span data-academy-card-face="back" className="col-start-1 row-start-1 flex min-w-0 flex-col justify-between gap-4 border border-[var(--academy-accent)] bg-[var(--academy-accent-ink)] p-6 text-left text-white [--academy-gender-der:#93c5fd] [--academy-gender-die:#fca5a5] [--academy-gender-das:#86efac] shadow-[0_10px_30px_rgba(20,35,60,0.14)] [backface-visibility:hidden] [transform:rotateY(180deg)]">
+              <span data-academy-card-face="back" style={{ WebkitBackfaceVisibility: "hidden", transform: "rotateY(180deg) translateZ(1px)" }} className="col-start-1 row-start-1 flex min-w-0 flex-col justify-between gap-4 border border-[var(--academy-accent)] bg-[var(--academy-accent-ink)] p-6 text-left text-white [--academy-gender-der:#93c5fd] [--academy-gender-die:#fca5a5] [--academy-gender-das:#86efac] shadow-[0_10px_30px_rgba(20,35,60,0.14)] [backface-visibility:hidden]">
                 <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-white/65">
                   Laut sprechen
                 </span>
