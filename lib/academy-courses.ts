@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { createClient } from "@/utils/supabase/server";
 import { createAdminClient } from "@/utils/supabase/admin";
 import {
@@ -123,7 +124,7 @@ export async function getAcademyCourseDraft(
   return courses.find((course) => course.courseKey === courseKey) || null;
 }
 
-export async function getPublishedAcademyCourse(
+export const getPublishedAcademyCourse = cache(async function getPublishedAcademyCourse(
   courseKey: string,
 ): Promise<AcademyCourse | null> {
   const supabase = await createClient();
@@ -165,7 +166,7 @@ export async function getPublishedAcademyCourse(
     quizRevision: Number(version.quiz_revision || courseRow.quiz_revision || 1),
     versionId: version.id,
   });
-}
+});
 
 export async function getEligibleAcademyCourses(): Promise<AcademyCourse[]> {
   const supabase = await createClient();

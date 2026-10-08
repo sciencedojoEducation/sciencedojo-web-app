@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
 import {
@@ -52,7 +53,7 @@ export function normalizeAcademyProgress(
   };
 }
 
-export async function requireTutorAcademyUser(
+export const requireTutorAcademyUser = cache(async function requireTutorAcademyUser(
   courseKey = TUTOR_ACADEMY_COURSE_KEY,
 ) {
   const supabase = await createClient();
@@ -106,7 +107,7 @@ export async function requireTutorAcademyUser(
     );
 
   return { supabase, user };
-}
+});
 
 export async function getTutorAcademyProgress(
   courseKey = TUTOR_ACADEMY_COURSE_KEY,

@@ -19,6 +19,7 @@ test("progress refreshes preserve the current position; initial bookmarks and ac
       const index = cursor++;
       if (!(index in hooks)) hooks[index] = initial;
       return [hooks[index], value => {
+        if (typeof value === "function") value = value(hooks[index]);
         hooks[index] = value;
         if (value && typeof value === "object" && "anchor" in value) requests.push(value.anchor);
       }];
@@ -54,15 +55,24 @@ test("progress refreshes preserve the current position; initial bookmarks and ac
     cleanups.forEach(cleanup => cleanup?.());
     cursor = 0;
     effects = [];
-    exports.default({
+    const tree = exports.default({
       children: ["one", "two"], roadmap: null, completedIds, resumeAnchor,
       anchors: ["first", "second"],
       steps: [{ id: "first", start: 0, end: 1, requiredIds: ["one"] }, { id: "second", start: 1, end: 2, requiredIds: ["two"] }],
       german: true, canCompleteLesson: true,
     });
     cleanups = effects.map(callback => callback());
+    return tree;
   };
-  render([], "first");
+  const topics = tree => {
+    if (Array.isArray(tree)) return tree.flatMap(topics);
+    if (!tree || typeof tree !== "object") return [];
+    if (tree.props?.className?.includes("academy-topic-content")) return [tree.props.children];
+    return topics(tree.props?.children);
+  };
+  const firstTopics = topics(render([], "first"));
+  assert.equal(firstTopics[0][0], "one");
+  assert.equal(firstTopics[1], null, "unvisited topics should not mount exercises or start reads");
   assert.deepEqual(requests, ["first"]);
   // A save supplies fresh arrays and may update the saved resume anchor.
   render(["one"], "second");
@@ -71,5 +81,8 @@ test("progress refreshes preserve the current position; initial bookmarks and ac
   window.location.hash = "#second";
   listeners.get("hashchange")();
   assert.deepEqual(requests, ["first", "second"], "explicit activity navigation must still scroll");
+  const visitedTopics = topics(render(["one", "two"], "second"));
+  assert.equal(visitedTopics[0][0], "one", "visited topic remains mounted to preserve unsaved work");
+  assert.equal(visitedTopics[1][0], "two", "hash navigation mounts the destination topic");
   cleanups.forEach(cleanup => cleanup?.());
 });

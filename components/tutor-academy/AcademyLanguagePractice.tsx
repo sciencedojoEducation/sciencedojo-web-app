@@ -1,5 +1,6 @@
 "use client";
 
+import { loadAcademyPortfolioSubmission } from "@/lib/academy-portfolio-client";
 import { isNicosWegCourse } from "@/lib/nicos-weg-course";
 import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
@@ -17,7 +18,6 @@ import { CheckCircle2, Mic, Save, Square, Trash2 } from "lucide-react";
 import { isAcademyBlockRequiredForCompletion, type LessonBlock } from "@/lib/tutor-academy";
 import {
   deleteAcademySpeakingSubmission,
-  getAcademyPortfolioSubmission,
   saveAcademySpeakingSubmission,
   saveAcademyWritingSubmission,
 } from "@/app/dashboard/academy/portfolio-actions";
@@ -112,14 +112,15 @@ function WritingPractice({
 }) {
   const router = useRouter();
   const [text, setText] = useState("");
+  const edited = useRef(false);
   const [saved, setSaved] = useState(false);
   const [message, setMessage] = useState("");
   const [pending, startTransition] = useTransition();
   const [checked, setChecked] = useState<{ text: string; result: AnswerCheckResult } | null>(null);
   useEffect(() => {
     let active = true;
-    getAcademyPortfolioSubmission(courseKey, lessonId, block.id!).then((value) => {
-      if (!active || value?.type !== "writing") return;
+    loadAcademyPortfolioSubmission(courseKey, lessonId, block.id!).then((value) => {
+      if (!active || edited.current || value?.type !== "writing") return;
       setText(value.text || "");
       setSaved(true);
     }).catch(() => setMessage("Eine gespeicherte Antwort konnte nicht geladen werden."));
@@ -141,7 +142,7 @@ function WritingPractice({
       <Checklist items={block.checklist} />
       <AcademyWritingInput genderCues={isNicosWegCourse(courseKey)} input={input} text={text} maxWords={block.maxWords}
         mismatchPositions={checkResult?.mismatchPositions}
-        onChange={value => { setText(value); setSaved(false); setChecked(null); }} />
+        onChange={value => { edited.current = true; setText(value); setSaved(false); setChecked(null); }} />
       {spec ? <AcademyInstantAnswerCheck spec={spec} result={checkResult} incomplete={Boolean(incomplete)}
         onCheck={() => { const result = checkPracticeAnswer(spec, text); setChecked({ text, result }); return result; }} /> : null}
       {!spec && capabilities.guidedSelfReview ? <AcademyGuidedSelfReview key={text} modelAnswer={block.modelAnswer} /> : null}
@@ -199,8 +200,8 @@ function SpeakingPractice({
 
   useEffect(() => {
     let active = true;
-    getAcademyPortfolioSubmission(courseKey, lessonId, block.id!).then((value) => {
-      if (!active || value?.type !== "speaking") return;
+    loadAcademyPortfolioSubmission(courseKey, lessonId, block.id!).then((value) => {
+      if (!active || recorder.current || value?.type !== "speaking") return;
       setSavedUrl(value.audioUrl);
       setElapsed(value.durationSeconds || 0);
       setSaved(true);

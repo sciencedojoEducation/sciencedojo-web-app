@@ -1,3 +1,4 @@
+import { academyNavigationCourse } from "@/lib/academy-navigation-data";
 import AcademyCourseUtilityLinks from "@/components/tutor-academy/AcademyCourseUtilityLinks";
 import { createClient } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
@@ -36,14 +37,7 @@ export default async function AcademyCourseLayout({
   const progress = await getTutorAcademyProgress(course.key);
   const { data: enrolled } = await supabase.rpc("course_pilot_enrolled", { target: course.id });
   const basePath = `/dashboard/academy/${course.key}`;
-  const navigationCourse = {
-    key: course.key,
-    shortTitle: course.shortTitle,
-    heroImage: course.heroImage,
-    lessons: course.lessons,
-    quizRevision: course.quizRevision,
-    rules: course.rules,
-  };
+  const navigationCourse = academyNavigationCourse(course);
   return (
     <div
       className={`${academySerif.variable} ${academyBodyFont.variable} academy-course-typography h-full min-h-0 bg-white text-[#101010]`}

@@ -1,3 +1,4 @@
+import PendingSubmitButton from "@/components/PendingSubmitButton";
 import { formatCourseDuration } from "@/lib/formatTime";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
@@ -119,7 +120,7 @@ export default async function TutorAcademyLessonPage({
                 </Link>
               )}
               <form action={completeAction}>
-                <button className="inline-flex min-h-11 w-full items-center justify-center gap-2 bg-[#1E5AA8] px-7 text-xs font-bold uppercase tracking-[0.1em] text-white hover:bg-[#174A8B] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1E5AA8] sm:w-auto">
+                <PendingSubmitButton pendingLabel="Saving and opening…" className="inline-flex min-h-11 w-full items-center justify-center gap-2 bg-[#1E5AA8] px-7 text-xs font-bold uppercase tracking-[0.1em] text-white hover:bg-[#174A8B] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1E5AA8] sm:w-auto">
                   {completed ? <CheckCircle2 size={17} /> : null}
                   {nextLesson
                     ? completed
@@ -133,7 +134,7 @@ export default async function TutorAcademyLessonPage({
                         ? "Go to final check"
                         : "Complete and take final check"}
                   <ArrowRight size={16} />
-                </button>
+                </PendingSubmitButton>
               </form>
             </div>
           </footer>

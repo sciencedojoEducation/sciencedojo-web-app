@@ -1,5 +1,7 @@
 "use client";
 
+import NavigationPending from "@/components/NavigationPending";
+
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -19,7 +21,7 @@ import { useDashboardRole } from "@/components/DashboardFrame";
 
 type NavigationCourse = Pick<
   AcademyCourse,
-  "key" | "shortTitle" | "heroImage" | "lessons" | "quizRevision" | "rules"
+  "key" | "shortTitle" | "heroImage" | "lessons" | "quizRevision" | "rules" | "examTracks"
 >;
 
 function NavigationContent({
@@ -113,7 +115,7 @@ function NavigationContent({
                         aria-current={active ? "page" : undefined}
                         className={`relative flex min-h-[52px] items-center gap-3 border-t border-[#ECEDEF] px-5 py-3 text-[13px] font-bold leading-4 text-[#252629] outline-none transition-colors hover:bg-[#F7F7F7] focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--academy-accent)] motion-reduce:transition-none ${active ? "bg-[#F3F3F3] before:absolute before:inset-y-0 before:left-0 before:w-1 before:bg-[var(--academy-accent)]" : ""}`}
                       >
-                        {content}
+                        {content}<NavigationPending />
                       </Link>
                     )}
                   </li>

@@ -1,5 +1,7 @@
 "use client";
 
+import NavigationPending from "@/components/NavigationPending";
+
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { DashboardMenuBadge } from "./DashboardBadgeProvider";
@@ -43,6 +45,7 @@ export default function SidebarLink({ href, name, iconName, badgeKey, exact = fa
         <DashboardNavIcon name={iconName} />
       </span>
       <span className="min-w-0 flex-1 truncate">{name}</span>
+      <NavigationPending />
       <DashboardMenuBadge badgeKey={badgeKey} label={name} />
     </Link>
   );

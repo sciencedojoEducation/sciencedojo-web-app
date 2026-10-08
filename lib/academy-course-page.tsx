@@ -14,8 +14,10 @@ export async function renderAcademyCoursePage(
 ) {
   const course = await getPublishedAcademyCourse(courseKey);
   if (!course) notFound();
-  const progress = await getTutorAcademyProgress(course.key);
-  const position = await getAcademyLearnerPosition(course.key);
+  const [progress, position] = await Promise.all([
+    getTutorAcademyProgress(course.key),
+    getAcademyLearnerPosition(course.key),
+  ]);
   return (
     <AcademyThemeScope course={course} className="min-h-full bg-white">
       <AcademyCourseCover

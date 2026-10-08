@@ -23,6 +23,8 @@ export default function AcademyLessonJourney({ children, roadmap, tracker, resum
   celebrateTopicChanges?: boolean;
 }) {
   const [active, setActive] = useState(0);
+  // Mount a topic on first use, then keep it mounted to preserve unsaved work.
+  const [visited, setVisited] = useState<number[]>([0]);
   const [whole, setWhole] = useState(false);
   const [celebration, setCelebration] = useState("");
   useEffect(() => {
@@ -52,7 +54,10 @@ export default function AcademyLessonJourney({ children, roadmap, tracker, resum
       const step = steps.findIndex((item) => index >= item.start && index < item.end);
       if (index < 0) return;
       if (root.current?.querySelector('[data-academy-recording="true"]')) return;
-      if (step >= 0) setActive(step);
+      if (step >= 0) {
+        setActive(step);
+        setVisited(current => current.includes(step) ? current : [...current, step]);
+      }
       setScrollRequest({ anchor, focus: false });
     };
     // Saving refreshes progress and recreates anchors/steps. Restore the initial
@@ -100,6 +105,7 @@ export default function AcademyLessonJourney({ children, roadmap, tracker, resum
     if (celebrate && celebrateTopicChanges) celebrateAcademyTopic();
     root.current?.querySelectorAll<HTMLMediaElement>("audio, video").forEach((media) => media.pause());
     setActive(index);
+    setVisited(current => current.includes(index) ? current : [...current, index]);
     setWhole(false);
     window.history.replaceState(null, "", `#${steps[index].id}`);
     setScrollRequest({ focus: true });
@@ -130,6 +136,7 @@ export default function AcademyLessonJourney({ children, roadmap, tracker, resum
         </div>
         <button type="button" aria-pressed={whole} aria-controls={contentId} onClick={() => {
           if (!canNavigate()) return;
+          if (!whole) setVisited(steps.map((_, index) => index));
           setWhole(!whole);
           if (whole) setScrollRequest({ focus: true });
         }} className="inline-flex min-h-11 items-center gap-2 rounded-full border border-[#B8CADA] px-4 text-sm font-bold text-[#173A63] focus-visible:outline-2 focus-visible:outline-[var(--academy-accent)]">
@@ -142,7 +149,7 @@ export default function AcademyLessonJourney({ children, roadmap, tracker, resum
     </AcademyTopicNavigator>
     <div id={contentId} className="academy-topic-body space-y-8">
       {steps.map((step, index) => <div key={step.id} hidden={!whole && active !== index} tabIndex={-1} className="academy-topic-content flex flex-col gap-8 focus:outline-none sm:gap-10">
-        {nodes.slice(step.start, step.end)}
+        {whole || active === index || visited.includes(index) ? nodes.slice(step.start, step.end) : null}
       </div>)}
     </div>
     <nav aria-label={german ? "Unterthemen wechseln" : "Topic navigation"} className="rounded-2xl border border-[#C7D9E9] bg-[#F0F6FC] p-5">

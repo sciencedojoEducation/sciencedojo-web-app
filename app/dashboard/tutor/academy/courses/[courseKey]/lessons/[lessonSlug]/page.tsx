@@ -1,3 +1,4 @@
+import PendingSubmitButton from "@/components/PendingSubmitButton";
 import { notFound, redirect } from "next/navigation";
 import { ArrowRight } from "lucide-react";
 import AcademyLessonBlocks from "@/components/tutor-academy/AcademyLessonBlocks";
@@ -31,7 +32,11 @@ export async function renderAcademyCourseLessonPage(
   if (!course) notFound();
   const lesson = getAcademyLesson(lessonSlug, course);
   if (!lesson) notFound();
-  const progress = await getTutorAcademyProgress(course.key);
+  const [progress, savedPosition, { supabase, user }] = await Promise.all([
+    getTutorAcademyProgress(course.key),
+    getAcademyLearnerPosition(course.key),
+    requireTutorAcademyUser(course.key),
+  ]);
   const index = getAcademyLessonIndex(lesson.slug, course);
   const requiredLessons = getAcademyRequiredLessons(course, progress);
   const pathIndex = requiredLessons.indexOf(lesson);
@@ -53,13 +58,11 @@ export async function renderAcademyCourseLessonPage(
       : basePath);
   const completed = getAcademyLessonProgressState(progress, lesson.slug, lesson.id) === "completed";
   const completedBlockIds = new Set(progress.completedBlockIds);
-  const savedPosition = await getAcademyLearnerPosition(course.key);
   const resume = resolveAcademyResumePosition(course, progress, savedPosition);
   const requiredPracticeIds = lesson.blocks
     .filter((block) => block.id && isAcademyBlockRequiredForCompletion(block) &&
       (block.type === "writing-practice" || block.type === "speaking-practice"))
     .map((block) => block.id!);
-  const { supabase, user } = await requireTutorAcademyUser(course.key);
   const { data: submissions, error: submissionError } = requiredPracticeIds.length
     ? await supabase.from("academy_learner_submissions")
       .select("block_id, submission_type, text_response, audio_path")
@@ -150,14 +153,14 @@ export async function renderAcademyCourseLessonPage(
               </div>
             ) : (
               <form action={completeAction}>
-                <button className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-full bg-[var(--academy-accent)] px-5 text-sm font-bold text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--academy-accent)]">
+                <PendingSubmitButton pendingLabel={isGermanAcademyCourse(course.key) ? "Speichert und öffnet …" : "Saving and opening…"} className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-full bg-[var(--academy-accent)] px-5 text-sm font-bold text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--academy-accent)]">
                   {nextLesson
                     ? isGermanAcademyCourse(course.key) ? "Nächstes Kapitel" : "Next chapter"
                     : !lesson.examTrack && course.rules?.requireFinalAssessment !== false
                       ? isGermanAcademyCourse(course.key) ? "Zum Abschlusstest" : "Next: final check"
                       : isGermanAcademyCourse(course.key) ? "Kurs abschließen" : "Finish course"}
                   <ArrowRight size={16} />
-                </button>
+                </PendingSubmitButton>
               </form>
             )} />
         </div>

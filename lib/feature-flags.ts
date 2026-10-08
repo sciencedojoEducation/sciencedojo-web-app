@@ -231,7 +231,7 @@ export function getDefaultFeatureFlags() {
   );
 }
 
-export async function getFeatureFlags(): Promise<FeatureFlag[]> {
+export const getFeatureFlags = cache(async function getFeatureFlags(): Promise<FeatureFlag[]> {
   try {
     const supabase = await createClient();
     const { data, error } = await supabase
@@ -265,7 +265,7 @@ export async function getFeatureFlags(): Promise<FeatureFlag[]> {
     console.warn("[feature-flags] Falling back to defaults:", error);
     return getDefaultFeatureFlags();
   }
-}
+});
 
 export async function getFeatureFlag(
   key: FeatureFlagKey,
