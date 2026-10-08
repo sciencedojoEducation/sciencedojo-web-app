@@ -99,7 +99,7 @@ export default function DashboardAccountMenu({
           <DashboardAvatar src={avatarUrl} name={userName} fallbackLabel={displayRole} />
         </span>
         <span className="min-w-0 flex-1">
-          <span className={`block truncate text-sm font-semibold ${light ? "text-[var(--student-ink)]" : "text-white"}`}>{userName}</span>
+          <span translate="no" className={`notranslate block truncate text-sm font-semibold ${light ? "text-[var(--student-ink)]" : "text-white"}`}>{userName}</span>
           <span className={`block text-xs capitalize ${light ? "text-[var(--student-muted-soft)]" : "text-slate-300"}`}>{displayRole}</span>
         </span>
         <ChevronUp className={`h-4 w-4 shrink-0 transition-transform ${light ? "text-[var(--student-muted-soft)]" : "text-slate-300"} ${isOpen ? "rotate-180" : ""}`} aria-hidden="true" />

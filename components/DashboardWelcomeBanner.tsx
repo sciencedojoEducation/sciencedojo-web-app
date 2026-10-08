@@ -88,7 +88,7 @@ export default function DashboardWelcomeBanner({
               <Image src={avatarUrl} alt="" fill sizes="44px" className="object-cover" />
             </div>
           ) : (
-            <div className="flex h-10 w-10 items-center justify-center rounded-full border border-white/40 bg-white/15 text-sm font-semibold text-white backdrop-blur-md sm:h-11 sm:w-11">
+            <div translate="no" className="notranslate flex h-10 w-10 items-center justify-center rounded-full border border-white/40 bg-white/15 text-sm font-semibold text-white backdrop-blur-md sm:h-11 sm:w-11">
               {firstName.charAt(0).toUpperCase()}
             </div>
           )}
@@ -96,7 +96,8 @@ export default function DashboardWelcomeBanner({
 
         <div className="max-w-2xl text-white">
           <p className="mb-2 text-sm font-medium text-white/78">{presentation.greeting}</p>
-          <h1 id="dashboard-welcome-title" className="text-3xl font-medium tracking-[-0.035em] sm:text-4xl md:text-5xl">
+          {/* Personal names must stay unchanged when the browser translates the dashboard. */}
+          <h1 id="dashboard-welcome-title" translate="no" className="notranslate text-3xl font-medium tracking-[-0.035em] sm:text-4xl md:text-5xl">
             {firstName}
           </h1>
           <p className="mt-3 max-w-xl text-sm leading-6 text-white/82 sm:text-base">
