@@ -8,6 +8,7 @@ import {
 } from "@/lib/question-generator";
 import { validateQuizSelection } from "@/lib/educationTaxonomy";
 import { normalizeMalformedLatexCommands } from "@/lib/math-notation";
+import { generateValidatedQuestionSet } from "@/lib/question-generator-validation";
 
 const initialError: QuestionGeneratorResult = {
   status: "error",
@@ -439,14 +440,14 @@ Do not use dollar math delimiters. Never output $...$, $$...$$, $begin:math:text
 Do not output raw LaTeX commands outside math delimiters. For example, output \\(\\frac{3 + \\sqrt{2}}{5 - \\sqrt{2}}\\), not $\\frac{3 + \\sqrt{2}}{5 - \\sqrt{2}}$ and not \\frac{3 + \\sqrt{2}}{5 - \\sqrt{2}}.
 Do not output programming-style notation such as x^2, sqrt(...), sin(theta), <=, >=, or != when the content is mathematical.
 When a question, answer, or working uses tabular data, output it as a markdown table with one row per line. Keep maths inside table cells wrapped in \\(...\\), for example \\(140 < h \\le 150\\). Do not describe a table unless an actual markdown table is included. Do not output HTML tables.
+Every table must have consistent column counts, non-empty headers, and fully populated data cells. Do not generate complete-the-table questions or placeholders. All source data used by the solution must appear in the learner-visible question; never invent missing input values in the answer or working.
 Keep working guidance readable. Use line breaks between calculation steps, and keep numbered steps on separate lines.
 Every item must include a concise answer and working/marking guidance.
 Every question must be mathematically coherent, unambiguous, and solvable from the information given. Avoid malformed symbolic names such as "S" appended to variables, unexplained vector notation, missing diagrams, or table labels that do not match the question.
 Keep questions age-appropriate for the selected level and curriculum.`,
     });
 
-    const result = await model.generateContent(
-      topic === "Mixed Topics"
+    const prompt = topic === "Mixed Topics"
         ? `Generate ${count} mixed-topic practice questions for ${stage}, ${curriculumKey}, ${awardingBodyKey}, ${level}, ${subject}.
 
 Educational stage: ${stage}
@@ -472,25 +473,29 @@ Subject: ${subject}
 Topic: ${topic}
 
 Make the questions specific to the topic and suitable for independent revision.
-If any question needs data in rows or columns, include a markdown table with one row per line before the question prompt.`,
-    );
-    const parsed = JSON.parse(result.response.text()) as { questions?: GeneratedQuestion[] };
-    const questions = (parsed.questions || [])
-      .slice(0, count)
-      .filter((question) => question.question && question.answer)
-      .map(formatQuestionNotation);
+If any question needs data in rows or columns, include a markdown table with one row per line before the question prompt.`;
+    const questions = await generateValidatedQuestionSet({
+      count,
+      prompt,
+      generate: async (attemptPrompt) => {
+        const result = await model.generateContent(attemptPrompt);
+        return result.response.text();
+      },
+      format: formatQuestionNotation,
+      onFailure: (attempt, issues) => {
+        console.warn("PracticeDojo generation rejected:", { attempt, issues });
+      },
+    });
 
-    if (questions.length === 0) {
-      throw new Error("No valid questions returned.");
-    }
+    if (!questions) throw new Error("No valid question set after two attempts.");
 
     return {
       status: "success",
       source: "llm",
       questions,
     };
-  } catch (error) {
-    console.error("AI question generation failed:", error);
+  } catch {
+    console.error("AI question generation failed; using built-in practice questions.");
     return {
       status: "success",
       source: "fallback",

@@ -43,3 +43,23 @@ test("empty speech transcription cannot produce success or invented praise", asy
   assert.deepEqual(result.strengths, []);
   assert.equal(result.improvedAnswer, "");
 });
+
+test("temporary provider failures retry once with a required response schema", async (t) => {
+  let attempts = 0;
+  t.mock.method(globalThis, "fetch", async (_url, request) => {
+    const body = JSON.parse(request.body);
+    assert.ok(body.generationConfig.responseSchema.required.includes("corrections"));
+    if (++attempts === 1) return new Response("", { status: 503 });
+    return Response.json({ candidates: [{ content: { parts: [{ text: JSON.stringify(feedback) }] } }] });
+  });
+  const result = await generateAcademyLanguageFeedback({ apiKey: "test", courseTitle: "A1", prompt: "Order tea", checklist: [], modelAnswer: "Ich möchte einen Tee.", text: "Ich möchte ein Tee." });
+  assert.equal(attempts, 2);
+  assert.equal(result.status, "needs-practice");
+});
+
+test("invalid provider credentials do not get retried", async (t) => {
+  let attempts = 0;
+  t.mock.method(globalThis, "fetch", async () => { attempts++; return new Response("", { status: 403 }); });
+  await assert.rejects(generateAcademyLanguageFeedback({ apiKey: "test", courseTitle: "A1", prompt: "Order tea", checklist: [], modelAnswer: "Ich möchte einen Tee.", text: "Ich möchte ein Tee." }), /403/);
+  assert.equal(attempts, 1);
+});

@@ -77,8 +77,18 @@ export async function POST(request: Request) {
     try {
       const feedback = await generateAcademyLanguageFeedback({ apiKey, courseTitle: course.title, prompt: block.prompt, checklist: block.checklist, modelAnswer: block.modelAnswer, text, audio });
       return NextResponse.json({ feedback }, { headers: { "Cache-Control": "no-store" } });
-    } catch {
-      return reply("Feedback could not be generated. Please try again. Your saved work is unaffected.", 503);
+    } catch (error) {
+      const reason = error instanceof Error ? error.message : "Unknown feedback error";
+      // Log only a classified reason, never the learner answer, audio or API key.
+      const diagnostic = reason.match(/^Feedback provider returned \d{3}$/)?.[0]
+        || (reason.includes("not grounded") ? "Ungrounded correction"
+          : reason.includes("Invalid language feedback") || error instanceof SyntaxError ? "Invalid feedback response"
+          : reason.includes("no feedback") ? "Empty feedback response"
+          : error instanceof Error && ["TimeoutError", "AbortError"].includes(error.name) ? "Feedback timeout"
+          : "Feedback connection failed");
+      console.error("[academy-feedback]", diagnostic);
+      const detail = process.env.NODE_ENV === "development" ? ` (${diagnostic})` : "";
+      return reply(`Feedback could not be generated${detail}. Please try again. Your saved work is unaffected.`, 503);
     }
   } catch {
     return reply("Unable to access this exercise. Please sign in and reopen the lesson.", 403);
