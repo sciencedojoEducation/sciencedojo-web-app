@@ -21,12 +21,8 @@ export default function ChildDetailsForm({ role, fullName, email, next }: ChildD
   useEffect(() => {
     if (!state.success) return;
 
-    const timer = window.setTimeout(() => {
-      router.replace(state.redirectTo || (isStudent ? "/dashboard/student" : "/dashboard/parent"));
-    }, 900);
-
-    return () => window.clearTimeout(timer);
-  }, [router, state.success]);
+    router.replace(state.redirectTo || (isStudent ? "/dashboard/student" : "/dashboard/parent"));
+  }, [router, state.success, state.redirectTo, isStudent]);
 
   if (state.success) {
     return (

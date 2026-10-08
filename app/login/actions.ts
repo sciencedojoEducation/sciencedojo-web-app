@@ -1,5 +1,6 @@
 'use server'
 
+import { after } from 'next/server'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { cookies, headers } from 'next/headers'
@@ -382,14 +383,21 @@ export async function signup(formData: FormData) {
         hourly_rate: 0
       }, { onConflict: 'id' });
 
-      await sendTrackedEmail({
-        userId: authData.user.id,
-        recipientEmail: data.email,
-        recipientName: fullName,
-        category: 'onboarding',
-        audience: 'tutor',
-        templateKey: 'tutor_welcome',
-        dedupeHours: 168,
+      const createdUserId = authData.user.id;
+      after(async () => {
+        try {
+          await sendTrackedEmail({
+            userId: createdUserId,
+            recipientEmail: data.email,
+            recipientName: fullName,
+            category: 'onboarding',
+            audience: 'tutor',
+            templateKey: 'tutor_welcome',
+            dedupeHours: 168,
+          });
+        } catch (error) {
+          console.error("[signup] Welcome email failed:", error);
+        }
       });
     }
   }

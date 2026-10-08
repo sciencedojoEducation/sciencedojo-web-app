@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/utils/supabase/server";
+import { after } from "next/server";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { isFeatureEnabled } from "@/lib/feature-flags";
@@ -164,17 +165,6 @@ export async function saveApplicationStage(
 
     // Ensure tutor row exists
     await supabase.from('tutors').upsert(tutorUpsert, { onConflict: 'id' });
-    if (user.email) {
-      await sendTrackedEmail({
-        userId: user.id,
-        recipientEmail: user.email.toLowerCase(),
-        recipientName: String(newData.full_name || user.user_metadata?.full_name || "Tutor"),
-        category: "onboarding",
-        audience: "tutor",
-        templateKey: "application_submitted",
-        dedupeHours: 720,
-      });
-    }
     // We store specific timestamps within the JSONB data object via VerificationStage
   }
 
@@ -194,6 +184,24 @@ export async function saveApplicationStage(
     throw new Error(`Database error: ${error.message}`);
   }
 
+  if (stage === 6 && shouldAdvance && user.email) {
+    const recipientEmail = user.email.toLowerCase();
+    after(async () => {
+      try {
+        await sendTrackedEmail({
+          userId: user.id,
+          recipientEmail,
+          recipientName: String(newData.full_name || user.user_metadata?.full_name || "Tutor"),
+          category: "onboarding",
+          audience: "tutor",
+          templateKey: "application_submitted",
+          dedupeHours: 720,
+        });
+      } catch (error) {
+        console.error("[onboarding] Notification failed:", error);
+      }
+    });
+  }
   revalidatePath("/tutor/onboarding");
   return { success: true };
 }

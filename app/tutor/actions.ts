@@ -1,6 +1,7 @@
 "use server"
 
 import { createAdminClient, createClient } from "@/utils/supabase/server";
+import { after } from "next/server";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { sendBookingRequestedEmail, sendBookingAcceptedEmail, sendLessonNotesEmail } from "@/lib/email";
@@ -309,21 +310,25 @@ export async function createBookingRequest(formData: FormData) {
     userId: user.id,
   });
 
-  // Get tutor email for notification
-  const { data: tutorProfile } = await supabase
-    .from("profiles")
-    .select("email")
-    .eq("id", tutorId)
-    .single();
-
-  if (tutorProfile?.email) {
-    await sendBookingRequestedEmail(
-      tutorProfile.email,
-      user.user_metadata?.full_name || "A student",
-      new Date(requestedDate || new Date()),
-      canonicalSubject
-    );
-  }
+  after(async () => {
+    try {
+      const { data: tutorProfile } = await supabase
+        .from("profiles")
+        .select("email")
+        .eq("id", tutorId)
+        .single();
+      if (tutorProfile?.email) {
+        await sendBookingRequestedEmail(
+          tutorProfile.email,
+          user.user_metadata?.full_name || "A student",
+          new Date(requestedDate || new Date()),
+          canonicalSubject
+        );
+      }
+    } catch (error) {
+      console.error("[booking] Notification failed:", error);
+    }
+  });
 
   revalidatePath("/dashboard/parent");
   revalidatePath("/dashboard/student");
@@ -361,28 +366,34 @@ export async function updateBookingStatus(formData: FormData) {
   }
 
   if (status === "accepted") {
-    // Get booking details to find the student
-    const { data: booking } = await supabase
-      .from("bookings")
-      .select("student_id, requested_date")
-      .eq("id", bookingId)
-      .single();
+    after(async () => {
+      try {
+        // Get booking details to find the student
+        const { data: booking } = await supabase
+          .from("bookings")
+          .select("student_id, requested_date")
+          .eq("id", bookingId)
+          .single();
 
-    if (booking) {
-      const { data: studentProfile } = await supabase
-        .from("profiles")
-        .select("email")
-        .eq("id", booking.student_id)
-        .single();
+        if (booking) {
+          const { data: studentProfile } = await supabase
+            .from("profiles")
+            .select("email")
+            .eq("id", booking.student_id)
+            .single();
         
-      if (studentProfile?.email) {
-        await sendBookingAcceptedEmail(
-          studentProfile.email,
-          user.user_metadata?.full_name || "Your Tutor",
-          new Date(booking.requested_date)
-        );
+          if (studentProfile?.email) {
+            await sendBookingAcceptedEmail(
+              studentProfile.email,
+              user.user_metadata?.full_name || "Your Tutor",
+              new Date(booking.requested_date)
+            );
+          }
+        }
+      } catch (error) {
+        console.error("[booking] Acceptance email failed:", error);
       }
-    }
+    });
   }
 
   revalidatePath("/dashboard/tutor");
