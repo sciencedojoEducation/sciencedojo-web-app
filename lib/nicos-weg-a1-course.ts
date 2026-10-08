@@ -1,7 +1,10 @@
+import { addNicosLearningEmojis } from "./nicos-weg-a1-emojis.ts";
+import { appendNicosA1Libraries } from "./nicos-weg-a1-library.ts";
 import { migrateAcademyCourse } from "./academy-schema.ts";
 import { nicosWegA1Units } from "./nicos-weg-a1-source.ts";
 import { styleNicosWegA1Course } from "./nicos-weg-a1-formatting.ts";
 import { nicosWegA1BilingualVocabulary } from "./nicos-weg-a1-sinhala.ts";
+import { nicosWegA1QuestionExplanation } from "./nicos-weg-a1-feedback.ts";
 import type { AcademyCourse, AcademyLesson, LessonBlock } from "./tutor-academy.ts";
 
 export const NICOS_WEG_A1_COURSE_KEY = "deutsch-nicos-weg-a1";
@@ -29,7 +32,7 @@ const lessons: AcademyLesson[] = nicosWegA1Units.map((unit) => {
       const correct = choices.findIndex((choice) => choice.toLocaleLowerCase("de") === answer.toLocaleLowerCase("de"));
       if (correct < 0) throw new Error(`Missing coursebook answer for ${id}, exercise ${index + 1}`);
       blocks.push({ id: `${id}-exercise-${index + 1}`, type: "knowledge-check", heading: `Aufgabe ${index + 1}`, completion: "pass", required: true,
-        question: { id: `${id}-question-${index + 1}`, type: "single-choice", prompt, options: choices.map((label, i) => ({ id: `option-${i}`, label })), correctOptionId: `option-${correct}`, explanation: `Coursebook answer: ${answer}. Read the grammar explanation above and try the sentence aloud.` } });
+        question: { id: `${id}-question-${index + 1}`, type: "single-choice", prompt, options: choices.map((label, i) => ({ id: `option-${i}`, label })), correctOptionId: `option-${correct}`, explanation: nicosWegA1QuestionExplanation(`${id}-question-${index + 1}`, `Coursebook answer: ${answer}. Try the completed sentence aloud.`) } });
     } else blocks.push({ id: `${id}-exercise-${index + 1}`, type: "writing-practice", heading: `Aufgabe ${index + 1}`, prompt, minWords: 1, maxWords: 30, checklist: ["Try your own answer before opening the model.", "Compare spelling, case and word order."], modelAnswer: answer, completion: "interact" });
   });
   blocks.push(
@@ -55,11 +58,11 @@ lessons.push({ id: "nico-a1-review", slug: "review", sectionId: "review", sectio
   { id: "nico-review-speak", type: "speaking-practice", heading: "Your next step · Say it aloud", prompt: "Say one goal in German and one small action you can do tomorrow. Speak for 30 seconds.", preparationSeconds: 30, targetSeconds: 30, checklist: ["Use your own sentences.", "Try without looking at a model."], modelAnswer: "Ich möchte gut Deutsch sprechen. Morgen lerne ich zehn Wörter. Ich übe jeden Tag.", completion: "interact" },
 ] });
 
-export const nicosWegA1Course: AcademyCourse = styleNicosWegA1Course(migrateAcademyCourse({
+export const nicosWegA1Course: AcademyCourse = addNicosLearningEmojis(appendNicosA1Libraries(styleNicosWegA1Course(migrateAcademyCourse({
   key: NICOS_WEG_A1_COURSE_KEY, title: "Deutsch lernen mit Nicos Weg A1", shortTitle: "Nicos Weg A1",
-  description: "Learn German through 12 selected scenes from Nicos Weg: official DW clips, German and English explanations, original Sinhala notes, vocabulary flashcards, 36 coursebook exercises and speaking practice. An independent visual study companion, not a complete A1 examination course. Film and screenshots © Deutsche Welle.",
+  description: "Learn German through 12 selected scenes from Nicos Weg: official DW clips, German and English explanations, original Sinhala notes, vocabulary flashcards, 36 coursebook exercises and speaking practice. Includes a separate grammar library across all 76 A1 episodes and 76 English/Sinhala vocabulary decks. An independent visual study companion, not an A1 examination preparation course. Film and screenshots © Deutsche Welle.",
   estimatedMinutes: 330, audienceRoles: ["student"], passMark: 70, quizRevision: 1, sections,
   heroImage: "/images/academy/nicos-weg-a1/unit-01.jpg",
   theme: { preset: "journey", accent: "teal", typography: "friendly-sans", density: "comfortable", coverStyle: "split-image", lessonHeaderStyle: "media-led" },
   rules: { navigation: "free", lessonCompletion: "required-blocks", requireFinalAssessment: false, attemptLimit: null, feedbackTiming: "immediate" }, lessons, quiz: [],
-}));
+}))));

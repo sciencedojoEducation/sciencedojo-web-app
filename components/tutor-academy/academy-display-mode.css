@@ -1,0 +1,157 @@
+/* Night reading applies only while an Academy lesson screen is mounted. */
+html[data-academy-mode="dark"] {
+  color-scheme: dark;
+  --academy-night-page: #101820;
+  --academy-night-surface: #192630;
+  --academy-night-raised: #22323e;
+  --academy-night-text: #e2e8ed;
+  --academy-night-muted: #b2bec8;
+  --academy-gender-der: #93c5fd;
+  --academy-gender-die: #fca5a5;
+  --academy-gender-das: #86efac;
+  --academy-german-blue: #93c5fd;
+  --academy-german-red: #fca5a5;
+  --academy-german-green: #86efac;
+  background: var(--academy-night-page);
+}
+html[data-academy-mode="dark"] body,
+html[data-academy-mode="dark"] main,
+html[data-academy-mode="dark"] .dashboard-shell {
+  background: var(--academy-night-page) !important;
+  color: var(--academy-night-text);
+}
+html[data-academy-mode="dark"] .academy-course-typography {
+  --academy-accent: #527ba5 !important;
+  --academy-accent-soft: #223849 !important;
+  --academy-accent-ink: #152a3c !important;
+  --academy-spark: #334654 !important;
+  color: var(--academy-night-text);
+}
+html[data-academy-mode="dark"] :is(header, nav, footer) {
+  background-color: var(--academy-night-surface) !important;
+  color: var(--academy-night-text);
+}
+html[data-academy-mode="dark"] :is([class*="bg-white"], [class*="bg-[#"], [class*="from-[#"], [class*="bg-amber-50"], [class*="bg-emerald-50"], [class*="bg-slate-100"], [class*="bg-secondary/"], [class*="bg-gray-50"]) {
+  background-color: var(--academy-night-surface) !important;
+  background-image: none !important;
+}
+html[data-academy-mode="dark"] :is([class*="text-[#"], [class*="text-secondary"], [class*="text-slate-"], [class*="text-gray-"], [class*="text-amber-"], [class*="text-emerald-"], [class*="text-[var(--academy-accent"]) {
+  color: var(--academy-night-text) !important;
+}
+html[data-academy-mode="dark"] :is(h1,h2,h3,h4, input, textarea, select) {
+  color: var(--academy-night-text);
+}
+html[data-academy-mode="dark"] :is(input,textarea,select) {
+  background: var(--academy-night-raised) !important;
+  border-color: #536575 !important;
+}
+html[data-academy-mode="dark"] input::placeholder,
+html[data-academy-mode="dark"] textarea::placeholder { color: var(--academy-night-muted); }
+html[data-academy-mode="dark"] :is([class*="border-[#"], [class*="border-slate-"], [class*="border-secondary"]) {
+  border-color: #405463 !important;
+}
+html[data-academy-mode="dark"] .academy-prose mark { background: #68551f; }
+html[data-academy-mode="dark"] .academy-flashcard { --academy-accent-ink: #152a3c; }
+
+/* Distinct page, card, choice and action layers instead of one flat surface. */
+html[data-academy-mode="dark"] .academy-course-typography .academy-knowledge-card {
+  background: #1d2e3a !important;
+  border-color: #597082 !important;
+  box-shadow: 0 8px 24px #00000030;
+}
+html[data-academy-mode="dark"] .academy-course-typography [data-academy-choice="idle"] {
+  background: #2b3d4b !important;
+  border-color: #5b7285 !important;
+}
+html[data-academy-mode="dark"] .academy-course-typography [data-academy-choice="idle"]:hover {
+  background: #354d5e !important;
+  border-color: #91b3cf !important;
+}
+html[data-academy-mode="dark"] .academy-course-typography [data-academy-choice="selected"] {
+  background: #244f70 !important;
+  border-color: #93c5fd !important;
+  box-shadow: 0 0 0 1px #93c5fd;
+}
+html[data-academy-mode="dark"] .academy-course-typography button:is([data-academy-action="primary"], [class*="bg-[var(--academy-accent)]"]):enabled {
+  background: #83bff5 !important;
+  color: #102536 !important;
+  border: 1px solid #b4daff;
+  box-shadow: 0 3px 10px #00000030;
+}
+html[data-academy-mode="dark"] .academy-course-typography button:is([data-academy-action="primary"], [class*="bg-[var(--academy-accent)]"]):enabled:hover {
+  background: #a3d2ff !important;
+}
+html[data-academy-mode="dark"] .academy-course-typography button:disabled {
+  background: #344552 !important;
+  color: #a8b7c2 !important;
+  opacity: 0.65;
+  box-shadow: none;
+}
+html[data-academy-mode="dark"] .academy-course-typography button[class*="bg-white"]:not(.academy-flashcard):enabled {
+  background: #304555 !important;
+  border-color: #7893a7 !important;
+}
+html[data-academy-mode="dark"] .academy-course-typography button[class*="bg-white"]:not(.academy-flashcard):enabled:hover {
+  background: #3d596c !important;
+}
+html[data-academy-mode="dark"] .academy-course-typography [data-academy-card-face="front"] {
+  background: #263b4a !important;
+  border-color: #6e879b !important;
+  box-shadow: 0 8px 24px #00000045;
+}
+html[data-academy-mode="dark"] .academy-course-typography [data-academy-card-face="back"] {
+  background: #204b50 !important;
+  border-color: #72bbb9 !important;
+  box-shadow: 0 8px 24px #00000045;
+}
+html[data-academy-mode="dark"] .academy-course-typography [data-academy-feedback="correct"] {
+  background: #193d35 !important;
+  border-color: #34d399 !important;
+}
+html[data-academy-mode="dark"] .academy-course-typography [data-academy-feedback="retry"] {
+  background: #413522 !important;
+  border-color: #fbbf24 !important;
+}
+html[data-academy-mode="dark"] .academy-course-typography :is(button, label):focus-within {
+  outline-color: #a6d2ff;
+}
+
+html[data-academy-mode="dark"] .academy-course-typography [class*="bg-teal-50"] {
+  background: #1d2e3a !important;
+  border-color: #597082 !important;
+}
+
+/* Soft, neutral grey surfaces for daytime reading; preserve semantic colours. */
+html[data-academy-mode="light"] {
+  --academy-paper-page: #e4e7ea;
+  --academy-paper-surface: #eef0f2;
+  --academy-paper-field: #f5f6f7;
+  background: var(--academy-paper-page);
+}
+html[data-academy-mode="light"] body,
+html[data-academy-mode="light"] main,
+html[data-academy-mode="light"] .dashboard-shell {
+  background: var(--academy-paper-page) !important;
+}
+html[data-academy-mode="light"] :is(header, nav),
+html[data-academy-mode="light"] [class~="bg-white"] {
+  background-color: var(--academy-paper-surface) !important;
+}
+html[data-academy-mode="light"] .academy-course-typography .academy-knowledge-card,
+html[data-academy-mode="light"] .academy-course-typography [data-academy-card-face="front"] {
+  background: var(--academy-paper-surface) !important;
+  border-color: #c4cbd2;
+}
+html[data-academy-mode="light"] [data-academy-lesson-progress] {
+  background-color: var(--academy-paper-surface) !important;
+  color: #263747 !important;
+}
+html[data-academy-mode="light"] [data-academy-lesson-progress] span {
+  color: #263747 !important;
+}
+html[data-academy-mode="light"] .academy-course-typography [data-academy-recording] {
+  background: linear-gradient(135deg, #e6ecec, var(--academy-paper-surface)) !important;
+}
+html[data-academy-mode="light"] .academy-course-typography :is(input:not([type="radio"]):not([type="checkbox"]), textarea, select) {
+  background-color: var(--academy-paper-field) !important;
+}

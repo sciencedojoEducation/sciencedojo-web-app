@@ -1,5 +1,10 @@
+import { isNicosWegCourse } from "@/lib/nicos-weg-course";
 import Image from "next/image";
+import AcademyGermanText, { AcademyGenderLegend } from "./AcademyGermanText";
+import AcademyDisplayMode from "./AcademyDisplayMode";
+import AcademyAnswerSoundToggle from "./AcademyAnswerSoundToggle";
 import AcademyVideoPlayer from "./AcademyVideoPlayer";
+import { withNicosMemoryAids } from "@/lib/nicos-weg-a1-memory-aids";
 import { academyVideoEmbedUrl, isAcademyDwVideoUrl } from "@/lib/academy-video";
 import {
   Check,
@@ -21,6 +26,8 @@ import AcademyCarousel from "./AcademyCarousel";
 import AcademyRichText from "./AcademyRichText";
 import AcademyMath from "./AcademyMath";
 import AcademyLanguagePractice from "./AcademyLanguagePractice";
+import AcademySentencePractice from "./AcademySentencePractice";
+import { sentencePracticeForBlock } from "@/lib/nicos-weg-a1-sentence-practice";
 import AcademyBlockBackground from "./AcademyBlockBackground";
 import AcademySectionTransition from "./AcademySectionTransition";
 import AcademyLessonRoadmap, { AcademyPhaseMarker } from "./AcademyLessonRoadmap";
@@ -49,14 +56,16 @@ const calloutClasses = {
 function AcademyMediaCaption({
   caption,
   items = [],
+  genderCues = false,
 }: {
   caption?: string;
+  genderCues?: boolean;
   items?: AcademyMediaCaptionItem[];
 }) {
   if (!caption && !items.length) return null;
   return (
     <div className="space-y-4 px-5 py-4 font-[family-name:var(--font-academy-body)] text-[13px] leading-6 text-[#5F6267]">
-      {caption ? <p>{caption}</p> : null}
+      {caption ? <p className="whitespace-pre-line"><AcademyGermanText text={caption} enabled={genderCues} /></p> : null}
       {items.map((item) => {
         if (item.type === "ordered-list" || item.type === "unordered-list") {
           const ListTag = item.type === "ordered-list" ? "ol" : "ul";
@@ -105,7 +114,7 @@ function AcademyMediaCaption({
 }
 
 export default function AcademyLessonBlocks({
-  blocks,
+  blocks: suppliedBlocks,
   courseKey,
   presentationCourseKey = courseKey,
   lessonId,
@@ -127,12 +136,18 @@ export default function AcademyLessonBlocks({
   /** Server-rendered, completion-gated next-chapter action. */
   lessonEnd?: React.ReactNode;
 }) {
+  const blocks = withNicosMemoryAids(presentationCourseKey, lessonId, suppliedBlocks);
+  const genderCues = isNicosWegCourse(presentationCourseKey);
   const activityLanguage = uiLanguage || (isGermanAcademyCourse(presentationCourseKey) ? "de" : "en");
   // Short induction lessons read as a single page, not invented learning phases.
   const showLessonJourney = presentationCourseKey !== TUTOR_ACADEMY_COURSE_KEY;
   const roadmap = showLessonJourney ? academyLessonRoadmap(blocks) : { sections: [], phases: [] };
   return (
-    <AcademyLessonJourney steps={showLessonJourney ? academyLessonJourneySteps(blocks, activityLanguage === "de" ? "Einstieg" : "Getting started", activityLanguage === "de") : []}
+    <>
+    {presentationCourseKey ? <AcademyDisplayMode /> : null}
+    {isNicosWegCourse(presentationCourseKey) ? <AcademyAnswerSoundToggle german={activityLanguage === "de"} /> : null}
+    {genderCues ? <AcademyGenderLegend /> : null}
+    <AcademyLessonJourney celebrateTopicChanges={isNicosWegCourse(presentationCourseKey)} steps={showLessonJourney ? academyLessonJourneySteps(blocks, activityLanguage === "de" ? "Einstieg" : "Getting started", activityLanguage === "de") : []}
       key={lessonId || blocks[0]?.id || courseKey}
       anchors={blocks.map(academyBlockAnchor)} completedIds={completedBlockIds} german={activityLanguage === "de"}
       canCompleteLesson={!!courseKey && !!lessonId}
@@ -150,6 +165,7 @@ export default function AcademyLessonBlocks({
               <section key={block.id || blockIndex}>
                 <AcademyRichText
                   document={block.content}
+                  genderCues={genderCues}
                   className={
                     block.layout === "two-column"
                       ? "md:columns-2 md:gap-10 [&>*]:break-inside-avoid"
@@ -173,7 +189,7 @@ export default function AcademyLessonBlocks({
                   key={paragraph}
                   className="font-[family-name:var(--font-academy-body)] text-[17px] font-medium leading-[30px] text-[#17202C] sm:leading-[33px]"
                 >
-                  {paragraph}
+                  <AcademyGermanText text={paragraph} enabled={genderCues} />
                 </p>
               ))}
             </section>
@@ -221,6 +237,7 @@ export default function AcademyLessonBlocks({
                 <figcaption className="border-t border-[#DEDFE1]">
                   <AcademyMediaCaption
                     caption={block.caption}
+                    genderCues={genderCues}
                     items={block.captionItems}
                   />
                 </figcaption>
@@ -248,7 +265,7 @@ export default function AcademyLessonBlocks({
                     {block.heading}
                   </h2>
                   <p className="academy-reading-copy mt-2 font-[family-name:var(--font-academy-body)] text-[15px] leading-7">
-                    {block.body}
+                    <AcademyGermanText text={block.body} enabled={genderCues} />
                   </p>
                 </div>
               </div>
@@ -258,6 +275,7 @@ export default function AcademyLessonBlocks({
 
         if (block.type === "numbered-list") {
           const listStyle = block.appearance?.variant || "numbered";
+          const sentencePractice = sentencePracticeForBlock(presentationCourseKey, block.id);
           return (
             <section key={blockIndex}>
               {block.heading && (
@@ -268,7 +286,7 @@ export default function AcademyLessonBlocks({
               <ol data-academy-motion-list className="border-t border-[#DEDFE1]">
                 {block.items.map((item, index) => (
                   <li
-                    key={`${index}-${item.title}`}
+                    key={`${index}-$<AcademyGermanText text={item.title} enabled={genderCues} />`}
                     className="grid grid-cols-[44px_1fr] gap-4 border-b border-[#DEDFE1] py-6"
                   >
                     <span
@@ -279,15 +297,16 @@ export default function AcademyLessonBlocks({
                     </span>
                     <div>
                       <h3 className="text-lg font-bold text-[#252629]">
-                        {item.title}
+                        <AcademyGermanText text={item.title} enabled={genderCues} />
                       </h3>
                       <p className="academy-reading-copy mt-2 font-[family-name:var(--font-academy-body)] text-[15px] leading-7 text-[#27313B]">
-                        {item.body}
+                        <AcademyGermanText text={item.body} enabled={genderCues} />
                       </p>
                     </div>
                   </li>
                 ))}
               </ol>
+              {sentencePractice && <AcademySentencePractice key={block.id} practice={sentencePractice} />}
             </section>
           );
         }
@@ -301,6 +320,8 @@ export default function AcademyLessonBlocks({
                 </h2>
               )}
               <AcademyAccordion
+                initiallyOpen={block.initiallyOpen}
+                genderCues={genderCues}
                 items={block.items}
                 courseKey={courseKey}
                 blockId={block.id}
@@ -319,6 +340,7 @@ export default function AcademyLessonBlocks({
                 </h2>
               )}
               <AcademyCarousel
+                genderCues={genderCues}
                 items={block.items}
                 courseKey={courseKey}
                 blockId={block.id}
@@ -335,7 +357,7 @@ export default function AcademyLessonBlocks({
               className="border-y border-[#DEDFE1] py-9 sm:px-8"
             >
               <blockquote className="font-[family-name:var(--font-academy-serif)] text-2xl font-bold leading-[1.55] text-[#252629] sm:text-[28px]">
-                “{block.quote}”
+                “<AcademyGermanText text={block.quote} enabled={genderCues}/>”
               </blockquote>
               <figcaption className="mt-5 text-[11px] font-bold uppercase tracking-[0.16em] text-[var(--academy-accent)]">
                 — {block.attribution}
@@ -413,6 +435,7 @@ export default function AcademyLessonBlocks({
                 </h2>
               ) : null}
               <AcademyTabs
+                genderCues={genderCues}
                 items={block.items}
                 uiLanguage={activityLanguage}
                 courseKey={courseKey}
@@ -427,6 +450,7 @@ export default function AcademyLessonBlocks({
           const cards = (
             <AcademyFlashcards
               items={block.items}
+              genderCues={genderCues}
               uiLanguage={activityLanguage}
               variant={
                 block.appearance?.variant === "stack" ||
@@ -472,6 +496,7 @@ export default function AcademyLessonBlocks({
             return (
               <section key={block.id || blockIndex}>
                 <AcademyProcessBuildUp
+                genderCues={genderCues}
                   heading={block.heading}
                   items={block.items}
                   uiLanguage={activityLanguage}
@@ -485,6 +510,7 @@ export default function AcademyLessonBlocks({
             return (
               <section key={block.id || blockIndex}>
                 <AcademyProcess
+                genderCues={genderCues}
                   heading={block.heading}
                   items={block.items}
                   uiLanguage={activityLanguage}
@@ -511,10 +537,10 @@ export default function AcademyLessonBlocks({
                       {index + 1}
                     </span>
                     <h3 className="text-lg font-bold text-[#252629]">
-                      {item.title}
+                      <AcademyGermanText text={item.title} enabled={genderCues} />
                     </h3>
                     <p className="academy-reading-copy mt-2 font-[family-name:var(--font-academy-body)] text-[15px] leading-7 text-[#27313B]">
-                      {item.body}
+                      <AcademyGermanText text={item.body} enabled={genderCues} />
                     </p>
                   </li>
                 ))}
@@ -567,7 +593,7 @@ export default function AcademyLessonBlocks({
                   >
                     <FileText className="shrink-0 text-[var(--academy-accent)]" />
                     <span className="min-w-0 flex-1">
-                      <strong className="block">{item.title}</strong>
+                      <strong className="block"><AcademyGermanText text={item.title} enabled={genderCues} /></strong>
                       {item.description ? (
                         <span className="mt-1 block text-sm font-normal text-[#717376]">
                           {item.description}
@@ -603,7 +629,7 @@ export default function AcademyLessonBlocks({
                   Ihr Browser unterstützt die Audiowiedergabe nicht.
                 </audio>
               ) : block.type === "video" && (embed || isAcademyDwVideoUrl(block.url)) ? (
-                <AcademyVideoPlayer embedUrl={embed || undefined} sourceUrl={block.url} title={block.heading || "Video"} german={activityLanguage === "de"} startSeconds={block.startSeconds} endSeconds={block.endSeconds} />
+                <AcademyVideoPlayer embedUrl={embed || undefined} sourceUrl={block.url} title={block.heading || "Video"} german={activityLanguage === "de"} startSeconds={block.startSeconds} endSeconds={block.endSeconds} clickToLoad={block.clickToLoad} />
               ) : embed ? (
                 <iframe
                   src={embed}
@@ -629,6 +655,7 @@ export default function AcademyLessonBlocks({
                 <div className="mt-3 border-t border-[#DEDFE1]">
                   <AcademyMediaCaption
                     caption={block.caption}
+                    genderCues={genderCues}
                     items={block.captionItems}
                   />
                 </div>
@@ -641,7 +668,7 @@ export default function AcademyLessonBlocks({
                       : activityLanguage === "de" ? "Transkript lesen" : "Read transcript"}
                   </summary>
                   <p className="academy-reading-copy mt-3 whitespace-pre-wrap font-[family-name:var(--font-academy-body)] text-[15px] leading-7 text-[#27313B]">
-                    {block.transcript}
+                    <AcademyGermanText text={block.transcript} enabled={genderCues} />
                   </p>
                 </details>
               ) : null}
@@ -661,7 +688,7 @@ export default function AcademyLessonBlocks({
                 </h2>
               ) : null}
               <p className="academy-reading-copy mt-5 font-[family-name:var(--font-academy-body)] text-[17px] leading-8">
-                {block.problem}
+                <AcademyGermanText text={block.problem} enabled={genderCues} />
               </p>
               {block.latex ? (
                 <div className="mt-5 overflow-x-auto border border-[#DEDFE1] bg-white p-4 text-lg text-[#173A63]">
@@ -678,9 +705,9 @@ export default function AcademyLessonBlocks({
                       {index + 1}
                     </span>
                     <div>
-                      <strong>{step.title}</strong>
+                      <strong><AcademyGermanText text={step.title} enabled={genderCues} /></strong>
                       <p className="mt-1 text-sm leading-6 text-[#27313B]">
-                        {step.body}
+                        <AcademyGermanText text={step.body} enabled={genderCues} />
                       </p>
                     </div>
                   </li>
@@ -688,7 +715,7 @@ export default function AcademyLessonBlocks({
               </ol>
               <div className="mt-6 border-l-4 border-emerald-600 bg-emerald-50 p-4">
                 <strong>{activityLanguage === "de" ? "Antwort" : "Answer"}</strong>
-                <p className="mt-1 text-sm leading-6">{block.answer}</p>
+                <p className="mt-1 text-sm leading-6"><AcademyGermanText text={block.answer} enabled={genderCues} /></p>
               </div>
             </section>
           );
@@ -720,6 +747,7 @@ export default function AcademyLessonBlocks({
               block={block}
               courseKey={courseKey}
               lessonId={lessonId}
+              genderCues={genderCues}
             />
           );
         }
@@ -763,7 +791,7 @@ export default function AcademyLessonBlocks({
                                   aria-hidden="true"
                                 />
                               )}
-                              {cell}
+                              <AcademyGermanText text={cell} enabled={genderCues} genderHint={/masculine|maskulin/i.test(block.columns[cellIndex]) || /^(Masculine|Maskulin)$/i.test(row[0]) ? "der" : /feminine|feminin/i.test(block.columns[cellIndex]) || /^(Feminine|Feminin)$/i.test(row[0]) ? "die" : /neuter|neutral/i.test(block.columns[cellIndex]) || /^(Neuter|Neutral)$/i.test(row[0]) ? "das" : undefined} caseHint={/akkusativ|accusative/i.test(block.columns[cellIndex]) || /^(AKK|Akkusativ|Accusative)$/i.test(row[0]) ? "Akkusativ" : /dativ|dative/i.test(block.columns[cellIndex]) || /^(DAT|Dativ|Dative)$/i.test(row[0]) ? "Dativ" : undefined} />
                             </td>
                           );
                         })}
@@ -814,6 +842,7 @@ export default function AcademyLessonBlocks({
         );
       })}
     </AcademyLessonJourney>
+    </>
   );
 }
 

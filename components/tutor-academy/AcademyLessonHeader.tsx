@@ -4,6 +4,7 @@ import { Clock } from "lucide-react";
 import { resolveAcademyTheme } from "@/lib/academy-theme";
 import { isGermanAcademyCourse } from "@/lib/german-academy-course";
 import { germanB2HeroImage, germanB2SectionScenes } from "@/lib/german-b2-visuals";
+import { nicosLessonBanner } from "@/lib/nicos-weg-a1-visuals";
 import type { AcademyCourse, AcademyLesson } from "@/lib/tutor-academy";
 
 export default function AcademyLessonHeader({
@@ -23,13 +24,14 @@ export default function AcademyLessonHeader({
 }) {
   const theme = resolveAcademyTheme(course);
   const b2 = course.key === "german-b2-complete";
-  const mediaLed = theme.lessonHeaderStyle === "media-led" ||
+  const nicosBanner = nicosLessonBanner(course.key, lesson);
+  const mediaLed = Boolean(nicosBanner) || theme.lessonHeaderStyle === "media-led" ||
     (b2 && theme.lessonHeaderStyle === "editorial");
   const german = isGermanAcademyCourse(course.key);
   const scene = b2 ? germanB2SectionScenes[lesson.sectionId || ""] : undefined;
-  const headerImage = b2
+  const headerImage = nicosBanner?.src || (b2
     ? scene?.src || germanB2HeroImage
-    : course.heroImage || "/images/home/8.professional-online-teacher.jpg";
+    : course.heroImage || "/images/home/8.professional-online-teacher.jpg");
   const journey = sequence || course.lessons;
   const sectionStart = index === 0 || journey[index - 1]?.sectionId !== lesson.sectionId;
   const hasSceneBlock = lesson.blocks.some((item) => item.type === "image" && item.id?.endsWith("-section-scene"));
@@ -55,9 +57,9 @@ export default function AcademyLessonHeader({
             fill
             sizes="100vw"
             loading={b2 ? "eager" : "lazy"}
-            className={`object-cover ${b2 ? "opacity-100" : "opacity-35"}`}
+            className={`object-cover ${nicosBanner ? "object-[center_35%] opacity-100" : b2 ? "opacity-100" : "opacity-35"}`}
           />
-          <div className={`absolute inset-0 ${b2 ? "bg-[#14112B]/70 md:bg-gradient-to-r md:from-[#14112B]/90 md:via-[#14112B]/70 md:to-[#14112B]/15" : "bg-gradient-to-r from-black/80 via-black/55 to-black/20"}`} />
+          <div className={`absolute inset-0 ${nicosBanner ? "bg-gradient-to-r from-black/85 via-black/70 to-black/45" : b2 ? "bg-[#14112B]/70 md:bg-gradient-to-r md:from-[#14112B]/90 md:via-[#14112B]/70 md:to-[#14112B]/15" : "bg-gradient-to-r from-black/80 via-black/55 to-black/20"}`} />
         </>
       ) : null}
       <div className={`relative mx-auto ${contentWidthClass}`}>
@@ -90,12 +92,13 @@ export default function AcademyLessonHeader({
           </p>
         ) : null}
         {theme.preset === "journey" ? (
-          <div className={`mt-8 flex flex-wrap items-center gap-3 rounded-xl p-4 text-sm ${mediaLed ? "bg-white/15 text-white" : "bg-[var(--academy-accent-soft)] text-[var(--academy-accent-ink)]"}`}>
+          <div data-academy-lesson-progress className={`mt-8 flex flex-wrap items-center gap-3 rounded-xl p-4 text-sm ${mediaLed ? "bg-white/15 text-white" : "bg-[var(--academy-accent-soft)] text-[var(--academy-accent-ink)]"}`}>
             <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[var(--academy-spark)] font-bold text-[#17202C]">{index + 1}</span>
             <span className="font-semibold">{german ? "Schritt" : "Step"} {index + 1} {german ? "von" : "of"} {journey.length}</span>
             <span className={mediaLed ? "text-white/80" : "text-[#435164]"}>{nextText}</span>
           </div>
         ) : null}
+        {nicosBanner?.attribution ? <p className="mt-3 text-right text-xs text-white/80">{nicosBanner.attribution} · Folge {nicosBanner.episode}: {nicosBanner.title}</p> : null}
       </div>
     </header>
   );

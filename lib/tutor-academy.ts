@@ -92,6 +92,7 @@ export type LessonBlock = AcademyBlockIdentity &
     | {
         type: "accordion";
         heading?: string;
+        initiallyOpen?: boolean;
         items: Array<{ id?: string; title: string; body: string }>;
       }
     | { type: "carousel"; heading?: string; items: AcademyMediaItem[] }
@@ -113,6 +114,8 @@ export type LessonBlock = AcademyBlockIdentity &
         type: "video";
         heading?: string;
         url: string;
+        /** Mount an external player only after the learner chooses Play. */
+        clickToLoad?: boolean;
         /** Absolute scene boundaries measured from the beginning of the video. */
         startSeconds?: number;
         endSeconds?: number;
@@ -152,6 +155,8 @@ export type LessonBlock = AcademyBlockIdentity &
           title: string;
           body: string;
           eyebrow?: string;
+          /** Optional visual memory cue; the German title remains unchanged. */
+          emoji?: string;
           src?: string;
           alt?: string;
           sprite?: {

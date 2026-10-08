@@ -1,3 +1,5 @@
+import { withNicosGenderCues } from "@/lib/nicos-gender-cues";
+import { AcademyGenderSpan } from "./AcademyGermanText";
 import type { AcademyRichTextDocument } from "@/lib/tutor-academy";
 import AcademyMath from "@/components/tutor-academy/AcademyMath";
 import { academyTextColor } from "@/lib/academy-text-colors";
@@ -41,7 +43,10 @@ function renderNode(node: RichNode, key: string): React.ReactNode {
         content = <mark className="rounded bg-[#FFF0B3] py-0.5 text-inherit [box-decoration-break:clone]">{content}</mark>;
       if (mark.type === "textStyle") {
         const color = academyTextColor(mark.attrs?.color);
-        if (color) content = <span style={{ color }}>{content}</span>;
+        if (color) content = <span style={{ color: `var(--academy-german-${color === "#B91C1C" ? "red" : color === "#166534" ? "green" : "blue"}, ${color})` }}>{content}</span>;
+      }
+      if (mark.type === "nicosGender" && (mark.attrs?.gender === "der" || mark.attrs?.gender === "die" || mark.attrs?.gender === "das")) {
+        content = <AcademyGenderSpan gender={mark.attrs.gender} grammaticalCase={mark.attrs.grammaticalCase === "Akkusativ" || mark.attrs.grammaticalCase === "Dativ" ? mark.attrs.grammaticalCase : undefined} showLabel={mark.attrs.label === true}>{content}</AcademyGenderSpan>;
       }
       if (mark.type === "strike") content = <s>{content}</s>;
       if (mark.type === "code")
@@ -157,13 +162,15 @@ function renderNode(node: RichNode, key: string): React.ReactNode {
 export default function AcademyRichText({
   document,
   className = "",
+  genderCues = false,
 }: {
   document: AcademyRichTextDocument;
+  genderCues?: boolean;
   className?: string;
 }) {
   return (
     <div className={`academy-prose space-y-6 ${className}`}>
-      {renderChildren(document.content as RichNode[] | undefined, "root")}
+      {renderChildren((genderCues ? withNicosGenderCues(document) : document).content as RichNode[] | undefined, "root")}
     </div>
   );
 }

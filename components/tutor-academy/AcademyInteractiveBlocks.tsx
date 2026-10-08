@@ -1,5 +1,8 @@
 "use client";
 
+import { isNicosWegCourse } from "@/lib/nicos-weg-course";
+import AcademyGermanText from "./AcademyGermanText";
+import { playAnswerSound } from "@/lib/academy-answer-sounds";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
@@ -15,10 +18,14 @@ import {
 } from "lucide-react";
 import type { QuizQuestion } from "@/lib/tutor-academy";
 import { germanA1VocabularyImage } from "@/lib/german-a1-vocabulary-image";
+import { nicosWegA1QuestionExplanation, resolveNicosWegA1Feedback } from "@/lib/nicos-weg-a1-feedback";
+import { getNicosChoiceCheck } from "@/lib/nicos-weg-a1-answer-bank";
+import { AcademyBilingualRule } from "./AcademyInstantAnswerCheck";
 import { recordAcademyBlockCompletion } from "@/app/dashboard/tutor/academy/actions";
 
 type Item = { id?: string; title: string; body: string };
 type FlashcardItem = Item & {
+  emoji?: string;
   eyebrow?: string;
   src?: string;
   alt?: string;
@@ -30,6 +37,7 @@ type FlashcardItem = Item & {
   };
 };
 type Tracking = {
+  genderCues?: boolean;
   courseKey?: string;
   blockId?: string;
   completion?: "view" | "interact" | "pass";
@@ -162,7 +170,7 @@ export function AcademyTabs({
             aria-labelledby={`${baseId}-tab-${index}`}
             className={`academy-reading-copy min-h-28 col-start-1 row-start-1 p-6 font-[family-name:var(--font-academy-body)] text-[17px] leading-8 text-[#27313B] sm:p-8 ${active !== index ? "invisible" : ""}`}
           >
-            {item.body}
+            <AcademyGermanText text={item.body} enabled={tracking.genderCues || isNicosWegCourse(tracking.courseKey)} />
           </div>
         ))}
       </div>
@@ -172,8 +180,9 @@ export function AcademyTabs({
 
 export function AcademyAccordion({
   items,
+  initiallyOpen = true,
   ...tracking
-}: { items: Item[] } & Tracking) {
+}: { items: Item[]; initiallyOpen?: boolean } & Tracking) {
   const container = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const cleanups = Array.from(container.current?.querySelectorAll("details") || []).map(observeAcademyDisclosure);
@@ -185,13 +194,13 @@ export function AcademyAccordion({
         <details
           key={item.id || item.title}
           className="group overflow-hidden rounded-2xl border border-[#D5E1EB] bg-white shadow-[0_2px_10px_rgba(23,58,99,0.03)] open:border-[#AFC8E7] open:bg-[#F2F7FC]"
-          open={index === 0}
+          open={initiallyOpen && index === 0}
           onToggle={(event) => {
             if (event.currentTarget.open) record(tracking);
           }}
         >
           <summary className="flex min-h-16 cursor-pointer list-none items-center justify-between gap-4 px-5 py-4 text-base font-bold text-[#252629] outline-none hover:bg-[#F2F7FC] focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--academy-accent)] sm:px-6">
-            <span className="flex items-center gap-3"><span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#E4EEF8] text-sm text-[#173A63]" aria-hidden="true">{index + 1}</span>{item.title}</span>
+            <span className="flex items-center gap-3"><span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#E4EEF8] text-sm text-[#173A63]" aria-hidden="true">{index + 1}</span><AcademyGermanText text={item.title} enabled={tracking.genderCues || isNicosWegCourse(tracking.courseKey)} /></span>
             <span
               className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#E4EEF8] text-xl text-[#173A63] transition-transform group-open:rotate-45 motion-reduce:transition-none"
               aria-hidden="true"
@@ -199,8 +208,8 @@ export function AcademyAccordion({
               +
             </span>
           </summary>
-          <p className="academy-reading-copy px-5 pb-6 font-[family-name:var(--font-academy-body)] text-[17px] leading-8 text-[#27313B] sm:px-6">
-            {item.body}
+          <p className="academy-reading-copy whitespace-pre-line px-5 pb-6 font-[family-name:var(--font-academy-body)] text-[17px] leading-8 text-[#27313B] sm:px-6">
+            <AcademyGermanText text={item.body} enabled={tracking.genderCues || isNicosWegCourse(tracking.courseKey)} />
           </p>
         </details>
       ))}
@@ -211,11 +220,14 @@ export function AcademyAccordion({
 export function AcademyFlashcards({
   items,
   variant = "flip-grid",
+  genderCues,
   ...tracking
 }: {
   items: FlashcardItem[];
+  genderCues?: boolean;
   variant?: "flip-grid" | "stack" | "picture-grid";
 } & Tracking) {
+  const showGender = genderCues ?? isNicosWegCourse(tracking.courseKey);
   const [flipped, setFlipped] = useState<Set<number>>(new Set());
   return (
     <div
@@ -230,8 +242,9 @@ export function AcademyFlashcards({
               className="group border border-[#DEDFE1] bg-white p-5 text-center shadow-[0_10px_30px_rgba(20,35,60,0.08)]"
             >
               <FlashcardVisual item={item} />
+              {item.emoji ? <span aria-hidden="true" className="mt-3 block text-4xl">{item.emoji}</span> : null}
               <h3 className="mt-4 text-xl font-black text-[#252629]">
-                {item.title}
+                <AcademyGermanText text={item.title} enabled={showGender} genderHint={item.title === "der" || item.title === "die" || item.title === "das" ? item.title : undefined} />
               </h3>
             </article>
           );
@@ -255,7 +268,7 @@ export function AcademyFlashcards({
             <span
               className={`relative grid [min-height:inherit] transition-transform duration-500 [transform-style:preserve-3d] motion-reduce:transition-none ${open ? "[transform:rotateY(180deg)]" : ""}`}
             >
-              <span className="col-start-1 row-start-1 flex min-w-0 flex-col overflow-hidden border border-[#DEDFE1] bg-white text-left shadow-[0_10px_30px_rgba(20,35,60,0.08)] [backface-visibility:hidden]">
+              <span data-academy-card-face="front" className="col-start-1 row-start-1 flex min-w-0 flex-col overflow-hidden border border-[#DEDFE1] bg-white text-left shadow-[0_10px_30px_rgba(20,35,60,0.08)] [backface-visibility:hidden]">
                 {item.src ? (
                   <span className="mt-5 block">
                     <FlashcardVisual item={item} />
@@ -265,20 +278,21 @@ export function AcademyFlashcards({
                   <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-[var(--academy-accent)]">
                     {item.eyebrow || (tracking.uiLanguage === "de" ? "Erst überlegen, dann aufdecken" : "Think first, then reveal")}
                   </span>
-                  <span className="text-2xl font-black text-[#252629]">
-                    {item.title}
+                  <span className="flex items-center gap-4 text-2xl font-black text-[#252629]">
+                    {item.emoji ? <span aria-hidden="true" className="shrink-0 text-4xl leading-none">{item.emoji}</span> : null}
+                    <span><AcademyGermanText text={item.title} enabled={showGender} genderHint={item.title === "der" || item.title === "die" || item.title === "das" ? item.title : undefined} /></span>
                   </span>
                   <span className="inline-flex items-center gap-2 text-xs font-bold text-[#717376]">
                     <RotateCcw size={14} /> Karte umdrehen
                   </span>
                 </span>
               </span>
-              <span className="col-start-1 row-start-1 flex min-w-0 flex-col justify-between gap-4 border border-[var(--academy-accent)] bg-[var(--academy-accent-ink)] p-6 text-left text-white shadow-[0_10px_30px_rgba(20,35,60,0.14)] [backface-visibility:hidden] [transform:rotateY(180deg)]">
+              <span data-academy-card-face="back" className="col-start-1 row-start-1 flex min-w-0 flex-col justify-between gap-4 border border-[var(--academy-accent)] bg-[var(--academy-accent-ink)] p-6 text-left text-white [--academy-gender-der:#93c5fd] [--academy-gender-die:#fca5a5] [--academy-gender-das:#86efac] shadow-[0_10px_30px_rgba(20,35,60,0.14)] [backface-visibility:hidden] [transform:rotateY(180deg)]">
                 <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-white/65">
                   Laut sprechen
                 </span>
-                <span className="font-[family-name:var(--font-academy-body)] text-base leading-7">
-                  {item.body}
+                <span className="whitespace-pre-line break-words font-[family-name:var(--font-academy-body)] text-xl font-semibold leading-8 sm:text-2xl sm:leading-9">
+                  <AcademyGermanText text={item.body} enabled={showGender} />
                 </span>
                 <span className="inline-flex items-center gap-2 text-xs font-bold text-white/70">
                   <RotateCcw size={14} /> Vorderseite zeigen
@@ -342,7 +356,7 @@ export function AcademyProcess({
               {item.title}
             </h3>
             <p className="academy-reading-copy mt-4 max-w-2xl font-[family-name:var(--font-academy-body)] text-[17px] leading-8 text-[#27313B]">
-              {item.body}
+              <AcademyGermanText text={item.body} enabled={tracking.genderCues || isNicosWegCourse(tracking.courseKey)} />
             </p>
           </div>
         ))}
@@ -453,7 +467,7 @@ export function AcademyProcessBuildUp({
                 {item.title}
               </h4>
               <p className="academy-reading-copy mt-2 whitespace-pre-wrap font-[family-name:var(--font-academy-body)] text-[15px] leading-7 text-[#27313B]">
-                {item.body}
+                <AcademyGermanText text={item.body} enabled={tracking.genderCues || isNicosWegCourse(tracking.courseKey)} />
               </p>
             </div>
           </li>
@@ -575,6 +589,11 @@ export function AcademyKnowledgeCheck({
   ...tracking
 }: { question: QuizQuestion } & Tracking) {
   const german = tracking.uiLanguage === "de";
+  const soundEnabled = isNicosWegCourse(tracking.courseKey);
+  const explanation = resolveNicosWegA1Feedback(question.id, question.explanation);
+  const choiceSpec = getNicosChoiceCheck(tracking.courseKey, tracking.blockId, question);
+  const useBilingualRule = choiceSpec && (explanation !== question.explanation
+    || explanation === nicosWegA1QuestionExplanation(question.id, "") || explanation === choiceSpec.explanation);
   const [answers, setAnswers] = useState<string[]>([]);
   const [reflection, setReflection] = useState("");
   const [submitted, setSubmitted] = useState(false);
@@ -613,7 +632,7 @@ export function AcademyKnowledgeCheck({
   if (type === "reflection")
     return (
       <div className="border-l-4 border-[var(--academy-accent)] bg-[var(--academy-accent-soft)] p-6">
-        <p className="text-lg font-bold text-[var(--academy-accent-ink)]">{question.prompt}</p>
+        <p className="text-lg font-bold text-[var(--academy-accent-ink)]"><AcademyGermanText text={question.prompt} enabled={soundEnabled}/></p>
         <textarea
           value={reflection}
           onChange={(event) => setReflection(event.target.value)}
@@ -634,7 +653,7 @@ export function AcademyKnowledgeCheck({
         </button>
         {submitted ? (
           <p className="mt-4 text-sm font-semibold text-[var(--academy-accent-ink)]">
-            {question.explanation}
+            {explanation}
           </p>
         ) : null}
         {saveError ? <p role="alert" className="mt-3 text-sm font-semibold text-red-700">{saveError}</p> : null}
@@ -645,11 +664,12 @@ export function AcademyKnowledgeCheck({
       <div className="mb-4 flex items-center gap-2 text-sm font-bold text-[#59451F]">
         <CircleHelp size={20} aria-hidden="true" /> {german ? "Kurz üben" : "Quick practice"}
       </div>
-      <p className="text-lg font-bold leading-7 text-[#252629]">{question.prompt}</p>
+      <p className="text-lg font-bold leading-7 text-[#252629]"><AcademyGermanText text={question.prompt} enabled={soundEnabled}/></p>
       <div className="mt-5 space-y-3">
         {question.options.map((option) => (
           <label
             key={option.id}
+            data-academy-choice={answers.includes(option.id) ? "selected" : "idle"}
             className={`flex min-h-14 cursor-pointer items-center gap-3 rounded-xl border p-4 font-[family-name:var(--font-academy-body)] text-base text-[#27313B] transition-colors focus-within:ring-2 focus-within:ring-[var(--academy-accent)] motion-reduce:transition-none ${answers.includes(option.id) ? "border-[var(--academy-accent)] bg-[#EAF3FB] shadow-[0_0_0_1px_var(--academy-accent)]" : "border-[#D9DFE4] bg-white hover:border-[#AFC8E7] hover:bg-[#F2F7FC]"}`}
           >
             <input
@@ -670,16 +690,18 @@ export function AcademyKnowledgeCheck({
                 );
               }}
             />
-            {option.label}
+            <AcademyGermanText text={option.label} enabled={soundEnabled}/>
           </label>
         ))}
       </div>
       <div className="mt-5 flex flex-wrap gap-3">
         <button
           type="button"
+          data-academy-action="primary"
           disabled={!answers.length || pending}
           onClick={() => {
             setSubmitted(true);
+            if (soundEnabled) playAnswerSound(correct ? "correct" : "retry");
             if (tracking.completion === "interact" || correct)
               void saveCompletion(type === "multiple-response" ? answers : answers[0]);
           }}
@@ -706,6 +728,7 @@ export function AcademyKnowledgeCheck({
       {submitted ? (
         <div
           ref={feedback}
+          data-academy-feedback={correct ? "correct" : "retry"}
           role="status"
           className={`mt-5 rounded-xl border-l-4 p-4 font-[family-name:var(--font-academy-body)] text-base ${correct ? "border-emerald-600 bg-emerald-50 text-emerald-900" : "border-amber-600 bg-amber-50 text-amber-950"}`}
         >
@@ -715,7 +738,7 @@ export function AcademyKnowledgeCheck({
               ? german ? "Richtig" : "Correct"
               : german ? "Noch nicht ganz" : "Not quite yet"}
           </p>
-          <p className="mt-1">{question.explanation}</p>
+          {useBilingualRule && choiceSpec ? <AcademyBilingualRule explanation={choiceSpec.explanation} explanationSinhala={choiceSpec.explanationSinhala} /> : <p className="mt-1"><AcademyGermanText text={explanation} enabled={soundEnabled}/></p>}
           <p className="mt-3 text-sm">{pending ? german ? "Fortschritt wird gespeichert …" : "Saving progress …" : progressSaved
             ? german ? "Fortschritt gespeichert. Weiter mit der nächsten Aktivität." : "Progress saved. Continue with the next activity."
             : correct ? german ? "Weiter mit der nächsten Aktivität." : "Continue with the next activity."

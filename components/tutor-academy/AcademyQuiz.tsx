@@ -1,5 +1,7 @@
 "use client";
 
+import { isNicosWegCourse } from "@/lib/nicos-weg-course";
+import AcademyGermanText from "./AcademyGermanText";
 import { useActionState } from "react";
 import Link from "next/link";
 import { CheckCircle2, RotateCcw, Trophy, XCircle } from "lucide-react";
@@ -115,7 +117,7 @@ export default function AcademyQuiz({
               <span className="mr-3 text-[#1E5AA8]">
                 {String(index + 1).padStart(2, "0")}
               </span>
-              {question.prompt}
+              <AcademyGermanText text={question.prompt} enabled={isNicosWegCourse(courseKey)} />
             </legend>
             {question.audioUrl && (
               <div className="mt-5 border-l-4 border-[#1E5AA8] bg-[#F1F6FC] p-4">
@@ -165,7 +167,7 @@ export default function AcademyQuiz({
                       required={question.type !== "multiple-response"}
                       className="mt-0.5 h-4 w-4 accent-blue-600"
                     />
-                    <span>{option.label}</span>
+                    <span><AcademyGermanText text={option.label} enabled={isNicosWegCourse(courseKey)} /></span>
                   </label>
                 ))}
               </div>

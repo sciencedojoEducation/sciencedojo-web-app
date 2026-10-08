@@ -8,7 +8,7 @@ import { academyVideoEmbedUrl, academyVideoSceneError, isAcademyDwVideoUrl } fro
 test("course preserves all 12 scenes, 36 exercises, 72 vocabulary entries and original Sinhala notes", () => {
   assert.deepEqual(validateAcademyCourse(nicosWegA1Course).errors, []);
   const scenes = nicosWegA1Course.lessons.slice(0, 12);
-  assert.equal(nicosWegA1Course.lessons.length, 13);
+  assert.equal(nicosWegA1Course.lessons.filter(lesson => ["story", "review"].includes(lesson.sectionId)).length, 13);
   assert.equal(scenes.flatMap((lesson) => lesson.blocks.filter((block) => block.id.includes("-exercise-"))).length, 36);
   assert.equal(scenes.flatMap((lesson) => lesson.blocks.filter((block) => block.type === "flashcards").flatMap((block) => block.items)).length, 72);
   for (const lesson of scenes) {

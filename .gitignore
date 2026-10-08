@@ -40,3 +40,10 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Local Nicos source downloads and draft recovery copies
+/tmp/nicos/reference/
+/tmp/nicos/library-backups/
+
+# Cached official A2/B1 source pages
+/tmp/nicos-a2-b1/

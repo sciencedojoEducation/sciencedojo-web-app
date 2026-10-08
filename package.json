@@ -31,7 +31,8 @@
     "academy:german-b2:seed": "node --experimental-strip-types scripts/seed-german-b2-course.mjs",
     "showcase:staging:seed": "node --env-file=.env.showcase.local scripts/seed-showcase-staging.mjs",
     "academy:german-a2:audio": "node --experimental-strip-types scripts/generate-german-a2-audio.mjs",
-    "academy:german-a2:seed": "node --experimental-strip-types scripts/seed-german-a2-course.mjs"
+    "academy:german-a2:seed": "node --experimental-strip-types scripts/seed-german-a2-course.mjs",
+    "academy:nicos-next:seed": "node --experimental-strip-types scripts/seed-nicos-weg-next-courses.mjs"
   },
   "dependencies": {
     "@atlaskit/pragmatic-drag-and-drop": "^3.1.0",

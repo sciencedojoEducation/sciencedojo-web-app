@@ -6,6 +6,7 @@ import { getAcademyJourneyLessonState } from "@/lib/academy-journey";
 import { isGermanAcademyCourse } from "@/lib/german-academy-course";
 import { getAcademyRecordingFormat } from "@/lib/academy-recording";
 import { generateAcademyLanguageFeedback } from "@/lib/academy-language-feedback";
+import { academyFeedbackCapabilities } from "@/lib/academy-feedback-capabilities";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -39,6 +40,7 @@ export async function POST(request: Request) {
     form = await new Response(Buffer.concat(chunks), { headers: { "Content-Type": request.headers.get("content-type") || "" } }).formData();
     const courseKey = String(form.get("courseKey") || "");
     if (!isGermanAcademyCourse(courseKey)) return reply("Feedback is available for German courses.", 400);
+    if (!academyFeedbackCapabilities(courseKey).aiFeedback) return reply("AI feedback is paused for this course. Use instant answer checking or guided self-review instead.", 503);
     context = await requireTutorAcademyUser(courseKey);
     const course = await getPublishedAcademyCourse(courseKey);
     const lesson = course?.lessons.find(item => item.id === form.get("lessonId"));

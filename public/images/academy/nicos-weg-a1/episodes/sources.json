@@ -1,0 +1,610 @@
+[
+  {
+    "episode": 1,
+    "title": "Hallo!",
+    "script": "https://static.dw.com/downloads/52718683/nicos-weg-a1-e0-l1-manuskript-und-wortschatz-englisch.pdf",
+    "video": "https://hlsvod.dw.com/i/Events/mp4/nicosweg/A1_E0_L1_F1_,sd,hd,.mp4.csmil/master.m3u8",
+    "seconds": 30,
+    "copyright": "Deutsche Welle"
+  },
+  {
+    "episode": 2,
+    "title": "Kein Problem!",
+    "script": "https://static.dw.com/downloads/52719054/nicos-weg-a1-e0-l2-manuskript-und-wortschatz-englisch.pdf",
+    "video": "https://hlsvod.dw.com/i/Events/mp4/nicosweg/A1_E0_L2_F2_,sd,hd,.mp4.csmil/master.m3u8",
+    "seconds": 30,
+    "copyright": "Deutsche Welle"
+  },
+  {
+    "episode": 3,
+    "title": "Tschüss!",
+    "script": "https://static.dw.com/downloads/52719087/nicos-weg-a1-e0-l3-manuskript-und-wortschatz-englisch.pdf",
+    "video": "https://hlsvod.dw.com/i/Events/mp4/nicosweg/A1_E0_L3_F3_,sd,hd,.mp4.csmil/master.m3u8",
+    "seconds": 30,
+    "copyright": "Deutsche Welle"
+  },
+  {
+    "episode": 4,
+    "title": "Von A bis Z",
+    "script": "https://static.dw.com/downloads/52719090/nicos-weg-a1-e0-l4-manuskript-und-wortschatz-englisch.pdf",
+    "video": "https://hlsvod.dw.com/i/Events/mp4/nicosweg/A1_E0_L4_F4_,sd,hd,.mp4.csmil/master.m3u8",
+    "seconds": 30,
+    "copyright": "Deutsche Welle"
+  },
+  {
+    "episode": 5,
+    "title": "Ich heiße Emma",
+    "script": "https://static.dw.com/downloads/52719106/nicos-weg-a1-e1-l1-manuskript-und-wortschatz-englisch.pdf",
+    "video": "https://hlsvod.dw.com/i/Events/mp4/nicosweg/A1_E1_L1_F5_,sd,hd,.mp4.csmil/master.m3u8",
+    "seconds": 30,
+    "copyright": "Deutsche Welle"
+  },
+  {
+    "episode": 6,
+    "title": "Das ist Nico",
+    "script": "https://static.dw.com/downloads/52719126/nicos-weg-a1-e1-l2-manuskript-und-wortschatz-englisch.pdf",
+    "video": "https://hlsvod.dw.com/i/Events/mp4/nicosweg/A1_E1_L2_F6_,sd,hd,.mp4.csmil/master.m3u8",
+    "seconds": 30,
+    "copyright": "Deutsche Welle"
+  },
+  {
+    "episode": 7,
+    "title": "Woher kommst du?",
+    "script": "https://static.dw.com/downloads/52719129/nicos-weg-a1-e1-l3-manuskript-und-wortschatz-englisch.pdf",
+    "video": "https://hlsvod.dw.com/i/Events/mp4/nicosweg/A1_E1_L3_F7_,sd,hd,.mp4.csmil/master.m3u8",
+    "seconds": 30,
+    "copyright": "Deutsche Welle"
+  },
+  {
+    "episode": 8,
+    "title": "Nico hat ein Problem",
+    "script": "https://static.dw.com/downloads/52719209/nicos-weg-a1-e1-l4-manuskript-und-wortschatz-englisch.pdf",
+    "video": "https://hlsvod.dw.com/i/Events/mp4/nicosweg/A1_E1_L4_F8_,sd,hd,.mp4.csmil/master.m3u8",
+    "seconds": 30,
+    "copyright": "Deutsche Welle"
+  },
+  {
+    "episode": 9,
+    "title": "Zahlen von 1 bis 100",
+    "script": "https://static.dw.com/downloads/52719212/nicos-weg-a1-e2-l1-manuskript-und-wortschatz-englisch.pdf",
+    "video": "https://hlsvod.dw.com/i/Events/mp4/nicosweg/A1_E2_L1_F9_,sd,hd,.mp4.csmil/master.m3u8",
+    "seconds": 30,
+    "copyright": "Deutsche Welle"
+  },
+  {
+    "episode": 10,
+    "title": "Wichtige Nummern",
+    "script": "https://static.dw.com/downloads/52719221/nicos-weg-a1-e2-l2-manuskript-und-wortschatz-englisch.pdf",
+    "video": "https://hlsvod.dw.com/i/Events/mp4/nicosweg/A1_E2_L2_F10_,sd,hd,.mp4.csmil/master.m3u8",
+    "seconds": 30,
+    "copyright": "Deutsche Welle"
+  },
+  {
+    "episode": 11,
+    "title": "Adressen",
+    "script": "https://static.dw.com/downloads/52719223/nicos-weg-a1-e2-l3-manuskript-und-wortschatz-englisch.pdf",
+    "video": "https://hlsvod.dw.com/i/Events/mp4/nicosweg/A1_E2_L3_F11_,sd,hd,.mp4.csmil/master.m3u8",
+    "seconds": 30,
+    "copyright": "Deutsche Welle"
+  },
+  {
+    "episode": 12,
+    "title": "Auf dem Amt",
+    "script": "https://static.dw.com/downloads/52719359/nicos-weg-a1-e2-l4-manuskript-und-wortschatz-englisch.pdf",
+    "video": "https://hlsvod.dw.com/i/Events/mp4/nicosweg/A1_E2_L4_F12_,sd,hd,.mp4.csmil/master.m3u8",
+    "seconds": 30,
+    "copyright": "Deutsche Welle"
+  },
+  {
+    "episode": 13,
+    "title": "Was machst du hier?",
+    "script": "https://static.dw.com/downloads/52719567/nicos-weg-a1-e3-l1-manuskript-und-wortschatz-englisch.pdf",
+    "video": "https://hlsvod.dw.com/i/Events/mp4/nicosweg/A1_E3_L1_F13_,sd,hd,.mp4.csmil/master.m3u8",
+    "seconds": 30,
+    "copyright": "Deutsche Welle"
+  },
+  {
+    "episode": 14,
+    "title": "Was trinkst du?",
+    "script": "https://static.dw.com/downloads/52719579/nicos-weg-a1-e3-l2-manuskript-und-wortschatz-englisch.pdf",
+    "video": "https://hlsvod.dw.com/i/Events/mp4/nicosweg/A1_E3_L2_F14_,sd,hd,.mp4.csmil/master.m3u8",
+    "seconds": 30,
+    "copyright": "Deutsche Welle"
+  },
+  {
+    "episode": 15,
+    "title": "Eine Pizza bitte!",
+    "script": "https://static.dw.com/downloads/52719582/nicos-weg-a1-e3-l3-manuskript-und-wortschatz-englisch.pdf",
+    "video": "https://hlsvod.dw.com/i/Events/mp4/nicosweg/A1_E3_L3_F15_,sd,hd,.mp4.csmil/master.m3u8",
+    "seconds": 30,
+    "copyright": "Deutsche Welle"
+  },
+  {
+    "episode": 16,
+    "title": "Zahlen bitte!",
+    "script": "https://static.dw.com/downloads/52719590/nicos-weg-a1-e3-l4-manuskript-und-wortschatz-englisch.pdf",
+    "video": "https://hlsvod.dw.com/i/Events/mp4/nicosweg/A1_E3_L4_F16_,sd,hd,.mp4.csmil/master.m3u8",
+    "seconds": 30,
+    "copyright": "Deutsche Welle"
+  },
+  {
+    "episode": 17,
+    "title": "Ich war schon in Berlin",
+    "script": "https://static.dw.com/downloads/52719600/nicos-weg-a1-e4-l1-manuskript-und-wortschatz-englisch.pdf",
+    "video": "https://hlsvod.dw.com/i/Events/mp4/nicosweg/A1_E4_L1_F17_,sd,hd,.mp4.csmil/master.m3u8",
+    "seconds": 30,
+    "copyright": "Deutsche Welle"
+  },
+  {
+    "episode": 18,
+    "title": "Wo liegt das?",
+    "script": "https://static.dw.com/downloads/52719615/nicos-weg-a1-e4-l2-manuskript-und-wortschatz-englisch.pdf",
+    "video": "https://hlsvod.dw.com/i/Events/mp4/nicosweg/A1_E4_L2_F18_,sd,hd,.mp4.csmil/master.m3u8",
+    "seconds": 30,
+    "copyright": "Deutsche Welle"
+  },
+  {
+    "episode": 19,
+    "title": "In Europa",
+    "script": "https://static.dw.com/downloads/52719617/nicos-weg-a1-e4-l3-manuskript-und-wortschatz-englisch.pdf",
+    "video": "https://hlsvod.dw.com/i/Events/mp4/nicosweg/A1_E4_L3_F19_,sd,hd,.mp4.csmil/master.m3u8",
+    "seconds": 30,
+    "copyright": "Deutsche Welle"
+  },
+  {
+    "episode": 20,
+    "title": "Andere Länder",
+    "script": "https://static.dw.com/downloads/52719637/nicos-weg-a1-e4-l4-manuskript-und-wortschatz-englisch.pdf",
+    "video": "https://hlsvod.dw.com/i/Events/mp4/nicosweg/A1_E4_L4_F20_,sd,hd,.mp4.csmil/master.m3u8",
+    "seconds": 30,
+    "copyright": "Deutsche Welle"
+  },
+  {
+    "episode": 21,
+    "title": "Was ist das?",
+    "script": "https://static.dw.com/downloads/52719650/nicos-weg-a1-e5-l1-manuskript-und-wortschatz-englisch.pdf",
+    "video": "https://hlsvod.dw.com/i/Events/mp4/nicosweg/A1_E5_L1_F21_,sd,hd,.mp4.csmil/master.m3u8",
+    "seconds": 30,
+    "copyright": "Deutsche Welle"
+  },
+  {
+    "episode": 22,
+    "title": "Wem gehört das?",
+    "script": "https://static.dw.com/downloads/52719652/nicos-weg-a1-e5-l2-manuskript-und-wortschatz-englisch.pdf",
+    "video": "https://hlsvod.dw.com/i/Events/mp4/nicosweg/A1_E5_L2_F22_,sd,hd,.mp4.csmil/master.m3u8",
+    "seconds": 30,
+    "copyright": "Deutsche Welle"
+  },
+  {
+    "episode": 23,
+    "title": "Ich habe kein …",
+    "script": "https://static.dw.com/downloads/52719694/nicos-weg-a1-e5-l3-manuskript-und-wortschatz-englisch.pdf",
+    "video": "https://hlsvod.dw.com/i/Events/mp4/nicosweg/A1_E5_L3_F23_,sd,hd,.mp4.csmil/master.m3u8",
+    "seconds": 30,
+    "copyright": "Deutsche Welle"
+  },
+  {
+    "episode": 24,
+    "title": "Das Auto ist rot",
+    "script": "https://static.dw.com/downloads/52719956/nicos-weg-a1-e5-l4-manuskript-und-wortschatz-englisch.pdf",
+    "video": "https://hlsvod.dw.com/i/Events/mp4/nicosweg/A1_E5_L4_F24_,sd,hd,.mp4.csmil/master.m3u8",
+    "seconds": 30,
+    "copyright": "Deutsche Welle"
+  },
+  {
+    "episode": 25,
+    "title": "So wohne ich",
+    "script": "https://static.dw.com/downloads/52719959/nicos-weg-a1-e6-l1-manuskript-und-wortschatz-englisch.pdf",
+    "video": "https://hlsvod.dw.com/i/Events/mp4/nicosweg/A1_E6_L1_F25_,sd,hd,.mp4.csmil/master.m3u8",
+    "seconds": 30,
+    "copyright": "Deutsche Welle"
+  },
+  {
+    "episode": 26,
+    "title": "Meine Wohnung",
+    "script": "https://static.dw.com/downloads/52719961/nicos-weg-a1-e6-l2-manuskript-und-wortschatz-englisch.pdf",
+    "video": "https://hlsvod.dw.com/i/Events/mp4/nicosweg/A1_E6_L2_F26_,sd,hd,.mp4.csmil/master.m3u8",
+    "seconds": 30,
+    "copyright": "Deutsche Welle"
+  },
+  {
+    "episode": 27,
+    "title": "Sofa, Sessel und Tisch",
+    "script": "https://static.dw.com/downloads/52719964/nicos-weg-a1-e6-l3-manuskript-und-wortschatz-englisch.pdf",
+    "video": "https://hlsvod.dw.com/i/Events/mp4/nicosweg/A1_E6_L3_F27_,sd,hd,.mp4.csmil/master.m3u8",
+    "seconds": 30,
+    "copyright": "Deutsche Welle"
+  },
+  {
+    "episode": 28,
+    "title": "Unser Haus",
+    "script": "https://static.dw.com/downloads/52719966/nicos-weg-a1-e6-l4-manuskript-und-wortschatz-englisch.pdf",
+    "video": "https://hlsvod.dw.com/i/Events/mp4/nicosweg/A1_E6_L4_F28_,sd,hd,.mp4.csmil/master.m3u8",
+    "seconds": 30,
+    "copyright": "Deutsche Welle"
+  },
+  {
+    "episode": 29,
+    "title": "Emmas Tag",
+    "script": "https://static.dw.com/downloads/52719975/nicos-weg-a1-e7-l1-manuskript-und-wortschatz-englisch.pdf",
+    "video": "https://hlsvod.dw.com/i/Events/mp4/nicosweg/A1_E7_L1_F29_,sd,hd,.mp4.csmil/master.m3u8",
+    "seconds": 30,
+    "copyright": "Deutsche Welle"
+  },
+  {
+    "episode": 30,
+    "title": "Tageszeiten",
+    "script": "https://static.dw.com/downloads/52719984/nicos-weg-a1-e7-l2-manuskript-und-wortschatz-englisch.pdf",
+    "video": "https://hlsvod.dw.com/i/Events/mp4/nicosweg/A1_E7_L2_F30_,sd,hd,.mp4.csmil/master.m3u8",
+    "seconds": 30,
+    "copyright": "Deutsche Welle"
+  },
+  {
+    "episode": 31,
+    "title": "Am Sonntag koche ich",
+    "script": "https://static.dw.com/downloads/52719997/nicos-weg-a1-e7-l3-manuskript-und-wortschatz-englisch.pdf",
+    "video": "https://hlsvod.dw.com/i/Events/mp4/nicosweg/A1_E7_L3_F31_,sd,hd,.mp4.csmil/master.m3u8",
+    "seconds": 30,
+    "copyright": "Deutsche Welle"
+  },
+  {
+    "episode": 32,
+    "title": "Emmas Wochenende",
+    "script": "https://static.dw.com/downloads/52720025/nicos-weg-a1-e7-l4-manuskript-und-wortschatz-englisch.pdf",
+    "video": "https://hlsvod.dw.com/i/Events/mp4/nicosweg/A1_E7_L4_F32_,sd,hd,.mp4.csmil/master.m3u8",
+    "seconds": 30,
+    "copyright": "Deutsche Welle"
+  },
+  {
+    "episode": 33,
+    "title": "Wie spät ist es?",
+    "script": "https://static.dw.com/downloads/52720041/nicos-weg-a1-e8-l1-manuskript-und-wortschatz-englisch.pdf",
+    "video": "https://hlsvod.dw.com/i/Events/mp4/nicosweg/A1_E8_L1_F33_,sd,hd,.mp4.csmil/master.m3u8",
+    "seconds": 30,
+    "copyright": "Deutsche Welle"
+  },
+  {
+    "episode": 34,
+    "title": "Hast du morgen Zeit?",
+    "script": "https://static.dw.com/downloads/52720053/nicos-weg-a1-e8-l2-manuskript-und-wortschatz-englisch.pdf",
+    "video": "https://hlsvod.dw.com/i/Events/mp4/nicosweg/A1_E8_L2_F34_,sd,hd,.mp4.csmil/master.m3u8",
+    "seconds": 30,
+    "copyright": "Deutsche Welle"
+  },
+  {
+    "episode": 35,
+    "title": "Wann spielen wir?",
+    "script": "https://static.dw.com/downloads/52720062/nicos-weg-a1-e8-l3-manuskript-und-wortschatz-englisch.pdf",
+    "video": "https://hlsvod.dw.com/i/Events/mp4/nicosweg/A1_E8_L3_F35_,sd,hd,.mp4.csmil/master.m3u8",
+    "seconds": 30,
+    "copyright": "Deutsche Welle"
+  },
+  {
+    "episode": 36,
+    "title": "Zu spät!?",
+    "script": "https://static.dw.com/downloads/52720064/nicos-weg-a1-e8-l4-manuskript-und-wortschatz-englisch.pdf",
+    "video": "https://hlsvod.dw.com/i/Events/mp4/nicosweg/A1_E8_L4_F36_,sd,hd,.mp4.csmil/master.m3u8",
+    "seconds": 30,
+    "copyright": "Deutsche Welle"
+  },
+  {
+    "episode": 37,
+    "title": "Ich bin Lehrerin",
+    "script": "https://static.dw.com/downloads/52720077/nicos-weg-a1-e9-l1-manuskript-und-wortschatz-englisch.pdf",
+    "video": "https://hlsvod.dw.com/i/Events/mp4/nicosweg/A1_E9_L1_F37_,sd,hd,.mp4.csmil/master.m3u8",
+    "seconds": 30,
+    "copyright": "Deutsche Welle"
+  },
+  {
+    "episode": 38,
+    "title": "Mein Beruf",
+    "script": "https://static.dw.com/downloads/52720088/nicos-weg-a1-e9-l2-manuskript-und-wortschatz-englisch.pdf",
+    "video": "https://hlsvod.dw.com/i/Events/mp4/nicosweg/A1_E9_L2_F38_,sd,hd,.mp4.csmil/master.m3u8",
+    "seconds": 30,
+    "copyright": "Deutsche Welle"
+  },
+  {
+    "episode": 39,
+    "title": "Wo ist der Aufzug?",
+    "script": "https://static.dw.com/downloads/52720090/nicos-weg-a1-e9-l3-manuskript-und-wortschatz-englisch.pdf",
+    "video": "https://hlsvod.dw.com/i/Events/mp4/nicosweg/A1_E9_L3_F39_,sd,hd,.mp4.csmil/master.m3u8",
+    "seconds": 30,
+    "copyright": "Deutsche Welle"
+  },
+  {
+    "episode": 40,
+    "title": "Traumberufe",
+    "script": "https://static.dw.com/downloads/52720100/nicos-weg-a1-e9-l4-manuskript-und-wortschatz-englisch.pdf",
+    "video": "https://hlsvod.dw.com/i/Events/mp4/nicosweg/A1_E9_L4_F40_,sd,hd,.mp4.csmil/master.m3u8",
+    "seconds": 30,
+    "copyright": "Deutsche Welle"
+  },
+  {
+    "episode": 41,
+    "title": "Wo ist der Bahnhof?",
+    "script": "https://static.dw.com/downloads/52720113/nicos-weg-a1-e10-l1-manuskript-und-wortschatz-englisch.pdf",
+    "video": "https://hlsvod.dw.com/i/Events/mp4/nicosweg/A1_E10_L1_F41_,sd,hd,.mp4.csmil/master.m3u8",
+    "seconds": 30,
+    "copyright": "Deutsche Welle"
+  },
+  {
+    "episode": 42,
+    "title": "An der Ampel links",
+    "script": "https://static.dw.com/downloads/52720133/nicos-weg-a1-e10-l2-manuskript-und-wortschatz-englisch.pdf",
+    "video": "https://hlsvod.dw.com/i/Events/mp4/nicosweg/A1_E10_L2_F42_,sd,hd,.mp4.csmil/master.m3u8",
+    "seconds": 30,
+    "copyright": "Deutsche Welle"
+  },
+  {
+    "episode": 43,
+    "title": "Mit Bus und Bahn",
+    "script": "https://static.dw.com/downloads/52720248/nicos-weg-a1-e10-l3-manuskript-und-wortschatz-englisch.pdf",
+    "video": "https://hlsvod.dw.com/i/Events/mp4/nicosweg/A1_E10_L3_F43_,sd,hd,.mp4.csmil/master.m3u8",
+    "seconds": 30,
+    "copyright": "Deutsche Welle"
+  },
+  {
+    "episode": 44,
+    "title": "Im Büro",
+    "script": "https://static.dw.com/downloads/52720300/nicos-weg-a1-e10-l4-manuskript-und-wortschatz-englisch.pdf",
+    "video": "https://hlsvod.dw.com/i/Events/mp4/nicosweg/A1_E10_L4_F44_,sd,hd,.mp4.csmil/master.m3u8",
+    "seconds": 30,
+    "copyright": "Deutsche Welle"
+  },
+  {
+    "episode": 45,
+    "title": "Lebensmittel",
+    "script": "https://static.dw.com/downloads/52720309/nicos-weg-a1-e11-l1-manuskript-und-wortschatz-englisch.pdf",
+    "video": "https://hlsvod.dw.com/i/Events/mp4/nicosweg/A1_E11_L1_F45_,sd,hd,.mp4.csmil/master.m3u8",
+    "seconds": 30,
+    "copyright": "Deutsche Welle"
+  },
+  {
+    "episode": 46,
+    "title": "Ich mag (nicht)!",
+    "script": "https://static.dw.com/downloads/52720325/nicos-weg-a1-e11-l2-manuskript-und-wortschatz-englisch.pdf",
+    "video": "https://hlsvod.dw.com/i/Events/mp4/nicosweg/A1_E11_L2_F46_,sd,hd,.mp4.csmil/master.m3u8",
+    "seconds": 30,
+    "copyright": "Deutsche Welle"
+  },
+  {
+    "episode": 47,
+    "title": "Haushaltsarbeit",
+    "script": "https://static.dw.com/downloads/52720347/nicos-weg-a1-e11-l3-manuskript-und-wortschatz-englisch.pdf",
+    "video": "https://hlsvod.dw.com/i/Events/mp4/nicosweg/A1_E11_L3_F47_,sd,hd,.mp4.csmil/master.m3u8",
+    "seconds": 30,
+    "copyright": "Deutsche Welle"
+  },
+  {
+    "episode": 48,
+    "title": "Was macht dir Spaß?",
+    "script": "https://static.dw.com/downloads/52720386/nicos-weg-a1-e11-l4-manuskript-und-wortschatz-englisch.pdf",
+    "video": "https://hlsvod.dw.com/i/Events/mp4/nicosweg/A1_E11_L4_F48_,sd,hd,.mp4.csmil/master.m3u8",
+    "seconds": 30,
+    "copyright": "Deutsche Welle"
+  },
+  {
+    "episode": 49,
+    "title": "Mengen und Preise",
+    "script": "https://static.dw.com/downloads/52720402/nicos-weg-a1-e12-l1-manuskript-und-wortschatz-englisch.pdf",
+    "video": "https://hlsvod.dw.com/i/Events/mp4/nicosweg/A1_E12_L1_F49_,sd,hd,.mp4.csmil/master.m3u8",
+    "seconds": 30,
+    "copyright": "Deutsche Welle"
+  },
+  {
+    "episode": 50,
+    "title": "Was darf es sein?",
+    "script": "https://static.dw.com/downloads/52720419/nicos-weg-a1-e12-l2-manuskript-und-wortschatz-englisch.pdf",
+    "video": "https://hlsvod.dw.com/i/Events/mp4/nicosweg/A1_E12_L2_F50_,sd,hd,.mp4.csmil/master.m3u8",
+    "seconds": 30,
+    "copyright": "Deutsche Welle"
+  },
+  {
+    "episode": 51,
+    "title": "Sonst noch etwas?",
+    "script": "https://static.dw.com/downloads/52720423/nicos-weg-a1-e12-l3-manuskript-und-wortschatz-englisch.pdf",
+    "video": "https://hlsvod.dw.com/i/Events/mp4/nicosweg/A1_E12_L3_F51_,sd,hd,.mp4.csmil/master.m3u8",
+    "seconds": 30,
+    "copyright": "Deutsche Welle"
+  },
+  {
+    "episode": 52,
+    "title": "Wie viel Mehl?",
+    "script": "https://static.dw.com/downloads/52720430/nicos-weg-a1-e12-l4-manuskript-und-wortschatz-englisch.pdf",
+    "video": "https://hlsvod.dw.com/i/Events/mp4/nicosweg/A1_E12_L4_F52_,sd,hd,.mp4.csmil/master.m3u8",
+    "seconds": 30,
+    "copyright": "Deutsche Welle"
+  },
+  {
+    "episode": 53,
+    "title": "Wie war dein Urlaub?",
+    "script": "https://static.dw.com/downloads/52720463/nicos-weg-a1-e13-l1-manuskript-und-wortschatz-englisch.pdf",
+    "video": "https://hlsvod.dw.com/i/Events/mp4/nicosweg/A1_E13_L1_F53_,sd,hd,.mp4.csmil/master.m3u8",
+    "seconds": 30,
+    "copyright": "Deutsche Welle"
+  },
+  {
+    "episode": 54,
+    "title": "Jahreszeiten",
+    "script": "https://static.dw.com/downloads/52720480/nicos-weg-a1-e13-l2-manuskript-und-wortschatz-englisch.pdf",
+    "video": "https://hlsvod.dw.com/i/Events/mp4/nicosweg/A1_E13_L2_F54_,sd,hd,.mp4.csmil/master.m3u8",
+    "seconds": 30,
+    "copyright": "Deutsche Welle"
+  },
+  {
+    "episode": 55,
+    "title": "Der Ausflug",
+    "script": "https://static.dw.com/downloads/52720497/nicos-weg-a1-e13-l3-manuskript-und-wortschatz-englisch.pdf",
+    "video": "https://hlsvod.dw.com/i/Events/mp4/nicosweg/A1_E13_L3_F55_,sd,hd,.mp4.csmil/master.m3u8",
+    "seconds": 30,
+    "copyright": "Deutsche Welle"
+  },
+  {
+    "episode": 56,
+    "title": "Wie wird das Wetter?",
+    "script": "https://static.dw.com/downloads/52720999/nicos-weg-a1-e13-l4-manuskript-und-wortschatz-englisch.pdf",
+    "video": "https://hlsvod.dw.com/i/Events/mp4/nicosweg/A1_E13_L4_F56_,sd,hd,.mp4.csmil/master.m3u8",
+    "seconds": 30,
+    "copyright": "Deutsche Welle"
+  },
+  {
+    "episode": 57,
+    "title": "Das ist jetzt modern",
+    "script": "https://static.dw.com/downloads/52721057/nicos-weg-a1-e14-l1-manuskript-und-wortschatz-englisch.pdf",
+    "video": "https://hlsvod.dw.com/i/Events/mp4/nicosweg/A1_E14_L1_F57_,sd,hd,.mp4.csmil/master.m3u8",
+    "seconds": 30,
+    "copyright": "Deutsche Welle"
+  },
+  {
+    "episode": 58,
+    "title": "Mein Lieblingspulli",
+    "script": "https://static.dw.com/downloads/52721069/nicos-weg-a1-e14-l2-manuskript-und-wortschatz-englisch.pdf",
+    "video": "https://hlsvod.dw.com/i/Events/mp4/nicosweg/A1_E14_L2_F58_,sd,hd,.mp4.csmil/master.m3u8",
+    "seconds": 30,
+    "copyright": "Deutsche Welle"
+  },
+  {
+    "episode": 59,
+    "title": "Das passt gut!",
+    "script": "https://static.dw.com/downloads/52721161/nicos-weg-a1-e14-l3-manuskript-und-wortschatz-englisch.pdf",
+    "video": "https://hlsvod.dw.com/i/Events/mp4/nicosweg/A1_E14_L3_F59_,sd,hd,.mp4.csmil/master.m3u8",
+    "seconds": 30,
+    "copyright": "Deutsche Welle"
+  },
+  {
+    "episode": 60,
+    "title": "Schick!",
+    "script": "https://static.dw.com/downloads/52721202/nicos-weg-a1-e14-l4-manuskript-und-wortschatz-englisch.pdf",
+    "video": "https://hlsvod.dw.com/i/Events/mp4/nicosweg/A1_E14_L4_F60_,sd,hd,.mp4.csmil/master.m3u8",
+    "seconds": 30,
+    "copyright": "Deutsche Welle"
+  },
+  {
+    "episode": 61,
+    "title": "Meine Familie",
+    "script": "https://static.dw.com/downloads/52721211/nicos-weg-a1-e15-l1-manuskript-und-wortschatz-englisch.pdf",
+    "video": "https://hlsvod.dw.com/i/Events/mp4/nicosweg/A1_E15_L1_F61_,sd,hd,.mp4.csmil/master.m3u8",
+    "seconds": 30,
+    "copyright": "Deutsche Welle"
+  },
+  {
+    "episode": 62,
+    "title": "Meine Eltern",
+    "script": "https://static.dw.com/downloads/52721231/nicos-weg-a1-e15-l2-manuskript-und-wortschatz-englisch.pdf",
+    "video": "https://hlsvod.dw.com/i/Events/mp4/nicosweg/A1_E15_L2_F62_,sd,hd,.mp4.csmil/master.m3u8",
+    "seconds": 30,
+    "copyright": "Deutsche Welle"
+  },
+  {
+    "episode": 63,
+    "title": "Meine Tante",
+    "script": "https://static.dw.com/downloads/52721246/nicos-weg-a1-e15-l3-manuskript-und-wortschatz-englisch.pdf",
+    "video": "https://hlsvod.dw.com/i/Events/mp4/nicosweg/A1_E15_L3_F63_,sd,hd,.mp4.csmil/master.m3u8",
+    "seconds": 30,
+    "copyright": "Deutsche Welle"
+  },
+  {
+    "episode": 64,
+    "title": "Mein Bruder",
+    "script": "https://static.dw.com/downloads/52721250/nicos-weg-a1-e15-l4-manuskript-und-wortschatz-englisch.pdf",
+    "video": "https://hlsvod.dw.com/i/Events/mp4/nicosweg/A1_E15_L4_F64_,sd,hd,.mp4.csmil/master.m3u8",
+    "seconds": 30,
+    "copyright": "Deutsche Welle"
+  },
+  {
+    "episode": 65,
+    "title": "Von Kopf bis Fuß",
+    "script": "https://static.dw.com/downloads/52721261/nicos-weg-a1-e16-l1-manuskript-und-wortschatz-englisch.pdf",
+    "video": "https://hlsvod.dw.com/i/Events/mp4/nicosweg/A1_E16_L1_F65_,sd,hd,.mp4.csmil/master.m3u8",
+    "seconds": 30,
+    "copyright": "Deutsche Welle"
+  },
+  {
+    "episode": 66,
+    "title": "Bist du fit?",
+    "script": "https://static.dw.com/downloads/52721282/nicos-weg-a1-e16-l2-manuskript-und-wortschatz-englisch.pdf",
+    "video": "https://hlsvod.dw.com/i/Events/mp4/nicosweg/A1_E16_L2_F66_,sd,hd,.mp4.csmil/master.m3u8",
+    "seconds": 30,
+    "copyright": "Deutsche Welle"
+  },
+  {
+    "episode": 67,
+    "title": "Fitness",
+    "script": "https://static.dw.com/downloads/52721376/nicos-weg-a1-e16-l3-manuskript-und-wortschatz-englisch.pdf",
+    "video": "https://hlsvod.dw.com/i/Events/mp4/nicosweg/A1_E16_L3_F67_,sd,hd,.mp4.csmil/master.m3u8",
+    "seconds": 30,
+    "copyright": "Deutsche Welle"
+  },
+  {
+    "episode": 68,
+    "title": "Ist das gesund?",
+    "script": "https://static.dw.com/downloads/52721397/nicos-weg-a1-e16-l4-manuskript-und-wortschatz-englisch.pdf",
+    "video": "https://hlsvod.dw.com/i/Events/mp4/nicosweg/A1_E16_L4_F68_,sd,hd,.mp4.csmil/master.m3u8",
+    "seconds": 30,
+    "copyright": "Deutsche Welle"
+  },
+  {
+    "episode": 69,
+    "title": "Geht es dir gut?",
+    "script": "https://static.dw.com/downloads/52721400/nicos-weg-a1-e17-l1-manuskript-und-wortschatz-englisch.pdf",
+    "video": "https://hlsvod.dw.com/i/Events/mp4/nicosweg/A1_E17_L1_F69_,sd,hd,.mp4.csmil/master.m3u8",
+    "seconds": 30,
+    "copyright": "Deutsche Welle"
+  },
+  {
+    "episode": 70,
+    "title": "Beim Arzt",
+    "script": "https://static.dw.com/downloads/52721478/nicos-weg-a1-e17-l2-manuskript-und-wortschatz-englisch.pdf",
+    "video": "https://hlsvod.dw.com/i/Events/mp4/nicosweg/A1_E17_L2_F70_,sd,hd,.mp4.csmil/master.m3u8",
+    "seconds": 30,
+    "copyright": "Deutsche Welle"
+  },
+  {
+    "episode": 71,
+    "title": "Gute Besserung!",
+    "script": "https://static.dw.com/downloads/52721488/nicos-weg-a1-e17-l3-manuskript-und-wortschatz-englisch.pdf",
+    "video": "https://hlsvod.dw.com/i/Events/mp4/nicosweg/A1_E17_L3_F71_,sd,hd,.mp4.csmil/master.m3u8",
+    "seconds": 30,
+    "copyright": "Deutsche Welle"
+  },
+  {
+    "episode": 72,
+    "title": "Nehmen Sie …",
+    "script": "https://static.dw.com/downloads/52721497/nicos-weg-a1-e17-l4-manuskript-und-wortschatz-englisch.pdf",
+    "video": "https://hlsvod.dw.com/i/Events/mp4/nicosweg/A1_E17_L4_F72_,sd,hd,.mp4.csmil/master.m3u8",
+    "seconds": 30,
+    "copyright": "Deutsche Welle"
+  },
+  {
+    "episode": 73,
+    "title": "Meine Heimat",
+    "script": "https://static.dw.com/downloads/52721499/nicos-weg-a1-e18-l1-manuskript-und-wortschatz-englisch.pdf",
+    "video": "https://hlsvod.dw.com/i/Events/mp4/nicosweg/A1_E18_L1_F73_,sd,hd,.mp4.csmil/master.m3u8",
+    "seconds": 30,
+    "copyright": "Deutsche Welle"
+  },
+  {
+    "episode": 74,
+    "title": "Leben in Deutschland",
+    "script": "https://static.dw.com/downloads/52721505/nicos-weg-a1-e18-l2-manuskript-und-wortschatz-englisch.pdf",
+    "video": "https://hlsvod.dw.com/i/Events/mp4/nicosweg/A1_E18_L2_F74_,sd,hd,.mp4.csmil/master.m3u8",
+    "seconds": 30,
+    "copyright": "Deutsche Welle"
+  },
+  {
+    "episode": 75,
+    "title": "Anders als zu Hause",
+    "script": "https://static.dw.com/downloads/52721519/nicos-weg-a1-e18-l3-manuskript-und-wortschatz-englisch.pdf",
+    "video": "https://hlsvod.dw.com/i/Events/mp4/nicosweg/A1_E18_L3_F75_,sd,hd,.mp4.csmil/master.m3u8",
+    "seconds": 30,
+    "copyright": "Deutsche Welle"
+  },
+  {
+    "episode": 76,
+    "title": "Ich träume von …",
+    "script": "https://static.dw.com/downloads/52721527/nicos-weg-a1-e18-l4-manuskript-und-wortschatz-englisch.pdf",
+    "video": "https://hlsvod.dw.com/i/Events/mp4/nicosweg/A1_E18_L4_F76_,sd,hd,.mp4.csmil/master.m3u8",
+    "seconds": 30,
+    "copyright": "Deutsche Welle"
+  }
+]

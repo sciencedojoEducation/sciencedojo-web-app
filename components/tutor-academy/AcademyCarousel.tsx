@@ -1,5 +1,6 @@
 "use client";
 
+import AcademyGermanText from "./AcademyGermanText";
 import { useId, useState } from "react";
 import Image from "next/image";
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -20,8 +21,10 @@ export default function AcademyCarousel({
   courseKey,
   blockId,
   completion,
+  genderCues = false,
 }: {
   items: CarouselItem[];
+  genderCues?: boolean;
   courseKey?: string;
   blockId?: string;
   completion?: "view" | "interact" | "pass";
@@ -86,10 +89,10 @@ export default function AcademyCarousel({
           {item.eyebrow || `Card ${safeIndex + 1}`}
         </p>
         <h3 className="mt-4 text-2xl font-bold tracking-[-0.02em] text-[#252629] sm:text-[28px]">
-          {item.title}
+          <AcademyGermanText text={item.title || ""} enabled={genderCues} />
         </h3>
         <p className="academy-reading-copy mt-4 max-w-2xl font-[family-name:var(--font-academy-body)] text-[16px] leading-8 text-[#27313B]">
-          {item.body}
+          <AcademyGermanText text={item.body || ""} enabled={genderCues} />
         </p>
       </div>
       <div className="academy-carousel-controls flex flex-wrap items-center justify-between gap-2 border-t border-[#DEDFE1] bg-[#FAFAFA] px-5 py-4">
@@ -117,7 +120,7 @@ export default function AcademyCarousel({
           ))}
         </div>
         <p className="sr-only" aria-live="polite">
-          Slide {safeIndex + 1} of {items.length}: {item.title}
+          Slide {safeIndex + 1} of {items.length}: <AcademyGermanText text={item.title || ""} enabled={genderCues} />
         </p>
         <div className="flex gap-2">
           <button

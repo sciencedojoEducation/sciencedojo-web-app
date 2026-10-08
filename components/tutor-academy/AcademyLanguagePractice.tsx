@@ -1,10 +1,18 @@
 "use client";
 
+import { isNicosWegCourse } from "@/lib/nicos-weg-course";
 import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { getAcademyRecordingFormat } from "@/lib/academy-recording";
-import { isGermanAcademyCourse } from "@/lib/german-academy-course";
+import { academyFeedbackCapabilities } from "@/lib/academy-feedback-capabilities";
+import { getNicosWritingCheck } from "@/lib/nicos-weg-a1-answer-bank";
+import { checkPracticeAnswer, type AnswerCheckResult } from "@/lib/academy-answer-checker";
 import AcademyPracticeFeedback from "./AcademyPracticeFeedback";
+import AcademyWritingInput from "./AcademyWritingInput";
+import AcademyGermanText from "./AcademyGermanText";
+import AcademyInstantAnswerCheck from "./AcademyInstantAnswerCheck";
+import AcademyGuidedSelfReview from "./AcademyGuidedSelfReview";
+import { getWritingInput, readBlankAnswer, readWordAnswer } from "@/lib/academy-writing-input";
 import { CheckCircle2, Mic, Save, Square, Trash2 } from "lucide-react";
 import { isAcademyBlockRequiredForCompletion, type LessonBlock } from "@/lib/tutor-academy";
 import {
@@ -23,13 +31,15 @@ export default function AcademyLanguagePractice({
   block,
   courseKey,
   lessonId,
+  genderCues = isNicosWegCourse(courseKey),
 }: {
   block: PracticeBlock;
   courseKey?: string;
   lessonId?: string;
+  genderCues?: boolean;
 }) {
   if (!courseKey || !lessonId || !block.id)
-    return <PracticePreview block={block} />;
+    return <PracticePreview block={block} genderCues={genderCues} />;
   return block.type === "writing-practice" ? (
     <WritingPractice block={block} courseKey={courseKey} lessonId={lessonId} />
   ) : (
@@ -41,10 +51,14 @@ function Frame({
   block,
   children,
   recording = false,
+  hidePrompt = false,
+  genderCues = false,
 }: {
   block: PracticeBlock;
   children: React.ReactNode;
   recording?: boolean;
+  hidePrompt?: boolean;
+  genderCues?: boolean;
 }) {
   return (
     <section data-academy-recording={recording} className="rounded-2xl border border-[#BFDCD0] bg-linear-to-br from-[#EAF6EF] to-white p-6 sm:p-8">
@@ -55,9 +69,9 @@ function Frame({
       <h2 className="mt-2 text-[28px] font-bold text-[#101010] sm:text-[32px]">
         {block.heading || (block.type === "writing-practice" ? "Schreiben" : "Sprechen")}
       </h2>
-      <p className="academy-reading-copy mt-4 font-[family-name:var(--font-academy-body)] text-[17px] leading-8 text-[#202733]">
-        {block.prompt}
-      </p>
+      {!hidePrompt ? <p className="academy-reading-copy mt-4 font-[family-name:var(--font-academy-body)] text-[17px] leading-8 text-[#202733]">
+        <AcademyGermanText text={block.prompt} enabled={genderCues}/>
+      </p> : null}
       {children}
     </section>
   );
@@ -101,6 +115,7 @@ function WritingPractice({
   const [saved, setSaved] = useState(false);
   const [message, setMessage] = useState("");
   const [pending, startTransition] = useTransition();
+  const [checked, setChecked] = useState<{ text: string; result: AnswerCheckResult } | null>(null);
   useEffect(() => {
     let active = true;
     getAcademyPortfolioSubmission(courseKey, lessonId, block.id!).then((value) => {
@@ -111,29 +126,41 @@ function WritingPractice({
     return () => { active = false; };
   }, [block.id, courseKey, lessonId]);
   const words = text.trim() ? text.trim().split(/\s+/).length : 0;
+  const input = getWritingInput(block.prompt);
+  const blankValues = input.kind === "blanks" ? readBlankAnswer(input.parts, text) : null;
+  const selected = input.kind === "order" ? readWordAnswer(input.tokens, text) : null;
+  const incomplete = blankValues ? blankValues.some(value => !value.trim()) : selected && input.kind === "order" ? selected.length !== input.tokens.length : !text.trim();
+  const capabilities = academyFeedbackCapabilities(courseKey);
+  const spec = getNicosWritingCheck(courseKey, block);
+  const checkResult = spec && checked?.text === text ? checked.result : null;
   return (
-    <Frame block={block}>
+    <Frame block={block} hidePrompt={Boolean(blankValues)} genderCues={isNicosWegCourse(courseKey)}>
       <p className="mt-3 text-xs font-semibold text-[#65717D]">
-        Ziel: {block.minWords}–{block.maxWords} Wörter · Ihre Antwort ist nur für Sie sichtbar.
+        {input.kind === "text" ? `Ziel: ${block.minWords}–${block.maxWords} Wörter · ` : ""}Ihre Antwort ist nur für Sie sichtbar.
       </p>
       <Checklist items={block.checklist} />
-      <textarea
-        value={text}
-        onChange={(event) => { setText(event.target.value.slice(0, 5000)); setSaved(false); }}
-        rows={8}
-        className="academy-reading-copy mt-6 w-full border border-[#AFC8E7] bg-white p-4 text-sm leading-7 outline-none focus:border-[var(--academy-accent)] focus:ring-2 focus:ring-[var(--academy-accent-soft)]"
-        placeholder="Schreiben Sie hier …"
-      />
+      <AcademyWritingInput genderCues={isNicosWegCourse(courseKey)} input={input} text={text} maxWords={block.maxWords}
+        mismatchPositions={checkResult?.mismatchPositions}
+        onChange={value => { setText(value); setSaved(false); setChecked(null); }} />
+      {spec ? <AcademyInstantAnswerCheck spec={spec} result={checkResult} incomplete={Boolean(incomplete)}
+        onCheck={() => { const result = checkPracticeAnswer(spec, text); setChecked({ text, result }); return result; }} /> : null}
+      {!spec && capabilities.guidedSelfReview ? <AcademyGuidedSelfReview key={text} modelAnswer={block.modelAnswer} /> : null}
       <div className="mt-2 flex flex-wrap items-center justify-between gap-3 text-xs text-[#65717D]">
-        <span>{words} Wörter</span>
+        <span>{blankValues ? `${blankValues.filter(value => value.trim()).length} / ${blankValues.length} Lücken ausgefüllt` : input.kind === "order" && selected ? "" : `${words} Wörter`}</span>
         <button
           type="button"
-          disabled={pending || !text.trim()}
+          data-academy-action="primary"
+          disabled={pending || Boolean(incomplete)}
           onClick={() => startTransition(async () => {
-            const result = await saveAcademyWritingSubmission(courseKey, lessonId, block.id!, text);
-            setMessage(result.message);
-            setSaved(result.ok);
-            if (result.ok) router.refresh();
+            try {
+              const result = await saveAcademyWritingSubmission(courseKey, lessonId, block.id!, text);
+              setMessage(result.message);
+              setSaved(result.ok);
+              if (result.ok) router.refresh();
+            } catch {
+              setMessage("Die Antwort konnte nicht gespeichert werden. Ihre Antwort und das Übungsfeedback bleiben erhalten. Bitte versuchen Sie es erneut.");
+              setSaved(false);
+            }
           })}
           className="inline-flex min-h-11 items-center gap-2 bg-[var(--academy-accent)] px-5 font-bold text-white disabled:opacity-40"
         >
@@ -141,8 +168,8 @@ function WritingPractice({
         </button>
       </div>
       {message ? <p role="status" className="mt-3 text-sm font-semibold text-[#244743]">{message}</p> : null}
-      {isGermanAcademyCourse(courseKey) ? <AcademyPracticeFeedback key={text} courseKey={courseKey} lessonId={lessonId} blockId={block.id!} text={text} /> : null}
-      {saved ? <><p role="status" className="mt-4 rounded-xl bg-[#D6EEDF] p-3 text-sm text-[#245444]">Antwort gespeichert · Nutzen Sie das Feedback und vergleichen Sie mit dem Beispiel. Diese Aufgabe wird nicht automatisch benotet.</p><ModelAnswer answer={block.modelAnswer} /></> : null}
+      {capabilities.aiFeedback ? <AcademyPracticeFeedback key={text} courseKey={courseKey} lessonId={lessonId} blockId={block.id!} text={text} disabled={Boolean(incomplete)} /> : null}
+      {saved ? <><p role="status" className="mt-4 rounded-xl bg-[#D6EEDF] p-3 text-sm text-[#245444]">Antwort gespeichert · Nutzen Sie das Feedback und vergleichen Sie mit dem Beispiel. Diese Aufgabe wird nicht automatisch benotet.</p>{!capabilities.guidedSelfReview ? <ModelAnswer answer={block.modelAnswer} /> : null}</> : null}
     </Frame>
   );
 }
@@ -228,7 +255,7 @@ function SpeakingPractice({
     setRecording(false);
   };
   return (
-    <Frame block={block} recording={recording}>
+    <Frame block={block} recording={recording} genderCues={isNicosWegCourse(courseKey)}>
       <p className="mt-3 text-xs font-semibold text-[#65717D]">
         Vorbereitung: {block.preparationSeconds} Sek. · Sprechzeit: ca. {block.targetSeconds} Sek. · Maximal 3 Minuten
       </p>
@@ -279,7 +306,8 @@ function SpeakingPractice({
       {localUrl || savedUrl ? (
         <audio controls preload="metadata" src={localUrl || savedUrl || undefined} className="mt-5 w-full" />
       ) : null}
-      {isGermanAcademyCourse(courseKey) && !recording && (blob || savedUrl) ? <AcademyPracticeFeedback key={localUrl || savedUrl} courseKey={courseKey} lessonId={lessonId} blockId={block.id!} audio={blob} savedAudio={!!savedUrl && !blob} /> : null}
+      {academyFeedbackCapabilities(courseKey).aiFeedback && !recording && (blob || savedUrl) ? <AcademyPracticeFeedback key={localUrl || savedUrl} courseKey={courseKey} lessonId={lessonId} blockId={block.id!} audio={blob} savedAudio={!!savedUrl && !blob} /> : null}
+      {academyFeedbackCapabilities(courseKey).guidedSelfReview ? <AcademyGuidedSelfReview key={localUrl || savedUrl || "speaking-review"} speaking modelAnswer={block.modelAnswer} /> : null}
       {saved ? (
         <><button
           type="button"
@@ -314,14 +342,14 @@ function SpeakingPractice({
           Zum Abschließen des Kapitels: Aufnahme stoppen und „Aufnahme speichern“ wählen. Erst danach ist „Weiter“ möglich.
         </p>
       ) : null}
-      {saved ? <><p role="status" className="mt-4 rounded-xl bg-[#D6EEDF] p-3 text-sm text-[#245444]">Aufnahme gespeichert · Nutzen Sie das Feedback, hören Sie die Aufnahme an und prüfen Sie Ihre Checkliste. Diese Aufgabe wird nicht automatisch benotet.</p><ModelAnswer answer={block.modelAnswer} /></> : null}
+      {saved ? <><p role="status" className="mt-4 rounded-xl bg-[#D6EEDF] p-3 text-sm text-[#245444]">Aufnahme gespeichert · Hören Sie die Aufnahme an und prüfen Sie Ihre Checkliste. Diese Aufgabe wird nicht automatisch benotet.</p>{!academyFeedbackCapabilities(courseKey).guidedSelfReview ? <ModelAnswer answer={block.modelAnswer} /> : null}</> : null}
     </Frame>
   );
 }
 
-function PracticePreview({ block }: { block: PracticeBlock }) {
+function PracticePreview({ block, genderCues = false }: { block: PracticeBlock; genderCues?: boolean }) {
   return (
-    <Frame block={block}>
+    <Frame block={block} genderCues={genderCues}>
       <Checklist items={block.checklist} />
       <div className="mt-6 border border-dashed border-[#AFC8E7] bg-white p-5 text-sm text-[#65717D]">
         {block.type === "writing-practice" ? "Gespeicherte Schreibfläche" : "Private Audioaufnahme"} ist in der Lernansicht verfügbar.
