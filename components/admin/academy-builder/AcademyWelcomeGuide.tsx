@@ -235,15 +235,15 @@ export default function AcademyWelcomeGuide() {
       </button>
       {open ? (
         <div className="fixed inset-0 z-[120] flex items-center justify-center bg-secondary/55 p-4 backdrop-blur-[2px]" role="dialog" aria-modal="true" aria-label="Academy builder introduction">
-          <div className="w-full max-w-4xl overflow-hidden rounded-[1.75rem] bg-white shadow-2xl">
-            <div className="flex items-start justify-between px-6 pt-6 sm:px-8 sm:pt-8">
-              <div>
+          <div className="flex max-h-[calc(100dvh-2rem)] w-full max-w-4xl flex-col overflow-hidden rounded-[1.75rem] bg-white shadow-2xl">
+            <div className="flex shrink-0 items-start justify-between gap-3 px-6 pt-6 sm:px-8 sm:pt-8">
+              <div className="min-w-0">
                 <p className="text-[10px] font-black uppercase tracking-[0.16em] text-primary/65">Welcome to Academy Builder</p>
                 <p className="mt-1 text-sm font-semibold text-secondary/45">A short tour of the authoring flow</p>
               </div>
-              <button ref={closeButtonRef} type="button" onClick={close} className="inline-flex h-11 w-11 items-center justify-center rounded-xl hover:bg-slate-100" aria-label="Close welcome tour"><X size={20} /></button>
+              <button ref={closeButtonRef} type="button" onClick={close} className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl hover:bg-slate-100" aria-label="Close welcome tour"><X size={20} /></button>
             </div>
-            <div className="overflow-hidden px-6 py-7 sm:px-8">
+            <div className="min-h-0 overflow-y-auto overscroll-contain px-6 py-7 sm:px-8">
               <div key={slide} className="academy-guide-enter">
                 <SlideVisual kind={slides[slide].visual} />
                 <p className="mt-7 text-[10px] font-black uppercase tracking-[0.16em] text-primary/65">{slides[slide].eyebrow}</p>
@@ -251,7 +251,7 @@ export default function AcademyWelcomeGuide() {
                 <p className="mt-3 max-w-2xl text-sm font-semibold leading-7 text-secondary/55">{slides[slide].body}</p>
               </div>
             </div>
-            <div className="flex flex-wrap items-center gap-3 border-t border-secondary/10 px-6 py-5 sm:px-8">
+            <div className="flex shrink-0 flex-wrap items-center gap-3 border-t border-secondary/10 px-6 py-5 sm:px-8">
               <div className="flex gap-2" aria-label={`Tour slide ${slide + 1} of ${slides.length}`}>
                 {slides.map((item, index) => <button key={item.title} type="button" onClick={() => setSlide(index)} aria-label={`Show tour slide ${index + 1}`} aria-current={slide === index ? "step" : undefined} className={`h-2.5 rounded-full transition-all ${slide === index ? "w-7 bg-primary" : "w-2.5 bg-secondary/15"}`} />)}
               </div>
