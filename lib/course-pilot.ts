@@ -1,5 +1,6 @@
 import "server-only";
 import { createClient } from "@/utils/supabase/server";
+import { createPublicClient } from "@/utils/supabase/public";
 import { isFeatureEnabled } from "@/lib/feature-flags";
 import { notFound, redirect } from "next/navigation";
 
@@ -20,8 +21,16 @@ export async function requirePilotEnabled() {
   if (!(await isFeatureEnabled("course_pilot_enabled"))) notFound();
 }
 export async function getPilotCatalog(key?: string): Promise<PilotCourse[]> {
-  await requirePilotEnabled();
-  const supabase = await createClient();
+  // Marketing reads must not depend on a visitor's cookies, token expiry, or
+  // account role. Enrollment and learner content still use the session client.
+  const supabase = createPublicClient();
+  const { data: flag, error: flagError } = await supabase
+    .from("feature_flags")
+    .select("enabled")
+    .eq("key", "course_pilot_enabled")
+    .maybeSingle();
+  if (flagError) throw new Error("Unable to load courses. Please try again later.");
+  if (!flag?.enabled) notFound();
   const { data, error } = await supabase.rpc("course_pilot_catalog", {
     target_key: key || null,
   });

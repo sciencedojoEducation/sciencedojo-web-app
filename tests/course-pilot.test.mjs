@@ -9,6 +9,31 @@ import {
   id,
 } from "./helpers/course-pilot-fixture.mjs";
 
+test("public catalogue is identical for anonymous visitors and every account role", async () => {
+  const { db, as } = await fixture();
+  try {
+    await db.exec("SET ROLE anon");
+    const publicCourses = (await db.query("SELECT course_pilot_catalog() AS courses")).rows[0].courses;
+    await db.exec("RESET ROLE");
+    assert.equal(publicCourses.length, 1);
+    // The fixture covers student, parent, tutor, internal, user, and admin.
+    for (const n of [1, 2, 3, 4, 5, 15]) {
+      await as(n, async () => {
+        const courses = (await db.query("SELECT course_pilot_catalog() AS courses")).rows[0].courses;
+        assert.deepEqual(courses, publicCourses);
+      });
+    }
+    // Browsing requires neither verification nor enrollment.
+    await db.query("UPDATE auth.users SET email_confirmed_at=NULL WHERE id=$1", [id(1)]);
+    await as(1, async () => {
+      const courses = (await db.query("SELECT course_pilot_catalog() AS courses")).rows[0].courses;
+      assert.deepEqual(courses, publicCourses);
+    });
+  } finally {
+    await db.close();
+  }
+});
+
 test("pilot migration: capacity, idempotency, waitlist, verified accounts, and retained places", async () => {
   const { db, as, join } = await fixture();
   try {
