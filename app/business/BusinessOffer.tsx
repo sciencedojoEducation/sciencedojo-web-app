@@ -1,5 +1,13 @@
 import { ArrowRight, Check } from "lucide-react";
 
+const pilotSummary = [
+  "Up to three learning objectives and a storyboard to review.",
+  "Approximately 5–10 minutes of interactive practice, with up to three decisions and explanatory feedback.",
+  "One practical application exercise and a scoring guide.",
+  "Two consolidated review rounds and agreed technical checks.",
+  "Approved design documents and the working pilot in the agreed delivery format.",
+];
+
 const deliverables = [
   ["One defined task", "One workplace task, one learner group, and one language: English."],
   ["An agreed source pack", "Approximately 15 pages or 20 slides, subject to content-density review, with access to one subject expert."],
@@ -68,12 +76,24 @@ export default function BusinessOffer() {
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#526071]">A practical place to start</p>
             <h2 id="offer-heading" className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">Onboarding Task Pilot</h2>
-            <p className="mt-5 max-w-lg leading-7 text-[#526071]">Start with one important task: an actionable client handover, a clear support response, or an agreed escalation. We turn your approved process into learning, practice, and a way to review understanding.</p>
-            <p className="mt-7 text-3xl font-bold tracking-tight">From €1,490</p>
-            <p className="mt-3 max-w-lg text-sm leading-6 text-[#526071]">For a project within the scope below. Final scope, delivery arrangements, schedule, and applicable taxes are confirmed in the proposal before work begins.</p>
+            <p className="mt-5 max-w-lg leading-7 text-[#526071]">We turn one approved workplace task into a tailored onboarding learning experience for one learner group, in English. Start with a client handover, a support response, or an agreed escalation.</p>
+            <p className="mt-7 text-3xl font-bold tracking-tight">From €1,490{" "}<span className="inline-block text-base font-medium tracking-normal text-[#526071]">per pilot project</span></p>
+            <div className="mt-6" aria-labelledby="pilot-summary-heading">
+              <h3 id="pilot-summary-heading" className="text-lg font-semibold">You receive</h3>
+              <ul className="mt-4 space-y-3 text-sm leading-6 text-[#526071]">
+                {pilotSummary.map((summary) => (
+                  <li key={summary} className="flex items-start gap-3">
+                    <Check className="mt-1 h-4 w-4 shrink-0 text-[#006B70]" aria-hidden="true" />
+                    <span>{summary}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <p className="mt-5 max-w-lg border-l-2 border-[#006B70] pl-4 text-sm leading-6 text-[#526071]"><strong className="font-semibold text-[#12243A]">5–10 minutes is learner practice time.</strong> Your project fee covers briefing, learning design, development, assessment, reviews, and handover.</p>
+            <p className="mt-5 max-w-lg text-sm leading-6 text-[#526071]">For a project within the detailed scope below. Final scope, delivery arrangements, schedule, and applicable taxes are confirmed in the proposal before work begins.</p>
             <a href="#contact" className="mt-6 inline-flex min-h-12 items-center gap-3 rounded-md bg-[#006B70] px-5 py-3 text-sm font-semibold text-white hover:bg-[#00565B] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#006B70]">Discuss a pilot <ArrowRight className="h-4 w-4 shrink-0" aria-hidden="true" /></a>
           </div>
-          <div className="rounded-lg border border-[#dce2e8] bg-white p-6 sm:p-7">
+          <div className="self-start rounded-lg border border-[#dce2e8] bg-white p-6 sm:p-7">
             <KnowledgeToPilotGraphic />
             <h3 className="text-lg font-semibold">You bring the knowledge. We shape the learning.</h3>
             <dl className="mt-5 space-y-5 text-sm">

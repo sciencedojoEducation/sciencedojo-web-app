@@ -17,6 +17,8 @@ The business page presents the Onboarding Task Pilot for English-working IT serv
 
 The founder statements are supported by the founder's own [portfolio](https://piumal.com/) and [thesis case study](https://piumal.com/projects/owlmentor?lang=en), and the owner approved the wording before publication.
 
+The owner subsequently approved a pricing clarification: “From €1,490 per pilot project”, a five-item deliverables summary immediately below the price, and an explanation that 5–10 minutes is learner practice time while the fee covers briefing, design, development, assessment, reviews, and handover. The existing nine detailed inclusions, scope boundaries, and proposal terms were preserved. Scoped ESLint and local desktop, 375px, and 320px layout checks passed; the summary had no horizontal overflow at either phone width.
+
 The complete focused test command passed 28 tests:
 
 ```sh
