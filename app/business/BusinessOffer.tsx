@@ -1,10 +1,15 @@
 import { ArrowRight, Check } from "lucide-react";
 
 const deliverables = [
-  ["A learning plan", "Audience, objectives, content map, and a storyboard your subject expert can review."],
-  ["A working experience", "An interactive module or learning tool in the delivery format agreed for the pilot."],
-  ["Purposeful assessment", "Practice tasks, feedback, and a rubric aligned to what people need to do."],
-  ["A practical handover", "Agreed source materials, setup guidance, and a walkthrough for your team."],
+  ["One defined task", "One workplace task, one learner group, and one language: English."],
+  ["An agreed source pack", "Approximately 15 pages or 20 slides, subject to content-density review, with access to one subject expert."],
+  ["A focused briefing", "One 45-minute briefing and limited written clarification."],
+  ["Reviewable learning design", "Up to three observable learning objectives and one storyboard."],
+  ["Interactive practice", "Approximately 5–10 minutes using existing components, with up to three decisions and explanatory feedback."],
+  ["A practical assessment", "One realistic application exercise and a simple scoring guide your team can use."],
+  ["Two review rounds", "One consolidated review of the storyboard and one of the working version, from your nominated approver."],
+  ["Agreed checks", "Usability and technical checks defined for the pilot and its delivery route."],
+  ["A clear handover", "Approved design documents and a working pilot in a delivery format confirmed before signing."],
 ];
 
 function KnowledgeToPilotGraphic() {
@@ -55,30 +60,36 @@ function KnowledgeToPilotGraphic() {
   );
 }
 
-export default function BusinessOffer({ emailHref }: { emailHref: string }) {
+export default function BusinessOffer() {
   return (
     <section id="offer" className="scroll-mt-6 bg-[#F3F5F7] px-5 py-14 md:px-8 md:py-16" aria-labelledby="offer-heading">
       <div className="mx-auto max-w-6xl">
         <div className="grid gap-10 lg:grid-cols-[0.95fr_1.05fr] lg:gap-12">
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#526071]">A practical place to start</p>
-            <h2 id="offer-heading" className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">One onboarding journey.<br />A working pilot.</h2>
-            <p className="mt-5 max-w-lg leading-7 text-[#526071]">Choose one role, process, or recurring challenge. We turn the essential knowledge into a focused experience your team can try before you commit to a wider programme.</p>
-            <p className="mt-4 text-sm leading-6 text-[#526071]">Scope, budget, timeline, and delivery format are agreed after reviewing your brief.</p>
+            <h2 id="offer-heading" className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">Onboarding Task Pilot</h2>
+            <p className="mt-5 max-w-lg leading-7 text-[#526071]">Start with one important task: an actionable client handover, a clear support response, or an agreed escalation. We turn your approved process into learning, practice, and a way to review understanding.</p>
+            <p className="mt-7 text-3xl font-bold tracking-tight">From €1,490</p>
+            <p className="mt-3 max-w-lg text-sm leading-6 text-[#526071]">For a project within the scope below. Final scope, delivery arrangements, schedule, and applicable taxes are confirmed in the proposal before work begins.</p>
+            <a href="#contact" className="mt-6 inline-flex min-h-12 items-center gap-3 rounded-md bg-[#006B70] px-5 py-3 text-sm font-semibold text-white hover:bg-[#00565B] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#006B70]">Discuss a pilot <ArrowRight className="h-4 w-4 shrink-0" aria-hidden="true" /></a>
           </div>
           <div className="rounded-lg border border-[#dce2e8] bg-white p-6 sm:p-7">
             <KnowledgeToPilotGraphic />
             <h3 className="text-lg font-semibold">You bring the knowledge. We shape the learning.</h3>
             <dl className="mt-5 space-y-5 text-sm">
-              <div><dt className="font-semibold text-[#006B70]">You bring</dt><dd className="mt-2 leading-6 text-[#526071]">Existing guides or slides, access to a subject expert, and a clear picture of what your people need to do.</dd></div>
-              <div className="border-t border-[#dce2e8] pt-5"><dt className="font-semibold text-[#006B70]">We design &amp; build</dt><dd className="mt-2 leading-6 text-[#526071]">The learning structure, realistic practice, useful feedback, and a working pilot ready for an agreed review with your team.</dd></div>
+              <div><dt className="font-semibold text-[#006B70]">A suitable starting point</dt><dd className="mt-2 leading-6 text-[#526071]">You already have an agreed process, approved material, a subject expert who can clarify it, and one person who can approve the work.</dd></div>
+              <div className="border-t border-[#dce2e8] pt-5"><dt className="font-semibold text-[#006B70]">We design &amp; build</dt><dd className="mt-2 leading-6 text-[#526071]">A focused scenario, explanations, and an application exercise. Your team reviews the assessment using the scoring guide; no AI marking or learner dashboard is needed.</dd></div>
             </dl>
-            <a href={emailHref} className="mt-5 inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-[#006B70] hover:underline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#006B70]">Tell us what you&apos;re working with <ArrowRight className="h-4 w-4 shrink-0" aria-hidden="true" /></a>
+            <p className="mt-5 text-xs leading-6 text-[#526071]">Start with one task before deciding whether a larger programme is useful.</p>
           </div>
         </div>
         <div className="mt-10 border-t border-[#dce2e8] pt-8">
-          <h3 className="text-sm font-semibold">What your pilot can include</h3>
-          <div className="mt-6 grid gap-7 sm:grid-cols-2 lg:grid-cols-4">{deliverables.map(([heading, text]) => <div key={heading}><Check className="h-5 w-5 text-[#006B70]" aria-hidden="true" /><h4 className="mt-3 font-semibold">{heading}</h4><p className="mt-2 text-sm leading-6 text-[#526071]">{text}</p></div>)}</div>
+          <h3 className="text-lg font-semibold">What the defined pilot includes</h3>
+          <div className="mt-6 grid gap-x-8 gap-y-7 sm:grid-cols-2 lg:grid-cols-3">{deliverables.map(([heading, text]) => <div key={heading} className="border-t border-[#dce2e8] pt-5"><Check className="h-5 w-5 text-[#006B70]" aria-hidden="true" /><h4 className="mt-3 font-semibold">{heading}</h4><p className="mt-2 text-sm leading-6 text-[#526071]">{text}</p></div>)}</div>
+        </div>
+        <div className="mt-9 grid gap-7 border-t border-[#dce2e8] pt-7 md:grid-cols-2">
+          <div><h3 className="text-sm font-semibold">Outside the initial pilot</h3><p className="mt-3 text-sm leading-6 text-[#526071]">A complete onboarding curriculum, policy development, extensive research, bespoke video or animation, additional languages, custom AI features, new platform functionality, and organisation-wide deployment. Ongoing hosting, maintenance, and integrations are agreed and priced separately where required.</p></div>
+          <div><h3 className="text-sm font-semibold">Scope and delivery agreed before signing</h3><p className="mt-3 text-sm leading-6 text-[#526071]">The proposal confirms a tested delivery route, files and usage rights, whether the pilot is for evaluation or continued use, and any access period or continuing costs. Changes to the approved task, audience, or content after storyboard approval require revised scope. Work that does not match the agreed specification is corrected.</p><p className="mt-3 text-sm leading-6 text-[#526071]">Dates depend on the agreed scope, available capacity, and client reviews. Larger assignments receive a separate quote.</p></div>
         </div>
       </div>
     </section>

@@ -1,5 +1,6 @@
 import { Resend } from 'resend';
 import { getSitePath, getSiteUrl, getSiteUrlFromPathOrUrl } from './site-url';
+import { deliverProviderEmail } from './email-delivery';
 
 const resendApiKey = process.env.RESEND_API_KEY;
 const resend = resendApiKey ? new Resend(resendApiKey) : null;
@@ -26,10 +27,16 @@ export async function sendEmail({
   to,
   subject,
   html,
+  replyTo,
+  idempotencyKey,
+  signal,
 }: {
   to: string;
   subject: string;
   html: string;
+  replyTo?: string;
+  idempotencyKey?: string;
+  signal?: AbortSignal;
 }): Promise<EmailSendResult> {
   if (!resend) {
     if (isProduction) {
@@ -42,23 +49,23 @@ export async function sendEmail({
     console.log(`To: ${to}`);
     console.log(`Subject: ${subject}`);
     console.log(`Body (HTML length): ${html.length} bytes`);
-    console.log(html);
     console.log('----------------------------\n');
     return { success: true, mock: true };
   }
 
-  try {
-    const data = await resend.emails.send({
+  const result = await deliverProviderEmail(
+    (message, options) => resend.emails.send(message, options),
+    {
       from: FROM_EMAIL,
       to,
       subject,
       html,
-    });
-    return { success: true, data };
-  } catch (error) {
-    console.error('Failed to send email:', error);
-    return { success: false, error };
-  }
+      ...(replyTo ? { replyTo } : {}),
+    },
+    idempotencyKey || signal ? { ...(idempotencyKey ? { idempotencyKey } : {}), ...(signal ? { signal } : {}) } : undefined,
+  );
+  if (!result.success) console.error('Email provider did not accept the message.');
+  return result;
 }
 
 export async function sendInternalTeamInviteEmail({

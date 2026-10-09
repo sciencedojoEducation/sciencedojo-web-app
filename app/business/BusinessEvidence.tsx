@@ -64,7 +64,7 @@ export default function BusinessEvidence({ practiceEnabled, focusEnabled }: { pr
       <div className="mx-auto max-w-6xl">
         <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#526071]">The work &amp; the thinking</p>
         <h2 id="work-heading" className="mt-3 max-w-2xl text-3xl font-bold tracking-tight sm:text-4xl">A realistic task. A visible design process.</h2>
-        <p className="mt-4 max-w-2xl leading-7 text-[#526071]">Explore a corporate learning concept, then inspect the brief, design choices, and assessment behind it.</p>
+        <p className="mt-4 max-w-2xl leading-7 text-[#526071]">Try the handover example: identify missing information, choose an appropriate response, and prepare the next step. Three decisions take about two minutes. Then inspect the design choices and sample scoring guide.</p>
         <article className="mt-8 overflow-hidden rounded-lg border border-[#dce2e8]">
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#dce2e8] px-6 py-4 text-xs"><span className="font-semibold">Client-request handover · Onboarding</span><span className="rounded bg-[#edf5f5] px-3 py-1.5 font-medium text-[#006B70]">Studio concept · Fictional scenario</span></div>
           <div className="grid lg:grid-cols-[0.95fr_1.05fr]">
@@ -76,11 +76,13 @@ export default function BusinessEvidence({ practiceEnabled, focusEnabled }: { pr
               <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#b9e0df]">The brief</p>
               <h3 className="mt-4 text-2xl font-bold tracking-tight sm:text-3xl">Turn a vague request into a clear handover.</h3>
               <p className="mt-4 text-sm leading-7 text-[#d1dfec]">A new project coordinator receives an urgent client request. The delivery team needs a clear scope, an accountable owner, and a confirmed deadline before work begins.</p>
-              <dl className="mt-6 space-y-4 text-sm"><div><dt className="font-semibold text-[#b9e0df]">Audience</dt><dd className="mt-1 text-[#d1dfec]">New coordinators in a fictional service business.</dd></div><div><dt className="font-semibold text-[#b9e0df]">Learning objective</dt><dd className="mt-1 leading-6 text-[#d1dfec]">Identify missing information, resolve uncertainty, and hand over an actionable request.</dd></div></dl>
-              <a href="#learning-demo" className={`mt-7 inline-flex min-h-12 items-center gap-3 rounded bg-white px-5 py-3 text-sm font-semibold text-[#12243A] hover:bg-[#edf5f5] ${focus}`}>Try the branching demo <ArrowRight className="h-4 w-4 shrink-0" aria-hidden="true" /></a>
+              <dl className="mt-6 space-y-4 text-sm"><div><dt className="font-semibold text-[#b9e0df]">Audience</dt><dd className="mt-1 text-[#d1dfec]">New project coordinators in a fictional IT service team.</dd></div><div><dt className="font-semibold text-[#b9e0df]">Learning objective</dt><dd className="mt-1 leading-6 text-[#d1dfec]">Identify missing information, resolve uncertainty, and hand over an actionable request.</dd></div></dl>
+              <a href="#learning-demo" className={`mt-7 inline-flex min-h-12 items-center gap-3 rounded bg-white px-5 py-3 text-sm font-semibold text-[#12243A] hover:bg-[#edf5f5] ${focus}`}>Try the demo <ArrowRight className="h-4 w-4 shrink-0" aria-hidden="true" /></a>
               </div>
             </div>
             <div id="learning-demo" className="min-w-0 scroll-mt-6 bg-[#F3F5F7] p-4 sm:p-6">
+              <p className="mb-2 text-xs font-semibold text-[#006B70]">Fictional workplace demo · 3 decisions · ~2 minutes</p>
+              <p className="mb-4 text-sm leading-6 text-[#526071]">You are the coordinator. Read the request, select a response, and check the feedback before moving on.</p>
               <WorkplaceDemo />
             </div>
           </div>
@@ -102,7 +104,7 @@ export default function BusinessEvidence({ practiceEnabled, focusEnabled }: { pr
 
         <div className="mt-12 border-t border-[#dce2e8] pt-8">
           <h3 className="text-xl font-semibold tracking-tight">Technical capability, demonstrated in ScienceDojo.</h3>
-          <p className="mt-3 max-w-2xl text-sm leading-6 text-[#526071]">These education products show how we build practice, feedback, and connected learning experiences. They are examples of our own product work.</p>
+          <p className="mt-3 max-w-2xl text-sm leading-6 text-[#526071]">These education products show our development work in practice, feedback, and connected learning experiences. They demonstrate technical capability; they are not client pilot results or features included in the €1,490 offer.</p>
           <div className="mt-7 grid gap-8 md:grid-cols-3">
             <article>
               <PracticePreview />

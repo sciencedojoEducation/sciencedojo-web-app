@@ -4,7 +4,7 @@ import { siteUrl } from "@/lib/seo";
 
 export const metadata: Metadata = {
   title: "Privacy Policy | ScienceDojo",
-  description: "How ScienceDojo handles account, student, booking, messaging, lead, analytics, and support information.",
+  description: "How ScienceDojo handles account, student, booking, messaging, business enquiry, lead, analytics, and support information.",
   alternates: {
     canonical: `${siteUrl}/privacy`,
   },
@@ -16,6 +16,7 @@ const sections = [
     items: [
       "Account details such as name, email address, role, login provider, and profile information.",
       "Parent and student details submitted during signup, onboarding, booking, free assessment, or support flows.",
+      "Name, email address, organisation, workplace learning needs, and optional timing supplied through the business enquiry form.",
       "Tutor profile, application, availability, subject, qualification, payout, and teaching information.",
       "Booking, lesson, classroom, message, homework, review, support, dispute, and admin status information.",
       "Basic analytics events such as page views, free assessment actions, CTA clicks, role selection, and tutor connect clicks when analytics is configured.",
@@ -27,10 +28,15 @@ const sections = [
     items: [
       "To create accounts and show the correct dashboard for parents, students, tutors, and admins.",
       "To help families request free assessments, find tutors, book lessons, and communicate about learning support.",
+      "To respond to business enquiries, clarify a proposed learning project, and maintain a record of the request and its notification status.",
       "To help tutors manage sessions, availability, student communication, lesson notes, and payouts.",
       "To improve safety, investigate disputes, prevent misuse, and support platform administration.",
       "To understand whether public SEO pages and booking flows are helping families find the right support.",
     ],
+  },
+  {
+    title: "Business enquiries",
+    body: "Business enquiry details are stored privately and used to respond to the request. Staff receive an email notification; submitting the form does not subscribe you to marketing emails. Short-lived pseudonymous request identifiers help limit automated abuse.",
   },
   {
     title: "Student privacy",
@@ -61,7 +67,7 @@ export default function PrivacyPage() {
     <LegalPage
       eyebrow="ScienceDojo privacy"
       title="Privacy Policy"
-      subtitle="How ScienceDojo handles information for families, students, tutors, leads, bookings, and platform support."
+      subtitle="How ScienceDojo handles information for families, students, tutors, business enquiries, leads, bookings, and platform support."
       sections={sections}
     />
   );
