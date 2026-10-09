@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, BookOpen, Code2, Sparkles } from "lucide-react";
-import WorkplaceDemo from "./WorkplaceDemo";
 import BusinessOffer from "./BusinessOffer";
 import BusinessEvidence from "./BusinessEvidence";
 import { getPublicFeatureFlagMap } from "@/lib/feature-flags";
@@ -34,8 +34,8 @@ export const metadata: Metadata = {
   title: { absolute: title },
   description,
   alternates: { canonical: `${siteUrl}/business` },
-  openGraph: { title, description, url: `${siteUrl}/business`, siteName: "ScienceDojo for Business", type: "website", images: [{ url: `${siteUrl}/images/sciencedojo-logo-brand.jpg`, width: 512, height: 512, alt: "ScienceDojo for Business" }] },
-  twitter: { card: "summary", title, description, images: [`${siteUrl}/images/sciencedojo-logo-brand.jpg`] },
+  openGraph: { title, description, url: `${siteUrl}/business`, siteName: "ScienceDojo for Business", type: "website", images: [{ url: `${siteUrl}/images/business/learning-design-hero-v1.webp`, width: 1536, height: 1024, alt: "Source materials transformed into an interactive learning experience" }] },
+  twitter: { card: "summary_large_image", title, description, images: [`${siteUrl}/images/business/learning-design-hero-v1.webp`] },
 };
 
 function BusinessBrand() {
@@ -62,18 +62,26 @@ export default async function BusinessPage() {
 
       <div id="business-content" tabIndex={-1}>
         <section className="bg-white px-5 py-12 md:px-8 md:py-16" aria-labelledby="business-heading">
-          <div className="mx-auto grid max-w-6xl items-center gap-10 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)] lg:gap-12">
-            <div>
+          <div className="mx-auto grid max-w-6xl items-center gap-x-10 gap-y-7 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)] lg:gap-x-12">
+            <div className="lg:col-start-1 lg:row-start-1">
               <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#526071]">Learning design &amp; technology</p>
               <h1 id="business-heading" className="mt-5 text-4xl font-bold leading-[1.04] tracking-[-0.045em] text-[#12243A] sm:text-5xl lg:text-[3.5rem]">Learning designed for the way people work.</h1>
               <p className="mt-6 max-w-lg text-base leading-7 text-[#526071] sm:text-lg sm:leading-8">Turn your guides, slides, and subject expertise into interactive onboarding and skills training. Instructional design and development, together.</p>
-              <div className="mt-8 flex flex-wrap items-center gap-6">
-                <a href={emailHref} className={button}>Discuss your project <ArrowRight className="h-4 w-4" aria-hidden="true" /></a>
-                <a href="#work" className={`inline-flex min-h-12 items-center gap-2 text-sm font-semibold hover:text-[#006B70] hover:underline ${focus}`}>See the work &amp; thinking <ArrowRight className="h-4 w-4" aria-hidden="true" /></a>
-              </div>
-              <div className="mt-9 border-t border-[#dce2e8] pt-4"><p className="text-sm font-medium">For HR, L&amp;D, and teams sharing specialist knowledge.</p><p className="mt-2 text-sm text-[#526071]">Work directly with Piumal, from the brief to the build.</p></div>
             </div>
-            <div id="learning-demo" className="min-w-0 scroll-mt-6"><WorkplaceDemo /><a href="#work" className={`mt-4 inline-flex min-h-11 items-center gap-2 text-xs font-semibold text-[#006B70] hover:underline ${focus}`}>Read the brief and design rationale <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" /></a></div>
+            <figure className="min-w-0 lg:col-start-2 lg:row-span-3 lg:row-start-1">
+              <div className="overflow-hidden rounded-lg bg-[#F3F5F7]">
+                <Image src="/images/business/learning-design-hero-v1.webp" alt="Sculptural paper guides connected to learning panels and an interactive course interface" width={1536} height={1024} sizes="(max-width: 1023px) 90vw, 560px" preload className="h-auto w-full" />
+              </div>
+              <figcaption className="mt-5 flex flex-wrap items-center justify-between gap-x-5 gap-y-2 border-t border-[#dce2e8] pt-3">
+                <span className="text-xs font-semibold text-[#526071]">From knowledge to practice.</span>
+                <a href="#learning-demo" className={`inline-flex min-h-11 items-center gap-2 text-xs font-semibold text-[#006B70] hover:underline ${focus}`}>Try the learning demo <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" /></a>
+              </figcaption>
+            </figure>
+            <div className="flex flex-wrap items-center gap-x-6 gap-y-2 lg:col-start-1 lg:row-start-2">
+              <a href={emailHref} className={button}>Discuss your project <ArrowRight className="h-4 w-4" aria-hidden="true" /></a>
+              <a href="#work" className={`inline-flex min-h-12 items-center gap-2 text-sm font-semibold hover:text-[#006B70] hover:underline ${focus}`}>See the work &amp; thinking <ArrowRight className="h-4 w-4" aria-hidden="true" /></a>
+            </div>
+            <div className="border-t border-[#dce2e8] pt-4 lg:col-start-1 lg:row-start-3"><p className="text-sm font-medium">For HR, L&amp;D, and teams sharing specialist knowledge.</p><p className="mt-2 text-sm text-[#526071]">Work directly with Piumal, from the brief to the build.</p></div>
           </div>
         </section>
 
