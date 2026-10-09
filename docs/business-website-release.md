@@ -12,7 +12,7 @@ The business page presents the Onboarding Task Pilot for English-working IT serv
 | W4 Founder | Copy describes teaching, learning design, development, thesis research, and direct collaboration. Portfolio and thesis case study links returned HTTP 200. Exact degree completion, current employment, commercial outcomes, and sole OwlMentor software ownership are not claimed. | Owner factual approval pending. |
 | W5 Enquiry form | Name, email, organisation, and workplace task are required; timing is optional. Labels, privacy notice, email alternative, public access, and draft retention were checked. | Local checks passed. |
 | W6 Enquiry route | A browser submission reached the real database. Its notification was accepted on the first attempt, and the owner confirmed receipt in the hello inbox. Visitor confirmation reflected database receipt. Validation, provider failure, timeout, deduplication, retries, spam checks, and private SQL access are covered by focused tests. | Production form submission remains to be checked after deployment. |
-| W7 Usability | Keyboard controls and focus, field labels, 16px form text, and responsive widths of 320, 375, 640, 1280, and 1440 CSS pixels were checked. The 640px check supplies reflow evidence for a 1280px viewport at 200% zoom. | Actual browser zoom remains to be verified. These checks are not accessibility certification. |
+| W7 Usability | Keyboard controls and focus, field labels, 16px form text, and responsive widths of 320, 375, 640, 1280, and 1440 CSS pixels were checked. The owner tested the enquiry form and three-decision demo at actual 200% browser zoom and confirmed both remained usable without clipped controls or sideways scrolling. | Local checks and owner zoom check passed. These checks are not accessibility certification. |
 | W8 Links and sharing | Corporate title, description, canonical URL, and social images were inspected in production HTML. The 1200×630 sharing image rendered successfully. Portfolio, product, privacy, and terms links were checked. | Verify deployed metadata and image after publication. |
 
 The founder statements are supported by the founder's own [portfolio](https://piumal.com/) and [thesis case study](https://piumal.com/projects/owlmentor?lang=en). They remain subject to owner factual review.
@@ -24,6 +24,8 @@ node --experimental-strip-types --test tests/business-enquiries.test.mjs tests/b
 ```
 
 Scoped ESLint, `git diff --check`, and `npm run build` passed. Node's module-format warning during the tests did not affect the result.
+
+The business implementation is saved locally in commit `5313447`. A further build of that commit in an isolated temporary checkout could not be completed: Turbopack rejected its external dependency symlink, and the Webpack fallback could not download the existing Google Fonts through the sandbox. That additional build remains unverified; these environment failures did not identify a source defect or change the earlier successful standard build.
 
 ## Database and notification configuration
 
@@ -57,4 +59,4 @@ The retained QA enquiry is labelled `ScienceDojo — website verification 2026-1
 2. Commit and publish only the business upgrade files; unrelated German academy work is outside this change.
 3. Verify the deployed business page, metadata, sharing image, main anchors, and demo.
 4. Submit one clearly labelled production enquiry, confirm its private record and inbox receipt, and verify the deployed retry route rejects unauthenticated requests.
-5. Complete the actual browser zoom check on the contact and demo journeys, then record the deployed commit and results here.
+5. Record the deployed commit and results here. The actual 200% browser zoom check on the contact and demo journeys was completed by the owner before publication.
