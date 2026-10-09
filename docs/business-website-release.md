@@ -1,19 +1,19 @@
 # Business website verification and release
 
-The business page presents the Onboarding Task Pilot for English-working IT service and software implementation teams. On 9 October 2026 the owner explicitly approved publication, including the claims, €1,490 starting price, pilot scope, founder copy, and handover terms. Deployment and checks against the live page follow that approval.
+The business page presents the Onboarding Task Pilot for English-working IT service and software implementation teams. On 9 October 2026 the owner explicitly approved publication, including the claims, €1,490 starting price, pilot scope, founder copy, and handover terms. The approved release was published to [the business page](https://www.sciencedojo.co.uk/business), and its live content, demo, form, links, and sharing image were verified.
 
 ## Verification on 9 October 2026
 
 | Requirement | Evidence | Release status |
 | --- | --- | --- |
-| W1 Opening section | Names the audience and the problem of applying an established process. The main actions are “Discuss a pilot” and “Try the demo”. Both anchors were checked in the browser. | Owner copy approval received; verify live anchors after publication. |
-| W2 Pilot offer | Shows the €1,490 starting price, source and interaction limits, deliverables, two consolidated reviews, exclusions, and proposal conditions. No unconditional delivery date, LMS compatibility, or continuing hosting promise is made. | Owner price and scope approval received. |
-| W3 Workplace demo | Fictional label remains visible at the demo anchor. Keyboard checks covered all three decisions, feedback, review, and restart. | Local checks passed. |
-| W4 Founder | Copy describes teaching, learning design, development, thesis research, and direct collaboration. Portfolio and thesis case study links returned HTTP 200. Exact degree completion, current employment, commercial outcomes, and sole OwlMentor software ownership are not claimed. | Owner factual approval received. |
-| W5 Enquiry form | Name, email, organisation, and workplace task are required; timing is optional. Labels, privacy notice, email alternative, public access, and draft retention were checked. | Local checks passed. |
-| W6 Enquiry route | A browser submission reached the real database. Its notification was accepted on the first attempt, and the owner confirmed receipt in the hello inbox. Visitor confirmation reflected database receipt. Validation, provider failure, timeout, deduplication, retries, spam checks, and private SQL access are covered by focused tests. | Production form submission remains to be checked after deployment. |
-| W7 Usability | Keyboard controls and focus, field labels, 16px form text, and responsive widths of 320, 375, 640, 1280, and 1440 CSS pixels were checked. The owner tested the enquiry form and three-decision demo at actual 200% browser zoom and confirmed both remained usable without clipped controls or sideways scrolling. | Local checks and owner zoom check passed. These checks are not accessibility certification. |
-| W8 Links and sharing | Corporate title, description, canonical URL, and social images were inspected in locally served production HTML. The 1200×630 sharing image rendered successfully. Portfolio, product, privacy, and terms links were checked. | Verify deployed metadata and image after publication. |
+| W1 Opening section | Names the audience and the problem of applying an established process. The main actions are “Discuss a pilot” and “Try the demo”. Both live anchors were checked in the browser. | Approved and verified live. |
+| W2 Pilot offer | Shows the €1,490 starting price, source and interaction limits, all nine inclusions, two consolidated reviews, exclusions, and proposal conditions. No unconditional delivery date, LMS compatibility, or continuing hosting promise is made. | Approved and verified live. |
+| W3 Workplace demo | Fictional label remains visible at the demo anchor. Live keyboard checks covered all three decisions, feedback, review, focus movement, and restart. | Verified live. |
+| W4 Founder | Copy describes teaching, learning design, development, thesis research, and direct collaboration. Portfolio and thesis case study links returned HTTP 200. Exact degree completion, current employment, commercial outcomes, and sole OwlMentor software ownership are not claimed. | Approved and verified live. |
+| W5 Enquiry form | Name, email, organisation, and workplace task are required; timing is optional. Labels, privacy notice, email alternative, public access, and draft retention were checked. The live form displayed required-field errors and then accepted a valid enquiry with timing blank. | Verified live. |
+| W6 Enquiry route | The owner confirmed both the earlier real-backend test and the further live-site browser submission reached the hello inbox. The production enquiry was saved and its notification accepted on the first attempt with no recorded error. Visitor confirmation reflected database receipt. Validation, provider failure, timeout, deduplication, retries, spam checks, and private SQL access are covered by focused tests. | Live storage, visitor confirmation, and actual inbox receipt verified. |
+| W7 Usability | Keyboard controls and focus, field labels, 16px form text, and responsive widths of 320, 375, 640, 1280, and 1440 CSS pixels were checked locally. Live checks at 375px confirmed no horizontal overflow, 16px field text, and a visible 2px keyboard focus outline. The owner tested the enquiry form and three-decision demo at actual 200% browser zoom and confirmed both remained usable without clipped controls or sideways scrolling. | Local, live mobile/keyboard, and owner zoom checks passed. These checks are not accessibility certification. |
+| W8 Links and sharing | Live corporate title, description, canonical URL, Open Graph, and Twitter metadata were verified. The sharing endpoint returned a valid 1200×630 PNG. Portfolio, product, privacy, terms, and artwork links returned HTTP 200; local anchors resolved. | Verified live. |
 
 The founder statements are supported by the founder's own [portfolio](https://piumal.com/) and [thesis case study](https://piumal.com/projects/owlmentor?lang=en), and the owner approved the wording before publication.
 
@@ -25,7 +25,9 @@ node --experimental-strip-types --test tests/business-enquiries.test.mjs tests/b
 
 Scoped ESLint, `git diff --check`, and `npm run build` passed. Node's module-format warning during the tests did not affect the result.
 
-The business implementation is saved locally in commit `5313447`. A further build of that commit in an isolated temporary checkout could not be completed: Turbopack rejected its external dependency symlink, and the Webpack fallback could not download the existing Google Fonts through the sandbox. That additional build remains unverified; these environment failures did not identify a source defect or change the earlier successful standard build.
+The business implementation was introduced in commit `5313447`. A further build of that commit in an isolated temporary checkout could not be completed: Turbopack rejected its external dependency symlink, and the Webpack fallback could not download the existing Google Fonts through the sandbox. That additional build remains unverified; these environment failures did not identify a source defect or change the earlier successful standard build.
+
+The approved release commit `29008b87aa58c542c639b5d2c06732e80f6d9034` was pushed to `main`. [Vercel deployment 2R8YQn5V6QQCcF2ZCYVaNtAUryjf](https://vercel.com/sciencedojo-s-projects/sciencedojo-web-app/2R8YQn5V6QQCcF2ZCYVaNtAUryjf) reported success, confirming that the published release built successfully. Unrelated German academy changes remained outside the committed release. The existing site URL configuration uses apex metadata URLs, which redirect to `www`; the redirected page and image present the correct corporate offer.
 
 ## Database and notification configuration
 
@@ -35,7 +37,7 @@ The action needs the existing Supabase URL and service-role key, plus a working 
 
 Production IP handling expects Vercel's overwritten `x-forwarded-for` header. Unsupported production proxy configurations fail closed. Abuse limits are three new enquiries per email and five per IP in each ten-minute window. Only hashes are stored for those request limits.
 
-The retry route requires the existing `CRON_SECRET`. An unauthenticated request to the existing production cron route returned HTTP 401, confirming that production cron authentication is configured. The new business route and its daily 06:30 UTC schedule take effect when this revision is deployed.
+The retry route requires the existing `CRON_SECRET`. The deployed business retry route rejected an unauthenticated request with HTTP 401 and `Unauthorized`. The published Vercel configuration includes its daily 06:30 UTC schedule.
 
 ## Notification operation
 
@@ -51,12 +53,12 @@ GROUP BY notification_status;
 
 `sent` records provider acceptance, not an inbox read. HTTP 200 from the worker can coexist with queued or exhausted notifications; inspect its counts and the stored queue state. If a provider accepts a message but recording that result fails, a later retry beyond the provider's idempotency window can duplicate the staff email while keeping one enquiry record.
 
-The retained QA enquiry is labelled `ScienceDojo — website verification 2026-10-09`. Treat it as a website test, not a prospect.
+The retained QA enquiries are labelled `ScienceDojo — website verification 2026-10-09` and `ScienceDojo — production website verification 2026-10-09`. Treat them as website tests, not prospects. The production test has enquiry ID `ca4e4cfd-31bf-4cc6-b4b4-b8ebf18a0bb2` and provider message ID `01a1226a-02dd-714f-98d2-7c74f3c32597`. It was recorded as `sent` on attempt 1 with no notification error. A read-only provider-event lookup returned HTTP 401, so provider delivery events were not independently verified. The owner independently confirmed the production test was received in the inbox, completing the receipt check.
 
-## Release sequence
+## Completed release checks
 
-1. Confirm owner approval of the commercial claims, price, pilot scope, founder wording, and handover terms.
-2. Commit and publish only the business upgrade files; unrelated German academy work is outside this change.
-3. Verify the deployed business page, metadata, sharing image, main anchors, and demo.
-4. Submit one clearly labelled production enquiry, confirm its private record and inbox receipt, and verify the deployed retry route rejects unauthenticated requests.
-5. Record the deployed commit and results here. The actual 200% browser zoom check on the contact and demo journeys was completed by the owner before publication.
+1. Owner approval received for the commercial claims, price, pilot scope, founder wording, and handover terms.
+2. Business upgrade committed and published; unrelated German academy work excluded.
+3. Deployed page, metadata, sharing image, main anchors, and full keyboard demo journey verified.
+4. Clearly labelled production enquiry saved, accurate visitor confirmation shown, and actual inbox receipt confirmed by the owner. Unauthenticated retry-route access rejected.
+5. Deployed release and results recorded here. The actual 200% browser zoom check on the contact and demo journeys was completed by the owner before publication.
