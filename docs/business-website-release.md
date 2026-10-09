@@ -1,21 +1,21 @@
 # Business website verification and release
 
-The business page presents the Onboarding Task Pilot for English-working IT service and software implementation teams. The implementation is ready for owner review. Publication requires approval of the claims, starting price, scope, and handover wording, followed by checks against the deployed page.
+The business page presents the Onboarding Task Pilot for English-working IT service and software implementation teams. On 9 October 2026 the owner explicitly approved publication, including the claims, €1,490 starting price, pilot scope, founder copy, and handover terms. Deployment and checks against the live page follow that approval.
 
 ## Verification on 9 October 2026
 
 | Requirement | Evidence | Release status |
 | --- | --- | --- |
-| W1 Opening section | Names the audience and the problem of applying an established process. The main actions are “Discuss a pilot” and “Try the demo”. Both anchors were checked in the browser. | Owner copy approval pending. |
-| W2 Pilot offer | Shows the €1,490 starting price, source and interaction limits, deliverables, two consolidated reviews, exclusions, and proposal conditions. No unconditional delivery date, LMS compatibility, or continuing hosting promise is made. | Owner price and scope approval pending. |
+| W1 Opening section | Names the audience and the problem of applying an established process. The main actions are “Discuss a pilot” and “Try the demo”. Both anchors were checked in the browser. | Owner copy approval received; verify live anchors after publication. |
+| W2 Pilot offer | Shows the €1,490 starting price, source and interaction limits, deliverables, two consolidated reviews, exclusions, and proposal conditions. No unconditional delivery date, LMS compatibility, or continuing hosting promise is made. | Owner price and scope approval received. |
 | W3 Workplace demo | Fictional label remains visible at the demo anchor. Keyboard checks covered all three decisions, feedback, review, and restart. | Local checks passed. |
-| W4 Founder | Copy describes teaching, learning design, development, thesis research, and direct collaboration. Portfolio and thesis case study links returned HTTP 200. Exact degree completion, current employment, commercial outcomes, and sole OwlMentor software ownership are not claimed. | Owner factual approval pending. |
+| W4 Founder | Copy describes teaching, learning design, development, thesis research, and direct collaboration. Portfolio and thesis case study links returned HTTP 200. Exact degree completion, current employment, commercial outcomes, and sole OwlMentor software ownership are not claimed. | Owner factual approval received. |
 | W5 Enquiry form | Name, email, organisation, and workplace task are required; timing is optional. Labels, privacy notice, email alternative, public access, and draft retention were checked. | Local checks passed. |
 | W6 Enquiry route | A browser submission reached the real database. Its notification was accepted on the first attempt, and the owner confirmed receipt in the hello inbox. Visitor confirmation reflected database receipt. Validation, provider failure, timeout, deduplication, retries, spam checks, and private SQL access are covered by focused tests. | Production form submission remains to be checked after deployment. |
 | W7 Usability | Keyboard controls and focus, field labels, 16px form text, and responsive widths of 320, 375, 640, 1280, and 1440 CSS pixels were checked. The owner tested the enquiry form and three-decision demo at actual 200% browser zoom and confirmed both remained usable without clipped controls or sideways scrolling. | Local checks and owner zoom check passed. These checks are not accessibility certification. |
-| W8 Links and sharing | Corporate title, description, canonical URL, and social images were inspected in production HTML. The 1200×630 sharing image rendered successfully. Portfolio, product, privacy, and terms links were checked. | Verify deployed metadata and image after publication. |
+| W8 Links and sharing | Corporate title, description, canonical URL, and social images were inspected in locally served production HTML. The 1200×630 sharing image rendered successfully. Portfolio, product, privacy, and terms links were checked. | Verify deployed metadata and image after publication. |
 
-The founder statements are supported by the founder's own [portfolio](https://piumal.com/) and [thesis case study](https://piumal.com/projects/owlmentor?lang=en). They remain subject to owner factual review.
+The founder statements are supported by the founder's own [portfolio](https://piumal.com/) and [thesis case study](https://piumal.com/projects/owlmentor?lang=en), and the owner approved the wording before publication.
 
 The complete focused test command passed 28 tests:
 
