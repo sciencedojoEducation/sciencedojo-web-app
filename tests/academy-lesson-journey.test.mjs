@@ -1,11 +1,56 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { test } from "node:test";
-import { academyLessonJourneySteps } from "../lib/academy-lesson-roadmap.ts";
+import { runInNewContext } from "node:vm";
+import ts from "typescript";
+import * as lessonRoadmap from "../lib/academy-lesson-roadmap.ts";
+import * as tutorAcademy from "../lib/tutor-academy.ts";
+import * as germanAcademy from "../lib/german-academy-course.ts";
+import * as nicosCourse from "../lib/nicos-weg-course.ts";
+import * as memoryAids from "../lib/nicos-weg-a1-memory-aids.ts";
+import * as academyVideo from "../lib/academy-video.ts";
+import * as tablePresentation from "../lib/academy-table-presentation.ts";
+import * as sentencePractice from "../lib/nicos-weg-a1-sentence-practice.ts";
 import { germanA1RestructuredCourse } from "../lib/german-a1-restructured-course.ts";
 import { germanA2Course } from "../lib/german-a2-course.ts";
 import { germanB1Course } from "../lib/german-b1-course.ts";
 import { germanB2Course } from "../lib/german-b2-course.ts";
+
+const { academyLessonJourneySteps } = lessonRoadmap;
+const rendererSource = await readFile(new URL("../components/tutor-academy/AcademyLessonBlocks.tsx", import.meta.url), "utf8");
+const rendererExports = {};
+const jsx = (type, props) => ({ type, props });
+const dependencies = {
+  "react/jsx-runtime": { jsx, jsxs: jsx },
+  "next/image": { default: "image" },
+  "lucide-react": {},
+  "@/lib/academy-lesson-roadmap": lessonRoadmap,
+  "@/lib/tutor-academy": tutorAcademy,
+  "@/lib/german-academy-course": germanAcademy,
+  "@/lib/nicos-weg-course": nicosCourse,
+  "@/lib/nicos-weg-a1-memory-aids": memoryAids,
+  "@/lib/academy-video": academyVideo,
+  "@/lib/academy-table-presentation": tablePresentation,
+  "@/lib/nicos-weg-a1-sentence-practice": sentencePractice,
+};
+// Keep child UI components opaque; execute the actual renderer and navigation helpers.
+runInNewContext(ts.transpileModule(rendererSource, {
+  compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX, target: ts.ScriptTarget.ES2022 },
+}).outputText, { exports: rendererExports, require: name => {
+  if (name in dependencies) return dependencies[name];
+  if (name.startsWith("./Academy")) return {
+    default: name.slice(2), AcademyGenderLegend: "AcademyGenderLegend", AcademyPhaseMarker: "AcademyPhaseMarker",
+  };
+  throw new Error(`Unexpected dependency: ${name}`);
+} });
+const renderBlocks = rendererExports.default;
+const navigationBlocks = [
+  { id: "start", type: "divider", label: "Getting started" },
+  { id: "intro", type: "text", heading: "Introduction", paragraphs: ["Welcome"] },
+  { id: "next", type: "divider", label: "Next task" },
+  { id: "task", type: "text", heading: "Task", paragraphs: ["Try this"] },
+];
+const journeyIn = tree => tree.props.children.find(child => child?.type === "AcademyLessonJourney");
 
 test("topic steps partition every authored block exactly once, preserving course order", () => {
   for (const course of [germanA1RestructuredCourse, germanA2Course, germanB1Course, germanB2Course]) {
@@ -41,17 +86,44 @@ test("lessons without topics retain the original whole-lesson rendering", () => 
 });
 
 test("Tutor Foundations keeps whole lessons and its course outline without inferred phase navigation", async () => {
-  const renderer = await readFile(new URL("../components/tutor-academy/AcademyLessonBlocks.tsx", import.meta.url), "utf8");
-  assert.match(renderer, /presentationCourseKey = courseKey/);
-  assert.match(renderer, /const showLessonJourney = presentationCourseKey !== TUTOR_ACADEMY_COURSE_KEY;/);
-  assert.match(renderer, /const roadmap = showLessonJourney \? academyLessonRoadmap\(blocks\) : \{ sections: \[\], phases: \[\] \}/);
-  assert.match(renderer, /steps=\{showLessonJourney \? academyLessonJourneySteps\([^\n]+ : \[\]\}/);
-  assert.match(renderer, /courseOutline=\{courseOutline\}/);
-  assert.match(renderer, /tracker=\{<AcademyActivityTracker/);
+  const courseOutline = { type: "outline" };
+  const tree = renderBlocks({ blocks: navigationBlocks, courseKey: tutorAcademy.TUTOR_ACADEMY_COURSE_KEY, lessonId: "lesson-one", courseOutline });
+  const { props } = journeyIn(tree);
+  assert.equal(props.steps.length, 0);
+  assert.equal(props.roadmap.props.sections.length, 0);
+  assert.equal(props.roadmap.props.phases.length, 0);
+  assert.equal(props.courseOutline, courseOutline);
+  assert.equal(props.children.length, navigationBlocks.length);
+  assert.equal(props.tracker.type, "AcademyActivityTracker");
+  assert.equal(props.tracker.props.courseKey, tutorAcademy.TUTOR_ACADEMY_COURSE_KEY);
+  assert.equal(props.canCompleteLesson, true);
   const journey = await readFile(new URL("../components/tutor-academy/AcademyLessonJourney.tsx", import.meta.url), "utf8");
   assert.match(journey, /steps.length < 2 && courseOutline/);
   assert.match(journey, /steps=\{\[\]\}[^\n]+courseOutline=\{courseOutline\}/);
   assert.match(journey, /academy-topic-body academy-block-stack flex flex-col">\{nodes\}/);
+});
+
+test("standard German lessons retain topic navigation and account progress controls", () => {
+  const tree = renderBlocks({ blocks: navigationBlocks, courseKey: "german-b2-complete", lessonId: "lesson-one" });
+  const { props } = journeyIn(tree);
+  assert.deepEqual(Array.from(props.steps, step => step.label), ["Getting started", "Next task"]);
+  assert.equal(props.roadmap.props.sections.length, 2);
+  assert.equal(props.tracker.type, "AcademyActivityTracker");
+  assert.equal(props.canCompleteLesson, true);
+  assert.ok(tree.props.children.some(child => child?.type === "AcademyDisplayMode"));
+});
+
+test("continuous public previews keep all content without topic or account progress controls", () => {
+  const tree = renderBlocks({ blocks: navigationBlocks, presentationCourseKey: "deutsch-b2-ankommen", continuous: true });
+  const { props } = journeyIn(tree);
+  assert.equal(props.children.length, navigationBlocks.length);
+  assert.deepEqual(Array.from(props.anchors), navigationBlocks.map(lessonRoadmap.academyBlockAnchor));
+  assert.equal(props.steps.length, 0);
+  assert.equal(props.roadmap.props.sections.length, 0);
+  assert.equal(props.roadmap.props.phases.length, 0);
+  assert.equal(props.tracker, null);
+  assert.equal(props.canCompleteLesson, false);
+  assert.ok(!tree.props.children.some(child => child?.type === "AcademyDisplayMode"));
 });
 
 test("draft preview identifies the course for navigation without enabling learner writes", async () => {
