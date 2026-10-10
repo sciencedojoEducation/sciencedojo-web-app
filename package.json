@@ -29,6 +29,8 @@
     "academy:german-b2:pronunciation": "node --experimental-strip-types scripts/generate-german-b2-pronunciation.mjs",
     "academy:german-b2:publish-enrichment": "node --experimental-strip-types scripts/publish-german-b2-enrichment.mjs",
     "academy:german-b2:seed": "node --experimental-strip-types scripts/seed-german-b2-course.mjs",
+    "academy:german-b2:story-audio": "node --experimental-strip-types scripts/generate-german-b2-story-audio.mjs",
+    "academy:german-b2:story-audio:verify": "node --experimental-strip-types scripts/verify-german-b2-story-audio.mjs",
     "showcase:staging:seed": "node --env-file=.env.showcase.local scripts/seed-showcase-staging.mjs",
     "academy:german-a2:audio": "node --experimental-strip-types scripts/generate-german-a2-audio.mjs",
     "academy:german-a2:seed": "node --experimental-strip-types scripts/seed-german-a2-course.mjs",

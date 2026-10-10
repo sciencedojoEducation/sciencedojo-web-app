@@ -123,6 +123,7 @@ export default function AcademyLessonBlocks({
   resumeAnchor,
   courseOutline,
   lessonEnd,
+  continuous = false,
 }: {
   blocks: LessonBlock[];
   courseKey?: string;
@@ -135,16 +136,18 @@ export default function AcademyLessonBlocks({
   courseOutline?: React.ReactNode;
   /** Server-rendered, completion-gated next-chapter action. */
   lessonEnd?: React.ReactNode;
+  /** Render a standalone preview as one page, without account progress controls. */
+  continuous?: boolean;
 }) {
   const blocks = withNicosMemoryAids(presentationCourseKey, lessonId, suppliedBlocks);
   const genderCues = isNicosWegCourse(presentationCourseKey);
   const activityLanguage = uiLanguage || (isGermanAcademyCourse(presentationCourseKey) ? "de" : "en");
   // Short induction lessons read as a single page, not invented learning phases.
-  const showLessonJourney = presentationCourseKey !== TUTOR_ACADEMY_COURSE_KEY;
+  const showLessonJourney = !continuous && presentationCourseKey !== TUTOR_ACADEMY_COURSE_KEY;
   const roadmap = showLessonJourney ? academyLessonRoadmap(blocks) : { sections: [], phases: [] };
   return (
     <>
-    {presentationCourseKey ? <AcademyDisplayMode /> : null}
+    {presentationCourseKey && !continuous ? <AcademyDisplayMode /> : null}
     {isNicosWegCourse(presentationCourseKey) ? <AcademyAnswerSoundToggle german={activityLanguage === "de"} /> : null}
     {genderCues ? <AcademyGenderLegend /> : null}
     <AcademyLessonJourney celebrateTopicChanges={isNicosWegCourse(presentationCourseKey)} steps={showLessonJourney ? academyLessonJourneySteps(blocks, activityLanguage === "de" ? "Einstieg" : "Getting started", activityLanguage === "de") : []}
@@ -154,7 +157,7 @@ export default function AcademyLessonBlocks({
       resumeAnchor={resumeAnchor}
       courseOutline={courseOutline}
       lessonEnd={lessonEnd}
-      tracker={<AcademyActivityTracker key="activity-tracker" courseKey={courseKey} lessonId={lessonId} german={activityLanguage === "de"} completedIds={completedBlockIds}
+      tracker={continuous ? null : <AcademyActivityTracker key="activity-tracker" courseKey={courseKey} lessonId={lessonId} german={activityLanguage === "de"} completedIds={completedBlockIds}
         activities={blocks.flatMap((block) => block.id ? [{ id: block.id, label: ("heading" in block && block.heading) || (block.type === "knowledge-check" ? block.question.prompt : block.type === "divider" ? block.label || (activityLanguage === "de" ? "Abschnitt" : "Section") : block.type), required: isAcademyBlockRequiredForCompletion(block) }] : [])} />}
       roadmap={<AcademyLessonRoadmap key="lesson-roadmap" sections={roadmap.sections} phases={roadmap.phases} german={activityLanguage === "de"} completedIds={completedBlockIds} />}>
       {blocks.map((block, blockIndex) => {

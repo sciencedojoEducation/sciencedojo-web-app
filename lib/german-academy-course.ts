@@ -6,6 +6,7 @@ const GERMAN_ACADEMY_COURSE_KEYS = new Set([
   "german-a2-complete",
   "german-b1-complete",
   "german-b2-complete",
+  "deutsch-b2-ankommen",
 ]);
 
 export function isGermanAcademyCourse(courseKey: string | undefined): boolean {

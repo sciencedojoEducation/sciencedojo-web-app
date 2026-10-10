@@ -1,0 +1,19 @@
+{
+  "provider": "Google Gemini",
+  "model": "gemini-3.8-flash-tts",
+  "voices": {
+    "Mira": "Kore",
+    "Jonas": "Charon",
+    "Leyla": "Aoede"
+  },
+  "episode": 1,
+  "generatedAt": "2026-10-08T17:44:00.480Z",
+  "fingerprint": "892608cf71d8b8d2f7dd223ba3485a7b0cc30afb835c27c5826007af2cc1e9b5",
+  "transcriptSha256": "d8c83c8f170b27b3475a0b1a32a1749b7585698f49dd09e0e7f6ffb224c664ae",
+  "sha256": "0de4f93d23f22e9d41147c625cc0356555a5ade3f1107f4095e8191726e62a73",
+  "seconds": 101.86,
+  "words": 272,
+  "wpm": 160,
+  "bytes": 1435289,
+  "groups": 5
+}

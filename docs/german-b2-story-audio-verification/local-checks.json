@@ -1,0 +1,29 @@
+[
+  {
+    "episode": 1,
+    "sha256": "0de4f93d23f22e9d41147c625cc0356555a5ade3f1107f4095e8191726e62a73",
+    "seconds": 101.888,
+    "wpm": 160,
+    "peak": 28033,
+    "rms": 4982,
+    "clippedSamples": 0
+  },
+  {
+    "episode": 2,
+    "sha256": "c6170cc4a9e42aafbf2219e125366ff1447e77245403999217ee786709e87a17",
+    "seconds": 117.20533333333333,
+    "wpm": 151,
+    "peak": 27871,
+    "rms": 4325,
+    "clippedSamples": 0
+  },
+  {
+    "episode": 3,
+    "sha256": "0e1f1e45d35e86c116d00d40d86bf3d4e37edff2171a44388866e6e89ba6ac0c",
+    "seconds": 118.528,
+    "wpm": 142,
+    "peak": 28064,
+    "rms": 4742,
+    "clippedSamples": 0
+  }
+]
