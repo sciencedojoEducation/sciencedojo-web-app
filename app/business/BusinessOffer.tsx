@@ -1,4 +1,5 @@
-import { ArrowRight, Check } from "lucide-react";
+import Image from "next/image";
+import { ArrowRight, BookOpen, Check, FileText, PackageCheck } from "lucide-react";
 
 const moduleSummary = [
   "Up to three learning objectives and a storyboard to review.",
@@ -20,49 +21,25 @@ const deliverables = [
   ["A usable handover", "A self-contained HTML module with editable HTML, CSS, and JavaScript, approved design documents, a scoring guide, and setup instructions."],
 ];
 
-function KnowledgeToPilotGraphic() {
+const scopeGroups = [
+  { title: "Your starting point", summary: "One task, one audience, and approved source material.", icon: FileText, items: [0, 1, 2] },
+  { title: "The learning experience", summary: "A storyboard, realistic practice, and a practical assessment.", icon: BookOpen, items: [3, 4, 5] },
+  { title: "Reviews & handover", summary: "Two review rounds, agreed checks, and files you can keep.", icon: PackageCheck, items: [6, 7, 8] },
+];
+
+function HandoverKitGraphic() {
   return (
     <figure className="mb-6 border-b border-[#dce2e8] pb-6">
-      <svg viewBox="0 0 480 138" className="mx-auto w-full max-w-lg" fill="none" aria-hidden="true" focusable="false">
-        <path d="M129 68H163M313 68H348" stroke="#a9b6c4" strokeWidth="1.5" />
-        <path d="m158 63 5 5-5 5m185-10 5 5-5 5" stroke="#a9b6c4" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-
-        <g transform="rotate(-9 77 68)">
-          <rect x="44" y="23" width="66" height="91" rx="4" fill="#F3F5F7" stroke="#b7c2ce" />
-        </g>
-        <rect x="46" y="21" width="66" height="91" rx="4" fill="white" stroke="#12243A" strokeWidth="1.5" />
-        <rect x="58" y="35" width="22" height="5" rx="2.5" fill="#006B70" />
-        <path d="M58 52H98M58 60H98M58 68H86" stroke="#b7c2ce" strokeWidth="2" strokeLinecap="round" />
-        <rect x="58" y="80" width="40" height="20" rx="2" fill="#F3F5F7" />
-        <path d="M65 90H91" stroke="#a9b6c4" strokeWidth="2" strokeLinecap="round" />
-
-        <path d="M213 43H222V55M247 80V90H209V100M247 90H284V100" stroke="#006B70" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-        <rect x="181" y="31" width="32" height="24" rx="5" fill="#F3F5F7" stroke="#12243A" strokeWidth="1.5" />
-        <path d="m247 30 25 25-25 25-25-25 25-25Z" fill="#e6f1f1" stroke="#006B70" strokeWidth="1.5" />
-        <circle cx="209" cy="110" r="10" fill="white" stroke="#b7c2ce" strokeWidth="1.5" />
-        <circle cx="284" cy="110" r="10" fill="#006B70" />
-        <path d="m280 110 3 3 5-6" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-        <circle cx="197" cy="43" r="3" fill="#006B70" />
-        <path d="M242 55H252M247 50V60" stroke="#006B70" strokeWidth="1.5" strokeLinecap="round" />
-
-        <rect x="365" y="28" width="91" height="81" rx="5" fill="white" stroke="#12243A" strokeWidth="1.5" />
-        <path d="M365 44H456" stroke="#12243A" strokeWidth="1.5" />
-        <circle cx="374" cy="36" r="1.5" fill="#006B70" />
-        <circle cx="380" cy="36" r="1.5" fill="#a9b6c4" />
-        <circle cx="386" cy="36" r="1.5" fill="#a9b6c4" />
-        <rect x="375" y="54" width="19" height="43" rx="2" fill="#F3F5F7" />
-        <path d="M380 61H389M380 67H389M380 73H386" stroke="#b7c2ce" strokeWidth="1.5" strokeLinecap="round" />
-        <path d="M403 57H444M403 64H437" stroke="#b7c2ce" strokeWidth="2" strokeLinecap="round" />
-        <rect x="403" y="74" width="43" height="10" rx="2" fill="#e6f1f1" stroke="#006B70" />
-        <circle cx="408" cy="79" r="1.5" fill="#006B70" />
-        <rect x="429" y="91" width="17" height="7" rx="2" fill="#006B70" />
-      </svg>
-      <figcaption>
-        <ol className="grid grid-cols-3 gap-2 text-center text-[11px] font-semibold leading-4 text-[#526071] sm:text-xs">
-          <li>Existing knowledge</li>
-          <li>Designed practice</li>
-          <li>A usable module</li>
-        </ol>
+      <div className="overflow-hidden rounded-lg bg-[#F3F5F7]">
+        <Image src="/images/business/module-handover-kit-v1.webp" alt="Illustration of a browser learning module beside a storyboard, scoring guide, and setup checklist" width={1536} height={1024} sizes="(max-width: 1023px) 90vw, 500px" className="h-auto w-full" />
+      </div>
+      <figcaption className="mt-4">
+        <p className="text-xs font-medium text-[#526071]">An illustrated view of your handover kit</p>
+        <div className="mt-3 grid grid-cols-3 gap-3 text-sm font-semibold leading-5 text-[#12243A]">
+          <span className="border-t-2 border-[#006B70] pt-2">Browser module</span>
+          <span className="border-t-2 border-[#006B70] pt-2">Editable files</span>
+          <span className="border-t-2 border-[#006B70] pt-2">Review guide</span>
+        </div>
       </figcaption>
     </figure>
   );
@@ -94,7 +71,7 @@ export default function BusinessOffer() {
             <a href="#contact" className="mt-6 inline-flex min-h-12 items-center gap-3 rounded-md bg-[#006B70] px-5 py-3 text-sm font-semibold text-white hover:bg-[#00565B] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#006B70]">Discuss your project <ArrowRight className="h-4 w-4 shrink-0" aria-hidden="true" /></a>
           </div>
           <div className="self-start rounded-lg border border-[#dce2e8] bg-white p-6 sm:p-7">
-            <KnowledgeToPilotGraphic />
+            <HandoverKitGraphic />
             <h3 className="text-lg font-semibold">You bring the knowledge. We shape the learning.</h3>
             <dl className="mt-5 space-y-5 text-sm">
               <div><dt className="font-semibold text-[#006B70]">A suitable starting point</dt><dd className="mt-2 leading-6 text-[#526071]">You already have an agreed process, approved material, a subject expert who can clarify it, and one person who can approve the work.</dd></div>
@@ -105,7 +82,17 @@ export default function BusinessOffer() {
         </div>
         <div className="mt-10 border-t border-[#dce2e8] pt-8">
           <h3 className="text-lg font-semibold">What the defined project includes</h3>
-          <div className="mt-6 grid gap-x-8 gap-y-7 sm:grid-cols-2 lg:grid-cols-3">{deliverables.map(([heading, text]) => <div key={heading} className="border-t border-[#dce2e8] pt-5"><Check className="h-5 w-5 text-[#006B70]" aria-hidden="true" /><h4 className="mt-3 font-semibold">{heading}</h4><p className="mt-2 text-sm leading-6 text-[#526071]">{text}</p></div>)}</div>
+          <div className="mt-6 grid items-start gap-5 md:grid-cols-3">
+            {scopeGroups.map(({ title, summary, icon: Icon, items }) => <div key={title} className="rounded-xl border border-[#dce2e8] bg-white p-5 sm:p-6">
+              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-[#edf5f5]"><Icon className="h-6 w-6 text-[#006B70]" aria-hidden="true" /></div>
+              <h4 className="mt-5 text-lg font-semibold">{title}</h4>
+              <p className="mt-2 text-sm leading-6 text-[#526071]">{summary}</p>
+              <details className="mt-4 border-t border-[#dce2e8] pt-3">
+                <summary className="min-h-11 cursor-pointer py-2 text-sm font-semibold text-[#006B70] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#006B70]">See the included scope</summary>
+                <dl className="mt-3 space-y-5">{items.map((item) => <div key={deliverables[item][0]}><dt className="text-sm font-semibold">{deliverables[item][0]}</dt><dd className="mt-2 text-sm leading-6 text-[#526071]">{deliverables[item][1]}</dd></div>)}</dl>
+              </details>
+            </div>)}
+          </div>
         </div>
         <div className="mt-9 grid gap-7 border-t border-[#dce2e8] pt-7 md:grid-cols-2">
           <div><h3 className="text-sm font-semibold">Keep it and use it internally</h3><p className="mt-3 text-sm leading-6 text-[#526071]">Your organisation may keep and use the delivered module for its own internal training, with no ScienceDojo subscription or per-learner charge. Open the HTML file in an agreed browser or use your own suitable hosting. You receive readable, editable module code; reusable components and third-party assets retain their applicable licences.</p><p className="mt-3 text-sm leading-6 text-[#526071]">The browser module keeps practice responses in the current page only. Your team uses the scoring guide to review learner work.</p></div>

@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
+import { ArrowDownToLine, ArrowRight, Check, ClipboardCheck, FileText, FolderOpen, ListChecks, MonitorPlay } from "lucide-react";
 import WorkplaceDemo from "./WorkplaceDemo";
 import HandoverApplication from "./HandoverApplication";
 import { handoverBrief, handoverDocuments, handoverEvaluationPlan, handoverRubric, handoverStoryboard } from "./handover-example";
@@ -10,6 +10,36 @@ const designChoices = [
   ["Decisions before explanations", "Learners choose what to do with a realistic request, then see the consequence and reasoning."],
   ["A connected scenario", "Earlier decisions change the context of the next step, so the task develops as a single experience."],
   ["Application beyond clicking", "A written handover asks learners to use the process. A subject expert can review that work against agreed criteria."],
+];
+const documentPreviews = [
+  {
+    title: "Learning design",
+    file: "learning-design.md",
+    icon: FileText,
+    caption: "Storyboard · first decision",
+    excerpt: handoverStoryboard[0],
+  },
+  {
+    title: "Scoring guide",
+    file: "assessment-guide.md",
+    icon: ClipboardCheck,
+    caption: `Criterion · ${handoverRubric[0].criterion}`,
+    excerpt: handoverRubric[0].description,
+  },
+  {
+    title: "Review checklist",
+    file: "client-review-checklist.md",
+    icon: ListChecks,
+    caption: "Before final sign-off",
+    excerpt: handoverDocuments[2].items[0],
+  },
+  {
+    title: "Setup & use",
+    file: "setup-and-use.md",
+    icon: FolderOpen,
+    caption: "Run the module",
+    excerpt: "Open client-handover-module.html in a browser with JavaScript enabled.",
+  },
 ];
 function PracticePreview() {
   return (
@@ -86,15 +116,33 @@ export default function BusinessEvidence({ practiceEnabled, focusEnabled }: { pr
           <div className="border-t border-[#dce2e8] bg-[#F3F5F7] p-6 sm:p-8">
             <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#006B70]">03 · Inspect the supporting documents</p>
             <h3 className="mt-3 text-xl font-semibold tracking-tight">The module comes with a design trail.</h3>
-            <p className="mt-3 max-w-3xl text-sm leading-7 text-[#526071]">Inspect the design documents and download the self-contained example module. It uses the same decisions and application exercise, with no ScienceDojo account or subscription needed to run the downloaded file.</p>
-            <div className="mt-5 flex flex-wrap items-center gap-x-6 gap-y-3">
-              <a href="/business/examples/client-handover-module.html" download className={`inline-flex min-h-12 items-center gap-2 rounded-md bg-[#006B70] px-5 py-3 text-sm font-semibold text-white hover:bg-[#00565B] ${focus}`}>Download the example module <ArrowRight className="h-4 w-4 shrink-0" aria-hidden="true" /></a>
-              <a href="/business/examples/learning-design.md" download className={`inline-flex min-h-11 items-center text-sm font-semibold text-[#006B70] underline underline-offset-4 ${focus}`}>Editable learning design</a>
-              <a href="/business/examples/assessment-guide.md" download className={`inline-flex min-h-11 items-center text-sm font-semibold text-[#006B70] underline underline-offset-4 ${focus}`}>Editable scoring guide</a>
-              <a href="/business/examples/client-review-checklist.md" download className={`inline-flex min-h-11 items-center text-sm font-semibold text-[#006B70] underline underline-offset-4 ${focus}`}>Review &amp; handover checklist</a>
-              <a href="/business/examples/setup-and-use.md" download className={`inline-flex min-h-11 items-center text-sm font-semibold text-[#006B70] underline underline-offset-4 ${focus}`}>Setup &amp; use instructions</a>
+            <p className="mt-3 max-w-3xl text-sm leading-7 text-[#526071]">Explore the actual files behind this fictional example: the complete browser module and four editable documents.</p>
+            <div className="mt-6 grid overflow-hidden rounded-xl border border-[#c7dedf] bg-white md:grid-cols-[0.9fr_1.1fr]">
+              <div className="flex flex-col justify-center bg-[#12243A] p-6 text-white sm:p-7">
+                <div className="flex items-center gap-3 text-[#b9e0df]"><MonitorPlay className="h-6 w-6" aria-hidden="true" /><p className="text-[11px] font-semibold uppercase tracking-[0.14em]">Complete browser module · HTML</p></div>
+                <h4 className="mt-4 text-xl font-semibold tracking-tight">Take the example with you.</h4>
+                <p className="mt-3 text-sm leading-6 text-[#d1dfec]">The same decisions, written exercise, and worked review. No ScienceDojo account or subscription needed.</p>
+                <a href="/business/examples/client-handover-module.html" download className={`mt-5 inline-flex min-h-12 w-fit items-center gap-3 rounded-md bg-white px-4 py-3 text-sm font-semibold text-[#12243A] hover:bg-[#edf5f5] ${focus}`}>Download the example module <ArrowDownToLine className="h-4 w-4 shrink-0" aria-hidden="true" /></a>
+              </div>
+              <figure className="flex flex-col justify-center bg-[#edf5f5] p-6 sm:p-7">
+                <div className="overflow-hidden rounded-lg border border-[#c7dedf] bg-white shadow-sm">
+                  <div className="flex items-center gap-3 border-b border-[#dce2e8] bg-[#F3F5F7] px-4 py-3"><div className="flex gap-1" aria-hidden="true"><span className="h-1.5 w-1.5 rounded-full bg-[#97a5b2]" /><span className="h-1.5 w-1.5 rounded-full bg-[#97a5b2]" /><span className="h-1.5 w-1.5 rounded-full bg-[#97a5b2]" /></div><span className="min-w-0 break-all text-[10px] font-medium text-[#526071]">client-handover-module.html</span></div>
+                  <div className="p-5"><p className="text-[10px] font-semibold uppercase tracking-[0.13em] text-[#006B70]">Fictional studio concept</p><p className="mt-3 text-lg font-semibold tracking-tight">{handoverBrief.title}</p><ol className="mt-5 grid gap-2 text-[11px] font-semibold text-[#006B70] sm:grid-cols-3 sm:text-center">{["Decisions", "Application", "Review"].map((step, index) => <li key={step} className="flex items-center gap-2 rounded-md bg-[#edf5f5] px-3 py-2 sm:block sm:px-1 sm:py-3"><span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-[#c7dedf] bg-white sm:mx-auto sm:mb-2">{index + 1}</span>{step}</li>)}</ol></div>
+                </div>
+                <figcaption className="mt-3 text-[11px] leading-5 text-[#526071]">Contents preview · Readable, editable HTML, CSS, and JavaScript</figcaption>
+              </figure>
             </div>
-            <p className="mt-3 text-xs leading-6 text-[#526071]">Open the downloaded HTML file in your browser. It includes readable HTML, CSS, and JavaScript. Practice drafts stay in the current page only; there is no central learner record or LMS completion report.</p>
+            <div className="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+              {documentPreviews.map(({ title, file, icon: Icon, caption, excerpt }) => <a key={file} href={`/business/examples/${file}`} download className={`group flex flex-col overflow-hidden rounded-lg border border-[#dce2e8] bg-white transition-colors hover:border-[#006B70] ${focus}`}>
+                <div className="flex flex-1 flex-col p-4">
+                  <div className="flex items-center justify-between gap-3"><Icon className="h-5 w-5 text-[#006B70]" aria-hidden="true" /><span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#526071]">Editable · Markdown</span></div>
+                  <p className="mt-4 text-sm font-semibold">{title}</p>
+                  <div className="mt-4 flex-1 border-l-2 border-[#c7dedf] pl-3"><p className="text-[11px] font-semibold uppercase tracking-wide text-[#006B70]">{caption}</p><p className="mt-2 break-words text-[13px] leading-5 text-[#526071]">{excerpt}</p>{file === "assessment-guide.md" && <div className="mt-3 flex flex-wrap gap-1.5">{handoverRubric[0].levels.map(({ rating }) => <span key={rating} className="rounded bg-[#F3F5F7] px-2 py-1 text-[11px] leading-4 text-[#526071]">{rating}</span>)}</div>}{file === "client-review-checklist.md" && <div className="mt-3 flex items-center gap-2 text-[11px] font-medium text-[#006B70]"><Check className="h-3.5 w-3.5 shrink-0" aria-hidden="true" /><span>Process · Facts · Criteria</span></div>}</div>
+                </div>
+                <span className="flex min-h-11 items-center justify-between gap-2 border-t border-[#dce2e8] bg-[#F3F5F7] px-4 py-3 text-xs font-semibold text-[#006B70] group-hover:bg-[#edf5f5]">Download document <ArrowDownToLine className="h-3.5 w-3.5 shrink-0" aria-hidden="true" /></span>
+              </a>)}
+            </div>
+            <p className="mt-4 text-xs leading-6 text-[#526071]">Document cards show real excerpts from the files. Open the downloaded HTML in your browser and keep the companion documents beside it. Practice drafts stay in the current page only; there is no central learner record or LMS completion report.</p>
             <div className="mt-5 grid gap-4 md:grid-cols-2">
               <details className="rounded-lg border border-[#dce2e8] bg-white p-5">
                 <summary className={`min-h-11 cursor-pointer text-sm font-semibold text-[#006B70] ${focus}`}>Learning brief &amp; storyboard</summary>

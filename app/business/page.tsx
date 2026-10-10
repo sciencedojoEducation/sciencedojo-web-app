@@ -6,6 +6,7 @@ import Link from "next/link";
 import { ArrowRight, BookOpen, Code2, Sparkles } from "lucide-react";
 import BusinessOffer from "./BusinessOffer";
 import BusinessEvidence from "./BusinessEvidence";
+import BusinessProcess from "./BusinessProcess";
 import BusinessEnquiryForm from "./BusinessEnquiryForm";
 import { getPublicFeatureFlagMap } from "@/lib/feature-flags";
 import { siteUrl } from "@/lib/seo";
@@ -15,22 +16,11 @@ const description = "Custom onboarding for English-speaking IT service and softw
 const emailHref = `mailto:hello@sciencedojo.co.uk?subject=${encodeURIComponent("ScienceDojo Custom Onboarding Module — Enquiry")}&body=${encodeURIComponent("Hello Piumal,\n\nI'd like to discuss a custom onboarding module.\n\nOrganisation: \nWhat should our people be able to do? \n\nThank you!")}`;
 const focus = "focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#006B70]";
 const button = `inline-flex min-h-12 items-center justify-center gap-3 rounded-md bg-[#006B70] px-6 py-3 text-sm font-bold text-white transition-colors hover:bg-[#00565B] ${focus}`;
-const navItems = [["The offer", "offer"], ["Work", "work"], ["Studio", "about"]];
+const navItems = [["The offer", "offer"], ["Work", "work"], ["Process", "process"], ["Studio", "about"]];
 const services = [
   { icon: BookOpen, title: "Further tasks & learning journeys", text: "Build on your first module with additional approved tasks, roles, or learning experiences.", deliverable: "A separately scoped learning plan, practice activities, and assessment aligned to your next brief.", example: "Example brief: extend a handover module to a second role or an agreed escalation process." },
   { icon: Code2, title: "Design support for learning agencies", text: "Bring Piumal into a defined part of a project you already manage, using your agreed requirements and production process.", deliverable: "A scenario, storyboard, or assessment, quoted separately for the contribution you need.", example: "Example brief: develop a reviewable scenario and scoring guide for your production team." },
   { icon: Sparkles, title: "Additional learning tools", text: "Explore a tailored practice or feedback tool when your brief needs more than the first module.", deliverable: "An agreed prototype, feedback criteria, and a human review process, quoted separately.", example: "Custom AI, new platform features, and integrations are outside the Custom Onboarding Module." },
-];
-const steps = [
-  ["Define the task", "Review your materials with a subject expert. Agree the audience, scope, delivery format, and success criteria."],
-  ["Review the storyboard", "Your nominated approver consolidates feedback on the objectives, scenario, and assessment before development."],
-  ["Build & review", "Develop the experience using existing components, run agreed checks, and collect one consolidated review of the working version."],
-  ["Check & hand over", "Correct work that does not meet the agreed specification, then hand over the browser module, editable code, approved design documents, scoring guide, and setup instructions."],
-];
-const practicalDetails = [
-  ["Where will the learning run?", "The standard handover is a self-contained HTML browser module. Open the file in your agreed browser or serve it from suitable hosting you already provide. We confirm your delivery route before signing. It needs no ScienceDojo account or subscription. SCORM, LMS completion reporting, and integrations are separately scoped."],
-  ["What happens at handover?", "You receive the browser module with readable, editable HTML, CSS, and JavaScript, approved learning objectives and storyboard, the exercise and scoring guide, and setup instructions. Your organisation may keep and use the delivered module for its internal training without a per-learner charge. Reusable components and third-party assets retain their applicable licences. Managed hosting and future updates are separate."],
-  ["How will we know it works?", "We agree the task and assessment criteria first. Your subject expert can review learner work against the scoring guide, check usability with a small group, and compare responses to equivalent tasks before and after practice. Evaluation arrangements are agreed for the project; improved workplace performance is not a guaranteed result."],
 ];
 
 export const metadata: Metadata = {
@@ -105,9 +95,7 @@ export default async function BusinessPage() {
           </div>
         </section>
 
-        <section id="process" className="scroll-mt-6 px-5 py-16 md:px-8 md:py-20" aria-labelledby="process-heading">
-          <div className="mx-auto max-w-6xl"><p className="text-xs font-bold uppercase tracking-[0.18em] text-[#006B70]">How we work</p><h2 id="process-heading" className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">Make the work reviewable at every stage.</h2><ol className="mt-10 grid gap-8 sm:grid-cols-2 lg:grid-cols-4">{steps.map(([heading, text], index) => <li key={heading} className="border-t-2 border-[#dce2e8] pt-5"><span className="text-sm font-bold text-[#006B70]">0{index + 1}</span><h3 className="mt-3 text-lg font-bold">{heading}</h3><p className="mt-3 text-sm leading-7 text-[#526071]">{text}</p></li>)}</ol><div className="mt-10 border-t border-[#dce2e8] pt-7"><h3 className="text-lg font-semibold">A few practical details</h3><div className="mt-4 grid gap-6 md:grid-cols-3">{practicalDetails.map(([question, answer]) => <details key={question} className="border-t border-[#dce2e8] pt-3"><summary className={`min-h-11 cursor-pointer text-sm font-semibold ${focus}`}>{question}</summary><p className="mt-3 text-sm leading-7 text-[#526071]">{answer}</p></details>)}</div></div></div>
-        </section>
+        <BusinessProcess />
 
         <section id="about" className="scroll-mt-6 bg-[#12243A] px-5 py-16 text-white md:px-8 md:py-20" aria-labelledby="about-heading">
           <div className="mx-auto grid max-w-6xl gap-8 md:grid-cols-[0.7fr_1fr]">
