@@ -42,6 +42,19 @@ const nextConfig: NextConfig = {
           },
         ],
       },
+      ...[
+        "client-handover-module.html",
+        "learning-design.md",
+        "assessment-guide.md",
+        "client-review-checklist.md",
+        "setup-and-use.md",
+      ].map((filename) => ({
+        source: `/business/examples/${filename}`,
+        headers: [
+          { key: "Content-Disposition", value: `attachment; filename="${filename}"` },
+          { key: "X-Content-Type-Options", value: "nosniff" },
+        ],
+      })),
     ];
   },
 };

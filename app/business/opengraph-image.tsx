@@ -2,7 +2,7 @@ import { ImageResponse } from "next/og";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 
-export const alt = "ScienceDojo for Business — Onboarding Task Pilot from €1,490, subject to agreed scope";
+export const alt = "ScienceDojo for Business — Custom Onboarding Module from €1,490 per project, subject to agreed scope";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -13,9 +13,9 @@ export default async function BusinessSharingImage() {
       <div style={{ display: "flex", flexDirection: "column", width: 530 }}>
         <div style={{ display: "flex", fontSize: 32, fontWeight: 700, letterSpacing: "-1px" }}>sciencedojo<span style={{ color: "#006B70" }}>.</span></div>
         <div style={{ display: "flex", marginTop: 7, fontSize: 13, fontWeight: 700, letterSpacing: "3px", color: "#526071" }}>FOR BUSINESS</div>
-        <div style={{ display: "flex", marginTop: 40, fontSize: 65, fontWeight: 700, lineHeight: 1.03, letterSpacing: "-2px" }}>Onboarding Task Pilot.</div>
+        <div style={{ display: "flex", marginTop: 30, fontSize: 56, fontWeight: 700, lineHeight: 1.03, letterSpacing: "-2px" }}>Custom Onboarding Module.</div>
         <div style={{ display: "flex", marginTop: 24, fontSize: 24, lineHeight: 1.4, color: "#526071" }}>Practical onboarding for IT service and software implementation teams.</div>
-        <div style={{ display: "flex", marginTop: 30, fontSize: 30, fontWeight: 700, color: "#006B70" }}>From €1,490</div>
+        <div style={{ display: "flex", marginTop: 24, fontSize: 30, fontWeight: 700, color: "#006B70" }}>From €1,490 per project</div>
         <div style={{ display: "flex", marginTop: 8, fontSize: 16, color: "#526071" }}>Scope, delivery, dates, and applicable taxes agreed in the proposal.</div>
         <div style={{ display: "flex", marginTop: 27, fontSize: 17, color: "#12243A" }}>sciencedojo.co.uk/business</div>
       </div>

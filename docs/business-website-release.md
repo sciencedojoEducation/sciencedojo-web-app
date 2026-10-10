@@ -1,6 +1,6 @@
 # Business website verification and release
 
-The business page presents the Onboarding Task Pilot for English-working IT service and software implementation teams. On 9 October 2026 the owner explicitly approved publication, including the claims, €1,490 starting price, pilot scope, founder copy, and handover terms. The approved release was published to [the business page](https://www.sciencedojo.co.uk/business), and its live content, demo, form, links, and sharing image were verified.
+The business page now presents the Custom Onboarding Module for English-working IT service and software implementation teams. It was first published as the Onboarding Task Pilot on 9 October 2026, after the owner explicitly approved publication, including the claims, €1,490 starting price, scope, founder copy, and handover terms. That release was published to [the business page](https://www.sciencedojo.co.uk/business), and its live content, demo, form, links, and sharing image were verified. The follow-up improvement is recorded below; earlier checks describe the release on their stated date.
 
 ## Verification on 9 October 2026
 
@@ -64,3 +64,48 @@ The retained QA enquiries are labelled `ScienceDojo — website verification 202
 3. Deployed page, metadata, sharing image, main anchors, and full keyboard demo journey verified.
 4. Clearly labelled production enquiry saved, accurate visitor confirmation shown, and actual inbox receipt confirmed by the owner. Unauthenticated retry-route access rejected.
 5. Deployed release and results recorded here. The actual 200% browser zoom check on the contact and demo journeys was completed by the owner before publication.
+
+## Offer and evidence improvement — 10 October 2026
+
+The owner asked to implement the recommended improvements after reviewing competitor prices. The offer name is now **Custom Onboarding Module**, with **From €1,490 per project**, one task, one audience, English, up to three decisions, an application exercise, a scoring guide, two consolidated reviews, and agreed checks. The duration is consistently an estimate of **5–10 minutes of total learner practice**, including decisions, application, and review; it is not a measured learner completion time or a universal course-development price.
+
+The standard handover is a self-contained HTML browser module with its readable, editable HTML/CSS/JavaScript, approved learning design, the exercise/scoring guide, and setup instructions. The organisation may keep and use the delivered module internally without a ScienceDojo subscription or per-learner charge. It supplies suitable hosting if required. Reusable components and third-party assets retain their applicable licences. Browser and delivery-route suitability, final price, taxes, and dates are confirmed before signing. Managed hosting, updates, rollout support, SCORM, LMS reporting, integrations, accounts, certificates, and central response storage are outside the base package.
+
+The unchanged three-decision example is labelled a quick excerpt. The complete fictional example now includes an application exercise, an illustrative learner response, a worked four-criterion review and revision, learning brief/storyboard, review checklist, and proposed evaluation plan. It has not been evaluated with a client team. The worked response acknowledges an outstanding policy-link check but omits its owner, deadline, and follow-up; the rubric correctly rates that criterion as partly demonstrated.
+
+Five downloadable files live in `public/business/examples`. Regenerate them with:
+
+```sh
+node scripts/build-business-example.mjs
+```
+
+The generator reads the same pure decision logic and example data as the page. It embeds styles and JavaScript without API, CDN, font, or asset dependencies. Typed practice responses are neither submitted nor persisted. The companion documents are editable Markdown; keep them beside the HTML file for relative document links to work.
+
+Local verification:
+
+- Scoped ESLint and the four existing decision tests passed, including all 27 decision paths.
+- The generator passed syntax, deterministic-generation, ID, label, anchor, document-link, and external-dependency checks.
+- `npm run build` passed compilation, TypeScript, and production output. An existing unrelated SEO page retried after a timeout and then completed successfully.
+- The module ran from both the existing Next development server and an ordinary Python static server with no ScienceDojo application dependency. Browser checks covered a mistake followed by repair, feedback, completion, restart, heading focus, visible keyboard focus, and response clearing/reload.
+- The on-page application exercised temporary input, clearing, and a keyboard-operated sample-review disclosure. Mobile layouts were checked at 375 and 320 pixels with no horizontal page overflow; the new input and enquiry fields use 16px text on mobile.
+- The independent module also had no horizontal overflow at 320 and 375 pixels, with 16px input and control text. All five downloadable responses returned HTTP 200, explicit attachment filenames, and `nosniff`; their bodies matched the generated files byte for byte. A browser download saved the HTML file successfully, and that saved copy also matched the generated source.
+- The updated social-sharing image returned a valid PNG and was visually checked for readable offer and price text.
+- Automated direct-file navigation was blocked by the browser's URL policy. A manual saved-file check was requested; it must not be recorded as passed without the owner's response. Static-server operation and source dependency checks do not substitute for that check.
+
+The existing enquiry backend and notification configuration are unchanged. The owner-confirmed inbox tests above remain the receipt evidence; fictional practice responses are not enquiries.
+
+### Validation for the next client conversations
+
+Use a private sales record for the next three to five qualified opportunities. Do not put prospect details or raw learner responses in this repository or the public example. Record:
+
+| Item | What to capture |
+| --- | --- |
+| Fit | An established task/process, approved source material, subject expert, learner group, and decision maker. |
+| Comprehension | What the buyer believes the €1,490 starting fee includes, where the module runs, and whether they understand continued internal use. |
+| Buying decision | Actual budget disclosed, quoted scope/price, accepted or declined outcome, and stated objections. Do not infer a budget from employee count. |
+| Effort and costs | Actual briefing, design, development, assessment, revision, QA/handover, and sales hours; direct costs and any separately priced work. |
+| Evidence agreement | Task criteria, comparable before/after exercises if suitable, who reviews them, permission and agreed handling of learner work. |
+
+The original planning allowance was 20 project hours plus four contingency hours, not a measured delivery result. Recalculate price or scope from actual work rather than stretching the package or advertising a market average.
+
+For the first real case study, agree the task and rubric before building, use different comparable requests before/after where appropriate, record participation and review method, note other training or support, and inspect workplace transfer with the client. Publish only with permission, including the limits and contrary findings. Do not publish the fictional example's ratings as client results. These are ready-to-use evaluation instructions, not a claim that a real client project has already happened.

@@ -1,11 +1,11 @@
 import { ArrowRight, Check } from "lucide-react";
 
-const pilotSummary = [
+const moduleSummary = [
   "Up to three learning objectives and a storyboard to review.",
-  "Approximately 5–10 minutes of interactive practice, with up to three decisions and explanatory feedback.",
+  "Approximately 5–10 minutes of learner practice, including up to three decisions, explanatory feedback, an application exercise, and review.",
   "One practical application exercise and a scoring guide.",
   "Two consolidated review rounds and agreed technical checks.",
-  "Approved design documents and the working pilot in the agreed delivery format.",
+  "A self-contained browser module you can keep for internal training, editable code, design documents, and setup instructions.",
 ];
 
 const deliverables = [
@@ -13,11 +13,11 @@ const deliverables = [
   ["An agreed source pack", "Approximately 15 pages or 20 slides, subject to content-density review, with access to one subject expert."],
   ["A focused briefing", "One 45-minute briefing and limited written clarification."],
   ["Reviewable learning design", "Up to three observable learning objectives and one storyboard."],
-  ["Interactive practice", "Approximately 5–10 minutes using existing components, with up to three decisions and explanatory feedback."],
+  ["Task practice", "Approximately 5–10 minutes in total using existing components: up to three decisions with explanatory feedback, an application exercise, and review."],
   ["A practical assessment", "One realistic application exercise and a simple scoring guide your team can use."],
   ["Two review rounds", "One consolidated review of the storyboard and one of the working version, from your nominated approver."],
-  ["Agreed checks", "Usability and technical checks defined for the pilot and its delivery route."],
-  ["A clear handover", "Approved design documents and a working pilot in a delivery format confirmed before signing."],
+  ["Agreed checks", "Usability and technical checks for the module and your agreed browser delivery route."],
+  ["A usable handover", "A self-contained HTML module with editable HTML, CSS, and JavaScript, approved design documents, a scoring guide, and setup instructions."],
 ];
 
 function KnowledgeToPilotGraphic() {
@@ -61,7 +61,7 @@ function KnowledgeToPilotGraphic() {
         <ol className="grid grid-cols-3 gap-2 text-center text-[11px] font-semibold leading-4 text-[#526071] sm:text-xs">
           <li>Existing knowledge</li>
           <li>Designed practice</li>
-          <li>A working pilot</li>
+          <li>A usable module</li>
         </ol>
       </figcaption>
     </figure>
@@ -75,13 +75,13 @@ export default function BusinessOffer() {
         <div className="grid gap-10 lg:grid-cols-[0.95fr_1.05fr] lg:gap-12">
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#526071]">A practical place to start</p>
-            <h2 id="offer-heading" className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">Onboarding Task Pilot</h2>
-            <p className="mt-5 max-w-lg leading-7 text-[#526071]">We turn one approved workplace task into a tailored onboarding learning experience for one learner group, in English. Start with a client handover, a support response, or an agreed escalation.</p>
-            <p className="mt-7 text-3xl font-bold tracking-tight">From €1,490{" "}<span className="inline-block text-base font-medium tracking-normal text-[#526071]">per pilot project</span></p>
-            <div className="mt-6" aria-labelledby="pilot-summary-heading">
-              <h3 id="pilot-summary-heading" className="text-lg font-semibold">You receive</h3>
+            <h2 id="offer-heading" className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">Custom Onboarding Module</h2>
+            <p className="mt-5 max-w-lg leading-7 text-[#526071]">One complete module for one approved workplace task, one learner group, and one language: English. Start with a client handover, a support response, or an agreed escalation. A larger onboarding programme receives a separate quote.</p>
+            <p className="mt-7 text-3xl font-bold tracking-tight">From €1,490{" "}<span className="inline-block text-base font-medium tracking-normal text-[#526071]">per project</span></p>
+            <div className="mt-6" aria-labelledby="module-summary-heading">
+              <h3 id="module-summary-heading" className="text-lg font-semibold">You receive</h3>
               <ul className="mt-4 space-y-3 text-sm leading-6 text-[#526071]">
-                {pilotSummary.map((summary) => (
+                {moduleSummary.map((summary) => (
                   <li key={summary} className="flex items-start gap-3">
                     <Check className="mt-1 h-4 w-4 shrink-0 text-[#006B70]" aria-hidden="true" />
                     <span>{summary}</span>
@@ -89,9 +89,9 @@ export default function BusinessOffer() {
                 ))}
               </ul>
             </div>
-            <p className="mt-5 max-w-lg border-l-2 border-[#006B70] pl-4 text-sm leading-6 text-[#526071]"><strong className="font-semibold text-[#12243A]">5–10 minutes is learner practice time.</strong> Your project fee covers briefing, learning design, development, assessment, reviews, and handover.</p>
+            <p className="mt-5 max-w-lg border-l-2 border-[#006B70] pl-4 text-sm leading-6 text-[#526071]"><strong className="font-semibold text-[#12243A]">5–10 minutes is estimated learner practice time, including the application exercise and review.</strong> Your project fee covers briefing, learning design, development, assessment, client reviews, and handover.</p>
             <p className="mt-5 max-w-lg text-sm leading-6 text-[#526071]">For a project within the detailed scope below. Final scope, delivery arrangements, schedule, and applicable taxes are confirmed in the proposal before work begins.</p>
-            <a href="#contact" className="mt-6 inline-flex min-h-12 items-center gap-3 rounded-md bg-[#006B70] px-5 py-3 text-sm font-semibold text-white hover:bg-[#00565B] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#006B70]">Discuss a pilot <ArrowRight className="h-4 w-4 shrink-0" aria-hidden="true" /></a>
+            <a href="#contact" className="mt-6 inline-flex min-h-12 items-center gap-3 rounded-md bg-[#006B70] px-5 py-3 text-sm font-semibold text-white hover:bg-[#00565B] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#006B70]">Discuss your project <ArrowRight className="h-4 w-4 shrink-0" aria-hidden="true" /></a>
           </div>
           <div className="self-start rounded-lg border border-[#dce2e8] bg-white p-6 sm:p-7">
             <KnowledgeToPilotGraphic />
@@ -104,13 +104,14 @@ export default function BusinessOffer() {
           </div>
         </div>
         <div className="mt-10 border-t border-[#dce2e8] pt-8">
-          <h3 className="text-lg font-semibold">What the defined pilot includes</h3>
+          <h3 className="text-lg font-semibold">What the defined project includes</h3>
           <div className="mt-6 grid gap-x-8 gap-y-7 sm:grid-cols-2 lg:grid-cols-3">{deliverables.map(([heading, text]) => <div key={heading} className="border-t border-[#dce2e8] pt-5"><Check className="h-5 w-5 text-[#006B70]" aria-hidden="true" /><h4 className="mt-3 font-semibold">{heading}</h4><p className="mt-2 text-sm leading-6 text-[#526071]">{text}</p></div>)}</div>
         </div>
         <div className="mt-9 grid gap-7 border-t border-[#dce2e8] pt-7 md:grid-cols-2">
-          <div><h3 className="text-sm font-semibold">Outside the initial pilot</h3><p className="mt-3 text-sm leading-6 text-[#526071]">A complete onboarding curriculum, policy development, extensive research, bespoke video or animation, additional languages, custom AI features, new platform functionality, and organisation-wide deployment. Ongoing hosting, maintenance, and integrations are agreed and priced separately where required.</p></div>
-          <div><h3 className="text-sm font-semibold">Scope and delivery agreed before signing</h3><p className="mt-3 text-sm leading-6 text-[#526071]">The proposal confirms a tested delivery route, files and usage rights, whether the pilot is for evaluation or continued use, and any access period or continuing costs. Changes to the approved task, audience, or content after storyboard approval require revised scope. Work that does not match the agreed specification is corrected.</p><p className="mt-3 text-sm leading-6 text-[#526071]">Dates depend on the agreed scope, available capacity, and client reviews. Larger assignments receive a separate quote.</p></div>
+          <div><h3 className="text-sm font-semibold">Keep it and use it internally</h3><p className="mt-3 text-sm leading-6 text-[#526071]">Your organisation may keep and use the delivered module for its own internal training, with no ScienceDojo subscription or per-learner charge. Open the HTML file in an agreed browser or use your own suitable hosting. You receive readable, editable module code; reusable components and third-party assets retain their applicable licences.</p><p className="mt-3 text-sm leading-6 text-[#526071]">The browser module keeps practice responses in the current page only. Your team uses the scoring guide to review learner work.</p></div>
+          <div><h3 className="text-sm font-semibold">Scope and delivery agreed before signing</h3><p className="mt-3 text-sm leading-6 text-[#526071]">We confirm your browser and delivery route, final price, applicable taxes, and schedule before work begins. Changes to the approved task, audience, or content after storyboard approval require revised scope. Work that does not match the agreed specification is corrected.</p><p className="mt-3 text-sm leading-6 text-[#526071]">Dates depend on the agreed scope, available capacity, and client reviews.</p></div>
         </div>
+        <div className="mt-7 border-t border-[#dce2e8] pt-6"><h3 className="text-sm font-semibold">Separately scoped</h3><p className="mt-3 max-w-4xl text-sm leading-6 text-[#526071]">A full onboarding curriculum, policy development, extensive research, bespoke video or animation, additional languages, custom AI features, and rollout support. Managed hosting, maintenance, updates, and integrations are quoted separately. The standard browser module does not include learner accounts, central response storage, certificates, or LMS completion reporting. SCORM and compatibility with an existing LMS require separate confirmation and a quote.</p></div>
       </div>
     </section>
   );

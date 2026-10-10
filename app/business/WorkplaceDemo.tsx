@@ -29,7 +29,7 @@ export default function WorkplaceDemo() {
     <div className="overflow-hidden rounded-lg border border-[#dce2e8] bg-white shadow-[0_16px_44px_rgba(18,36,58,0.07)]">
       <div className="flex flex-wrap items-center justify-between gap-2 bg-[#12243A] px-5 py-4 text-white">
         <p className="text-sm font-semibold">Client request → clear handover</p>
-        <span className="text-[10px] font-medium uppercase tracking-[0.16em] text-[#d9e2e9]">Concept demo</span>
+        <span className="text-[10px] font-medium uppercase tracking-[0.16em] text-[#d9e2e9]">Quick excerpt</span>
       </div>
       <div className="grid sm:grid-cols-[7rem_minmax(0,1fr)]">
         <div className="hidden border-r border-[#e1e6eb] bg-[#F3F5F7] px-2 py-6 sm:block" aria-label="Demo overview">

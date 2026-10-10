@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="Fictional ScienceDojo workplace learning example: decisions, a practical handover exercise, and a scoring guide."><title>Client handover — ScienceDojo learning example</title><style>
+:root{color-scheme:light;--navy:#12243a;--teal:#006b70;--muted:#526071;--line:#dce2e8;--soft:#f3f5f7}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--soft);color:var(--navy);font:1rem/1.65 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+a{color:var(--teal);text-underline-offset:.2em}a,button,input,textarea,summary{touch-action:manipulation}a:focus-visible,button:focus-visible,input:focus-visible,textarea:focus-visible,summary:focus-visible{outline:3px solid var(--teal);outline-offset:4px}
+button,input,textarea{font:inherit}button,summary{cursor:pointer}button{min-height:44px;border:0;border-radius:5px;padding:.6rem 1rem;background:var(--navy);color:#fff;font-weight:650}button:hover{background:#213f5a}button:disabled{cursor:not-allowed;opacity:.55}
+header{background:var(--navy);color:white;padding:2.5rem 1.25rem}header>div,main,footer{width:min(100%,960px);margin:auto}header p{color:#d1dfec}h1,h2,h3{line-height:1.25;letter-spacing:-.02em}h1{font-size:clamp(1.9rem,5vw,3rem)}h2{font-size:clamp(1.5rem,4vw,2rem)}h3{font-size:1.1rem}
+main{padding:1.5rem 1.25rem 3rem}section{margin-top:1.5rem;padding:1.5rem;border:1px solid var(--line);border-radius:8px;background:white;scroll-margin-top:1rem}nav{display:flex;flex-wrap:wrap;gap:1rem;padding:.75rem 0}p{margin:.75rem 0}.label{font-size:.78rem;text-transform:uppercase;letter-spacing:.12em;font-weight:700;color:var(--teal)}.notice{border-left:3px solid var(--teal);background:#edf5f5;padding:.8rem 1rem}.muted{color:var(--muted)}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1.25rem}.source{white-space:pre-wrap;overflow-wrap:anywhere}.stage{font-size:.85rem;font-weight:700;color:var(--teal)}.context{padding:1rem;background:var(--soft);border-radius:5px}.options{display:grid;gap:.7rem}fieldset{border:0;padding:0;margin:1.25rem 0}legend{font-weight:650;margin-bottom:.8rem}
+.choice{display:flex;gap:.7rem;align-items:flex-start;min-height:44px;padding:.85rem;border:1px solid var(--line);border-radius:5px;cursor:pointer}.choice:has(input:checked){border-color:var(--teal);background:#edf5f5}.choice input{width:1rem;height:1rem;margin-top:.35rem;flex-shrink:0;accent-color:var(--teal)}.actions{display:flex;flex-wrap:wrap;justify-content:space-between;gap:.75rem;margin-top:1rem}.secondary{color:var(--teal);background:transparent;border:1px solid var(--line)}.secondary:hover{background:#edf5f5}
+textarea{display:block;width:100%;min-height:14rem;border:1px solid #8294a5;border-radius:5px;background:white;color:var(--navy);padding:.8rem;resize:vertical}label[for]{display:block;font-weight:650;margin:1rem 0 .5rem}small{display:block;color:var(--muted)}details{margin:1.25rem 0;border-top:1px solid var(--line);padding-top:1rem}summary{min-height:44px;font-weight:650;color:var(--teal)}.rubric-item{padding:1rem 0;border-top:1px solid var(--line)}.rubric-item:first-child{border-top:0}.rubric-item dl{margin:0}.rubric-item dt{font-weight:650}.rubric-item dd{margin:0 0 .6rem;color:var(--muted)}footer{padding:0 1.25rem 2rem;font-size:.85rem;color:var(--muted)}.skip{position:absolute;left:1rem;top:-8rem;background:white;padding:.75rem}.skip:focus{top:1rem}.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap}[hidden]{display:none!important}
+@media(max-width:600px){.grid{grid-template-columns:1fr}section{padding:1.1rem}main{padding:1rem}header{padding:1.75rem 1rem}.actions button{flex:1}h1{font-size:1.9rem}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}@media print{body{background:white}header{background:white;color:var(--navy)}header p{color:var(--muted)}nav,.skip,button,#decision-form{display:none}section{break-inside:avoid}details>*{display:block}textarea{height:16rem}}
+</style></head>
+<body><a class="skip" href="#main">Skip to the module</a><header><div><p class="label" style="color:#b9e0df">ScienceDojo for Business · Downloadable example</p><h1>Client request → clear handover</h1><p>Practise clarifying a request, agreeing a realistic scope, and preparing an actionable handover.</p><p><strong>Fictional studio concept · Not evaluated with a client team</strong></p></div></header>
+<main id="main"><nav aria-label="Module sections"><a href="#brief">The task</a><a href="#practice">Decision practice</a><a href="#application">Apply it</a><a href="#assessment">Example and scoring guide</a><a href="#use">Files and use</a></nav>
+<section id="brief" aria-labelledby="brief-heading"><p class="label">1 · Understand the task</p><h2 id="brief-heading">A clear request before work begins</h2><p>Turn a vague client request into an actionable brief before delivery starts.</p><p><strong>Audience:</strong> New project coordinators in a fictional IT service team.</p><h3>After this practice, you should be able to:</h3><ul><li>Prepare a handover that names scope, acceptance criteria, owner, approver, confirmed deadline, checkpoint, and an action for unresolved information.</li></ul><p class="notice">Allow around 5–10 minutes for the decisions, writing, and review, depending on your pace. The three decisions alone are a quick excerpt of about two minutes. Your pace may vary.</p></section>
+<section id="practice" aria-labelledby="practice-heading"><p class="label">2 · Practise the decisions</p><h2 id="practice-heading">Try, check, understand</h2><p>Choose a response and read the feedback before continuing. Earlier choices change the next situation.</p><p id="demo-stage" class="stage"></p><h3 id="demo-heading" tabindex="-1"></h3><p id="demo-context" class="context"></p>
+<form id="decision-form"><fieldset id="decision-options"><legend id="decision-question"></legend><div id="choices" class="options"></div></fieldset><div id="feedback" class="notice" role="status" aria-live="polite" aria-atomic="true"></div><div class="actions"><button id="next" type="submit" disabled>Check decision</button></div></form><div id="decision-review" hidden></div><button id="restart" class="secondary" type="button" style="margin-top:1rem">Start the decisions again</button><noscript><p class="notice">Enable JavaScript to use the decision practice. The exercise and scoring guide below remain readable without it.</p></noscript></section>
+<section id="application" aria-labelledby="application-heading"><p class="label">3 · Apply the approach</p><h2 id="application-heading">Prepare the handover</h2><p>Use the confirmed facts below to draft a short delivery brief. State the deliverable, owner, approver, deadline, checkpoint, and unresolved issue. Distinguish an agreed commitment from an assumption.</p><dl><dt><strong>Maya, the client approver</strong></dt><dd style="margin:.3rem 0 1rem">Approves a first-day PDF checklist for 20 new starters, with joining instructions and links to approved policies. She will accept it when those items are present and the links are correct.</dd><dt><strong>Alex, the delivery lead</strong></dt><dd style="margin:.3rem 0 1rem">Accepts ownership and confirms capacity to deliver the agreed checklist by Friday at 4 pm. A progress check is agreed for Thursday at 2 pm.</dd><dt><strong>Lina, the policy contact</strong></dt><dd style="margin:.3rem 0 1rem">Must confirm the current policy links by Thursday at noon. That confirmation is still outstanding.</dd><dt><strong>Portal integration</strong></dt><dd style="margin:.3rem 0 1rem">Is excluded from this handover. A separate scope and date have not been agreed.</dd></dl><label for="application-answer">Your handover response</label><textarea id="application-answer" aria-describedby="answer-guidance answer-status" autocomplete="off" maxlength="8000" placeholder="Deliverable and acceptance criteria: …
+Owner and approver: …
+Deadline and checkpoint: …
+Open issue, owner, and next action: …"></textarea><small id="answer-guidance">Use only this fictional scenario. Do not enter confidential or personal information. Nothing you write is transmitted or saved after the page closes or reloads.</small><p id="answer-status" class="muted" role="status" aria-live="polite">No answer entered yet.</p><button id="clear-answer" class="secondary" type="button">Clear my response</button><p>Compare your response with the scoring guide below. A team reviewer would assess the work sample; this example does not automatically grade your answer.</p></section>
+<section id="assessment" aria-labelledby="assessment-heading"><p class="label">4 · Inspect the assessment</p><h2 id="assessment-heading">An example response and completed scoring guide</h2><details><summary>Reveal a sample learner response</summary><div class="source"><p>Deliver a first-day PDF checklist for 20 new starters. Include joining instructions and approved policy links. Maya will accept the checklist when the required items are present and the links are correct.</p><p>Alex owns delivery; Maya is the client approver. Maya has approved this scope, and Alex has confirmed capacity to deliver by Friday at 4 pm. We will check progress on Thursday at 2 pm.</p><p>Portal integration is a separate request with no agreed delivery date. The policy links still need checking before the checklist is sent.</p></div></details><h3>The criteria</h3><p>Use the same guide to review a learner response. Ratings describe the evidence present; they are not a validated pass threshold.</p><article class="rubric-item"><h3>Scope</h3><p>Names the deliverable, audience, acceptance criteria, and excluded work.</p><dl><dt>Missing</dt><dd>Does not identify the deliverable or its acceptance criteria.</dd><dt>Partly demonstrated</dt><dd>Identifies the deliverable but leaves the audience, acceptance criteria, or exclusions unclear.</dd><dt>Clearly demonstrated</dt><dd>Records the agreed deliverable, audience, acceptance criteria, and excluded work.</dd></dl><p class="notice"><strong>Illustrative review: Clearly demonstrated.</strong><br>Names the first-day checklist, 20 new starters, approved policy links, and Maya’s acceptance. Separates portal integration from this delivery.</p></article><article class="rubric-item"><h3>Owner</h3><p>Names the accountable delivery owner, client approver, and next checkpoint.</p><dl><dt>Missing</dt><dd>Names no accountable owner or approver.</dd><dt>Partly demonstrated</dt><dd>Names an owner or approver but leaves responsibility or the checkpoint unclear.</dd><dt>Clearly demonstrated</dt><dd>Names the delivery owner and approver and records the agreed checkpoint.</dd></dl><p class="notice"><strong>Illustrative review: Clearly demonstrated.</strong><br>Names Alex as delivery owner and Maya as approver, with a Thursday 2 pm progress check.</p></article><article class="rubric-item"><h3>Deadline</h3><p>Records an explicit deadline that the delivery owner has confirmed for the agreed scope.</p><dl><dt>Missing</dt><dd>Gives no explicit deadline.</dd><dt>Partly demonstrated</dt><dd>Gives a deadline but does not record confirmation of capacity for the agreed scope.</dd><dt>Clearly demonstrated</dt><dd>Records the agreed day and time and the delivery owner’s confirmation of capacity.</dd></dl><p class="notice"><strong>Illustrative review: Clearly demonstrated.</strong><br>Records Friday at 4 pm and states that Alex has confirmed capacity for the approved scope.</p></article><article class="rubric-item"><h3>Uncertainty</h3><p>Identifies an unresolved issue, its owner, its check date, and a next action if it remains unresolved.</p><dl><dt>Missing</dt><dd>Treats unresolved information as confirmed or omits it.</dd><dt>Partly demonstrated</dt><dd>Acknowledges some uncertainty but omits an issue, its owner, its check date, or the action if unresolved.</dd><dt>Clearly demonstrated</dt><dd>Records the outstanding issue, who will resolve it, when it will be checked, and the action if it remains unresolved.</dd></dl><p class="notice"><strong>Illustrative review: Partly demonstrated.</strong><br>Acknowledges that policy links need checking and leaves portal work uncommitted, but omits Lina as the check owner, the Thursday noon deadline, and what to do if the links remain unconfirmed.</p></article><details><summary>Inspect a suggested revision</summary><p>Lina will confirm the current policy links by Thursday at noon. If confirmation is missing, flag the affected links to Alex and Maya before the 2 pm checkpoint and agree the next step before including them in the final checklist.</p></details><p class="notice">This is an illustrative response and assessor judgement, not a real learner result. A client subject expert would approve the task and criteria before they were used.</p></section>
+<section id="use" aria-labelledby="use-heading"><p class="label">5 · Keep and inspect the package</p><h2 id="use-heading">A module you can run independently</h2><p>This HTML file contains its own readable styles, content and JavaScript. Open it in a supported browser or place it on a static web server. It requires no account, API, external font, installation or ScienceDojo subscription.</p><p>The sample is provided for your organisation’s internal evaluation and learning. You may keep and adapt it for that internal use. It grants no exclusive intellectual-property assignment or right to resell or redistribute ScienceDojo materials.</p><p>Responses and decision progress exist only in this open page. There is no reporting to an LMS, central tracking, certificate, learner dashboard or data collection.</p><p>Companion editable documents: <a href="learning-design.md" download>learning design and storyboard</a>, <a href="assessment-guide.md" download>exercise and scoring guide</a>, <a href="client-review-checklist.md" download>client review and handover checklist</a>, and <a href="setup-and-use.md" download>setup and usage notes</a>. Keep them beside this HTML file to use these local links.</p></section>
+</main><footer>ScienceDojo for Business · Fictional learning sample. The editable files demonstrate one possible browser handover, not a complete onboarding curriculum.</footer><script>
+"use strict";
+const demo = (function () { const exports = {}; "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.demoSteps = void 0;
+exports.createDemoState = createDemoState;
+exports.getDemoScenario = getDemoScenario;
+exports.demoReducer = demoReducer;
+exports.getDemoReview = getDemoReview;
+exports.demoSteps = ["The request", "The trade-off", "The handover"];
+function createDemoState() {
+    return { step: 0, selected: null, decisions: [], checked: false, complete: false };
+}
+function getDemoScenario(state) {
+    const firstChoice = state.decisions[0]?.choice;
+    const secondChoice = state.decisions[1]?.choice;
+    if (state.step === 0) {
+        return {
+            title: "Clarify the request.",
+            context: "You’re a new project coordinator at a fictional studio. A client emails: “Can we have an onboarding guide by Friday? Keep it simple — similar to the last one.”",
+            question: "What do you do before passing the request to delivery?",
+            options: [
+                {
+                    choice: "clarify",
+                    label: "Ask about the audience, essential content, approver, and exact deadline.",
+                    feedback: "The client names Maya as approver and confirms a first-day checklist with policy links for 20 new hires, due Friday at 4 pm. You now have a brief to test with delivery.",
+                },
+                {
+                    choice: "promise",
+                    label: "Promise Friday and ask delivery to start a guide.",
+                    feedback: "Delivery starts a handbook. The client meant a first-day checklist. You’ve committed to a deadline before agreeing what needs to be built.",
+                },
+                {
+                    choice: "forward",
+                    label: "Forward the email and ask delivery how long it will take.",
+                    feedback: "Delivery estimates two days, but the format, essential content, and approver are still open. An estimate alone does not make this request actionable.",
+                },
+            ],
+        };
+    }
+    if (state.step === 1) {
+        const context = firstChoice === "clarify"
+            ? "Alex, the delivery lead, can finish the agreed checklist and policy links by Friday. Adding them to the client’s portal would take until Monday. Maya asks if “all onboarding” can still be ready on Friday."
+            : firstChoice === "promise"
+                ? "Alex has started a handbook, but Maya, the client approver, now explains that she needs a first-day checklist and policy links. Portal integration would take until Monday. Your Friday promise needs to be revisited."
+                : "Alex’s two-day estimate did not include portal integration, which would take until Monday. You learn that Maya is the client approver and Friday is the target. The actual deliverable still needs agreement.";
+        return {
+            title: "Resolve the trade-off.",
+            context,
+            question: "How do you resolve the mismatch between scope and time?",
+            options: [
+                {
+                    choice: "align",
+                    label: "Agree a Friday checklist with Maya; confirm portal work as a separate follow-up.",
+                    feedback: "Maya approves the checklist and policy links for Friday at 4 pm. Portal work is separate and has no promised date. Alex confirms capacity for the agreed deliverable.",
+                },
+                {
+                    choice: "assume",
+                    label: "Keep the Friday target and let Alex interpret “all onboarding.”",
+                    feedback: "Alex flags that portal work cannot fit by Friday. Maya has not approved a smaller deliverable. The team still has two different expectations.",
+                },
+                {
+                    choice: "escalate",
+                    label: "Ask your manager to choose the scope without checking with Maya.",
+                    feedback: "Your manager chooses a checklist, but Maya has not approved that change. Internal agreement helps with capacity; it does not replace agreement with the client.",
+                },
+            ],
+        };
+    }
+    const scopeAgreed = secondChoice === "align";
+    return {
+        title: "Make the handover usable.",
+        context: scopeAgreed
+            ? "The Friday checklist and policy links are approved. Alex has capacity. Portal work is separate. Delivery needs a clear record of who owns the work and when to check progress."
+            : secondChoice === "assume"
+                ? "Alex and Maya still have different expectations about Friday. Before delivery can proceed confidently, the scope needs client approval and a named owner."
+                : "Your manager has proposed a checklist. Maya’s approval is still missing. Before handing over, you need to confirm the scope with her and make ownership explicit.",
+        question: "What should happen before you mark this handover complete?",
+        options: [
+            {
+                choice: "confirm",
+                label: scopeAgreed
+                    ? "Assign Alex the approved checklist; record Maya’s approval, Friday 4 pm, and a Thursday check-in."
+                    : "Confirm scope with Maya and Friday 4 pm with Alex; name Alex as owner and record a Thursday check-in.",
+                feedback: scopeAgreed
+                    ? "Alex is the named delivery owner, Maya is the approver, and the scope, deadline, and checkpoint are written down. The handover is actionable."
+                    : "Maya approves the checklist and policy links. Alex confirms capacity for Friday at 4 pm and accepts delivery ownership. You record the approved scope, owner, deadline, and Thursday checkpoint; portal work is separate.",
+            },
+            {
+                choice: "handoff",
+                label: "Mark it complete and let delivery contact the client if anything is unclear.",
+                feedback: scopeAgreed
+                    ? "The scope is agreed, but ownership and the progress check are not recorded. Delivery has to reconstruct the handover instead of using one shared brief."
+                    : "The open scope is passed downstream. Delivery may start work the client has not approved, and no one has a shared record of ownership or the checkpoint.",
+            },
+            {
+                choice: "notes",
+                label: "Send the email thread and assume everyone knows their next step.",
+                feedback: "The thread contains context, but it is not an agreed handover. A brief should make the deliverable, owner, approver, deadline, and next checkpoint easy to find.",
+            },
+        ],
+    };
+}
+function demoReducer(state, action) {
+    if (action.type === "reset")
+        return createDemoState();
+    if (state.complete)
+        return state;
+    if (action.type === "select") {
+        if (state.checked || !getDemoScenario(state).options.some((option) => option.choice === action.choice))
+            return state;
+        return { ...state, selected: action.choice };
+    }
+    if (action.type === "check") {
+        if (state.checked || state.selected === null)
+            return state;
+        const decision = getDemoScenario(state).options.find((option) => option.choice === state.selected);
+        if (!decision)
+            return state;
+        return { ...state, decisions: [...state.decisions, decision], checked: true };
+    }
+    if (!state.checked)
+        return state;
+    if (state.step === 2)
+        return { ...state, complete: true };
+    return { ...state, step: (state.step + 1), selected: null, checked: false };
+}
+function getDemoReview(decisions) {
+    const practice = [];
+    if (decisions[0]?.choice !== "clarify")
+        practice.push("Clarify audience, scope, approver, and deadline before making a commitment.");
+    if (decisions[1]?.choice !== "align")
+        practice.push("Resolve scope and capacity with the client; make any follow-up work explicit.");
+    if (decisions[2]?.choice !== "confirm")
+        practice.push("Record the deliverable, owner, approver, deadline, and checkpoint in one brief.");
+    return {
+        outcome: decisions[2]?.choice === "confirm"
+            ? "You finished with an actionable handover."
+            : "Your handover still leaves work for others to clarify.",
+        practice: practice.length > 0
+            ? practice
+            : ["Use the scope–owner–deadline–checkpoint checklist on your next handover."],
+    };
+}
+
+return exports; })();
+let state = demo.createDemoState();
+const stage = document.getElementById("demo-stage");
+const heading = document.getElementById("demo-heading");
+const context = document.getElementById("demo-context");
+const form = document.getElementById("decision-form");
+const fieldset = document.getElementById("decision-options");
+const legend = document.getElementById("decision-question");
+const choices = document.getElementById("choices");
+const feedback = document.getElementById("feedback");
+const next = document.getElementById("next");
+const review = document.getElementById("decision-review");
+
+function paragraph(text, className) { const element = document.createElement("p"); element.textContent = text; if (className) element.className = className; return element; }
+function render(focusHeading) {
+  const scenario = demo.getDemoScenario(state);
+  stage.textContent = state.complete ? "Three decisions completed" : "Decision " + (state.step + 1) + " of 3 · " + demo.demoSteps[state.step];
+  heading.textContent = state.complete ? "Your handover review" : scenario.title;
+  form.hidden = state.complete;
+  context.hidden = state.complete;
+  review.hidden = !state.complete;
+  if (state.complete) {
+    const outcome = demo.getDemoReview(state.decisions);
+    review.replaceChildren(paragraph(outcome.outcome));
+    const list = document.createElement("ol");
+    for (const item of state.decisions) { const row = document.createElement("li"); row.textContent = item.label; list.append(row); }
+    review.append(list, paragraph("What to practise next", "label"));
+    const practice = document.createElement("ul");
+    for (const item of outcome.practice) { const row = document.createElement("li"); row.textContent = item; practice.append(row); }
+    review.append(practice, paragraph("This review describes the choices made in a fictional scenario. It is not a measure of workplace performance.", "muted"));
+    const link = document.createElement("a"); link.href = "#application"; link.textContent = "Continue to the practical exercise"; review.append(link);
+  } else {
+    context.textContent = scenario.context;
+    legend.textContent = scenario.question;
+    fieldset.disabled = state.checked;
+    choices.replaceChildren();
+    for (const option of scenario.options) {
+      const label = document.createElement("label"); label.className = "choice";
+      const input = document.createElement("input"); input.type = "radio"; input.name = "decision"; input.value = option.choice; input.checked = state.selected === option.choice;
+      input.addEventListener("change", () => { state = demo.demoReducer(state, { type: "select", choice: option.choice }); next.disabled = state.selected === null; });
+      const text = document.createElement("span"); text.textContent = option.label; label.append(input, text); choices.append(label);
+    }
+    feedback.replaceChildren();
+    if (state.checked) { feedback.append(paragraph("What happens next", "label"), paragraph(state.decisions[state.step].feedback)); }
+    next.disabled = state.selected === null;
+    next.textContent = state.checked ? (state.step === 2 ? "Review decisions" : "Continue") : "Check decision";
+  }
+  if (focusHeading) heading.focus({ preventScroll: true });
+}
+form.addEventListener("submit", (event) => { event.preventDefault(); const previous = state.step; state = demo.demoReducer(state, { type: state.checked ? "continue" : "check" }); render(previous !== state.step || state.complete); });
+document.getElementById("restart").addEventListener("click", () => { state = demo.createDemoState(); render(true); });
+const answer = document.getElementById("application-answer");
+const status = document.getElementById("answer-status");
+answer.value = "";
+answer.addEventListener("input", () => { status.textContent = answer.value.trim() ? "Your draft stays in this open page only. It is not sent or automatically scored." : "No answer entered yet."; });
+document.getElementById("clear-answer").addEventListener("click", () => { answer.value = ""; status.textContent = "Your draft has been cleared."; answer.focus(); });
+render(false);
+</script></body></html>
