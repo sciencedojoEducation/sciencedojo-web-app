@@ -109,3 +109,56 @@ Use a private sales record for the next three to five qualified opportunities. D
 The original planning allowance was 20 project hours plus four contingency hours, not a measured delivery result. Recalculate price or scope from actual work rather than stretching the package or advertising a market average.
 
 For the first real case study, agree the task and rubric before building, use different comparable requests before/after where appropriate, record participation and review method, note other training or support, and inspect workplace transfer with the client. Publish only with permission, including the limits and contrary findings. Do not publish the fictional example's ratings as client results. These are ready-to-use evaluation instructions, not a claim that a real client project has already happened.
+
+## Homepage navigation maintenance — 13 October 2026
+
+A read-only live check returned HTTP 200 for the homepage and business page. The homepage had one business link, Company → For Business in the footer, without an account requirement. Desktop navigation and the mobile menu had no business link.
+
+For Business is now an unconditional local link to `/business` in the desktop navigation and mobile menu. Desktop focus has a visible 2px outline and a 44px-high target. The mobile link uses the existing focus styling and closes the menu on activation. The drawer now scrolls vertically, after the short-phone check showed Sign up below the viewport with all currently enabled menu items.
+
+Local verification passed:
+
+- Scoped ESLint for NavbarClient and MobileNavbarMenu, plus `npm run typecheck`.
+- At 1280 × 900, all six desktop navigation links fit without overlapping the guest account/assessment controls; the business link is visible after Resources.
+- At 375 × 667, the menu has 659px of content in a 587px scroll area. Keyboard access reaches the lower utilities; Sign up is visible after scrolling.
+- Escape closes the drawer and returns focus to its trigger. Keyboard Enter on the mobile business link and clicking its desktop counterpart reach the public business page, whose heading is visible. Body scrolling is restored after navigation.
+
+Screenshots: [desktop navigation](../output/qa/business-nav-desktop-2026-10-13.jpg) and [mobile navigation](../output/qa/business-nav-mobile-2026-10-13.jpg).
+
+**Release status:** local implementation and checks only; no commit, push or deployment has been performed for this maintenance. The previously deployed footer route remains the live-site evidence. No enquiry submission, owner approval of new commercial claims, or accessibility certification is implied by these navigation checks.
+
+## Readable supporting documents — 14 October 2026
+
+After the owner reported confusion about Markdown-only downloads, the four supporting documents now have complete PDF reading copies alongside their editable text sources. The page's primary action is Download PDF; each card also has a distinct Editable text (.md) link. The heading is Explore a sample delivery package, with a plain-language explanation of the formats. The package has an `example-package` anchor. The HTML demonstration, commercial offer, fictional label and human-review assessment remain intact.
+
+The PDFs are generated from the canonical Markdown, which itself comes from the shared example data through the existing Node generator. Regenerate in this order:
+
+```sh
+node scripts/build-business-example.mjs
+python3 scripts/build-business-documents.py
+```
+
+The Python step requires ReportLab, supplied by the Codex bundled Python runtime. If the system Python lacks it, use the bundled Python executable. It builds all four by default, accepts an individual document name, and rejects unknown names clearly. It uses available Unicode fonts with fallbacks and invariant metadata for repeatable output on the same runtime/fonts. No new runtime or build dependency was added to the website; the generated PDFs are static assets.
+
+| PDF | Pages | Bytes |
+| --- | --- | --- |
+| learning-design.pdf | 1 | 46,426 |
+| assessment-guide.pdf | 3 | 50,468 |
+| client-review-checklist.pdf | 1 | 45,602 |
+| setup-and-use.pdf | 2 | 50,226 |
+
+Verification passed:
+
+- All seven pages rendered with Poppler and were visually inspected for legibility, pagination, glyphs, headers and footers. All 105 source blocks and source hashes matched; 24 public link annotations were verified. Consecutive regeneration produced identical PDF hashes.
+- Scoped ESLint and type checking passed. The Node example generator parses the standalone runtime and rejects remote runtime assets/response persistence as before. Actual Node → Python regeneration succeeded; the no-argument, single-document and invalid-name parser paths were checked.
+- All four local PDF routes returned HTTP 200, `application/pdf`, explicit attachment filenames and `nosniff`. Response bodies matched the PDF assets byte for byte. A browser click saved learning-design.pdf, whose saved bytes matched the source asset.
+- The business page presents four PDF and four editable-text links with distinct accessible names, sibling anchors and visible 2px inset keyboard outlines. Layout checks at 1280px, 375px and 320px found no horizontal page overflow; secondary links have 44px-high targets.
+- The standalone HTML has separate links to all four PDFs and their four editable text versions. It explains that these companions are separate downloads and must be kept alongside the HTML for relative links. Setup notes distinguish reading PDFs from editing text and qualify direct saved-file use: check the chosen browser/delivery route before relying on it with learners. This does not complete the still-pending saved-file operation test.
+
+Screenshots: [desktop document downloads](../output/qa/business-documents-desktop-2026-10-14.jpg) and [phone document downloads](../output/qa/business-documents-mobile-2026-10-14.jpg).
+
+**Release status:** generated assets and website changes are local, uncommitted and unpublished. Public PDF links embedded in the documents will be available after deployment. No Word-document capability, client outcome, enquiry receipt or certification has been inferred from these format improvements.
+
+### Document wordmark alignment
+
+On 14 October, Piumal confirmed the logo should use the simple lowercase wordmark **sciencedojo.**, with a trailing dot. Both PDF generators now render navy lowercase lettering and a teal dot on the same baseline, matching the existing business-page wordmark. The four supporting documents and two-page brochure were regenerated. All nine pages were rendered and visually checked: the wordmark and dot are present without clipping or overlap. Body content, legal company naming, page counts and all 28 PDF link annotations match their previous versions. The table above reflects the updated PDF sizes. [Brand guidelines](brand-guidelines.md) record the rule, and AGENTS.md directs future document work to follow it. Publication remains pending.

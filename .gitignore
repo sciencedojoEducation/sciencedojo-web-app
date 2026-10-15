@@ -47,3 +47,6 @@ next-env.d.ts
 
 # Cached official A2/B1 source pages
 /tmp/nicos-a2-b1/
+
+# Private business planning, prospect research and owner inputs
+/.business-private/

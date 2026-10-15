@@ -6,6 +6,7 @@ import HandoverApplication from "./HandoverApplication";
 import { handoverBrief, handoverDocuments, handoverEvaluationPlan, handoverRubric, handoverStoryboard } from "./handover-example";
 
 const focus = "focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#006B70]";
+const documentFocus = "focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-[#006B70]";
 const designChoices = [
   ["Decisions before explanations", "Learners choose what to do with a realistic request, then see the consequence and reasoning."],
   ["A connected scenario", "Earlier decisions change the context of the next step, so the task develops as a single experience."],
@@ -37,8 +38,8 @@ const documentPreviews = [
     title: "Setup & use",
     file: "setup-and-use.md",
     icon: FolderOpen,
-    caption: "Run the module",
-    excerpt: "Open client-handover-module.html in a browser with JavaScript enabled.",
+    caption: "Using your files",
+    excerpt: "Read, print or share the PDFs using a PDF reader.",
   },
 ];
 function PracticePreview() {
@@ -113,10 +114,10 @@ export default function BusinessEvidence({ practiceEnabled, focusEnabled }: { pr
             </div>
           </div>
           <HandoverApplication />
-          <div className="border-t border-[#dce2e8] bg-[#F3F5F7] p-6 sm:p-8">
+          <div id="example-package" className="scroll-mt-6 border-t border-[#dce2e8] bg-[#F3F5F7] p-6 sm:p-8">
             <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#006B70]">03 · Inspect the supporting documents</p>
-            <h3 className="mt-3 text-xl font-semibold tracking-tight">The module comes with a design trail.</h3>
-            <p className="mt-3 max-w-3xl text-sm leading-7 text-[#526071]">Explore the actual files behind this fictional example: the complete browser module and four editable documents.</p>
+            <h3 className="mt-3 text-xl font-semibold tracking-tight">Explore a sample delivery package.</h3>
+            <p className="mt-3 max-w-3xl text-sm leading-7 text-[#526071]">Download the interactive example and four supporting PDFs. Editable text versions are also available. All materials belong to this fictional demonstration.</p>
             <div className="mt-6 grid overflow-hidden rounded-xl border border-[#c7dedf] bg-white md:grid-cols-[0.9fr_1.1fr]">
               <div className="flex flex-col justify-center bg-[#12243A] p-6 text-white sm:p-7">
                 <div className="flex items-center gap-3 text-[#b9e0df]"><MonitorPlay className="h-6 w-6" aria-hidden="true" /><p className="text-[11px] font-semibold uppercase tracking-[0.14em]">Complete browser module · HTML</p></div>
@@ -133,16 +134,19 @@ export default function BusinessEvidence({ practiceEnabled, focusEnabled }: { pr
               </figure>
             </div>
             <div className="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-              {documentPreviews.map(({ title, file, icon: Icon, caption, excerpt }) => <a key={file} href={`/business/examples/${file}`} download className={`group flex flex-col overflow-hidden rounded-lg border border-[#dce2e8] bg-white transition-colors hover:border-[#006B70] ${focus}`}>
+              {documentPreviews.map(({ title, file, icon: Icon, caption, excerpt }) => <article key={file} className="flex flex-col overflow-hidden rounded-lg border border-[#dce2e8] bg-white transition-colors hover:border-[#006B70]">
+                <a href={`/business/examples/${file.replace(/\.md$/, ".pdf")}`} download aria-label={`Download ${title} (PDF)`} className={`group flex flex-1 flex-col ${documentFocus}`}>
                 <div className="flex flex-1 flex-col p-4">
-                  <div className="flex items-center justify-between gap-3"><Icon className="h-5 w-5 text-[#006B70]" aria-hidden="true" /><span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#526071]">Editable · Markdown</span></div>
+                  <div className="flex items-center justify-between gap-3"><Icon className="h-5 w-5 text-[#006B70]" aria-hidden="true" /><span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#526071]">PDF document</span></div>
                   <p className="mt-4 text-sm font-semibold">{title}</p>
                   <div className="mt-4 flex-1 border-l-2 border-[#c7dedf] pl-3"><p className="text-[11px] font-semibold uppercase tracking-wide text-[#006B70]">{caption}</p><p className="mt-2 break-words text-[13px] leading-5 text-[#526071]">{excerpt}</p>{file === "assessment-guide.md" && <div className="mt-3 flex flex-wrap gap-1.5">{handoverRubric[0].levels.map(({ rating }) => <span key={rating} className="rounded bg-[#F3F5F7] px-2 py-1 text-[11px] leading-4 text-[#526071]">{rating}</span>)}</div>}{file === "client-review-checklist.md" && <div className="mt-3 flex items-center gap-2 text-[11px] font-medium text-[#006B70]"><Check className="h-3.5 w-3.5 shrink-0" aria-hidden="true" /><span>Process · Facts · Criteria</span></div>}</div>
                 </div>
-                <span className="flex min-h-11 items-center justify-between gap-2 border-t border-[#dce2e8] bg-[#F3F5F7] px-4 py-3 text-xs font-semibold text-[#006B70] group-hover:bg-[#edf5f5]">Download document <ArrowDownToLine className="h-3.5 w-3.5 shrink-0" aria-hidden="true" /></span>
-              </a>)}
+                <span className="flex min-h-11 items-center justify-between gap-2 border-t border-[#dce2e8] bg-[#F3F5F7] px-4 py-3 text-xs font-semibold text-[#006B70] group-hover:bg-[#edf5f5]">Download PDF <ArrowDownToLine className="h-3.5 w-3.5 shrink-0" aria-hidden="true" /></span>
+                </a>
+                <a href={`/business/examples/${file}`} download aria-label={`Download editable text for ${title} (.md)`} className={`inline-flex min-h-11 items-center border-t border-[#dce2e8] px-4 py-3 text-xs text-[#526071] underline underline-offset-4 hover:text-[#006B70] ${documentFocus}`}>Editable text (.md)</a>
+              </article>)}
             </div>
-            <p className="mt-4 text-xs leading-6 text-[#526071]">Document cards show real excerpts from the files. Open the downloaded HTML in your browser and keep the companion documents beside it. Practice drafts stay in the current page only; there is no central learner record or LMS completion report.</p>
+            <p className="mt-4 text-xs leading-6 text-[#526071]">The PDFs are for reading, printing, and sharing; the text versions can be edited in a text editor. The interactive example is a separate browser file. Practice drafts stay in the current page only; there is no central learner record or LMS completion report.</p>
             <div className="mt-5 grid gap-4 md:grid-cols-2">
               <details className="rounded-lg border border-[#dce2e8] bg-white p-5">
                 <summary className={`min-h-11 cursor-pointer text-sm font-semibold text-[#006B70] ${focus}`}>Learning brief &amp; storyboard</summary>

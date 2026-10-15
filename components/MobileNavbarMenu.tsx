@@ -149,7 +149,7 @@ export default function MobileNavbarMenu({
           role="dialog"
           aria-modal="true"
           aria-label="Mobile navigation"
-          className="mr-auto flex h-full min-h-full w-[min(82vw,24rem)] flex-col border-r border-secondary/10 bg-white px-4 pb-8 pt-6 shadow-2xl"
+          className="mr-auto flex h-full min-h-full w-[min(82vw,24rem)] flex-col overflow-y-auto overscroll-contain border-r border-secondary/10 bg-white px-4 pb-8 pt-6 shadow-2xl"
         >
           <nav className="grid gap-1.5" aria-label="Mobile primary navigation">
             {showCourses && <Link href="/courses" onClick={closeMenu} className={navLinkClass}>Courses</Link>}
@@ -181,6 +181,9 @@ export default function MobileNavbarMenu({
                 FocusDojo
               </Link>
             )}
+            <Link href="/business" onClick={closeMenu} className={navLinkClass}>
+              For Business
+            </Link>
             {showFreeAssessment && (
               <BookAssessmentLink
                 source="navbar_mobile"

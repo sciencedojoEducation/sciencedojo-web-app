@@ -48,6 +48,10 @@ const nextConfig: NextConfig = {
         "assessment-guide.md",
         "client-review-checklist.md",
         "setup-and-use.md",
+        "learning-design.pdf",
+        "assessment-guide.pdf",
+        "client-review-checklist.pdf",
+        "setup-and-use.pdf",
       ].map((filename) => ({
         source: `/business/examples/${filename}`,
         headers: [
