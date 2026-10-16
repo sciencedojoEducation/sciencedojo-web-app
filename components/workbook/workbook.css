@@ -33,5 +33,5 @@ fieldset.wb-exercises{border:0;padding:0;margin:0;min-width:0}.wb-source-depende
 .wb-shared-player small{display:block;font-size:12px;color:#355538}
 .wb-audio-timeline{display:flex;align-items:center;gap:10px;font-size:12px;font-variant-numeric:tabular-nums}
 .wb-audio-timeline input{min-width:0;flex:1;height:44px;accent-color:#23634f;cursor:pointer}
-@media(max-width:1050px){.wb-shared-player{left:8px;right:8px}}
+@media(max-width:1020px){.wb-shared-player{left:8px;right:8px}}
 @media(max-width:380px){.wb-shared-player{padding:8px 10px}.wb-shared-player .wb-button,.wb-shared-player .wb-primary-button{padding:8px}.wb-shared-player label{gap:4px}}
