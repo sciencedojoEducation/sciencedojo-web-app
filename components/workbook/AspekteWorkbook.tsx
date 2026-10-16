@@ -7,6 +7,8 @@ import { BookOpen, Check, CheckCheck, ChevronLeft, ChevronRight, Download, Uploa
 import { workbookFieldKey, workbookAnswerParts, setWorkbookAnswerPart, workbookQuickSession, type WorkbookQuickFilter, type WorkbookManifest, type StudyPage, type StudyExercise, type WorkbookAnswers, type FieldResult, type CheckResult, type StudyField, type WorkbookBlock } from "@/lib/aspekte-workbook";
 import type { AcademyLanguageFeedback } from "@/lib/academy-language-feedback";
 import WorkbookRecorder from "./WorkbookRecorder";
+import { prepareWorkbookRecordingUpload } from "@/lib/workbook-recording-client";
+import { createClient as createStorageClient } from "@/utils/supabase/client";
 import WorkbookAudio, { type WorkbookAudioHandle } from "./WorkbookAudio";
 import WorkbookMarkers from "./WorkbookMarkers";
 import WorkbookRecordingHistory from "./WorkbookRecordingHistory";
@@ -336,16 +338,27 @@ function ExerciseCard({ exercise, page, answers, results, onAnswer, bank, setBan
 
   async function requestFeedback() {
     setBusy(true); setError("");
+    const uploadEndpoint = `${API}/recordings/upload?exercise=${encodeURIComponent(key)}&account=${encodeURIComponent(recordingScope.split(":")[0])}`;
+    let temporaryTicket: string | undefined;
     try {
       const form = new FormData(); form.set("page", String(page)); form.set("exercise", exercise.id); form.set("accountId", recordingScope.split(":")[0]);
-      if (audio) form.set("audio", audio, "answer"); else form.set("text", text);
+      if (audio && cloudRecordings) {
+        const grant = await prepareWorkbookRecordingUpload(uploadEndpoint, audio, "feedback", async (grant, file) => {
+          const result = await createStorageClient().storage.from("workbook-recordings").uploadToSignedUrl(grant.path, grant.token, file, { contentType: grant.mime, cacheControl: "0" });
+          if (result.error) throw new Error("Audio upload could not finish. Your local recording is safe; retry feedback when connected.");
+        });
+        temporaryTicket = grant.ticket; form.set("audioTicket", grant.ticket);
+      } else if (audio) form.set("audio", audio, "answer"); else form.set("text", text);
       const response = await fetch(`${API}/feedback`, { method: "POST", body: form });
       const body = await response.json();
       if (!response.ok) throw new Error(body.message);
       setFeedback(body.feedback); setFeedbackInput(text);
       if (body.saved) onFeedbackSaved(); else setError("Feedback is shown, but could not be saved to your history. Keep a copy before leaving.");
     } catch (error) { setError(error instanceof Error ? error.message : "Feedback is unavailable."); }
-    setBusy(false);
+    finally {
+      if (temporaryTicket) await fetch(uploadEndpoint, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "cancel", ticket: temporaryTicket }) }).catch(() => {});
+      setBusy(false);
+    }
   }
 
   const placed = new Set((exercise.content || []).flatMap(block => [block.text || "", ...(block.rows || []).flat()].flatMap(text => [...text.matchAll(/\{\{([^}]+)\}\}/g)].map(match => match[1].split("#")[0]))));

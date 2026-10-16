@@ -122,7 +122,7 @@ try{
    const row=ok(await admin.from('workbook_recordings').select('storage_path').eq('user_id',users[0].id).single(),'disposable recording');recordingPaths.push(row.storage_path);
    assert.ok((await b.client.storage.from('workbook-recordings').download(row.storage_path)).error);
    assert.deepEqual(ok(await b.client.from('workbook_recordings').select('id'),'other recordings'),[]);
-   const recording=(await(await request(anotherDevice,path)).json()).recording;assert.ok(recording.url);assert.equal((await fetch(recording.url)).status,200);
+   const recording=(await(await request(anotherDevice,path)).json()).recording;assert.ok(recording.url);assert.equal((await fetch(new URL(recording.url,origin),{headers:{Cookie:anotherDevice.cookie}})).status,200);
    await request(a,path,null,200,{method:'DELETE'});
    assert.equal((await(await request(anotherDevice,path)).json()).recording,null);
    assert.ok((await admin.storage.from('workbook-recordings').download(row.storage_path)).error);
