@@ -1,7 +1,7 @@
 /** Return audio on the workbook origin, including the range headers mobile players use. */
-export function workbookAudioStream(upstream: Response) {
+export function workbookAudioStream(upstream: Response, contentType = "audio/mp4") {
   const headers = new Headers({
-    "Content-Type": "audio/mp4",
+    "Content-Type": ["audio/mp4", "audio/webm", "audio/ogg"].includes(contentType) ? contentType : "application/octet-stream",
     "Accept-Ranges": "bytes",
     "Cache-Control": "private, no-store",
     "Content-Disposition": "inline",

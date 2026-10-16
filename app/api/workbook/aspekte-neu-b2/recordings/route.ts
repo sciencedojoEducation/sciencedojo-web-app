@@ -1,26 +1,13 @@
-import { createAdminClient } from "@/utils/supabase/admin";
-import { requireWorkbookAccess, workbookError, workbookSameOrigin, WorkbookAccessError, WORKBOOK_KEY } from "@/lib/workbook-access";
-import { readWorkbookLearning } from "@/lib/workbook-learning-server";
-import { readWorkbookPage } from "@/lib/aspekte-workbook-server";
-import { chapterForPage } from "@/lib/workbook-study";
+import { workbookError, workbookSameOrigin, WorkbookAccessError, WORKBOOK_KEY } from "@/lib/workbook-access";
+import { workbookRecordingTarget as target } from "@/lib/workbook-recording-target";
 import { getAcademyRecordingFormat } from "@/lib/academy-recording";
 const json = (body: unknown, status = 200) => Response.json(body, { status, headers: { "Cache-Control": "private, no-store" } });
-async function target(request: Request) {
-  const access = await requireWorkbookAccess(request); if (access.local) throw new WorkbookAccessError(400, "Cloud recording saves require an invited account.");
-  if (new URL(request.url).searchParams.get("account") !== access.id) throw new WorkbookAccessError(401, "Your account changed. Reload before saving a recording.");
-  const exercise = new URL(request.url).searchParams.get("exercise") || "";
-  const [pageNumber, id] = exercise.split(":"); const page = await readWorkbookPage(Number(pageNumber));
-  if (!page || !page.exercises.some(e => e.id === id && e.mode === "speaking")) throw new WorkbookAccessError(404, "Speaking exercise not found.");
-  const state = await readWorkbookLearning(access); const run = state.draft.exerciseRuns?.[exercise] || state.draft.runs[String(chapterForPage(page.bookPage))] || "initial";
-  return { access, exercise, run, admin: createAdminClient() };
-}
 export async function GET(request: Request) {
   try {
     const { access, exercise, run, admin } = await target(request);
     const { data, error } = await admin.from("workbook_recordings").select("id,storage_path,created_at").eq("user_id", access.id).eq("book_key", WORKBOOK_KEY).eq("exercise_key", exercise).eq("run_id", run).maybeSingle();
     if (error) throw error; if (!data) return json({ recording: null });
-    const signed = await admin.storage.from("workbook-recordings").createSignedUrl(data.storage_path, 300); if (signed.error) throw signed.error;
-    return json({ recording: { id: data.id, url: signed.data.signedUrl, createdAt: data.created_at } });
+    return json({ recording: { id: data.id, url: `/api/workbook/${WORKBOOK_KEY}/recordings/media/${data.id}?account=${access.id}`, createdAt: data.created_at } });
   } catch (e) { return workbookError(e); }
 }
 export async function POST(request: Request) {

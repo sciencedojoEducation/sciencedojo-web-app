@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Mic, Square, Upload, Trash2 } from "lucide-react";
+import { createClient } from "@/utils/supabase/client";
+import { uploadWorkbookRecording } from "@/lib/workbook-recording-client";
 
 async function audioStore(key: string, value?: Blob | null): Promise<Blob | null> {
   return new Promise((resolve, reject) => {
@@ -38,9 +40,18 @@ export default function WorkbookRecorder({ id, onAudio, exerciseKey, cloudEnable
   async function cloudSave(remove = false) {
     setCloudBusy(true);
     try {
-      const form = new FormData(); if (blob) form.set("audio", blob, "answer");
-      const r = await fetch(endpoint, { method: remove ? "DELETE" : "POST", ...(remove ? {} : { body: form }) });
-      const data = await r.json(); if (!r.ok) throw new Error(data.message);
+      setMessage(remove ? "Removing account recording…" : "Saving recording privately…");
+      let data: { warning?: string };
+      if (remove) {
+        const r = await fetch(endpoint, { method: "DELETE" });
+        data = await r.json(); if (!r.ok) throw new Error((data as { message?: string }).message || "Recording deletion unavailable.");
+      } else {
+        if (!blob) throw new Error("Choose a local recording first.");
+        data = await uploadWorkbookRecording(endpoint.replace("/recordings?", "/recordings/upload?"), blob, async (grant, file) => {
+          const result = await createClient().storage.from("workbook-recordings").uploadToSignedUrl(grant.path, grant.token, file, { contentType: grant.mime, cacheControl: "0" });
+          if (result.error) throw new Error("The recording upload could not finish. Your local recording has not been removed. Retry saving when connected.");
+        });
+      }
       await loadCloud(); setMessage(data.warning || (remove ? "Recording removed from your account." : "Recording saved privately to your account."));
     } catch (e) { setMessage(e instanceof Error ? e.message : "Cloud recording unavailable."); }
     setCloudBusy(false);
@@ -117,6 +128,6 @@ export default function WorkbookRecorder({ id, onAudio, exerciseKey, cloudEnable
     {legacyBlob && !url && <button className="wb-button" onClick={() => { void save(legacyBlob); setLegacyBlob(null); }}>Import earlier device recording into this attempt</button>}
     {url && <audio controls src={url} preload="metadata" aria-label="Your spoken answer" />}
     {cloudEnabled && <div className="wb-cloud-recording"><button className="wb-button" disabled={!blob || recording || cloudBusy} onClick={() => void cloudSave()}>Save to my account</button>{cloudUrl && <><audio controls src={cloudUrl} preload="none" aria-label="Your privately saved recording" /><button className="wb-button" disabled={cloudBusy || recording} onClick={async () => { setCloudBusy(true); try { const r = await fetch(cloudUrl); if (!r.ok) throw new Error("Saved recording could not load. Refresh the page and retry."); const saved = await r.blob(); setBlob(saved); callback.current(saved); setMessage("Saved recording selected. Request Gemini feedback when ready."); } catch (e) { setMessage(e instanceof Error ? e.message : "Unable to load saved recording."); } finally { setCloudBusy(false); } }}>Use saved recording for feedback</button><button className="wb-text-button" disabled={cloudBusy} onClick={() => void cloudSave(true)}>Delete account recording</button></>}</div>}
-    <small role="status">{message || "Your recording stays on this device until you request Gemini feedback."}</small>
+    <small role="status">{message || "Your recording stays on this device unless you choose Save to my account or request Gemini feedback."}</small>
   </div>;
 }

@@ -8,8 +8,7 @@ export async function GET(request: Request) {
     if (access.local) return json({ recordings: [] });
     const offset = Number(params.get("offset") || 0); if (!Number.isSafeInteger(offset) || offset < 0) throw new WorkbookAccessError(400, "Invalid recording page.");
     const admin = createAdminClient(); const { data, error } = await admin.from("workbook_recordings").select("id,exercise_key,run_id,storage_path,created_at").eq("user_id", access.id).eq("book_key", WORKBOOK_KEY).order("created_at", { ascending: false }).range(offset, offset + 49); if (error) throw error;
-    const signed = data.length ? await admin.storage.from("workbook-recordings").createSignedUrls(data.map(r => r.storage_path), 300) : { data: [], error: null }; if (signed.error) throw signed.error;
-    return json({ recordings: data.map((r, i) => ({ id: r.id, exercise: r.exercise_key, run: r.run_id, at: r.created_at, url: signed.data?.[i]?.signedUrl || null })), hasMore: data.length === 50 });
+    return json({ recordings: data.map(r => ({ id: r.id, exercise: r.exercise_key, run: r.run_id, at: r.created_at, url: `/api/workbook/${WORKBOOK_KEY}/recordings/media/${r.id}?account=${access.id}` })), hasMore: data.length === 50 });
   } catch (e) { return workbookError(e); }
 }
 export async function DELETE(request: Request) {

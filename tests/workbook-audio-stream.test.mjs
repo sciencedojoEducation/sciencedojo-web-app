@@ -19,6 +19,10 @@ test('unavailable storage and malformed ranges never become misleading audio res
  const broken=workbookAudioStream(new Response('bad',{status:206}));assert.equal(broken.status,502);
  const unsatisfiable=workbookAudioStream(new Response('range error',{status:416,headers:{'Content-Range':'bytes */1000'}}));assert.equal(unsatisfiable.status,416);assert.equal(unsatisfiable.headers.get('content-range'),'bytes */1000');assert.equal(await unsatisfiable.text(),'');
 });
+test('private recording streams preserve supported browser audio formats without trusting arbitrary content types',()=>{
+ for(const mime of ['audio/mp4','audio/webm','audio/ogg'])assert.equal(workbookAudioStream(new Response('audio'),mime).headers.get('content-type'),mime);
+ assert.equal(workbookAudioStream(new Response('audio'),'text/html').headers.get('content-type'),'application/octet-stream');
+});
 test('playback errors distinguish a required tap, a network failure and unsupported media',()=>{
  assert.match(workbookPlaybackError({name:'NotAllowedError'}),/playback tap/);
  assert.match(workbookPlaybackError(null,{code:2}),/connection/);
