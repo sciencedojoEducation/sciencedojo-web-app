@@ -123,7 +123,7 @@ Verified screenshot: `private-materials/aspekte-neu-b2/derived/native-book-previ
 
 The active goal is implementation of the approved symbols/accounts/mobile/revision plan.
 It is **not complete** until the remaining deployment and device verification gates pass.
-The owner has now applied migration 069 and the prepared private workbook package has been uploaded. No learner rollout, deployment, commit or push has been performed. See the latest cloud verification entry below; earlier blocked-audit entries are historical.
+The owner has now applied migration 069 and the prepared private workbook package has been uploaded. A local workbook release commit is ready; learner rollout and production deployment remain pending. See the latest cloud verification entry below; earlier blocked-audit entries are historical.
 
 Implemented locally:
 
@@ -213,11 +213,16 @@ A temporary standalone production server on loopback port 3002 uses private Supa
 
 ### Review branch preparation
 
-The connected GitHub repository's current `main` matches local HEAD `f9e46167e5e065dc4f72b88b77485b39bcfdb94d`. Its Vercel commit status is successful and points to deployment `6YFjQuANXQ9g2UwkxqfCdQ7BsbRt`, confirming the existing GitHub-to-Vercel workflow. No new production deployment is claimed. Repository metadata reports push permission, but the connector later rejected blob creation with HTTP 403, `Resource not accessible by integration`; it cannot publish this snapshot. The local GitHub CLI credential is invalid.
+The connected GitHub repository's current `main` matches local HEAD `f9e46167e5e065dc4f72b88b77485b39bcfdb94d`. Its Vercel commit status is successful and points to deployment `6YFjQuANXQ9g2UwkxqfCdQ7BsbRt`, confirming the existing GitHub-to-Vercel workflow. No new production deployment is claimed. Repository metadata reports push permission, but the connector later rejected blob creation with HTTP 403, `Resource not accessible by integration`; it cannot publish this snapshot. The initial restricted-network CLI probe reported invalid authentication; an explicit network-enabled recheck confirmed the existing CLI login is valid.
 
-A scoped review snapshot includes the 53 workbook source, route, test, script, icon and documentation files. It excludes the unrelated business backlog edit, all private source/media/learner files, and environment files; configured secret values were checked absent. The workbook remains disabled by default in production. A review PR remains pending valid GitHub write authentication, browser access and Vercel environment configuration. No remote branch or pull request was created by the rejected blob calls.
+A scoped review snapshot includes the 53 workbook source, route, test, script, icon and documentation files. It excludes the unrelated business backlog edit, all private source/media/learner files, and environment files; configured secret values were checked absent. The workbook remains disabled by default in production. The valid network-enabled GitHub CLI can publish the review branch; browser and Vercel environment verification remain pending. No remote branch or pull request was created by the rejected blob calls.
 
 
 ### Local release snapshot
 
-Preparing the 53 reviewed workbook files on a local `codex/private-b2-workbook` branch. This retains the current tested source and excludes the unrelated business backlog edit. Private book/source/media/learner state and environment files are ignored and absent from the snapshot. GitHub publication is blocked by the connector's write-permission rejection and invalid CLI authentication. Vercel project: `sciencedojo-s-projects/sciencedojo-web-app`, deployed from the connected repository. Production enabling still requires `WORKBOOK_STORAGE=supabase` and `WORKBOOK_ENABLED=true`, followed by private HTTPS and device checks. Do not merge or enable access on the strength of local or synthetic API checks alone.
+Preparing the 53 reviewed workbook files on a local `codex/private-b2-workbook` branch. This retains the current tested source and excludes the unrelated business backlog edit. Private book/source/media/learner state and environment files are ignored and absent from the snapshot. The connector rejects writes, but the existing GitHub CLI login works when network access is allowed. Vercel project: `sciencedojo-s-projects/sciencedojo-web-app`, deployed from the connected repository. Production enabling still requires `WORKBOOK_STORAGE=supabase` and `WORKBOOK_ENABLED=true`, followed by private HTTPS and device checks. Do not merge or enable access on the strength of local or synthetic API checks alone.
+
+
+### Network-authentication correction
+
+An explicit network-enabled `gh auth status` confirmed the existing user login is valid with repository scope. The earlier default-sandbox probe misleadingly reported invalid authentication when networking was restricted. The connector's separate HTTP 403 still applies to that integration, but valid user GitHub CLI authentication provides the normal authorized publication workflow. A network-enabled remote check confirmed `main` still at `f9e46167e5e065dc4f72b88b77485b39bcfdb94d` and no existing workbook branch. Fresh computer inventory now reports the Mac unlocked; the original browser tab remains a stale connection-error page.
