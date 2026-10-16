@@ -14,7 +14,7 @@ const maintenanceAllowedPrefixes = [
   "/_next",
 ];
 
-export function proxy(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname, searchParams } = request.nextUrl;
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set("x-next-pathname", pathname);
@@ -23,6 +23,11 @@ export function proxy(request: NextRequest) {
       headers: requestHeaders,
     },
   });
+
+  if ((pathname.startsWith("/workbooks/") || pathname.startsWith("/api/workbook/")) && process.env.WORKBOOK_ENABLED === "true") {
+    const { updateSession } = await import("@/utils/supabase/middleware");
+    return updateSession(request);
+  }
 
   if (
     pathname === "/" &&

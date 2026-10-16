@@ -2,6 +2,11 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   output: "standalone",
+  outputFileTracingExcludes: {
+    // Production workbook content is fetched from private Supabase storage.
+    "/*": ["./private-materials/**/*"],
+    "/api/workbook/**/*": ["./public/**/*"],
+  },
   experimental: {
     serverActions: {
       bodySizeLimit: "10mb",
