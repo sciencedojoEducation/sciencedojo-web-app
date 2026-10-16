@@ -175,10 +175,10 @@ export function recordWorkbookAttempt(state: WorkbookLearningState, pages: Workb
 }
 export function workbookChapterStats(state: WorkbookLearningState, chapter: number, totalFields: number) {
   const submitted = state.attempts.filter(a => a.chapter === chapter && a.kind === "chapter");
-  const score = (a: WorkbookAttempt) => a.result.scored ? Math.round(a.result.correct / a.result.scored * 100) : null;
+  const score = (a: WorkbookAttempt) => a.result.scored ? Math.round(a.result.correct / a.result.scored * 1000) / 10 : null;
   const scores = submitted.map(score).filter((n): n is number => n !== null);
   const independent = submitted.filter(a => !a.assisted).map(score).filter((n): n is number => n !== null);
   const latest = submitted.at(-1);
   const filled = Object.entries(state.draft.answers).filter(([k, v]) => chapterForPage(Number(k.split(":")[0])) === chapter && v.trim()).length;
-  return { first: submitted[0] ? score(submitted[0]) : null, latest: latest ? score(latest) : null, best: scores.length ? Math.max(...scores) : null, bestUnassisted: independent.length ? Math.max(...independent) : null, attempts: submitted.length, answered: filled, totalFields, needsPractice: latest ? (score(latest) ?? 100) < 80 : false };
+  return { first: submitted[0] ? score(submitted[0]) : null, latest: latest ? score(latest) : null, best: scores.length ? Math.max(...scores) : null, bestUnassisted: independent.length ? Math.max(...independent) : null, attempts: submitted.length, answered: filled, totalFields, needsPractice: !!latest && latest.result.scored > 0 && latest.result.correct * 100 < latest.result.scored * 80 };
 }

@@ -26,6 +26,16 @@ test('chapter submissions preserve fixed denominators, history, idempotency and 
  const stats=workbookChapterStats(state,1,3);assert.equal(stats.first,50);assert.equal(stats.latest,100);assert.equal(stats.best,100);assert.equal(stats.bestUnassisted,50);
  state.draft.assisted=[];recordWorkbookAttempt(state,[page],{...input,id:'practice',kind:'practice'});assert.equal(workbookChapterStats(state,1,3).attempts,2);
 });
+test('completed chapter scores just under 80 percent still need practice; exactly 80 does not',()=>{
+ const state=emptyWorkbookLearningState();
+ const attempt={id:'threshold',chapter:1,kind:'chapter',run:'initial',at:now,answers:{},assisted:false,contentVersion:'fixture',result:{fields:{},correct:103,scored:129,unanswered:0,review:0}};
+ state.attempts=[attempt];
+ const below=workbookChapterStats(state,1,129);assert.equal(below.needsPractice,true);assert.equal(below.latest,79.8);assert.equal(below.bestUnassisted,79.8);
+ state.attempts=[{...attempt,result:{...attempt.result,correct:4,scored:5}}];
+ assert.equal(workbookChapterStats(state,1,5).latest,80);assert.equal(workbookChapterStats(state,1,5).needsPractice,false);
+ state.attempts=[{...attempt,result:{...attempt.result,correct:0,scored:0}}];
+ assert.equal(workbookChapterStats(state,1,0).latest,null);assert.equal(workbookChapterStats(state,1,0).needsPractice,false);
+});
 test('revision uses 1/3/7/14 day intervals and failures restart at one day',()=>{
  const state=emptyWorkbookLearningState();queueWorkbookReview(state,6,'1','uncertain',now);let item=state.reviews[0];
  for(const days of [1,3,7,14]){item=advanceWorkbookReview(item,true,now);assert.equal(Date.parse(item.due)-Date.parse(now),days*86400000);}
