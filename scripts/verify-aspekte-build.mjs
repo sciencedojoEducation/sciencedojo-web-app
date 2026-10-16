@@ -24,7 +24,13 @@ for(const trace of files){
  }
  routes.push({route:relative(build,trace),files:data.files.length,bytes});
 }
-const report={checkedAt:new Date().toISOString(),privateSourceFiles:0,staticPublicFiles:0,routes};
+const serverTraces=await traces(join(root,'.next/server/app'));
+for(const trace of serverTraces)for(const entry of JSON.parse(await readFile(trace,'utf8')).files){
+ assert.ok(!relative(root,resolve(trace,'..',entry)).split('\\').join('/').startsWith('private-materials/'),`Private file traced into ${relative(root,trace)}`);
+}
+const standalonePrivate=await stat(join(root,'.next/standalone/private-materials')).then(()=>true,error=>{if(error.code==='ENOENT')return false;throw error;});
+assert.equal(standalonePrivate,false,'Private materials were copied into the standalone deployment');
+const report={checkedAt:new Date().toISOString(),serverTraces:serverTraces.length,privateSourceFiles:0,staticPublicFiles:0,standalonePrivateFiles:false,routes};
 const evidence=join(root,'private-materials/aspekte-neu-b2/derived');await mkdir(evidence,{recursive:true});
 await writeFile(join(evidence,'build-trace-verification.json'),JSON.stringify(report,null,2)+'\n');
 console.log(JSON.stringify(report,null,2));
