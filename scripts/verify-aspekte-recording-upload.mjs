@@ -43,6 +43,7 @@ try{
  await call(a,upload,{action:'prepare',mime:'audio/mp4',bytes:100},403,{headers:{Origin:'https://wrong.example'}});
  await call(a,upload,{action:'prepare',mime:'audio/mp4',bytes:10*1024*1024+1},400);
  await call(a,upload,{action:'prepare',mime:'text/plain',bytes:100},400);
+ await call(a,upload.replace(`exercise=${exercise}`,`exercise=${exercise}:extra`),{action:'prepare',mime:'audio/mp4',bytes:100},404);
  for(const fixture of fixtures){
   const grant=await prepare(fixture.bytes);await call(a,upload,{action:'complete',ticket:grant.ticket});
   await call(second,upload,{action:'complete',ticket:grant.ticket}); // Lost success response retry.
