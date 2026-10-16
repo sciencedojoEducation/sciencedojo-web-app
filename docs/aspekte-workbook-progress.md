@@ -277,3 +277,10 @@ Activation deployment `EBHTqcyNtsRi2K7Kjn9USE4SozTm` reached Ready on the checke
 - The disposable identity, learner rows and local credentials were removed. The requested owner account was rechecked as verified, unsuspended and a current workbook member; its role was not changed. The existing live-site desktop login was preserved rather than replaced for testing.
 
 Evidence: `derived/production-gates-enabled-verification.json`, `derived/production-live-api-verification.json`, and private owner-access verification. These are production HTTP/API checks; prior real browser interaction was verified in the private HTTPS preview of the same source build. They do not prove physical-phone/tablet touch/audio behavior or real microphone capture. The owner has been given the live link and asked to test answer persistence, numbered playback and recording on the phone. Those acceptance results remain pending. No general learner invitations have been distributed.
+
+
+### Chapter-end quick-session follow-up — 17 October 2026
+
+The acceptance audit found that starting a chapter quick session from its vocabulary pages returned no exercises despite eligible earlier tasks. Session selection now begins at the current page and fills remaining places from earlier pages in that same chapter. Whole exercise IDs are retained. Listening still requires explicit exercise markers or repeat-track references; unavailable Lehrbuch tasks remain excluded, and revision includes only due exercises.
+
+All 140 start positions across ten chapters produced five unique complete exercise IDs. The native browser confirmed page 18 starts a five-exercise session with its preceding source context and reaches the complete fifth exercise. The original local preview state was restored, and legacy browser answers were not imported. The 25 focused tests, TypeScript and targeted ESLint passed. Evidence: `derived/quick-session-selection-verification.json`. This follow-up is awaiting normal remote build/release checks; the existing private production workbook remains active. Physical-device acceptance remains pending.

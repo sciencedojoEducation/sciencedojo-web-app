@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { checkWorkbookPages, normaliseWorkbookAnswer, studyPage, workbookByteRange, isLocalWorkbookRequest, workbookAnswerParts, setWorkbookAnswerPart } from "../lib/aspekte-workbook.ts";
+import { checkWorkbookPages, normaliseWorkbookAnswer, studyPage, workbookByteRange, isLocalWorkbookRequest, workbookAnswerParts, setWorkbookAnswerPart, workbookQuickSession } from "../lib/aspekte-workbook.ts";
 
 const page = {
   bookPage: 6, section: "Wortschatz", kind: "exercises", tracks: [2], warnings: [],
@@ -11,6 +11,24 @@ const page = {
     { id: "4", label: "Ich kann", options: ["+", "0", "-"], answers: [], evaluation: "self" },
   ] }],
 };
+
+test("chapter quick sessions still offer five whole exercises from the chapter's final pages", () => {
+  const pages = [6, 7, 8, 9, 10, 11].map(bookPage => studyPage({ ...page, bookPage }));
+  assert.deepEqual(workbookQuickSession(pages, "chapter", 11, new Set()), ["11:2", "6:2", "7:2", "8:2", "9:2"]);
+  assert.deepEqual(workbookQuickSession(pages, "chapter", 19, new Set()), ["6:2", "7:2", "8:2", "9:2", "10:2"]);
+  assert.deepEqual(pages.map(p => p.bookPage), [6, 7, 8, 9, 10, 11]);
+});
+
+test("quick filters use explicit listening references and exclude unavailable source tasks", () => {
+  const pages = [6, 7, 8, 9].map(bookPage => studyPage(structuredClone({ ...page, bookPage })));
+  pages[0].exercises[0].markers = [{ type: "audio", label: "3", position: "heading", track: 3 }];
+  pages[1].exercises[0].relatedTracks = [3];
+  pages[2].tracks = [9]; // A page summary alone is not an exercise-to-track mapping.
+  pages[3].exercises[0].requiresSource = "lehrbuch";
+  pages[3].exercises[0].markers = [{ type: "audio", label: "4", position: "heading", track: 4 }];
+  assert.deepEqual(workbookQuickSession(pages, "listening", 6, new Set()), ["6:2", "7:2"]);
+  assert.deepEqual(workbookQuickSession(pages, "revision", 6, new Set(["6:2", "8:2", "9:2"])), ["6:2", "8:2"]);
+});
 
 test("fixed answers use explicit alternatives; open responses and self-review never inflate the score", () => {
   const result = checkWorkbookPages([page], { "6:2:1": " VERTRAUT. ", "6:2:2": "nirgendwo", "6:2:3": "Meine eigene Antwort", "6:2:4": "+" });

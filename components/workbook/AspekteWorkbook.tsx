@@ -4,7 +4,7 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { BookOpen, Check, CheckCheck, ChevronLeft, ChevronRight, Download, Upload, Headphones, Sparkles, ArrowUpRight, X, Menu, ZoomIn, GripVertical, CircleCheck, CircleAlert, LoaderCircle, RotateCcw } from "lucide-react";
-import { workbookFieldKey, workbookAnswerParts, setWorkbookAnswerPart, type WorkbookManifest, type StudyPage, type StudyExercise, type WorkbookAnswers, type FieldResult, type CheckResult, type StudyField, type WorkbookBlock } from "@/lib/aspekte-workbook";
+import { workbookFieldKey, workbookAnswerParts, setWorkbookAnswerPart, workbookQuickSession, type WorkbookQuickFilter, type WorkbookManifest, type StudyPage, type StudyExercise, type WorkbookAnswers, type FieldResult, type CheckResult, type StudyField, type WorkbookBlock } from "@/lib/aspekte-workbook";
 import type { AcademyLanguageFeedback } from "@/lib/academy-language-feedback";
 import WorkbookRecorder from "./WorkbookRecorder";
 import WorkbookAudio, { type WorkbookAudioHandle } from "./WorkbookAudio";
@@ -45,7 +45,7 @@ export default function AspekteWorkbook({ manifest }: { manifest: WorkbookManife
   const setNotes = (value: Record<string, string> | ((current: Record<string, string>) => Record<string, string>)) => updateDraft("notes", value);
   const setVisited = (value: number[] | ((current: number[]) => number[])) => updateDraft("visited", value);
   const setPageNumber = (page: number) => updateDraft("position", current => ({ ...current, page }));
-  const [quickFilter, setQuickFilter] = useState("chapter");
+  const [quickFilter, setQuickFilter] = useState<WorkbookQuickFilter>("chapter");
   const [conflictChoices, setConflictChoices] = useState<Record<string, "local" | "remote">>({});
   const [chapters, setChapters] = useState<Record<number, StudyPage[]>>({});
   const [error, setError] = useState("");
@@ -152,7 +152,7 @@ export default function AspekteWorkbook({ manifest }: { manifest: WorkbookManife
       let content = chapters[selectedChapter];
       if (!content) { const r = await fetch(`${API}?chapter=${selectedChapter}`); const data = await r.json(); if (!r.ok) throw new Error(data.message); content = data.pages; setChapters(current => ({ ...current, [selectedChapter]: content })); }
       const due = new Set(study.state.reviews.filter(r => r.due && Date.parse(r.due) <= Date.now()).map(r => r.key));
-      const items = content.flatMap(p => p.exercises.filter(e => !e.requiresSource).filter(e => quickFilter === "listening" ? (e.markers?.some(m => m.type === "audio") || !!e.relatedTracks?.length) : quickFilter === "revision" ? due.has(`${p.bookPage}:${e.id}`) : e.fields.some(f => f.evaluation !== "self")).map(e => `${p.bookPage}:${e.id}`)).filter(k => quickFilter !== "chapter" || Number(k.split(":")[0]) >= pageNumber).slice(0, 5);
+      const items = workbookQuickSession(content, quickFilter, pageNumber, due);
       if (!items.length) { setError("No matching exercises here. Choose an earlier page or another chapter."); return; }
       if (quickFilter === "revision") {
         // Archive existing work before creating blank review responses.
@@ -247,7 +247,7 @@ export default function AspekteWorkbook({ manifest }: { manifest: WorkbookManife
     <div className="wb-main">
       <header className="wb-topbar"><div><button className="wb-icon-button wb-mobile-menu" aria-label="Open chapter menu" onClick={() => setDrawer(true)}><Menu size={20} /></button><span className="wb-breadcrumb">Mein Lernraum <ChevronRight size={13} /> Arbeitsbuch B2</span></div><span className="wb-save-status" role="status"><span className="wb-local-dot" />{storageMessage}</span></header>
       <div className="wb-workspace">
-        <nav className="wb-study-nav" aria-label="Study views"><button className="wb-button" aria-pressed={position.view === "book"} onClick={() => updateDraft("position", p => ({ ...p, view: "book" }))}>Book</button><label>Quick session <select aria-label="Quick session filter" value={quickFilter} onChange={e => setQuickFilter(e.target.value)}><option value="chapter">This chapter</option><option value="listening">Listening</option><option value="revision">Revision due</option></select></label><button className="wb-button" disabled={!initialised || checking} onClick={() => void startQuickSession()}>Start 5 exercises</button><button className="wb-button" aria-pressed={position.view === "progress"} onClick={() => updateDraft("position", p => ({ ...p, view: "progress" }))}>My progress</button></nav>
+        <nav className="wb-study-nav" aria-label="Study views"><button className="wb-button" aria-pressed={position.view === "book"} onClick={() => updateDraft("position", p => ({ ...p, view: "book" }))}>Book</button><label>Quick session <select aria-label="Quick session filter" value={quickFilter} onChange={e => setQuickFilter(e.target.value as WorkbookQuickFilter)}><option value="chapter">This chapter</option><option value="listening">Listening</option><option value="revision">Revision due</option></select></label><button className="wb-button" disabled={!initialised || checking} onClick={() => void startQuickSession()}>Start 5 exercises</button><button className="wb-button" aria-pressed={position.view === "progress"} onClick={() => updateDraft("position", p => ({ ...p, view: "progress" }))}>My progress</button></nav>
         {study.loadError && <p className="wb-error" role="alert">{study.loadError}</p>}
         {study.legacy && <section className="wb-import-notice"><p>Answers from the previous browser-only workbook are available. Import them into this study account? Your original backup will be kept.</p><button className="wb-button" disabled={!!study.conflict} onClick={() => { try { const saved = localStorage.getItem(STORAGE); if (saved) restoreBackup(JSON.parse(saved)); study.dismissLegacy(); } catch { setError("The old browser backup could not be read."); } }}>Import previous answers and notes</button><button className="wb-text-button" onClick={study.dismissLegacy}>Keep for later</button></section>}
         {study.conflict && <WorkbookConflictPanel conflict={study.conflict} choices={conflictChoices} onChoice={(key, choice) => setConflictChoices(current => ({ ...current, [key]: choice }))} onResolve={() => study.resolve(conflictChoices)} onExport={() => { const d = study.conflict!.local; setBackupText(JSON.stringify({ version: 1, answers: d.answers, page: d.position.page, visited: d.visited, notes: d.notes }, null, 2)); setBackupMessage("Unsent answers from this device before resolving the conflict."); backupDialog.current?.showModal(); }} />}
