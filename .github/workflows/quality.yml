@@ -36,3 +36,6 @@ jobs:
 
       - name: Build production application
         run: npm run build
+
+      - name: Verify private workbook build traces
+        run: node scripts/verify-aspekte-build.mjs
