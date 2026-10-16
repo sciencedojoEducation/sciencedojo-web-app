@@ -1,0 +1,223 @@
+# Personal Aspekte neu B2 workbook
+
+Private workbook, separate from ScienceDojo business work.
+
+Current account/mobile upgrade: implemented locally; cloud migration, private HTTPS deployment, and visual/mobile acceptance remain pending. The original delivery below is historical; see the upgrade section at the end.
+
+## Original delivered implementation (before account upgrade)
+
+Local URL: `http://localhost:3000/workbooks/aspekte-neu-b2`.
+Source: `/Users/piumalmahawasala/Downloads/Aspekte Neu B2 Arbeitsbuch.pdf`.
+
+- All ten chapters, printed pages 6–145 (140 pages), have interactive book content.
+  There are 403 exercise groups, including vocabulary notes and self-assessment.
+- The main view recreates the book with passages, tables, inline blanks, matching,
+  selections and writing fields. Original photos, cartoons, comics, maps and diagrams
+  are extracted from the supplied PDF. Detailed reading/ad cards retain their original
+  typography as cropped source graphics; illustrations have an in-book enlarge view.
+- All 185 PDF pages remain available in the optional original reference, including
+  answer key and listening transcripts. It is not a separate reading pane.
+- All 51 imported CD tracks are browser-compatible WAVs, with source originals kept.
+  Listening tasks have their corresponding tracks and speed controls; the full audio
+  library includes the introductory track as well.
+- Page, chapter and whole-book checks use 1,334 fixed-answer items. The 565 open-review
+  fields show published examples where available and offer Gemini review; personal
+  responses and vocabulary notes do not inflate fixed scores. Whole sentences with
+  exact-key checks also offer Gemini review when an alternative differs from the key.
+- Set answers require every member, independent of order; token assignment appends to
+  multiword sets. Separate verb positions share one checked answer. Punctuation-only
+  answers preserve the difference between a full stop and question mark.
+- Existing server-side Gemini key/provider reused for requested learner feedback.
+  Supports writing and audio, with English/Sinhala explanations. No bulk source
+  transcription was sent to Google.
+- Answers, notes and position save in localStorage. Audio recordings save in IndexedDB.
+  Text/notes backups support JSON download/import and an editable text export/restore
+  fallback. Audio recordings are explicitly excluded from those backups.
+- Book files, content JSON and audio remain in gitignored `private-materials/`.
+  Routes are development-only, loopback-only and enforce same-origin POST requests.
+  Nothing was published or deployed.
+
+## Verification
+
+Agent checks on 16 October 2026:
+
+- `scripts/audit-aspekte-workbook.mjs --require-complete`: PASS. All 140 pages native,
+  no missing page or structural issue; 185 source JPEGs and 51 source/derived tracks.
+- Unit/provider tests: 15 PASS, including spelling preservation, multi-answer sets,
+  segmented answers, punctuation distinctions, key hiding, audio ranges and origins.
+- Final TypeScript and ESLint passed after the backup, image zoom and whole-book
+  checking changes; all 15 unit/provider tests passed again.
+- Live local HTTP: all ten chapters return 140 ready/native pages; no field answer keys
+  leak before checking. Whole-book submission of all 1,334 canonical answers scores
+  1,334/1,334. Cross-origin POST returns 403. Opposite punctuation correctly fails.
+  Evidence: `private-materials/aspekte-neu-b2/derived/http-verification.json`.
+- Previously checked all 51 WAV range responses; original track 2 plays at 0.75×.
+- Browser: native source artwork/passages, multiword tap assignment and checking,
+  answer persistence across reload, segmented verb answers on mobile, whole-book
+  summary, and original-image enlarge dialog passed.
+- Browser: backup text round-trip restored the test answer; invalid backup preserved
+  current answers. Blob download did not produce an automation download event in the
+  in-app browser; text export/restore provides a verified fallback. Native file
+  download receipt is not claimed.
+- Live Gemini feedback appeared in the workbook for a fictional German response;
+  no invented corrections appeared. Test entries were cleared afterward.
+- Phone breakpoint 390×844: passages and inline controls readable, no document-level
+  horizontal overflow, original images loaded; chapter drawer and checking worked.
+  Temporary viewport override reset after the check.
+- Original-asset crops inspected and refined, including complete adverts A–L,
+  maps, comics, photos and text-bearing graphics. This is agent QA, not independent
+  proofreading or an independent learner usability study.
+
+## Practical limits
+
+Some exercises explicitly require the separate Lehrbuch, which was not supplied.
+Those dependencies are flagged rather than filled with invented source material.
+The original is available for checking any transcription discrepancy. Source text
+and keys have been authored/reviewed by the agent; a structural audit alone is not
+proof of perfect semantic transcription. Live human microphone capture has not been
+verified; the browser requires the user's microphone permission. Recording API
+handling/provider audio payloads are covered by the existing provider tests.
+
+## Source transcription permission history
+
+Automatic approval review rejected the initial bulk Gemini transcription call because
+permission covered learner feedback, not exporting scanned pages, OCR and answer-key
+content to Google. An explicit question was sent; no approval arrived. All remaining
+source authoring was therefore completed locally. Bulk export is no longer needed.
+Do not run `scripts/extract-aspekte-workbook.mjs` without explicit approval for that
+specific transmission. Learner-triggered feedback remains within the authorized scope.
+
+## Local authoring and maintenance
+
+Private material root: `private-materials/aspekte-neu-b2/`.
+Derived data: `derived/manifest.json`, `content/006.json` through `145.json`, `figures/`,
+`pages/`, `audio/`, `text/` and `source-text.json`.
+
+Private local authoring helpers (`derived/local-chapter-*.py`) write field-only data.
+Never rerun them over native pages without preserving enrichment. Native scripts
+(`derived/native-chapter-*.py`) add source passages and assets. Some final fixes are
+manual: chapter 2 page 20 segmented verb, chapter 2 page 28 full-height reading cards,
+chapter 3 page 35 word grid and refined crops. Run `native-post-review.py` after any
+chapter 4/10 native regeneration to retain final readability/word-building hint fixes.
+The shared `native-common.py` vocabulary helper provides writable meaning fields.
+Keep the ignored authoring directory; it contains the personal book itself.
+
+Preparation is resumable:
+
+```sh
+python3 scripts/prepare-aspekte-workbook.py --pdf '/Users/piumalmahawasala/Downloads/Aspekte Neu B2 Arbeitsbuch.pdf'
+node scripts/audit-aspekte-workbook.mjs --require-complete
+```
+
+Owned development server exec session: 36359, bound to 127.0.0.1:3000. It uses the installed Next.js documented `--webpack` development mode after the
+Turbopack session again served stale SSR HTML. Fresh HTTP confirmed the current
+whole-book check and backup dialog in SSR; a fresh browser reload logged no errors.
+The server
+is intentionally left running for the owner. Existing business-backlog edits belong
+to other work and were not modified by this workbook task.
+
+Verified screenshot: `private-materials/aspekte-neu-b2/derived/native-book-preview.jpg`.
+
+
+## Account/mobile upgrade — 16 October 2026
+
+The active goal is implementation of the approved symbols/accounts/mobile/revision plan.
+It is **not complete** until the remaining deployment and device verification gates pass.
+The owner has now applied migration 069 and the prepared private workbook package has been uploaded. No learner rollout, deployment, commit or push has been performed. See the latest cloud verification entry below; earlier blocked-audit entries are historical.
+
+Implemented locally:
+
+- All 140 pages carry reviewed source symbol metadata. Original margin glyphs were detected against page images, checked on contact sheets, and matched to the printed CD index on PDF page 184. Totals: 241 solution keys, 21 GI/TELC exam markers, 50 exercise-linked track buttons for tracks 2–51 (track 1 is the introduction).
+- One shared CD player supports marker tapping, pause/resume, switching, restart, rewind, speed, native seeking, errors and saved position. The audio library uses that player too. Markers appear with their exercises in book/quick/revision views. Solution references record assistance, including server-side reference/legacy checking routes. Supplementary exam worksheet panels identify material not supplied.
+- All 51 AAC/M4A streaming copies decoded successfully: 40,874,062 bytes versus 742,845,840 WAV bytes. Originals are retained. `scripts/prepare-aspekte-streaming.py` uses FFmpeg; the temporary helper was installed under `/private/tmp/aspekte-media-tools` after the system converter lacked an AAC codec.
+- Existing email/Google authentication reused, verified active membership required outside the loopback preview. Production defaults disabled (`WORKBOOK_ENABLED`), private sources use Supabase, and signed media links last five minutes. New account entry selects the general learner role; invitation-return URLs do not mount marketing tags.
+- Migration `sql/069_private_workbooks.sql`: private memberships, email-bound single-use seven-day invitations, learner state/recordings, service-only compare-and-swap saves, persistent per-user Gemini quotas, private source/recording buckets. Administrators can manage access but have no direct learner-progress reading policy.
+- Administrator UI `/dashboard/admin/workbooks` grants/revokes verified accounts and creates/revokes invitation links for manual sharing. No emails are sent by this feature.
+- Account-scoped autosave and pending browser backups; independent device edits merge, conflicting answers/notes require a choice. Changed chapter/exercise run identities preserve the server's fresh run and keep local backups. Account-switch requests cannot store the previous learner's data.
+- Resume page/exercise/view/audio, explicit import of old browser answers/notes, five-exercise chapter/listening/revision sessions, private chapter first/latest/best/best-unassisted results, immutable answer history, fresh chapter/exercise retries, due revision, manual uncertainty/skipping, self-review of open tasks without numeric grades.
+- Fixed scores exclude four exercises requiring the absent Lehrbuch: page 15/1, 50/1a, 85/2, 91/3a. The 1,334 source fixed fields remain authored; **1,310** are currently eligible for numeric scoring. Open/source-dependent review count is 589. Missing material never becomes an automatic weakness signal.
+- Review intervals: 1/3/7/14 days, then completion; a failed due review returns after one day. Repeating an early review does not advance its schedule. Completed chapter attempts below 80% need practice; unfinished chapters show coverage.
+- Audio recordings remain account/run/exercise-scoped on device, with optional per-recording cloud saving, playback/deletion for current and historical attempts, optional legacy-device recording import, and account-deletion cleanup. Capture stops on leaving an exercise and saves the completed blob locally. Real microphone behavior remains unverified.
+- Requested Gemini feedback is saved with its source answer/run for later revision; it does not alter numeric scores. Feedback can still be shown if history saving fails, with a visible message.
+- Workbook-scoped manifest, icons and home-screen instructions. Online chapters only, no offline downloads, notification scheduler, or service-worker private content cache.
+
+Verification completed so far:
+
+- Source/asset audit passed on all 140 pages, including marker/page-track correspondence.
+- Focused model/provider/database/public-render suite: 29 tests passed before the latest final verification rerun. Database tests execute the actual migration and RLS in disposable PostgreSQL (PGlite).
+- Local integration passed all 140 sanitized content pages, 51 audio range responses, three original symbols, CAS conflicts, server grading, idempotent submissions, preserved history/fresh retries, separate exercise runs, self-review scheduling, listening bookmarks, account-switch guards and cross-origin rejection. Its preview state was backed up/restored. Evidence: `private-materials/aspekte-neu-b2/derived/study-http-verification.json`.
+- Every M4A decoded fully; evidence `derived/streaming-verification.json`.
+- TypeScript and targeted ESLint passed during implementation. The final production build passed. The full application test suite passed **421/421** with no failures, and final targeted ESLint passed without warnings.
+
+External/device gates still required:
+
+1. **Supabase schema and source upload — resolved.** The owner applied migration 069. A live inspection confirmed all five workbook tables, required functions, and both private buckets. The private uploader dry-run and `--apply` succeeded for 496 files / 94,489,142 bytes. Cloud verification is continuing. HTTPS release and device testing remain required before learner rollout.
+2. **Browser/device verification.** The existing IAB tab was on a connection-error `data:` page; attempting to bind it was rejected by browser URL policy. Inventory also reported the Mac locked. An async request asked the owner to unlock and reopen the workbook. Do not bypass that rejection with another browser automation surface. UI/touch/current screenshots and live microphone checks are not claimed. Continue when the owner provides a usable browser state.
+3. **Deployment access and release verification.** There is no Vercel CLI login/project attachment in this checkout. Preserve unrelated business-backlog edits and unpublished business maintenance. No cloud/HTTPS rollout has been attempted.
+
+Release instructions: `docs/aspekte-workbook-accounts.md`.
+Private upload tool: `scripts/publish-aspekte-private.mjs` (dry-run default, refuses public buckets).
+Current development server session: **13610**, loopback port 3000, webpack.
+Old session 36359 no longer existed. Current final build log: `/private/tmp/aspekte-final-build.log`.
+Do not mark this active goal complete using local code/tests as proof of the pending cloud/device gates.
+
+
+### Final local verification / remaining gates
+
+- Final application build: passed (`next build --webpack`).
+- Full application tests: **421 passed, 0 failed**. Targeted ESLint and TypeScript passed.
+- Standalone production gates checked with the feature enabled and disabled. Enabled: every tested content/media/checking/study/admin/feedback API rejects anonymous requests with 401; the book page streams a login redirect and no private content. Disabled: all tested private APIs return 404. The generic install manifest remains accessible. Temporary production servers were stopped.
+- Evidence: `derived/production-gates-enabled-verification.json`, `derived/production-gates-disabled-verification.json`.
+- Live Gemini request with a fictional German letter returned HTTP 200; the exact feedback was found in private history. Preview state was restored afterward. Evidence: `derived/feedback-history-verification.json`.
+- Quick/revision source fidelity includes 38 explicit earlier-exercise references and seven repeat-listening references. Context remains read-only learner/source material, with linked passages and source illustrations. Multi-track markers include their A/B/dialog/person labels from the CD index. Runtime manifests include verified chapter counts to avoid 140 storage downloads just to open the book.
+- Final local integration evidence includes all 140 sanitized pages, all 51 AAC range streams, fresh exercise/run identities, self-review, idempotency, conflicts and account-switch protection. Temporary preview work was removed/restored; the old browser-only backup was not touched.
+- Owner questions remain pending: unlock/reopen the workbook for browser/device verification, and provide the existing Supabase SQL Editor session or apply migration 069. No schema/admin deployment credentials are available in this environment. The active goal remains unfinished pending those external gates.
+
+Current summary: `private-materials/aspekte-neu-b2/derived/upgrade-verification.json`.
+
+
+### Save conflict and playback follow-up
+
+- Added regression coverage for audio-position changes arriving during fresh-attempt requests. Server resets keep old saved answers cleared, preserve independent edits, and require an explicit choice for responses typed while a run resets.
+- Conflict choices show complete response text. A separate account-scoped recovery copy survives successful autosave; learners can inspect/export, restore or delete it. Reloading during a conflict preserves its original baseline and unsent device responses, including when listening bookmarks continue changing.
+- A learner can explicitly carry selected unsent responses into a new run. Unchanged responses from the prior run stay cleared. Answer and note editing waits until conflicting versions are resolved.
+- Switching speakers clears the old pending seek position, normal pause/resume retains buffered playback, and retrying a failed recording reloads its source while retaining its bookmark. Late rejections from earlier play requests do not overwrite the active player state.
+- Full application suite: **421 passed, 0 failed**; targeted ESLint passed. The final production build rerun passed, including TypeScript checks. Local integration also verified simultaneous same-revision device saves: one succeeds, the other gets a conflict, and independent edits merge without loss.
+- A fresh read-only live Supabase inspection still found no workbook schema interfaces or private workbook buckets. No cloud data was changed. The previously requested SQL Editor access, unlocked usable browser, and deployment access remain outstanding; no learner rollout is claimed.
+
+
+### External-access blocked audit
+
+The same access gates were confirmed across three consecutive goal turns. The latest read-only Supabase probe returned no workbook schema interfaces and no workbook buckets. Deployment environment variables and CLI/project credential files are absent. Fresh computer inventory reports the Mac locked, no accessible native apps, and the existing IAB tab still on its connection-error data page. No alternative browser surface was used to bypass the earlier URL-policy rejection.
+
+Local code, source auditing, integration checks, 421 tests, TypeScript, lint and the production build are complete. The overall goal is **blocked, not complete** pending owner access: apply migration 069 or provide the existing SQL Editor session; unlock the Mac and reopen the localhost workbook; provide the existing deployment workflow. Then continue private upload, HTTPS deployment, real-account isolation/invitation tests, cross-device resume and real phone/tablet/microphone checks. No learner rollout has occurred.
+
+
+### Migration applied and private package uploaded
+
+The owner reported applying migration 069. Live schema inspection confirmed workbook memberships, invitations, learning states, recordings and feedback requests, plus the required functions. Both storage buckets are private. The uploader validated and uploaded **496 runtime files / 94,489,142 bytes** into `private-workbooks/aspekte-neu-b2/`. Originals, authoring files and learner preview data were not uploaded.
+
+A temporary standalone production server on loopback port 3002 uses private Supabase source storage and account enforcement for live API verification. The cloud verifier checks every uploaded object's SHA-256, anonymous/raw source withholding, disposable account isolation, invitations, optimistic saves, quotas and synthetic recording deletion. Real browser/device capture and private HTTPS deployment remain pending. The overall goal resumed after the owner resolved the migration blocker.
+
+
+### Live cloud verification completed
+
+- All **496 files / 94,489,142 bytes** downloaded through the private service connection matched local SHA-256 values. Anonymous storage access, public URLs and learner-created signatures cannot expose the source. Evidence: `derived/cloud-assets-verification.json`.
+- Two disposable verified accounts exercised live RLS, email-bound/single-use/expired/revoked invitations, service-only writes, stale-revision rejection, per-user quotas, and membership revocation. No real learner records were used.
+- The standalone production API read chapter content from private Supabase storage and withheld source answers. Saved answers resumed through an independent authentication session; another learner could not read them or save under the first account. Practice grading, duplicate submission handling, fresh attempts and correction hiding passed.
+- Authorized audio returned a private signed stream with byte-range support. A synthetic recording could be stored, retrieved through another session, isolated from the other learner, and deleted from both database and storage. This does not verify real microphone capture or browser playback.
+- All disposable accounts, invitations and recording objects were removed. The first API run used a noncanonical loopback origin and was rejected by the origin check; its disposable data was removed too. Using the temporary server's canonical `http://localhost:3002` origin passed. No application origin protection was relaxed.
+- Evidence: `derived/cloud-api-verification.json` and combined `derived/cloud-verification.json`. The temporary standalone production server was stopped; the existing development preview remains separate. The verifier script passed targeted ESLint. No production build rerun was needed: only verification scripts and documentation changed.
+- **Remaining:** existing deployment workflow/access, private HTTPS release, real-account browser flow, phone/tablet/touch and microphone verification. The current computer inventory still reports the Mac locked and the IAB tab on a connection-error data page. An async question asks which deployment workflow to use. No production feature flag was enabled and no learner invitation was distributed.
+
+
+### Review branch preparation
+
+The connected GitHub repository's current `main` matches local HEAD `f9e46167e5e065dc4f72b88b77485b39bcfdb94d`. Its Vercel commit status is successful and points to deployment `6YFjQuANXQ9g2UwkxqfCdQ7BsbRt`, confirming the existing GitHub-to-Vercel workflow. No new production deployment is claimed. Repository metadata reports push permission, but the connector later rejected blob creation with HTTP 403, `Resource not accessible by integration`; it cannot publish this snapshot. The local GitHub CLI credential is invalid.
+
+A scoped review snapshot includes the 53 workbook source, route, test, script, icon and documentation files. It excludes the unrelated business backlog edit, all private source/media/learner files, and environment files; configured secret values were checked absent. The workbook remains disabled by default in production. A review PR remains pending valid GitHub write authentication, browser access and Vercel environment configuration. No remote branch or pull request was created by the rejected blob calls.
+
+
+### Local release snapshot
+
+Preparing the 53 reviewed workbook files on a local `codex/private-b2-workbook` branch. This retains the current tested source and excludes the unrelated business backlog edit. Private book/source/media/learner state and environment files are ignored and absent from the snapshot. GitHub publication is blocked by the connector's write-permission rejection and invalid CLI authentication. Vercel project: `sciencedojo-s-projects/sciencedojo-web-app`, deployed from the connected repository. Production enabling still requires `WORKBOOK_STORAGE=supabase` and `WORKBOOK_ENABLED=true`, followed by private HTTPS and device checks. Do not merge or enable access on the strength of local or synthetic API checks alone.

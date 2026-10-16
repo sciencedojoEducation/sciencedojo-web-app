@@ -5,6 +5,7 @@ import DashboardTourReplayButton from "./DashboardTourReplayButton";
 import DashboardMobileDrawer from "./DashboardMobileDrawer";
 import DashboardBadgeProvider from "./DashboardBadgeProvider";
 import DashboardAccountMenu from "./DashboardAccountMenu";
+import { workbookFeatureEnabled } from "@/lib/workbook-access";
 import { isFeatureEnabled } from "@/lib/feature-flags";
 import { getDashboardNavSections } from "@/lib/dashboard-navigation";
 import {
@@ -48,6 +49,13 @@ export default async function DashboardSidebar({ role }: { role: DashboardRole }
   if (await isFeatureEnabled("course_pilot_enabled")) {
     for (const section of sections) section.items = section.items.filter(item => item.href !== "/dashboard/academy");
     sections.push({ title: "Courses", items: [{ name: "My Courses", href: "/dashboard/academy", iconName: "academy" }, { name: "Browse courses", href: "/courses", iconName: "academy" }] });
+  }
+  if (workbookFeatureEnabled()) {
+    if (role === "admin") sections.push({ title: "Private workbooks", items: [{ name: "Workbook access", href: "/dashboard/admin/workbooks", iconName: "academy" }] });
+    if (user) {
+      const { data: workbookAccess } = await supabase.from("workbook_memberships").select("active").eq("user_id", user.id).eq("book_key", "aspekte-neu-b2").maybeSingle();
+      if (workbookAccess?.active) sections.push({ title: "Private workbooks", items: [{ name: "My B2 workbook", href: "/workbooks/aspekte-neu-b2", iconName: "academy" }] });
+    }
   }
   const hasTour = role === "parent" || role === "student" || role === "tutor";
   const studentAppearance = role === "student";

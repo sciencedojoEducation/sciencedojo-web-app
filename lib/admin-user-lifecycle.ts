@@ -224,6 +224,9 @@ async function collectStorageTargets(adminClient: AdminClient, userId: string, p
     }
   }
 
+  const workbookAudio = await listStorageObjectsRecursive(adminClient, "workbook-recordings", userId);
+  for (const path of workbookAudio) targets.push({ bucket: "workbook-recordings", path });
+
   const privateDocs = await listStorageObjectsRecursive(adminClient, "private_docs", userId);
   for (const path of privateDocs) {
     targets.push({ bucket: "private_docs", path });
@@ -392,6 +395,8 @@ async function deleteAppRecordsForUser(adminClient: AdminClient, userId: string,
   await deleteRows(adminClient, "tutors", "id", userId);
 
   if (email) {
+    const { error: workbookInviteError } = await adminClient.from("workbook_invitations").delete().eq("email", normalizeEmail(email));
+    if (workbookInviteError && !["PGRST205", "42P01"].includes(workbookInviteError.code)) throw new Error(`Failed to delete workbook invitations: ${workbookInviteError.message}`);
     const { error: internalError } = await adminClient
       .from("internal_team_members")
       .delete()
