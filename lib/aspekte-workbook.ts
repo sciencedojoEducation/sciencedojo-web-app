@@ -62,6 +62,7 @@ export type WorkbookPage = {
 export type StudyField = Omit<WorkbookField, "answers">;
 export type StudyExercise = Omit<WorkbookExercise, "fields" | "modelAnswer" | "solutionEvidence"> & { fields: StudyField[] };
 export type StudyPage = Omit<WorkbookPage, "exercises"> & { exercises: StudyExercise[]; ready: boolean; nativeReady: boolean };
+export type WorkbookQuickFilter = "chapter" | "listening" | "revision";
 export type WorkbookTrack = { number: number; available: boolean; seconds: number; bytes: number };
 export type WorkbookChapter = { number: number; title: string; firstPage: number; lastPage: number; readyPages: number; nativePages: number; totalFields: number };
 export type WorkbookManifest = {
@@ -129,6 +130,20 @@ export function studyPage(page: WorkbookPage): StudyPage {
       fields: fields.map(({ id, label, options, optionLabels, multiple, multiline, segments, evaluation }) => ({ id, label, options, optionLabels, multiple, multiline, segments, evaluation })),
     })),
   };
+}
+
+/** Keep whole exercises; chapter sessions wrap when the remaining pages have too few. */
+export function workbookQuickSession(pages: StudyPage[], filter: WorkbookQuickFilter, startPage: number, due: ReadonlySet<string>) {
+  const eligible = pages.flatMap(page => page.exercises
+    .filter(exercise => !exercise.requiresSource)
+    .filter(exercise => filter === "listening"
+      ? exercise.markers?.some(marker => marker.type === "audio") || !!exercise.relatedTracks?.length
+      : filter === "revision" ? due.has(`${page.bookPage}:${exercise.id}`) : exercise.fields.some(field => field.evaluation !== "self"))
+    .map(exercise => ({ key: `${page.bookPage}:${exercise.id}`, page: page.bookPage })));
+  const ordered = filter === "chapter"
+    ? [...eligible.filter(item => item.page >= startPage), ...eligible.filter(item => item.page < startPage)]
+    : eligible;
+  return ordered.slice(0, 5).map(item => item.key);
 }
 
 /** Strict single HTTP range; suffix ranges and open-ended ranges support seeking. */

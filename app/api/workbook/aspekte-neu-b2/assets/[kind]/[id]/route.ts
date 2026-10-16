@@ -9,6 +9,7 @@ import { changeWorkbookLearning } from "@/lib/workbook-learning-server";
 import { chapterForPage } from "@/lib/workbook-study";
 import { requireWorkbookAccess, workbookError } from "@/lib/workbook-access";
 import { createAdminClient } from "@/utils/supabase/admin";
+import { workbookAudioStream } from "@/lib/workbook-audio-stream";
 
 export const runtime = "nodejs";
 
@@ -34,6 +35,17 @@ export async function GET(request: Request, context: { params: Promise<{ kind: s
     const object = kind === "symbol" ? `symbols/${id}.jpg` : kind === "figure" ? `figures/${id}.jpg` : kind === "page" ? `pages/page-${id.padStart(3, "0")}.jpg` : `audio/${id.padStart(2, "0")}.m4a`;
     const { data, error } = await createAdminClient().storage.from("private-workbooks").createSignedUrl(`aspekte-neu-b2/${object}`, 300);
     if (error || !data) return new Response(null, { status: 404 });
+    if (kind === "audio") {
+      try {
+        const headers = new Headers({ "Accept-Encoding": "identity" });
+        const range = request.headers.get("range");
+        if (range) headers.set("Range", range);
+        const upstream = await fetch(data.signedUrl, { headers, cache: "no-store", signal: request.signal, method: request.method === "HEAD" ? "HEAD" : "GET" });
+        return workbookAudioStream(upstream);
+      } catch {
+        return new Response(null, { status: 503, headers: { "Cache-Control": "private, no-store" } });
+      }
+    }
     return new Response(null, { status: 307, headers: { Location: data.signedUrl, "Cache-Control": "private, no-store", "Referrer-Policy": "no-referrer" } });
   }
   const path = kind === "symbol" ? join(workbookRoot, "symbols", `${id}.jpg`) : kind === "figure" ? join(workbookRoot, "figures", `${id}.jpg`) : kind === "page" ? join(workbookRoot, "pages", `page-${id.padStart(3, "0")}.jpg`) : join(workbookRoot, "audio", `${id.padStart(2, "0")}.m4a`);

@@ -17,3 +17,8 @@ test('a normal pause and resume does not reload the source or discard its buffer
  const pause=prepareWorkbookAudio(player,2,2,'/audio/2',1);assert.equal(pause.pause,true);assert.deepEqual(events,['pause']);
  const resume=prepareWorkbookAudio(player,2,2,'/audio/2',1.25);assert.equal(resume.pause,false);assert.equal(resume.reloaded,false);assert.equal(resume.resumeAt,undefined);assert.equal(player.currentTime,37);assert.equal(player.playbackRate,1.25);assert.deepEqual(events,['pause']);
 });
+test('explicit retry restarts a stalled load even before the browser raises a media error',()=>{
+ const{player,events}=media();player.paused=false;
+ const retry=prepareWorkbookAudio(player,2,2,'/audio/2',1,true);
+ assert.equal(retry.pause,false);assert.equal(retry.reloaded,true);assert.equal(retry.resumeAt,37);assert.deepEqual(events,['pause','load:/audio/2']);
+});

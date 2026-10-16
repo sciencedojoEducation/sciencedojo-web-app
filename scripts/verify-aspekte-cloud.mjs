@@ -112,10 +112,9 @@ try{
    state=(await(await request(a,'/study',{action:'start-session',accountId:users[0].id,revision:state.revision,chapter:1,exercises:['6:2'],id:randomUUID()})).json()).state;
    assert.equal(state.draft.answers['6:2:1'],undefined);assert.equal(Object.hasOwn(state.draft.revealed,'6:2:1'),false);
    report.checks.push('production API uses cloud chapters, withholds keys, saves across independent sessions, isolates accounts, grades on server and preserves fresh attempts');
-   const media=await request(a,'/assets/audio/2',null,307,{redirect:'manual'});const signed=media.headers.get('location');assert.ok(signed);
-   const audio=await fetch(signed,{headers:{Range:'bytes=0-63'}});assert.equal(audio.status,206);assert.equal((await audio.arrayBuffer()).byteLength,64);
+   const audio=await request(a,'/assets/audio/2',null,206,{headers:{Range:'bytes=0-63'}});assert.equal(audio.headers.get('location'),null);assert.equal(audio.headers.get('accept-ranges'),'bytes');assert.equal(audio.headers.get('content-type'),'audio/mp4');assert.equal((await audio.arrayBuffer()).byteLength,64);
    await request(null,'/assets/audio/2',null,401);
-   report.checks.push('authorized audio redirects to private signed stream with byte-range support');
+   report.checks.push('authorized audio streams on the workbook origin with explicit byte-range headers and no cross-site redirect');
    const speaking=chapter.pages.flatMap(p=>p.exercises.map(e=>({...e,page:p.bookPage}))).find(e=>e.mode==='speaking');assert.ok(speaking);
    const path=`/recordings?account=${users[0].id}&exercise=${speaking.page}:${speaking.id}`;
    const form=new FormData();form.set('audio',new Blob([new Uint8Array([0x1a,0x45,0xdf,0xa3,0x80])],{type:'audio/webm'}),'disposable.webm');

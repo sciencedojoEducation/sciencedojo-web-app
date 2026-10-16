@@ -2,7 +2,7 @@
 
 Private workbook, separate from ScienceDojo business work.
 
-Current account/mobile upgrade: implemented locally; cloud migration, private HTTPS deployment, and visual/mobile acceptance remain pending. The original delivery below is historical; see the upgrade section at the end.
+Current account/mobile upgrade: deployed privately at `https://www.sciencedojo.co.uk/workbooks/aspekte-neu-b2`. Migration 069, private source upload, preview browser checks, and production HTTPS access/saving/media checks are complete. Production activation followed explicit owner approval. Physical phone/tablet and microphone acceptance remain pending; the full goal is not yet marked complete. The original delivery below is historical; see the latest dated entry at the end.
 
 ## Original delivered implementation (before account upgrade)
 
@@ -248,3 +248,48 @@ The private uploader's `--content-only` mode validated and uploaded 141 JSON fil
 The first successful HTTPS preview (`5o7RB7UiqT8miexLR8GpesUvyzh5`, source `8d6321f`) passed actual disposable-account sign-in and return to the workbook, private chapter loading, autosave/checking (1/12 correct with ten unanswered), fresh exercise clearing with preserved practice/archive history, and a five-exercise quick session. A fictional open response returned Gemini feedback in the browser. An unauthenticated shell probe encounters Vercel's preview protection (302), so it is not counted as proving application-level anonymous gates on this host. Do not weaken preview protection to run that probe. Production application-level HTTPS gates remain to be checked on the normal site. The disposable account remains active only for the ongoing browser checks and must be removed afterward.
 
 The original local preview state was restored after both browser scenarios; its state file was originally absent and was removed again only after verifying no answers, notes, attempts, reviews or feedback had been introduced. The legacy browser-only backup was not imported or altered.
+
+
+### Private HTTPS acceptance and disabled production release — 17 October 2026
+
+PR #12 source head `1c0389f971bf3c27d80829d9a351d45318456df1` passed build/regression checks, cron security, and Vercel Preview. It was merged as `880a6ad2cf322ed0d594e9828825fd15a4d514b6`. Production workbook flags remain unset. Deployment `HEZvQg5LPnqhTy6UwGThrD8cBHUZ` is ready. All merged-commit CI checks passed. Fifteen live HTTPS checks on `https://www.sciencedojo.co.uk` passed with the feature disabled: content/media/check/save/admin/invitation routes returned 404, the page exposed no source content, and the install manifest was valid. Evidence: `derived/production-gates-disabled-verification.json`. The first probe used the separate apex `sciencedojo.uk`, which serves a parked lander; its manifest check failed and it is not counted as application evidence. The Vercel assigned-domain list confirmed the canonical `www.sciencedojo.co.uk` target. The overall release still awaits explicit activation approval and physical-device acceptance.
+
+The latest private HTTPS preview passed an independent learner sign-in that restored the saved response, quick-session position and Gemini feedback. Earlier-subpart choices appeared as read-only context. The uncertainty action added an exercise to revision, and the performance view preserved practice history without inventing a chapter result. Page-16 speaker markers streamed exact tracks 3 (40.052993 seconds) and 4 (44.76 seconds); one audio element switched tracks and paused without media errors. The symbol legend and online-only home-screen instructions opened. All disposable browser account data and credentials were removed afterward. Evidence: `derived/browser-https-verification.json`.
+
+The owner-supplied verified, active sciencedojo account now has only the requested workbook membership. Its existing role was preserved; no email or general learner invitation was sent. Email and account identifiers remain in ignored private evidence.
+
+Automatic approval review rejected saving Production `WORKBOOK_ENABLED=true` and `WORKBOOK_STORAGE=supabase`, stating that the rollout plan did not authorize this exact activation before live-production and device checks. The unsaved form was discarded; no Production values were saved and the action has not been retried. Obtain explicit owner approval for this exact activation. Publishing the reviewed code with the feature disabled does not enable workbook access. Real phone/tablet use and microphone capture remain unverified; the overall goal remains active and unfinished.
+
+
+### Approved production activation — 17 October 2026
+
+The owner explicitly instructed “activate it”. Production-only `WORKBOOK_ENABLED=true` and `WORKBOOK_STORAGE=supabase` were saved through the existing signed-in Vercel settings; Preview and Development selections were not changed. Redeployment `EBHTqcyNtsRi2K7Kjn9USE4SozTm` uses the checked main commit `880a6ad2cf322ed0d594e9828825fd15a4d514b6`. This supersedes the earlier activation-approval gate; no further approval for this same activation is needed. Enabled HTTPS checks are in progress. The previously completed disabled checks remain historical evidence. Real phone/tablet and microphone checks are still pending.
+
+
+### Enabled production HTTPS verification — 17 October 2026
+
+Activation deployment `EBHTqcyNtsRi2K7Kjn9USE4SozTm` reached Ready on the checked main commit, with Production-only workbook flags enabled. The canonical live workbook is `https://www.sciencedojo.co.uk/workbooks/aspekte-neu-b2`.
+
+- All 15 anonymous HTTPS checks passed: content, media, study, checking, feedback, invitation and administrator APIs return 401; the workbook page redirects to login without source content; the workbook installation manifest is valid.
+- A disposable verified account without membership was denied. After granting only that test membership, all ten chapters returned 140 interactive pages without raw answer keys or model answers.
+- Answers, notes and page/exercise/audio position resumed in an independent authentication session. Stale saves and account mismatches were rejected. Server grading returned 1/12 with 11 unanswered; duplicate submissions did not create another attempt. A fresh exercise cleared answers/corrections and preserved its history.
+- CD audio, original symbol artwork and appendix pages returned private signed streams with byte-range support. Learner administrator access and cross-origin saves were denied. Revoking test membership blocked content and new media requests across both sessions.
+- The disposable identity, learner rows and local credentials were removed. The requested owner account was rechecked as verified, unsuspended and a current workbook member; its role was not changed. The existing live-site desktop login was preserved rather than replaced for testing.
+
+Evidence: `derived/production-gates-enabled-verification.json`, `derived/production-live-api-verification.json`, and private owner-access verification. These are production HTTP/API checks; prior real browser interaction was verified in the private HTTPS preview of the same source build. They do not prove physical-phone/tablet touch/audio behavior or real microphone capture. The owner has been given the live link and asked to test answer persistence, numbered playback and recording on the phone. Those acceptance results remain pending. No general learner invitations have been distributed.
+
+
+### Chapter-end quick-session follow-up — 17 October 2026
+
+The acceptance audit found that starting a chapter quick session from its vocabulary pages returned no exercises despite eligible earlier tasks. Session selection now begins at the current page and fills remaining places from earlier pages in that same chapter. Whole exercise IDs are retained. Listening still requires explicit exercise markers or repeat-track references; unavailable Lehrbuch tasks remain excluded, and revision includes only due exercises.
+
+All 140 start positions across ten chapters produced five unique complete exercise IDs. The native browser confirmed page 18 starts a five-exercise session with its preceding source context and reaches the complete fifth exercise. The original local preview state was restored, and legacy browser answers were not imported. The audit also found that integer percentage rounding could hide completed scores just below the 80% practice threshold. Chapter scores now show one decimal place, while practice classification compares the exact fixed-answer fraction; 79.8% needs practice and exactly 80% does not. The 26 focused tests, TypeScript and targeted ESLint passed. Evidence: `derived/quick-session-selection-verification.json`. This follow-up is awaiting normal remote build/release checks; the existing private production workbook remains active. Physical-device acceptance remains pending.
+
+
+### Reported phone audio failure — 17 October 2026
+
+The owner reported that tracks do not play on the phone. Successful HTTP checks and desktop-preview playback do not establish working phone playback; this report supersedes any assumption of physical-device acceptance. Browser, track number and visible failure details have been requested.
+
+The private AAC files are valid AAC-LC, 44.1kHz stereo; track 2 has audible signal (mean -18.2 dB). Storage supports initial, middle and suffix byte ranges but does not advertise `Accept-Ranges`. Workbook audio now streams through the authenticated workbook origin instead of redirecting the media element to a different origin. It forwards range requests and returns explicit media, range and private-cache headers; images and appendix references keep their existing private redirects. The player adds error-specific guidance, a Retry playback button and a protected direct-audio fallback. The stream helper refuses upstream error bodies and malformed partial responses.
+
+The player also offers recovery after 15 seconds of stalled loading; Retry explicitly refreshes the media source from the user’s tap without losing its bookmark. Thirty-one focused tests, TypeScript and targeted ESLint passed. The production build, artifact privacy guard and authenticated cloud-backed API checks passed before deployment, including the same-origin byte-range stream, account isolation, revocation and synthetic recording cleanup. Disposable verification accounts were removed. Remote release checks and physical phone playback remain pending. This is a targeted transport/recovery change; the root cause and phone playback are not yet confirmed.
