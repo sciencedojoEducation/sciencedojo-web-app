@@ -1,5 +1,14 @@
 import type { NextConfig } from "next";
 
+// The optional campus service needs only its exact configured WebSocket origin.
+const campusSocketOrigin = (() => {
+  try {
+    const url = new URL(process.env.CAMPUS_PUBLIC_URL || "");
+    if (url.protocol === "wss:" || (process.env.NODE_ENV !== "production" && url.protocol === "ws:" && ["localhost", "127.0.0.1"].includes(url.hostname))) return ` ${url.origin} ${url.origin.replace(/^ws/, "http")}`;
+  } catch { /* Campus is disabled until configured. */ }
+  return "";
+})();
+
 const nextConfig: NextConfig = {
   output: "standalone",
   outputFileTracingExcludes: {
@@ -39,7 +48,7 @@ const nextConfig: NextConfig = {
         headers: [
           {
             key: 'Content-Security-Policy',
-            value: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://www.googletagmanager.com; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://unpkg.com https://cdn.tldraw.com https://meet.jit.si https://*.jit.si wss://*.jit.si https://www.google-analytics.com https://analytics.google.com https://hlsvod.dw.com https://dwvod-rwrtr.akamaized.net https://dwvod-pckgr.akamaized.net; frame-src 'self' https://meet.jit.si https://*.jit.si https://www.youtube.com https://player.vimeo.com https://open.spotify.com https://w.soundcloud.com; media-src 'self' blob: https://*.supabase.co https://hlsvod.dw.com https://dwvod-rwrtr.akamaized.net https://dwvod-pckgr.akamaized.net; img-src 'self' data: blob: https://*.supabase.co https://i.ytimg.com https://lh3.googleusercontent.com https://unpkg.com https://cdn.tldraw.com https://meet.jit.si https://*.jit.si https://www.google-analytics.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com https://cdn.tldraw.com https://meet.jit.si https://*.jit.si; worker-src 'self' blob:; child-src 'self' blob: https://meet.jit.si https://*.jit.si https://www.youtube.com https://player.vimeo.com https://open.spotify.com https://w.soundcloud.com;",
+            value: `default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://www.googletagmanager.com; connect-src 'self'${campusSocketOrigin} https://*.supabase.co wss://*.supabase.co https://unpkg.com https://cdn.tldraw.com https://meet.jit.si https://*.jit.si wss://*.jit.si https://www.google-analytics.com https://analytics.google.com https://hlsvod.dw.com https://dwvod-rwrtr.akamaized.net https://dwvod-pckgr.akamaized.net; frame-src 'self' https://meet.jit.si https://*.jit.si https://www.youtube.com https://player.vimeo.com https://open.spotify.com https://w.soundcloud.com; media-src 'self' blob: https://*.supabase.co https://hlsvod.dw.com https://dwvod-rwrtr.akamaized.net https://dwvod-pckgr.akamaized.net; img-src 'self' data: blob: https://*.supabase.co https://i.ytimg.com https://lh3.googleusercontent.com https://unpkg.com https://cdn.tldraw.com https://meet.jit.si https://*.jit.si https://www.google-analytics.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com https://cdn.tldraw.com https://meet.jit.si https://*.jit.si; worker-src 'self' blob:; child-src 'self' blob: https://meet.jit.si https://*.jit.si https://www.youtube.com https://player.vimeo.com https://open.spotify.com https://w.soundcloud.com;`,
           },
           {
             key: 'Cross-Origin-Opener-Policy',

@@ -8,7 +8,7 @@ export default function PublicChromeGate({ children }: { children: React.ReactNo
     pathname === "/tutor/onboarding" || pathname.startsWith("/tutor/onboarding/");
   const isBusiness = pathname === "/business" || pathname.startsWith("/business/");
 
-  if (pathname.startsWith("/dashboard") || pathname.startsWith("/workbooks/") || pathname === "/maintenance" || isTutorOnboarding || isBusiness) {
+  if (pathname === "/campus" || pathname.startsWith("/campus/") || pathname.startsWith("/dashboard") || pathname.startsWith("/workbooks/") || pathname === "/maintenance" || isTutorOnboarding || isBusiness) {
     return null;
   }
 
