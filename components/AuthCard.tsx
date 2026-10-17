@@ -1,9 +1,8 @@
 "use client";
 
-import { motion, AnimatePresence } from "framer-motion";
-import Image from "next/image";
+import { motion } from "framer-motion";
 import Link from "next/link";
-import { ArrowRight, Shield } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 
 interface AuthCardProps {
   children: React.ReactNode;
@@ -29,9 +28,9 @@ export default function AuthCard({
     : "md:items-center md:p-6";
 
   return (
-    <div className={`relative flex min-h-[calc(100svh-5rem)] w-full items-start justify-center overflow-x-hidden bg-[#F8FAFC] px-4 py-3 sm:px-4 sm:py-6 md:min-h-[calc(100dvh-5rem)] ${desktopAlignmentClass}`}>
-      {/* Premium Digital Dojo Background */}
-      <div className="absolute inset-0 z-0 pointer-events-none">
+    <div className={`relative flex min-h-svh w-full items-start justify-center bg-[#F8FAFC] px-4 pt-3 pb-[max(1.5rem,env(safe-area-inset-bottom))] sm:px-4 sm:pt-6 md:min-h-dvh ${desktopAlignmentClass}`}>
+      {/* Clip decoration only; the form uses the normal document scroll on phones. */}
+      <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
         
         {/* Cinematic Grain Overlay */}
         <svg aria-hidden="true" className="absolute inset-0 h-full w-full opacity-[0.03] pointer-events-none">
@@ -137,25 +136,14 @@ export default function AuthCard({
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className={`relative z-10 w-full ${maxWidth} max-md:max-w-[440px]`}
+        className={`relative z-10 min-w-0 w-full ${maxWidth} max-md:max-w-[440px]`}
       >
-        <div className="rounded-[1.5rem] border border-white/60 bg-white/95 p-4 shadow-xl shadow-primary/10 backdrop-blur-xl sm:p-6 md:rounded-[3rem] md:p-12 md:shadow-2xl">
+        <div className="break-words rounded-[1.5rem] border border-white/60 bg-white/95 p-4 shadow-xl shadow-primary/10 backdrop-blur-xl sm:p-6 md:rounded-[3rem] md:p-12 md:shadow-2xl">
           
           {showLogo && (
-            <div className="mb-2.5 flex justify-center md:mb-8">
-              <motion.div 
-                initial={{ scale: 0.8 }}
-                animate={{ scale: 1 }}
-                className="relative h-10 w-10 overflow-hidden rounded-xl shadow-xl shadow-navy/15 ring-2 ring-white md:h-20 md:w-20 md:rounded-2xl md:shadow-2xl md:ring-4"
-              >
-                <Image 
-                  src="/images/sciencedojo-logo-brand.jpg" 
-                  alt="ScienceDojo Logo" 
-                  fill 
-                  className="object-cover"
-                />
-              </motion.div>
-            </div>
+            <Link href="/" aria-label="sciencedojo. home" className="mb-3 flex min-h-11 items-center justify-center text-xl font-bold tracking-tight text-secondary md:mb-8 md:text-2xl">
+              <span translate="no">sciencedojo<span className="text-primary">.</span></span>
+            </Link>
           )}
 
           <div className="mb-3 text-center md:mb-10">
@@ -202,13 +190,13 @@ export function RoleCard({
       whileHover={{ y: -4, scale: 1.02 }}
       whileTap={{ scale: 0.98 }}
       onClick={onClick}
-      className="w-full text-left p-6 rounded-[2rem] bg-navy/5 border-2 border-transparent hover:border-navy/10 hover:bg-white hover:shadow-xl transition-all group flex items-center justify-between"
+      className="min-h-11 w-full gap-3 text-left p-4 md:p-6 rounded-[2rem] bg-navy/5 border-2 border-transparent hover:border-navy/10 hover:bg-white hover:shadow-xl transition-all group flex items-center justify-between"
     >
-      <div className="space-y-1">
-        <h3 className="text-xl font-black text-navy">{title}</h3>
+      <div className="min-w-0 space-y-1">
+        <h3 className="text-base md:text-xl font-black text-navy">{title}</h3>
         <p className="text-sm font-medium text-navy/40">{description}</p>
       </div>
-      <div className={`w-12 h-12 rounded-2xl ${iconColor} flex items-center justify-center transition-all group-hover:bg-navy group-hover:text-white`}>
+      <div className={`shrink-0 w-10 h-10 md:w-12 md:h-12 rounded-2xl ${iconColor} flex items-center justify-center transition-all group-hover:bg-navy group-hover:text-white`}>
         <ArrowRight size={20} className={arrowColor + " group-hover:text-white"} />
       </div>
     </motion.button>
