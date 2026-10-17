@@ -4,7 +4,7 @@ import { test } from "node:test";
 const read = file => readFileSync(new URL(`../${file}`, import.meta.url), "utf8");
 
 test("desktop learner lesson bodies and headers widen without changing phone sizes", () => {
-  for (const file of ["components/tutor-academy/AcademyLessonHeader.tsx", "app/dashboard/tutor/academy/courses/[courseKey]/lessons/[lessonSlug]/page.tsx", "app/dashboard/tutor/academy/lessons/[lessonSlug]/page.tsx"]) {
+  for (const file of ["components/tutor-academy/AcademyLessonHeader.tsx", "lib/academy-course-lesson-page.tsx", "app/dashboard/tutor/academy/lessons/[lessonSlug]/page.tsx"]) {
     assert.match(read(file), /max-w-\[728px\] lg:max-w-\[1080px\] xl:max-w-\[1200px\]/);
   }
 });

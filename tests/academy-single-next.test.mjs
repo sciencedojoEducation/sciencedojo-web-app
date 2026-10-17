@@ -12,7 +12,7 @@ test("chapter completion replaces Next only at the final topic or end of whole-c
 });
 
 test("learner pages supply one server-gated next action without a second Continue footer", () => {
-  const page = read("app/dashboard/tutor/academy/courses/[courseKey]/lessons/[lessonSlug]/page.tsx");
+  const page = read("lib/academy-course-lesson-page.tsx");
   assert.match(page, /lessonEnd=\{missingRequiredBlocks.length \?/);
   assert.match(page, /<form action=\{completeAction\}>/);
   assert.match(page, /Nächstes Kapitel/);

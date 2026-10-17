@@ -1,0 +1,16 @@
+{
+  "name": "sciencedojo-campus-server",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22.18.0"
+  },
+  "scripts": {
+    "start": "node --experimental-strip-types index.mjs",
+    "test": "node --experimental-strip-types --test ../../tests/campus-server.test.mjs"
+  },
+  "dependencies": {
+    "@colyseus/core": "0.18.19",
+    "@colyseus/ws-transport": "0.18.4"
+  }
+}
