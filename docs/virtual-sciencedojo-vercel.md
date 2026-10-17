@@ -51,8 +51,8 @@ check; continued database polling is not treated as browser liveness. A visible
 browser also watches for missing application snapshots for twelve seconds,
 checking once a second, and ends the connection locally if the channel is silent.
 Hidden tabs receive a fresh grace period when visible again, while native pongs
-avoid depending on throttled tab JavaScript for server liveness. Actual Vercel
-network/proxy behavior still requires the proposed hosted staging checks.
+avoid depending on throttled tab JavaScript for server liveness. Bounded actual Vercel
+network/proxy checks are recorded below; retain both independent liveness paths.
 
 The 200ms SQL interval implies up to approximately 50 runtime RPC calls/second
 for ten healthy connected users, plus admission/cleanup calls. This is a design
@@ -190,12 +190,46 @@ This is short, direct-SQL staging evidence. It is not ten Vercel WebSocket clien
 a database-wide/network outage, server-only SQL timing, a long session, a cost
 estimate or intended-device/human acceptance. Those scopes remain distinct.
 
-Vercel Authentication remains unchanged. It blocks automated external clients;
-a deployment-only temporary access-link approval is pending for the remaining
-automated multi-user WSS checks. No shareable link or automation bypass was
-created. Those checks, broader hosted outage/endurance/cost assessment, intended
-devices, independent human usability and G1–G9 remain open. Legal/vendor/staffing/device/
-pilot release gates are not satisfied by these synthetic tests.
+### Actual multi-user Preview checks
+
+The owner subsequently approved a temporary share link for the single staging
+Preview, including Vercel Hobby's disclosed replacement of any existing shareable
+link. Project-wide protection was retained. Actual Next.js/Supabase/WSS clients
+then verified ten connected occupants for 30 seconds and rejection of an
+eleventh, shared two-peer snapshots, duplicate-account denial, one owner in a
+simultaneous seat race, block filtering with retained occupied-seat state,
+reporting, genuine duration handover and old-owner invalidation. The handover
+check completed after about 209 seconds with the seat/studying state retained.
+Staff revocation removed the peer and denied new admission; switch-off stopped
+world updates and denied admission. Both raw close events were delivered.
+
+A corrected isolated native-pong fault first required both healthy peers to see
+the occupied seat. Stopping pongs released it after 7,118ms while the healthy
+peers remained. Raw close arrived after 16,942ms. Keep the browser snapshot
+watchdog: authoritative room cleanup and delivery of a proxy close event are
+separate observations. Actual hosted UI revocation also displayed disconnection,
+zero peers and disabled controls; its 3D library was visually verified.
+
+Across the bounded core attempts/continuation and isolated fault, 5,030 inbound
+world frames and 32 separately formed handshakes were checked, with no
+credential/learning-canary violations. Early scratch attempts needed a full lease
+cleanup wait, a closer movement target and an occupied-seat observation barrier;
+the private evidence retains those limitations. No application code changed.
+This is a short ten-client check, not endurance/cost, intended-device or human
+acceptance. Earlier separate real-course persistence evidence remains applicable;
+this run created no course or learning data.
+
+All thirteen new disposable accounts, memberships, staff authority, reports,
+audit and tickets were removed, passwords scrubbed and original flags restored
+off. Final SQL confirmed zero memberships/presence/owned auth/staff, all eight
+campus tables with RLS and enabled immutable-version protection. The temporary
+share link was revoked; plain access, its old URL and its previously issued
+cookie each redirected to Vercel sign-in. Access secrets were scrubbed. The five
+branch overrides remain absent; no schema, course or environment value changed.
+
+Broader hosted outage/endurance/cost assessment, intended devices, independent
+human usability and G1–G9 remain pending. No production change, paid service or
+real-learner admission occurred; the beta remains closed.
 
 ## Cutover and rollback
 

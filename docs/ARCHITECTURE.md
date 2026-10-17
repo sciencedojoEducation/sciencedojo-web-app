@@ -54,8 +54,12 @@ cancellable. These failure paths are covered by synthetic socket/browser tests;
 actual Preview sign-in, WSS, course framing, handover and recovery also passed
 with synthetic staging accounts. Hosted SQL capacity/seat checks passed. All
 fixtures and temporary Preview overrides were removed and flags restored off.
-Automated multi-user WSS, hosted outage/load, intended-device and human checks
-remain distinct and pending. No real learner release is established.
+Subsequent approved hosted multi-user WSS checks passed ten sockets for 30
+seconds, contention, duration transfer, revocation and shutdown; the temporary
+link and fixtures were removed. A no-pong peer lost its seat after 7.1 seconds
+and received raw close after 16.9 seconds, preserving the need for the browser
+snapshot watchdog. Broader outage/endurance/cost, intended-device and human
+checks remain pending. No real learner release is established.
 
 The existing application remains at the repository root. Additions are a protected `/campus` route and campus components in the web app, a separately deployed `services/campus-server/` Colyseus service, and browser-safe shared TypeScript contracts under `lib/campus/`. Authentication and database mapping remain server-side. The service has its own package and lockfile, runs on Node 22.18+ using native type stripping, and is excluded from the root Next.js TypeScript inputs. No workspace conversion was introduced.
 
@@ -160,7 +164,7 @@ Rollback disables campus admission, removes active campus sessions and stops the
 
 ## Future validation and acceptance matrix
 
-The scenarios below remain acceptance criteria. Local SQL, transport/browser fixtures and disposable real staging integration cover parts of them; see the [implementation evidence and limitations](virtual-sciencedojo-implementation.md). Real staging enrollment/private progress and the local library-frame walk/sit/study/save/close/stand loop passed, including unsent-note retention, offline reopening and fresh admission. Two peer-observation sessions inspected 2,697 frames without the synthetic account/course/note canaries. Actual staging Preview TLS/WSS, course framing and duration/recovery checks subsequently passed. Bounded direct hosted SQL checks reached 49.18 updates/sec with ten occupants; a controlled room-lock timeout also verified failed-cleanup lease recovery. These do not establish ten Vercel clients, broader outage/endurance/cost, intended-device performance, human operations or independent usability. Those scopes remain pending. Use synthetic accounts until operational gates permit real learners.
+The scenarios below remain acceptance criteria. Local SQL, transport/browser fixtures and disposable real staging integration cover parts of them; see the [implementation evidence and limitations](virtual-sciencedojo-implementation.md). Real staging enrollment/private progress and the local library-frame walk/sit/study/save/close/stand loop passed, including unsent-note retention, offline reopening and fresh admission. Two peer-observation sessions inspected 2,697 frames without the synthetic account/course/note canaries. Actual staging Preview TLS/WSS, course framing and duration/recovery checks subsequently passed. Bounded direct hosted SQL checks reached 49.18 updates/sec with ten occupants; a controlled room-lock timeout also verified failed-cleanup lease recovery. Those direct SQL results remain distinct from the subsequent actual ten-socket, 30-second Preview check and hosted handover/revocation/native-pong recovery evidence in the transport guide. Broader outage/endurance/cost, intended-device performance, human operations and independent usability remain pending. Use synthetic accounts until operational gates permit real learners.
 
 | ID | Scenario and required evidence |
 | --- | --- |

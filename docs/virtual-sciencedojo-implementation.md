@@ -12,7 +12,7 @@ Updated 17 October 2026. The owner requested completing the project after approv
 - Optional Vercel transport: a service-only shared SQL room coordinates capacity/seats and expiring ownership across function instances; actual staging Preview and bounded backend verification are recorded below and in the [transport guide](virtual-sciencedojo-vercel.md).
 - Safety: durable reason-only reports and blocks, staff-only member/report/audit reads, reviewed invitations and revocation in `/dashboard/admin/campus`, immediate removal notification with periodic-check fallback.
 - Privacy integration: campus and Academy routes and their login/signup return paths skip new marketing tag initialization and manual analytics events. The campus document boundary withholds its UI after a public-page SPA transition and opens a fresh document before rendering study content, clearing prior marketing globals. Automatic retries are bounded; a full-page fallback link remains available. A broader vendor/telemetry assessment remains part of G4/G5.
-- Build isolation: existing Next.js layout retained; the service has its own lockfile. CI installs both dependency sets and matching Chromium, runs the synthetic beta browser acceptance before the build, and retains fixture screenshots/evidence for seven days. Root type checking excludes the service directory. Verified quality and cron checks passed on documentation head `3eb0097`, with unchanged application code from `280319a`; see the evidence below.
+- Build isolation: existing Next.js layout retained; the service has its own lockfile. CI installs both dependency sets and matching Chromium, runs the synthetic beta browser acceptance before the build, and retains fixture screenshots/evidence for seven days. Root type checking excludes the service directory. Verified quality and cron checks passed on documentation head `a3379be`, with unchanged application code from `280319a`; see the evidence below.
 
 Migrations 067/070 and subsequently 071 were applied to showcase staging on 17 October after explicit owner approvals, and bounded disposable QA completed. Both original staging beta flags are restored off and all owned fixtures removed. None of these migrations has been applied to production. No paid service has been provisioned, production setting enabled or real learner invited.
 
@@ -23,7 +23,7 @@ Migrations 067/070 and subsequently 071 were applied to showcase staging on 17 O
 | Protocol and SQL | Nine tests passed against actual simulation and PGlite policies: replay/invalid inputs, bounded movement, seat contention, block filtering, identity projection, capacity, one-use/expiry/service-only tickets, metadata spoofing, RLS, report limit, revocation, suspension, disabled flag, actual byte limits and bounded admission counters |
 | Actual multiplayer | `tests/campus-server.test.mjs` passed with real Colyseus/WebSocket clients: foreign origin and invalid credentials denied, unauthorized room creation denied, two peers/seat contention, per-client filtering, periodic revocation and ten-client capacity. A subsequent regression case also passed for duplicate reservations: a failed duplicate cannot remove the avatar owned by the successful session |
 | Browser fixture | `scripts/check-campus-browser.mjs` passed in two Chromium contexts: keyboard walk/sit, notice/Study Hub, Escape from inside the frame and focus return, synthetic course save, unsaved input retained across close/reopen, stand, forced WebSocket loss with retained course input and cleaned-up presence, block/unblock/report, leave/fresh admission and 390px layout without overflow or uncaught browser errors |
-| Hosted build and checks | [Quality 39020832796](https://github.com/sciencedojoEducation/sciencedojo-web-app/actions/runs/39020832796) and [cron 39020832777](https://github.com/sciencedojoEducation/sciencedojo-web-app/actions/runs/39020832777) passed on `3eb0097`, including 467 tests, both browser transports, service release/restart, type checking, lint, production build and private workbook trace checks |
+| Hosted build and checks | [Quality 39021927850](https://github.com/sciencedojoEducation/sciencedojo-web-app/actions/runs/39021927850) and [cron 39021927863](https://github.com/sciencedojoEducation/sciencedojo-web-app/actions/runs/39021927863) passed on `a3379be`, including 467 tests, both browser transports, service release/restart, type checking, lint, production build and private workbook trace checks |
 | Regression | Latest local and hosted `npm test` passed **467 tests**, zero failures/skips, including explicit campus staff isolation and privileged flag-action checks |
 | Real staging database | Five synthetic accounts and one owned course: reviewed fixture admission/notice, default-off denial, unprovisioned-admin denial, course entitlement independence, two enrollments, ten-place cap/waitlist, private-note save/relogin/reload, one-use/service-only ticket redemption, block/report/staff resolution and cleanup passed. Eight null-identity synthetic enrollment rows filled only the disposable course's remaining seats |
 | Real application/service | Loopback Next.js and the actual room entry point used real staging auth and RPCs. Two peers joined through real admission/service endpoints; foreign origin, replay and outsider admission were denied; block/unblock filtering and periodic revocation passed. Final clean-exit run inspected 60 WebSocket frames without account IDs/emails, course key/title, private-note canary or issued tickets; revocation took 1,926 ms (under the 15-second bound) |
@@ -82,7 +82,7 @@ Staff bootstrap is separate from learner admission: a trusted operator must prov
 
 1. Resolve G1–G7 with actual operator, safety lead, adult/residence verification policy, privacy notices and lawful bases, vendor/region/transfer review, retention/export/deletion arrangements, staffed supervision/report response targets and a numerical spending ceiling. Store private evidence outside the repository. No retention period or legal outcome is invented by this implementation.
 2. Review/apply migration 070 once through the normal migration process; it leaves the flag disabled. Confirm existing enrollment/progress and RLS behavior on that target database. Do not create course listings or change the ten-place cap to fit the campus cohort.
-3. Deploy the web app and one approved EU/EEA room service with exact origins, TLS, request/log controls, bounded infrastructure counts and health checks. Check the actual application framing policy and CSP. Confirm no credentials, profile identity or course/answer/progress data enter room traffic or infrastructure/marketing logs.
+3. Deploy the reviewed web app and selected transport (the existing Vercel/shared-SQL path or an approved Colyseus service) with reviewed hosting, exact origins, TLS, request/log controls, bounded infrastructure counts and health checks. Check the actual application framing policy and CSP. Confirm no credentials, profile identity or course/answer/progress data enter room traffic or infrastructure/marketing logs.
 4. Select the published pilot course and test verified disposable accounts through real signup/login, reviewed membership, notice acceptance, admission, enrollment/denial/waitlist, save/reload and simultaneous study. Verify actual learner progress directly through existing course routes. Test revocation, blocking/report resolution, service loss/restart, no-WebGL fallback, reduced motion, keyboard/modal behavior and intended devices. Remove disposable accounts afterward.
 5. Review results against V1–V11 and G8. Rehearse report/block/removal and shutdown with named staff; record actual response times. Resolve defects before recording owner approval/cohort/schedule under G9. Only then enable the release setting and flag for invited learners.
 
@@ -212,10 +212,10 @@ Authentication were unchanged. Private manifests were scrubbed of disposable
 passwords. Detailed evidence remains ignored under `.campus-private/`.
 
 **Remaining hosted scope:** Vercel sign-in blocks external automated clients.
-Approval is pending for a temporary access link to this single test deployment,
-to be revoked after multi-user WSS checks; no such link/bypass was created.
-Those checks, hosted DB outage/load/cost, intended devices, independent human
-usability and G1–G9 remain open. The beta is closed; no production change, paid
+At that checkpoint a temporary deployment link was still awaiting approval;
+the later approved multi-user procedure and cleanup are recorded below. Broader
+hosted DB outage/endurance/cost, intended devices, independent human usability
+and G1–G9 remain open. The beta is closed; no production change, paid
 service or real learner admission occurred. See the Vercel guide for continuation
 and keep newly owned fixtures in a fresh manifest rather than reusing cleaned
 accounts.
@@ -243,9 +243,48 @@ memberships, audit and tickets were removed; passwords were scrubbed and both
 original flags restored off. Final SQL confirmed no owned auth fixtures or campus
 memberships/presence, eight RLS-protected campus tables and enabled immutable
 version protection. No course or deployment setting changed. The bounded load
-and lock scenarios have evidence; automated multi-user WSS, broader outage/
-endurance/cost, intended devices, independent human usability and G1–G9 remain
-pending. Detailed scripts/manifests/results are private and ignored.
+and lock scenarios have evidence; subsequent actual multi-user WSS is recorded
+below. Broader outage/endurance/cost, intended devices, independent human
+usability and G1–G9 remain pending. Detailed scripts/manifests/results are private and ignored.
+
+### Actual multi-user Preview and cleanup — 17 October 2026
+
+After the owner approved both the single staging Preview link and its disclosed
+Hobby replacement effect, the unchanged `280319a` application passed actual
+Next.js/Supabase/WSS multi-user checks: ten sockets stayed live for 30 seconds
+while an eleventh was denied; two peers shared snapshots, duplicate connections
+were denied, concurrent seat requests had one owner, blocking retained occupied
+seats and reporting succeeded. Genuine duration handover retained seat/studying
+state, and old-owner commands/cleanup could not remove the replacement. The
+check completed at about 209 seconds. Staff removal denied readmission and stopped
+updates, as did global switch-off. The revocation check's 15,299ms includes a
+fixed 14-second quiescence wait; removal plus admission denial were verified
+within an upper bound of 1,299ms.
+
+The isolated no-pong test required both healthy peers to observe the seat before
+the fault. Authoritative removal/seat release took 7,118ms, with raw close after
+16,942ms and healthy peers retained. Keep the browser snapshot watchdog as well
+as server heartbeat/lease cleanup; raw proxy close delivery has its own timing.
+Actual hosted UI sign-in/3D entry and staff revocation also passed: disconnected
+status, zero stale peers and disabled controls. These are automated/synthetic
+results, not intended-device or human usability acceptance.
+
+Across the core scratch attempts/continuation and isolated fault, 5,030 inbound
+world frames and 32 separately formed handshakes were checked with no canary
+violations. Private evidence retains the early too-short rejoin wait, too-distant
+seat target and premature snapshot/frame assertions; no product code was changed
+to satisfy them. The later corrected checks passed. The earlier real-course
+persistence result is reused; this run created no course or learning data.
+
+All thirteen new accounts and their authority/reports/audit/tickets were removed,
+passwords scrubbed and original flags restored off. Final SQL confirmed zero
+memberships/presence/owned auth/staff, eight RLS tables and enabled immutable
+protection. The link was revoked; its old URL and previously issued cookie both
+redirected to Vercel sign-in, as did ordinary unauthenticated access. Access
+secrets were scrubbed. No schema, course, branch override or production setting
+changed. Detailed evidence is private under `.campus-private/`; do not reuse its
+cleaned manifests. Broader outage/endurance/cost, intended devices, independent
+human usability and G1–G9 remain pending. The beta is closed and PR #17 stays draft.
 
 ### Vercel preview experiment — approved 17 October 2026
 
@@ -295,7 +334,7 @@ trial record are retained locally. No production deployment/configuration,
 database, paid plan or account fixture was changed. This result establishes
 Vercel transport feasibility, not a deployed shared-library beta.
 
-The adult presence-only software, real staging course loop and clean service-release installation/restart are locally verified. The owner selected the existing Vercel project for a trial and its synthetic WSS test passed; the opt-in shared-state adaptation now has bounded actual Preview and staging SQL evidence, with fixtures/settings cleaned afterward. Automated multi-user WSS, hosted outage/load and operational/device checks remain pending; the project is not launch-complete. A numerical spending ceiling is still needed before any new paid infrastructure commitment. Nature/weather, custom avatars, extra zones, text/voice, tutor lectures, autoscaling/50-player hardening and the broader roadmap remain deferred by the agreed pilot decisions. They have not been implemented or silently declared complete.
+The adult presence-only software, real staging course loop and clean service-release installation/restart are locally verified. The owner selected the existing Vercel project for a trial and its synthetic WSS test passed; the opt-in shared-state adaptation now has bounded actual Preview and staging SQL evidence, with fixtures/settings cleaned afterward. Actual bounded multi-user Preview WSS subsequently passed as recorded in the transport guide. Broader outage/endurance/cost and operational/device checks remain pending; the project is not launch-complete. A numerical spending ceiling is still needed before any new paid infrastructure commitment. Nature/weather, custom avatars, extra zones, text/voice, tutor lectures, autoscaling/50-player hardening and the broader roadmap remain deferred by the agreed pilot decisions. They have not been implemented or silently declared complete.
 
 ### Continuation evidence — 17 October 2026
 
