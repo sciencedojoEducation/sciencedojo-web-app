@@ -118,7 +118,28 @@ and [Next.js upgrade helper](https://vercel.com/docs/functions/functions-api-ref
 Use the existing preview workflow for this experiment; do not convert the whole
 project to Services or provision a state store merely to test the transport.
 
-The adult presence-only software, real staging course loop and clean service-release installation/restart are locally verified. Intended-deployment, device and operational checks remain incomplete; the project is not launch-complete. Hosting account and spending-ceiling input is still needed before preparing an approved live-service deployment. Nature/weather, custom avatars, extra zones, text/voice, tutor lectures, autoscaling/50-player hardening and the broader roadmap remain deferred by the agreed pilot decisions. They have not been implemented or silently declared complete.
+**Hosted outcome:** Software revision `17e2637` deployed successfully in the
+existing project as [preview 318bhYMfp](https://vercel.com/sciencedojo-s-projects/sciencedojo-web-app/318bhYMfpAnkDCe7YQqKyzUwP5HR).
+The signed-in Vercel browser at
+[`/campus/hosting-check`](https://sciencedojo-web-oieaphpd0-sciencedojo-s-projects.vercel.app/campus/hosting-check)
+passed all four real WSS exchanges, including closing and making fresh
+connections, and observed **two distinct process markers**. This demonstrates
+that in-memory state cannot be assumed to be shared even in this tiny test.
+The existing campus admission flags remain disabled. Local type checking,
+scoped lint and all 454 regression tests passed.
+[Hosted quality 39015584841](https://github.com/sciencedojoEducation/sciencedojo-web-app/actions/runs/39015584841)
+and [cron 39015584969](https://github.com/sciencedojoEducation/sciencedojo-web-app/actions/runs/39015584969)
+passed, including the maintained library browser acceptance, service release,
+production build and private workbook traces. A separate unauthenticated CLI
+request received the preview's 302 protection redirect; no credentials were
+extracted or protection bypassed to attempt further probes. Origin/expiry/
+production guards were tested locally; payload and idle limits are implemented,
+not separately verified against the protected host. The screenshot and private
+trial record are retained locally. No production deployment/configuration,
+database, paid plan or account fixture was changed. This result establishes
+Vercel transport feasibility, not a deployed shared-library beta.
+
+The adult presence-only software, real staging course loop and clean service-release installation/restart are locally verified. The owner selected the existing Vercel project for a trial and its synthetic WSS test passed; a shared-state adaptation is still needed to run the full room there. Intended-deployment, device and operational checks remain incomplete; the project is not launch-complete. A numerical spending ceiling is still needed before any new paid infrastructure commitment. Nature/weather, custom avatars, extra zones, text/voice, tutor lectures, autoscaling/50-player hardening and the broader roadmap remain deferred by the agreed pilot decisions. They have not been implemented or silently declared complete.
 
 ### Continuation evidence — 17 October 2026
 

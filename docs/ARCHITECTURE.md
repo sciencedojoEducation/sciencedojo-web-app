@@ -26,8 +26,10 @@ or admission. See the implementation record. Vercel's current WebSocket beta
 supports connections, but different connections can reach different function
 instances and close at duration limits. The single-process room described below
 remains the verified implementation; a coordinated Vercel room is not yet built
-or verified. A transport probe must not silently replace room authority with
-client-owned state or declare shared presence ready.
+or verified. The hosted probe at software revision `17e2637` passed four WSS
+exchanges and observed two process markers, demonstrating this coordination
+requirement on the actual account. A transport probe must not silently replace
+room authority with client-owned state or declare shared presence ready.
 
 The existing application remains at the repository root. Additions are a protected `/campus` route and campus components in the web app, a separately deployed `services/campus-server/` Colyseus service, and browser-safe shared TypeScript contracts under `lib/campus/`. Authentication and database mapping remain server-side. The service has its own package and lockfile, runs on Node 22.18+ using native type stripping, and is excluded from the root Next.js TypeScript inputs. No workspace conversion was introduced.
 
