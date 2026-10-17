@@ -71,3 +71,21 @@ fieldset.wb-exercises{border:0;padding:0;margin:0;min-width:0}.wb-source-depende
 .wb-page-steps .wb-page-current{background:#e2f3ff;color:#155c88;border-color:#8dcff2}
 .wb-source-symbol{border-radius:10px}.wb-source-symbol:hover,.wb-source-symbol-playing{background:#e4f4ff;border-color:#6dbdec}
 .wb-shared-player{background:#fff;border-color:#9ad6f4;box-shadow:0 5px 28px #1a5c8a26}.wb-source-symbol:focus-visible{outline-color:#1684bf}
+
+/* Keep each phone word bank in reach, bounded by its own exercise. */
+.wb-bank-toggle{display:none}
+@media(max-width:760px){
+  /* clip keeps the rounded page edge without creating a sticky scroll container. */
+  .wb-digital-book{overflow:clip}
+  .wb-native-page .wb-bank{position:sticky;top:max(8px,env(safe-area-inset-top));z-index:20;overflow-anchor:none;display:flex;flex-direction:column;gap:8px;max-height:min(34svh,260px);padding:8px;background:#f4faff;border-color:#95c8e7;box-shadow:0 6px 20px #234f7526}
+  .wb-bank-toggle{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-shrink:0;width:100%;min-height:44px;padding:5px 6px;border:0;border-radius:7px;background:transparent;color:#175d86;font-size:13px;text-align:left}
+  .wb-bank-toggle strong{font-family:var(--wb-title-font);font-weight:800}
+  .wb-bank-toggle>span{display:inline-flex;align-items:center;gap:5px;font-size:12px}
+  .wb-bank-chevron-open{transform:rotate(180deg)}
+  .wb-native-page .wb-bank>p{flex-shrink:0;font-size:11px;line-height:1.4;margin:0 4px}
+  .wb-native-page .wb-bank>.wb-bank-words{min-height:0;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;align-content:flex-start;scrollbar-width:thin;padding:3px}
+  .wb-native-page .wb-bank.wb-bank-collapsed>p,.wb-native-page .wb-bank.wb-bank-collapsed>.wb-bank-words{display:none}
+  .wb-native-page .wb-token{min-height:44px;min-width:44px;max-width:100%;padding:8px 10px;font-size:14px;white-space:normal;overflow-wrap:anywhere;text-align:left}
+  .wb-bank .wb-token:focus-visible{outline-offset:-3px}
+  .wb-exercise:has(>.wb-bank) .wb-field input,.wb-exercise:has(>.wb-bank) .wb-field textarea,.wb-exercise:has(>.wb-bank) .wb-field select{scroll-margin-top:calc(min(34svh,260px) + 20px)}
+}
