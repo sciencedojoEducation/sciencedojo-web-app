@@ -60,13 +60,13 @@ export default function SignupPage({ searchParams }: { searchParams: Promise<{ [
       title="Join the Dojo" 
       subtitle={isWorkbookSignup ? "Create your account for your private workbook" : isCourseSignup ? "Create your account to join the course" : "Create your account to get started"}
       footer={
-        <div className="space-y-4">
+        <div className="space-y-1.5 md:space-y-4">
           <p className="text-xs font-bold text-navy/20 text-center">
             Already have an account?
           </p>
           <Link 
             href={nextParam ? `/login?next=${encodeURIComponent(nextParam)}` : "/login"}
-            className="block text-primary font-black text-xs hover:text-black transition-all text-center"
+            className="flex min-h-11 items-center justify-center text-primary font-black text-xs hover:text-black transition-all text-center"
           >
             Log In Here
           </Link>
@@ -114,7 +114,7 @@ export default function SignupPage({ searchParams }: { searchParams: Promise<{ [
           >
             <button
               onClick={goBack}
-              className="text-xs font-bold text-navy/20 hover:text-navy transition-all"
+              className="inline-flex min-h-11 items-center text-xs font-bold text-navy/50 hover:text-navy transition-all"
             >
               ← Back
             </button>
@@ -149,13 +149,13 @@ export default function SignupPage({ searchParams }: { searchParams: Promise<{ [
             key="auth-options"
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="space-y-6"
+            className="space-y-3 md:space-y-6"
           >
             {/* Header for Step 2 */}
-            <div className="flex items-center justify-between gap-4 mb-4">
+            <div className="flex items-center justify-between gap-4 mb-2 md:mb-4">
               <button 
                 onClick={goBack}
-                className="text-xs font-bold text-navy/20 hover:text-navy transition-all"
+                className="inline-flex min-h-11 items-center text-xs font-bold text-navy/50 hover:text-navy transition-all"
               >
                 ← Back
               </button>
@@ -167,9 +167,9 @@ export default function SignupPage({ searchParams }: { searchParams: Promise<{ [
             <motion.div 
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="space-y-5"
+              className="space-y-3 md:space-y-5"
             >
-              <div className="text-center space-y-3">
+              <div className="text-center space-y-2 md:space-y-3">
                 <p className="text-sm font-bold text-navy/50 leading-relaxed">
                   {googleHelperText}
                 </p>
@@ -177,7 +177,7 @@ export default function SignupPage({ searchParams }: { searchParams: Promise<{ [
                   type="button"
                   disabled={isConnectingGoogle}
                   onClick={handleGoogleSignup}
-                  className="w-full flex items-center justify-center gap-4 py-5 bg-white border border-navy/5 rounded-[2rem] shadow-xl shadow-navy/5 hover:border-navy/10 hover:shadow-navy/10 transition-all transform active:scale-95 overflow-hidden group relative disabled:opacity-60 disabled:cursor-not-allowed"
+                  className="w-full flex items-center justify-center gap-3 py-3 md:gap-4 md:py-5 bg-white border border-navy/5 rounded-[2rem] shadow-xl shadow-navy/5 hover:border-navy/10 hover:shadow-navy/10 transition-all transform active:scale-95 overflow-hidden group relative disabled:opacity-60 disabled:cursor-not-allowed"
                 >
                   <div className="w-5 h-5 relative">
                     <svg viewBox="0 0 24 24" width="20" height="20" xmlns="http://www.w3.org/2000/svg">
@@ -215,59 +215,67 @@ export default function SignupPage({ searchParams }: { searchParams: Promise<{ [
                 } finally {
                   setIsSubmitting(false);
                 }
-              }} className="space-y-4">
+              }} className="space-y-3 md:space-y-4">
                 <div className="space-y-2">
-                    <label className="text-xs font-bold text-navy/40 ml-6 flex items-center gap-2">
+                    <label htmlFor="signup-name" className="text-xs font-bold text-navy/60 ml-3 md:ml-6 flex items-center gap-2">
                        <User size={12} /> Full Name
                     </label>
                     <input 
+                      id="signup-name"
+                      autoComplete="name"
                       name="name" 
                       type="text" 
                       required 
                       placeholder="Enso Calibur" 
-                      className="w-full bg-white/60 backdrop-blur-md border border-white/40 rounded-[2rem] px-8 py-5 text-navy font-bold focus:ring-4 focus:ring-mint/10 outline-none transition-all placeholder:text-navy/20 shadow-sm"
+                      className="w-full bg-white/60 backdrop-blur-md border border-white/40 rounded-[1.25rem] px-4 py-3 text-base scroll-mt-24 scroll-mb-6 md:rounded-[2rem] md:px-8 md:py-5 text-navy font-bold focus:ring-4 focus:ring-mint/10 outline-none transition-all placeholder:text-navy/20 shadow-sm"
                     />
                 </div>
 
                 {role === "parent" && (
                   <div className="space-y-2">
-                      <label className="text-xs font-bold text-navy/40 ml-6 flex items-center gap-2">
+                      <label htmlFor="signup-student_name" className="text-xs font-bold text-navy/60 ml-3 md:ml-6 flex items-center gap-2">
                         <Users size={12} /> Student&apos;s Full Name
                       </label>
                       <input
+                        id="signup-student_name"
+                        autoComplete="section-child name"
                         name="student_name"
                         type="text"
                         required
                         placeholder="Your child's name"
-                        className="w-full bg-white/60 backdrop-blur-md border border-white/40 rounded-[2rem] px-8 py-5 text-navy font-bold focus:ring-4 focus:ring-mint/10 outline-none transition-all placeholder:text-navy/20 shadow-sm"
+                        className="w-full bg-white/60 backdrop-blur-md border border-white/40 rounded-[1.25rem] px-4 py-3 text-base scroll-mt-24 scroll-mb-6 md:rounded-[2rem] md:px-8 md:py-5 text-navy font-bold focus:ring-4 focus:ring-mint/10 outline-none transition-all placeholder:text-navy/20 shadow-sm"
                       />
                   </div>
                 )}
 
                 <div className="space-y-2">
-                    <label className="text-xs font-bold text-navy/40 ml-6 flex items-center gap-2">
+                    <label htmlFor="signup-email" className="text-xs font-bold text-navy/60 ml-3 md:ml-6 flex items-center gap-2">
                       <Mail size={12} /> Email Address
                     </label>
                     <input 
+                      id="signup-email"
+                      autoComplete="email"
                       name="email" 
                       type="email" 
                       required 
                       placeholder="you@dojo.com" 
-                      className="w-full bg-white/60 backdrop-blur-md border border-white/40 rounded-[2rem] px-8 py-5 text-navy font-bold focus:ring-4 focus:ring-mint/10 outline-none transition-all placeholder:text-navy/20 shadow-sm"
+                      className="w-full bg-white/60 backdrop-blur-md border border-white/40 rounded-[1.25rem] px-4 py-3 text-base scroll-mt-24 scroll-mb-6 md:rounded-[2rem] md:px-8 md:py-5 text-navy font-bold focus:ring-4 focus:ring-mint/10 outline-none transition-all placeholder:text-navy/20 shadow-sm"
                     />
                 </div>
 
                 <div className="space-y-2">
-                    <label className="text-xs font-bold text-navy/40 ml-6 flex items-center gap-2">
+                    <label htmlFor="signup-password" className="text-xs font-bold text-navy/60 ml-3 md:ml-6 flex items-center gap-2">
                       <Lock size={12} /> Password
                     </label>
                     <input 
+                      id="signup-password"
+                      autoComplete="new-password"
                       name="password" 
                       type="password" 
                       required 
                       minLength={8}
                       placeholder="At least 8 characters" 
-                      className="w-full bg-white/60 backdrop-blur-md border border-white/40 rounded-[2rem] px-8 py-5 text-navy font-bold focus:ring-4 focus:ring-mint/10 outline-none transition-all placeholder:text-navy/20 shadow-sm tracking-widest"
+                      className="w-full bg-white/60 backdrop-blur-md border border-white/40 rounded-[1.25rem] px-4 py-3 text-base scroll-mt-24 scroll-mb-6 md:rounded-[2rem] md:px-8 md:py-5 text-navy font-bold focus:ring-4 focus:ring-mint/10 outline-none transition-all placeholder:text-navy/20 shadow-sm tracking-widest"
                     />
                 </div>
 
@@ -280,7 +288,7 @@ export default function SignupPage({ searchParams }: { searchParams: Promise<{ [
                     <button 
                       type="submit"
                       disabled={isSubmitting}
-                      className="w-full py-5 bg-primary text-white rounded-[2rem] font-black tracking-tight text-lg shadow-2xl shadow-primary/20 hover:bg-primary-hover transition-all active:scale-95 disabled:opacity-50 overflow-hidden relative group"
+                      className="min-h-11 w-full py-3 md:py-5 bg-primary text-white rounded-[1.25rem] md:rounded-[2rem] font-black tracking-tight text-base md:text-lg shadow-2xl shadow-primary/20 hover:bg-primary-hover transition-all active:scale-95 disabled:opacity-50 overflow-hidden relative group"
                     >
                       <span className="relative z-10">{isSubmitting ? 'Creating Account...' : 'Create My Account'}</span>
                       <motion.div 
