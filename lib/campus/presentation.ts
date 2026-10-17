@@ -1,38 +1,42 @@
 import type { Player } from "./protocol.ts";
 
 type Pose = Pick<Player, "x" | "z" | "rotation" | "seat">;
-/** Local visual state only. It never changes the authoritative snapshot or sends positions. */
+type Sample = Pose & { at: number };
+// Cover the 200ms shared-room cadence plus normal arrival jitter. Display only:
+// no extrapolation, client simulation or change to authoritative snapshots.
+export const PRESENTATION_DELAY_MS = 300;
 export function createPresentation(pose: Pose, now: number) {
-  return { x: pose.x, z: pose.z, rotation: pose.rotation,
-    fromX: pose.x, fromZ: pose.z, fromRotation: pose.rotation,
-    toX: pose.x, toZ: pose.z, toRotation: pose.rotation,
-    seat: pose.seat, startedAt: now, receivedAt: now, duration: 0 };
+  return { x: pose.x, z: pose.z, rotation: pose.rotation, seat: pose.seat,
+    receivedAt: now, samples: [{ ...pose, at: now - PRESENTATION_DELAY_MS }, { ...pose, at: now }] as Sample[] };
 }
 export type Presentation = ReturnType<typeof createPresentation>;
+const angleBetween = (a: number, b: number) => Math.atan2(Math.sin(b - a), Math.cos(b - a));
 
 export function advancePresentation(view: Presentation, now: number) {
-  const t = view.duration ? Math.max(0, Math.min(1, (now - view.startedAt) / view.duration)) : 1;
-  view.x = view.fromX + (view.toX - view.fromX) * t;
-  view.z = view.fromZ + (view.toZ - view.fromZ) * t;
-  const angle = view.fromRotation + (view.toRotation - view.fromRotation) * t;
+  const at = now - PRESENTATION_DELAY_MS;
+  const samples = view.samples;
+  while (samples.length > 1 && samples[1].at <= at) samples.shift();
+  const from = samples[0], to = samples[1] ?? from;
+  const fraction = to.at > from.at ? Math.max(0, Math.min(1, (at - from.at) / (to.at - from.at))) : 1;
+  view.x = from.x + (to.x - from.x) * fraction;
+  view.z = from.z + (to.z - from.z) * fraction;
+  const angle = from.rotation + angleBetween(from.rotation, to.rotation) * fraction;
   view.rotation = Math.atan2(Math.sin(angle), Math.cos(angle));
-  return t < 1;
+  return samples.some(s => Math.abs(s.x - view.x) > .000001 || Math.abs(s.z - view.z) > .000001 ||
+    Math.abs(angleBetween(view.rotation, s.rotation)) > .000001);
 }
 
 export function receivePresentation(view: Presentation, pose: Pose, now: number) {
-  advancePresentation(view, now);
-  const gap = now - view.receivedAt;
+  const previous = view.samples.at(-1)!;
+  const snap = pose.seat !== view.seat || now - view.receivedAt > 1000 ||
+    Math.hypot(pose.x - previous.x, pose.z - previous.z) > 3;
   view.receivedAt = now;
-  const angle = Math.atan2(Math.sin(pose.rotation - view.rotation), Math.cos(pose.rotation - view.rotation));
-  const snap = pose.seat !== view.seat || gap > 1000 || Math.hypot(pose.x - view.x, pose.z - view.z) > 3;
-  if (!snap && pose.x === view.toX && pose.z === view.toZ &&
-    Math.abs(Math.atan2(Math.sin(pose.rotation - view.toRotation), Math.cos(pose.rotation - view.toRotation))) < .00001) return;
-  view.fromX = snap ? pose.x : view.x;
-  view.fromZ = snap ? pose.z : view.z;
-  view.fromRotation = snap ? pose.rotation : view.rotation;
-  view.toX = pose.x; view.toZ = pose.z;
-  view.toRotation = snap ? pose.rotation : view.rotation + angle;
-  view.seat = pose.seat; view.startedAt = now;
-  view.duration = snap ? 0 : Math.max(50, Math.min(250, gap));
+  if (snap) {
+    Object.assign(view, createPresentation(pose, now));
+    return;
+  }
+  // Keep stationary samples: they mark when an authoritative stop occurred.
+  if (previous.at === now) view.samples.pop();
+  view.samples.push({ x: pose.x, z: pose.z, rotation: pose.rotation, seat: pose.seat, at: now });
   advancePresentation(view, now);
 }

@@ -15,7 +15,9 @@ await build({
     const player={id:'40000000-0000-0000-0000-000000000001',pseudonym:'Quiet Maple aaaa01',colour:0,x:-2,z:4,rotation:0,status:'walking',seat:null};
     const unavailable=()=>{window.noWebgl=true};
     function App(){const [x,setX]=useState(-2);useEffect(()=>{
-      window.startWalk=()=>{window.sceneFrames=[];let i=0;const timer=setInterval(()=>{setX(-2+ ++i*.3);if(i===20){clearInterval(timer);window.walkDone=true;}},200);};
+      window.startWalk=()=>{window.sceneFrames=[];const gaps=[120,280,160,240,140,260,180,220];let i=0,elapsed=0;
+        const step=()=>{const gap=gaps[i%gaps.length];setTimeout(()=>{elapsed+=gap;setX(-2+elapsed*.0015);
+          if(++i===20)window.walkDone=true;else step();},gap);};step();};
     },[]);return <Scene snapshot={{self:player.id,players:[{...player,x}],occupied:[]}} active={true} onUnavailable={unavailable}/>;}
     createRoot(document.getElementById('root')).render(<App/>);`, loader: "tsx", resolveDir: process.cwd() },
   bundle: true, platform: "browser", format: "esm", jsx: "automatic",
@@ -56,8 +58,15 @@ try {
   assert(frames.length > 10, "Missing rendered movement frames");
   const walking = frames.filter(f => f.t <= frames[0].t + 4000);
   const changed = walking.filter((f, i) => i && Math.abs(f.x - walking[i - 1].x) > .0001);
+  const core = walking.filter(f => f.t > frames[0].t + 700 && f.t < frames[0].t + 3600);
+  let lastMoveAt = core[0]?.t ?? 0, maxMovementPauseMs = 0;
+  for (let i = 1; i < core.length; i++) {
+    if (Math.abs(core[i].x - core[i - 1].x) > .0001) lastMoveAt = core[i].t;
+    else maxMovementPauseMs = Math.max(maxMovementPauseMs, core[i].t - lastMoveAt);
+  }
   const gaps = walking.slice(1).map((f,i)=>f.t-walking[i].t).sort((a,b)=>a-b);
   const result = { scope: "Synthetic actual scene, headless Chrome / SwiftShader; not hardware or hosted FPS",
+    arrivalGapsMs: [120,280,160,240,140,260,180,220], maxMovementPauseMs: Math.round(maxMovementPauseMs),
     renderedWalkingFrames: walking.length, changingPositionFrames: changed.length,
     distinctPositions: new Set(walking.map(f=>f.x.toFixed(4))).size,
     p95FrameGapMs: Math.round(gaps[Math.ceil(gaps.length*.95)-1]),
@@ -66,6 +75,7 @@ try {
   assert.deepEqual(errors, []);
   if (!process.argv.includes("--baseline")) {
     assert(result.distinctPositions > 35, "Movement still steps only at snapshot rate");
+    assert(result.maxMovementPauseMs < 80, "Character pauses between uneven snapshot arrivals");
     assert(result.maxDrawCalls < 40, "Static scene draw calls regressed");
     assert(Math.abs(result.finalX-4)<.01, "Presentation must settle at the authoritative target");
   }
