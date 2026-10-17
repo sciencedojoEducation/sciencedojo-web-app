@@ -91,6 +91,33 @@ For shutdown, disable `virtual_campus_enabled` and unset `CAMPUS_PILOT_READY`; a
 
 ## Remaining project work
 
+### Vercel preview experiment — approved 17 October 2026
+
+The owner asked to try hosting within the existing ScienceDojo Vercel project.
+The first bounded experiment uses `/campus/hosting-check` and an isolated
+`/api/campus-hosting-check` Next.js WebSocket endpoint. It tests two simultaneous
+synthetic connections, closes them and makes two fresh connections. The endpoint
+accepts only the fixed `probe` message, returns a random process marker, limits
+payloads to 32 bytes and terminates each connection after eight seconds. It is
+available only on this branch's Vercel preview, expires at 00:00 UTC on 18 October
+and returns 404 in production. No learner admission, database access, environment
+secret, new subscription, production setting or existing course flow is involved.
+
+Acceptance: verify the preview actually upgrades to WSS and exchanges the fixed
+message; verify production/other-branch/expiry/wrong-origin guards; retain actual
+hosted evidence separately from local verification. A passing probe establishes
+transport feasibility only. Vercel can route new connections to different
+instances and closes sockets at function duration limits. The current single-
+process Colyseus room therefore cannot be installed unchanged. A later shared-
+state implementation must preserve authoritative movement, atomic seats, capacity,
+admission/revocation, blocking and course recovery across instances. Do not enable
+the student beta or call it Vercel-ready based on a successful connection probe.
+
+Sources checked 17 October: [Vercel WebSockets](https://vercel.com/docs/functions/websockets)
+and [Next.js upgrade helper](https://vercel.com/docs/functions/functions-api-reference/vercel-functions-package#upgradewebsocket).
+Use the existing preview workflow for this experiment; do not convert the whole
+project to Services or provision a state store merely to test the transport.
+
 The adult presence-only software, real staging course loop and clean service-release installation/restart are locally verified. Intended-deployment, device and operational checks remain incomplete; the project is not launch-complete. Hosting account and spending-ceiling input is still needed before preparing an approved live-service deployment. Nature/weather, custom avatars, extra zones, text/voice, tutor lectures, autoscaling/50-player hardening and the broader roadmap remain deferred by the agreed pilot decisions. They have not been implemented or silently declared complete.
 
 ### Continuation evidence — 17 October 2026

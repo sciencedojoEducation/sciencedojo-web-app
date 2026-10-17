@@ -20,6 +20,15 @@ The app now declares Three.js 0.186.1, React Three Fiber 9.8.2 and Colyseus SDK 
 
 ## Structure and system boundary
 
+The owner approved trying the existing Vercel project on 17 October. An isolated,
+expiring, preview-only WebSocket probe now tests transport without learner data
+or admission. See the implementation record. Vercel's current WebSocket beta
+supports connections, but different connections can reach different function
+instances and close at duration limits. The single-process room described below
+remains the verified implementation; a coordinated Vercel room is not yet built
+or verified. A transport probe must not silently replace room authority with
+client-owned state or declare shared presence ready.
+
 The existing application remains at the repository root. Additions are a protected `/campus` route and campus components in the web app, a separately deployed `services/campus-server/` Colyseus service, and browser-safe shared TypeScript contracts under `lib/campus/`. Authentication and database mapping remain server-side. The service has its own package and lockfile, runs on Node 22.18+ using native type stripping, and is excluded from the root Next.js TypeScript inputs. No workspace conversion was introduced.
 
 ```mermaid

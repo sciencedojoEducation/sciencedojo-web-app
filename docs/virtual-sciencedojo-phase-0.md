@@ -29,6 +29,11 @@ The restore completed with a Healthy dashboard and Postgres 17.6. After automati
 
 ## Pilot experience and design defaults
 
+On 17 October the owner approved trying a Vercel preview within the existing
+ScienceDojo project. This permits the bounded synthetic transport experiment in
+the implementation record; it does not enable the beta, approve paid services,
+apply production schemas or establish any operational gate as complete.
+
 The first world is a calm, stylized, low-poly blockout of the Cube's library: readable paths, a computer interaction, simple lighting and capsule avatars. Use generated pseudonyms and a constrained built-in colour palette. Avoid user-uploaded avatars, free-text names, photorealism, competitive scoring, streak pressure and collectible rewards. These are implementation defaults from the approved plan, not evidence of an owner-approved final art design. Use the lowercase **sciencedojo.** wordmark for logos and follow the [brand guidelines](brand-guidelines.md).
 
 Opening the Study Hub displays a full-screen HTML course surface. Movement stops while studying; others see only a coarse studying state. Explain before opening it: “Your campus pseudonym is used in the shared world. Course discussions use your existing profile name and avatar; course reviews can show your name publicly.” Private notes remain private under the existing course rules. Do not imply that the whole platform is anonymous.
