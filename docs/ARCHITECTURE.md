@@ -26,8 +26,9 @@ or admission. See the implementation record. Vercel's current WebSocket beta
 supports connections, but different connections can reach different function
 instances and close at duration limits. The single-process room described below
 remains the default implementation. An opt-in coordinated Vercel path is now
-implemented and locally tested; its new schema and actual staging deployment
-remain pending. See the [Vercel transport guide](virtual-sciencedojo-vercel.md)
+implemented and tested locally and in bounded staging checks. After explicit
+owner approval, migration 071 was applied to showcase staging. See the
+[Vercel transport guide](virtual-sciencedojo-vercel.md)
 for its transaction authority, rate bounds, renewal and verification procedure.
 The hosted probe at software revision `17e2637` passed four WSS
 exchanges and observed two process markers, demonstrating this coordination
@@ -42,14 +43,19 @@ movement and leases. A fresh one-use handshake can transfer a mature connection
 before its function duration expires, preserving seat and course-frame input.
 RLS denies browser access to runtime state, while per-viewer snapshots preserve
 blocking and all private-learning boundaries. Migration 071 is additive and
-unapplied; the old service remains usable when transport configuration is absent.
+applied only to showcase staging; the old service remains usable when transport
+configuration is absent.
 Renewal HTTP and replacement-socket attempts are bounded independently, so a
 stalled renewal cannot indefinitely suppress disconnect/seat cleanup in the UI.
 Native ping/pong liveness controls seat cleanup independently of DB polling; a
 visible-client snapshot watchdog handles a silent application channel. Hidden
 tabs get a fresh visibility grace period, and initial admission is bounded and
 cancellable. These failure paths are covered by synthetic socket/browser tests;
-actual hosted network behavior remains pending staging approval.
+actual Preview sign-in, WSS, course framing, handover and recovery also passed
+with synthetic staging accounts. Hosted SQL capacity/seat checks passed. All
+fixtures and temporary Preview overrides were removed and flags restored off.
+Automated multi-user WSS, hosted outage/load, intended-device and human checks
+remain distinct and pending. No real learner release is established.
 
 The existing application remains at the repository root. Additions are a protected `/campus` route and campus components in the web app, a separately deployed `services/campus-server/` Colyseus service, and browser-safe shared TypeScript contracts under `lib/campus/`. Authentication and database mapping remain server-side. The service has its own package and lockfile, runs on Node 22.18+ using native type stripping, and is excluded from the root Next.js TypeScript inputs. No workspace conversion was introduced.
 

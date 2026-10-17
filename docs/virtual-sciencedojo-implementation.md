@@ -134,11 +134,10 @@ admission handshakes. Its local PGlite runtime recorded 107 calls, p95 2ms and
 maximum 6ms; these numbers do not establish hosted latency, contention, capacity
 or cost. The original Colyseus browser also passed, inspecting 385 frames.
 Type checking and scoped lint passed before the final upgrade-claim addition;
-current-source final CI must be checked after publication. No 071 migration,
-branch credential change, live fixture creation, production change, purchase or
-learner admission has occurred. Earlier schema approval covers only 067/070;
-obtain scoped approval for 071 and staging credentials in the Vercel preview
-after preparing the concrete reviewed implementation.
+At that pre-approval checkpoint, final hosted CI and scoped approval for 071
+and staging credentials were still required. No migration 071, branch credential
+change, live fixture creation, production change, purchase or learner admission
+had occurred. The subsequent approved procedure and outcomes are recorded below.
 
 **Recovery follow-up:** A local failure regression reproduced a stalled renewal
 HTTP request suppressing the old socket's disconnect event indefinitely. The
@@ -164,7 +163,61 @@ handshakes. All six socket tests and all 467 regression tests passed; the origin
 Colyseus browser also passed, inspecting 414 world frames. Type checking, scoped
 lint and whitespace checks passed. These are local fault-injection results;
 current-source hosted checks and actual staging integration remain distinct.
-Migration 071 and its pending approval scope remain unchanged.
+At that checkpoint, migration 071 still required the scoped staging approval recorded below.
+
+### Shared-room staging procedure — approved 17 October 2026
+
+The owner explicitly approved applying migration 071 to showcase staging only,
+temporary staging Supabase URL/anon/server credentials in the beta branch's
+Vercel Preview, and disposable QA with fixture cleanup and exact flag/environment
+restoration. No production change, paid service or learner release is authorized.
+The migration's reviewed SHA-256 is
+`1ca2e865e923c2c0c065db7901b753e026061643c7fc12d81b90c8acb29b6f6a`.
+The SQL editor reported success. A subsequent actual database check confirmed two
+runtime tables with RLS, service-only runtime execution, denied direct runtime
+table access and both original flags off. The five branch-only Preview values
+were saved and the actual deployment on
+software head `280319a` reached Ready. Hosted quality 39018702720 and cron
+39018702689 also passed that exact software head, including 467 tests and both
+browser transports. The downloaded browser artifact contains 17 shared-room
+checks with 1,398 world frames and eight separately checked admission handshakes;
+the original transport inspected 953 frames. These maintained fixtures remain
+separate from the following actual staging check.
+
+**Actual integration outcome:** The deployed 3D library was visually verified.
+A staging-only synthetic account signed in through the actual Next.js Preview,
+entered TLS/WSS, walked/sat and opened its authorized Academy course in the Study
+Hub. It completed the existing lesson to 100%; a fresh login verified persistence
+and peer isolation. Retained notes survived Hub close/reopen and actual duration
+handover. Database ownership changed after approximately 203 seconds with seat,
+studying state and unsaved input retained. Duplicate hosted-tab admission was
+denied. Hosted report/block, provisioned staff resolution, revocation/denied
+readmission, fresh standing admission and switch-off passed. The retained course
+saved notes while campus was off; fresh login and peer isolation passed.
+
+Actual hosted SQL concurrent admissions respected the ten-place cap including
+the GUI learner; simultaneous seat claims produced one owner. The successful
+bounded run recorded 57 RPC calls, p95 146ms and maximum 153ms at the local API
+caller. A direct SQL observer inspected 488 snapshots without credential or
+learning-canary violations. This observer is not a second Vercel socket, and
+these timings are not sustained throughput, server SQL time or a cost estimate.
+
+**Cleanup:** All fourteen disposable accounts, the owned course/data and temporary
+staff/membership authority were removed. Both original flags were restored off;
+all eight campus tables have RLS, immutable-version protection is enabled and
+owned auth/course/presence rows are absent. All five temporary branch-only
+Preview overrides were removed. Original shared/Production variables and Vercel
+Authentication were unchanged. Private manifests were scrubbed of disposable
+passwords. Detailed evidence remains ignored under `.campus-private/`.
+
+**Remaining hosted scope:** Vercel sign-in blocks external automated clients.
+Approval is pending for a temporary access link to this single test deployment,
+to be revoked after multi-user WSS checks; no such link/bypass was created.
+Those checks, hosted DB outage/load/cost, intended devices, independent human
+usability and G1–G9 remain open. The beta is closed; no production change, paid
+service or real learner admission occurred. See the Vercel guide for continuation
+and keep newly owned fixtures in a fresh manifest rather than reusing cleaned
+accounts.
 
 ### Vercel preview experiment — approved 17 October 2026
 
@@ -214,7 +267,7 @@ trial record are retained locally. No production deployment/configuration,
 database, paid plan or account fixture was changed. This result establishes
 Vercel transport feasibility, not a deployed shared-library beta.
 
-The adult presence-only software, real staging course loop and clean service-release installation/restart are locally verified. The owner selected the existing Vercel project for a trial and its synthetic WSS test passed; the opt-in shared-state adaptation is now locally verified but its new staging schema/deployment remains pending. Intended-deployment, device and operational checks remain incomplete; the project is not launch-complete. A numerical spending ceiling is still needed before any new paid infrastructure commitment. Nature/weather, custom avatars, extra zones, text/voice, tutor lectures, autoscaling/50-player hardening and the broader roadmap remain deferred by the agreed pilot decisions. They have not been implemented or silently declared complete.
+The adult presence-only software, real staging course loop and clean service-release installation/restart are locally verified. The owner selected the existing Vercel project for a trial and its synthetic WSS test passed; the opt-in shared-state adaptation now has bounded actual Preview and staging SQL evidence, with fixtures/settings cleaned afterward. Automated multi-user WSS, hosted outage/load and operational/device checks remain pending; the project is not launch-complete. A numerical spending ceiling is still needed before any new paid infrastructure commitment. Nature/weather, custom avatars, extra zones, text/voice, tutor lectures, autoscaling/50-player hardening and the broader roadmap remain deferred by the agreed pilot decisions. They have not been implemented or silently declared complete.
 
 ### Continuation evidence — 17 October 2026
 

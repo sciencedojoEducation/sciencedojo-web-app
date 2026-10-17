@@ -1,7 +1,8 @@
 # sciencedojo. Vercel beta transport
 
 17 October 2026. The optional shared-SQL transport is implemented and tested
-locally. It has not been applied to staging or production, and does not authorize
+locally and in the bounded staging checks below. Migration 071 is applied only
+to showcase staging after explicit owner approval. This does not authorize
 learner admission. Preserve the existing website, dashboards and course player.
 
 ## How it works
@@ -89,11 +90,11 @@ saved evidence. The quality workflow runs this check alongside the original
 Colyseus browser acceptance and retains both sets of synthetic evidence for seven
 days. Local fixture auth is not proof of hosted Next.js/Supabase integration.
 
-## Proposed staging verification, after scoped approval
+## Approved staging verification — 17 October 2026
 
-1. Apply **only 071** to **sciencedojo-showcase-staging**, after inspecting the
-   actual schema and original flags. 067/070 are already applied and must not be
-   replayed. Do not touch production or unrelated 068/069.
+1. **071 is now applied** to **sciencedojo-showcase-staging**. Inspect the
+   existing schema and original flags before continuation; do not replay
+   067/070/071. Do not touch production or unrelated 068/069.
 2. Configure only branch-specific **Preview** environment values in the existing
    ScienceDojo Vercel project: the staging Supabase URL, staging anon key and
    staging service-role credential; `CAMPUS_TRANSPORT=vercel`; and
@@ -102,7 +103,8 @@ days. Local fixture auth is not proof of hosted Next.js/Supabase integration.
    is outside this staging procedure. Confirm the actual branch scoping before
    saving any credential. No additional hosting plan, store or subscription is
    required by this implementation.
-3. Verify the preview uses staging before provisioning fixtures. Use newly owned
+3. Verify the deployment and branch-scoped staging configuration before
+   provisioning fixtures, then confirm staging-only sign-in. Use newly owned
    synthetic confirmed accounts, explicit fixture-only staff/membership and one
    disposable authorized course. Record original flags and temporarily change
    only the approved staging flags. Never copy production learner data.
@@ -117,10 +119,50 @@ days. Local fixture auth is not proof of hosted Next.js/Supabase integration.
    false after QA. Verify cleanup, RLS, disabled admission and successful current
    hosted checks. Keep detailed account/host evidence private.
 
-Your earlier explicit database approval covered staging migrations 067/070.
-071 and the scoped staging credentials in Vercel must be separately approved
-before this procedure is performed. Legal/vendor/staffing/device/pilot release
-gates remain unchanged and are not satisfied by synthetic tests.
+The owner explicitly approved 071, the branch-scoped staging credentials
+(including the private server key), and disposable QA with cleanup/restoration.
+The migration applied successfully, with RLS, service-only runtime execution and
+denied direct table access verified through SQL and actual API requests.
+
+### Actual staging outcome
+
+Preview software head `280319a` built successfully with the five temporary
+branch-only values. A newly owned staging account signed in through the actual
+Next.js Preview, entered the TLS/WSS room, walked using tap controls, sat at a
+desk and opened its authorized existing Academy course. The deployed 3D library
+was visually verified. The course reached 100%; completion persisted across a
+fresh staging login and remained hidden from the peer. Unsent notes survived Hub
+close/reopen, actual connection handover, staff removal and switch-off. The
+existing course still saved those notes offline; a fresh login reloaded them,
+while the peer could not read them. Campus removal did not remove course access.
+
+The actual 200-second duration renewal changed server connection ownership after
+approximately 203 seconds, retaining the desk, studying state and course input.
+A second hosted tab was denied as already connected. Hosted report/block actions,
+trusted staging staff report resolution, revocation, denied readmission, fresh
+standing admission and switch-off all passed. A direct hosted-SQL observer
+inspected 488 snapshots without a credential or learning-canary violation; this
+was a database observer, not a second Vercel WebSocket client.
+
+Concurrent calls against actual staging Postgres enforced the ten-place cap
+(including the connected Preview learner) and one owner for simultaneous seat
+claims. The successful bounded run made 57 RPC calls, with p95 146ms and maximum
+153ms measured at the local API caller. This small check does not establish
+sustained ten-client throughput, server-only SQL latency, cost or outage behavior.
+
+All fourteen disposable accounts, the owned course/data and temporary authority
+were removed; both original flags were restored off. Final checks confirmed all
+eight campus tables have RLS, immutable-version protection is enabled and owned
+fixtures/presence are absent. All five temporary branch-only Preview overrides
+were removed; original shared/Production variables were unchanged. Detailed
+manifests, timings and account/host evidence remain ignored and private.
+
+Vercel Authentication remains unchanged. It blocks automated external clients;
+a deployment-only temporary access-link approval is pending for the remaining
+automated multi-user WSS checks. No shareable link or automation bypass was
+created. Those checks, a hosted DB-failure/load exercise, intended devices,
+independent human usability and G1–G9 remain open. Legal/vendor/staffing/device/
+pilot release gates are not satisfied by these synthetic tests.
 
 ## Cutover and rollback
 

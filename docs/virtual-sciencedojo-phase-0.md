@@ -36,7 +36,7 @@ apply production schemas or establish any operational gate as complete.
 The hosted probe subsequently passed four WSS exchanges and observed two server
 instances. The existing-project transport is feasible. The coordinated room
 subsequently gained an opt-in, locally verified shared-SQL implementation; its
-new migration 071 and scoped staging deployment remain pending approval. See
+new migration 071 and scoped staging deployment were subsequently approved explicitly. Migration 071 is applied to showcase staging only. Bounded actual Preview sign-in/WSS/course/handover/recovery and hosted SQL concurrency checks passed with synthetic accounts, followed by fixture removal, original flag restoration and removal of temporary branch overrides. Automated multi-user WSS, hosted outage/load, intended-device and human checks remain pending. See
 the [Vercel transport guide](virtual-sciencedojo-vercel.md). No new paid plan,
 production change or admission occurred.
 
