@@ -25,6 +25,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Install campus service dependencies
+        run: npm ci --prefix services/campus-server
+
       - name: Test cron authorization
         run: npm test
 

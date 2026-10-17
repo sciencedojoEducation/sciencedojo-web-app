@@ -23,6 +23,8 @@ These decisions define the intended pilot. They do not verify anyone's age, resi
 
 **Owner clarification, 17 October 2026:** Virtual ScienceDojo is an optional beta alongside the current platform. Preserve the existing website and dashboards. Learners enter the library and use its computers/laptops to access their own existing dashboard and authorized learning. The implemented beta retains the library; classrooms are a possible later environment, not a replacement dashboard or a new course entitlement. The adult, invite-only and operational gates above remain unchanged.
 
+The owner subsequently approved the public draft PR and restoring the configured showcase staging project, including its announced Postgres update. [Draft PR #17](https://github.com/sciencedojoEducation/sciencedojo-web-app/pull/17) is open and the restore request was accepted. This authorizes the reviewed staging/software checks, not paid provisioning or real-learner admission; all operational gates remain pending until actual evidence is recorded.
+
 ## Pilot experience and design defaults
 
 The first world is a calm, stylized, low-poly blockout of the Cube's library: readable paths, a computer interaction, simple lighting and capsule avatars. Use generated pseudonyms and a constrained built-in colour palette. Avoid user-uploaded avatars, free-text names, photorealism, competitive scoring, streak pressure and collectible rewards. These are implementation defaults from the approved plan, not evidence of an owner-approved final art design. Use the lowercase **sciencedojo.** wordmark for logos and follow the [brand guidelines](brand-guidelines.md).
