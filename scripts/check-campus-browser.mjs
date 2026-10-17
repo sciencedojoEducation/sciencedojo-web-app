@@ -22,6 +22,8 @@ const identities = new Map(),
   tickets = new Map();
 const runtimeSockets = new Map(), runtimeDurations = [];
 const stalledRenewals = new Set();
+const quietSnapshots = new Set();
+let stalledEntries = 0;
 let next = 0;
 const identity = () => {
   const n = ++next;
@@ -88,6 +90,7 @@ const http = createServer(async (req, res) => {
         renewal = Boolean(body && JSON.parse(body).renew === true);
       }
       const previous = /fixture=([0-9a-f-]+)/.exec(req.headers.cookie || "")?.[1];
+      if (shared && !renewal && stalledEntries > 0) { stalledEntries--; return; }
       if (shared && renewal && stalledRenewals.has(previous)) {
         // Deliberately send no headers/body: the browser must bound a hung admission request.
         res.once("close", () => stalledRenewals.delete(previous));
@@ -155,6 +158,15 @@ const http = createServer(async (req, res) => {
       }
       res.statusCode = 204; return res.end();
     }
+    if (shared && path.startsWith("/fixture/stall-snapshots/")) {
+      if (!validServiceKey(req.headers.authorization || null, serviceKey)) { res.statusCode = 401; return res.end(); }
+      quietSnapshots.add(path.split("/").at(-1));
+      res.statusCode = 204; return res.end();
+    }
+    if (shared && path === "/fixture/stall-next-entry") {
+      if (!validServiceKey(req.headers.authorization || null, serviceKey)) { res.statusCode = 401; return res.end(); }
+      stalledEntries++; res.statusCode = 204; return res.end();
+    }
     if (path.startsWith("/dashboard/academy/")) {
       res.setHeader("content-type", "text/html; charset=utf-8");
       return res.end(
@@ -185,6 +197,8 @@ try {
       if (req.url !== "/api/campus/socket" || req.headers.origin !== origin || !identities.has(own)) { socket.destroy(); return; }
       servers[listener++ % 2].handleUpgrade(req, socket, head, (ws) => {
         runtimeSockets.set(ws, own);
+        const send = ws.send.bind(ws);
+        ws.send = (...args) => { if (!quietSnapshots.has(own)) return send(...args); };
         const done = runVercelCampusSession(ws, own, async (args) => {
           const started = performance.now();
           try { return await shared.runtime(args.runtime_connection, args.runtime_operation, args.runtime_commands, args.ticket_hash, args.expected_campus, args.runtime_renew); }
@@ -526,6 +540,39 @@ try {
       await a.getByRole("button", { name: "Enter library", exact: true }).click();
       await a.getByText("In the library · walking", { exact: true }).waitFor();
       result.checks.push("A hung renewal request times out after the old socket closes, clears stale presence, preserves offline course input and permits fresh admission");
+      const latest = (await shared.db.query("SELECT campus_id FROM campus_presence ORDER BY opened_at DESC LIMIT 1")).rows[0].campus_id;
+      const quiet = await fetch(`${origin}/fixture/stall-snapshots/${latest}`, { method: "POST", headers: { authorization: `Bearer ${serviceKey}` } });
+      if (quiet.status !== 204) throw new Error("Silent-channel trigger failed");
+      await a.waitForFunction(() => document.body.textContent.includes("Disconnected — your course stays open"), undefined, { timeout: 15000 });
+      await a.getByText("0 here", { exact: true }).waitFor();
+      await a.getByRole("button", { name: "Open Study Hub", exact: true }).click();
+      if ((await course.getByRole("textbox", { name: "Practice answer" }).inputValue()) !== "campus-wire-answer-canary-17oct")
+        throw new Error("Silent-channel failure discarded retained course input");
+      await a.getByRole("button", { name: "Return to library →" }).click();
+      await a.getByRole("button", { name: "Enter library", exact: true }).click();
+      await a.getByText("In the library · walking", { exact: true }).waitFor();
+      result.checks.push("A silent application channel is detected locally even while native pongs remain healthy; presence clears and unsaved course input survives fresh admission");
+      await a.getByRole("button", { name: "Leave", exact: true }).click();
+      const stallEntry = async () => {
+        const response = await fetch(`${origin}/fixture/stall-next-entry`, { method: "POST", headers: { authorization: `Bearer ${serviceKey}` } });
+        if (response.status !== 204) throw new Error("Stalled-entry trigger failed");
+        await a.getByRole("button", { name: "Enter library", exact: true }).click();
+        for (let attempt = 0; attempt < 40 && stalledEntries > 0; attempt++)
+          await new Promise((resolve) => setTimeout(resolve, 25));
+        if (stalledEntries > 0) throw new Error("Stalled entry request was not observed before cancellation/timeout");
+      };
+      await stallEntry();
+      await a.getByRole("button", { name: "Leave", exact: true }).click();
+      await a.getByText("You left the library", { exact: true }).waitFor();
+      await stallEntry();
+      await a.getByText("Unable to enter", { exact: true }).waitFor({ timeout: 12000 });
+      await a.getByRole("button", { name: "Open Study Hub", exact: true }).click();
+      if ((await course.getByRole("textbox", { name: "Practice answer" }).inputValue()) !== "campus-wire-answer-canary-17oct")
+        throw new Error("Stalled initial entry discarded retained course input");
+      await a.getByRole("button", { name: "Return to library →" }).click();
+      await a.getByRole("button", { name: "Enter library", exact: true }).click();
+      await a.getByText("In the library · walking", { exact: true }).waitFor();
+      result.checks.push("Initial admission is cancellable with Leave and bounded on timeout, retains offline course input and permits a new attempt");
     }
     await a.getByRole("button", { name: "Leave", exact: true }).click();
     await a.getByRole("button", { name: "Enter library", exact: true }).click();

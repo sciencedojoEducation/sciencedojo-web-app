@@ -23,7 +23,8 @@ export function runVercelCampusSession(
   socket: WebSocket,
   expectedCampus: string,
   runtime: RuntimeCall,
-  { intervalMs = 200, lifetimeMs = 240000, admissionMs = 5000, renewAfterMs = 200000 } = {},
+  { intervalMs = 200, lifetimeMs = 240000, admissionMs = 5000, renewAfterMs = 200000,
+    heartbeatMs = 3000, pongTimeoutMs = 6000 } = {},
 ) {
   return new Promise<void>((resolve) => {
     const connection = randomUUID();
@@ -32,13 +33,15 @@ export function runVercelCampusSession(
     const commands: { type: string; data: unknown }[] = [];
     let rateAt = Date.now(), rateCount = 0;
     let work: Promise<void> = Promise.resolve();
+    let lastPong = performance.now();
     const send = (type: string, data: unknown) => {
       if (!closed && socket.readyState === 1) socket.send(JSON.stringify({ type, data }));
     };
     const finish = () => {
       if (closed) return;
       closed = true;
-      clearTimeout(admissionTimer); clearTimeout(lifetimeTimer); clearTimeout(renewTimer); clearInterval(tick);
+      clearTimeout(admissionTimer); clearTimeout(lifetimeTimer); clearTimeout(renewTimer);
+      clearInterval(tick); clearInterval(heartbeat);
       pendingInput = undefined; commands.length = 0;
       // Release after the last operation settles, including an interrupted join.
       // If the host is killed, the database lease still expires after 15 seconds.
@@ -66,6 +69,16 @@ export function runVercelCampusSession(
     const admissionTimer = setTimeout(() => end(4003), admissionMs);
     const lifetimeTimer = setTimeout(() => end(1012), lifetimeMs);
     const renewTimer = setTimeout(() => { if (admitted) send("renew", null); }, renewAfterMs);
+    // Database polling is not evidence that the remote browser is still alive.
+    // Native control frames also work when a healthy browser throttles tab JS.
+    const heartbeat = setInterval(() => {
+      if (closed || !admitted) return;
+      if (performance.now() - lastPong >= pongTimeoutMs) {
+        socket.terminate(); finish(); return;
+      }
+      try { socket.ping(); } catch { socket.terminate(); finish(); }
+    }, heartbeatMs);
+    socket.on("pong", () => { lastPong = performance.now(); });
     const tick = setInterval(() => {
       if (!admitted || closed || inFlight) return;
       inFlight = true;
@@ -96,7 +109,7 @@ export function runVercelCampusSession(
           ticket_hash: hashTicket(message.ticket), expected_campus: expectedCampus, runtime_renew: message.renew === true })
           .then((result) => {
             if (closed) return;
-            admitted = true; clearTimeout(admissionTimer); consume(result, true);
+            admitted = true; lastPong = performance.now(); clearTimeout(admissionTimer); consume(result, true);
           }).catch(() => end(4003));
         return;
       }

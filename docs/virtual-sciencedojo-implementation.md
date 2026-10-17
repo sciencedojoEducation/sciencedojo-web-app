@@ -151,6 +151,21 @@ sanitized errors, failed immediate cleanup and expired-seat release on recovery.
 This follow-up changes no schema or staging-approval scope. Current-source
 browser and hosted checks are recorded with the follow-up PR evidence.
 
+**Liveness follow-up:** Further failure controls reproduced the server renewing
+a no-pong peer's presence indefinitely and a browser retaining a silent channel's
+old presence. Native ping/pong checks now terminate unresponsive peers and release
+their seats; healthy peers stay connected. A visible-client snapshot watchdog
+ends silent channels with course input retained, while hidden tabs get a fresh
+grace period on return. Initial and renewal HTTP admission now share a ten-second
+abort deadline; Leave cancels initial entry and invalidates late results. The
+local full shared-room browser passed these added failures along with healthy
+handover and recovery, inspecting 948 world frames and eight separately validated
+handshakes. All six socket tests and all 467 regression tests passed; the original
+Colyseus browser also passed, inspecting 414 world frames. Type checking, scoped
+lint and whitespace checks passed. These are local fault-injection results;
+current-source hosted checks and actual staging integration remain distinct.
+Migration 071 and its pending approval scope remain unchanged.
+
 ### Vercel preview experiment — approved 17 October 2026
 
 The owner asked to try hosting within the existing ScienceDojo Vercel project.

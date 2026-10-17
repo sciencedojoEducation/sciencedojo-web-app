@@ -9,7 +9,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { connectCampus, type CampusConnection } from "@/lib/campus/connection";
+import { connectCampus, requestCampusAdmission, type CampusConnection } from "@/lib/campus/connection";
 import { SEATS, type Snapshot } from "@/lib/campus/protocol";
 import "./campus.css";
 
@@ -68,6 +68,7 @@ export default function CampusClient({
     pointerStarted = useRef(0),
     sequence = useRef(0),
     connecting = useRef(false),
+    admissionRequest = useRef<AbortController | null>(null),
     generation = useRef(0);
   const stage = useRef<HTMLDivElement>(null),
     frame = useRef<HTMLIFrameElement>(null),
@@ -100,12 +101,12 @@ export default function CampusClient({
     if (connecting.current || connected) return;
     connecting.current = true;
     const attempt = generation.current;
+    const controller = new AbortController();
+    admissionRequest.current = controller;
     setNotice("");
     setConnection("Connecting…");
     try {
-      const response = await fetch("/api/campus/admission", { method: "POST" });
-      const admission = await response.json();
-      if (!response.ok) throw new Error(admission.error || "Unable to enter.");
+      const admission = await requestCampusAdmission({ signal: controller.signal });
       const next = await connectCampus(admission);
       if (attempt !== generation.current) {
         void next.leave();
@@ -134,10 +135,14 @@ export default function CampusClient({
       setConnection("In the library");
       stage.current?.focus();
     } catch (error) {
+      if (attempt !== generation.current) return;
       setConnection("Unable to enter");
       setNotice(error instanceof Error ? error.message : "Please try again.");
     } finally {
-      connecting.current = false;
+      if (admissionRequest.current === controller) {
+        admissionRequest.current = null;
+        connecting.current = false;
+      }
     }
   };
   useEffect(() => {
@@ -155,6 +160,7 @@ export default function CampusClient({
       // Intentionally invalidate the latest attempt counter; this is not a DOM ref.
       // eslint-disable-next-line react-hooks/exhaustive-deps
       generation.current++;
+      admissionRequest.current?.abort();
       stop();
       clearInterval(timer);
       window.removeEventListener("blur", stop);
@@ -163,6 +169,9 @@ export default function CampusClient({
     };
   }, [stopMovement]);
   const leave = () => {
+    generation.current++;
+    admissionRequest.current?.abort();
+    connecting.current = false;
     stopMovement();
     void room.current?.leave();
     room.current = null;
@@ -323,7 +332,7 @@ export default function CampusClient({
               <button
                 className="secondary"
                 onClick={leave}
-                disabled={!connected}
+                disabled={!connected && !connecting.current}
               >
                 Leave
               </button>

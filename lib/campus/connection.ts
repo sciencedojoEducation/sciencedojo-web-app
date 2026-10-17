@@ -1,4 +1,29 @@
-import { isSnapshot, type Snapshot } from "./protocol.ts";
+import { CAMPUS_ROOM, isSnapshot, type Snapshot } from "./protocol.ts";
+
+type CampusAdmission = { transport?: string; endpoint: string; room: string; ticket: string };
+
+/** Both initial entry and renewal must remain bounded and cancellable. */
+export async function requestCampusAdmission({ renew = false, signal }: { renew?: boolean; signal?: AbortSignal } = {}): Promise<CampusAdmission> {
+  const controller = new AbortController();
+  const abort = () => controller.abort();
+  if (signal?.aborted) abort();
+  signal?.addEventListener("abort", abort, { once: true });
+  const deadline = setTimeout(abort, 10000);
+  try {
+    const response = await fetch("/api/campus/admission", { method: "POST", signal: controller.signal,
+      ...(renew ? { headers: { "content-type": "application/json" }, body: JSON.stringify({ renew: true }) } : {}) });
+    const data = await response.json();
+    if (!response.ok) throw new Error(typeof data?.error === "string" ? data.error : "Campus unavailable. Please try again.");
+    if (!data || typeof data !== "object" || typeof data.endpoint !== "string" || data.room !== CAMPUS_ROOM ||
+      typeof data.ticket !== "string" || !/^[0-9a-f]{64}$/.test(data.ticket) ||
+      (data.transport !== undefined && !["vercel", "colyseus"].includes(data.transport)))
+      throw new Error("Invalid campus admission response.");
+    return { endpoint: data.endpoint, room: data.room, ticket: data.ticket, transport: data.transport };
+  } catch (error) {
+    if (controller.signal.aborted) throw new Error("Campus admission was interrupted or timed out. Your course stays open.");
+    throw error;
+  } finally { clearTimeout(deadline); signal?.removeEventListener("abort", abort); }
+}
 
 export type CampusConnection = {
   send(type: string, data?: unknown): void;
@@ -9,9 +34,7 @@ export type CampusConnection = {
 };
 
 /** Same UI contract as the existing room; authentication stays in the protected handshake. */
-export async function connectCampus(admission: {
-  transport?: string; endpoint: string; room: string; ticket: string;
-}): Promise<CampusConnection> {
+export async function connectCampus(admission: CampusAdmission): Promise<CampusConnection> {
   if (admission.transport !== "vercel") {
     const { Client } = await import("@colyseus/sdk");
     const room = await new Client(admission.endpoint).joinById(admission.room, { ticket: admission.ticket });
@@ -27,18 +50,29 @@ export async function connectCampus(admission: {
   let snapshot: Snapshot | undefined;
   let socket: WebSocket | undefined, pending: WebSocket | undefined;
   let stopping = false, renewing = false, leftEmitted = false;
+  let lastSnapshotAt = performance.now();
   const renewalAbort = new AbortController();
+  const visibilityChanged = () => { lastSnapshotAt = performance.now(); };
+  document.addEventListener("visibilitychange", visibilityChanged);
+  const watchdog = setInterval(() => {
+    // Hidden/frozen tabs get a fresh grace period on return; native pongs keep
+    // their server connection alive without depending on throttled tab timers.
+    if (document.visibilityState !== "visible") { lastSnapshotAt = performance.now(); return; }
+    if (socket && !stopping && performance.now() - lastSnapshotAt >= 12000) ended();
+  }, 1000);
   const emit = (type: string, data: unknown) => {
     for (const handler of messages.get(type) || []) handler(data);
   };
   const ended = () => {
     if (leftEmitted) return;
-    leftEmitted = true;
+    leftEmitted = true; stopping = true;
+    clearInterval(watchdog); document.removeEventListener("visibilitychange", visibilityChanged);
+    renewalAbort.abort(); socket?.close(1000); pending?.close(1000);
     for (const handler of left) handler();
   };
   const connection: CampusConnection = {
     send: (type, data = null) => { if (socket?.readyState === WebSocket.OPEN) socket.send(JSON.stringify({ type, data })); },
-    leave: async () => { stopping = true; renewalAbort.abort(); socket?.close(1000); pending?.close(1000); },
+    leave: async () => { ended(); },
     onMessage: <T>(type: string, handler: (value: T) => void) => {
       let handlers = messages.get(type);
       if (!handlers) { handlers = new Set(); messages.set(type, handlers); }
@@ -64,10 +98,11 @@ export async function connectCampus(admission: {
           ready = true; clearTimeout(timeout);
           const previous = socket;
           socket = candidate; pending = undefined; snapshot = message.data;
+          lastSnapshotAt = performance.now();
           previous?.close(1000);
           emit("snapshot", snapshot); resolve();
         } else if (candidate === socket && message.type === "snapshot" && isSnapshot(message.data)) {
-          snapshot = message.data; emit("snapshot", snapshot);
+          snapshot = message.data; lastSnapshotAt = performance.now(); emit("snapshot", snapshot);
         } else if (message.type === "notice" && typeof message.data === "string") {
           notice = message.data;
           if (candidate === socket) emit("notice", notice);
@@ -87,28 +122,15 @@ export async function connectCampus(admission: {
   async function renewConnection() {
     if (renewing || stopping) return;
     renewing = true;
-    const requestAbort = new AbortController();
-    const abortRequest = () => requestAbort.abort();
-    renewalAbort.signal.addEventListener("abort", abortRequest, { once: true });
-    // A hung admission response must not indefinitely suppress the old socket's
-    // disconnect event. Leave aborts it too; a new socket has its own deadline.
-    const requestDeadline = setTimeout(abortRequest, 10000);
     try {
-      const response = await fetch("/api/campus/admission", { method: "POST", signal: requestAbort.signal,
-        headers: { "content-type": "application/json" }, body: JSON.stringify({ renew: true }) });
-      const next = await response.json();
-      if (!response.ok || next.transport !== "vercel" || next.endpoint !== "/api/campus/socket" ||
-        typeof next.ticket !== "string" || !/^[0-9a-f]{64}$/.test(next.ticket)) throw new Error("Renewal unavailable");
+      const next = await requestCampusAdmission({ renew: true, signal: renewalAbort.signal });
+      if (next.transport !== "vercel" || next.endpoint !== "/api/campus/socket") throw new Error("Renewal unavailable");
       await open(next.ticket, true);
     } catch {
       if (!stopping) emit("notice", "Library connection could not renew. Your course stays open.");
       if (socket?.readyState !== WebSocket.OPEN) ended();
-    } finally {
-      clearTimeout(requestDeadline);
-      renewalAbort.signal.removeEventListener("abort", abortRequest);
-      renewing = false;
-    }
+    } finally { renewing = false; }
   }
-  await open(admission.ticket);
+  try { await open(admission.ticket); } catch (error) { ended(); throw error; }
   return connection;
 }

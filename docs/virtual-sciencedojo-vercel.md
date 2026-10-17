@@ -42,6 +42,16 @@ Renewal admission requests have a ten-second abort deadline; opening their
 replacement socket has a separate twelve-second deadline. Leaving cancels both.
 A stalled admission response cannot indefinitely suppress notification that the
 old socket closed or leave a stale connected/seat display.
+Initial admission uses the same ten-second HTTP deadline and can be cancelled
+with Leave while connecting. Cancelled attempts cannot later overwrite the new
+UI state. Server-native ping/pong checks run every three seconds and terminate
+an unresponsive connection after the six-second pong allowance is exceeded at a
+check; continued database polling is not treated as browser liveness. A visible
+browser also watches for missing application snapshots for twelve seconds,
+checking once a second, and ends the connection locally if the channel is silent.
+Hidden tabs receive a fresh grace period when visible again, while native pongs
+avoid depending on throttled tab JavaScript for server liveness. Actual Vercel
+network/proxy behavior still requires the proposed hosted staging checks.
 
 The 200ms SQL interval implies up to approximately 50 runtime RPC calls/second
 for ten healthy connected users, plus admission/cleanup calls. This is a design
@@ -67,6 +77,11 @@ The failure regression also stalls renewal HTTP entirely, closes the old socket,
 and requires bounded disconnection, cleared presence, retained offline input and
 fresh admission. Injected RPC outage checks cover sanitized connection failure,
 failed immediate cleanup and release of expired seat ownership after recovery.
+Additional failure controls first reproduced an unresponsive peer retaining its
+seat and a silent application channel leaving stale browser presence. Regressions
+now require server heartbeat cleanup, retention of a healthy peer, client-side
+silent-channel detection and cancellable/bounded initial entry with retained
+course input. These are loopback fault injections, not a real hosted outage.
 Handshake shape and
 fixture-issued ticket digests are checked separately; all other wire frames are
 scanned for credentials and learning canaries. No handshake credentials enter

@@ -45,6 +45,11 @@ blocking and all private-learning boundaries. Migration 071 is additive and
 unapplied; the old service remains usable when transport configuration is absent.
 Renewal HTTP and replacement-socket attempts are bounded independently, so a
 stalled renewal cannot indefinitely suppress disconnect/seat cleanup in the UI.
+Native ping/pong liveness controls seat cleanup independently of DB polling; a
+visible-client snapshot watchdog handles a silent application channel. Hidden
+tabs get a fresh visibility grace period, and initial admission is bounded and
+cancellable. These failure paths are covered by synthetic socket/browser tests;
+actual hosted network behavior remains pending staging approval.
 
 The existing application remains at the repository root. Additions are a protected `/campus` route and campus components in the web app, a separately deployed `services/campus-server/` Colyseus service, and browser-safe shared TypeScript contracts under `lib/campus/`. Authentication and database mapping remain server-side. The service has its own package and lockfile, runs on Node 22.18+ using native type stripping, and is excluded from the root Next.js TypeScript inputs. No workspace conversion was introduced.
 

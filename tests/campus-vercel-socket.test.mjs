@@ -30,8 +30,8 @@ async function listener(f, options = {}, wrap = (call) => call) {
     },
   };
 }
-async function join(server, peer, rawTicket, renew = false) {
-  const socket = new WebSocket(`${server.url}/${peer}`);
+async function join(server, peer, rawTicket, renew = false, socketOptions = {}) {
+  const socket = new WebSocket(`${server.url}/${peer}`, socketOptions);
   const frames = [], waiters = new Set();
   const closed = new Promise((resolve) => socket.once("close", (code) => resolve(code)));
   const ready = new Promise((resolve, reject) => {
@@ -184,4 +184,26 @@ test("an RPC outage closes presence without exposing errors and expired ownershi
     assert.equal(recovered.players[0].status, "walking");
     assert.equal(recovered.players[0].seat, null);
   } finally { unavailable = false; await server.close(); await f.db.close(); }
+});
+
+test("liveness heartbeat removes an unresponsive peer despite continued database polling, retaining a healthy peer", { timeout: 10000 }, async () => {
+  const f = await runtimeFixture(2);
+  const server = await listener(f, { intervalMs: 30, heartbeatMs: 50, pongTimeoutMs: 600 });
+  try {
+    const a = await join(server, 1, await f.issueRaw(1), false, { autoPong: false });
+    const b = await join(server, 2, await f.issueRaw(2));
+    await a.snapshot((s) => s.players.length === 2);
+    await f.db.query("UPDATE campus_presence SET x=-4.5,z=-3 WHERE campus_id=$1", [f.members[0].id]);
+    a.send("sit", "desk-1");
+    await b.snapshot((s) => s.occupied.length === 1);
+    let deadline;
+    const outcome = await Promise.race([
+      a.closed,
+      new Promise((resolve) => { deadline = setTimeout(() => resolve("still-connected"), 1800); }),
+    ]);
+    clearTimeout(deadline);
+    assert.equal(outcome, 1006, "no-pong connection must terminate rather than renew its seat forever");
+    await b.snapshot((s) => s.players.length === 1 && s.occupied.length === 0);
+    assert.equal(b.socket.readyState, WebSocket.OPEN, "native pong response keeps a healthy peer connected");
+  } finally { await server.close(); await f.db.close(); }
 });
