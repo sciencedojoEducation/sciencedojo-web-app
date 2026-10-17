@@ -24,7 +24,7 @@ export async function proxy(request: NextRequest) {
     },
   });
 
-  if ((pathname.startsWith("/workbooks/") || pathname.startsWith("/api/workbook/")) && process.env.WORKBOOK_ENABLED === "true") {
+  if (pathname === "/campus" || pathname.startsWith("/api/campus/") || ((pathname.startsWith("/workbooks/") || pathname.startsWith("/api/workbook/")) && process.env.WORKBOOK_ENABLED === "true")) {
     const { updateSession } = await import("@/utils/supabase/middleware");
     return updateSession(request);
   }

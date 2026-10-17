@@ -2,6 +2,7 @@
 
 # dependencies
 /node_modules
+/services/campus-server/node_modules/
 /.pnp
 .pnp.*
 .yarn/*
