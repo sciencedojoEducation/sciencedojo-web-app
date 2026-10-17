@@ -75,6 +75,23 @@ jobs:
           if-no-files-found: ignore
           retention-days: 7
 
+      - name: Check campus render budget and smooth movement
+        timeout-minutes: 3
+        env:
+          TMPDIR: ${{ runner.temp }}
+        run: npm run test:campus:render
+
+      - name: Save synthetic campus render evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: virtual-sciencedojo-render-evidence
+          path: |
+            ${{ runner.temp }}/campus-render-*/evidence.json
+            ${{ runner.temp }}/campus-render-*/scene.png
+          if-no-files-found: ignore
+          retention-days: 7
+
       - name: Type-check
         run: npm run typecheck
 

@@ -45,6 +45,7 @@ npm ci
 npm ci --prefix services/campus-server
 npm run test:campus
 npm run test:campus:release
+npm run test:campus:render
 npm test
 npm run typecheck
 npm run build
@@ -358,3 +359,15 @@ The adult presence-only software, real staging course loop and clean service-rel
 - Further local acceptance audit: the browser study flow's actual WebSocket frames were inspected for its course title/path, a typed answer canary and issued admission tickets. An initial run inspected 291 frames; a combined run inspected 297, with none of those values found. The combined run also proved the no-WebGL direct-Academy fallback without an uncaught error and exercised the authenticated HTTP moderator-removal endpoint, preserving open course input, cleaning up presence and permitting fresh admission. These checks are now retained in the maintained browser-check script. They are fixture evidence for parts of V4/V9/V10, not proof of production traffic, live enrollment, moderator staffing or hardware performance.
 
 Read-only production hosting metadata has been checked and recorded privately. Consult the ignored private hosting record before repeating that investigation; do not publish its locations or detailed deployed findings without explicit owner authorization for the public destination. G5 vendor/privacy review remains pending. No production configuration, deployment or data was changed by that check.
+
+## Movement continuity fix — 17 October 2026
+
+The owner reported that controls work but movement feels discontinuous in the local preview. Avatars previously snapped directly to shared-room snapshots, normally five per second. The scene now interpolates locally between confirmed targets and follows that displayed position with the camera. Seat/stand transitions, corrections over three units and gaps over one second snap immediately. There is no extrapolation, client-position submission or change to server authority, networking frequency, account/course data or release controls.
+
+Fixed library boxes now share an instanced geometry/material, static shadows are cached, avatar ground shadows use inexpensive geometry and the canvas uses pixel ratio one with demand rendering. Rendering remains paused in the Study Hub; reduced motion anchors the camera. These changes follow the [React Three Fiber performance guidance](https://r3f.docs.pmnd.rs/advanced/scaling-performance).
+
+A sequential before/after probe used the actual scene, twenty synthetic targets at 200ms intervals, a 900×600 canvas and installed Chrome 155/headless SwiftShader. Draw calls fell from **265 to 17**, geometries from **133 to 17**, and distinct displayed positions during the four-second walk increased from **21 to 219**. Observed p95 frame gaps were 26ms and 17ms. These are bounded software-rendered fixture measurements, not hardware/hosted FPS guarantees. The resulting scene screenshot was visually inspected.
+
+Local verification passed: **471 tests**, both maintained browser transports (1,239 world frames and eight separately checked handshakes without canary violations), scoped ESLint, type checking, production build and private workbook traces. The actual-scene render check asserts intermediate positions, a draw-call budget and exact final target; it is added to quality CI with seven-day JSON/screenshot artifacts. Hosted results for this revision must be checked separately. The earlier actual staging tests used application revision `280319a` and do not verify this new rendering code on that deployment.
+
+The rebuilt synthetic preview is available for owner retesting at `http://127.0.0.1:3012/`. Refresh and re-enter to load the fix. Human smoothness acceptance and all operational gates remain pending. No staging fixture, hosted setting, production data or paid service was changed for this fix.

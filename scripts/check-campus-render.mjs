@@ -1,0 +1,74 @@
+/** Isolated synthetic scene probe. No auth, hosted data, or production diagnostic hooks. */
+import assert from "node:assert/strict";
+import { createServer } from "node:http";
+import { mkdtemp, readFile, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join, resolve } from "node:path";
+import { build } from "esbuild";
+import { chromium } from "@playwright/test";
+
+const directory = await mkdtemp(join(tmpdir(), "campus-render-"));
+const fiber = resolve("node_modules/@react-three/fiber/dist/react-three-fiber.esm.js");
+await build({
+  stdin: { contents: `import React,{useState,useEffect} from 'react';
+    import {createRoot} from 'react-dom/client';import Scene from './components/campus/CampusScene';
+    const player={id:'40000000-0000-0000-0000-000000000001',pseudonym:'Quiet Maple aaaa01',colour:0,x:-2,z:4,rotation:0,status:'walking',seat:null};
+    const unavailable=()=>{window.noWebgl=true};
+    function App(){const [x,setX]=useState(-2);useEffect(()=>{
+      window.startWalk=()=>{window.sceneFrames=[];let i=0;const timer=setInterval(()=>{setX(-2+ ++i*.3);if(i===20){clearInterval(timer);window.walkDone=true;}},200);};
+    },[]);return <Scene snapshot={{self:player.id,players:[{...player,x}],occupied:[]}} active={true} onUnavailable={unavailable}/>;}
+    createRoot(document.getElementById('root')).render(<App/>);`, loader: "tsx", resolveDir: process.cwd() },
+  bundle: true, platform: "browser", format: "esm", jsx: "automatic",
+  outfile: join(directory, "app.js"), define: { "process.env.NODE_ENV": '"production"' },
+  plugins: [{ name: "scene-observer", setup(b) {
+    b.onResolve({ filter: /^@react-three\/fiber$/ }, () => ({ path: "probe", namespace: "scene-probe" }));
+    b.onLoad({ filter: /.*/, namespace: "scene-probe" }, () => ({ loader: "jsx", resolveDir: process.cwd(), contents: `
+      import React from 'react';import {Canvas as Base,useFrame} from ${JSON.stringify(fiber)};
+      export * from ${JSON.stringify(fiber)};
+      function Probe(){useFrame(({scene,gl},delta)=>{
+        let avatar;scene.traverse(o=>{if(o.geometry?.type==='RingGeometry')avatar=o.parent});
+        if(avatar){window.sceneFrames??=[];window.sceneFrames.push({t:performance.now(),ms:delta*1000,x:avatar.position.x,calls:gl.info.render.calls,triangles:gl.info.render.triangles,geometries:gl.info.memory.geometries});}
+        window.sceneReady=true;
+      });return null;}
+      export function Canvas(props){return <Base {...props}>{props.children}<Probe/></Base>}
+    ` }));
+  } }],
+});
+const http = createServer(async (req, res) => {
+  if (req.url === "/app.js") { res.setHeader("content-type", "text/javascript");res.end(await readFile(join(directory, "app.js"))); }
+  else res.end('<!doctype html><div id="root" style="width:900px;height:600px"></div><script type="module" src="/app.js"></script>');
+});
+let browser;
+try {
+  await new Promise((resolve) => http.listen(0, "127.0.0.1", resolve));
+  browser = await chromium.launch({ executablePath: process.env.CAMPUS_CHROMIUM_PATH || undefined, headless: true,
+    args: ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader"] });
+  const page = await browser.newPage({ viewport: { width: 1000, height: 740 }, deviceScaleFactor: 2 });
+  const errors = [];page.on("pageerror", e => errors.push(e.message));
+  await page.goto(`http://127.0.0.1:${http.address().port}`);
+  await page.waitForFunction(() => window.sceneReady || window.noWebgl);
+  assert(!(await page.evaluate(() => window.noWebgl)), "WebGL fixture unavailable");
+  await page.waitForTimeout(1500);
+  await page.evaluate(() => window.startWalk());
+  await page.waitForFunction(() => window.walkDone, null, { timeout: 15000 });
+  await page.waitForTimeout(600);
+  const frames = await page.evaluate(() => window.sceneFrames);
+  assert(frames.length > 10, "Missing rendered movement frames");
+  const walking = frames.filter(f => f.t <= frames[0].t + 4000);
+  const changed = walking.filter((f, i) => i && Math.abs(f.x - walking[i - 1].x) > .0001);
+  const gaps = walking.slice(1).map((f,i)=>f.t-walking[i].t).sort((a,b)=>a-b);
+  const result = { scope: "Synthetic actual scene, headless Chrome / SwiftShader; not hardware or hosted FPS",
+    renderedWalkingFrames: walking.length, changingPositionFrames: changed.length,
+    distinctPositions: new Set(walking.map(f=>f.x.toFixed(4))).size,
+    p95FrameGapMs: Math.round(gaps[Math.ceil(gaps.length*.95)-1]),
+    maxDrawCalls: Math.max(...frames.map(f=>f.calls)), maxGeometries: Math.max(...frames.map(f=>f.geometries)),
+    finalX: frames.at(-1).x, browserErrors: errors, evidence: join(directory, "evidence.json") };
+  assert.deepEqual(errors, []);
+  if (!process.argv.includes("--baseline")) {
+    assert(result.distinctPositions > 35, "Movement still steps only at snapshot rate");
+    assert(result.maxDrawCalls < 40, "Static scene draw calls regressed");
+    assert(Math.abs(result.finalX-4)<.01, "Presentation must settle at the authoritative target");
+  }
+  await page.screenshot({ path: join(directory, "scene.png") });
+  await writeFile(result.evidence, JSON.stringify(result, null, 2));console.log(JSON.stringify(result,null,2));
+} finally { await browser?.close();http.closeAllConnections();await new Promise(r=>http.close(r)); }

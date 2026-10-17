@@ -41,6 +41,7 @@
     "test:campus": "node --experimental-strip-types --test tests/campus*.test.mjs",
     "test:campus:browser": "node --experimental-strip-types scripts/check-campus-browser.mjs",
     "test:campus:vercel:browser": "node --experimental-strip-types scripts/check-campus-browser.mjs --vercel",
+    "test:campus:render": "node scripts/check-campus-render.mjs",
     "campus:preview": "node --experimental-strip-types scripts/check-campus-browser.mjs --preview"
   },
   "dependencies": {
