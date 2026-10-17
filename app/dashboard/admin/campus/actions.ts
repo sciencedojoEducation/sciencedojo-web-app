@@ -31,7 +31,9 @@ export async function manageCampus(form: FormData) {
         .eq("user_id", id)
         .single();
       const url = process.env.CAMPUS_INTERNAL_URL;
-      if (member && url && process.env.CAMPUS_SERVICE_KEY) {
+      // The Vercel runtime removes revoked membership on its next shared DB step;
+      // do not send the old service key to an obsolete room host after cutover.
+      if (process.env.CAMPUS_TRANSPORT !== "vercel" && member && url && process.env.CAMPUS_SERVICE_KEY) {
         try {
           const endpoint = new URL(`/remove/${member.campus_id}`, url);
           if (

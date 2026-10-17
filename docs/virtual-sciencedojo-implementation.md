@@ -91,6 +91,55 @@ For shutdown, disable `virtual_campus_enabled` and unset `CAMPUS_PILOT_READY`; a
 
 ## Remaining project work
 
+### Vercel shared-room adaptation — implementation plan, 17 October 2026
+
+Continue the owner's existing-project Vercel trial and authorized pilot software
+work with an opt-in `CAMPUS_TRANSPORT=vercel` path. Preserve the currently tested
+Colyseus transport as the default and keep all admission/release controls off.
+Use one short-lived private presence row per connected campus identity in the
+existing Supabase database, with a singleton transaction lock for atomic capacity,
+duplicate connection and seat decisions. Database time governs speed, input
+expiry and connection leases across Vercel instances. Reuse migration 070's
+one-use tickets, eligibility/revocation, block rules and course authorization;
+do not give a browser direct table or runtime-function access.
+
+Add an additive, separately reviewed migration with RLS and service-only runtime
+functions, a bounded same-origin WebSocket handler, and a browser adapter exposing
+the current campus UI's message/leave interface. Validate concurrent connections,
+seat races, global capacity, input replay/speed, per-viewer blocking, revocation,
+lease cleanup and function-duration disconnect recovery with independent server
+handlers using the same database. Run the real UI/recovery acceptance for both
+transports. SQL physics must be tested against the established world invariants.
+Measure request rate/latency; do not infer the intended host's capacity from a
+local test. Additional schema deployment, live fixture provisioning and any
+paid-resource decision must be checked against the owner's specific approvals;
+prepare and verify the code before requesting any remaining deployment approval.
+Do not apply this new migration to production or enable learner admission.
+
+**Implementation outcome:** Added the opt-in same-origin Vercel socket/adapter
+and additive migration 071. The actual SQL enforces shared capacity, seats,
+speed/replay/input expiry, block filtering, eligibility/revocation and expiring
+ownership. A database-backed upgrade marker allows one socket attempt per
+fresh ticket. Fresh account-bound handover transfers a mature connection before
+the function duration limit, retaining the seat and mounted course; old cleanup
+cannot delete new ownership. The original Colyseus path remains the default.
+See the [Vercel guide](virtual-sciencedojo-vercel.md) for implementation limits
+and the exact proposed staging procedure.
+
+The full local regression passed 465 tests before the final upgrade-claim
+addition; the final ten targeted SQL/config/socket checks passed afterward.
+The shared-room browser passed the study/recovery flow and forced handover with
+294 inspected non-handshake frames plus five separately validated, fixture-issued
+admission handshakes. Its local PGlite runtime recorded 107 calls, p95 2ms and
+maximum 6ms; these numbers do not establish hosted latency, contention, capacity
+or cost. The original Colyseus browser also passed, inspecting 385 frames.
+Type checking and scoped lint passed before the final upgrade-claim addition;
+current-source final CI must be checked after publication. No 071 migration,
+branch credential change, live fixture creation, production change, purchase or
+learner admission has occurred. Earlier schema approval covers only 067/070;
+obtain scoped approval for 071 and staging credentials in the Vercel preview
+after preparing the concrete reviewed implementation.
+
 ### Vercel preview experiment — approved 17 October 2026
 
 The owner asked to try hosting within the existing ScienceDojo Vercel project.
@@ -139,7 +188,7 @@ trial record are retained locally. No production deployment/configuration,
 database, paid plan or account fixture was changed. This result establishes
 Vercel transport feasibility, not a deployed shared-library beta.
 
-The adult presence-only software, real staging course loop and clean service-release installation/restart are locally verified. The owner selected the existing Vercel project for a trial and its synthetic WSS test passed; a shared-state adaptation is still needed to run the full room there. Intended-deployment, device and operational checks remain incomplete; the project is not launch-complete. A numerical spending ceiling is still needed before any new paid infrastructure commitment. Nature/weather, custom avatars, extra zones, text/voice, tutor lectures, autoscaling/50-player hardening and the broader roadmap remain deferred by the agreed pilot decisions. They have not been implemented or silently declared complete.
+The adult presence-only software, real staging course loop and clean service-release installation/restart are locally verified. The owner selected the existing Vercel project for a trial and its synthetic WSS test passed; the opt-in shared-state adaptation is now locally verified but its new staging schema/deployment remains pending. Intended-deployment, device and operational checks remain incomplete; the project is not launch-complete. A numerical spending ceiling is still needed before any new paid infrastructure commitment. Nature/weather, custom avatars, extra zones, text/voice, tutor lectures, autoscaling/50-player hardening and the broader roadmap remain deferred by the agreed pilot decisions. They have not been implemented or silently declared complete.
 
 ### Continuation evidence — 17 October 2026
 

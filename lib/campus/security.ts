@@ -14,6 +14,12 @@ export function validServiceKey(
 export function sameOrigin(request: Request) {
   return request.headers.get("origin") === new URL(request.url).origin;
 }
+export function campusSocketRequestAllowed(request: Request) {
+  const url = new URL(request.url);
+  return sameOrigin(request) && request.headers.get("upgrade")?.toLowerCase() === "websocket" &&
+    (url.protocol === "https:" || (process.env.NODE_ENV !== "production" &&
+      url.protocol === "http:" && ["localhost", "127.0.0.1"].includes(url.hostname)));
+}
 /** Enforce the limit on bytes read, including requests without Content-Length. */
 export async function readCampusJson(
   request: Request,
@@ -51,6 +57,10 @@ export async function readCampusJson(
   }
 }
 export function campusConfiguration() {
+  if (process.env.CAMPUS_PILOT_READY !== "true") return null;
+  if (process.env.CAMPUS_TRANSPORT === "vercel")
+    return { transport: "vercel" as const, publicUrl: "/api/campus/socket" };
+  if (process.env.CAMPUS_TRANSPORT && process.env.CAMPUS_TRANSPORT !== "colyseus") return null;
   const publicUrl = process.env.CAMPUS_PUBLIC_URL;
   if (
     process.env.CAMPUS_PILOT_READY !== "true" ||
@@ -78,7 +88,7 @@ export function campusConfiguration() {
       )
     )
       return null;
-    return { publicUrl: url.origin };
+    return { transport: "colyseus" as const, publicUrl: url.origin };
   } catch {
     return null;
   }

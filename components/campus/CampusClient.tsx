@@ -9,7 +9,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { Client, type Room } from "@colyseus/sdk";
+import { connectCampus, type CampusConnection } from "@/lib/campus/connection";
 import { SEATS, type Snapshot } from "@/lib/campus/protocol";
 import "./campus.css";
 
@@ -62,7 +62,7 @@ export default function CampusClient({
   const [reason, setReason] = useState("harassment"),
     [busy, setBusy] = useState(false),
     [help, setHelp] = useState(false);
-  const room = useRef<Room | null>(null),
+  const room = useRef<CampusConnection | null>(null),
     direction = useRef({ x: 0, z: 0 }),
     stepTimer = useRef<ReturnType<typeof setTimeout> | null>(null),
     pointerStarted = useRef(0),
@@ -106,11 +106,7 @@ export default function CampusClient({
       const response = await fetch("/api/campus/admission", { method: "POST" });
       const admission = await response.json();
       if (!response.ok) throw new Error(admission.error || "Unable to enter.");
-      const next = await new Client(admission.endpoint).joinById(
-        admission.room,
-        { ticket: admission.ticket },
-      );
-      next.reconnection.enabled = false;
+      const next = await connectCampus(admission);
       if (attempt !== generation.current) {
         void next.leave();
         return;

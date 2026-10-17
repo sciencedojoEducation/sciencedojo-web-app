@@ -34,8 +34,11 @@ ScienceDojo project. This permits the bounded synthetic transport experiment in
 the implementation record; it does not enable the beta, approve paid services,
 apply production schemas or establish any operational gate as complete.
 The hosted probe subsequently passed four WSS exchanges and observed two server
-instances. The existing-project transport is feasible; a coordinated room is
-still unimplemented. No new paid plan, production change or admission occurred.
+instances. The existing-project transport is feasible. The coordinated room
+subsequently gained an opt-in, locally verified shared-SQL implementation; its
+new migration 071 and scoped staging deployment remain pending approval. See
+the [Vercel transport guide](virtual-sciencedojo-vercel.md). No new paid plan,
+production change or admission occurred.
 
 The first world is a calm, stylized, low-poly blockout of the Cube's library: readable paths, a computer interaction, simple lighting and capsule avatars. Use generated pseudonyms and a constrained built-in colour palette. Avoid user-uploaded avatars, free-text names, photorealism, competitive scoring, streak pressure and collectible rewards. These are implementation defaults from the approved plan, not evidence of an owner-approved final art design. Use the lowercase **sciencedojo.** wordmark for logos and follow the [brand guidelines](brand-guidelines.md).
 

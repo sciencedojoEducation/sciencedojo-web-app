@@ -32,6 +32,25 @@ export type Player = {
 };
 export type Snapshot = { self: string; players: Player[]; occupied: string[] };
 export type Input = { x: number; z: number; seq: number };
+export function isSnapshot(value: unknown): value is Snapshot {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return false;
+  const snapshot = value as Snapshot;
+  if (Object.keys(value).sort().join(",") !== "occupied,players,self" ||
+    typeof snapshot.self !== "string" || !Array.isArray(snapshot.players) || snapshot.players.length > 10 ||
+    !Array.isArray(snapshot.occupied) || snapshot.occupied.length > SEATS.length ||
+    new Set(snapshot.occupied).size !== snapshot.occupied.length ||
+    !snapshot.occupied.every((id) => SEATS.some((seat) => seat.id === id))) return false;
+  if (!snapshot.players.every((p) => p && typeof p === "object" &&
+    Object.keys(p).sort().join(",") === "colour,id,pseudonym,rotation,seat,status,x,z" &&
+    isIdentity({ id: p.id, pseudonym: p.pseudonym, colour: p.colour, blocked: [] }) &&
+    Number.isFinite(p.x) && p.x >= WORLD.minX && p.x <= WORLD.maxX &&
+    Number.isFinite(p.z) && p.z >= WORLD.minZ && p.z <= WORLD.maxZ &&
+    Number.isFinite(p.rotation) && Math.abs(p.rotation) <= Math.PI + 0.000001 &&
+    (p.seat === null ? p.status === "walking" :
+      SEATS.some((seat) => seat.id === p.seat) && ["seated", "studying"].includes(p.status)))) return false;
+  return new Set(snapshot.players.map((p) => p.id)).size === snapshot.players.length &&
+    snapshot.players.some((p) => p.id === snapshot.self);
+}
 export function isInput(value: unknown): value is Input {
   if (!value || typeof value !== "object") return false;
   const v = value as Record<string, unknown>;

@@ -3,19 +3,31 @@ import { createServer } from "node:http";
 import { readFile, mkdtemp, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { randomBytes } from "node:crypto";
+import { randomBytes, createHash } from "node:crypto";
+import { WebSocketServer } from "ws";
 import { build } from "esbuild";
 import { chromium } from "@playwright/test";
 import { createCampusServer } from "../services/campus-server/server.mjs";
+import { runtimeFixture } from "../tests/helpers/campus-runtime-fixture.mjs";
+import { runVercelCampusSession } from "../lib/campus/vercel-session.ts";
+import { validServiceKey } from "../lib/campus/security.ts";
+
+const vercel = process.argv.includes("--vercel");
+const shared = vercel ? await runtimeFixture(14) : null;
 
 const directory = await mkdtemp(join(tmpdir(), "sciencedojo-campus-browser-"));
 const origin = "http://127.0.0.1:3012",
   serviceKey = randomBytes(32).toString("hex");
 const identities = new Map(),
   tickets = new Map();
+const runtimeSockets = new Map(), runtimeDurations = [];
 let next = 0;
 const identity = () => {
   const n = ++next;
+  if (shared) {
+    if (!shared.members[n - 1]) throw new Error("Synthetic account fixture exhausted");
+    return { ...shared.members[n - 1], blocked: [] };
+  }
   return {
     id: `40000000-0000-0000-0000-${String(n).padStart(12, "0")}`,
     pseudonym: `Quiet Maple aaaa${String(n).padStart(2, "0")}`,
@@ -48,10 +60,11 @@ await build({
 });
 const wireFrames = [],
   ticketReads = [],
-  issuedTickets = [];
+  issuedTickets = [],
+  handshakeHashes = [];
 const errors = [],
   result = {
-    fixture: "Synthetic UI/course fixture with real Colyseus WebSockets",
+    fixture: vercel ? "Synthetic UI/course fixture with independent WebSocket handlers and shared SQL runtime" : "Synthetic UI/course fixture with real Colyseus WebSockets",
     checks: [],
     screenshots: [],
   };
@@ -68,9 +81,16 @@ const http = createServer(async (req, res) => {
       return res.end(await readFile(join(directory, path.slice(1))));
     }
     if (path === "/api/campus/admission") {
-      const who = identity();
+      let renewal = false;
+      if (shared) {
+        let body = ""; for await (const chunk of req) body += chunk;
+        renewal = Boolean(body && JSON.parse(body).renew === true);
+      }
+      const previous = /fixture=([0-9a-f-]+)/.exec(req.headers.cookie || "")?.[1];
+      const who = renewal && identities.has(previous) ? identities.get(previous) : identity();
       identities.set(who.id, who);
-      const ticket = randomBytes(32).toString("hex");
+      const account = shared ? shared.members.findIndex((member) => member.id === who.id) + 1 : next;
+      const ticket = shared ? await shared.issueRaw(account) : randomBytes(32).toString("hex");
       tickets.set(ticket, who);
       res.setHeader(
         "set-cookie",
@@ -80,7 +100,8 @@ const http = createServer(async (req, res) => {
       return res.end(
         JSON.stringify({
           ticket,
-          endpoint: "ws://127.0.0.1:2569",
+          endpoint: shared ? "/api/campus/socket" : "ws://127.0.0.1:2569",
+          transport: shared ? "vercel" : "colyseus",
           room: "library",
         }),
       );
@@ -98,8 +119,25 @@ const http = createServer(async (req, res) => {
       if (action.action === "block") who.blocked.push(action.target);
       if (action.action === "unblock")
         who.blocked = who.blocked.filter((id) => id !== action.target);
+      if (shared) {
+        const account = shared.members.findIndex((m) => m.id === own) + 1;
+        if (action.action === "report") await shared.as(account, () => shared.db.query("SELECT campus_report($1,$2)", [action.target, action.reason]));
+        else await shared.as(account, () => shared.db.query("SELECT campus_block($1,$2)", [action.target, action.action === "block"]));
+      }
       res.setHeader("content-type", "application/json");
       return res.end('{"saved":true}');
+    }
+    if (shared && path.startsWith("/fixture/remove/")) {
+      if (!validServiceKey(req.headers.authorization || null, serviceKey)) { res.statusCode = 401; return res.end(); }
+      await shared.db.query("DELETE FROM campus_presence WHERE campus_id=$1", [path.split("/").at(-1)]);
+      res.statusCode = 204; return res.end();
+    }
+    if (shared && path.startsWith("/fixture/renew/")) {
+      if (!validServiceKey(req.headers.authorization || null, serviceKey)) { res.statusCode = 401; return res.end(); }
+      const target = path.split("/").at(-1);
+      await shared.db.query("UPDATE campus_presence SET opened_at=clock_timestamp()-interval '181 seconds' WHERE campus_id=$1", [target]);
+      for (const [socket, own] of runtimeSockets) if (own === target) socket.send(JSON.stringify({ type: "renew", data: null }));
+      res.statusCode = 204; return res.end();
     }
     if (path.startsWith("/dashboard/academy/")) {
       res.setHeader("content-type", "text/html; charset=utf-8");
@@ -122,7 +160,30 @@ const http = createServer(async (req, res) => {
 });
 try {
   await new Promise((resolve) => http.listen(3012, "127.0.0.1", resolve));
-  campus = await createCampusServer({
+  if (shared) {
+    const servers = [new WebSocketServer({ noServer: true, maxPayload: 2048 }), new WebSocketServer({ noServer: true, maxPayload: 2048 })];
+    const sessions = new Set();
+    let listener = 0;
+    http.on("upgrade", (req, socket, head) => {
+      const own = /fixture=([0-9a-f-]+)/.exec(req.headers.cookie || "")?.[1];
+      if (req.url !== "/api/campus/socket" || req.headers.origin !== origin || !identities.has(own)) { socket.destroy(); return; }
+      servers[listener++ % 2].handleUpgrade(req, socket, head, (ws) => {
+        runtimeSockets.set(ws, own);
+        const done = runVercelCampusSession(ws, own, async (args) => {
+          const started = performance.now();
+          try { return await shared.runtime(args.runtime_connection, args.runtime_operation, args.runtime_commands, args.ticket_hash, args.expected_campus, args.runtime_renew); }
+          finally { runtimeDurations.push(performance.now() - started); }
+        });
+        sessions.add(done); void done.finally(() => { sessions.delete(done); runtimeSockets.delete(ws); });
+      });
+    });
+    campus = { close: async () => {
+      for (const server of servers) for (const socket of server.clients) socket.terminate();
+      await Promise.all([...sessions]);
+      for (const server of servers) await new Promise((resolve) => server.close(resolve));
+      await shared.db.close();
+    } };
+  } else campus = await createCampusServer({
     port: 2569,
     origin,
     serviceKey,
@@ -218,14 +279,23 @@ try {
       b = await bContext.newPage();
     for (const page of [a, b]) {
       page.on("websocket", (socket) => {
+        let firstSent = true;
         for (const kind of ["framesent", "framereceived"])
-          socket.on(kind, (frame) =>
-            wireFrames.push(
-              Buffer.isBuffer(frame.payload)
-                ? frame.payload
-                : Buffer.from(frame.payload),
-            ),
-          );
+          socket.on(kind, (frame) => {
+            const bytes = Buffer.isBuffer(frame.payload) ? frame.payload : Buffer.from(frame.payload);
+            if (vercel && kind === "framesent" && firstSent) {
+              firstSent = false;
+              try {
+                const admission = JSON.parse(bytes.toString());
+                const keys = Object.keys(admission).sort().join(",");
+                if (!(keys === "ticket,type" || (keys === "renew,ticket,type" && admission.renew === true)) || admission.type !== "admit" || !/^[0-9a-f]{64}$/.test(admission.ticket))
+                  throw new Error("Invalid protected admission handshake");
+                handshakeHashes.push(createHash("sha256").update(admission.ticket).digest("hex"));
+                return;
+              } catch { errors.push("Invalid protected admission handshake"); }
+            }
+            wireFrames.push(bytes);
+          });
       });
       page.on("response", (response) => {
         if (new URL(response.url()).pathname === "/api/campus/admission")
@@ -251,15 +321,19 @@ try {
     );
     await a.getByRole("button", { name: "Controls", exact: true }).click();
     const forward = a.getByRole("button", { name: "Walk forward", exact: true });
-    const me = campus.room.world.players.values().next().value;
+    const firstId = identities.keys().next().value;
+    const player = async (id = firstId) => shared
+      ? (await shared.db.query("SELECT campus_id AS id,x,z FROM campus_presence WHERE campus_id=$1", [id])).rows[0]
+      : campus.room.world.players.get(id);
+    const me = await player();
     for (const activate of [() => forward.click(), () => forward.press("Enter")]) {
-      const before = me.z;
+      const before = (await player()).z;
       await activate();
       await new Promise((resolve) => setTimeout(resolve, 650));
-      if (me.z >= before - 0.3) throw new Error("Direction button activation did not move");
-      const stopped = me.z;
+      if ((await player()).z >= before - 0.3) throw new Error("Direction button activation did not move");
+      const stopped = (await player()).z;
       await new Promise((resolve) => setTimeout(resolve, 350));
-      if (Math.abs(me.z - stopped) > 0.05) throw new Error("Direction step did not stop");
+      if (Math.abs((await player()).z - stopped) > 0.05) throw new Error("Direction step did not stop");
     }
     result.checks.push("Pointer taps and native keyboard button activation move a bounded step and stop");
     const stage = a.getByRole("region", { name: /3D library/ });
@@ -267,7 +341,7 @@ try {
     await a.keyboard.down("ArrowUp");
     await new Promise((resolve) => setTimeout(resolve, 1400));
     await a.keyboard.up("ArrowUp");
-    if (me.z > 0) throw new Error("Keyboard movement did not reach the desks");
+    if ((await player()).z > 0) throw new Error("Keyboard movement did not reach the desks");
     await a.getByRole("button", { name: "Desk 2 Sit →", exact: true }).click();
     await a
       .getByRole("button", { name: "Open Study Hub", exact: true })
@@ -333,6 +407,23 @@ try {
         .inputValue()) !== "campus-wire-answer-canary-17oct"
     )
       throw new Error("Closing hub discarded work");
+    if (shared) {
+      const oldConnection = (await shared.db.query("SELECT connection_id FROM campus_presence WHERE campus_id=$1", [me.id])).rows[0].connection_id;
+      const renewed = await fetch(`${origin}/fixture/renew/${me.id}`, { method: "POST", headers: { authorization: `Bearer ${serviceKey}` } });
+      if (renewed.status !== 204) throw new Error("Renewal trigger failed");
+      let transferred = false;
+      for (let attempt = 0; attempt < 50; attempt++) {
+        const state = (await shared.db.query("SELECT connection_id,seat FROM campus_presence WHERE campus_id=$1", [me.id])).rows[0];
+        if (state && state.connection_id !== oldConnection && state.seat === "desk-2") { transferred = true; break; }
+        await new Promise((resolve) => setTimeout(resolve, 100));
+      }
+      if (!transferred || !(await a.locator("dialog").evaluate((dialog) => dialog.open)) ||
+        (await course.getByRole("textbox", { name: "Practice answer" }).inputValue()) !== "campus-wire-answer-canary-17oct")
+        throw new Error("Duration handover did not retain the seat, Hub and course input");
+      if ((await a.textContent("body")).includes("Disconnected — your course stays open"))
+        throw new Error("Healthy handover disconnected the UI");
+      result.checks.push("Fresh one-use admission transfers between independent handlers before the duration limit, retaining seat, modal and unsaved course input");
+    }
     await course.getByRole("button", { name: "Save progress" }).click();
     await course.getByText("Saved", { exact: true }).waitFor();
     await a.getByRole("button", { name: "Return to library →" }).click();
@@ -351,7 +442,7 @@ try {
     await a
       .getByRole("button", { name: "Open Study Hub", exact: true })
       .click();
-    const removal = await fetch("http://127.0.0.1:2569/remove/" + me.id, {
+    const removal = await fetch((shared ? `${origin}/fixture` : "http://127.0.0.1:2569") + "/remove/" + me.id, {
       method: "POST",
       headers: { authorization: "Bearer " + serviceKey },
     });
@@ -378,7 +469,7 @@ try {
     await a.getByRole("button", { name: "Return to library →" }).click();
     await a.getByRole("button", { name: "Enter library", exact: true }).click();
     await a.getByText("In the library · walking", { exact: true }).waitFor();
-    if (campus.room.world.players.has(me.id))
+    if (await player(me.id))
       throw new Error("Dropped presence retained its seat");
     result.checks.push(
       "Authenticated moderator removal clears stale presence/seat UI, permits offline Hub reopen with retained input and fresh admission",
@@ -411,6 +502,12 @@ try {
     await a.getByText("In the library · walking", { exact: true }).waitFor();
     result.checks.push("Leave and fresh admission restore standing presence");
     await Promise.all(ticketReads);
+    if (vercel) {
+      const issuedHashes = new Set(issuedTickets.map((ticket) => createHash("sha256").update(ticket).digest("hex")));
+      if (!handshakeHashes.length || handshakeHashes.some((hash) => !issuedHashes.has(hash)))
+        throw new Error("Protected handshake did not use a fixture-issued one-use ticket");
+      result.checks.push(`${handshakeHashes.length} exact fixed-shape admission handshakes checked separately; no credentials retained in evidence`);
+    }
     const combined = Buffer.concat(wireFrames);
     if (!wireFrames.length || !issuedTickets.length)
       throw new Error("Wire observation missing");
@@ -432,6 +529,12 @@ try {
     );
     if (errors.length) throw new Error(errors.join("\n"));
     result.checks.push("No uncaught browser errors");
+    if (shared) {
+      const samples = [...runtimeDurations].sort((a, b) => a - b);
+      result.localSqlRuntime = { calls: samples.length, p95Ms: Math.round(samples[Math.floor(samples.length * 0.95)] || 0),
+        maxMs: Math.round(samples.at(-1) || 0), intervalMs: 200,
+        scope: "Local PGlite fixture only; not hosted latency, throughput or cost evidence" };
+    }
     await writeFile(
       join(directory, "evidence.json"),
       JSON.stringify(result, null, 2),

@@ -27,5 +27,5 @@ export async function POST(request: Request) {
       },
       429,
     );
-  return campusJson({ ticket, endpoint: config.publicUrl, room: CAMPUS_ROOM });
+  return campusJson({ ticket, transport: config.transport, endpoint: config.publicUrl, room: CAMPUS_ROOM });
 }

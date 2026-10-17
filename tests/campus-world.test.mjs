@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { admissionLimiter } from "../services/campus-server/admission-limit.mjs";
 import { CampusWorld } from "../lib/campus/world.ts";
-import { isInput, SEATS } from "../lib/campus/protocol.ts";
+import { isInput, isSnapshot, SEATS } from "../lib/campus/protocol.ts";
 import {
   hashTicket,
   validServiceKey,
@@ -17,6 +17,24 @@ const identity = (n) => ({
   email: "private@example.test",
   course: "secret-course",
   grade: 99,
+});
+
+test("snapshot validation rejects leaked fields, duplicate identities and invalid world state", () => {
+  const world = new CampusWorld(); world.join(identity(1));
+  const valid = world.snapshot(identity(1).id);
+  assert.equal(isSnapshot(valid), true);
+  for (const mutate of [
+    (s) => { s.players[0].email = "private@example.test"; },
+    (s) => { s.players.push({ ...s.players[0] }); },
+    (s) => { s.players[0].x = Infinity; },
+    (s) => { s.players[0].seat = "invented"; },
+    (s) => { s.players[0].status = "studying"; },
+    (s) => { s.self = "not-a-present-campus-id"; },
+    (s) => { s.occupied = ["desk-1", "desk-1"]; },
+  ]) {
+    const value = structuredClone(valid); mutate(value);
+    assert.equal(isSnapshot(value), false);
+  }
 });
 
 test("admission limits bound single-source and distributed traffic and reset after a minute", () => {

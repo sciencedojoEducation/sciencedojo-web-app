@@ -25,11 +25,24 @@ expiring, preview-only WebSocket probe now tests transport without learner data
 or admission. See the implementation record. Vercel's current WebSocket beta
 supports connections, but different connections can reach different function
 instances and close at duration limits. The single-process room described below
-remains the verified implementation; a coordinated Vercel room is not yet built
-or verified. The hosted probe at software revision `17e2637` passed four WSS
+remains the default implementation. An opt-in coordinated Vercel path is now
+implemented and locally tested; its new schema and actual staging deployment
+remain pending. See the [Vercel transport guide](virtual-sciencedojo-vercel.md)
+for its transaction authority, rate bounds, renewal and verification procedure.
+The hosted probe at software revision `17e2637` passed four WSS
 exchanges and observed two process markers, demonstrating this coordination
 requirement on the actual account. A transport probe must not silently replace
 room authority with client-owned state or declare shared presence ready.
+
+The Vercel path reuses the same admission, world snapshot and Study Hub UI. An
+authenticated same-origin Next.js socket passes only a hashed admission ticket
+and opaque connection ownership to a service-only Postgres runtime. A singleton
+lock serializes the ten-place room across instances; database time controls
+movement and leases. A fresh one-use handshake can transfer a mature connection
+before its function duration expires, preserving seat and course-frame input.
+RLS denies browser access to runtime state, while per-viewer snapshots preserve
+blocking and all private-learning boundaries. Migration 071 is additive and
+unapplied; the old service remains usable when transport configuration is absent.
 
 The existing application remains at the repository root. Additions are a protected `/campus` route and campus components in the web app, a separately deployed `services/campus-server/` Colyseus service, and browser-safe shared TypeScript contracts under `lib/campus/`. Authentication and database mapping remain server-side. The service has its own package and lockfile, runs on Node 22.18+ using native type stripping, and is excluded from the root Next.js TypeScript inputs. No workspace conversion was introduced.
 

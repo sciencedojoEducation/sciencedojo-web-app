@@ -8,7 +8,7 @@ import {
 import { campusJson } from "@/lib/campus/server";
 export async function POST(request: Request) {
   if (
-    !campusConfiguration() ||
+    campusConfiguration()?.transport !== "colyseus" ||
     !validServiceKey(
       request.headers.get("authorization"),
       process.env.CAMPUS_SERVICE_KEY,
