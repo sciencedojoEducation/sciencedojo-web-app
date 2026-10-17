@@ -36,6 +36,8 @@
     "academy:german-a2:seed": "node --experimental-strip-types scripts/seed-german-a2-course.mjs",
     "academy:nicos-next:seed": "node --experimental-strip-types scripts/seed-nicos-weg-next-courses.mjs",
     "campus:server": "npm --prefix services/campus-server start",
+    "campus:package": "node scripts/package-campus-service.mjs",
+    "test:campus:release": "node scripts/check-campus-release.mjs",
     "test:campus": "node --experimental-strip-types --test tests/campus*.test.mjs",
     "test:campus:browser": "node --experimental-strip-types scripts/check-campus-browser.mjs",
     "campus:preview": "node --experimental-strip-types scripts/check-campus-browser.mjs --preview"

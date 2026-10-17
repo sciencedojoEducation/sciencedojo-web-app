@@ -31,6 +31,24 @@ jobs:
       - name: Run regression tests
         run: npm test
 
+      - name: Check clean campus service release and restart
+        timeout-minutes: 5
+        env:
+          TMPDIR: ${{ runner.temp }}
+        run: npm run test:campus:release
+
+      - name: Save campus service release evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: campus-service-release
+          path: |
+            ${{ runner.temp }}/sciencedojo-campus-release-*/campus-service.tar.gz
+            ${{ runner.temp }}/sciencedojo-campus-release-*/campus-service.sha256
+            ${{ runner.temp }}/sciencedojo-campus-release-*/evidence.json
+          if-no-files-found: ignore
+          retention-days: 7
+
       - name: Install campus browser
         run: npx playwright install --with-deps chromium
 
