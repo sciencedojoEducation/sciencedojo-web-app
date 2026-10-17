@@ -179,3 +179,7 @@ Weekly note: **What moved forward? What blocked progress? What are the next thre
 4. Preserve approved claims, pricing and scope until the owner approves a concrete change. Research can inform a decision but cannot replace the owner's decision.
 5. Reuse existing website and demonstration work. New development should answer a specific buyer requirement or observed usability issue.
 6. Keep actual prospect records, confidential materials, personal permission documents and learner responses in appropriate private storage.
+
+### Preview build resilience — 17 October 2026
+
+The optional-campus preview at `c3fcc34` failed while prerendering `/gcse-physics-tutor`, after public feature-flag database timeouts. The live production release `ed6d210` remained Ready; fresh homepage/login/signup, workbook manifest, protected-content and database availability checks passed. The isolated `codex/preview-public-data-timeout` patch gives only the public Supabase client a five-second request deadline, preserving caller cancellation, framework fetch options and the existing safe fallback/cache behavior. It does not change marketing claims, pricing, private authorization or any feature switches. Local regression tests, TypeScript, scoped/latency lint, full production build and private-workbook trace checks are the preparation evidence; hosted preview/CI outcomes must be read from that branch's actual checks. B3, S1 and R1 remain the only three active business tasks; all paid-work and tested-delivery gates remain intact.
