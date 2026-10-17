@@ -25,6 +25,8 @@ These decisions define the intended pilot. They do not verify anyone's age, resi
 
 The owner subsequently approved the public draft PR and restoring the configured showcase staging project, including its announced Postgres update. [Draft PR #17](https://github.com/sciencedojoEducation/sciencedojo-web-app/pull/17) is open and the restore request was accepted. This authorizes the reviewed staging/software checks, not paid provisioning or real-learner admission; all operational gates remain pending until actual evidence is recorded.
 
+The restore completed with a Healthy dashboard and Postgres 17.6. Automatic approval review then required separate approval for schema migration. The campus staff/switch hardening does not establish that the existing platform's broader authorization review or G1–G9 is complete. Deployed authorization findings remain in the ignored private preflight record.
+
 ## Pilot experience and design defaults
 
 The first world is a calm, stylized, low-poly blockout of the Cube's library: readable paths, a computer interaction, simple lighting and capsule avatars. Use generated pseudonyms and a constrained built-in colour palette. Avoid user-uploaded avatars, free-text names, photorealism, competitive scoring, streak pressure and collectible rewards. These are implementation defaults from the approved plan, not evidence of an owner-approved final art design. Use the lowercase **sciencedojo.** wordmark for logos and follow the [brand guidelines](brand-guidelines.md).

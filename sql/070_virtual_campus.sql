@@ -1,7 +1,31 @@
 BEGIN;
--- Additive, disabled by default. Apply after 069 through the normal migration process.
+-- Additive, disabled by default. Requires 067's course authorization helpers.
+-- Normally follows 069; isolated campus staging does not depend on unrelated 068/069 schemas.
 INSERT INTO public.feature_flags(key,label,description,enabled,category)
 VALUES('virtual_campus_enabled','Virtual campus','Invite-only adult shared study library.',false,'Growth / Beta') ON CONFLICT(key) DO NOTHING;
+
+-- Campus authority is explicitly provisioned by a trusted operator;
+-- an existing account profile alone does not establish campus staff permission.
+CREATE TABLE public.campus_staff (
+ user_id uuid PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+ enabled boolean NOT NULL DEFAULT true, created_at timestamptz NOT NULL DEFAULT now()
+);
+ALTER TABLE public.campus_staff ENABLE ROW LEVEL SECURITY;
+REVOKE ALL ON public.campus_staff FROM PUBLIC,anon,authenticated;
+GRANT SELECT,INSERT,UPDATE,DELETE ON public.campus_staff TO service_role;
+CREATE FUNCTION public.campus_is_staff() RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path=public,pg_temp AS $$
+ SELECT public.course_pilot_admin() AND public.course_pilot_active()
+ AND EXISTS(SELECT 1 FROM campus_staff WHERE user_id=auth.uid() AND enabled);
+$$;
+-- Restrictive write policies protect this one switch even alongside legacy
+-- permissive feature-flag policies. Public flag reads retain their existing behavior.
+CREATE POLICY "Campus flag insert staff" ON public.feature_flags AS RESTRICTIVE FOR INSERT TO authenticated
+ WITH CHECK(key<>'virtual_campus_enabled' OR public.campus_is_staff());
+CREATE POLICY "Campus flag update staff" ON public.feature_flags AS RESTRICTIVE FOR UPDATE TO authenticated
+ USING(key<>'virtual_campus_enabled' OR public.campus_is_staff())
+ WITH CHECK(key<>'virtual_campus_enabled' OR public.campus_is_staff());
+CREATE POLICY "Campus flag delete staff" ON public.feature_flags AS RESTRICTIVE FOR DELETE TO authenticated
+ USING(key<>'virtual_campus_enabled' OR public.campus_is_staff());
 
 CREATE TABLE public.campus_members (
  user_id uuid PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
@@ -40,10 +64,10 @@ ALTER TABLE public.campus_tickets ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.campus_blocks ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.campus_reports ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.campus_audit ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Campus staff read members" ON public.campus_members FOR SELECT TO authenticated USING(public.course_pilot_admin());
+CREATE POLICY "Campus staff read members" ON public.campus_members FOR SELECT TO authenticated USING(public.campus_is_staff());
 CREATE POLICY "Campus own blocks" ON public.campus_blocks FOR SELECT TO authenticated USING(owner_id=auth.uid() AND public.course_pilot_active());
-CREATE POLICY "Campus staff read reports" ON public.campus_reports FOR SELECT TO authenticated USING(public.course_pilot_admin());
-CREATE POLICY "Campus staff read audit" ON public.campus_audit FOR SELECT TO authenticated USING(public.course_pilot_admin());
+CREATE POLICY "Campus staff read reports" ON public.campus_reports FOR SELECT TO authenticated USING(public.campus_is_staff());
+CREATE POLICY "Campus staff read audit" ON public.campus_audit FOR SELECT TO authenticated USING(public.campus_is_staff());
 REVOKE ALL ON public.campus_members,public.campus_tickets,public.campus_blocks,public.campus_reports,public.campus_audit FROM anon,authenticated;
 GRANT SELECT ON public.campus_members,public.campus_blocks,public.campus_reports,public.campus_audit TO authenticated;
 
@@ -113,7 +137,7 @@ $$;
 CREATE FUNCTION public.campus_manage_member(target_user uuid, active boolean, adult boolean, eea boolean) RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path=public,pg_temp AS $$
 DECLARE campus uuid;
 BEGIN
- IF NOT public.course_pilot_admin() THEN RAISE EXCEPTION 'Admin required'; END IF;
+ IF NOT public.campus_is_staff() THEN RAISE EXCEPTION 'Admin campus staff required'; END IF;
  IF active AND NOT(adult AND eea) THEN RAISE EXCEPTION 'Reviewed adult and EU/EEA eligibility required'; END IF;
  INSERT INTO campus_members(user_id,enabled,adult_verified,eea_verified,verified_by,verified_at,colour)
  VALUES(target_user,active,adult,eea,auth.uid(),now(),floor(random()*5)::int)
@@ -125,12 +149,13 @@ END;
 $$;
 CREATE FUNCTION public.campus_resolve_report(target_report uuid) RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path=public,pg_temp AS $$
 BEGIN
- IF NOT public.course_pilot_admin() THEN RAISE EXCEPTION 'Admin required'; END IF;
+ IF NOT public.campus_is_staff() THEN RAISE EXCEPTION 'Admin campus staff required'; END IF;
  UPDATE campus_reports SET resolved_at=now(),resolved_by=auth.uid() WHERE id=target_report;
  INSERT INTO campus_audit(actor,target,action) SELECT auth.uid(),target,'report-resolved' FROM campus_reports WHERE id=target_report;
 END;
 $$;
-REVOKE ALL ON FUNCTION public.campus_allowed(uuid),public.campus_self(),public.campus_accept_notice(text),public.campus_issue_ticket(text),public.campus_block(uuid,boolean),public.campus_report(uuid,text),public.campus_manage_member(uuid,boolean,boolean,boolean),public.campus_resolve_report(uuid),public.campus_service_identity(uuid),public.campus_redeem_ticket(text) FROM PUBLIC,anon,authenticated;
-GRANT EXECUTE ON FUNCTION public.campus_self(),public.campus_accept_notice(text),public.campus_issue_ticket(text),public.campus_block(uuid,boolean),public.campus_report(uuid,text),public.campus_manage_member(uuid,boolean,boolean,boolean),public.campus_resolve_report(uuid) TO authenticated;
+REVOKE ALL ON FUNCTION public.campus_is_staff(),public.campus_allowed(uuid),public.campus_self(),public.campus_accept_notice(text),public.campus_issue_ticket(text),public.campus_block(uuid,boolean),public.campus_report(uuid,text),public.campus_manage_member(uuid,boolean,boolean,boolean),public.campus_resolve_report(uuid),public.campus_service_identity(uuid),public.campus_redeem_ticket(text) FROM PUBLIC,anon,authenticated;
+GRANT EXECUTE ON FUNCTION public.campus_is_staff(),public.campus_self(),public.campus_accept_notice(text),public.campus_issue_ticket(text),public.campus_block(uuid,boolean),public.campus_report(uuid,text),public.campus_manage_member(uuid,boolean,boolean,boolean),public.campus_resolve_report(uuid) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.campus_service_identity(uuid),public.campus_redeem_ticket(text) TO service_role;
+NOTIFY pgrst,'reload schema';
 COMMIT;

@@ -51,6 +51,7 @@ next-env.d.ts
 
 # Private business planning, prospect research and owner inputs
 /.business-private/
+/.campus-private/
 
 # Local workbook PDFs and source audio
 /private-materials/

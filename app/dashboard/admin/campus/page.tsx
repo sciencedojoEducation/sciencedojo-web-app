@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { requirePilotAdmin } from "@/lib/course-pilot";
+import { campusStaffSession } from "@/lib/campus/staff";
 import { manageCampus } from "./actions";
 export const metadata = { title: "Campus moderation | ScienceDojo" };
 export default async function CampusAdmin({
@@ -7,7 +7,15 @@ export default async function CampusAdmin({
 }: {
   searchParams: Promise<{ message?: string }>;
 }) {
-  const { supabase } = await requirePilotAdmin();
+  const session = await campusStaffSession();
+  if (!session) return (
+    <main className="mx-auto max-w-xl space-y-5 p-8 text-slate-900">
+      <h1 className="text-3xl font-semibold">Campus staff setup required</h1>
+      <p>A trusted operator must provision campus staff access separately. An account profile or signup role does not grant this permission.</p>
+      <Link href="/dashboard/admin" className="underline">Return to administration</Link>
+    </main>
+  );
+  const { supabase } = session;
   const [membersResult, reportsResult, auditResult] = await Promise.all([
     supabase
       .from("campus_members")

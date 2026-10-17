@@ -12,6 +12,7 @@ async function setup() {
       "utf8",
     ),
   );
+  await f.db.query("INSERT INTO campus_staff(user_id) VALUES($1)", [id(15)]);
   return f;
 }
 async function service(db, sql, args = []) {
@@ -99,6 +100,35 @@ test("campus defaults closed; only reviewed invite and notice allow one-use serv
       ).rows[0].identity,
       null,
     );
+  } finally {
+    await f.db.close();
+  }
+});
+test("a legacy metadata-derived admin profile cannot become campus staff or change the campus switch", async () => {
+  const f = await setup();
+  try {
+    // Model permissive legacy flag policies and an untrusted admin profile.
+    await f.db.exec(`ALTER TABLE feature_flags ENABLE ROW LEVEL SECURITY;
+      GRANT SELECT,INSERT,UPDATE,DELETE ON feature_flags TO authenticated;
+      CREATE POLICY legacy_flag_access ON feature_flags FOR ALL TO authenticated USING(true) WITH CHECK(true);`);
+    await f.db.query("UPDATE profiles SET role='admin' WHERE id=$1", [id(1)]);
+    await f.as(1, async () => {
+      assert.equal((await f.db.query("SELECT campus_is_staff() AS allowed")).rows[0].allowed, false);
+      await assert.rejects(f.db.query("INSERT INTO campus_staff(user_id) VALUES($1)", [id(1)]), /permission denied/);
+      await assert.rejects(f.db.query("SELECT campus_manage_member($1,true,true,true)", [id(2)]), /staff required/);
+      assert.equal((await f.db.query("SELECT * FROM campus_members")).rows.length, 0);
+      assert.equal((await f.db.query("UPDATE feature_flags SET enabled=true WHERE key='virtual_campus_enabled' RETURNING key")).rows.length, 0);
+      assert.equal((await f.db.query("DELETE FROM feature_flags WHERE key='virtual_campus_enabled' RETURNING key")).rows.length, 0);
+      await assert.rejects(f.db.query("INSERT INTO feature_flags(key,enabled) VALUES('virtual_campus_enabled',true)"), /row-level security/);
+    });
+    assert.equal((await f.db.query("SELECT enabled FROM feature_flags WHERE key='virtual_campus_enabled'")).rows[0].enabled, false);
+    await service(f.db, "INSERT INTO campus_staff(user_id) VALUES($1)", [id(1)]);
+    await f.as(1, async () => {
+      assert.equal((await f.db.query("SELECT campus_is_staff() AS allowed")).rows[0].allowed, true);
+      assert.equal((await f.db.query("UPDATE feature_flags SET enabled=true WHERE key='virtual_campus_enabled' RETURNING key")).rows.length, 1);
+    });
+    await service(f.db, "UPDATE campus_staff SET enabled=false WHERE user_id=$1", [id(1)]);
+    assert.equal((await f.as(1, () => f.db.query("SELECT campus_is_staff() AS allowed"))).rows[0].allowed, false);
   } finally {
     await f.db.close();
   }

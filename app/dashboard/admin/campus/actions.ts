@@ -1,9 +1,11 @@
 "use server";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { requirePilotAdmin } from "@/lib/course-pilot";
+import { campusStaffSession } from "@/lib/campus/staff";
 export async function manageCampus(form: FormData) {
-  const { supabase } = await requirePilotAdmin();
+  const session = await campusStaffSession();
+  if (!session) throw new Error("Campus staff authorization required.");
+  const { supabase } = session;
   const id = String(form.get("id") || ""),
     action = String(form.get("action") || "");
   if (!/^[0-9a-f-]{36}$/i.test(id))
