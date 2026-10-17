@@ -43,6 +43,8 @@ before its function duration expires, preserving seat and course-frame input.
 RLS denies browser access to runtime state, while per-viewer snapshots preserve
 blocking and all private-learning boundaries. Migration 071 is additive and
 unapplied; the old service remains usable when transport configuration is absent.
+Renewal HTTP and replacement-socket attempts are bounded independently, so a
+stalled renewal cannot indefinitely suppress disconnect/seat cleanup in the UI.
 
 The existing application remains at the repository root. Additions are a protected `/campus` route and campus components in the web app, a separately deployed `services/campus-server/` Colyseus service, and browser-safe shared TypeScript contracts under `lib/campus/`. Authentication and database mapping remain server-side. The service has its own package and lockfile, runs on Node 22.18+ using native type stripping, and is excluded from the root Next.js TypeScript inputs. No workspace conversion was introduced.
 

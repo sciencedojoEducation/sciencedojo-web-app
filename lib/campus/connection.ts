@@ -87,8 +87,14 @@ export async function connectCampus(admission: {
   async function renewConnection() {
     if (renewing || stopping) return;
     renewing = true;
+    const requestAbort = new AbortController();
+    const abortRequest = () => requestAbort.abort();
+    renewalAbort.signal.addEventListener("abort", abortRequest, { once: true });
+    // A hung admission response must not indefinitely suppress the old socket's
+    // disconnect event. Leave aborts it too; a new socket has its own deadline.
+    const requestDeadline = setTimeout(abortRequest, 10000);
     try {
-      const response = await fetch("/api/campus/admission", { method: "POST", signal: renewalAbort.signal,
+      const response = await fetch("/api/campus/admission", { method: "POST", signal: requestAbort.signal,
         headers: { "content-type": "application/json" }, body: JSON.stringify({ renew: true }) });
       const next = await response.json();
       if (!response.ok || next.transport !== "vercel" || next.endpoint !== "/api/campus/socket" ||
@@ -97,7 +103,11 @@ export async function connectCampus(admission: {
     } catch {
       if (!stopping) emit("notice", "Library connection could not renew. Your course stays open.");
       if (socket?.readyState !== WebSocket.OPEN) ended();
-    } finally { renewing = false; }
+    } finally {
+      clearTimeout(requestDeadline);
+      renewalAbort.signal.removeEventListener("abort", abortRequest);
+      renewing = false;
+    }
   }
   await open(admission.ticket);
   return connection;

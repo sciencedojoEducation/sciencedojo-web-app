@@ -140,6 +140,17 @@ learner admission has occurred. Earlier schema approval covers only 067/070;
 obtain scoped approval for 071 and staging credentials in the Vercel preview
 after preparing the concrete reviewed implementation.
 
+**Recovery follow-up:** A local failure regression reproduced a stalled renewal
+HTTP request suppressing the old socket's disconnect event indefinitely. The
+unfixed browser test timed out waiting for safe disconnection. Renewal admission
+now aborts after ten seconds and remains cancellable by Leave; the replacement
+socket retains its independent twelve-second deadline. The regression requires
+cleared presence, retained offline course input and fresh admission after the
+old socket closes. An additional injected RPC-outage test passed, including
+sanitized errors, failed immediate cleanup and expired-seat release on recovery.
+This follow-up changes no schema or staging-approval scope. Current-source
+browser and hosted checks are recorded with the follow-up PR evidence.
+
 ### Vercel preview experiment — approved 17 October 2026
 
 The owner asked to try hosting within the existing ScienceDojo Vercel project.

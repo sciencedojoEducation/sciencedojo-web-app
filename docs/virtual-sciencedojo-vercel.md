@@ -38,6 +38,10 @@ cleanup cannot delete the replacement. The UI retains its existing iframe,
 including unsaved input. A socket closes at 240 seconds if renewal fails; the
 route's maximum duration is 300 seconds. Any failure still provides leave/direct
 course access and permits fresh admission. No unbounded reconnect loop runs.
+Renewal admission requests have a ten-second abort deadline; opening their
+replacement socket has a separate twelve-second deadline. Leaving cancels both.
+A stalled admission response cannot indefinitely suppress notification that the
+old socket closed or leave a stale connected/seat display.
 
 The 200ms SQL interval implies up to approximately 50 runtime RPC calls/second
 for ten healthy connected users, plus admission/cleanup calls. This is a design
@@ -58,7 +62,12 @@ does not establish real hosted Postgres contention behavior.
 actual shared runtime using synthetic auth/course fixtures. It covers walking,
 tap/keyboard controls, dashboard access, study/save/retention, removal, offline
 Hub reopening, fresh admission, report/block, phone layout and a forced duration
-handover retaining the seat and unsaved course input. Handshake shape and
+handover retaining the seat and unsaved course input.
+The failure regression also stalls renewal HTTP entirely, closes the old socket,
+and requires bounded disconnection, cleared presence, retained offline input and
+fresh admission. Injected RPC outage checks cover sanitized connection failure,
+failed immediate cleanup and release of expired seat ownership after recovery.
+Handshake shape and
 fixture-issued ticket digests are checked separately; all other wire frames are
 scanned for credentials and learning canaries. No handshake credentials enter
 saved evidence. The quality workflow runs this check alongside the original

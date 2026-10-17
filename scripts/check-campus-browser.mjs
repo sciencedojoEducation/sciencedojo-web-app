@@ -21,6 +21,7 @@ const origin = "http://127.0.0.1:3012",
 const identities = new Map(),
   tickets = new Map();
 const runtimeSockets = new Map(), runtimeDurations = [];
+const stalledRenewals = new Set();
 let next = 0;
 const identity = () => {
   const n = ++next;
@@ -87,6 +88,11 @@ const http = createServer(async (req, res) => {
         renewal = Boolean(body && JSON.parse(body).renew === true);
       }
       const previous = /fixture=([0-9a-f-]+)/.exec(req.headers.cookie || "")?.[1];
+      if (shared && renewal && stalledRenewals.has(previous)) {
+        // Deliberately send no headers/body: the browser must bound a hung admission request.
+        res.once("close", () => stalledRenewals.delete(previous));
+        return;
+      }
       const who = renewal && identities.has(previous) ? identities.get(previous) : identity();
       identities.set(who.id, who);
       const account = shared ? shared.members.findIndex((member) => member.id === who.id) + 1 : next;
@@ -137,6 +143,16 @@ const http = createServer(async (req, res) => {
       const target = path.split("/").at(-1);
       await shared.db.query("UPDATE campus_presence SET opened_at=clock_timestamp()-interval '181 seconds' WHERE campus_id=$1", [target]);
       for (const [socket, own] of runtimeSockets) if (own === target) socket.send(JSON.stringify({ type: "renew", data: null }));
+      res.statusCode = 204; return res.end();
+    }
+    if (shared && path.startsWith("/fixture/stall-renewal/")) {
+      if (!validServiceKey(req.headers.authorization || null, serviceKey)) { res.statusCode = 401; return res.end(); }
+      const target = path.split("/").at(-1);
+      stalledRenewals.add(target);
+      for (const [socket, own] of runtimeSockets) if (own === target) {
+        socket.send(JSON.stringify({ type: "renew", data: null }));
+        setTimeout(() => socket.close(1012), 100);
+      }
       res.statusCode = 204; return res.end();
     }
     if (path.startsWith("/dashboard/academy/")) {
@@ -497,6 +513,20 @@ try {
     )
       throw new Error("Phone horizontal overflow");
     result.checks.push("390px layout has no horizontal overflow");
+    if (shared) {
+      const own = (await shared.db.query("SELECT campus_id FROM campus_presence ORDER BY opened_at DESC LIMIT 1")).rows[0].campus_id;
+      const stalled = await fetch(`${origin}/fixture/stall-renewal/${own}`, { method: "POST", headers: { authorization: `Bearer ${serviceKey}` } });
+      if (stalled.status !== 204) throw new Error("Stalled-renewal trigger failed");
+      await a.waitForFunction(() => document.body.textContent.includes("Disconnected — your course stays open"), undefined, { timeout: 12000 });
+      await a.getByText("0 here", { exact: true }).waitFor();
+      await a.getByRole("button", { name: "Open Study Hub", exact: true }).click();
+      if ((await course.getByRole("textbox", { name: "Practice answer" }).inputValue()) !== "campus-wire-answer-canary-17oct")
+        throw new Error("Hung renewal discarded retained course input");
+      await a.getByRole("button", { name: "Return to library →" }).click();
+      await a.getByRole("button", { name: "Enter library", exact: true }).click();
+      await a.getByText("In the library · walking", { exact: true }).waitFor();
+      result.checks.push("A hung renewal request times out after the old socket closes, clears stale presence, preserves offline course input and permits fresh admission");
+    }
     await a.getByRole("button", { name: "Leave", exact: true }).click();
     await a.getByRole("button", { name: "Enter library", exact: true }).click();
     await a.getByText("In the library · walking", { exact: true }).waitFor();

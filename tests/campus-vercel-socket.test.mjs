@@ -156,3 +156,32 @@ test("fresh account-bound handover preserves a seat across handlers and old clea
     await assert.rejects(join(servers[0], 1, await f.issueRaw(1), true), /Admission denied/);
   } finally { await Promise.all(servers.map((server) => server.close())); await f.db.close(); }
 });
+
+test("an RPC outage closes presence without exposing errors and expired ownership cannot occupy a seat after recovery", { timeout: 10000 }, async () => {
+  const f = await runtimeFixture(1);
+  let unavailable = false;
+  const privateError = "private-upstream-credential-canary";
+  const server = await listener(f, { intervalMs: 30 }, (call) => async (args) => {
+    if (unavailable) throw new Error(privateError);
+    return call(args);
+  });
+  try {
+    const a = await join(server, 1, await f.issueRaw(1));
+    await f.db.exec("UPDATE campus_presence SET x=-4.5,z=-3");
+    a.send("sit", "desk-1");
+    await a.snapshot((s) => s.occupied.length === 1);
+    unavailable = true;
+    assert.equal(await a.closed, 1011);
+    await Promise.all([...server.sessions]);
+    assert.equal(JSON.stringify(a.frames).includes(privateError), false);
+    assert.equal((await f.db.query("SELECT count(*)::int AS n FROM campus_presence")).rows[0].n, 1,
+      "failed cleanup leaves only the bounded database lease");
+    await f.db.exec("UPDATE campus_presence SET lease_until=clock_timestamp()-interval '1 second'");
+    unavailable = false;
+    const b = await join(server, 1, await f.issueRaw(1));
+    const recovered = await b.snapshot((s) => s.players.length === 1);
+    assert.deepEqual(recovered.occupied, []);
+    assert.equal(recovered.players[0].status, "walking");
+    assert.equal(recovered.players[0].seat, null);
+  } finally { unavailable = false; await server.close(); await f.db.close(); }
+});
