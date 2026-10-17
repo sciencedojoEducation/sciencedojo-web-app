@@ -249,12 +249,24 @@ try {
     result.checks.push(
       "Two browser contexts join the same real room with pseudonyms",
     );
+    await a.getByRole("button", { name: "Controls", exact: true }).click();
+    const forward = a.getByRole("button", { name: "Walk forward", exact: true });
+    const me = campus.room.world.players.values().next().value;
+    for (const activate of [() => forward.click(), () => forward.press("Enter")]) {
+      const before = me.z;
+      await activate();
+      await new Promise((resolve) => setTimeout(resolve, 650));
+      if (me.z >= before - 0.3) throw new Error("Direction button activation did not move");
+      const stopped = me.z;
+      await new Promise((resolve) => setTimeout(resolve, 350));
+      if (Math.abs(me.z - stopped) > 0.05) throw new Error("Direction step did not stop");
+    }
+    result.checks.push("Pointer taps and native keyboard button activation move a bounded step and stop");
     const stage = a.getByRole("region", { name: /3D library/ });
     await stage.focus();
     await a.keyboard.down("ArrowUp");
-    await new Promise((resolve) => setTimeout(resolve, 2100));
+    await new Promise((resolve) => setTimeout(resolve, 1400));
     await a.keyboard.up("ArrowUp");
-    const me = campus.room.world.players.values().next().value;
     if (me.z > 0) throw new Error("Keyboard movement did not reach the desks");
     await a.getByRole("button", { name: "Desk 2 Sit →", exact: true }).click();
     await a
@@ -357,12 +369,19 @@ try {
     )
       throw new Error("Transport loss discarded course input");
     await a.getByRole("button", { name: "Return to library →" }).click();
+    await a.getByText("0 here", { exact: true }).waitFor();
+    if (await a.getByRole("button", { name: /Your seat/ }).count())
+      throw new Error("Disconnected UI retained a seat claim");
+    await a.getByRole("button", { name: "Open Study Hub", exact: true }).click();
+    if ((await course.getByRole("textbox", { name: "Practice answer" }).inputValue()) !== "campus-wire-answer-canary-17oct")
+      throw new Error("Offline Hub reopen discarded course input");
+    await a.getByRole("button", { name: "Return to library →" }).click();
     await a.getByRole("button", { name: "Enter library", exact: true }).click();
     await a.getByText("In the library · walking", { exact: true }).waitFor();
     if (campus.room.world.players.has(me.id))
       throw new Error("Dropped presence retained its seat");
     result.checks.push(
-      "Authenticated moderator removal retains course input, clears presence and permits fresh admission",
+      "Authenticated moderator removal clears stale presence/seat UI, permits offline Hub reopen with retained input and fresh admission",
     );
     await a.getByRole("button", { name: "Block", exact: true }).click();
     await a.getByText("1 here", { exact: true }).waitFor();

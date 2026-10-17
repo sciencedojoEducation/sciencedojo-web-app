@@ -64,6 +64,8 @@ export default function CampusClient({
     [help, setHelp] = useState(false);
   const room = useRef<Room | null>(null),
     direction = useRef({ x: 0, z: 0 }),
+    stepTimer = useRef<ReturnType<typeof setTimeout> | null>(null),
+    pointerStarted = useRef(0),
     sequence = useRef(0),
     connecting = useRef(false),
     generation = useRef(0);
@@ -73,6 +75,17 @@ export default function CampusClient({
     hubDialog = useRef<HTMLDialogElement>(null);
   const self = snapshot.players.find((p) => p.id === snapshot.self);
   const unavailable = useCallback(() => setNo3d(true), []);
+  const stopMovement = useCallback(() => {
+    if (stepTimer.current) clearTimeout(stepTimer.current);
+    stepTimer.current = null;
+    direction.current = { x: 0, z: 0 };
+  }, []);
+  const stepDirection = useCallback((x: number, z: number) => {
+    stopMovement();
+    direction.current = { x, z };
+    // A native button click must last long enough to reach the input loop.
+    stepTimer.current = setTimeout(stopMovement, 300);
+  }, [stopMovement]);
   useEffect(() => {
     if (hub) hubDialog.current?.showModal();
     else hubDialog.current?.close();
@@ -110,8 +123,9 @@ export default function CampusClient({
         if (room.current !== next) return;
         room.current = null;
         setConnected(false);
+        setSnapshot({ self: "", players: [], occupied: [] });
         setConnection("Disconnected — your course stays open");
-        direction.current = { x: 0, z: 0 };
+        stopMovement();
       });
       next.onError(() =>
         setNotice(
@@ -138,26 +152,26 @@ export default function CampusClient({
           seq: sequence.current++,
         });
     }, 100);
-    const stop = () => {
-      direction.current = { x: 0, z: 0 };
-    };
+    const stop = stopMovement;
     window.addEventListener("blur", stop);
     document.addEventListener("visibilitychange", stop);
     return () => {
       // Intentionally invalidate the latest attempt counter; this is not a DOM ref.
       // eslint-disable-next-line react-hooks/exhaustive-deps
       generation.current++;
+      stop();
       clearInterval(timer);
       window.removeEventListener("blur", stop);
       document.removeEventListener("visibilitychange", stop);
       void room.current?.leave();
     };
-  }, []);
+  }, [stopMovement]);
   const leave = () => {
-    direction.current = { x: 0, z: 0 };
+    stopMovement();
     void room.current?.leave();
     room.current = null;
     setConnected(false);
+    setSnapshot({ self: "", players: [], occupied: [] });
     setConnection("You left the library");
   };
   const safety = async (target: string, action: string) => {
@@ -228,9 +242,7 @@ export default function CampusClient({
             ref={stage}
             role="region"
             aria-label="3D library. Use arrow keys or WASD to walk. Tab to library controls."
-            onBlur={() => {
-              direction.current = { x: 0, z: 0 };
-            }}
+            onBlur={stopMovement}
             onKeyDown={(event) => {
               if (event.key === "Escape") {
                 direction.current = { x: 0, z: 0 };
@@ -331,7 +343,8 @@ export default function CampusClient({
           {help && (
             <div className="campus-help">
               <p>
-                Focus the library and use WASD or arrow keys to walk. Move near
+                Focus the library and use WASD or arrow keys to walk. Tap a
+                direction button for a step, or hold it to keep walking. Move near
                 a desk, then choose its Sit button. Escape stops movement. All
                 actions are available below without pointer capture.
               </p>
@@ -347,27 +360,22 @@ export default function CampusClient({
                     aria-label={d.name}
                     disabled={!connected || Boolean(self?.seat)}
                     onPointerDown={(e) => {
+                      stopMovement();
+                      pointerStarted.current = performance.now();
                       e.currentTarget.setPointerCapture(e.pointerId);
                       direction.current = { x: d.x, z: d.z };
                     }}
                     onPointerUp={() => {
-                      direction.current = { x: 0, z: 0 };
+                      if (performance.now() - pointerStarted.current < 200)
+                        stepDirection(d.x, d.z);
+                      else stopMovement();
                     }}
-                    onPointerCancel={() => {
-                      direction.current = { x: 0, z: 0 };
+                    onPointerCancel={stopMovement}
+                    onClick={(e) => {
+                      // Keyboard and assistive activation have no pointer sequence.
+                      if (e.detail === 0) stepDirection(d.x, d.z);
                     }}
-                    onKeyDown={(e) => {
-                      if (e.key === " " || e.key === "Enter") {
-                        e.preventDefault();
-                        direction.current = { x: d.x, z: d.z };
-                      }
-                    }}
-                    onKeyUp={() => {
-                      direction.current = { x: 0, z: 0 };
-                    }}
-                    onBlur={() => {
-                      direction.current = { x: 0, z: 0 };
-                    }}
+                    onBlur={stopMovement}
                   >
                     {d.label}
                   </button>
@@ -414,9 +422,9 @@ export default function CampusClient({
             <div className="campus-actions">
               <button
                 ref={hubButton}
-                disabled={!connected || !self?.seat}
+                disabled={connected ? !self?.seat : !course}
                 onClick={() => {
-                  direction.current = { x: 0, z: 0 };
+                  stopMovement();
                   send("action", "study");
                   setHub(true);
                 }}

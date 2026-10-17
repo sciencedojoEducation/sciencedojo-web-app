@@ -91,6 +91,8 @@ Show the Phase 0 identity notice before opening the frame, including the existin
 | Suspension / invite removal / switch off | Invalidate campus access, release seats and remove the participant within the revalidation bound (or immediately on staff removal). Course access remains governed independently by its existing rules |
 | No 3D / reduced motion / touch | Offer direct authenticated Academy access, readable status/errors, keyboard controls and reduced-motion behavior. Desktop 3D is the first target; no mobile-3D support claim without device evidence |
 
+Direction buttons support a short step from a pointer tap or native keyboard/assistive activation, as well as continuous pointer holding; WASD/arrows remain available. Movement timers stop on blur, exit and disconnect. Leaving/disconnection clears the client snapshot so old participants and seat claims are not presented as current. An already-mounted course can be reopened while offline, preserving unsent work without a new campus connection or course entitlement.
+
 Pause unnecessary canvas rendering while the course is open. Exclude learning content from world logs and review shared root analytics before real use. Direct Academy access remains available if the campus service is unavailable or the campus feature is disabled, provided existing course flags/access allow it.
 
 The campus layout now withholds its UI until the browser confirms a clean document. A transition from a public document, or detected Google/Meta globals or loader scripts, requires a full document navigation before campus children mount. A session marker bounds automatic reload attempts, with a hard-navigation fallback. The central analytics event helper also rejects private-study routes and their login/signup return URLs. This closes the known SPA carryover gap without asserting that vendor/privacy review or browser-extension auditing is complete.
@@ -119,7 +121,7 @@ Rollback disables campus admission, removes active campus sessions and stops the
 
 ## Future validation and acceptance matrix
 
-The scenarios below remain acceptance criteria. Local SQL, transport/browser fixtures and disposable real staging integration cover parts of them; see the [implementation evidence and limitations](virtual-sciencedojo-implementation.md). Real staging enrollment/private progress and direct-course saves have passed. The full real-course library-frame flow, hosted TLS/WSS/framing, device performance, human operations and independent usability remain unverified. Use synthetic accounts until operational gates permit real learners.
+The scenarios below remain acceptance criteria. Local SQL, transport/browser fixtures and disposable real staging integration cover parts of them; see the [implementation evidence and limitations](virtual-sciencedojo-implementation.md). Real staging enrollment/private progress and the local library-frame walk/sit/study/save/close/stand loop passed, including unsent-note retention, offline reopening and fresh admission. Two peer-observation sessions inspected 2,697 frames without the synthetic account/course/note canaries. Hosted cold entry/TLS/WSS/framing, device performance, human operations and independent usability remain unverified. Use synthetic accounts until operational gates permit real learners.
 
 | ID | Scenario and required evidence |
 | --- | --- |
