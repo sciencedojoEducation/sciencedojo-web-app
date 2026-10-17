@@ -25,8 +25,31 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Install campus service dependencies
+        run: npm ci --prefix services/campus-server
+
       - name: Run regression tests
         run: npm test
+
+      - name: Install campus browser
+        run: npx playwright install --with-deps chromium
+
+      - name: Check optional campus beta in Chromium
+        timeout-minutes: 10
+        env:
+          TMPDIR: ${{ runner.temp }}
+        run: npm run test:campus:browser
+
+      - name: Save synthetic campus browser evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: virtual-sciencedojo-browser-evidence
+          path: |
+            ${{ runner.temp }}/sciencedojo-campus-browser-*/evidence.json
+            ${{ runner.temp }}/sciencedojo-campus-browser-*/*.png
+          if-no-files-found: ignore
+          retention-days: 7
 
       - name: Type-check
         run: npm run typecheck
