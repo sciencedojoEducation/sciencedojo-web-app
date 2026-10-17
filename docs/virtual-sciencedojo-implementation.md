@@ -8,12 +8,13 @@ Updated 17 October 2026. The owner requested completing the project after approv
 - `/campus`: closed/invitation state, explicit notice acceptance, lazy-loaded 3D library, capsule avatars, keyboard/touch direction controls, four exclusive desks, participant list and accessible HTML controls.
 - Study Hub: native modal, existing authorized Academy routes in a same-origin frame, course-identity notice, retained iframe when closed, direct-course fallback. Learning content never enters room state.
 - Admission: verified account and private reviewed membership, default-disabled feature flag, separate release setting, random one-use 60-second tickets stored as hashes, same-origin mutations and bounded request bodies.
-- Multiplayer: separate Colyseus process, static authentication before reservation, join-time and periodic eligibility checks, one library with ten connections, authoritative movement and seat state, per-participant blocked views, disconnect cleanup and fresh admission to reconnect.
+- Multiplayer: default separate Colyseus process, static authentication before reservation, join-time and periodic eligibility checks, one library with ten connections, authoritative movement and seat state, per-participant blocked views, disconnect cleanup and fresh admission to reconnect.
+- Optional Vercel transport: a service-only shared SQL room coordinates capacity/seats and expiring ownership across function instances; actual staging Preview and bounded backend verification are recorded below and in the [transport guide](virtual-sciencedojo-vercel.md).
 - Safety: durable reason-only reports and blocks, staff-only member/report/audit reads, reviewed invitations and revocation in `/dashboard/admin/campus`, immediate removal notification with periodic-check fallback.
 - Privacy integration: campus and Academy routes and their login/signup return paths skip new marketing tag initialization and manual analytics events. The campus document boundary withholds its UI after a public-page SPA transition and opens a fresh document before rendering study content, clearing prior marketing globals. Automatic retries are bounded; a full-page fallback link remains available. A broader vendor/telemetry assessment remains part of G4/G5.
-- Build isolation: existing Next.js layout retained; the service has its own lockfile. CI installs both dependency sets and matching Chromium, runs the synthetic beta browser acceptance before the build, and retains fixture screenshots/evidence for seven days. Root type checking excludes the service directory. Hosted quality and cron checks passed on software commit `41d02a7`; see the evidence below.
+- Build isolation: existing Next.js layout retained; the service has its own lockfile. CI installs both dependency sets and matching Chromium, runs the synthetic beta browser acceptance before the build, and retains fixture screenshots/evidence for seven days. Root type checking excludes the service directory. Verified quality and cron checks passed on documentation head `3eb0097`, with unchanged application code from `280319a`; see the evidence below.
 
-Migrations 067/070 were applied to showcase staging on 17 October after the owner's explicit approval, and disposable real-service QA completed. Both original staging beta flags are restored off and all owned fixtures removed. Neither migration has been applied to production. No paid service has been provisioned, production setting enabled or real learner invited.
+Migrations 067/070 and subsequently 071 were applied to showcase staging on 17 October after explicit owner approvals, and bounded disposable QA completed. Both original staging beta flags are restored off and all owned fixtures removed. None of these migrations has been applied to production. No paid service has been provisioned, production setting enabled or real learner invited.
 
 ## Evidence and limits
 
@@ -22,20 +23,20 @@ Migrations 067/070 were applied to showcase staging on 17 October after the owne
 | Protocol and SQL | Nine tests passed against actual simulation and PGlite policies: replay/invalid inputs, bounded movement, seat contention, block filtering, identity projection, capacity, one-use/expiry/service-only tickets, metadata spoofing, RLS, report limit, revocation, suspension, disabled flag, actual byte limits and bounded admission counters |
 | Actual multiplayer | `tests/campus-server.test.mjs` passed with real Colyseus/WebSocket clients: foreign origin and invalid credentials denied, unauthorized room creation denied, two peers/seat contention, per-client filtering, periodic revocation and ten-client capacity. A subsequent regression case also passed for duplicate reservations: a failed duplicate cannot remove the avatar owned by the successful session |
 | Browser fixture | `scripts/check-campus-browser.mjs` passed in two Chromium contexts: keyboard walk/sit, notice/Study Hub, Escape from inside the frame and focus return, synthetic course save, unsaved input retained across close/reopen, stand, forced WebSocket loss with retained course input and cleaned-up presence, block/unblock/report, leave/fresh admission and 390px layout without overflow or uncaught browser errors |
-| Hosted build and checks | [Quality 39010543985](https://github.com/sciencedojoEducation/sciencedojo-web-app/actions/runs/39010543985) and [cron 39010543990](https://github.com/sciencedojoEducation/sciencedojo-web-app/actions/runs/39010543990) passed on `41d02a7`, including the production build, synthetic browser acceptance, type checking, lint and private workbook trace checks. These supersede the earlier local prerender-timeout limitation |
-| Regression | Latest local and hosted `npm test` passed **452 tests**, zero failures/skips, including explicit campus staff isolation and privileged flag-action checks |
+| Hosted build and checks | [Quality 39020832796](https://github.com/sciencedojoEducation/sciencedojo-web-app/actions/runs/39020832796) and [cron 39020832777](https://github.com/sciencedojoEducation/sciencedojo-web-app/actions/runs/39020832777) passed on `3eb0097`, including 467 tests, both browser transports, service release/restart, type checking, lint, production build and private workbook trace checks |
+| Regression | Latest local and hosted `npm test` passed **467 tests**, zero failures/skips, including explicit campus staff isolation and privileged flag-action checks |
 | Real staging database | Five synthetic accounts and one owned course: reviewed fixture admission/notice, default-off denial, unprovisioned-admin denial, course entitlement independence, two enrollments, ten-place cap/waitlist, private-note save/relogin/reload, one-use/service-only ticket redemption, block/report/staff resolution and cleanup passed. Eight null-identity synthetic enrollment rows filled only the disposable course's remaining seats |
 | Real application/service | Loopback Next.js and the actual room entry point used real staging auth and RPCs. Two peers joined through real admission/service endpoints; foreign origin, replay and outsider admission were denied; block/unblock filtering and periodic revocation passed. Final clean-exit run inspected 60 WebSocket frames without account IDs/emails, course key/title, private-note canary or issued tickets; revocation took 1,926 ms (under the 15-second bound) |
 | Real Academy browser | Actual staging login, shared presence, walk/sit and course identity notice passed. The existing lesson's Finish course action saved 100% completion inside the real Study Hub frame; a fresh authenticated session confirmed progress and peer isolation. Close/stand/reopen preserved unsent private notes. With campus disabled, the retained frame reopened and its existing Save notes action persisted work. Fresh campus admission preserved another unsent edit. The final disconnect cleared stale participants/seat claims and allowed offline reopening again |
 | Peer observation | Two real staging-backed peer sessions inspected 2,697 frames during the browser study/recovery flow. Only coarse absent/walking/seated/studying transitions were recorded; none of the synthetic account identifiers/emails, course key/title, private-note canaries or observer admission ticket appeared |
-| Staging cleanup | All five auth fixtures, temporary staff membership, owned course/version/listing/memberships, progress, notes, reports, audit, blocks and tickets removed and checked. Both original flags restored false. Read-only SQL confirmed six campus tables with RLS and normal immutable-version protection enabled. QA services stopped; disposable credentials erased |
+| Original staging cleanup | All five auth fixtures, temporary staff membership, owned course/version/listing/memberships, progress, notes, reports, audit, blocks and tickets removed and checked. Both original flags restored false. Read-only SQL confirmed six campus tables with RLS and normal immutable-version protection enabled. QA services stopped; disposable credentials erased |
 | Clean service release | `npm run test:campus:release` passed on Node 22.22.2: explicit-file archive and standalone checksums, tampered/symlinked payload and manifest rejection, overwrite protection, clean service-only dependency installation, missing-credential startup denial, actual packaged-process callback/admission/seat ownership, SIGTERM/restart cleanup and consumed-ticket rejection/fresh admission. Captured logs contained no issued synthetic credential. This uses a synthetic loopback application callback, not a hosted deployment |
 | Existing workbook protection | `node scripts/verify-aspekte-build.mjs` passed: no private source or static-public files in server traces |
 | Built disabled app | Loopback production server: `/campus` displayed closed state; admission/safety/service returned 403 without release configuration; a foreign-origin admission was denied |
 | Preservation | The pre-existing business backlog edit retained SHA-256 `0cf8997b87ddc6c511861116bc87c6c15fddb4bafe3bcc162135b3ec3c169c1b`; B3/S1/R1 and approved business scope/pricing were not changed |
 | Dependency check | Separate service installation reported zero advisories. A shared root `ws` advisory was removed by updating within the existing range to 8.22.0. The root audit still reports 21 other advisories; their applicability and upgrades remain part of the broader production review, not a claim of security certification |
 
-Browser fixture screenshots were visually inspected on desktop and 390px phone width. That maintained fixture uses synthetic admission/course responses. The separate local-app/staging check above exercised real Supabase auth, enrollment and embedded Academy saves; accounts were admin-created without email, so public signup/delivery was not tested. An initial cold development opening reloaded the campus page; the repeated flow completed after the routes were compiled. Cold entry on the intended deployment must still be tested. Hosted TLS/WSS/framing/CSP, infrastructure/marketing logs, named moderator operation, intended-device performance and independent usability remain unverified. Local network canaries do not replace hosted-network inspection. No 50-user or 60fps claim is made.
+Browser fixture screenshots were visually inspected on desktop and 390px phone width. That maintained fixture uses synthetic admission/course responses. The separate local-app/staging check above exercised real Supabase auth, enrollment and embedded Academy saves; accounts were admin-created without email, so public signup/delivery was not tested. An initial cold development opening reloaded the campus page; the repeated flow completed after the routes were compiled. Actual Vercel Preview TLS/WSS, course framing and handover/recovery subsequently passed, as detailed below. Intended-device cold entry/performance, broader CSP/network/log assessment, named moderator operation and independent usability remain unverified. Local network canaries do not replace hosted-network inspection. No 50-user or 60fps claim is made.
 
 Reproduce software checks from the repository root using Node 22.18+:
 
@@ -218,6 +219,33 @@ usability and G1–G9 remain open. The beta is closed; no production change, pai
 service or real learner admission occurred. See the Vercel guide for continuation
 and keep newly owned fixtures in a fresh manifest rather than reusing cleaned
 accounts.
+
+### Additional bounded backend checks — 17 October 2026
+
+The same approved staging-QA scope subsequently measured one, five and ten SQL
+occupants for 10/15/30 seconds using 200ms ticks with no overlapping per-peer
+RPCs. It completed 1,891 updates without RPC error, lost presence, projection or
+canary violations. Ten occupants achieved 49.18 updates/sec against the 50/sec
+design ceiling, with caller-measured p95 128ms, p99 228ms and maximum 470ms.
+Five occupants achieved 24.20/sec and one achieved 5.00/sec. Busy peers skipped
+ticks rather than queueing work; see the transport guide for all stage timings.
+
+A guarded transaction then held the isolated room-lock row. The seven-second
+pulse caused a bounded update timeout, with cleanup recovering as the lock
+released.
+An eleven-second pulse exercised both failures: update timeout 2,091ms, cleanup
+timeout 3,984ms, then expired-seat release after 15,214ms while the recovering
+second SQL peer remained present. No persistent schema/configuration changed.
+These are actual API/SQL results, not Vercel-client or database-wide outage proof.
+
+All seventeen accounts across the three new backend runs, temporary authority,
+memberships, audit and tickets were removed; passwords were scrubbed and both
+original flags restored off. Final SQL confirmed no owned auth fixtures or campus
+memberships/presence, eight RLS-protected campus tables and enabled immutable
+version protection. No course or deployment setting changed. The bounded load
+and lock scenarios have evidence; automated multi-user WSS, broader outage/
+endurance/cost, intended devices, independent human usability and G1–G9 remain
+pending. Detailed scripts/manifests/results are private and ignored.
 
 ### Vercel preview experiment — approved 17 October 2026
 

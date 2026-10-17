@@ -157,11 +157,44 @@ fixtures/presence are absent. All five temporary branch-only Preview overrides
 were removed; original shared/Production variables were unchanged. Detailed
 manifests, timings and account/host evidence remain ignored and private.
 
+### Bounded backend update-rate and contention checks
+
+A subsequent isolated staging run used ten newly owned synthetic members. It
+called the actual shared runtime through the staging API with the same 200ms
+interval and one-call-per-peer limit as the server. A busy peer skipped its next
+tick rather than building a queue. The three stages completed 1,891 world updates
+with no RPC errors, lost presence, invalid snapshot fields or credential/learning
+canary violations:
+
+| Occupants | Duration | Target updates/sec | Measured updates/sec | API p95 / p99 / max |
+| --- | --- | --- | --- | --- |
+| 1 | 10 seconds | 5 | 5.00 | 108 / 132 / 132ms |
+| 5 | 15 seconds | 25 | 24.20 | 137 / 540 / 594ms |
+| 10 | 30 seconds | 50 | 49.18 | 128 / 228 / 470ms |
+
+A separate guarded SQL transaction held only the synthetic library's lock row.
+The first seven-second pulse produced a bounded update timeout and cleanup
+recovered as the lock released. An eleven-second pulse then produced an actual
+update timeout after 2,091ms and failed cleanup after 3,984ms. The recovering
+second SQL peer remained present; the stopped peer's seat disappeared through
+lease expiry after 15,214ms from its last healthy response. No persistent schema,
+role, timeout configuration, course data or deployment protection changed.
+
+These three backend runs used seventeen disposable accounts in total. All were
+removed, their temporary staff/memberships/audit/tickets cleaned and passwords
+scrubbed; both original flags were restored off. Final SQL verified no remaining
+owned accounts, campus memberships or presence, all eight campus tables with RLS
+and enabled immutable-version protection.
+
+This is short, direct-SQL staging evidence. It is not ten Vercel WebSocket clients,
+a database-wide/network outage, server-only SQL timing, a long session, a cost
+estimate or intended-device/human acceptance. Those scopes remain distinct.
+
 Vercel Authentication remains unchanged. It blocks automated external clients;
 a deployment-only temporary access-link approval is pending for the remaining
 automated multi-user WSS checks. No shareable link or automation bypass was
-created. Those checks, a hosted DB-failure/load exercise, intended devices,
-independent human usability and G1–G9 remain open. Legal/vendor/staffing/device/
+created. Those checks, broader hosted outage/endurance/cost assessment, intended
+devices, independent human usability and G1–G9 remain open. Legal/vendor/staffing/device/
 pilot release gates are not satisfied by these synthetic tests.
 
 ## Cutover and rollback
