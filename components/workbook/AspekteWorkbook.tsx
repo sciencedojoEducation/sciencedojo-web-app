@@ -3,7 +3,7 @@
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
-import { BookOpen, Check, CheckCheck, ChevronLeft, ChevronRight, Download, Upload, Headphones, Sparkles, ArrowUpRight, X, Menu, ZoomIn, GripVertical, CircleCheck, CircleAlert, LoaderCircle, RotateCcw } from "lucide-react";
+import { BookOpen, Check, CheckCheck, ChevronDown, ChevronLeft, ChevronRight, Download, Upload, Headphones, Sparkles, ArrowUpRight, X, Menu, ZoomIn, GripVertical, CircleCheck, CircleAlert, LoaderCircle, RotateCcw } from "lucide-react";
 import { workbookFieldKey, workbookAnswerParts, setWorkbookAnswerPart, workbookQuickSession, type WorkbookQuickFilter, type WorkbookManifest, type StudyPage, type StudyExercise, type WorkbookAnswers, type FieldResult, type CheckResult, type StudyField, type WorkbookBlock } from "@/lib/aspekte-workbook";
 import type { AcademyLanguageFeedback } from "@/lib/academy-language-feedback";
 import WorkbookRecorder from "./WorkbookRecorder";
@@ -319,6 +319,7 @@ function ExerciseCard({ exercise, page, answers, results, onAnswer, bank, setBan
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [audio, setAudio] = useState<Blob | null>(null);
+  const [wordBankCollapsed, setWordBankCollapsed] = useState(false);
   const key = `${page}:${exercise.id}`;
   const open = exercise.fields.some(f => f.evaluation === "review");
   const personal = exercise.fields.every(f => f.evaluation === "self");
@@ -387,7 +388,14 @@ function ExerciseCard({ exercise, page, answers, results, onAnswer, bank, setBan
 
   const markerGroup = (markers: NonNullable<StudyExercise["markers"]>) => <WorkbookMarkers markers={markers} activeTrack={activeTrack} playing={playing} onTrack={onTrack} onReference={onReference} onExam={onExam} />;
   return <article className="wb-exercise" id={`exercise-${page}-${exercise.id}`} onFocusCapture={() => onFocusExercise(`${page}:${exercise.id}`)}>{markerGroup((exercise.markers || []).filter(m => m.position === "heading"))}<div className="wb-exercise-heading"><span className="wb-exercise-number">{exercise.id}</span><span className="wb-task-type">{exercise.mode === "self" ? "SELF-ASSESSMENT" : personal ? "PERSONAL RESPONSE" : open ? "OPEN PRACTICE" : "ANSWER KEY"}</span></div><h3>{exercise.instruction}</h3>
-    {!!exercise.wordBank.length && <div className="wb-bank"><p><GripVertical size={13} /> Drag a word into an answer, or select one and tap a field.</p><div>{exercise.wordBank.map((token, i) => <button type="button" key={`${token}:${i}`} draggable className={bank?.key === key && bank.token === token ? "wb-token wb-token-selected" : "wb-token"} aria-pressed={bank?.key === key && bank.token === token} onClick={() => setBank(bank?.key === key && bank.token === token ? null : { key, token })} onDragStart={event => { event.dataTransfer.effectAllowed = "copy"; event.dataTransfer.setData("text/plain", token); event.dataTransfer.setData("application/x-workbook-token", JSON.stringify({ key, token })); setBank({ key, token }); }}><GripVertical size={12} />{exercise.wordBankLabels?.[token] || token}</button>)}</div></div>}
+    {!!exercise.wordBank.length && <div className={`wb-bank${wordBankCollapsed ? " wb-bank-collapsed" : ""}`} role="group" aria-label={`Word bank for exercise ${exercise.id}`}>
+      <button type="button" className="wb-bank-toggle" aria-label={`${wordBankCollapsed ? "Show" : "Hide"} words for exercise ${exercise.id}`} aria-expanded={!wordBankCollapsed} aria-controls={`word-bank-${key}`} onClick={() => setWordBankCollapsed(collapsed => !collapsed)}>
+        <strong>Words · {exercise.id}</strong><span>{wordBankCollapsed ? "Show" : "Hide"}<ChevronDown size={16} aria-hidden className={wordBankCollapsed ? "" : "wb-bank-chevron-open"} /></span>
+      </button>
+      <p><GripVertical size={13} /> Drag a word into an answer, or select one and tap a field.</p>
+      <div className="wb-bank-words" id={`word-bank-${key}`}>{exercise.wordBank.map((token, i) => <button type="button" key={`${token}:${i}`} draggable className={bank?.key === key && bank.token === token ? "wb-token wb-token-selected" : "wb-token"} aria-pressed={bank?.key === key && bank.token === token} onClick={() => setBank(bank?.key === key && bank.token === token ? null : { key, token })} onDragStart={event => { event.dataTransfer.effectAllowed = "copy"; event.dataTransfer.setData("text/plain", token); event.dataTransfer.setData("application/x-workbook-token", JSON.stringify({ key, token })); setBank({ key, token }); }}><GripVertical size={12} />{exercise.wordBankLabels?.[token] || token}</button>)}</div>
+    </div>}
+
     {exercise.requiresSource && <p className="wb-source-dependency">This exercise needs the separate Lehrbuch. It is excluded from fixed-answer scores.</p>}<div className="wb-exercise-content">{exercise.content?.map((block, index) => <div key={index}>{markerGroup((exercise.markers || []).filter(m => m.position === "content" && m.beforeBlock === index))}<BookBlock block={block} field={reference => { const [id, segment] = reference.split("#"); return renderField(exercise.fields.find(f => f.id === id), true, segment ? Number(segment) : undefined); }} /></div>)}</div>
     <div className="wb-fields">{exercise.fields.filter(field => !placed.has(field.id)).map(field => renderField(field, false))}</div>
     {exercise.mode === "speaking" && <WorkbookRecorder id={`${recordingScope}:${key}`} exerciseKey={key} cloudEnabled={cloudRecordings} onAudio={blob => { setAudio(blob); if (audio || blob) setFeedback(null); }} />}

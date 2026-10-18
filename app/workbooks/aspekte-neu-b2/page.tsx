@@ -17,7 +17,7 @@ export default async function WorkbookPage() {
   } catch (e) {
     if (e instanceof WorkbookAccessError && e.status === 401) redirect("/login?next=%2Fworkbooks%2Faspekte-neu-b2");
     if (e instanceof WorkbookAccessError && e.status === 404) notFound();
-    return <main className="p-10"><h1>Private workbook</h1><p>{e instanceof Error ? e.message : "Unable to check workbook access."}</p><Link href="/login?next=%2Fworkbooks%2Faspekte-neu-b2">Sign in to your invited account</Link></main>;
+    return <main className="p-10"><h1>Private workbook</h1><p>{e instanceof Error ? e.message : "Unable to check workbook access."}</p><Link href="/login?next=%2Fworkbooks%2Faspekte-neu-b2">Sign in to your account</Link></main>;
   }
   const manifest = await readWorkbookManifest();
   if (!manifest) return <main className="p-10"><h1>Workbook sources are not ready yet.</h1><p>Run the local workbook preparation script first.</p></main>;

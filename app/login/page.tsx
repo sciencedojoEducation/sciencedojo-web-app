@@ -4,8 +4,7 @@ import { useState, use } from "react";
 import { login, signInWithGoogle } from "@/app/login/actions";
 import Link from "next/link";
 import AuthCard, { Divider } from "@/components/AuthCard";
-import { User, Mail, Lock, ShieldCheck } from "lucide-react";
-import Image from "next/image";
+import { Mail, Lock } from "lucide-react";
 import { motion } from "framer-motion";
 
 export default function LoginPage({ searchParams }: { searchParams: Promise<{ [key: string]: string | string[] | undefined }> }) {
@@ -25,11 +24,11 @@ export default function LoginPage({ searchParams }: { searchParams: Promise<{ [k
       footer={
         <div className="space-y-1.5 md:space-y-4">
           <p className="text-xs font-bold text-navy/20 text-center">
-            Don't have an account?
+            Don&apos;t have an account?
           </p>
           <Link 
             href={nextParam ? `/signup?next=${encodeURIComponent(nextParam)}` : "/signup"}
-            className="block text-primary font-black text-xs hover:text-black transition-all text-center"
+            className="flex min-h-11 items-center justify-center text-primary font-black text-xs hover:text-black transition-all text-center"
           >
             Create an Account
           </Link>
@@ -59,33 +58,37 @@ export default function LoginPage({ searchParams }: { searchParams: Promise<{ [k
         }} className="space-y-2.5 text-left md:space-y-4">
           {nextParam && <input type="hidden" name="next" value={nextParam} />}
           <div className="space-y-1.5 md:space-y-2">
-             <label className="ml-4 flex items-center gap-2 text-[11px] font-bold text-navy/40 md:ml-6 md:text-xs">
+             <label htmlFor="login-email" className="ml-4 flex items-center gap-2 text-[11px] font-bold text-navy/40 md:ml-6 md:text-xs">
                <Mail size={12} /> Email Address
              </label>
              <input 
+               id="login-email"
+               autoComplete="email"
                name="email" 
                type="email" 
                required 
                placeholder="you@dojo.com" 
-               className="w-full rounded-[1.25rem] border border-white/40 bg-white/60 px-4 py-3 text-base font-bold text-navy shadow-sm outline-none backdrop-blur-md transition-all placeholder:text-navy/20 focus:ring-4 focus:ring-mint/10 md:rounded-[2rem] md:px-8 md:py-5"
+               className="w-full rounded-[1.25rem] border border-white/40 bg-white/60 px-4 py-3 text-base scroll-mt-24 scroll-mb-6 font-bold text-navy shadow-sm outline-none backdrop-blur-md transition-all placeholder:text-navy/20 focus:ring-4 focus:ring-mint/10 md:rounded-[2rem] md:px-8 md:py-5"
              />
           </div>
 
           <div className="relative space-y-1.5 md:space-y-2">
              <div className="flex items-center justify-between pr-4 md:pr-6">
-               <label className="ml-4 flex items-center gap-2 text-[11px] font-bold text-navy/40 md:ml-6 md:text-xs">
+               <label htmlFor="login-password" className="ml-4 flex items-center gap-2 text-[11px] font-bold text-navy/40 md:ml-6 md:text-xs">
                  <Lock size={12} /> Password
                </label>
-               <Link href="/forgot-password" title="Forgot Password" className="text-xs font-bold text-primary/40 hover:text-primary transition-all">
+               <Link href="/forgot-password" title="Forgot Password" className="inline-flex min-h-11 items-center text-xs font-bold text-primary/60 hover:text-primary transition-all">
                  Forgot Password?
                </Link>
              </div>
              <input 
+               id="login-password"
+               autoComplete="current-password"
                name="password" 
                type="password" 
                required 
                placeholder="••••••••" 
-                className="w-full rounded-[1.25rem] border border-white/40 bg-white/60 px-4 py-3 text-base font-bold tracking-widest text-navy shadow-sm outline-none backdrop-blur-md transition-all placeholder:text-navy/20 focus:ring-4 focus:ring-mint/10 md:rounded-[2rem] md:px-8 md:py-5"
+                className="w-full rounded-[1.25rem] border border-white/40 bg-white/60 px-4 py-3 text-base scroll-mt-24 scroll-mb-6 font-bold tracking-widest text-navy shadow-sm outline-none backdrop-blur-md transition-all placeholder:text-navy/20 focus:ring-4 focus:ring-mint/10 md:rounded-[2rem] md:px-8 md:py-5"
              />
           </div>
 
@@ -105,7 +108,7 @@ export default function LoginPage({ searchParams }: { searchParams: Promise<{ [k
             </button>
             <Link
               href="/login/internal"
-              className="mt-3 block text-center text-[11px] font-black text-primary/55 transition-colors hover:text-primary"
+              className="mt-1 flex min-h-11 items-center justify-center text-center md:mt-3 text-[11px] font-black text-primary/55 transition-colors hover:text-primary"
             >
               Internal team? Log in here
             </Link>

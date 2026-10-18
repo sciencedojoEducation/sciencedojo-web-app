@@ -1,5 +1,6 @@
 import "server-only";
 import { createClient } from "@/utils/supabase/server";
+import { createAdminClient } from "@/utils/supabase/admin";
 import { isLocalWorkbookRequest } from "@/lib/aspekte-workbook";
 export const WORKBOOK_KEY = "aspekte-neu-b2";
 export type WorkbookAccess = { id: string; email: string; local: boolean; admin: boolean };
@@ -23,9 +24,21 @@ export async function requireWorkbookAccess(request: Request, adminOnly = false)
   const admin = profile.role === "admin";
   if (adminOnly) { if (!admin) throw new WorkbookAccessError(403, "Administrator access is required."); }
   else {
-    const { data, error } = await client.from("workbook_memberships").select("active").eq("user_id", user.id).eq("book_key", WORKBOOK_KEY).maybeSingle();
-    if (error) throw new WorkbookAccessError(503, "Workbook accounts are not configured yet.");
-    if (!data?.active) throw new WorkbookAccessError(403, "An invitation is required for this workbook.");
+    const readMembership = () => client.from("workbook_memberships").select("active").eq("user_id", user.id).eq("book_key", WORKBOOK_KEY).maybeSingle();
+    let membership = await readMembership();
+    if (membership.error) throw new WorkbookAccessError(503, "Workbook accounts are not configured yet.");
+    if (!membership.data) {
+      // Owner-approved automatic access: enroll only this verified, active user.
+      // DO NOTHING on conflict preserves admin revocations and concurrent first visits.
+      const { error } = await createAdminClient().from("workbook_memberships").upsert(
+        { user_id: user.id, book_key: WORKBOOK_KEY, active: true },
+        { onConflict: "user_id,book_key", ignoreDuplicates: true },
+      );
+      if (error) throw new WorkbookAccessError(503, "Workbook access could not be activated. Please retry.");
+      membership = await readMembership();
+      if (membership.error || !membership.data) throw new WorkbookAccessError(503, "Workbook access could not be confirmed. Please retry.");
+    }
+    if (!membership.data.active) throw new WorkbookAccessError(403, "Your workbook access has been revoked. Please contact the administrator.");
   }
   return { id: user.id, email: user.email || "", local: false, admin };
 }
