@@ -123,6 +123,6 @@ export default function CampusScene({snapshot,active,onUnavailable,view="follow"
   </Canvas>
   <div className="school-signs" aria-hidden="true">{SCHOOL_PLACES.map(p=><span key={p.id} ref={el=>{if(el)elements.set(p.id,el);else elements.delete(p.id);}}>{p.name}</span>)}</div>
   {view==="first-person"&&<span className="cube-crosshair" aria-hidden="true"/>}
-  {interactive&&<span className="cube-look-hint">{view==="first-person"?(lookMode==="locked"?"Mouse to look · E to interact · Esc releases":lookMode==="paused"?"Click school to resume mouse look · E to interact":"Mouse to look · Click to lock · E to interact"):"Drag to orbit · Use look buttons to turn"}</span>}
+  {interactive&&<span className="cube-look-hint">{view==="first-person"?(lookMode==="locked"?"Mouse captured · 360° look · E to interact · Esc releases":lookMode==="paused"?"Click school to resume mouse look · E to interact":"Mouse to look · Edges keep turning · Click for 360° · Esc pauses"):"Drag to orbit · Use look buttons to turn"}</span>}
  </div>;
 }

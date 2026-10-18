@@ -505,7 +505,7 @@
 .cube-campus .campus-stage-caption{color:#f1fbff;text-shadow:0 1px 5px #071b2c;pointer-events:none;z-index:2;}
 .cube-campus .campus-stage-caption span{color:#f1fbff;}
 .cube-crosshair{position:absolute;left:50%;top:50%;width:6px;height:6px;border:1px solid #ffffffb0;border-radius:50%;box-shadow:0 0 3px #102935;pointer-events:none;}
-.cube-look-hint{position:absolute;bottom:72px;left:50%;transform:translateX(-50%);font-size:10px;letter-spacing:.06em;white-space:nowrap;background:#0b263ab3;color:#edfaff;padding:7px 12px;border-radius:20px;pointer-events:none;}
+.cube-look-hint{position:absolute;bottom:72px;left:50%;transform:translateX(-50%);font-size:10px;letter-spacing:.06em;width:max-content;max-width:calc(100% - 24px);text-align:center;background:#0b263ab3;color:#edfaff;padding:7px 12px;border-radius:20px;pointer-events:none;}
 .cube-world-controls{margin-top:16px;padding:19px 22px;background:linear-gradient(120deg,#ecf4f4,#f7faf7);border:1px solid #c4d6da;border-radius:18px;}
 .cube-clock-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;}
 .cube-clock-heading .campus-eyebrow{font-size:9px;margin:0 0 4px;}

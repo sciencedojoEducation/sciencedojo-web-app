@@ -23,5 +23,6 @@ test("first-person movement rotates bounded direction inputs with the camera",()
 test("look controls constrain pitch and distance without preventing first-person sky views",()=>{
  assert.equal(boundedLook({yaw:0,pitch:-10,distance:999},"orbit").pitch,.16);
  const look=boundedLook({yaw:10,pitch:20,distance:-1},"first-person");
- assert.equal(look.pitch,1.35);assert.equal(look.distance,10);assert(Math.abs(look.yaw)<=Math.PI);
+ assert(look.pitch>Math.PI*89/180&&look.pitch<Math.PI/2);assert.equal(look.distance,10);assert(Math.abs(look.yaw)<=Math.PI);
+ assert.equal(boundedLook({yaw:0,pitch:-20,distance:36},"first-person").pitch,-look.pitch);
 });

@@ -135,3 +135,7 @@ Sequence: physics/protocol and disposable shared-state/security checks; rendered
 ### Basketball private-beta verification — 18 October 2026
 
 Owner-requested shared basketball is implemented and locally verified, including physical makes/misses/rebounds, E/mouse/touch/fullscreen controls, exclusive ownership and peer totals. Both browser transports, 501 regressions, graphics, type/lint/build and clean service packaging/restart passed. The implementation record contains the evidence and bounds. Schema 073 is local-only, and these synthetic results do not complete hosted deployment, human acceptance or any operational/learner-release gate.
+
+## Mouse-look range correction — owner report, 18 October 2026
+
+The owner reports incomplete up/down/left/right turning and uneven view control. Authorized fix plan: retain immediate local mouse deltas and native pointer capture, widen first-person pitch to nearly vertical without flipping, and continue turning at the scene edges when uncaptured so cursor bounds cannot prevent a full turn. Stop edge motion on leaving the scene, Escape, focus/view loss, disconnect and Study Hub pause; keep touch/orbit and world messages unchanged. Verify actual captured and denied-capture camera ranges, full turns in both directions, input/render agreement and stationary state after release, plus existing graphics/course checks.

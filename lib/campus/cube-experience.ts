@@ -22,8 +22,9 @@ export function schoolSky(hour: number) {
     sunColour:mix("#ffad74","#fff1bc",daylight), phase:daylight>.8?"Daylight":daylight<.1?"Night sky":"Twilight" };
 }
 export function boundedLook(look: CameraLook, view: SchoolView): CameraLook {
+  const pitchLimit = view === "first-person" ? Math.PI / 2 - .01 : 1.35;
   return { yaw:Number.isFinite(look.yaw)?Math.atan2(Math.sin(look.yaw),Math.cos(look.yaw)):0,
-    pitch:clamp(Number.isFinite(look.pitch)?look.pitch:.35,view==="first-person"?-1.35:.16,1.35),
+    pitch:clamp(Number.isFinite(look.pitch)?look.pitch:.35,view==="first-person"?-pitchLimit:.16,pitchLimit),
     distance:clamp(Number.isFinite(look.distance)?look.distance:36,10,260) };
 }
 /** Convert local movement axes only; the server still authorizes movement. */
