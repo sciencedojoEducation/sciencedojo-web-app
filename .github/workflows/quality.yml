@@ -53,13 +53,13 @@ jobs:
         run: npx playwright install --with-deps chromium
 
       - name: Check optional campus beta in Chromium
-        timeout-minutes: 10
+        timeout-minutes: 15
         env:
           TMPDIR: ${{ runner.temp }}
         run: npm run test:campus:browser
 
       - name: Check shared SQL campus transport in Chromium
-        timeout-minutes: 10
+        timeout-minutes: 15
         env:
           TMPDIR: ${{ runner.temp }}
         run: npm run test:campus:vercel:browser

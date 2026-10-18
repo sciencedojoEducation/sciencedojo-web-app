@@ -568,3 +568,46 @@ check the openings and safe landings in addition to authority/SQL parity.
 The floor subtraction now also opens the middle-level passage for the top slide.
 Renderer voids and authoritative shaft obstacles share one fixed blueprint, with
 a regression requiring actual slab openings and solid boarding/exit landings.
+
+## Living Cube — verification and private review, 19 October 2026
+
+A clean snapshot of committed campus source `6ab25c8` passed **513 regressions**,
+excluding concurrent unrelated business edits in the shared working directory.
+Type checking, scoped lint, production build, private-workbook build traces and
+the explicit-file clean service package/install/process-restart check passed
+locally. The service archive includes the shared plan, geometry and locomotion
+modules and retains its manifest/checksum verification. No environment/private
+files were added to its allowlist.
+
+Both complete synthetic browser transports passed the existing retained-course,
+safety/recovery, fullscreen, mouse/Orbit and basketball flows plus the three-level
+tour. A final focused Colyseus tour additionally passed the corrected E boarding,
+external lift landing, upper classroom screening, escalator, level-2 Study Hub and
+slide return. The shared-SQL full tour observed the same authoritative behavior.
+Navigation uses actual ordinary inputs and map routes, without test teleports.
+Protected handshakes and all other world frames retain their separate wire audit;
+no course path/title, answer canary or admission ticket enters the shared frames.
+
+Normal/reduced-motion/throttled actual-scene probes retained all previous limits:
+84/109/48 distinct walking positions, 0/0/23ms stationary pauses,
+27 maximum walking draw calls, exact authoritative settlement and no browser
+errors. Rendered eye/body checks passed crouch, horizontal prone, confirmed jump
+elevation, five opaque room panels and rounded beanbags. The normal probe was
+repeated after consolidating all transport openings. These remain synthetic local
+Chromium/SwiftShader observations, not hardware FPS or human usability evidence.
+
+Review corrected short jump edges lost by input coalescing, phone controls that
+overlaid existing actions, prone clearance near furniture, floor-label overlap,
+disabled contextual transport buttons and solid slabs across transport paths.
+The maintained browser check now supports a focused floor-tour mode; its two full
+CI steps have a bounded 15-minute allowance for the additional walking coverage.
+Movement and graphics assertions are unchanged. Screenshots/evidence retain the
+existing seven-day hosted artifact policy; no current-head hosted run is claimed
+by these local results.
+
+The synthetic preview was refreshed and actually traversed to the level-2 Quiet
+study lounge, left in Orbit/Daylight for owner review. Evidence is retained in the
+ignored private review record and prepared local artifacts. No new-feature owner
+acceptance, live lesson operation, hosted migration or G1–G9 completion is inferred.
+072/073/074 remain local-only; the PR remains draft and the release controls stay
+disabled on hosted environments. The existing platform/course boundary remains.

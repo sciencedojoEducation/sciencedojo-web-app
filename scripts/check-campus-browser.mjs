@@ -1,3 +1,4 @@
+import {checkLivingCube} from "./campus-living-cube-acceptance.mjs";
 /** Disposable loopback fixture: real campus UI + Colyseus; synthetic course, no production auth bypass. */
 import { createServer } from "node:http";
 import { readFile, mkdtemp, writeFile } from "node:fs/promises";
@@ -354,8 +355,11 @@ try {
     const forward = a.getByRole("button", { name: "Walk forward", exact: true });
     const firstId = identities.keys().next().value;
     const player = async (id = firstId) => shared
-      ? (await shared.db.query("SELECT campus_id AS id,x,z FROM campus_presence WHERE campus_id=$1", [id])).rows[0]
+      ? (await shared.db.query("SELECT campus_id AS id,x,z,floor,elevation,stance,travel->>'via' AS travel,seat,status FROM campus_presence WHERE campus_id=$1", [id])).rows[0]
       : campus.room.world.players.get(id);
+    if(process.argv.includes("--living-cube-only")){
+      await checkLivingCube({page:a,peer:b,stage:a.getByRole("region",{name:/3D school/}),player,id:firstId,result,directory});
+    }else{
     const me = await player();
     for (const activate of [() => forward.click(), () => forward.press("Enter")]) {
       const before = (await player()).z;
@@ -681,7 +685,7 @@ try {
     if((await a.getByRole("button",{name:"Live local time",exact:true}).getAttribute("aria-pressed"))!=="true")throw new Error("Local24-hour clock did not resume");
     await a.getByRole("button",{name:"Daylight",exact:true}).click();
     result.checks.push("First-person hover look, click-to-lock, locked relative motion, Escape release and E without camera turning work in actual Chromium");
-    result.checks.push("Glass Cube exterior, first-person camera-relative walking, look/orbit/zoom controls, keyboard sky slider, night mode and resumed local24-hour clock work without new world-state fields");
+    result.checks.push("Glass Cube exterior, first-person camera-relative walking, look/orbit/zoom controls, keyboard sky slider, night mode and resumed local24-hour clock work without sharing camera or clock state");
     await a.getByRole("button", { name: "Whole school", exact: true }).click();
     if (await a.locator(".school-map-place").count() !== 15) throw new Error("Whole-school map is incomplete");
     await a.waitForTimeout(1800);
@@ -874,6 +878,8 @@ try {
     await a.waitForFunction(()=>!document.querySelector('.campus-immersive'));
     result.basketball={sharedOwnership:true,repeatSafePickup:true,heldPowerRisesAndFalls:true,lowerPowerKeepsPossession:true,cancelChargeKeepsBall:true,keyboardChargeReleaseMiss:true,retrievedRebound:true,carryDribble:true,physicalBasketPoints:points,peerScoreAgreement:true,putDown:true,disconnectRelease:true,fullscreenPhone:true,touchChargeRelease:true};
     result.checks.push('Actual court gameplay: two peers walk there, race for one ball, hold E through rising/falling power without losing possession, cancel with Escape, then release a shot; another player retrieves and scores a physical basket with shared totals. Touch also lowers power while held and shoots only on release; fullscreen controls remain visible');
+    await checkLivingCube({page:a,peer:b,stage,player,id:courtIds[0],result,directory});
+    }
     await Promise.all(ticketReads);
     if (vercel) {
       const issuedHashes = new Set(issuedTickets.map((ticket) => createHash("sha256").update(ticket).digest("hex")));

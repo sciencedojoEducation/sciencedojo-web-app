@@ -16,7 +16,8 @@ await build({
     import {createBasketball,basketballAction,advanceBasketball,basketballSnapshot,basketballAim,suggestedShot} from './lib/campus/basketball';
     const player={id:'40000000-0000-0000-0000-000000000001',pseudonym:'Quiet Maple aaaa01',colour:0,x:-2,z:4,rotation:0,status:'walking',seat:null};
     const unavailable=()=>{window.noWebgl=true};
-    function App(){const [x,setX]=useState(-2),[z,setZ]=useState(4),[view,setView]=useState("follow"),[hour,setHour]=useState(12),[active,setActive]=useState(true),[ball,setBall]=useState(undefined),[look,setLook]=useState({yaw:0,pitch:.55,distance:36});useEffect(()=>{window.showOverview=()=>setView("overview");
+    function App(){const [living,setLiving]=useState({floor:0,elevation:0,stance:"stand",travel:null}),[frosted,setFrosted]=useState([]);const [x,setX]=useState(-2),[z,setZ]=useState(4),[view,setView]=useState("follow"),[hour,setHour]=useState(12),[active,setActive]=useState(true),[ball,setBall]=useState(undefined),[look,setLook]=useState({yaw:0,pitch:.55,distance:36});useEffect(()=>{window.showOverview=()=>setView("overview");
+      window.showLiving=(pose)=>{window.watchOrbit=false;setLiving({floor:2,elevation:24,stance:"stand",travel:null,...pose});setX(26);setZ(-24);setView(pose.view??"first-person");setLook({yaw:0,pitch:0,distance:16});setHour(12);};window.screenLiving=()=>setFrosted(["quiet"]);
       window.showExterior=()=>{setView("exterior");setHour(12)};window.showNight=()=>setHour(22);window.pauseScene=()=>setActive(false);window.resumeScene=()=>setActive(true);
       window.showFirst=()=>{window.watchOrbit=false;setZ(26);setView("first-person");setLook({yaw:-.64,pitch:.72,distance:36})};
       window.refreshSnapshot=()=>setX(x=>x+.2);
@@ -28,14 +29,14 @@ await build({
       window.startWalk=()=>{window.sceneFrames=[];window.walkStartedAt=performance.now();window.walkArrivals=[];const gaps=[120,280,160,240,140,260,180,220];let i=0,elapsed=0;
         const step=()=>{const gap=gaps[i%gaps.length];setTimeout(()=>{elapsed+=gap;setX(-2+elapsed*.0015);
           window.walkArrivals.push(performance.now());if(++i===20){window.walkDoneAt=performance.now();window.walkDone=true;}else step();},gap);};step();};
-    },[]);return <Scene snapshot={{self:player.id,players:[{...player,x,z}],occupied:[],...(ball?{basketball:ball}:{})}} active={active} view={view} hour={hour} look={look} onUnavailable={unavailable} onLookChange={next=>{window.lastLook=next;window.orbitExpectedYaw=next.yaw;window.lookHistory??=[];window.lookHistory.push(next.yaw);}}/>;}
+    },[]);return <Scene snapshot={{self:player.id,players:[{...player,x,z,...living}],occupied:[],frosted,...(ball?{basketball:ball}:{})}} active={active} view={view} hour={hour} look={look} onUnavailable={unavailable} onLookChange={next=>{window.lastLook=next;window.orbitExpectedYaw=next.yaw;window.lookHistory??=[];window.lookHistory.push(next.yaw);}}/>;}
     createRoot(document.getElementById('root')).render(<App/>);`, loader: "tsx", resolveDir: process.cwd() },
   bundle: true, platform: "browser", format: "esm", jsx: "automatic",
   outfile: join(directory, "app.js"), define: { "process.env.NODE_ENV": '"production"' },
   plugins: [{ name: "scene-observer", setup(b) {
     b.onResolve({ filter: /^@react-three\/fiber$/ }, () => ({ path: "probe", namespace: "scene-probe" }));
     b.onLoad({ filter: /.*/, namespace: "scene-probe" }, () => ({ loader: "jsx", resolveDir: process.cwd(), contents: `
-      import React from 'react';import {Canvas as Base,useFrame} from ${JSON.stringify(fiber)};
+      import React from 'react';import {Matrix4,Vector3} from 'three';import {Canvas as Base,useFrame} from ${JSON.stringify(fiber)};
       export * from ${JSON.stringify(fiber)};
       function Probe(){useFrame(({scene,gl,camera},delta)=>{
         const avatar=scene.getObjectByName('campus-self-avatar');let receivingShadows=false;scene.traverse(o=>{if(o.isMesh&&o.receiveShadow)receivingShadows=true;});
@@ -51,6 +52,12 @@ await build({
         const ballProjection=ball?.position.clone().project(camera);
         window.courtDiagnostics={foregroundVisible:!!ballProjection&&Math.abs(ballProjection.x)<1&&Math.abs(ballProjection.y)<1&&ballProjection.z>-1&&ballProjection.z<1,rims:scene.getObjectByName('basketball-rims')?.count,nets:scene.getObjectByName('basketball-nets')?.count,visible:ball?.visible,guideVisible:guide?.visible,guidePoints:guide?.count};
         if(window.courtCapture&&ball){window.courtFrames??=[];window.courtFrames.push({t:performance.now(),x:ball.position.x,y:ball.position.y,z:ball.position.z,calls:gl.info.render.calls});}
+        if(window.livingProbe&&avatar){
+          const body=avatar.getObjectByName('avatar-body'),head=avatar.getObjectByName('avatar-head-hands'),screens=scene.getObjectByName('room-focus-glass'),bags=scene.getObjectByName('campus-beanbags'),matrix=new Matrix4();
+          avatar.updateWorldMatrix(true,true);head.getMatrixAt(0,matrix);const position=new Vector3().setFromMatrixPosition(matrix).applyMatrix4(head.matrixWorld);let opaque=0;
+          for(let i=0;i<screens.count;i++){screens.getMatrixAt(i,matrix);if(matrix.elements[0]!==0)opaque++;}
+          window.livingDiagnostics={rootY:avatar.position.y,eye:camera.position.y,headY:position.y,prone:body.rotation.x,opaque,bags:bags.count,calls:gl.info.render.calls};
+        }
         window.sceneReady=true;
       });return null;}
       export function Canvas(props){return <Base {...props} onCreated={state=>{
@@ -267,6 +274,19 @@ try {
   assert.deepEqual(errors,[],'Playable court must not introduce browser errors');
   result.basketballRendering={rims:2,nets:2,firstPersonHeldBallVisible:true,localTrajectory:true,physicalBasket:true,distinctBallPositions:ballPositions,maxDrawCalls:courtCalls,reducedMotion:process.argv.includes('--reduced-motion')};
   await page.screenshot({path:join(directory,'basketball-court-flight.png')});
+  await page.evaluate(()=>{window.livingProbe=true;window.showLiving({});});
+  await page.waitForFunction(()=>Math.abs(window.livingDiagnostics?.eye-25.67)<.01);
+  const standing=await page.evaluate(()=>window.livingDiagnostics);
+  await page.evaluate(()=>window.showLiving({stance:'crouch'}));await page.waitForFunction(()=>Math.abs(window.livingDiagnostics?.eye-25.05)<.01);
+  const crouching=await page.evaluate(()=>window.livingDiagnostics);assert(crouching.headY<standing.headY-.3,'Crouch must lower the actual rendered head');
+  await page.evaluate(()=>window.showLiving({stance:'prone'}));await page.waitForFunction(()=>Math.abs(window.livingDiagnostics?.eye-24.4)<.01);
+  const prone=await page.evaluate(()=>window.livingDiagnostics);assert(Math.abs(prone.prone-Math.PI/2)<.001&&prone.headY<24.6,'Prone must place the actual body close to the floor');
+  await page.evaluate(()=>window.showLiving({elevation:25.2}));await page.waitForFunction(()=>Math.abs(window.livingDiagnostics?.rootY-25.3)<.01&&Math.abs(window.livingDiagnostics?.eye-26.87)<.01);
+  await page.evaluate(()=>{window.showLiving({view:'follow'});window.screenLiving();});await page.waitForFunction(()=>window.livingDiagnostics?.opaque===5);
+  assert((await page.evaluate(()=>window.livingDiagnostics.bags))>=16,'Upper lounges must contain actual rounded beanbag meshes');
+  await page.waitForTimeout(1200);await page.screenshot({path:join(directory,'living-cube-upper-lounge.png')});
+  const living=await page.evaluate(()=>window.livingDiagnostics);assert(living.calls<40,'Expanded floors exceeded the unchanged draw-call budget');assert.deepEqual(errors,[]);
+  result.livingCubeRendering={threeLevels:true,standingEye:standing.eye,crouchedEye:crouching.eye,proneEye:prone.eye,realLoweredCrouchHead:true,realHorizontalProneBody:true,confirmedJumpElevation:true,opaqueGlassPanels:living.opaque,roundedBeanbagParts:living.bags,maxDrawCalls:living.calls};
   await writeFile(result.evidence, JSON.stringify(result, null, 2));
 } catch(error) {
   if(page){await writeFile(join(directory,'mouse-look-failure.json'),JSON.stringify(await page.evaluate(()=>({look:window.lastLook,forward:window.cameraForward,turns:window.lookHistory,locked:!!document.pointerLockElement})),null,2));console.error('Camera failure evidence:',directory);}

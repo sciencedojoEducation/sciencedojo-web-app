@@ -28,3 +28,8 @@ admission/release gates remain in force.
 
 Implementation is for local private review. No hosted schema application, paid
 infrastructure, lesson entitlement or real-learner admission is authorized here.
+
+Software implementation and local verification are complete for private review;
+see the [runbook](virtual-sciencedojo-implementation.md). Three usable levels,
+27 places and 20 workstations are implemented. Human acceptance and all hosted
+schema/operational gates remain separately pending.
