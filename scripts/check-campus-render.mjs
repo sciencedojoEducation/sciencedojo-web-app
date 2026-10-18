@@ -82,6 +82,8 @@ try {
     distinctPositions: new Set(walking.map(f=>f.x.toFixed(4))).size,
     p95FrameGapMs: Math.round(gaps[Math.ceil(gaps.length*.95)-1]),
     minimumPixelRatio: Math.min(...frames.map(f=>f.dpr)),
+    qualityTransitions: frames.filter((f,i)=>!i||f.dpr!==frames[i-1].dpr||f.shadows!==frames[i-1].shadows)
+      .map(f=>({afterStartMs:Math.round(f.t-walk.started),pixelRatio:f.dpr,shadows:f.shadows})),
     decorativeShadowsDisabled: frames.some(f=>!f.shadows),
     maxDrawCalls: Math.max(...frames.map(f=>f.calls)), maxGeometries: Math.max(...frames.map(f=>f.geometries)),
     finalX: frames.at(-1).x, browserErrors: errors, evidence: join(directory, "evidence.json") };

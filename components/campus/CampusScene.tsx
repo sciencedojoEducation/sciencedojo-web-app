@@ -5,10 +5,12 @@ import {Vector3,type Group} from "three";
 import {AVATAR_COLOURS,SEATS,type Player,type Snapshot} from "@/lib/campus/protocol";
 import {SCHOOL_PLACES} from "@/lib/campus/school-layout";
 import {advancePresentation,createPresentation,receivePresentation} from "@/lib/campus/presentation";
+import {createRenderBudget,reduceRenderQuality} from "@/lib/campus/render-budget";
 import SchoolModel from "./SchoolModel";
 type ViewPosition={current:{x:number;z:number}};
+type FrameActivity={current:boolean};
 export type SchoolView="overview"|"follow"|"place";
-function Avatar({ player, self, onPosition }: { player: Player; self: boolean; onPosition: (x: number, z: number) => void }) {
+function Avatar({ player, self, onPosition, activityRef }: { player: Player; self: boolean; onPosition: (x: number, z: number) => void; activityRef:FrameActivity }) {
   const group = useRef<Group>(null);
   const motion = useRef(createPresentation(player, 0));
   const invalidate = useThree(s => s.invalidate);
@@ -19,7 +21,7 @@ function Avatar({ player, self, onPosition }: { player: Player; self: boolean; o
     group.current?.position.set(view.x, player.seat ? .4 : 0, view.z);
     if (group.current) group.current.rotation.y = view.rotation;
     if (self) onPosition(view.x, view.z);
-    if (moving) invalidate();
+    if (moving) { activityRef.current=true; invalidate(); }
   }, -1);
   return <group ref={group}>
     <mesh position={[0, .75, 0]}><capsuleGeometry args={[.28, player.seat ? .25 : .55, 4, 8]} /><meshStandardMaterial color={AVATAR_COLOURS[player.colour]} /></mesh>
@@ -32,7 +34,7 @@ function Avatar({ player, self, onPosition }: { player: Player; self: boolean; o
     </mesh>}
   </group>;
 }
-function Camera({focus,present,reducedMotion,view,placeId}:{focus:ViewPosition;present:boolean;reducedMotion:boolean;view:SchoolView;placeId:string}) {
+function Camera({focus,present,reducedMotion,view,placeId,activityRef}:{focus:ViewPosition;present:boolean;reducedMotion:boolean;view:SchoolView;placeId:string;activityRef:FrameActivity}) {
  const camera=useThree(s=>s.camera),invalidate=useThree(s=>s.invalidate);
  const target=useMemo(()=>new Vector3(),[]),look=useMemo(()=>new Vector3(),[]),aim=useMemo(()=>new Vector3(),[]);
  const place=SCHOOL_PLACES.find(p=>p.id===placeId)??SCHOOL_PLACES[7];
@@ -42,7 +44,7 @@ function Camera({focus,present,reducedMotion,view,placeId}:{focus:ViewPosition;p
    target.set(x+13,16,z+20);aim.set(x,0,z-1);}
   const settled=camera.position.distanceToSquared(target)<.00001&&look.distanceToSquared(aim)<.00001;
   if(reducedMotion||settled){camera.position.copy(target);look.copy(aim);}
-  else{const step=1-Math.exp(-delta*4);camera.position.lerp(target,step);look.lerp(aim,step);invalidate();}
+  else{const step=1-Math.exp(-delta*4);camera.position.lerp(target,step);look.lerp(aim,step);activityRef.current=true;invalidate();}
   camera.lookAt(look);
  });return null;
 }
@@ -58,21 +60,19 @@ function Labels({elements,view}:{elements:Map<string,HTMLSpanElement>;view:Schoo
   }
  });return null;
 }
-function RenderBudget({scale,onSlow}:{scale:number;onSlow:()=>void}){
- const sample=useRef({average:1/60,elapsed:0,requested:false});
- useLayoutEffect(()=>{sample.current={average:1/60,elapsed:0,requested:false};},[scale]);
+function RenderBudget({scale,onSlow,activityRef,active}:{scale:number;onSlow:()=>void;activityRef:FrameActivity;active:boolean}){
+ const sample=useRef(createRenderBudget());
+ useLayoutEffect(()=>{sample.current=createRenderBudget();activityRef.current=false;},[scale,active,activityRef]);
  useFrame((_,delta)=>{
+  const continuous=activityRef.current;activityRef.current=false;
   if(scale<=.45||sample.current.requested)return;
-  // An idle demand canvas must not count a long pause as a whole slow window.
-  const frame=Math.min(delta,.25);
-  sample.current.average=sample.current.average*.85+frame*.15;
-  sample.current.elapsed=sample.current.average>.04?sample.current.elapsed+frame:0;
-  if(sample.current.elapsed>.9&&sample.current.average>.04){sample.current.requested=true;onSlow();}
- });return null;
+  if(reduceRenderQuality(sample.current,delta,continuous))onSlow();
+ },-2);return null;
 }
 export default function CampusScene({snapshot,active,onUnavailable,view="follow",placeId="library"}:{snapshot:Snapshot;active:boolean;onUnavailable:()=>void;view?:SchoolView;placeId?:string}){
  const [renderScale,setRenderScale]=useState(1);
- const reduceResolution=useCallback(()=>setRenderScale(previous=>previous===1?.65:.45),[]);
+ const reduceResolution=useCallback(()=>setRenderScale(.45),[]);
+ const activityRef=useRef(false);
  const focus=useRef({x:0,z:0}),elements=useMemo(()=>new Map<string,HTMLSpanElement>(),[]);
  const follow=useCallback((x:number,z:number)=>{focus.current.x=x;focus.current.z=z;},[]);
  useEffect(()=>{const canvas=document.createElement("canvas"),context=canvas.getContext("webgl2");if(!context)onUnavailable();else context.getExtension("WEBGL_lose_context")?.loseContext();},[onUnavailable]);
@@ -82,10 +82,10 @@ export default function CampusScene({snapshot,active,onUnavailable,view="follow"
     fallback={<p>3D is unavailable. You can open your courses directly.</p>}
     onCreated={({gl})=>gl.domElement.addEventListener("webglcontextlost",onUnavailable)}>
    <SchoolModel occupied={occupied}/>
-   {snapshot.players.map(p=><Avatar key={p.id} player={p} self={p.id===snapshot.self} onPosition={follow}/>)}
-   <Camera focus={focus} present={snapshot.players.some(p=>p.id===snapshot.self)} reducedMotion={typeof window!=="undefined"&&window.matchMedia("(prefers-reduced-motion: reduce)").matches} view={view} placeId={placeId}/>
+   {snapshot.players.map(p=><Avatar key={p.id} player={p} self={p.id===snapshot.self} onPosition={follow} activityRef={activityRef}/>)}
+   <Camera focus={focus} present={snapshot.players.some(p=>p.id===snapshot.self)} reducedMotion={typeof window!=="undefined"&&window.matchMedia("(prefers-reduced-motion: reduce)").matches} view={view} placeId={placeId} activityRef={activityRef}/>
    <Labels elements={elements} view={view}/>
-   <RenderBudget scale={renderScale} onSlow={reduceResolution}/>
+   <RenderBudget scale={renderScale} onSlow={reduceResolution} activityRef={activityRef} active={active}/>
   </Canvas>
   <div className="school-signs" aria-hidden="true">{SCHOOL_PLACES.map(p=><span key={p.id} ref={el=>{if(el)elements.set(p.id,el);else elements.delete(p.id);}}>{p.name}</span>)}</div>
  </div>;
