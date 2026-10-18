@@ -74,4 +74,6 @@ The Cube fallback disables decorative shadow receiving with mesh uniforms while 
 
 The terminal scene assertion observes actual displayed settlement with a three-second deadline and records the delay; do not substitute a fixed Node-side sleep on software GPU runners. Its waiting must not extend the original walking continuity window or change exact-target tolerance.
 
+The Cube slow-frame duration is 450ms after its moving average crosses 40ms. Retain idle/snapshot/load-recovery protections and the bounded-response behavioral regression; delaying adaptation leaves too much of a short walk at an unsuitable pixel load. Existing actual-scene continuity limits remain unchanged.
+
 The glass Cube iteration preserves the 15 authoritative ground destinations and 10 study stations. Upper planted terraces are architectural scenery, not additional accessible floors. Camera-relative first-person directions must be normalized to existing input bounds; never add camera, clock or sky metadata to world messages. Preserve the actual 70-degree eye-level/hidden-self checks, sun/moon/star and aerial-cutaway checks, mobile look/clock controls, reduced motion, Study Hub pause and existing course/safety/recovery paths. Current Cube verification is in docs/virtual-sciencedojo-cube.md and the runbook; previous-school hosted results do not establish current-head checks.

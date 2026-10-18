@@ -10,10 +10,11 @@ test("idle and five-Hz snapshot redraws preserve quality on a demand canvas",()=
 });
 
 test("sustained slow animation requests one quality reduction per level",()=>{
-  const sample=createRenderBudget();let requests=0;
-  for(let i=0;i<30;i++)requests+=Number(reduceRenderQuality(sample,.1,true));
+  const sample=createRenderBudget();let requests=0,firstRequestAt=Infinity;
+  for(let i=0;i<30;i++)if(reduceRenderQuality(sample,.1,true)){requests++;firstRequestAt=Math.min(firstRequestAt,(i+1)*.1);}
   assert.equal(requests,1);
   assert.equal(sample.requested,true);
+  assert(firstRequestAt<=.9,"Sustained ten-FPS animation must adapt within its first second");
 });
 
 test("recovered or interrupted animation does not accumulate old slow time",()=>{

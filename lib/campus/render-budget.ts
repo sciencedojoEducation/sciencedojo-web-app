@@ -12,7 +12,7 @@ export function reduceRenderQuality(sample: RenderBudgetSample, delta: number, c
   const frame = Math.min(Math.max(delta, 0), .25);
   sample.average = sample.average * .85 + frame * .15;
   sample.slowSeconds = sample.average > .04 ? sample.slowSeconds + frame : 0;
-  if (sample.slowSeconds <= .9) return false;
+  if (sample.slowSeconds <= .45) return false;
   sample.requested = true;
   return true;
 }
