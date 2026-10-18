@@ -16,9 +16,9 @@ await build({
     const player={id:'40000000-0000-0000-0000-000000000001',pseudonym:'Quiet Maple aaaa01',colour:0,x:-2,z:4,rotation:0,status:'walking',seat:null};
     const unavailable=()=>{window.noWebgl=true};
     function App(){const [x,setX]=useState(-2),[view,setView]=useState("follow");useEffect(()=>{window.showOverview=()=>setView("overview");
-      window.startWalk=()=>{window.sceneFrames=[];const gaps=[120,280,160,240,140,260,180,220];let i=0,elapsed=0;
+      window.startWalk=()=>{window.sceneFrames=[];window.walkStartedAt=performance.now();window.walkArrivals=[];const gaps=[120,280,160,240,140,260,180,220];let i=0,elapsed=0;
         const step=()=>{const gap=gaps[i%gaps.length];setTimeout(()=>{elapsed+=gap;setX(-2+elapsed*.0015);
-          if(++i===20)window.walkDone=true;else step();},gap);};step();};
+          window.walkArrivals.push(performance.now());if(++i===20){window.walkDoneAt=performance.now();window.walkDone=true;}else step();},gap);};step();};
     },[]);return <Scene snapshot={{self:player.id,players:[{...player,x}],occupied:[]}} active={true} view={view} onUnavailable={unavailable}/>;}
     createRoot(document.getElementById('root')).render(<App/>);`, loader: "tsx", resolveDir: process.cwd() },
   bundle: true, platform: "browser", format: "esm", jsx: "automatic",
@@ -61,10 +61,13 @@ try {
   await page.waitForFunction(() => window.walkDone, null, { timeout: 15000 });
   await page.waitForTimeout(600);
   const frames = await page.evaluate(() => window.sceneFrames);
+  const walk=await page.evaluate(()=>({started:window.walkStartedAt,finished:window.walkDoneAt,arrivals:window.walkArrivals}));
   assert(frames.length > 10, "Missing rendered movement frames");
-  const walking = frames.filter(f => f.t <= frames[0].t + 4000);
+  // Timers on a busy software renderer can deliver the twenty targets late.
+  // Compare interpolation over all twenty arrivals, including the 300ms buffer.
+  const walking = frames.filter(f => f.t <= walk.finished + 300);
   const changed = walking.filter((f, i) => i && Math.abs(f.x - walking[i - 1].x) > .0001);
-  const core = walking.filter(f => f.t > frames[0].t + 700 && f.t < frames[0].t + 3600);
+  const core = walking.filter(f => f.t > walk.started + 700 && f.t < walk.finished - 400);
   let lastMoveAt = core[0]?.t ?? 0, maxMovementPauseMs = 0;
   for (let i = 1; i < core.length; i++) {
     if (Math.abs(core[i].x - core[i - 1].x) > .0001) lastMoveAt = core[i].t;
@@ -72,6 +75,8 @@ try {
   }
   const gaps = walking.slice(1).map((f,i)=>f.t-walking[i].t).sort((a,b)=>a-b);
   const result = { scope: "Synthetic actual scene, headless Chrome / SwiftShader; not hardware or hosted FPS",
+    authoritativeTargetCount: walk.arrivals.length, observedWalkMs: Math.round(walk.finished-walk.started),
+    observedArrivalGapsMs: walk.arrivals.map((at,i)=>Math.round(at-(i?walk.arrivals[i-1]:walk.started))),
     arrivalGapsMs: [120,280,160,240,140,260,180,220], maxMovementPauseMs: Math.round(maxMovementPauseMs),
     renderedWalkingFrames: walking.length, changingPositionFrames: changed.length,
     distinctPositions: new Set(walking.map(f=>f.x.toFixed(4))).size,
@@ -82,6 +87,7 @@ try {
     finalX: frames.at(-1).x, browserErrors: errors, evidence: join(directory, "evidence.json") };
   await writeFile(result.evidence, JSON.stringify(result, null, 2));console.log(JSON.stringify(result,null,2));
   assert.deepEqual(errors, []);
+  assert.equal(result.authoritativeTargetCount,20,"Probe must observe all twenty authoritative targets");
   if(slowDevice)assert(result.minimumPixelRatio<1,"High-pixel-load, CPU-throttled probe must exercise adaptive rendering");
   if(result.minimumPixelRatio<1)assert(result.decorativeShadowsDisabled,"Slow-device fallback must disable decorative shadows");
   if(process.argv.includes("--reduced-motion")){

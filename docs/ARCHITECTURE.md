@@ -201,3 +201,5 @@ Whole-school rendering groups instanced boxes per room using accurate culling bo
 School props use shared diffuse Lambert materials and cached 1024-pixel shadows with normal bias; retain per-room culling and the adaptive canvas budget. This avoids unnecessary physically based shading for the low-poly scene.
 
 The slow-device fallback disables decorative canvas shadows at the first resolution reduction (1 → 0.65), then permits 0.45 if sustained frames remain slow; HTML remains sharp and the avatar keeps its inexpensive ground marker. The frame window clamps idle gaps so a resumed demand canvas cannot count one idle pause as sustained load. The actual-scene probe records shadow fallback and retains all movement thresholds; `--slow-device` exercises four times the canvas pixels with CPU throttling in isolated QA and requires the fallback to activate.
+
+Rendering QA observes all 20 synthetic target arrivals and their actual timing before assessing interpolation; nominal timer durations do not bound a busy runner’s observed walk. Keep the existing continuity/draw-call thresholds and separate these fixture results from hardware FPS.
