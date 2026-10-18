@@ -7,7 +7,7 @@ import { chapterForPage } from "@/lib/workbook-study";
 
 export async function workbookRecordingTarget(request: Request) {
   const access = await requireWorkbookAccess(request);
-  if (access.local) throw new WorkbookAccessError(400, "Cloud recording saves require an invited account.");
+  if (access.local) throw new WorkbookAccessError(400, "Cloud recording saves require a signed-in account.");
   const params = new URL(request.url).searchParams;
   if (params.get("account") !== access.id) throw new WorkbookAccessError(401, "Your account changed. Reload before saving a recording.");
   const exercise = params.get("exercise") || "";
