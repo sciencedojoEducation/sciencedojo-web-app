@@ -11,14 +11,14 @@ const directory = await mkdtemp(join(tmpdir(), "campus-render-"));
 const fiber = resolve("node_modules/@react-three/fiber/dist/react-three-fiber.esm.js");
 await build({
   stdin: { contents: `import React,{useState,useEffect} from 'react';
-    import {createRoot} from 'react-dom/client';import Scene from './components/campus/CampusScene';
+    import './components/campus/campus.css';import {createRoot} from 'react-dom/client';import Scene from './components/campus/CampusScene';
     const player={id:'40000000-0000-0000-0000-000000000001',pseudonym:'Quiet Maple aaaa01',colour:0,x:-2,z:4,rotation:0,status:'walking',seat:null};
     const unavailable=()=>{window.noWebgl=true};
-    function App(){const [x,setX]=useState(-2);useEffect(()=>{
+    function App(){const [x,setX]=useState(-2),[view,setView]=useState("follow");useEffect(()=>{window.showOverview=()=>setView("overview");
       window.startWalk=()=>{window.sceneFrames=[];const gaps=[120,280,160,240,140,260,180,220];let i=0,elapsed=0;
         const step=()=>{const gap=gaps[i%gaps.length];setTimeout(()=>{elapsed+=gap;setX(-2+elapsed*.0015);
           if(++i===20)window.walkDone=true;else step();},gap);};step();};
-    },[]);return <Scene snapshot={{self:player.id,players:[{...player,x}],occupied:[]}} active={true} onUnavailable={unavailable}/>;}
+    },[]);return <Scene snapshot={{self:player.id,players:[{...player,x}],occupied:[]}} active={true} view={view} onUnavailable={unavailable}/>;}
     createRoot(document.getElementById('root')).render(<App/>);`, loader: "tsx", resolveDir: process.cwd() },
   bundle: true, platform: "browser", format: "esm", jsx: "automatic",
   outfile: join(directory, "app.js"), define: { "process.env.NODE_ENV": '"production"' },
@@ -27,9 +27,9 @@ await build({
     b.onLoad({ filter: /.*/, namespace: "scene-probe" }, () => ({ loader: "jsx", resolveDir: process.cwd(), contents: `
       import React from 'react';import {Canvas as Base,useFrame} from ${JSON.stringify(fiber)};
       export * from ${JSON.stringify(fiber)};
-      function Probe(){useFrame(({scene,gl},delta)=>{
+      function Probe(){useFrame(({scene,gl,camera},delta)=>{
         let avatar;scene.traverse(o=>{if(o.geometry?.type==='RingGeometry')avatar=o.parent});
-        if(avatar){window.sceneFrames??=[];window.sceneFrames.push({t:performance.now(),ms:delta*1000,x:avatar.position.x,calls:gl.info.render.calls,triangles:gl.info.render.triangles,geometries:gl.info.memory.geometries});}
+        if(avatar){window.sceneFrames??=[];window.sceneFrames.push({t:performance.now(),ms:delta*1000,x:avatar.position.x,cameraX:camera.position.x,cameraY:camera.position.y,cameraZ:camera.position.z,calls:gl.info.render.calls,triangles:gl.info.render.triangles,geometries:gl.info.memory.geometries});}
         window.sceneReady=true;
       });return null;}
       export function Canvas(props){return <Base {...props}>{props.children}<Probe/></Base>}
@@ -37,8 +37,8 @@ await build({
   } }],
 });
 const http = createServer(async (req, res) => {
-  if (req.url === "/app.js") { res.setHeader("content-type", "text/javascript");res.end(await readFile(join(directory, "app.js"))); }
-  else res.end('<!doctype html><div id="root" style="width:900px;height:600px"></div><script type="module" src="/app.js"></script>');
+  if (["/app.js","/app.css"].includes(req.url)) { res.setHeader("content-type",req.url.endsWith("css")?"text/css":"text/javascript");res.end(await readFile(join(directory, req.url.slice(1)))); }
+  else res.end('<!doctype html><link rel="stylesheet" href="/app.css"><div id="root" style="width:900px;height:600px"></div><script type="module" src="/app.js"></script>');
 });
 let browser;
 try {
@@ -46,6 +46,7 @@ try {
   browser = await chromium.launch({ executablePath: process.env.CAMPUS_CHROMIUM_PATH || undefined, headless: true,
     args: ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader"] });
   const page = await browser.newPage({ viewport: { width: 1000, height: 740 }, deviceScaleFactor: 2 });
+  if(process.argv.includes("--reduced-motion"))await page.emulateMedia({reducedMotion:"reduce"});
   const errors = [];page.on("pageerror", e => errors.push(e.message));
   await page.goto(`http://127.0.0.1:${http.address().port}`);
   await page.waitForFunction(() => window.sceneReady || window.noWebgl);
@@ -73,6 +74,10 @@ try {
     maxDrawCalls: Math.max(...frames.map(f=>f.calls)), maxGeometries: Math.max(...frames.map(f=>f.geometries)),
     finalX: frames.at(-1).x, browserErrors: errors, evidence: join(directory, "evidence.json") };
   assert.deepEqual(errors, []);
+  if(process.argv.includes("--reduced-motion")){
+    assert(frames.every(f=>Math.hypot(f.cameraX-frames[0].cameraX,f.cameraY-frames[0].cameraY,f.cameraZ-frames[0].cameraZ)<.0001),"Reduced motion must keep the selected-place camera anchored");
+    result.reducedMotionCameraAnchored=true;
+  }
   if (!process.argv.includes("--baseline")) {
     assert(result.distinctPositions > 35, "Movement still steps only at snapshot rate");
     assert(result.maxMovementPauseMs < 80, "Character pauses between uneven snapshot arrivals");
@@ -80,5 +85,7 @@ try {
     assert(Math.abs(result.finalX-4)<.01, "Presentation must settle at the authoritative target");
   }
   await page.screenshot({ path: join(directory, "scene.png") });
+  await page.evaluate(()=>window.showOverview());await page.waitForTimeout(2500);
+  await page.screenshot({path:join(directory,"whole-school.png")});
   await writeFile(result.evidence, JSON.stringify(result, null, 2));console.log(JSON.stringify(result,null,2));
 } finally { await browser?.close();http.closeAllConnections();await new Promise(r=>http.close(r)); }

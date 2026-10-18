@@ -38,7 +38,7 @@ export default async function CampusPage() {
         <div className="mx-auto max-w-xl">
           <p className="text-2xl font-semibold">sciencedojo.</p>
           <h1 className="mt-12 text-3xl font-semibold">
-            Before you enter the library
+            Before you enter the school
           </h1>
           <p className="mt-6 leading-7">
             This supervised pilot is for invited adults aged 18+ living in the

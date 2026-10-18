@@ -11,11 +11,12 @@ import {
 } from "react";
 import { connectCampus, requestCampusAdmission, type CampusConnection } from "@/lib/campus/connection";
 import { SEATS, type Snapshot } from "@/lib/campus/protocol";
+import { SCHOOL_PLACES, schoolPlaceAt, schoolRoute, type Point } from "@/lib/campus/school-layout";
 import "./campus.css";
 
 const Scene = dynamic(() => import("./CampusScene"), {
   ssr: false,
-  loading: () => <div className="campus-loading">Preparing the library…</div>,
+  loading: () => <div className="campus-loading">Preparing your school…</div>,
 });
 class CanvasBoundary extends Component<
   { children: ReactNode },
@@ -28,7 +29,7 @@ class CanvasBoundary extends Component<
   render() {
     return this.state.failed ? (
       <p className="campus-loading">
-        3D could not start. Use the accessible library controls or open your
+        3D could not start. Use the accessible school controls or open your
         courses directly.
       </p>
     ) : (
@@ -62,6 +63,10 @@ export default function CampusClient({
   const [reason, setReason] = useState("harassment"),
     [busy, setBusy] = useState(false),
     [help, setHelp] = useState(false);
+  const [view, setView] = useState<"overview" | "follow" | "place">("overview");
+  const [selectedPlace, setSelectedPlace] = useState("library"), [walkingTo, setWalkingTo] = useState("");
+  const navigation = useRef<{ points: Point[]; name: string } | null>(null);
+  const latestSelf = useRef<Point | null>(null);
   const room = useRef<CampusConnection | null>(null),
     direction = useRef({ x: 0, z: 0 }),
     stepTimer = useRef<ReturnType<typeof setTimeout> | null>(null),
@@ -75,11 +80,21 @@ export default function CampusClient({
     hubButton = useRef<HTMLButtonElement>(null),
     hubDialog = useRef<HTMLDialogElement>(null);
   const self = snapshot.players.find((p) => p.id === snapshot.self);
+  const currentPlace = self ? schoolPlaceAt(self) : undefined;
+  const selected = SCHOOL_PLACES.find(p => p.id === selectedPlace)!;
+  const visibleSeats = SEATS.filter(s => s.place === (currentPlace?.id ?? "library"));
+  const walkToPlace = () => {
+    if (!self || self.seat) { setNotice("Stand up before walking to another place."); return; }
+    const points = schoolRoute(self, { x: selected.x, z: selected.z + 2 });
+    if (!points.length) { setNotice("Use the direction controls to reach an open path first."); return; }
+    navigation.current = { points, name: selected.name };setWalkingTo(selected.name);setView("follow");stage.current?.focus();
+  };
   const unavailable = useCallback(() => setNo3d(true), []);
   const stopMovement = useCallback(() => {
     if (stepTimer.current) clearTimeout(stepTimer.current);
     stepTimer.current = null;
     direction.current = { x: 0, z: 0 };
+    navigation.current = null;setWalkingTo("");
   }, []);
   const stepDirection = useCallback((x: number, z: number) => {
     stopMovement();
@@ -113,6 +128,7 @@ export default function CampusClient({
         return;
       }
       next.onMessage<Snapshot>("snapshot", (data) => {
+        latestSelf.current = data.players.find(p => p.id === data.self) ?? null;
         setSnapshot(data);
       });
       next.onMessage<string>("notice", (data) => setNotice(data));
@@ -132,7 +148,8 @@ export default function CampusClient({
       room.current = next;
       sequence.current = 0;
       setConnected(true);
-      setConnection("In the library");
+      setConnection("In the school");
+      setView("follow");
       stage.current?.focus();
     } catch (error) {
       if (attempt !== generation.current) return;
@@ -147,6 +164,12 @@ export default function CampusClient({
   };
   useEffect(() => {
     const timer = setInterval(() => {
+      const route = navigation.current, position = latestSelf.current;
+      if (route && position) {
+        while (route.points.length && Math.hypot(route.points[0].x - position.x, route.points[0].z - position.z) < .3) route.points.shift();
+        if (!route.points.length) { navigation.current = null;setWalkingTo("");direction.current = { x: 0, z: 0 };setNotice(`Arrived at ${route.name}.`); }
+        else { const dx = route.points[0].x - position.x, dz = route.points[0].z - position.z, length = Math.max(1, Math.hypot(dx, dz));direction.current = { x: dx / length, z: dz / length }; }
+      }
       if (room.current)
         room.current.send("input", {
           ...direction.current,
@@ -177,7 +200,7 @@ export default function CampusClient({
     room.current = null;
     setConnected(false);
     setSnapshot({ self: "", players: [], occupied: [] });
-    setConnection("You left the library");
+    setConnection("You left the school");
   };
   const safety = async (target: string, action: string) => {
     setBusy(true);
@@ -226,12 +249,12 @@ export default function CampusClient({
         </Link>
       </header>
       <div className="campus-layout">
-        <section className="campus-world-panel" aria-label="Shared library">
+        <section className="campus-world-panel" aria-label="Shared school">
           <div className="campus-world-heading">
             <div>
-              <p className="campus-eyebrow">A little space to focus</p>
-              <h1>Learn, together.</h1>
-              <p className="campus-beta-note">An optional virtual library for your existing learning.</p>
+              <p className="campus-eyebrow">Your school, together</p>
+              <h1>A whole school to explore.</h1>
+              <p className="campus-beta-note">15 places to discover. Your own courses, wherever you study.</p>
             </div>
             <span className="campus-presence">
               <i />
@@ -246,15 +269,16 @@ export default function CampusClient({
             tabIndex={0}
             ref={stage}
             role="region"
-            aria-label="3D library. Use arrow keys or WASD to walk. Tab to library controls."
-            onBlur={stopMovement}
+            aria-label="3D school. Use arrow keys or WASD to walk. Tab to school controls."
+            onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) stopMovement(); }}
             onKeyDown={(event) => {
               if (event.key === "Escape") {
-                direction.current = { x: 0, z: 0 };
+                stopMovement();
                 document.exitPointerLock?.();
                 return;
               }
               if (!connected || self?.seat || hub) return;
+              if (navigation.current) stopMovement();
               const key = event.key.toLowerCase();
               if (
                 [
@@ -307,11 +331,18 @@ export default function CampusClient({
                   }}
                   active={!hub}
                   onUnavailable={unavailable}
+                  view={view}
+                  placeId={selectedPlace}
                 />
               </CanvasBoundary>
             )}
+            <div className="school-camera-controls" aria-label="School camera">
+              <button className="secondary" aria-pressed={view === "overview"} onClick={() => setView("overview")}>Whole school</button>
+              <button className="secondary" aria-pressed={view === "follow"} onClick={() => setView("follow")}>Follow me</button>
+            </div>
             <div className="campus-stage-caption">
-              THE CUBE / LIBRARY FLOOR<span>Quiet company. Real learning.</span>
+              SCIENCEDOJO / {view === "overview" ? "WHOLE SCHOOL" : view === "place" ? selected.name.toUpperCase() : (currentPlace?.name ?? "School walkways").toUpperCase()}
+              <span>{view === "overview" ? "Choose a place on the map below." : "Connected places. Shared learning."}</span>
             </div>
           </div>
           <div className="campus-controls">
@@ -327,7 +358,7 @@ export default function CampusClient({
                 onClick={() => void enter()}
                 disabled={connected || connecting.current}
               >
-                {connected ? "Connected" : "Enter library"}
+                {connected ? "Connected" : "Enter school"}
               </button>
               <button
                 className="secondary"
@@ -345,10 +376,10 @@ export default function CampusClient({
               </button>
             </div>
           </div>
-          {help && (
+          {(help || connected) && (
             <div className="campus-help">
               <p>
-                Focus the library and use WASD or arrow keys to walk. Tap a
+                Focus the school and use WASD or arrow keys to walk. Tap a
                 direction button for a step, or hold it to keep walking. Move near
                 a desk, then choose its Sit button. Escape stops movement. All
                 actions are available below without pointer capture.
@@ -388,6 +419,20 @@ export default function CampusClient({
               </div>
             </div>
           )}
+          {walkingTo && <p className="school-route-status" role="status">Walking to {walkingTo}… <button className="secondary" onClick={stopMovement}>Stop walking</button></p>}
+          <section className="school-map-panel" aria-label="School map">
+            <div className="school-map-heading"><div><p className="campus-eyebrow">Make yourself at home</p><h2>Find your place.</h2></div><span>15 places · 10 study stations</span></div>
+            <div className="school-map-grid">
+              {SCHOOL_PLACES.map(place => <button key={place.id} className={`school-map-place ${selectedPlace === place.id ? "selected" : ""}`} aria-pressed={selectedPlace === place.id}
+                style={{ backgroundColor: place.colour }} onClick={() => { stopMovement();setSelectedPlace(place.id);setView("place"); }}>
+                <span className="school-map-symbol" aria-hidden="true">{place.outdoor ? "✳" : "▤"}</span><strong>{place.name}</strong>{currentPlace?.id === place.id && <small>You are here</small>}
+              </button>)}
+            </div>
+            <div className="school-place-detail"><div><h3>{selected.name}</h3><p>{selected.description}</p></div>
+              <button disabled={!connected || Boolean(self?.seat)} onClick={walkToPlace}>Walk here →</button>
+            </div>
+            {!connected && <p className="school-map-hint">Look around freely. Enter the school to walk between places.</p>}
+          </section>
           {notice && (
             <p className="campus-notice" role="status">
               {notice}
@@ -402,8 +447,9 @@ export default function CampusClient({
               Take a seat at a computer or laptop to access your own dashboard
               and courses. Your usual access and progress carry over.
             </p>
+            {!visibleSeats.length && <p>Study computers are in the Library, Computer lab and Classroom A. Use the school map to find them.</p>}
             <div className="campus-seats">
-              {SEATS.map((seat, i) => (
+              {visibleSeats.map((seat) => (
                 <button
                   key={seat.id}
                   disabled={
@@ -413,7 +459,7 @@ export default function CampusClient({
                   }
                   onClick={() => send("sit", seat.id)}
                 >
-                  <span>Desk {i + 1}</span>
+                  <span>{seat.name}</span>
                   <small>
                     {self?.seat === seat.id
                       ? "Your seat"
@@ -447,7 +493,7 @@ export default function CampusClient({
           </section>
           <section className="campus-card">
             <p className="campus-eyebrow">In good company</p>
-            <h2>People in the library</h2>
+            <h2>People at school</h2>
             <p>Campus pseudonyms only. No chat or voice.</p>
             <label className="campus-reason">
               Report reason
@@ -533,7 +579,7 @@ export default function CampusClient({
             <p className="campus-eyebrow">Your learning, in focus</p>
             <h2>Study Hub</h2>
           </div>
-          <button onClick={closeHub}>Return to library →</button>
+          <button onClick={closeHub}>Return to school →</button>
         </header>
         <nav className="campus-hub-shortcuts" aria-label="Your existing learning tools">
           <p>This beta connects to your existing ScienceDojo account.</p>
@@ -581,7 +627,7 @@ export default function CampusClient({
         ) : (
           <>
             <div className="campus-course-note">
-              Course work stays open when you return to the library. Save your
+              Course work stays open when you return to the school. Save your
               work in the course before leaving this page.{" "}
               <Link
                 href={`/dashboard/academy/${encodeURIComponent(course)}`}

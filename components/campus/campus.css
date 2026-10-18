@@ -499,3 +499,36 @@
 .campus-shell a {
   color: inherit;
 }
+
+/* Whole-school cutaway and accessible place map. */
+.school-scene{position:relative;width:100%;height:100%;}
+.school-signs{position:absolute;inset:0;pointer-events:none;overflow:hidden;}
+.school-signs>span{position:absolute;top:0;left:0;white-space:nowrap;background:#f9f8edeb;border:1px solid #567c6740;color:#214c40;padding:4px 7px;border-radius:5px;font:600 10px/1.2 Arial,sans-serif;box-shadow:0 2px 5px #28463515;}
+.school-view-overview .school-signs>span{font-size:9px;padding:3px 5px;}
+.school-camera-controls{position:absolute;top:15px;left:15px;display:flex;gap:5px;z-index:2;}
+.campus-shell .school-camera-controls button{background:#fbfaf2ed;color:#285547;padding:8px 12px;font-size:11px;min-height:38px;border-color:#b3c5b2;}
+.campus-shell .school-camera-controls button[aria-pressed=true]{background:#214e42;color:#fff;}
+.school-map-panel{margin-top:25px;background:#faf9f1;border:1px solid #d5deca;border-radius:22px;padding:22px;}
+.school-map-heading{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:18px;}
+.school-map-heading h2{font:400 28px Georgia,serif;margin:5px 0 0;}
+.school-map-heading>span{font-size:11px;color:#607a6a;text-align:right;}
+.school-map-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;padding:10px;border-radius:13px;background:#e6e8da;}
+.campus-shell .school-map-place{color:#254c40;border:2px solid transparent;border-radius:9px;min-height:91px;padding:10px 5px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;}
+.campus-shell .school-map-place.selected{border-color:#24624c;box-shadow:0 0 0 2px #faf9ee;}
+.school-map-place strong{font-size:10px;line-height:1.3;}
+.school-map-place small{font-size:9px;font-weight:400;}
+.school-map-symbol{font-size:20px;font-weight:400;line-height:1;opacity:.65;}
+.school-place-detail{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-top:18px;}
+.school-place-detail h3{font:400 23px Georgia,serif;margin:0 0 5px;}
+.school-place-detail p,.school-map-hint{font-size:12px;line-height:1.6;color:#5f7668;margin:0;}
+.school-place-detail button{white-space:nowrap;}
+.school-map-hint{margin-top:12px;}
+.school-route-status{display:flex;align-items:center;justify-content:space-between;font-size:13px;background:#e3ebdb;border-radius:12px;padding:10px 14px;gap:10px;}
+.school-route-status button{padding:7px 12px;}
+@media(max-width:600px){
+ .school-map-panel{padding:14px;border-radius:17px;}.school-map-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;padding:6px;}
+ .campus-shell .school-map-place{padding:6px 2px;min-height:82px;border-radius:6px;}.school-map-place strong{font-size:11px;}.school-map-symbol{font-size:17px;}
+ .school-map-heading h2{font-size:25px;}.school-map-heading>span{font-size:9px;}.school-place-detail{align-items:flex-start;}.school-place-detail h3{font-size:21px;}
+ .school-place-detail button{font-size:11px;padding:10px;}.school-view-overview .school-signs>span{font-size:6px;padding:2px 3px;}
+ .school-camera-controls{top:10px;left:10px;}.campus-shell .school-camera-controls button{font-size:10px;padding:7px 10px;}
+}

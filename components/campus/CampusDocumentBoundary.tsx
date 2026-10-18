@@ -70,8 +70,8 @@ export default function CampusDocumentBoundary({
         <h1 className="text-2xl font-semibold">Preparing your study session</h1>
         <p role="status" className="mt-4 leading-7">
           {state === "reload"
-            ? "Open the library in a fresh page to keep public-site tracking scripts separate from your study activity. If this message returns, try a browser profile without extensions that add tracking scripts."
-            : "Opening the library in a private page…"}
+            ? "Open the school in a fresh page to keep public-site tracking scripts separate from your study activity. If this message returns, try a browser profile without extensions that add tracking scripts."
+            : "Opening the school in a private page…"}
         </p>
         {/* A document navigation is required here; client routing would retain loaded scripts. */}
         {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
@@ -79,7 +79,7 @@ export default function CampusDocumentBoundary({
           href="/campus"
           className="mt-6 inline-flex min-h-12 items-center rounded-full bg-[#173b39] px-6 text-white"
         >
-          Open a fresh library page →
+          Open a fresh school page →
         </a>
       </div>
     </section>

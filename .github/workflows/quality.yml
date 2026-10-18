@@ -79,7 +79,7 @@ jobs:
         timeout-minutes: 3
         env:
           TMPDIR: ${{ runner.temp }}
-        run: npm run test:campus:render
+        run: npm run test:campus:render && npm run test:campus:render -- --reduced-motion
 
       - name: Save synthetic campus render evidence
         if: always()
@@ -88,7 +88,7 @@ jobs:
           name: virtual-sciencedojo-render-evidence
           path: |
             ${{ runner.temp }}/campus-render-*/evidence.json
-            ${{ runner.temp }}/campus-render-*/scene.png
+            ${{ runner.temp }}/campus-render-*/*.png
           if-no-files-found: ignore
           retention-days: 7
 

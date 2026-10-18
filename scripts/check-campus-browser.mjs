@@ -248,7 +248,7 @@ try {
     const privatePage = await privateContext.newPage();
     await privatePage.goto(`${origin}/privacy-entry-fixture`);
     await privatePage
-      .getByRole("button", { name: "Enter library", exact: true })
+      .getByRole("button", { name: "Enter school", exact: true })
       .waitFor();
     if (
       !(await privatePage.evaluate(
@@ -339,10 +339,10 @@ try {
       });
       await page.goto(origin);
       await page
-        .getByRole("button", { name: "Enter library", exact: true })
+        .getByRole("button", { name: "Enter school", exact: true })
         .click();
       await page
-        .getByText("In the library · walking", { exact: true })
+        .getByText("In the school · walking", { exact: true })
         .waitFor();
     }
     await a.getByText("2 here", { exact: true }).waitFor();
@@ -366,7 +366,7 @@ try {
       if (Math.abs((await player()).z - stopped) > 0.05) throw new Error("Direction step did not stop");
     }
     result.checks.push("Pointer taps and native keyboard button activation move a bounded step and stop");
-    const stage = a.getByRole("region", { name: /3D library/ });
+    const stage = a.getByRole("region", { name: /3D school/ });
     await stage.focus();
     await a.keyboard.down("ArrowUp");
     await new Promise((resolve) => setTimeout(resolve, 1400));
@@ -456,9 +456,9 @@ try {
     }
     await course.getByRole("button", { name: "Save progress" }).click();
     await course.getByText("Saved", { exact: true }).waitFor();
-    await a.getByRole("button", { name: "Return to library →" }).click();
+    await a.getByRole("button", { name: "Return to school →" }).click();
     await a.getByRole("button", { name: "Stand up", exact: true }).click();
-    await a.getByText("In the library · walking", { exact: true }).waitFor();
+    await a.getByText("In the school · walking", { exact: true }).waitFor();
     result.checks.push(
       "Keyboard walk, sit, Study Hub, identity notice, save, close/reopen retention and stand",
     );
@@ -489,16 +489,16 @@ try {
         .inputValue()) !== "campus-wire-answer-canary-17oct"
     )
       throw new Error("Transport loss discarded course input");
-    await a.getByRole("button", { name: "Return to library →" }).click();
+    await a.getByRole("button", { name: "Return to school →" }).click();
     await a.getByText("0 here", { exact: true }).waitFor();
     if (await a.getByRole("button", { name: /Your seat/ }).count())
       throw new Error("Disconnected UI retained a seat claim");
     await a.getByRole("button", { name: "Open Study Hub", exact: true }).click();
     if ((await course.getByRole("textbox", { name: "Practice answer" }).inputValue()) !== "campus-wire-answer-canary-17oct")
       throw new Error("Offline Hub reopen discarded course input");
-    await a.getByRole("button", { name: "Return to library →" }).click();
-    await a.getByRole("button", { name: "Enter library", exact: true }).click();
-    await a.getByText("In the library · walking", { exact: true }).waitFor();
+    await a.getByRole("button", { name: "Return to school →" }).click();
+    await a.getByRole("button", { name: "Enter school", exact: true }).click();
+    await a.getByText("In the school · walking", { exact: true }).waitFor();
     if (await player(me.id))
       throw new Error("Dropped presence retained its seat");
     result.checks.push(
@@ -536,9 +536,9 @@ try {
       await a.getByRole("button", { name: "Open Study Hub", exact: true }).click();
       if ((await course.getByRole("textbox", { name: "Practice answer" }).inputValue()) !== "campus-wire-answer-canary-17oct")
         throw new Error("Hung renewal discarded retained course input");
-      await a.getByRole("button", { name: "Return to library →" }).click();
-      await a.getByRole("button", { name: "Enter library", exact: true }).click();
-      await a.getByText("In the library · walking", { exact: true }).waitFor();
+      await a.getByRole("button", { name: "Return to school →" }).click();
+      await a.getByRole("button", { name: "Enter school", exact: true }).click();
+      await a.getByText("In the school · walking", { exact: true }).waitFor();
       result.checks.push("A hung renewal request times out after the old socket closes, clears stale presence, preserves offline course input and permits fresh admission");
       const latest = (await shared.db.query("SELECT campus_id FROM campus_presence ORDER BY opened_at DESC LIMIT 1")).rows[0].campus_id;
       const quiet = await fetch(`${origin}/fixture/stall-snapshots/${latest}`, { method: "POST", headers: { authorization: `Bearer ${serviceKey}` } });
@@ -548,36 +548,57 @@ try {
       await a.getByRole("button", { name: "Open Study Hub", exact: true }).click();
       if ((await course.getByRole("textbox", { name: "Practice answer" }).inputValue()) !== "campus-wire-answer-canary-17oct")
         throw new Error("Silent-channel failure discarded retained course input");
-      await a.getByRole("button", { name: "Return to library →" }).click();
-      await a.getByRole("button", { name: "Enter library", exact: true }).click();
-      await a.getByText("In the library · walking", { exact: true }).waitFor();
+      await a.getByRole("button", { name: "Return to school →" }).click();
+      await a.getByRole("button", { name: "Enter school", exact: true }).click();
+      await a.getByText("In the school · walking", { exact: true }).waitFor();
       result.checks.push("A silent application channel is detected locally even while native pongs remain healthy; presence clears and unsaved course input survives fresh admission");
       await a.getByRole("button", { name: "Leave", exact: true }).click();
       const stallEntry = async () => {
         const response = await fetch(`${origin}/fixture/stall-next-entry`, { method: "POST", headers: { authorization: `Bearer ${serviceKey}` } });
         if (response.status !== 204) throw new Error("Stalled-entry trigger failed");
-        await a.getByRole("button", { name: "Enter library", exact: true }).click();
+        await a.getByRole("button", { name: "Enter school", exact: true }).click();
         for (let attempt = 0; attempt < 40 && stalledEntries > 0; attempt++)
           await new Promise((resolve) => setTimeout(resolve, 25));
         if (stalledEntries > 0) throw new Error("Stalled entry request was not observed before cancellation/timeout");
       };
       await stallEntry();
       await a.getByRole("button", { name: "Leave", exact: true }).click();
-      await a.getByText("You left the library", { exact: true }).waitFor();
+      await a.getByText("You left the school", { exact: true }).waitFor();
       await stallEntry();
       await a.getByText("Unable to enter", { exact: true }).waitFor({ timeout: 12000 });
       await a.getByRole("button", { name: "Open Study Hub", exact: true }).click();
       if ((await course.getByRole("textbox", { name: "Practice answer" }).inputValue()) !== "campus-wire-answer-canary-17oct")
         throw new Error("Stalled initial entry discarded retained course input");
-      await a.getByRole("button", { name: "Return to library →" }).click();
-      await a.getByRole("button", { name: "Enter library", exact: true }).click();
-      await a.getByText("In the library · walking", { exact: true }).waitFor();
+      await a.getByRole("button", { name: "Return to school →" }).click();
+      await a.getByRole("button", { name: "Enter school", exact: true }).click();
+      await a.getByText("In the school · walking", { exact: true }).waitFor();
       result.checks.push("Initial admission is cancellable with Leave and bounded on timeout, retains offline course input and permits a new attempt");
     }
     await a.getByRole("button", { name: "Leave", exact: true }).click();
-    await a.getByRole("button", { name: "Enter library", exact: true }).click();
-    await a.getByText("In the library · walking", { exact: true }).waitFor();
+    await a.getByRole("button", { name: "Enter school", exact: true }).click();
+    await a.getByText("In the school · walking", { exact: true }).waitFor();
     result.checks.push("Leave and fresh admission restore standing presence");
+    await a.getByRole("button", { name: "Whole school", exact: true }).click();
+    if (await a.locator(".school-map-place").count() !== 15) throw new Error("Whole-school map is incomplete");
+    await a.waitForTimeout(1800);
+    await a.screenshot({ path: join(directory, "whole-school-desktop.png") });result.screenshots.push(join(directory, "whole-school-desktop.png"));
+    const retainedBeforeTravel = await course.locator("#answer").inputValue();
+    await a.locator(".school-map-place").filter({ hasText: "Computer lab" }).click();
+    await a.getByRole("button", { name: "Walk here →", exact: true }).click();
+    await a.getByText("Arrived at Computer lab.", { exact: true }).waitFor({ timeout: 35000 });
+    await stage.focus();await a.keyboard.down("ArrowUp");await new Promise(resolve=>setTimeout(resolve,1400));await a.keyboard.up("ArrowUp");
+    await a.getByRole("button", { name: "Lab computer 2 Sit →", exact: true }).click();
+    await a.waitForFunction(()=>!Array.from(document.querySelectorAll("button")).find(e=>e.textContent==="Open Study Hub")?.disabled);
+    await a.getByRole("button", { name: "Open Study Hub", exact: true }).click();
+    if (await course.getByRole("textbox", { name: "Practice answer" }).inputValue() !== retainedBeforeTravel) throw new Error("Travel discarded retained course work");
+    await a.getByRole("button", { name: "Return to school →", exact: true }).click();
+    await a.getByRole("button", { name: "Stand up", exact: true }).click();
+    await a.getByRole("button", { name: "Whole school", exact: true }).click();
+    await a.setViewportSize({ width: 390, height: 844 });
+    if (await a.evaluate(()=>document.documentElement.scrollWidth>innerWidth)) throw new Error("School map overflows phone width");
+    await a.waitForTimeout(1800);
+    await a.screenshot({path:join(directory,"whole-school-phone.png")});result.screenshots.push(join(directory,"whole-school-phone.png"));
+    result.checks.push("All 15 places are discoverable; ordinary input navigation walks through doors to the Computer lab, its study station reuses retained course work, and the school map fits phone width");
     await Promise.all(ticketReads);
     if (vercel) {
       const issuedHashes = new Set(issuedTickets.map((ticket) => createHash("sha256").update(ticket).digest("hex")));

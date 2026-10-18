@@ -245,3 +245,7 @@ presence and restore the reviewed transport configuration. Keep 071 additive;
 do not drop tables during an incident merely to roll back app code. Use the
 separate service release guide for the default Colyseus transport. Restore
 admission only after that specific deployment passes the agreed gates.
+
+## Whole-school follow-up — 18 October 2026
+
+Migration 072 prepares the expanded school bounds, solid wall/door physics and ten study stations while preserving existing admission/privacy controls. It is tested in disposable local PGlite only and is not applied to any hosted database. The new socket consumer requires its server-only `school-v1` revision and rejects older runtimes. Before any hosted whole-school QA, separately review/apply 072 under actual owner authorization; do not replay 067/070/071 or reuse cleaned fixtures. The beta remains closed and prior actual staging evidence belongs to the older library software revision.
