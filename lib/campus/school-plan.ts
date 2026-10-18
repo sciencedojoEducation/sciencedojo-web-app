@@ -60,9 +60,9 @@ export const floorHeight=(floor=0)=>SCHOOL_FLOORS[floor]?.y??0;
 export type Stance="stand"|"crouch"|"prone";
 export const movementSpeed=(stance:Stance="stand",run=false)=>stance==="prone"?.8:stance==="crouch"?1.45:run?5.5:3;
 export const postureEye=(stance:Stance="stand")=>stance==="prone"?.4:stance==="crouch"?1.05:1.67;
-export type Connector={id:"lift"|"escalator"|"slide";name:string;x:number;z:number;exitX:number;exitZ:number;duration:number};
+export type Connector={id:"lift"|"escalator"|"slide";name:string;x:number;z:number;exitX:number;exitZ:number;duration:number;shaftX?:number};
 export const SCHOOL_CONNECTORS:readonly Connector[]=[
- {id:"lift",name:"Glass elevator",x:-39,z:39,exitX:-39,exitZ:39,duration:3500},
+ {id:"lift",name:"Glass elevator",x:-17,z:39,exitX:-17,exitZ:39,duration:3500,shaftX:-13},
  {id:"escalator",name:"Moving escalator",x:39,z:13,exitX:39,exitZ:-13,duration:6500},
  {id:"slide",name:"Garden slide",x:-39,z:13,exitX:-39,exitZ:39,duration:4500}
 ];

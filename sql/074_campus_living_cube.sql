@@ -510,10 +510,13 @@ INSERT INTO public.campus_school_solids VALUES (0,-36.18,-15.82,-35.18,-34.82),
 (0,62.15,63.85,37.15,38.85),
 (0,37.5,40.5,-12.4,12.4),
 (0,-40.2,-37.8,14,38),
+(0,-14.7,-11.3,37.2,40.8),
 (1,37.5,40.5,-12.4,12.4),
 (1,-40.2,-37.8,14,38),
+(1,-14.7,-11.3,37.2,40.8),
 (2,37.5,40.5,-12.4,12.4),
-(2,-40.2,-37.8,14,38);
+(2,-40.2,-37.8,14,38),
+(2,-14.7,-11.3,37.2,40.8);
 CREATE INDEX campus_school_solids_floor ON public.campus_school_solids(floor);
 ALTER TABLE public.campus_school_solids ENABLE ROW LEVEL SECURITY;
 REVOKE ALL ON public.campus_school_solids FROM PUBLIC,anon,authenticated;
@@ -623,10 +626,11 @@ BEGIN
 
  -- Server-owned transport trajectories and bounded jumps use database time.
  WITH trips AS (SELECT campus_id,travel,greatest(0,least(1,(extract(epoch FROM at_time)*1000-(travel->>'at')::double precision)/(travel->>'duration')::double precision)) t FROM campus_presence WHERE travel IS NOT NULL),
- positions AS(SELECT *,t*t*(3-2*t) AS v FROM trips)
- UPDATE campus_presence p SET x=(q.travel->>'x')::double precision+((q.travel->>'endX')::double precision-(q.travel->>'x')::double precision)*v,
+ ride_time AS(SELECT *,CASE WHEN travel->>'via'='lift' THEN greatest(0,least(1,(t-.1)/.8)) ELSE t END AS u FROM trips),
+ positions AS(SELECT *,u*u*(3-2*u) AS v FROM ride_time)
+ UPDATE campus_presence p SET x=CASE WHEN q.travel->>'via'='lift' THEN CASE WHEN t<.1 THEN (q.travel->>'x')::double precision+((q.travel->>'shaftX')::double precision-(q.travel->>'x')::double precision)*t/.1 WHEN t>.9 THEN (q.travel->>'shaftX')::double precision+((q.travel->>'endX')::double precision-(q.travel->>'shaftX')::double precision)*(t-.9)/.1 ELSE (q.travel->>'shaftX')::double precision END ELSE (q.travel->>'x')::double precision+((q.travel->>'endX')::double precision-(q.travel->>'x')::double precision)*v END,
  z=(q.travel->>'z')::double precision+((q.travel->>'endZ')::double precision-(q.travel->>'z')::double precision)*v,
- elevation=(q.travel->>'from')::integer*12+((q.travel->>'to')::integer-(q.travel->>'from')::integer)*12*v+CASE WHEN q.travel->>'via'='slide' AND t<1 THEN sin(pi()*t)*.8 ELSE 0 END,
+ elevation=(q.travel->>'from')::integer*12+((q.travel->>'to')::integer-(q.travel->>'from')::integer)*12*v,
  floor=CASE WHEN t=1 THEN (q.travel->>'to')::integer ELSE p.floor END,
  stance=CASE WHEN q.travel->>'via'='slide' AND t<1 THEN 'crouch' ELSE 'stand' END,
  travel=CASE WHEN t=1 THEN NULL ELSE q.travel END,simulated_at=at_time
@@ -698,13 +702,13 @@ BEGIN
      END IF;
     ELSIF value->>'action'='travel' AND player.status='walking' AND player.seat IS NULL AND (SELECT count(*) FROM jsonb_object_keys(value))=3 AND value ? 'via' AND jsonb_typeof(value->'to')='number' AND value->>'to' IN ('0','1','2') AND abs(player.elevation-player.floor*12)<.05 THEN
      target_floor:=(value->>'to')::integer;
-     SELECT item INTO config FROM jsonb_array_elements('[{"id":"lift","name":"Glass elevator","x":-39,"z":39,"exitX":-39,"exitZ":39,"duration":3500},{"id":"escalator","name":"Moving escalator","x":39,"z":13,"exitX":39,"exitZ":-13,"duration":6500},{"id":"slide","name":"Garden slide","x":-39,"z":13,"exitX":-39,"exitZ":39,"duration":4500}]'::jsonb) v(item) WHERE item->>'id'=value->>'via';
+     SELECT item INTO config FROM jsonb_array_elements('[{"id":"lift","name":"Glass elevator","x":-17,"z":39,"exitX":-17,"exitZ":39,"duration":3500,"shaftX":-13},{"id":"escalator","name":"Moving escalator","x":39,"z":13,"exitX":39,"exitZ":-13,"duration":6500},{"id":"slide","name":"Garden slide","x":-39,"z":13,"exitX":-39,"exitZ":39,"duration":4500}]'::jsonb) v(item) WHERE item->>'id'=value->>'via';
      IF config IS NOT NULL AND target_floor<>player.floor THEN
       reverse_trip:=config->>'id'='escalator' AND target_floor=player.floor-1;
       start_x:=(config->>CASE WHEN reverse_trip THEN 'exitX' ELSE 'x' END)::double precision;start_z:=(config->>CASE WHEN reverse_trip THEN 'exitZ' ELSE 'z' END)::double precision;
       end_x:=(config->>CASE WHEN reverse_trip THEN 'x' ELSE 'exitX' END)::double precision;end_z:=(config->>CASE WHEN reverse_trip THEN 'z' ELSE 'exitZ' END)::double precision;
       IF sqrt((player.x-start_x)^2+(player.z-start_z)^2)<=2.2 AND (config->>'id'='lift' OR (config->>'id'='slide' AND player.floor>0 AND target_floor=0) OR (config->>'id'='escalator' AND abs(target_floor-player.floor)=1)) THEN
-       player.travel:=jsonb_build_object('via',config->>'id','from',player.floor,'to',target_floor,'x',start_x,'z',start_z,'endX',end_x,'endZ',end_z,'at',extract(epoch FROM at_time)*1000,'duration',(config->>'duration')::integer);
+       player.travel:=jsonb_build_object('via',config->>'id','from',player.floor,'to',target_floor,'x',start_x,'z',start_z,'endX',end_x,'endZ',end_z,'at',extract(epoch FROM at_time)*1000,'duration',(config->>'duration')::integer,'shaftX',coalesce((config->>'shaftX')::double precision,start_x));
        player.x:=start_x;player.z:=start_z;player.stance:=CASE WHEN config->>'id'='slide' THEN 'crouch' ELSE 'stand' END;player.jump_at:=NULL;player.input_x:=0;player.input_z:=0;player.simulated_at:=at_time;
       END IF;
      END IF;

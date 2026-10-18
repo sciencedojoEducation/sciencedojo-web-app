@@ -556,3 +556,11 @@ edge survives replacement of its queued movement sample before the 200ms SQL tic
 the newest axes/sequence and one bounded jump remain. No hosted migration is
 applied. Existing release flags, operating gates and the draft/unmerged PR remain
 unchanged. Verification and review evidence follow below.
+
+Review also split the upper slabs around real elevator/escalator openings, moved
+the lift landing away from the slide exit, and kept those openings inaccessible
+to ordinary walking. Lift travel boards horizontally at the external landing,
+rises inside the glass shaft and exits onto a solid destination landing. Its
+boarding canopies sit outside the shaft, and landing-height glass has doorway
+openings. The slide descends in the direction of its actual ramp. Geometry tests
+check the openings and safe landings in addition to authority/SQL parity.

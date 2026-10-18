@@ -1,5 +1,6 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
+import {boxes} from '../lib/campus/school-geometry.ts';
 import {CampusWorld} from '../lib/campus/world.ts';
 import {isInput,isSnapshot} from '../lib/campus/protocol.ts';
 import {SCHOOL_SOLIDS,SCHOOL_PLACES,STUDY_SEATS,SCHOOL_CONNECTORS,walkSchool,schoolWalkable} from '../lib/campus/school-layout.ts';
@@ -25,7 +26,7 @@ test('bounded running, crouching, prone and jump intent reject position, speed a
 
 test('every visible furniture footprint is solid and jump/run cannot tunnel; upper atrium edges are bounded',()=>{
  for(const s of SCHOOL_SOLIDS){assert.equal(schoolWalkable((s.minX+s.maxX)/2,(s.minZ+s.maxZ)/2,s.floor??0),false);}
- for(const floor of [1,2]){assert.equal(schoolWalkable(0,13,floor),false);assert.equal(schoolWalkable(-39,39,floor),true);}
+ for(const floor of [1,2]){assert.equal(schoolWalkable(0,13,floor),false);assert.equal(schoolWalkable(-17,39,floor),true);}
  for(const stance of ['stand','crouch','prone']){let p={x:-4.5,z:-1.6};for(let i=0;i<30;i++)p=walkSchool(p,0,-1,.35,stance,true);assert(p.z>-2.3,'desk chair remains solid');}
  assert.equal(schoolWalkable(0,0,3),false);
  const w=new CampusWorld();w.join(who(1));const p=w.players.get(who(1).id);Object.assign(p,{x:-4.5,z:-1.7});
@@ -80,9 +81,9 @@ test('shared SQL owns room switching, floor journeys, jump clock, seat isolation
   r=await f.runtime(a.connection,'step',[command({action:'glass',room:'physics'})]);assert.deepEqual(r.snapshot.frosted,['library']);
   r=await f.runtime(a.connection,'step',[{type:'input',data:{x:0,z:0,seq:1,jump:true}}]);
   await f.db.query("UPDATE campus_presence SET jump_at=clock_timestamp()-interval '425 milliseconds' WHERE campus_id=$1",[id]);r=await f.runtime(a.connection,'step');assert(r.snapshot.players.find(p=>p.id===id).elevation>1.18);
-  await f.db.query("UPDATE campus_presence SET x=-39,z=39,jump_at=NULL,elevation=0,input_x=0,input_z=0,rate_count=0 WHERE campus_id=$1",[id]);
+  await f.db.query("UPDATE campus_presence SET x=-17,z=39,jump_at=NULL,elevation=0,input_x=0,input_z=0,rate_count=0 WHERE campus_id=$1",[id]);
   r=await f.runtime(a.connection,'step',[command({action:'travel',via:'lift',to:2})]);assert.equal(r.snapshot.players.find(p=>p.id===id).travel,'lift');
-  r=await f.runtime(a.connection,'step',[{type:'input',data:{x:1,z:0,seq:2,run:true}}]);assert.equal(r.snapshot.players.find(p=>p.id===id).x,-39);
+  r=await f.runtime(a.connection,'step',[{type:'input',data:{x:1,z:0,seq:2,run:true}}]);assert(r.snapshot.players.find(p=>p.id===id).x>=-17&&r.snapshot.players.find(p=>p.id===id).x<=-13);
   await f.db.query("UPDATE campus_presence SET travel=jsonb_set(travel,'{at}',to_jsonb(extract(epoch FROM clock_timestamp())*1000-3600)) WHERE campus_id=$1",[id]);
   r=await f.runtime(a.connection,'step');let p=r.snapshot.players.find(p=>p.id===id);assert.equal(p.floor,2);assert.equal(p.elevation,24);assert.equal(p.travel,null);
   const seat=STUDY_SEATS.find(s=>s.floor===2);await f.db.query('UPDATE campus_presence SET x=$2,z=$3,rate_count=0 WHERE campus_id=$1',[id,seat.x,seat.z]);
@@ -109,4 +110,15 @@ test('downward escalators, seated glass and interrupted journeys retain floor au
   await f.db.query("UPDATE campus_presence SET lease_until=clock_timestamp()-interval '1 second' WHERE campus_id=$1",[id]);
   const fresh=await f.connect(1);assert.deepEqual(fresh.result.snapshot.frosted,[]);assert.equal(fresh.result.snapshot.players[0].floor,0);assert.equal(fresh.result.snapshot.players[0].travel,null);
  }finally{await f.db.close();}
+});
+
+
+test('upper slabs contain real lift/escalator openings and solid landings, with no walking into shafts',()=>{
+ const lift=SCHOOL_CONNECTORS.find(c=>c.id==='lift');
+ for(const floor of [1,2]){
+  const slabs=boxes.filter(b=>b.floor===floor&&b.size[1]===.5&&Math.abs(b.position[1]-(floor*12-.27))<1e-8);
+  const covered=(x,z)=>slabs.some(b=>Math.abs(b.position[0]-x)<b.size[0]/2&&Math.abs(b.position[2]-z)<b.size[2]/2);
+  assert.equal(covered(lift.shaftX,39),false);assert.equal(covered(39,0),false);
+  assert.equal(covered(lift.x,39),true);assert.equal(schoolWalkable(lift.shaftX,39,floor),false);assert(schoolWalkable(lift.x,39,floor));
+ }
 });

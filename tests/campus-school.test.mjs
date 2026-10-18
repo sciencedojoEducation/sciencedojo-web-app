@@ -6,7 +6,7 @@ import {runtimeFixture} from './helpers/campus-runtime-fixture.mjs';
 test('every school destination and study station is reachable through doorways without crossing walls',()=>{
  assert.equal(SCHOOL_PLACES.length,27);assert.equal(STUDY_SEATS.length,20);
  for(const destination of [...SCHOOL_PLACES.map(p=>({x:p.x,z:p.z+2,floor:p.floor})),...STUDY_SEATS]){
-  const floor=destination.floor??0;let position={x:floor?-39:-1,z:floor?39:4,floor};const route=schoolRoute(position,destination);assert(route.length,`No route to ${JSON.stringify(destination)}`);
+  const floor=destination.floor??0;let position={x:floor?-17:-1,z:floor?39:4,floor};const route=schoolRoute(position,destination);assert(route.length,`No route to ${JSON.stringify(destination)}`);
   for(const waypoint of route){
    let steps=0;
    while(Math.hypot(waypoint.x-position.x,waypoint.z-position.z)>.04){

@@ -6,12 +6,12 @@ import {SCHOOL_CONNECTORS} from "@/lib/campus/school-plan";
 type Part={x:number;y:number;z:number;w:number;h:number;d:number;colour:string;rx?:number};
 const parts:Part[]=[];
 const add=(x:number,y:number,z:number,w:number,h:number,d:number,colour:string,rx=0)=>parts.push({x,y,z,w,h,d,colour,rx});
-const lift=SCHOOL_CONNECTORS[0],escalator=SCHOOL_CONNECTORS[1],slide=SCHOOL_CONNECTORS[2];
+const lift={...SCHOOL_CONNECTORS[0],x:SCHOOL_CONNECTORS[0].shaftX!},escalator=SCHOOL_CONNECTORS[1],slide=SCHOOL_CONNECTORS[2];
 for(const side of [-1,1])for(const dz of [-1.6,1.6])add(lift.x+side*1.6,12,lift.z+dz,.16,25,.16,"#759b98");
 for(const y of [0,12,24]){
- add(lift.x,y+.03,lift.z,3.2,.12,3.2,"#668f82");
- add(lift.x,y+2.7,lift.z,3.5,.18,3.5,"#acccc0");
- add(lift.x,y+1.2,lift.z+1.5,.65,.5,.15,"#7cbaac");
+ add(lift.x-4,y+.03,lift.z,3.2,.12,3.2,"#668f82");
+ add(lift.x-4,y+2.7,lift.z,3.5,.18,3.5,"#acccc0");
+ add(lift.x-4,y+1.2,lift.z+1.5,.65,.5,.15,"#7cbaac");
 }
 const slope=Math.atan2(12,26),length=Math.hypot(12,26);
 for(const y of [0,12]){
@@ -19,14 +19,17 @@ for(const y of [0,12]){
  add(escalator.x,y+5.85,0,2.6,.3,length,"#a8b9aa",slope);
 }
 for(const top of [12,24]){
- const angle=-Math.atan2(top,26),len=Math.hypot(top,26);
- add(slide.x,top/2+.25,26,2,.15,len,"#d2b275",angle);
+ const angle=Math.atan2(top,26),len=Math.hypot(top,26);
+ add(slide.x,top/2-.04,26,2,.15,len,"#d2b275",angle);
  for(const side of [-1,1])add(slide.x+side*1.08,top/2+.6,26,.12,.8,len,"#91bba0",angle);
 }
 export default function CampusTransport({floor,animate=false,reducedMotion=false,activityRef}:{floor:number;animate?:boolean;reducedMotion?:boolean;activityRef:{current:boolean};hour?:number}){
+ const glass=useRef<InstancedMesh>(null);
  const fixed=useRef<InstancedMesh>(null),steps=useRef<InstancedMesh>(null);
  const geometry=useMemo(()=>new BoxGeometry(1,1,1),[]),material=useMemo(()=>new MeshLambertMaterial(),[]),transform=useMemo(()=>new Object3D(),[]);
- useLayoutEffect(()=>{const c=new Color();parts.forEach((p,i)=>{transform.position.set(p.x,p.y,p.z);transform.rotation.set(p.rx??0,0,0);transform.scale.set(p.w,p.h,p.d);transform.updateMatrix();fixed.current!.setMatrixAt(i,transform.matrix);fixed.current!.setColorAt(i,c.set(p.colour));});fixed.current!.instanceMatrix.needsUpdate=true;fixed.current!.instanceColor!.needsUpdate=true;fixed.current!.computeBoundingSphere();},[transform]);
+ useLayoutEffect(()=>{const c=new Color();parts.forEach((p,i)=>{transform.position.set(p.x,p.y,p.z);transform.rotation.set(p.rx??0,0,0);transform.scale.set(p.w,p.h,p.d);transform.updateMatrix();fixed.current!.setMatrixAt(i,transform.matrix);fixed.current!.setColorAt(i,c.set(p.colour));});fixed.current!.instanceMatrix.needsUpdate=true;fixed.current!.instanceColor!.needsUpdate=true;fixed.current!.computeBoundingSphere();
+  for(const [i,p] of [[lift.x+1.65,12,lift.z,.05,25,3.3],[lift.x,12,lift.z-1.65,3.3,25,.05],[lift.x,12,lift.z+1.65,3.3,25,.05],[lift.x-1.65,7.5,lift.z,.05,9,3.3],[lift.x-1.65,19.5,lift.z,.05,9,3.3]].entries()){transform.rotation.set(0,0,0);transform.position.set(p[0],p[1],p[2]);transform.scale.set(p[3],p[4],p[5]);transform.updateMatrix();glass.current!.setMatrixAt(i,transform.matrix);}glass.current!.instanceMatrix.needsUpdate=true;glass.current!.computeBoundingSphere();
+ },[transform]);
  useFrame(({clock,invalidate})=>{
   const phase=animate&&!reducedMotion?(clock.elapsedTime*.4)%1:0;
   for(let level=0;level<2;level++)for(let i=0;i<32;i++){
@@ -35,5 +38,5 @@ export default function CampusTransport({floor,animate=false,reducedMotion=false
   steps.current!.instanceMatrix.needsUpdate=true;steps.current!.computeBoundingSphere();
   if(animate&&!reducedMotion){activityRef.current=true;invalidate();}
  });
- return <group name="campus-floor-transport"><instancedMesh name="campus-lift-escalator-slide" ref={fixed} args={[geometry,material,parts.length]}/><instancedMesh name="campus-moving-steps" ref={steps} args={[geometry,undefined,64]}><meshLambertMaterial color="#94b4a1"/></instancedMesh></group>;
+ return <group name="campus-floor-transport"><instancedMesh name="campus-lift-shaft-glass" ref={glass} args={[geometry,undefined,5]}><meshBasicMaterial color="#b1e3d4" transparent opacity={.12} depthWrite={false}/></instancedMesh><instancedMesh name="campus-lift-escalator-slide" ref={fixed} args={[geometry,material,parts.length]}/><instancedMesh name="campus-moving-steps" ref={steps} args={[geometry,undefined,64]}><meshLambertMaterial color="#94b4a1"/></instancedMesh></group>;
 }

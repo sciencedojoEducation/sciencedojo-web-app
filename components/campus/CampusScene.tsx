@@ -34,7 +34,7 @@ function Avatar({ player, self, onPosition, activityRef,hidden,reducedMotion,bal
   }, -1);
   return <group name={self?"campus-self-avatar":"campus-avatar"} ref={group} visible={!hidden}>
     <AvatarBody colour={AVATAR_COLOURS[player.colour]} motion={motion} seated={!!player.seat} hidden={hidden} reducedMotion={reducedMotion} activityRef={activityRef} ballHeld={ballHeld} stance={player.stance}/>
-    {player.travel==="lift"&&<mesh name="campus-lift-platform" position={[0,-.05,0]}><boxGeometry args={[2.8,.12,2.8]}/><meshLambertMaterial color="#8bac9f"/></mesh>}
+    {player.travel==="lift"&&<><mesh name="campus-lift-platform" position={[0,-.05,0]}><boxGeometry args={[2.8,.12,2.8]}/><meshLambertMaterial color="#8bac9f"/></mesh><mesh name="campus-lift-capsule" position={[0,1.2,0]}><boxGeometry args={[2.8,2.4,2.8]}/><meshBasicMaterial color="#b7e3d5" transparent opacity={.12} depthWrite={false}/></mesh></>}
     {!player.seat && <mesh position={[0, .015, 0]} rotation={[-Math.PI / 2, 0, 0]}>
       <circleGeometry args={[.4, 16]} /><meshBasicMaterial color="#25483d" transparent opacity={.15} depthWrite={false} />
     </mesh>}

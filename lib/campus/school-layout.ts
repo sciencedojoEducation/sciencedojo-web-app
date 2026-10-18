@@ -17,7 +17,7 @@ export function schoolPlaceAt(point: Point) {
   return SCHOOL_PLACES.find(p => (p.floor??0)===(point.floor??0) && Math.abs(point.x - p.x) < p.width / 2 && Math.abs(point.z - p.z) < p.depth / 2);
 }
 export const SCHOOL_SOLIDS=[...SCHOOL_WALLS,...furniture,
-  ...[0,1,2].flatMap(floor=>[{floor,minX:37.5,maxX:40.5,minZ:-12.4,maxZ:12.4},{floor,minX:-40.2,maxX:-37.8,minZ:14,maxZ:38}])
+  ...[0,1,2].flatMap(floor=>[{floor,minX:37.5,maxX:40.5,minZ:-12.4,maxZ:12.4},{floor,minX:-40.2,maxX:-37.8,minZ:14,maxZ:38},{floor,minX:-14.7,maxX:-11.3,minZ:37.2,maxZ:40.8}])
 ];
 export function schoolWalkable(x: number, z: number,floor=0,radius=.34) {
   const b = SCHOOL_BOUNDS,edge=Math.max(.5,radius+.07);

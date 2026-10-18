@@ -179,8 +179,8 @@ for(const tree of trees)furniture.push({minX:tree.x-.5*tree.scale,maxX:tree.x+.5
 // Real upper slabs; safe bounded edges and a skylit central atrium.
 for(const floor of [1,2]){
  base=floorHeight(floor);section=0;solid=false;
- box([0,-.27,-18],[128,.5,42],"#dce3d7");box([0,-.27,32],[128,.5,20],"#dce3d7");
- for(const side of [-1,1])box([side*45,-.27,12.5],[38,.5,19],"#dce3d7");
+ // Split the slabs around real lift and escalator shafts.
+ for(const [x,z,w,d] of [[-13.25,-18,101.5,42],[52.25,-18,23.5,42],[39,-25.7,3,26.6],[-45,12.5,38,19],[31.75,12.5,11.5,19],[52.25,12.5,23.5,19],[39,17.2,3,9.6],[-39.35,32,49.3,20],[26.35,32,75.3,20],[-13,29.6,3.4,15.2],[-13,41.4,3.4,1.2]])box([x,-.27,z],[w,.5,d],"#dce3d7");
  // Railings protect the atrium and outer floor edges.
  for(const x of [-64,64])box([x,.65,1.5],[.14,1.3,81],"#8ca79c");
  for(const z of [-39,42])box([0,.65,z],[128,1.3,.14],"#8ca79c");
