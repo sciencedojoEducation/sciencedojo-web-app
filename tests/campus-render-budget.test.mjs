@@ -1,6 +1,13 @@
 import assert from "node:assert/strict";
 import {test} from "node:test";
-import {createRenderBudget,reduceRenderQuality} from "../lib/campus/render-budget.ts";
+import {createRenderBudget,initialRenderScale,reduceRenderQuality} from "../lib/campus/render-budget.ts";
+
+test("software rasterizers start with a light canvas; hardware and unknown renderers retain quality",()=>{
+  for(const name of ["ANGLE (Google, SwiftShader Device)","llvmpipe (LLVM)","softpipe","Software Rasterizer","Microsoft Basic Render Driver"])
+    assert.equal(initialRenderScale(name),.45);
+  for(const name of ["","WebKit WebGL","ANGLE (Apple, Metal)","Intel UHD Graphics"])
+    assert.equal(initialRenderScale(name),1);
+});
 
 test("idle and five-Hz snapshot redraws preserve quality on a demand canvas",()=>{
   const sample=createRenderBudget();

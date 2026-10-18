@@ -1,6 +1,11 @@
 export const createRenderBudget = () => ({ average: 1 / 60, slowSeconds: 0, requested: false });
 export type RenderBudgetSample = ReturnType<typeof createRenderBudget>;
 
+/** Local capability choice only; never retain or transmit the renderer string. */
+export function initialRenderScale(renderer: string): 1 | .45 {
+  return /swiftshader|llvmpipe|softpipe|software (?:renderer|rasterizer)|microsoft basic render/i.test(renderer) ? .45 : 1;
+}
+
 /** Demand-rendered snapshot/idle gaps are not evidence of a slow GPU. */
 export function reduceRenderQuality(sample: RenderBudgetSample, delta: number, continuous: boolean) {
   if (!continuous) {

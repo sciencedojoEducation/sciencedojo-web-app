@@ -5,7 +5,7 @@ import {PerspectiveCamera,Vector3,type Group} from "three";
 import {AVATAR_COLOURS,SEATS,type Player,type Snapshot} from "@/lib/campus/protocol";
 import {SCHOOL_PLACES} from "@/lib/campus/school-layout";
 import {advancePresentation,createPresentation,receivePresentation} from "@/lib/campus/presentation";
-import {createRenderBudget,reduceRenderQuality} from "@/lib/campus/render-budget";
+import {createRenderBudget,initialRenderScale,reduceRenderQuality} from "@/lib/campus/render-budget";
 import {DEFAULT_LOOK,boundedLook,type CameraLook,type SchoolView} from "@/lib/campus/cube-experience";
 import SchoolModel from "./SchoolModel";
 import CubeArchitecture from "./CubeArchitecture";
@@ -106,7 +106,11 @@ export default function CampusScene({snapshot,active,onUnavailable,view="follow"
    onPointerCancel={()=>{dragRef.current=null;}} onLostPointerCapture={()=>{dragRef.current=null;}}>
   <Canvas shadows dpr={renderScale} frameloop={active?"demand":"never"} camera={{fov:view==="first-person"?70:43,position:view==='exterior'?[215,92,245]:view==='overview'?[87,124,133]:[13,16,20],far:2200,near:.08}}
     fallback={<p>3D is unavailable. You can open your courses directly.</p>}
-    onCreated={({gl})=>gl.domElement.addEventListener("webglcontextlost",onUnavailable)}>
+    onCreated={({gl})=>{
+     const context=gl.getContext(),info=context.getExtension("WEBGL_debug_renderer_info");
+     if(info)setRenderScale(initialRenderScale(String(context.getParameter(info.UNMASKED_RENDERER_WEBGL))));
+     gl.domElement.addEventListener("webglcontextlost",onUnavailable);
+    }}>
    <CubeEnvironment hour={hour} cutaway={view==="overview"}/><SchoolModel occupied={occupied} detailedShadows={renderScale===1}/><CubeArchitecture cutaway={view==="overview"}/>
    {snapshot.players.map(p=><Avatar key={p.id} player={p} self={p.id===snapshot.self} onPosition={follow} activityRef={activityRef} hidden={view==="first-person"&&p.id===snapshot.self}/>)}
    <Camera focus={focus} present={snapshot.players.some(p=>p.id===snapshot.self)} reducedMotion={typeof window!=="undefined"&&window.matchMedia("(prefers-reduced-motion: reduce)").matches} view={view} placeId={placeId} activityRef={activityRef} angles={angles}/>

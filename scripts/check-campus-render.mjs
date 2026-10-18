@@ -38,7 +38,15 @@ await build({
           sun:scene.getObjectByName('cube-sun')?.visible,envelope:scene.getObjectByName('cube-envelope')?.visible};
         window.sceneReady=true;
       });return null;}
-      export function Canvas(props){return <Base {...props}>{props.children}<Probe/></Base>}
+      export function Canvas(props){return <Base {...props} onCreated={state=>{
+        // The dedicated stress run exercises the dynamic fallback even when
+        // its actual software GPU would normally select the light profile.
+        if(${slowDevice}){
+          const context=state.gl.getContext(),info=context.getExtension('WEBGL_debug_renderer_info');
+          if(info){const getParameter=context.getParameter.bind(context);context.getParameter=p=>p===info.UNMASKED_RENDERER_WEBGL?'Synthetic hardware profile':getParameter(p);}
+        }
+        props.onCreated?.(state);
+      }}>{props.children}<Probe/></Base>}
     ` }));
   } }],
 });
@@ -92,7 +100,8 @@ try {
     renderedWalkingFrames: walking.length, changingPositionFrames: changed.length,
     distinctPositions: new Set(walking.map(f=>f.x.toFixed(4))).size,
     p95FrameGapMs: Math.round(gaps[Math.ceil(gaps.length*.95)-1]),
-    minimumPixelRatio: Math.min(...frames.map(f=>f.dpr)),
+    initialPixelRatio:frames[0].dpr,minimumPixelRatio: Math.min(...frames.map(f=>f.dpr)),
+    capabilityOverride:slowDevice?"Hardware classification only; actual software GPU and CPU throttling remain":null,
     qualityTransitions: frames.filter((f,i)=>!i||f.dpr!==frames[i-1].dpr||f.shadows!==frames[i-1].shadows)
       .map(f=>({afterStartMs:Math.round(f.t-walk.started),pixelRatio:f.dpr,shadows:f.shadows})),
     decorativeShadowsDisabled: frames.some(f=>!f.shadows),
@@ -104,7 +113,10 @@ try {
   assert.deepEqual(errors, []);
   assert.equal(result.authoritativeTargetCount,20,"Probe must observe all twenty authoritative targets");
   assert(result.shadowPipelineStable,"Adaptive quality must retain the cached shadow shader pipeline");
-  if(slowDevice)assert(result.minimumPixelRatio<1,"High-pixel-load, CPU-throttled probe must exercise adaptive rendering");
+  if(slowDevice){
+    assert.equal(result.initialPixelRatio,1,"Stress probe must start at full quality to exercise dynamic adaptation");
+    assert(result.minimumPixelRatio<1,"High-pixel-load, CPU-throttled probe must exercise adaptive rendering");
+  }
   if(result.minimumPixelRatio<1)assert(result.decorativeShadowsDisabled,"Slow-device fallback must disable decorative shadows");
   if(process.argv.includes("--reduced-motion")){
     assert(frames.every(f=>Math.hypot(f.cameraX-frames[0].cameraX,f.cameraY-frames[0].cameraY,f.cameraZ-frames[0].cameraZ)<.0001),"Reduced motion must keep the selected-place camera anchored");
