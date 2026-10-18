@@ -12,13 +12,14 @@ const forest:{x:number;z:number;size:number;base?:number}[]=Array.from({length:1
 }).concat([-60,60].flatMap(x=>[-58,57].map(z=>({x,z,size:11})))).concat(
  [18,42,66,90,114,138].flatMap(base=>[-64,64].flatMap(x=>[-50,0,50].map(z=>({x,z,size:4,base})))));
 
-function Landscape(){
+function Landscape({cutaway}:{cutaway:boolean}){
  const trunks=useRef<InstancedMesh>(null),leaves=useRef<InstancedMesh>(null),hills=useRef<InstancedMesh>(null);
  useLayoutEffect(()=>{
   const matrix=new Object3D(),colour=new Color();
   forest.forEach((t,i)=>{
-   matrix.position.set(t.x,t.size*.3+(t.base??-2),t.z);matrix.scale.set(t.size*.075,t.size*.6,t.size*.075);matrix.updateMatrix();trunks.current!.setMatrixAt(i,matrix.matrix);
-   matrix.position.y=t.size*.77+(t.base??-2);matrix.scale.set(t.size*.38,t.size*.56,t.size*.38);matrix.updateMatrix();leaves.current!.setMatrixAt(i,matrix.matrix);
+   const size=cutaway&&t.base!==undefined?0:t.size;
+   matrix.position.set(t.x,t.size*.3+(t.base??-2),t.z);matrix.scale.set(size*.075,size*.6,size*.075);matrix.updateMatrix();trunks.current!.setMatrixAt(i,matrix.matrix);
+   matrix.position.y=t.size*.77+(t.base??-2);matrix.scale.set(size*.38,size*.56,size*.38);matrix.updateMatrix();leaves.current!.setMatrixAt(i,matrix.matrix);
    leaves.current!.setColorAt(i,colour.set(["#477e6a","#5c9577","#78a38a","#37675c"][i%4]));
   });
   for(let i=0;i<9;i++){
@@ -27,7 +28,7 @@ function Landscape(){
   }
   for(const mesh of [trunks.current!,leaves.current!,hills.current!]){mesh.instanceMatrix.needsUpdate=true;mesh.computeBoundingSphere();}
   leaves.current!.instanceColor!.needsUpdate=true;
- },[]);
+ },[cutaway]);
  return <>
   <mesh rotation={[-Math.PI/2,0,0]} position={[0,-2,0]}><planeGeometry args={[1800,1800]}/><meshLambertMaterial color="#5a8272"/></mesh>
   <mesh rotation={[-Math.PI/2,0,0]} position={[0,-1.7,0]}><ringGeometry args={[88,119,80]}/><meshPhongMaterial color="#5c9ba8" shininess={70}/></mesh>
@@ -37,7 +38,7 @@ function Landscape(){
  </>;
 }
 
-export default function CubeEnvironment({hour}:{hour:number}){
+export default function CubeEnvironment({hour,cutaway=false}:{hour:number;cutaway?:boolean}){
  const sky=useMemo(()=>schoolSky(hour),[hour]),light=useRef<DirectionalLight>(null);
  const uniforms=useMemo(()=>({topColour:{value:new Color(sky.zenith)},horizonColour:{value:new Color(sky.horizon)}}),[sky]);
  const stars=useMemo(()=>{
@@ -60,6 +61,6 @@ export default function CubeEnvironment({hour}:{hour:number}){
   <hemisphereLight args={[sky.daylight>.3?"#d8f4ff":"#a3bbef","#485b4b",.55]}/>
   <directionalLight ref={light} position={[source.x*110,Math.max(25,source.y*110),source.z*110]} intensity={sky.daylight>.1?.4+sky.daylight*2:.5} color={sky.daylight>.1?sky.sunColour:"#b6ceff"} castShadow shadow-mapSize={[1024,1024]} shadow-normalBias={.04}
     shadow-camera-left={-95} shadow-camera-right={95} shadow-camera-top={95} shadow-camera-bottom={-95} shadow-camera-far={300} shadow-autoUpdate={false} shadow-needsUpdate={true}/>
-  <Landscape/>
+  <Landscape cutaway={cutaway}/>
  </>;
 }

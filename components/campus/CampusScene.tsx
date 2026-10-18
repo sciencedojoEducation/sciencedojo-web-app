@@ -50,7 +50,7 @@ function Camera({focus,present,reducedMotion,view,placeId,activityRef,angles}:{f
   if(view==="first-person"){
    target.set(present?focus.current.x:0,present?focus.current.eye:1.67,present?focus.current.z:4);
    aim.copy(target).add(look.set(Math.sin(angles.yaw)*Math.cos(angles.pitch),Math.sin(angles.pitch),-Math.cos(angles.yaw)*Math.cos(angles.pitch)));
-   initializedRef.current=true;camera.position.copy(target);camera.lookAt(aim);return;
+   initializedRef.current=true;camera.position.copy(target);camera.lookAt(aim);camera.updateMatrixWorld();return;
   }
   if(view==="exterior"){target.set(215,92,245);aim.set(0,61,1);}
   else if(view==="overview"){target.set(87,124,133);aim.set(0,0,0);}
@@ -64,6 +64,7 @@ function Camera({focus,present,reducedMotion,view,placeId,activityRef,angles}:{f
   if(!initializedRef.current||reducedMotion||settled){initializedRef.current=true;camera.position.copy(target);look.copy(aim);}
   else{const step=1-Math.exp(-delta*4);camera.position.lerp(target,step);look.lerp(aim,step);activityRef.current=true;invalidate();}
   camera.lookAt(look);
+  camera.updateMatrixWorld();
  });return null;
 }
 function Labels({elements,view}:{elements:Map<string,HTMLSpanElement>;view:SchoolView}){
@@ -72,7 +73,7 @@ function Labels({elements,view}:{elements:Map<string,HTMLSpanElement>;view:Schoo
   for(const place of SCHOOL_PLACES){const el=elements.get(place.id);if(!el)continue;
    point.set(place.x,4.8,place.z-6);const near=point.distanceTo(camera.position)<47;
    point.project(camera);const x=(point.x+1)*size.width/2,y=(1-point.y)*size.height/2;
-   const visible=view!=="exterior"&&point.z>-1&&point.z<1&&x>0&&x<size.width&&y>0&&y<size.height&&(view==='overview'||near);
+   const visible=view!=="exterior"&&view!=="first-person"&&point.z>-1&&point.z<1&&x>0&&x<size.width&&y>0&&y<size.height&&(view==='overview'||near);
    const display=visible?'block':'none';if(el.style.display!==display)el.style.display=display;
    if(visible){const transform=`translate(${Math.round(x)}px,${Math.round(y)}px) translate(-50%,-50%)`;if(el.style.transform!==transform)el.style.transform=transform;}
   }
@@ -106,7 +107,7 @@ export default function CampusScene({snapshot,active,onUnavailable,view="follow"
   <Canvas shadows={renderScale===1} dpr={renderScale} frameloop={active?"demand":"never"} camera={{fov:view==="first-person"?70:43,position:view==='exterior'?[215,92,245]:view==='overview'?[87,124,133]:[13,16,20],far:2200,near:.08}}
     fallback={<p>3D is unavailable. You can open your courses directly.</p>}
     onCreated={({gl})=>gl.domElement.addEventListener("webglcontextlost",onUnavailable)}>
-   <CubeEnvironment hour={hour}/><SchoolModel occupied={occupied}/><CubeArchitecture cutaway={view==="overview"}/>
+   <CubeEnvironment hour={hour} cutaway={view==="overview"}/><SchoolModel occupied={occupied}/><CubeArchitecture cutaway={view==="overview"}/>
    {snapshot.players.map(p=><Avatar key={p.id} player={p} self={p.id===snapshot.self} onPosition={follow} activityRef={activityRef} hidden={view==="first-person"&&p.id===snapshot.self}/>)}
    <Camera focus={focus} present={snapshot.players.some(p=>p.id===snapshot.self)} reducedMotion={typeof window!=="undefined"&&window.matchMedia("(prefers-reduced-motion: reduce)").matches} view={view} placeId={placeId} activityRef={activityRef} angles={angles}/>
    <Labels elements={elements} view={view}/>
