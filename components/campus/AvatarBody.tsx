@@ -1,4 +1,5 @@
 "use client";
+import type {Stance} from "@/lib/campus/school-plan";
 import {useCallback,useLayoutEffect,useMemo,useRef} from "react";
 import {useFrame,useThree} from "@react-three/fiber";
 import {Color,DynamicDrawUsage,Object3D,Sphere,Vector3,type InstancedMesh,type Mesh} from "three";
@@ -8,8 +9,8 @@ type ActivityRef={current:boolean};
 const SKIN="#e9c5a0",HAIR="#3e3029",TROUSERS="#355450",SHOES="#203932";
 
 /** A built-in toy-like humanoid. All 23 body pieces use three draw calls. */
-export default function AvatarBody({colour,motion,seated,hidden,reducedMotion,activityRef,ballHeld=false}:{
- colour:string;motion:PoseRef;seated:boolean;hidden:boolean;reducedMotion:boolean;activityRef:ActivityRef;ballHeld?:boolean;
+export default function AvatarBody({colour,motion,seated,hidden,reducedMotion,activityRef,ballHeld=false,stance="stand"}:{
+ colour:string;motion:PoseRef;seated:boolean;hidden:boolean;reducedMotion:boolean;activityRef:ActivityRef;ballHeld?:boolean;stance?:Stance;
 }){
  const boxes=useRef<InstancedMesh>(null),round=useRef<InstancedMesh>(null),hair=useRef<Mesh>(null);
  const transform=useMemo(()=>new Object3D(),[]),invalidate=useThree(s=>s.invalidate);
@@ -17,7 +18,8 @@ export default function AvatarBody({colour,motion,seated,hidden,reducedMotion,ac
  const pose=useCallback((phase:number,amount:number)=>{
   const box=boxes.current,spheres=round.current;if(!box||!spheres||!hair.current)return;
   const bob=seated?0:Math.abs(Math.sin(phase))*.015*amount;
-  const hip=seated?.59:.76,offset=hip-.76+bob,head=1.48+offset;
+  const lowered=stance==="crouch";
+  const hip=seated?.59:lowered?.4:.76,offset=hip-.76+bob,head=1.48+offset;
   const part=(mesh:InstancedMesh,index:number,x:number,y:number,z:number,w:number,h:number,d:number,angle=0)=>{
    transform.position.set(x,y,z);transform.rotation.set(angle,0,0);transform.scale.set(w,h,d);transform.updateMatrix();mesh.setMatrixAt(index,transform.matrix);
   };
@@ -34,7 +36,7 @@ export default function AvatarBody({colour,motion,seated,hidden,reducedMotion,ac
    part(box,index,x,shoulder-Math.cos(arm)*.11,-Math.sin(arm)*.11,.15,.22,.17,arm);
    part(box,index+1,x,elbowY-Math.cos(forearm)*.115,elbowZ-Math.sin(forearm)*.115,.11,.23,.12,forearm);
    part(spheres,side===-1?1:2,x,wristY,wristZ,.075,.08,.07);
-   const thigh=seated?-1.08:swing,shin=seated?0:thigh-Math.max(0,Math.sin(phase+(side===1?Math.PI:0)))*.42*amount;
+   const thigh=seated?-1.08:lowered?-.85:swing,shin=seated?0:lowered?.85:thigh-Math.max(0,Math.sin(phase+(side===1?Math.PI:0)))*.42*amount;
    const kneeY=hip+bob-Math.cos(thigh)*.32,kneeZ=-Math.sin(thigh)*.32;
    const ankleY=kneeY-Math.cos(shin)*.32,ankleZ=kneeZ-Math.sin(shin)*.32,leg=side===-1?7:10;
    part(box,leg,side*.115,hip+bob-Math.cos(thigh)*.16,-Math.sin(thigh)*.16,.145,.32,.18,thigh);
@@ -48,7 +50,7 @@ export default function AvatarBody({colour,motion,seated,hidden,reducedMotion,ac
   for(const side of [-1,1])part(box,side===-1?17:18,side*.075,head+.025,.197,.035,.045,.025);
   hair.current.position.y=head;
   box.instanceMatrix.needsUpdate=true;spheres.instanceMatrix.needsUpdate=true;
- },[seated,ballHeld,transform]);
+ },[seated,ballHeld,stance,transform]);
  useLayoutEffect(()=>{
   const box=boxes.current!,spheres=round.current!,tint=new Color();
   const colours=[colour,TROUSERS,SKIN,colour,SKIN,colour,SKIN,TROUSERS,TROUSERS,SHOES,TROUSERS,TROUSERS,SHOES,HAIR,HAIR,HAIR,HAIR,"#253734","#253734"];
@@ -75,7 +77,7 @@ export default function AvatarBody({colour,motion,seated,hidden,reducedMotion,ac
   if(travel>.00001||previous!==state.amount)pose(state.phase,state.amount);
   if(!walking&&state.amount>0){activityRef.current=true;invalidate();}
  },-.5);
- return <group name="avatar-body">
+ return <group name="avatar-body" rotation={stance==="prone"?[Math.PI/2,0,0]:[0,0,0]} position={stance==="prone"?[0,.25,-.7]:[0,0,0]}>
   <instancedMesh name="avatar-parts" ref={boxes} args={[undefined,undefined,19]}>
    <boxGeometry args={[1,1,1]}/><meshLambertMaterial/>
   </instancedMesh>

@@ -257,3 +257,20 @@ The owner requested playable basketball. Migration 073 adds service-only RLS eph
 The private service envelope includes database time, version and admitted geometry only. It is stripped before transport; per-viewer public projection hides blocked held-ball ownership/location. A normal duration handover keeps possession under the same campus identifier, while obsolete/disconnected owners cannot commit. Empty-room cleanup resets court totals; existing lease/eligibility checks release abandoned possession. Abrupt final-process loss has the same deferred physical-cleanup caveat as presence above.
 
 The current shared socket requires `school-v2-basketball`, superseding the earlier 072-only `school-v1` checkpoint. Migration 073 is tested in disposable local PGlite only and has not been applied to staging or production. Hosted use requires separate review/approval of 072/073 and fresh bounded integration evidence; do not replay earlier migrations or restore cleaned credentials/fixtures. Existing release/operating gates remain pending.
+
+## Living Cube follow-up — 19 October 2026
+
+Prepared migration [074](../sql/074_campus_living_cube.sql) extends both the
+protected school runtime and shared court eligibility for three usable floors,
+server-owned posture/jumps/travel and shared room screening. Its fixed solid
+footprints must exactly match the shared procedural geometry. The socket retains
+one short jump edge when coalescing the latest movement sample; all original
+message/queue/rate/admission/lease limits remain. Public snapshots contain bounded
+floor, elevation, stance, travel label and fixed screened-room IDs; clocks, paths,
+connection ownership and learning data remain private.
+
+The required revision is now `school-v3-living-cube`. This is local preparation:
+072, 073 and 074 remain unapplied to hosted databases. Coordinate reviewed schema
+and application/service versions before any separately approved deployment. Room
+screening is visual focus only, with open doors and shared presence. G1–G9 remain
+pending. See the [runbook](virtual-sciencedojo-implementation.md) for evidence.

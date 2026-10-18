@@ -6,7 +6,7 @@ export const HOOPS = [
   { id: "south", name: "South hoop", x: 52, z: 6.6, boardZ: 7 },
 ] as const;
 export type HoopId = typeof HOOPS[number]["id"];
-export type CourtPlayer = { id: string; x: number; z: number; rotation: number; status: string };
+export type CourtPlayer = { id: string; x: number; z: number; rotation: number; status: string;floor?:number;travel?:string|null };
 export type BasketballCommand = { action: "take" } | { action: "drop" } |
   { action: "shoot"; dx: number; dy: number; dz: number; power: number };
 export type BasketballSnapshot = {
@@ -55,8 +55,8 @@ export function isBasketballState(value: unknown): value is BasketballState {
     finite(actionAt, -1000, Number.MAX_SAFE_INTEGER) && typeof shot === "boolean" &&
     finite(shotX, COURT.minX, COURT.maxX) && finite(shotZ, COURT.minZ, COURT.maxZ);
 }
-export function onCourt(p: { x: number; z: number }) {
-  return p.x > COURT.minX && p.x < COURT.maxX && p.z > COURT.minZ && p.z < COURT.maxZ;
+export function onCourt(p: { x: number; z: number; floor?:number;travel?:string|null }) {
+  return (p.floor??0)===0&&!p.travel&&p.x > COURT.minX && p.x < COURT.maxX && p.z > COURT.minZ && p.z < COURT.maxZ;
 }
 const eligible = (p?: CourtPlayer) => p && p.status === "walking" && onCourt(p);
 export function canTakeBasketball(b: BasketballSnapshot, p: CourtPlayer) {

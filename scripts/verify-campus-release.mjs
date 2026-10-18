@@ -5,8 +5,11 @@ import { fileURLToPath } from "node:url";
 
 export const releaseFiles = [
   "lib/campus/basketball.ts",
+  "lib/campus/locomotion.ts",
   "lib/campus/protocol.ts",
+  "lib/campus/school-geometry.ts",
   "lib/campus/school-layout.ts",
+  "lib/campus/school-plan.ts",
   "lib/campus/world.ts",
   "services/campus-server/.env.example",
   "services/campus-server/DEPLOYMENT.md",

@@ -511,3 +511,48 @@ Held movement keys are tracked independently, including arrow-key aliases. Oppos
 Local verification passed **503 regressions**, scoped lint/type and production build. Both full browser transports observed actual authoritative Orbit movement in all four directions after camera rotation, normalized diagonals, opposite-key cancellation, release/alias restoration and stopped input on control focus, alongside all existing course/safety/fullscreen/mouse-look/basketball/power checks and wire canaries. Actual-scene normal/reduced-motion probes additionally verified immediate per-frame heading agreement while dragging and receiving a moving avatar pose, visible third-person self and existing first-person/release behavior. They recorded 167/152 distinct walking positions, no stationary pause, 24 draw calls and exact settlement under the unchanged graphics thresholds. Heading error stayed below 1e-6 radians in the fixtures. These are local synthetic Chromium/SwiftShader observations, not hardware FPS, subjective owner acceptance or current-head hosted CI.
 
 The synthetic preview was refreshed in connected Orbit/Daylight at the library, zoomed to the existing minimum distance with keyboard focus on the school. Prepared evidence is retained with the private review artifacts. No hosted schema, paid service or learner-release setting changed; the 1v1/2v2 match plan remains proposed separately.
+
+## Living Cube — implementation, 19 October 2026
+
+The owner authorized the [private software plan](virtual-sciencedojo-living-cube.md).
+Three usable levels now contain 27 places and 20 existing-course workstations.
+The two new floors add furnished classrooms, physics/botanical rooms, reading and
+quiet-study lounges with rounded beanbags, planted commons, a conservatory and a
+fitness studio. Their slabs, bounded atrium/outer edges, room walls and furniture
+are represented in the school geometry. Cutaway/map views select a level; follow
+and eye-level views track actual confirmed elevation. Upper computers reuse the
+retained Study Hub and existing authorization. No live lesson broadcasting,
+teacher dashboard or new entitlement is introduced.
+
+Shift runs, Space jumps, C toggles crouching and Z toggles lying prone, with
+visible Controls-panel alternatives. Authority owns speeds, jump timing and
+posture. Confirmed vertical positions use the existing presentation buffer;
+rendered crouch/prone bodies and eye heights change accordingly. Solid horizontal
+footprints are shared with procedural furniture, walls and transport structures.
+They remain solid during jumps; this slice does not add jumping onto furniture.
+Prone clearance uses a larger conservative footprint, including its transition.
+Wayfinding stands the character before following an ordinary bounded input route.
+
+Every enclosed room has a physical focus-glass switch and an accessible room
+button. E works near the switch; room buttons also work while seated. The server
+requires the current room and floor, and peers share the resulting opaque panels.
+This is visual screening: doorways remain open and presence remains shared, with
+no confidential room, locked admission, chat or voice claim.
+
+The glass lift, moving escalator and garden slide use E/button boarding and
+server-owned journeys, with visible map routes to their connections. The lift
+reaches any of the three floors, escalators connect adjacent floors in either
+direction, and slides return from an upper floor to ground. Horizontal input,
+seating and another boarding request cannot take over a journey. Floor/seat and
+basketball checks are floor-aware. Disconnect/expiry removes travel with presence;
+fresh admission returns safely to ground, while legitimate duration handover
+retains authority. Journey paths/times stay private; peers receive only bounded
+current geometry and fixed travel labels.
+
+Migration 074 adds service-only focus state and collision geometry, extends the
+existing protected presence row, and updates shared SQL authority and basketball
+eligibility. The matching revision fails closed against older SQL. A short jump
+edge survives replacement of its queued movement sample before the 200ms SQL tick;
+the newest axes/sequence and one bounded jump remain. No hosted migration is
+applied. Existing release flags, operating gates and the draft/unmerged PR remain
+unchanged. Verification and review evidence follow below.

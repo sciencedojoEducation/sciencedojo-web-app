@@ -147,3 +147,10 @@ The owner cannot lower power while holding E because release immediately shoots.
 ## Orbit movement correction — owner request, 18 October 2026
 
 The owner reports awkward Orbit WASD movement and requests familiar GTA-style third-person controls. Authorized fix: map manual Orbit movement to the horizontal camera direction, keep automatic routes in world coordinates and let the existing server-owned avatar heading face travel. Keep Orbit rotation responsive so visible heading and movement axes agree while turning. Track held keys independently so opposite keys cancel and releasing one restores the other, including arrow-key aliases. Preserve normalized diagonals, existing first-person input, touch buttons, focus/leave cleanup, reduced motion and private camera state. Verify actual Orbit movement after rotation, combinations/releases and renderer alignment in both browser transports, plus existing camera/graphics/course checks.
+
+## Living Cube — owner request, 19 October 2026
+
+The owner authorized movement/posture, furniture collision, shared focus glass and
+usable upper floors. The [implementation plan](virtual-sciencedojo-living-cube.md)
+supersedes the earlier decorative-terrace limit for this private software phase.
+Existing learning, identity and operational gates remain unchanged.

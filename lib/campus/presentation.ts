@@ -1,12 +1,12 @@
 import type { Player } from "./protocol.ts";
 
-type Pose = Pick<Player, "x" | "z" | "rotation" | "seat">;
+type Pose = Pick<Player, "x" | "z" | "rotation" | "seat" | "elevation" | "floor">;
 type Sample = Pose & { at: number };
 // Cover the 200ms shared-room cadence plus normal arrival jitter. Display only:
 // no extrapolation, client simulation or change to authoritative snapshots.
 export const PRESENTATION_DELAY_MS = 300;
 export function createPresentation(pose: Pose, now: number) {
-  return { x: pose.x, z: pose.z, rotation: pose.rotation, seat: pose.seat,
+  return { x: pose.x, z: pose.z, rotation: pose.rotation, seat: pose.seat,elevation:pose.elevation??0,floor:pose.floor??0,
     receivedAt: now, samples: [{ ...pose, at: now - PRESENTATION_DELAY_MS }, { ...pose, at: now }] as Sample[] };
 }
 export type Presentation = ReturnType<typeof createPresentation>;
@@ -20,10 +20,11 @@ export function advancePresentation(view: Presentation, now: number) {
   const fraction = to.at > from.at ? Math.max(0, Math.min(1, (at - from.at) / (to.at - from.at))) : 1;
   view.x = from.x + (to.x - from.x) * fraction;
   view.z = from.z + (to.z - from.z) * fraction;
+  view.elevation=(from.elevation??0)+((to.elevation??0)-(from.elevation??0))*fraction;
   const angle = from.rotation + angleBetween(from.rotation, to.rotation) * fraction;
   view.rotation = Math.atan2(Math.sin(angle), Math.cos(angle));
   return samples.some(s => Math.abs(s.x - view.x) > .000001 || Math.abs(s.z - view.z) > .000001 ||
-    Math.abs(angleBetween(view.rotation, s.rotation)) > .000001);
+    Math.abs((s.elevation??0)-view.elevation)>.000001 || Math.abs(angleBetween(view.rotation, s.rotation)) > .000001);
 }
 
 export function receivePresentation(view: Presentation, pose: Pose, now: number) {
@@ -37,6 +38,6 @@ export function receivePresentation(view: Presentation, pose: Pose, now: number)
   }
   // Keep stationary samples: they mark when an authoritative stop occurred.
   if (previous.at === now) view.samples.pop();
-  view.samples.push({ x: pose.x, z: pose.z, rotation: pose.rotation, seat: pose.seat, at: now });
+  view.samples.push({ x: pose.x, z: pose.z, rotation: pose.rotation, seat: pose.seat,elevation:pose.elevation??0,floor:pose.floor??0, at: now });
   advancePresentation(view, now);
 }

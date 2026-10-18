@@ -85,7 +85,7 @@ test("independent WebSocket servers share SQL world state, seating, blocks and r
     const wire = JSON.stringify([...a.frames, ...b.frames]);
     for (const forbidden of [...tickets, id(1), id(2), "connection_id", "ticket", "course", "grade", "email", "lease_until", "blocked"])
       assert.equal(wire.includes(forbidden), false, forbidden);
-    assert.deepEqual(Object.keys(race.players[0]).sort(), ["colour", "id", "pseudonym", "rotation", "seat", "status", "x", "z"]);
+    assert.deepEqual(Object.keys(race.players[0]).sort(), ["colour", "elevation", "floor", "id", "pseudonym", "rotation", "seat", "stance", "status", "travel", "x", "z"]);
   } finally {
     await Promise.all(servers.map((server) => server.close()));
     assert.equal((await f.db.query("SELECT count(*)::int AS n FROM campus_presence")).rows[0].n, 0);
@@ -221,4 +221,16 @@ test("expanded school fails closed against an older SQL world revision", { timeo
     await Promise.all([...server.sessions]);
     assert.equal((await f.db.query("SELECT count(*)::int AS n FROM campus_presence")).rows[0].n, 0);
   } finally { await server.close();await f.db.close(); }
+});
+
+test('coalescing keeps one short jump edge while retaining the newest movement and sequence',async()=>{
+ const f=await runtimeFixture(1);let resolveBatch;const received=new Promise(resolve=>{resolveBatch=resolve;});
+ const server=await listener(f,{intervalMs:500},call=>async args=>{if(args.runtime_commands?.length)resolveBatch(args.runtime_commands);return call(args);});
+ try{
+  const peer=await join(server,1,await f.issueRaw(1));
+  peer.send('input',{x:0,z:0,seq:1,jump:true,run:false,stance:'stand'});
+  peer.send('input',{x:1,z:0,seq:2,jump:false,run:true,stance:'stand'});
+  const commands=await received;assert.equal(commands.length,1);assert.equal(commands[0].data.seq,2);assert.equal(commands[0].data.x,1);assert.equal(commands[0].data.run,true);assert.equal(commands[0].data.jump,true);
+  peer.send('input',{x:0,z:0,seq:3,jump:false});
+ }finally{await server.close();await f.db.close();}
 });

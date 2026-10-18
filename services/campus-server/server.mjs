@@ -68,6 +68,7 @@ export async function createCampusServer({
         if (!this.world.playBasketball(client.auth.id, action, Date.now()))
           client.send("notice", "Move near the ball on the sports court. Another player may be using it.");
       });
+      this.onMessage("environment",(client,data)=>this.world.environment(client.auth.id,data,Date.now()));
       this.onMessage("refresh", async (client) => {
         if (!this.world.allow(client.auth.id, Date.now())) return;
         await this.checkClient(client);

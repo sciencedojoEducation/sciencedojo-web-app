@@ -1,6 +1,7 @@
+import {isEnvironmentCommand} from "./locomotion.ts";
 import { randomUUID } from "node:crypto";
 import type { WebSocket } from "ws";
-import { isInput, isSnapshot, SEATS, type Snapshot } from "./protocol.ts";
+import { isInput, isSnapshot, SEATS, type Input, type Snapshot } from "./protocol.ts";
 import { hashTicket } from "./security.ts";
 import { SCHOOL_REVISION } from "./school-layout.ts";
 import { isBasketballCommand } from "./basketball.ts";
@@ -32,7 +33,7 @@ export function runVercelCampusSession(
   return new Promise<void>((resolve) => {
     const connection = randomUUID();
     let admitted = false, admitting = false, closed = false, inFlight = false;
-    let pendingInput: { type: string; data: unknown } | undefined;
+    let pendingInput: { type: string; data: Input } | undefined;
     const commands: { type: string; data: unknown }[] = [];
     let rateAt = Date.now(), rateCount = 0;
     let work: Promise<void> = Promise.resolve();
@@ -118,10 +119,14 @@ export function runVercelCampusSession(
       }
       if (Object.keys(message).sort().join(",") !== "data,type") { end(1008); return; }
       const { type, data } = message;
-      if (type === "input" && isInput(data)) pendingInput = { type, data };
+      if (type === "input" && isInput(data)) {
+        // Preserve a jump edge when a later movement sample replaces the queued
+        // input before the 200ms SQL tick. Keep only one bounded jump request.
+        pendingInput = { type, data:{...data,...(data.jump||pendingInput?.data.jump?{jump:true}:{})} };
+      }
       else if ((type === "sit" && SEATS.some((s) => s.id === data)) ||
         (type === "action" && ["stand", "study", "close"].includes(data)) ||
-        (type === "basketball" && isBasketballCommand(data))) {
+        (type === "basketball" && isBasketballCommand(data)) || (type === "environment" && isEnvironmentCommand(data))) {
         if (commands.length >= 4) { end(1008); return; }
         commands.push({ type, data });
       } else if (!(type === "refresh" && data === null)) end(1008);

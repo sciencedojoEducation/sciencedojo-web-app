@@ -12,8 +12,9 @@ import {
   type ReactNode,
 } from "react";
 import { connectCampus, requestCampusAdmission, type CampusConnection } from "@/lib/campus/connection";
+import {availableJourneys,nearbyGlassSwitch} from "@/lib/campus/locomotion";
 import { SEATS, type Snapshot } from "@/lib/campus/protocol";
-import { SCHOOL_PLACES, schoolPlaceAt, schoolRoute, type Point } from "@/lib/campus/school-layout";
+import { SCHOOL_PLACES,SCHOOL_FLOORS,SCHOOL_CONNECTORS,floorHeight, type Stance, schoolPlaceAt, schoolRoute, type Point } from "@/lib/campus/school-layout";
 import {DEFAULT_LOOK,boundedLook,cameraDirection,keyboardDirection,clockLabel,schoolSky,type CameraLook,type SchoolView} from "@/lib/campus/cube-experience";
 import "./campus.css";
 import {useCampusFullscreen} from "./useCampusFullscreen";
@@ -90,6 +91,11 @@ export default function CampusClient({
   const [selectedPlace, setSelectedPlace] = useState("library"), [walkingTo, setWalkingTo] = useState("");
   const navigation = useRef<{ points: Point[]; name: string } | null>(null);
   const latestSelf = useRef<Point | null>(null);
+  const motionIntent=useRef({run:false,jump:false,stance:"stand" as Stance});
+  const [stance,setStance]=useState<Stance>("stand");
+  const [touchRun,setTouchRun]=useState(false);const touchRunMode=useRef(false);
+  const posture=(next:Stance)=>{motionIntent.current.stance=next;setStance(next);stage.current?.focus();};
+  const jump=()=>{motionIntent.current.jump=true;motionIntent.current.stance="stand";setStance("stand");stage.current?.focus();};
   const heldMovementKeys=useRef(new Set<string>());
   const room = useRef<CampusConnection | null>(null),
     direction = useRef({ x: 0, z: 0 }),
@@ -109,17 +115,27 @@ export default function CampusClient({
   const selected = SCHOOL_PLACES.find(p => p.id === selectedPlace)!;
   const visibleSeats = SEATS.filter(s => s.place === (currentPlace?.id ?? "library"));
   const walkToPlace = () => {
-    if (!self || self.seat) { setNotice("Stand up before walking to another place."); return; }
-    const points = schoolRoute(self, { x: selected.x, z: selected.z + 2 });
+    if (!self || self.seat||self.travel) { setNotice("Stand up before walking to another place."); return; }
+    motionIntent.current.stance="stand";setStance("stand");
+    const different=(self.floor??0)!==(selected.floor??0);
+    const target=different?{x:SCHOOL_CONNECTORS[0].x,z:SCHOOL_CONNECTORS[0].z,floor:self.floor}:{x:selected.x,z:selected.z+2,floor:selected.floor};
+    const points = schoolRoute(self,target);
     if (!points.length) { setNotice("Use the direction controls to reach an open path first."); return; }
-    navigation.current = { points, name: selected.name };setWalkingTo(selected.name);setView("follow");stage.current?.focus();
+    navigation.current = { points, name: different?`Glass elevator · choose level ${selected.floor??0}`:selected.name };setWalkingTo(selected.name);setView("follow");stage.current?.focus();
+  };
+  const walkToConnector=(id:string,reverse=false)=>{
+    if(!self||self.seat||self.travel)return;
+    const c=SCHOOL_CONNECTORS.find(c=>c.id===id)!;stopMovement();motionIntent.current.stance="stand";setStance("stand");
+    const points=schoolRoute(self,{x:reverse?c.exitX:c.x,z:reverse?c.exitZ:c.z,floor:self.floor});
+    if(!points.length){setNotice("Move to an open path first.");return;}
+    navigation.current={points,name:c.name};setWalkingTo(c.name);setView("follow");stage.current?.focus();
   };
   const unavailable = useCallback(() => setNo3d(true), []);
   const stopMovement = useCallback(() => {
     if (stepTimer.current) clearTimeout(stepTimer.current);
     stepTimer.current = null;
     direction.current = { x: 0, z: 0 };
-    heldMovementKeys.current.clear();
+    heldMovementKeys.current.clear();motionIntent.current.run=false;motionIntent.current.jump=false;
     navigation.current = null;setWalkingTo("");
     ballCharge.current.started=null;setCharging(false);
   }, []);
@@ -164,7 +180,7 @@ export default function CampusClient({
     const controller = new AbortController();
     admissionRequest.current = controller;
     setNotice("");
-    setUsedDesk(false);
+    setUsedDesk(false);touchRunMode.current=false;setTouchRun(false);
     setConnection("Connecting…");
     try {
       const admission = await requestCampusAdmission({ signal: controller.signal });
@@ -174,7 +190,12 @@ export default function CampusClient({
         return;
       }
       next.onMessage<Snapshot>("snapshot", (data) => {
-        latestSelf.current = data.players.find(p => p.id === data.self) ?? null;
+        const nextSelf=data.players.find(p=>p.id===data.self)??null;
+        if(nextSelf&&latestSelf.current&&(nextSelf.floor??0)!==(latestSelf.current.floor??0)){
+          stopMovement();motionIntent.current.stance="stand";setStance("stand");
+          setSelectedPlace(previous=>(SCHOOL_PLACES.find(p=>p.id===previous)?.floor??0)===(nextSelf.floor??0)?previous:SCHOOL_PLACES.find(p=>(p.floor??0)===(nextSelf.floor??0))!.id);
+        }
+        latestSelf.current = nextSelf;
         if(data.basketball?.holder!==data.self&&ballCharge.current.started!==null){ballCharge.current.started=null;setCharging(false);}
         setSnapshot(data);
       });
@@ -220,8 +241,9 @@ export default function CampusClient({
       if (room.current)
         room.current.send("input", {
           ...(["first-person","orbit"].includes(cameraRef.current.view)&&!route?cameraDirection(direction.current.x,direction.current.z,cameraRef.current.yaw):direction.current),
-          seq: sequence.current++,
+          seq: sequence.current++,run:motionIntent.current.run||touchRunMode.current,jump:motionIntent.current.jump,stance:motionIntent.current.stance,
         });
+      motionIntent.current.jump=false;
     }, 100);
     const stop = stopMovement;
     window.addEventListener("blur", stop);
@@ -287,7 +309,7 @@ export default function CampusClient({
     setHub(true);
   };
   const nearbyDesk = self && !self.seat ? SEATS
-    .filter(seat => !snapshot.occupied.includes(seat.id) && Math.hypot(self.x-seat.x,self.z-seat.z)<=2.1)
+    .filter(seat => (seat.floor??0)===(self.floor??0)&&!self.travel&&Math.abs((self.elevation??0)-floorHeight(self.floor))<.05&&!snapshot.occupied.includes(seat.id) && Math.hypot(self.x-seat.x,self.z-seat.z)<=2.1)
     .sort((a,b)=>Math.hypot(self.x-a.x,self.z-a.z)-Math.hypot(self.x-b.x,self.z-b.z))[0] : undefined;
   const ball=snapshot.basketball,mine=!!self&&ball?.holder===self.id;
   const atCourt=!!self&&onCourt(self),takeBall=!!ball&&!!self&&canTakeBasketball(ball,self);
@@ -312,12 +334,20 @@ export default function CampusClient({
     changeLook(boundedLook({...rememberedLook.current,yaw:Math.atan2(hoop.x-self.x,self.z-hoop.z),pitch:Math.atan2(COURT.rimY-1.67,Math.max(.1,Math.hypot(hoop.x-self.x,hoop.z-self.z)) )},"first-person"));
     stage.current?.focus();
   };
+  const journeys=self?availableJourneys(self):[];
+  const switchRoom=self?nearbyGlassSwitch(self):undefined;
+  const journey=journeys.find(j=>j.to===(selected.floor??0))??journeys[0];
+  const travel=(via:string,to:number)=>{stopMovement();send("environment",{action:"travel",via,to});stage.current?.focus();};
+  const toggleGlass=(id:string)=>{stopMovement();send("environment",{action:"glass",room:id});stage.current?.focus();};
   const courtInteraction=atCourt&&!!ball;
-  const interactionLabel = courtInteraction?(mine?charging?"Release E to shoot":"Hold E, release to shoot":takeBall?"Pick up basketball":ball.mode==="held"?"Ball in use · wait for a rebound":"Move near the basketball"):self?.seat ? usedDesk ? "Stand up" : "Use computer" : nearbyDesk ? `Sit at ${nearbyDesk.name}` : "Move near a free study desk";
+  const interactionLabel = self?.travel?`Riding ${self.travel}…`:journey?`${journey.connector.name} → level ${journey.to}`:switchRoom?`${snapshot.frosted?.includes(switchRoom.id)?"Clear":"Screen"} room glass`:courtInteraction?(mine?charging?"Release E to shoot":"Hold E, release to shoot":takeBall?"Pick up basketball":ball.mode==="held"?"Ball in use · wait for a rebound":"Move near the basketball"):self?.seat ? usedDesk ? "Stand up" : "Use computer" : nearbyDesk ? `Sit at ${nearbyDesk.name}` : "Move near a free study desk";
   const interact = () => {
     if (!connected || hub || performance.now()-lastInteraction.current<400) return;
     lastInteraction.current=performance.now();
     stopMovement();
+    if(self?.travel)return;
+    if(journey){travel(journey.connector.id,journey.to);return;}
+    if(switchRoom){toggleGlass(switchRoom.id);return;}
     if(courtInteraction){
       if(mine)shootBall();
       else if(takeBall){send("basketball",{action:"take"});faceHoop(suggestedShot(self!).hoop.id);}
@@ -362,7 +392,7 @@ export default function CampusClient({
             <div>
               <p className="campus-eyebrow">The Cube · A school without ordinary walls</p>
               <h1>A world of possibility.<br/>Inside one Cube.</h1>
-              <p className="campus-beta-note">Glass, green spaces and a sky that changes with your day. 15 places to discover.</p>
+              <p className="campus-beta-note">Glass, green spaces and a sky that changes with your day. Three levels, 27 places and room to find your focus.</p>
             </div>
             <span className="campus-presence">
               <i />
@@ -377,7 +407,7 @@ export default function CampusClient({
             tabIndex={0}
             ref={stage}
             role="region"
-            aria-label="3D school. Use arrow keys or WASD to walk. In First person, move the mouse to look. E interacts with a nearby desk or basketball; hold and release E to shoot. Escape releases the mouse. Tab to school controls."
+            aria-label="3D school. Use arrow keys or WASD to walk. In First person, move the mouse to look. Shift runs, Space jumps, C crouches, Z lies prone. E interacts with a nearby desk, glass switch, lift or basketball; hold and release E to shoot. Escape releases the mouse. Tab to school controls."
             onBlur={event => {
               if (event.relatedTarget !== event.currentTarget) {
                 stopMovement();
@@ -394,6 +424,11 @@ export default function CampusClient({
               if(event.key.toLowerCase()==="e"&&!event.altKey&&!event.ctrlKey&&!event.metaKey){event.preventDefault();if(!event.repeat){if(courtInteraction&&mine)startShot();else interact();}return;}
               if (!connected || self?.seat || hub) return;
               const key = event.key.toLowerCase();
+              if(!event.altKey&&!event.ctrlKey&&!event.metaKey){
+                if(key==="shift"){event.preventDefault();motionIntent.current.run=true;return;}
+                if(key===" "){event.preventDefault();if(!event.repeat)jump();return;}
+                if(key==="c"||key==="z"){event.preventDefault();if(!event.repeat){const next=key==="c"?"crouch":"prone";posture(motionIntent.current.stance===next?"stand":next);}return;}
+              }
               if (!(
                 [
                   "arrowleft",
@@ -414,6 +449,7 @@ export default function CampusClient({
             onKeyUp={(event) => {
               if(event.target!==event.currentTarget)return;
               if(event.key.toLowerCase()==="e"&&ballCharge.current.started!==null){event.preventDefault();shootBall(currentShotPower(ballCharge.current,performance.now()));return;}
+              if(event.key==="Shift"){motionIntent.current.run=false;}
               if(heldMovementKeys.current.delete(event.key.toLowerCase()))
                 direction.current=keyboardDirection(heldMovementKeys.current);
             }}
@@ -459,12 +495,17 @@ export default function CampusClient({
               <button className="secondary" onClick={() => openPanel("people")}>People &amp; safety</button>
               {walkingTo && <button className="secondary" onClick={stopMovement}>Stop walking</button>}
             </div>
-            {connected && !hub && <button className="campus-interact" disabled={courtInteraction?!mine&&!takeBall:!self?.seat&&!nearbyDesk}
+            {connected && !hub && <button className="campus-interact" disabled={!!self?.travel||(!journey&&!switchRoom&&(courtInteraction?!mine&&!takeBall:!self?.seat&&!nearbyDesk))}
               onPointerDown={event=>{if(!mine)return;event.preventDefault();stage.current?.focus();event.currentTarget.setPointerCapture(event.pointerId);startShot();}}
               onPointerUp={event=>{if(ballCharge.current.started!==null){shootBall(currentShotPower(ballCharge.current,performance.now()));if(event.currentTarget.hasPointerCapture(event.pointerId))event.currentTarget.releasePointerCapture(event.pointerId);}}}
               onPointerCancel={()=>{ballCharge.current.started=null;setCharging(false);}}
               onLostPointerCapture={()=>{if(ballCharge.current.started!==null){ballCharge.current.started=null;setCharging(false);}}}
               onClick={event=>{if(mine){if(event.detail===0)shootBall();}else interact();}}><kbd>E</kbd> {interactionLabel}</button>}
+            {connected&&self&&!hub&&<div className="campus-body-tools" aria-label="Body and room controls">
+              <span>{SCHOOL_FLOORS[self.floor??0].name} · {self.travel?`Riding ${self.travel}`:self.stance??"stand"}</span>
+              {currentPlace&&!currentPlace.outdoor&&!self.travel&&<button aria-pressed={snapshot.frosted?.includes(currentPlace.id)??false} onClick={()=>toggleGlass(currentPlace.id)}>{snapshot.frosted?.includes(currentPlace.id)?"Clear room glass":"Screen room glass"}</button>}
+              {journeys.map(j=><button key={`${j.connector.id}-${j.to}`} onClick={()=>travel(j.connector.id,j.to)}>{j.connector.name} → level {j.to}</button>)}
+            </div>}
             {connected&&atCourt&&ball&&self&&!hub&&<BasketballHud ball={ball} self={self} charge={ballCharge} charging={charging} power={shotPower} target={targetHoop} onPower={setPower} onFace={faceHoop} onShoot={()=>shootBall()} onDrop={()=>{stopMovement();send("basketball",{action:"drop"});stage.current?.focus();}}/>}
             <div className="campus-stage-caption">
               THE CUBE / {view === "exterior"?"GLASS. NATURE. POSSIBILITY.":view === "overview" ? "WHOLE SCHOOL" : view === "place" ? selected.name.toUpperCase() : (currentPlace?.name ?? "Ground campus").toUpperCase()}
@@ -517,6 +558,8 @@ export default function CampusClient({
           {(help || connected || immersive) && (
             <div className="campus-help" data-campus-panel="controls" hidden={immersive&&schoolPanel!=="controls"} tabIndex={immersive?-1:undefined} aria-label="Movement controls">
               <p>
+                Shift runs. Space jumps. C toggles crouching; Z toggles lying prone.
+                Tables, shelves and boards are solid, including while jumping.
                 Focus the school and use WASD or arrow keys to walk. Tap a
                 direction button for a step, or hold it to keep walking. Move near
                 a desk and press E to sit, then E to use its computer. After
@@ -528,8 +571,17 @@ export default function CampusClient({
                 On the sports court, E picks up the basketball. Aim at a hoop,
                 hold E while power rises and falls, then release to shoot. Escape
                 cancels charging and keeps the ball. The dotted arc and power
-                guide help you line up shots. All actions also have visible buttons.
+                guide help you line up shots.
+                Walk to the glass elevator, moving escalator or garden slide and
+                press E to ride. Room switches screen the glass for shared visual
+                focus; doors stay open and presence stays shared. All actions also have visible buttons.
               </p>
+              <div className="campus-posture-controls" aria-label="Posture controls">
+              <button className="secondary" disabled={!connected||!!self?.seat||!!self?.travel} aria-pressed={touchRun} onClick={()=>{touchRunMode.current=!touchRunMode.current;setTouchRun(touchRunMode.current);stage.current?.focus();}}>Run · Shift</button>
+              <button className="secondary" disabled={!connected||!!self?.seat||!!self?.travel} onClick={jump}>Jump · Space</button>
+              <button className="secondary" disabled={!connected||!!self?.seat||!!self?.travel} aria-pressed={stance==="crouch"} onClick={()=>posture(stance==="crouch"?"stand":"crouch")}>Crouch · C</button>
+              <button className="secondary" disabled={!connected||!!self?.seat||!!self?.travel} aria-pressed={stance==="prone"} onClick={()=>posture(stance==="prone"?"stand":"prone")}>Lie down · Z</button>
+              </div>
               <div className="campus-direction-pad">
                 {[
                   { name: "Walk forward", x: 0, z: -1, label: "↑" },
@@ -567,15 +619,17 @@ export default function CampusClient({
           )}
           {walkingTo && <p className="school-route-status" role="status">Walking to {walkingTo}… <button className="secondary" onClick={stopMovement}>Stop walking</button></p>}
           <section className="school-map-panel" data-campus-panel="map" hidden={immersive&&schoolPanel!=="map"} tabIndex={immersive?-1:undefined} aria-label="School map">
-            <div className="school-map-heading"><div><p className="campus-eyebrow">Make yourself at home</p><h2>Find your place.</h2></div><span>15 places · 10 study stations</span></div>
+            <div className="school-map-heading"><div><p className="campus-eyebrow">Make yourself at home</p><h2>Find your place.</h2></div><span>3 levels · 27 places · 20 study stations</span></div>
+            <div className="school-floor-tabs" aria-label="School levels">{SCHOOL_FLOORS.map(f=><button key={f.id} className="secondary" aria-pressed={(selected.floor??0)===f.id} onClick={()=>{stopMovement();setSelectedPlace(SCHOOL_PLACES.find(p=>(p.floor??0)===f.id)!.id);setView("place");}}>{f.name}</button>)}</div>
             <div className="school-map-grid">
-              {SCHOOL_PLACES.map(place => <button key={place.id} className={`school-map-place ${selectedPlace === place.id ? "selected" : ""}`} aria-pressed={selectedPlace === place.id}
+              {SCHOOL_PLACES.filter(place=>(place.floor??0)===(selected.floor??0)).map(place => <button key={place.id} className={`school-map-place ${selectedPlace === place.id ? "selected" : ""}`} aria-pressed={selectedPlace === place.id}
                 style={{ backgroundColor: place.colour }} onClick={() => { stopMovement();setSelectedPlace(place.id);setView("place"); }}>
                 <span className="school-map-symbol" aria-hidden="true">{place.outdoor ? "✳" : "▤"}</span><strong>{place.name}</strong>{currentPlace?.id === place.id && <small>You are here</small>}
               </button>)}
             </div>
+            {connected&&<div className="school-floor-tabs" aria-label="Travel connections"><button className="secondary" onClick={()=>walkToConnector("lift")}>Walk to glass elevator</button>{(self?.floor??0)<2&&<button className="secondary" onClick={()=>walkToConnector("escalator")}>Walk to escalator up</button>}{(self?.floor??0)>0&&<><button className="secondary" onClick={()=>walkToConnector("escalator",true)}>Walk to escalator down</button><button className="secondary" onClick={()=>walkToConnector("slide")}>Walk to garden slide</button></>}</div>}
             <div className="school-place-detail"><div><h3>{selected.name}</h3><p>{selected.description}</p></div>
-              <button disabled={!connected || Boolean(self?.seat)} onClick={walkToPlace}>Walk here →</button>
+              <button disabled={!connected || Boolean(self?.seat)||Boolean(self?.travel)} onClick={walkToPlace}>Walk here →</button>
             </div>
             {!connected && <p className="school-map-hint">Look around freely. Enter the school to walk between places.</p>}
           </section>
@@ -593,7 +647,7 @@ export default function CampusClient({
               Take a seat at a computer or laptop to access your own dashboard
               and courses. Your usual access and progress carry over.
             </p>
-            {!visibleSeats.length && <p>Study computers are in the Library, Computer lab and Classroom A. Use the school map to find them.</p>}
+            {!visibleSeats.length && <p>Study computers are in the library, labs, classrooms and upper quiet lounge. Use the school map to find them.</p>}
             <div className="campus-seats">
               {visibleSeats.map((seat) => (
                 <button

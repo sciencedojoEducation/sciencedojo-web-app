@@ -90,7 +90,7 @@ test("shared SQL simulation enforces the established speed, bounds, replay and s
     assert.equal((await f.runtime(a.connection, "step", [{ type: "sit", data: SEATS[0].id }])).snapshot.occupied.length, 0, "distant seating denied");
     // Every constrained seat has the same fixed coordinates as the established protocol.
     for (const seat of SEATS) {
-      await f.db.query("UPDATE campus_presence SET x=$1,z=$2,rate_count=0", [seat.x, seat.z]);
+      await f.db.query("UPDATE campus_presence SET x=$1,z=$2,floor=$3,elevation=$3*12,input_x=0,input_z=0,rate_count=0", [seat.x, seat.z,seat.floor??0]);
       const seated = (await f.runtime(a.connection, "step", [{ type: "sit", data: seat.id }])).snapshot.players[0];
       assert.equal(seated.x, seat.x); assert.equal(seated.z, seat.z);
       assert.equal(seated.seat, seat.id);

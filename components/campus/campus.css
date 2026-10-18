@@ -633,3 +633,17 @@
 .basketball-power-bar{position:relative;width:100%;height:14px;}
 .basketball-power-bar meter{display:block;height:14px;margin:0;}
 .basketball-power-bar i{position:absolute;top:2px;bottom:2px;width:2px;background:#9a5527;pointer-events:none;}
+
+/* In-world controls stay inside the fullscreen shell and wrap on phones. */
+.campus-body-tools{position:absolute;top:58px;left:12px;right:12px;display:flex;flex-wrap:wrap;gap:5px;align-items:center;pointer-events:none;z-index:3}
+.campus-body-tools>*{pointer-events:auto;font-size:11px}
+.campus-body-tools>span{background:#eff2e8ed;color:#25483d;padding:7px 10px;border-radius:14px}
+.campus-body-tools button{padding:6px 10px;min-height:32px;box-shadow:0 2px 10px #244c3220}
+.school-floor-tabs{display:flex;flex-wrap:wrap;gap:7px;margin:14px 0}
+.school-floor-tabs button[aria-pressed=true]{background:#254c40;color:white}
+@media(max-width:600px){.campus-body-tools{top:48px;left:6px;right:6px;gap:3px}.campus-body-tools>*{font-size:10px}.campus-body-tools button{padding:4px 7px;min-height:29px}.campus-body-tools>span{width:100%;background:#eff2e8d9}}
+
+.campus-posture-controls{display:flex;flex-wrap:wrap;gap:7px;margin:12px 0}
+.campus-body-tools>span{pointer-events:none}
+.campus-immersive .campus-body-tools{top:116px}
+@media(max-height:520px){.campus-immersive .campus-body-tools{top:112px;max-width:45%}.campus-immersive .campus-body-tools>span{display:none}}
