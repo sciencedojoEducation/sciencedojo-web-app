@@ -564,3 +564,7 @@ rises inside the glass shaft and exits onto a solid destination landing. Its
 boarding canopies sit outside the shaft, and landing-height glass has doorway
 openings. The slide descends in the direction of its actual ramp. Geometry tests
 check the openings and safe landings in addition to authority/SQL parity.
+
+The floor subtraction now also opens the middle-level passage for the top slide.
+Renderer voids and authoritative shaft obstacles share one fixed blueprint, with
+a regression requiring actual slab openings and solid boarding/exit landings.

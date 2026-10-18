@@ -67,3 +67,10 @@ export const SCHOOL_CONNECTORS:readonly Connector[]=[
  {id:"slide",name:"Garden slide",x:-39,z:13,exitX:-39,exitZ:39,duration:4500}
 ];
 export const glassSwitch=(room:Place)=>({x:room.x+3.3,z:room.z+7.8,floor:room.floor??0});
+
+/** Shared floor voids: renderer subtraction, authority and SQL collision parity. */
+export const SCHOOL_TRANSPORT_SHAFTS=[
+ {minX:37.5,maxX:40.5,minZ:-12.4,maxZ:12.4},
+ {minX:-40.2,maxX:-37.8,minZ:14,maxZ:38},
+ {minX:-14.7,maxX:-11.3,minZ:37.2,maxZ:40.8}
+] as const;

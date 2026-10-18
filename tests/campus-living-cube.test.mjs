@@ -118,7 +118,7 @@ test('upper slabs contain real lift/escalator openings and solid landings, with 
  for(const floor of [1,2]){
   const slabs=boxes.filter(b=>b.floor===floor&&b.size[1]===.5&&Math.abs(b.position[1]-(floor*12-.27))<1e-8);
   const covered=(x,z)=>slabs.some(b=>Math.abs(b.position[0]-x)<b.size[0]/2&&Math.abs(b.position[2]-z)<b.size[2]/2);
-  assert.equal(covered(lift.shaftX,39),false);assert.equal(covered(39,0),false);
+  assert.equal(covered(lift.shaftX,39),false);assert.equal(covered(39,0),false);assert.equal(covered(-39,26),false,"Upper slide must pass through a real opening at the middle level");
   assert.equal(covered(lift.x,39),true);assert.equal(schoolWalkable(lift.shaftX,39,floor),false);assert(schoolWalkable(lift.x,39,floor));
  }
 });
