@@ -4,6 +4,7 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 export const releaseFiles = [
+  "lib/campus/basketball.ts",
   "lib/campus/protocol.ts",
   "lib/campus/school-layout.ts",
   "lib/campus/world.ts",

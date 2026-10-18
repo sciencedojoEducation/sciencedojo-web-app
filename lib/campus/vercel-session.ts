@@ -3,6 +3,7 @@ import type { WebSocket } from "ws";
 import { isInput, isSnapshot, SEATS, type Snapshot } from "./protocol.ts";
 import { hashTicket } from "./security.ts";
 import { SCHOOL_REVISION } from "./school-layout.ts";
+import { isBasketballCommand } from "./basketball.ts";
 
 export type RuntimeResult = {
   world_revision?: string;
@@ -66,7 +67,7 @@ export function runVercelCampusSession(
         return;
       }
       send(ready ? "ready" : "snapshot", result.snapshot);
-      if (result.notice) send("notice", "Move closer to an available seat.");
+      if (result.notice) send("notice", result.notice === "Court busy. Try E again." ? result.notice : "Move closer to an available seat or ball.");
     };
     const admissionTimer = setTimeout(() => end(4003), admissionMs);
     const lifetimeTimer = setTimeout(() => end(1012), lifetimeMs);
@@ -119,7 +120,8 @@ export function runVercelCampusSession(
       const { type, data } = message;
       if (type === "input" && isInput(data)) pendingInput = { type, data };
       else if ((type === "sit" && SEATS.some((s) => s.id === data)) ||
-        (type === "action" && ["stand", "study", "close"].includes(data))) {
+        (type === "action" && ["stand", "study", "close"].includes(data)) ||
+        (type === "basketball" && isBasketballCommand(data))) {
         if (commands.length >= 4) { end(1008); return; }
         commands.push({ type, data });
       } else if (!(type === "refresh" && data === null)) end(1008);

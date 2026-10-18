@@ -101,8 +101,9 @@ try {
   archive = await packageCampusService(join(directory, "campus-service.tar.gz"));
   const { stdout: listing } = await exec("tar", ["-tzf", archive.archive]);
   const entries = listing.trim().split("\n");
-  assert.equal(entries.length, 12);
+  assert.equal(entries.length, 13);
   assert(entries.includes("lib/campus/school-layout.ts"));
+  assert(entries.includes("lib/campus/basketball.ts"));
   assert(entries.every((path) => !path.startsWith("/") && !path.split("/").includes("..")));
   assert(entries.every((path) => !/(^|\/)(\.git|\.campus-private|\.business-private|node_modules|private-materials)(\/|$)/.test(path)));
   assert.deepEqual(entries.filter((path) => /(^|\/)\.env/.test(path)), ["services/campus-server/.env.example"]);
@@ -133,7 +134,7 @@ try {
   checks.push("Altered/symlinked payloads rejected and existing archive cannot be overwritten");
   await exec("npm", ["ci", "--omit=dev", "--prefix", "services/campus-server"], { cwd: extracted, timeout: 120000 });
   const { stdout: verification } = await exec(process.execPath, ["verify-release.mjs"], { cwd: extracted });
-  assert.deepEqual(JSON.parse(verification), { verified: true, sourceRevision: archive.sourceRevision, files: 11 });
+  assert.deepEqual(JSON.parse(verification), { verified: true, sourceRevision: archive.sourceRevision, files: 12 });
   checks.push("Clean extraction installs only the service lockfile and passes its standalone verifier");
   await new Promise((accept) => app.listen(0, "127.0.0.1", accept));
   origin = `http://127.0.0.1:${app.address().port}`;

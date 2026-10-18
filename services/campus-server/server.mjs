@@ -64,6 +64,10 @@ export async function createCampusServer({
         if (this.world.allow(client.auth.id, Date.now()))
           this.world.status(client.auth.id, action);
       });
+      this.onMessage("basketball", (client, action) => {
+        if (!this.world.playBasketball(client.auth.id, action, Date.now()))
+          client.send("notice", "Move near the ball on the sports court. Another player may be using it.");
+      });
       this.onMessage("refresh", async (client) => {
         if (!this.world.allow(client.auth.id, Date.now())) return;
         await this.checkClient(client);

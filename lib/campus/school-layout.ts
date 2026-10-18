@@ -1,5 +1,5 @@
 /** Shared public architecture only: no accounts, courses or learning activity. */
-export const SCHOOL_REVISION = "school-v1";
+export const SCHOOL_REVISION = "school-v2-basketball";
 export const SCHOOL_BOUNDS = { minX: -64, maxX: 64, minZ: -39, maxZ: 42, speed: 3 };
 export type Place = { id: string; name: string; kind: string; x: number; z: number; width: number; depth: number; colour: string; accent: string; description: string; outdoor?: boolean };
 export const SCHOOL_PLACES: readonly Place[] = [
@@ -12,7 +12,7 @@ export const SCHOOL_PLACES: readonly Place[] = [
   { id: "science", name: "Science lab", kind: "science", x: -26, z: 0, width: 20, depth: 18, colour: "#d2e3df", accent: "#588f8a", description: "Laboratory benches, microscopes and a demonstration area." },
   { id: "library", name: "Library", kind: "library", x: 0, z: 0, width: 20, depth: 18, colour: "#ede9dc", accent: "#477a70", description: "Books, quiet company and the original four study computers." },
   { id: "computer", name: "Computer lab", kind: "computer", x: 26, z: 0, width: 20, depth: 18, colour: "#d6e0e6", accent: "#597f99", description: "Four connected workstations opening your existing learning." },
-  { id: "sports", name: "Sports court", kind: "sports", x: 52, z: 0, width: 20, depth: 18, colour: "#bdcfc1", accent: "#668b77", description: "An outdoor basketball court and spectator benches.", outdoor: true },
+  { id: "sports", name: "Sports court", kind: "sports", x: 52, z: 0, width: 20, depth: 18, colour: "#bdcfc1", accent: "#668b77", description: "A playable shared basketball court. E picks up the ball; aim, hold E and release to shoot. Two hoops, rebounds and court scores.", outdoor: true },
   { id: "gym", name: "Sports hall", kind: "gym", x: -52, z: 26, width: 20, depth: 18, colour: "#d9c39e", accent: "#9b7a4e", description: "A school gym with court markings and training space." },
   { id: "classroom-b", name: "Classroom B", kind: "classroom", x: -26, z: 26, width: 20, depth: 18, colour: "#e4d8b9", accent: "#a18d54", description: "A second classroom for independent study and school life." },
   { id: "reception", name: "Reception", kind: "reception", x: 0, z: 26, width: 20, depth: 18, colour: "#e8dfd0", accent: "#917b61", description: "The school's welcome desk and central meeting point." },

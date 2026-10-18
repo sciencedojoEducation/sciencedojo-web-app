@@ -3,6 +3,7 @@ import { campusConfiguration, campusSocketRequestAllowed } from "@/lib/campus/se
 import { campusSession, campusJson } from "@/lib/campus/server";
 import { createAdminClient } from "@/utils/supabase/server";
 import { runVercelCampusSession } from "@/lib/campus/vercel-session";
+import { withBasketballRuntime } from "@/lib/campus/basketball-shared";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -15,9 +16,14 @@ export async function GET(request: Request) {
   const { data: upgradeAllowed, error: upgradeError } = await session.supabase.rpc("campus_begin_socket");
   if (upgradeError || upgradeAllowed !== true) return campusJson(null, 429);
   const supabase = await createAdminClient();
-  return upgradeWebSocket((socket) => runVercelCampusSession(socket, session.identity.id, async (args) => {
+  const sharedRuntime = withBasketballRuntime(async (args) => {
     const { data, error } = await supabase.rpc("campus_runtime", args).abortSignal(AbortSignal.timeout(5000));
     if (error || !data) throw new Error("Campus runtime unavailable");
     return data;
-  }), { maxPayload: 2048 });
+  }, async args => {
+    const { data, error } = await supabase.rpc("campus_basketball_commit", args).abortSignal(AbortSignal.timeout(5000));
+    if (error || !data) throw new Error("Court runtime unavailable");
+    return data;
+  });
+  return upgradeWebSocket((socket) => runVercelCampusSession(socket, session.identity.id, sharedRuntime), { maxPayload: 2048 });
 }

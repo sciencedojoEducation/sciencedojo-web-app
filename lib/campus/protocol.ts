@@ -1,4 +1,5 @@
 import { SCHOOL_BOUNDS, STUDY_SEATS } from "./school-layout.ts";
+import { isBasketballSnapshot, type BasketballSnapshot } from "./basketball.ts";
 export const CAMPUS_NOTICE = "campus-adult-pilot-v1";
 export const CAMPUS_ROOM = "library";
 export const WORLD = SCHOOL_BOUNDS;
@@ -26,12 +27,13 @@ export type Player = {
   status: "walking" | "seated" | "studying";
   seat: string | null;
 };
-export type Snapshot = { self: string; players: Player[]; occupied: string[] };
+export type Snapshot = { self: string; players: Player[]; occupied: string[]; basketball?: BasketballSnapshot };
 export type Input = { x: number; z: number; seq: number };
 export function isSnapshot(value: unknown): value is Snapshot {
   if (!value || typeof value !== "object" || Array.isArray(value)) return false;
   const snapshot = value as Snapshot;
-  if (Object.keys(value).sort().join(",") !== "occupied,players,self" ||
+  if (!["occupied,players,self", "basketball,occupied,players,self"].includes(Object.keys(value).sort().join(",")) ||
+    ("basketball" in snapshot && !isBasketballSnapshot(snapshot.basketball)) ||
     typeof snapshot.self !== "string" || !Array.isArray(snapshot.players) || snapshot.players.length > 10 ||
     !Array.isArray(snapshot.occupied) || snapshot.occupied.length > SEATS.length ||
     new Set(snapshot.occupied).size !== snapshot.occupied.length ||
@@ -44,7 +46,8 @@ export function isSnapshot(value: unknown): value is Snapshot {
     Number.isFinite(p.rotation) && Math.abs(p.rotation) <= Math.PI + 0.000001 &&
     (p.seat === null ? p.status === "walking" :
       SEATS.some((seat) => seat.id === p.seat) && ["seated", "studying"].includes(p.status)))) return false;
-  return new Set(snapshot.players.map((p) => p.id)).size === snapshot.players.length &&
+  return (!snapshot.basketball?.holder || snapshot.players.some(p => p.id === snapshot.basketball!.holder)) &&
+    new Set(snapshot.players.map((p) => p.id)).size === snapshot.players.length &&
     snapshot.players.some((p) => p.id === snapshot.self);
 }
 export function isInput(value: unknown): value is Input {

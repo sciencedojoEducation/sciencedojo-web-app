@@ -1,4 +1,5 @@
 import { walkSchool } from "./school-layout.ts";
+import { createBasketball, advanceBasketball, basketballAction, basketballSnapshot } from "./basketball.ts";
 import {
   SEATS,
   isInput,
@@ -12,6 +13,7 @@ import {
 export class CampusWorld {
   players = new Map<string, Player>();
   blocks = new Map<string, Set<string>>();
+  basketball = createBasketball();
   private inputs = new Map<string, Input & { at: number }>();
   private sequences = new Map<string, number>();
   private rates = new Map<string, { at: number; count: number }>();
@@ -38,6 +40,7 @@ export class CampusWorld {
     this.inputs.delete(id);
     this.sequences.delete(id);
     this.rates.delete(id);
+    if (!this.players.size) this.basketball = createBasketball();
   }
   input(id: string, data: unknown, now: number) {
     if (
@@ -67,6 +70,14 @@ export class CampusWorld {
       Object.assign(p, walkSchool(p, input.x, input.z, seconds));
       if (input.x || input.z) p.rotation = Math.atan2(input.x, input.z);
     }
+    this.basketball = advanceBasketball(this.basketball, [...this.players.values()], now);
+  }
+  playBasketball(id: string, command: unknown, now: number) {
+    if (!this.allow(id, now)) return false;
+    const state = advanceBasketball(this.basketball, [...this.players.values()], now);
+    const next = basketballAction(state, this.players.get(id), command, now);
+    this.basketball = next ?? state;
+    return next !== null;
   }
   sit(id: string, seatId: unknown) {
     const p = this.players.get(id),
@@ -107,6 +118,7 @@ export class CampusWorld {
       occupied: [...this.players.values()].flatMap((p) =>
         p.seat ? [p.seat] : [],
       ),
+      basketball: basketballSnapshot(this.basketball, [...this.players.values()].filter(p => !blocked.has(p.id))),
     };
   }
 }
