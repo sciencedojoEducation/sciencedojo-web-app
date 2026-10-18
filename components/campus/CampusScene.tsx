@@ -65,7 +65,8 @@ function RenderBudget({scale,onSlow}:{scale:number;onSlow:()=>void}){
   if(scale<=.45||sample.current.requested)return;
   // An idle demand canvas must not count a long pause as a whole slow window.
   const frame=Math.min(delta,.25);
-  sample.current.average=sample.current.average*.85+frame*.15;sample.current.elapsed+=frame;
+  sample.current.average=sample.current.average*.85+frame*.15;
+  sample.current.elapsed=sample.current.average>.04?sample.current.elapsed+frame:0;
   if(sample.current.elapsed>.9&&sample.current.average>.04){sample.current.requested=true;onSlow();}
  });return null;
 }
