@@ -10,10 +10,11 @@ import {DEFAULT_LOOK,boundedLook,type CameraLook,type SchoolView} from "@/lib/ca
 import SchoolModel from "./SchoolModel";
 import CubeArchitecture from "./CubeArchitecture";
 import CubeEnvironment from "./CubeEnvironment";
+import AvatarBody from "./AvatarBody";
 type ViewPosition={current:{x:number;z:number;eye:number}};
 type FrameActivity={current:boolean};
 export type {SchoolView} from "@/lib/campus/cube-experience";
-function Avatar({ player, self, onPosition, activityRef,hidden }: { player: Player; self: boolean; onPosition: (x: number, z: number,eye:number) => void; activityRef:FrameActivity;hidden:boolean }) {
+function Avatar({ player, self, onPosition, activityRef,hidden,reducedMotion }: { player: Player; self: boolean; onPosition: (x: number, z: number,eye:number) => void; activityRef:FrameActivity;hidden:boolean;reducedMotion:boolean }) {
   const group = useRef<Group>(null);
   const motion = useRef(createPresentation(player, 0));
   const invalidate = useThree(s => s.invalidate);
@@ -21,18 +22,17 @@ function Avatar({ player, self, onPosition, activityRef,hidden }: { player: Play
   useFrame(() => {
     const view = motion.current;
     const moving = advancePresentation(view, performance.now());
-    group.current?.position.set(view.x, player.seat ? .4 : 0, view.z);
+    group.current?.position.set(view.x, .1, view.z);
     if (group.current) group.current.rotation.y = view.rotation;
     if (self) onPosition(view.x, view.z,player.seat?1.25:1.67);
     if (moving) { activityRef.current=true; invalidate(); }
   }, -1);
   return <group ref={group} visible={!hidden}>
-    <mesh position={[0, .75, 0]}><capsuleGeometry args={[.28, player.seat ? .25 : .55, 4, 8]} /><meshStandardMaterial color={AVATAR_COLOURS[player.colour]} /></mesh>
-    <mesh position={[0, player.seat ? 1.27 : 1.42, 0]}><sphereGeometry args={[.23, 12, 12]} /><meshStandardMaterial color="#e9c5a0" /></mesh>
-    {!player.seat && <mesh position={[0, .135, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+    <AvatarBody colour={AVATAR_COLOURS[player.colour]} motion={motion} seated={!!player.seat} hidden={hidden} reducedMotion={reducedMotion} activityRef={activityRef}/>
+    {!player.seat && <mesh position={[0, .015, 0]} rotation={[-Math.PI / 2, 0, 0]}>
       <circleGeometry args={[.4, 16]} /><meshBasicMaterial color="#25483d" transparent opacity={.15} depthWrite={false} />
     </mesh>}
-    {self && <mesh position={[0, .16, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+    {self && <mesh position={[0, .02, 0]} rotation={[-Math.PI / 2, 0, 0]}>
       <ringGeometry args={[.43, .52, 24]} /><meshBasicMaterial color="#205e52" />
     </mesh>}
   </group>;
@@ -99,6 +99,7 @@ export default function CampusScene({snapshot,active,onUnavailable,view="follow"
  const angles=boundedLook(look,view);
  useEffect(()=>{const canvas=document.createElement("canvas"),context=canvas.getContext("webgl2");if(!context)onUnavailable();else context.getExtension("WEBGL_lose_context")?.loseContext();},[onUnavailable]);
  const occupied=SEATS.reduce((mask,seat,i)=>mask|(snapshot.occupied.includes(seat.id)?1<<i:0),0);
+ const reducedMotion=typeof window!=="undefined"&&window.matchMedia("(prefers-reduced-motion: reduce)").matches;
  return <div className={`school-scene school-view-${view}`} style={{position:"relative",width:"100%",height:"100%",touchAction:interactive?"none":"auto",cursor:interactive?"grab":"default"}}
    onPointerDown={event=>{if(!interactive||!active||event.button!==0)return;event.preventDefault();event.currentTarget.parentElement?.focus();event.currentTarget.setPointerCapture(event.pointerId);dragRef.current={x:event.clientX,y:event.clientY};}}
    onPointerMove={event=>{const previous=dragRef.current;if(!previous||!interactive||!active)return;onLookChange?.(boundedLook({...angles,yaw:angles.yaw+(event.clientX-previous.x)*.006,pitch:angles.pitch-(event.clientY-previous.y)*.005},view));dragRef.current={x:event.clientX,y:event.clientY};}}
@@ -112,8 +113,8 @@ export default function CampusScene({snapshot,active,onUnavailable,view="follow"
      gl.domElement.addEventListener("webglcontextlost",onUnavailable);
     }}>
    <CubeEnvironment hour={hour} cutaway={view==="overview"}/><SchoolModel occupied={occupied} detailedShadows={renderScale===1}/><CubeArchitecture cutaway={view==="overview"}/>
-   {snapshot.players.map(p=><Avatar key={p.id} player={p} self={p.id===snapshot.self} onPosition={follow} activityRef={activityRef} hidden={view==="first-person"&&p.id===snapshot.self}/>)}
-   <Camera focus={focus} present={snapshot.players.some(p=>p.id===snapshot.self)} reducedMotion={typeof window!=="undefined"&&window.matchMedia("(prefers-reduced-motion: reduce)").matches} view={view} placeId={placeId} activityRef={activityRef} angles={angles}/>
+   {snapshot.players.map(p=><Avatar key={p.id} player={p} self={p.id===snapshot.self} onPosition={follow} activityRef={activityRef} hidden={view==="first-person"&&p.id===snapshot.self} reducedMotion={reducedMotion}/>)}
+   <Camera focus={focus} present={snapshot.players.some(p=>p.id===snapshot.self)} reducedMotion={reducedMotion} view={view} placeId={placeId} activityRef={activityRef} angles={angles}/>
    <Labels elements={elements} view={view}/>
    <RenderBudget scale={renderScale} onSlow={reduceResolution} activityRef={activityRef} active={active}/>
   </Canvas>

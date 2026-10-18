@@ -108,6 +108,8 @@ On 18 October the owner subsequently confirmed **“all works in the library”*
 
 ## Glass Cube experience — owner direction, 18 October 2026
 
+The owner also explicitly requested hands, legs and a little hair for campus characters. This supersedes the initial capsule-body art default with a built-in stylized humanoid, modest walking limbs and a seated pose. The constrained appearance palette, local presentation/privacy boundary and all operational gates remain unchanged; no user-uploaded or profile-based customization is added.
+
 The owner explicitly requested modern glass-based architecture, the school contained in a literal cube, multiple camera angles including an inside/eye-level view, nature, sun and a 24-hour day/night sky with stars and moon, and said to go ahead. This authorizes the next private-beta software iteration and supersedes earlier deferral of environmental nature/sky and camera work. It does not authorize hosted schemas, paid services or real learner admission.
 
 Plan: wrap the existing authoritative ground campus in a cubic glass/metal envelope with a planted island, surrounding landscape, clear internal pavilions and a suspended scientific orbital sculpture. Keep all 15 places and 10 study stations at their existing server coordinates; do not advertise decorative structure as additional accessible floors. Provide exterior, aerial/cutaway, follow, orbit and first-person cameras, drag/touch/keyboard look controls and camera-relative first-person movement using ordinary bounded direction inputs. Keep camera/time preferences local. Add a deterministic sky, visible sun/moon/stars and accessible local-clock/manual time controls. Preserve direct courses, reduced motion, safety/leave and Study Hub rendering pause.
