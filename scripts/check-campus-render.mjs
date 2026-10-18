@@ -64,7 +64,13 @@ try {
   await page.waitForTimeout(1500);
   await page.evaluate(() => window.startWalk());
   await page.waitForFunction(() => window.walkDone, null, { timeout: 15000 });
-  await page.waitForTimeout(600);
+  // Observe actual terminal presentation, rather than racing a fixed Node-side
+  // delay against the browser's React commit, 300ms buffer and software GPU.
+  // Walking continuity still uses the original arrival-based window below.
+  await page.waitForFunction(() => {
+    const frame=window.sceneFrames?.at(-1);
+    return frame&&frame.t>=window.walkDoneAt+300&&Math.abs(frame.x-4)<.000001;
+  }, null, { timeout: 3000 });
   const frames = await page.evaluate(() => window.sceneFrames);
   const walk=await page.evaluate(()=>({started:window.walkStartedAt,finished:window.walkDoneAt,arrivals:window.walkArrivals}));
   assert(frames.length > 10, "Missing rendered movement frames");
@@ -92,7 +98,8 @@ try {
     decorativeShadowsDisabled: frames.some(f=>!f.shadows),
     shadowPipelineStable: frames.every(f=>f.shadowPipeline),
     maxDrawCalls: Math.max(...frames.map(f=>f.calls)), maxGeometries: Math.max(...frames.map(f=>f.geometries)),
-    finalX: frames.at(-1).x, browserErrors: errors, evidence: join(directory, "evidence.json") };
+    finalX: frames.at(-1).x, terminalFrameAfterLastTargetMs:Math.round(frames.at(-1).t-walk.finished),
+    browserErrors: errors, evidence: join(directory, "evidence.json") };
   await writeFile(result.evidence, JSON.stringify(result, null, 2));console.log(JSON.stringify(result,null,2));
   assert.deepEqual(errors, []);
   assert.equal(result.authoritativeTargetCount,20,"Probe must observe all twenty authoritative targets");
