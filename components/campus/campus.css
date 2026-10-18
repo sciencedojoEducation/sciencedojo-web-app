@@ -505,7 +505,7 @@
 .school-signs{position:absolute;inset:0;pointer-events:none;overflow:hidden;}
 .school-signs>span{position:absolute;top:0;left:0;white-space:nowrap;background:#f9f8edeb;border:1px solid #567c6740;color:#214c40;padding:4px 7px;border-radius:5px;font:600 10px/1.2 Arial,sans-serif;box-shadow:0 2px 5px #28463515;}
 .school-view-overview .school-signs>span{font-size:9px;padding:3px 5px;}
-.school-camera-controls{position:absolute;top:15px;left:15px;display:flex;gap:5px;z-index:2;}
+.school-camera-controls{position:absolute;top:15px;left:15px;display:flex;flex-wrap:wrap;max-width:calc(100% - 30px);gap:5px;z-index:2;}
 .campus-shell .school-camera-controls button{background:#fbfaf2ed;color:#285547;padding:8px 12px;font-size:11px;min-height:38px;border-color:#b3c5b2;}
 .campus-shell .school-camera-controls button[aria-pressed=true]{background:#214e42;color:#fff;}
 .school-map-panel{margin-top:25px;background:#faf9f1;border:1px solid #d5deca;border-radius:22px;padding:22px;}

@@ -593,6 +593,7 @@ try {
     const retainedBeforeTravel = await course.locator("#answer").inputValue();
     await a.locator(".school-map-place").filter({ hasText: "Computer lab" }).click();
     await a.getByRole("button", { name: "Walk here →", exact: true }).click();
+    await a.locator(".school-camera-controls").getByRole("button", { name: "Stop walking", exact: true }).waitFor();
     await a.getByText("Arrived at Computer lab.", { exact: true }).waitFor({ timeout: 35000 });
     const travelId = (await aContext.cookies()).find(cookie => cookie.name === "fixture").value;
     await walkForwardTo(travelId, -2.3);
@@ -607,6 +608,9 @@ try {
     if (await a.evaluate(()=>document.documentElement.scrollWidth>innerWidth)) throw new Error("School map overflows phone width");
     await a.waitForTimeout(1800);
     await a.screenshot({path:join(directory,"whole-school-phone.png")});result.screenshots.push(join(directory,"whole-school-phone.png"));
+    await a.getByRole("button", { name: "People & safety", exact: true }).click();
+    if (!(await a.getByRole("region", { name: "People and safety", exact: true }).evaluate(el=>el===document.activeElement))) throw new Error("Safety shortcut did not move keyboard focus to the participant controls");
+    result.checks.push("School camera has a direct safety shortcut and stop-walking control; participant safety keeps a leave action at phone width");
     result.checks.push("All 15 places are discoverable; ordinary input navigation walks through doors to the Computer lab, its study station reuses retained course work, and the school map fits phone width");
     await Promise.all(ticketReads);
     if (vercel) {

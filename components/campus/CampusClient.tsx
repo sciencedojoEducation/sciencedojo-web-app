@@ -75,6 +75,7 @@ export default function CampusClient({
     connecting = useRef(false),
     admissionRequest = useRef<AbortController | null>(null),
     generation = useRef(0);
+  const people = useRef<HTMLElement>(null);
   const stage = useRef<HTMLDivElement>(null),
     frame = useRef<HTMLIFrameElement>(null),
     hubButton = useRef<HTMLButtonElement>(null),
@@ -339,6 +340,8 @@ export default function CampusClient({
             <div className="school-camera-controls" aria-label="School camera">
               <button className="secondary" aria-pressed={view === "overview"} onClick={() => setView("overview")}>Whole school</button>
               <button className="secondary" aria-pressed={view === "follow"} onClick={() => setView("follow")}>Follow me</button>
+              <button className="secondary" onClick={() => { stopMovement();people.current?.focus(); }}>People &amp; safety</button>
+              {walkingTo && <button className="secondary" onClick={stopMovement}>Stop walking</button>}
             </div>
             <div className="campus-stage-caption">
               SCIENCEDOJO / {view === "overview" ? "WHOLE SCHOOL" : view === "place" ? selected.name.toUpperCase() : (currentPlace?.name ?? "School walkways").toUpperCase()}
@@ -491,9 +494,10 @@ export default function CampusClient({
               </button>
             </div>
           </section>
-          <section className="campus-card">
+          <section className="campus-card" ref={people} tabIndex={-1} aria-label="People and safety">
             <p className="campus-eyebrow">In good company</p>
             <h2>People at school</h2>
+            <button className="secondary" onClick={leave} disabled={!connected}>Leave school</button>
             <p>Campus pseudonyms only. No chat or voice.</p>
             <label className="campus-reason">
               Report reason
