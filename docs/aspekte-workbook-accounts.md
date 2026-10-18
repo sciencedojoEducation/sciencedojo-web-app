@@ -3,6 +3,14 @@
 The existing workbook remains a private local preview by default in development.
 Production defaults to disabled and never uses the loopback preview bypass.
 
+## Current access policy — 18 October 2026
+
+The owner requested direct access for anyone signing in for the workbook, replacing the original invite-only default. On first workbook access, the server verifies the signed-in user, confirmed email and active profile, then inserts only their own workbook membership. Existing registered classmates with no membership gain access on their next visit. No migration or bulk account update is required.
+
+Insertion uses conflict-ignore semantics and rechecks membership: existing and concurrent administrator revocations remain effective. Anonymous, unverified, suspended and revoked accounts remain blocked; administrators alone manage access. Per-user saving, recording isolation, server grading, private storage and persistent Gemini limits remain in place. Account creation by itself does not enroll a user until they open the workbook.
+
+Share `/workbooks/aspekte-neu-b2` or `/signup?role=user&next=%2Fworkbooks%2Faspekte-neu-b2`. Existing invitation pages also offer direct workbook entry; accepting a personal invitation remains optional. The original release sequence below records the earlier invitation-based setup.
+
 ## Release sequence
 
 1. Apply `sql/069_private_workbooks.sql` through the existing Supabase SQL/migration workflow. It creates private learner data, service-only write RPCs, email-bound invitation redemption, persistent feedback quotas, and private media buckets. Keep production `WORKBOOK_ENABLED` unset/false.

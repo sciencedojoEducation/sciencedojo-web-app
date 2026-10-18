@@ -53,3 +53,17 @@ test('private workbook migration: atomic revisions, isolated quotas, account del
  await db.query('DELETE FROM auth.users WHERE id=$1',[id(1)]);assert.equal((await db.query('SELECT * FROM workbook_learning_states')).rows.length,0);
  }finally{await db.close();}
 });
+
+test('automatic access insertion is idempotent, preserves revocation and retains learner isolation',async()=>{
+ const{db,as}=await fixture();try{
+ const enroll=async n=>db.query("INSERT INTO workbook_memberships(user_id,book_key,active) VALUES($1,'aspekte-neu-b2',true) ON CONFLICT(user_id,book_key) DO NOTHING",[id(n)]);
+ await db.query("INSERT INTO workbook_memberships(user_id,book_key,active) VALUES($1,'aspekte-neu-b2',false)",[id(1)]);
+ await enroll(1);assert.equal((await db.query('SELECT active FROM workbook_memberships WHERE user_id=$1',[id(1)])).rows[0].active,false);
+ await Promise.all([enroll(2),enroll(2),enroll(2)]);
+ assert.equal((await db.query('SELECT count(*)::int AS count FROM workbook_memberships WHERE user_id=$1',[id(2)])).rows[0].count,1);
+ await db.query("SELECT workbook_save_state($1,'aspekte-neu-b2',0,$2)",[id(2),JSON.stringify({draft:{answers:{private:'my answer'}}})]);
+ assert.equal((await as(2,()=>db.query('SELECT * FROM workbook_learning_states'))).rows.length,1);
+ assert.equal((await as(1,()=>db.query('SELECT * FROM workbook_learning_states'))).rows.length,0);
+ await enroll(2);assert.equal((await db.query('SELECT revision FROM workbook_learning_states WHERE user_id=$1',[id(2)])).rows[0].revision,1);
+ }finally{await db.close();}
+});
