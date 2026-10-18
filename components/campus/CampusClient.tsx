@@ -16,6 +16,7 @@ import { SEATS, type Snapshot } from "@/lib/campus/protocol";
 import { SCHOOL_PLACES, schoolPlaceAt, schoolRoute, type Point } from "@/lib/campus/school-layout";
 import {DEFAULT_LOOK,boundedLook,cameraDirection,clockLabel,schoolSky,type CameraLook,type SchoolView} from "@/lib/campus/cube-experience";
 import "./campus.css";
+import {useCampusFullscreen} from "./useCampusFullscreen";
 
 const subscribeClock=(notify:()=>void)=>{const timer=setInterval(notify,1000);return()=>clearInterval(timer);};
 const readLocalHour=()=>{const now=new Date();return now.getHours()+now.getMinutes()/60;};
@@ -114,6 +115,17 @@ export default function CampusClient({
     direction.current = { x: 0, z: 0 };
     navigation.current = null;setWalkingTo("");
   }, []);
+  const {shell,button:fullscreenButton,immersive,enter:enterFullscreen,exit:exitFullscreen}=useCampusFullscreen(stopMovement);
+  const [schoolPanel,setSchoolPanel]=useState<"map"|"sky"|"desk"|"people"|"controls"|null>(null);
+  const openPanel=(panel:typeof schoolPanel)=>{
+    stopMovement();document.exitPointerLock?.();setSchoolPanel(panel);
+    if (!immersive && panel==="people") people.current?.focus();
+  };
+  const closePanel=()=>{setSchoolPanel(null);stage.current?.focus();};
+  useEffect(()=>{
+    if(!immersive||!schoolPanel)return;
+    shell.current?.querySelector<HTMLElement>(`[data-campus-panel="${schoolPanel}"]`)?.focus();
+  },[immersive,schoolPanel,shell]);
   const stepDirection = useCallback((x: number, z: number) => {
     stopMovement();
     direction.current = { x, z };
@@ -260,6 +272,7 @@ export default function CampusClient({
   const openHub = () => {
     stopMovement();
     document.exitPointerLock?.();
+    setSchoolPanel(null);
     send("action", "study");
     setUsedDesk(true);
     setHub(true);
@@ -282,11 +295,20 @@ export default function CampusClient({
     hubDialog.current?.close();
     setHub(false);
     send("action", "close");
-    if (view==="first-person") stage.current?.focus();
+    // A retained iframe's Escape listener may predate this camera/fullscreen mode.
+    if (shell.current?.classList.contains("campus-immersive")||cameraRef.current.view==="first-person") stage.current?.focus();
     else hubButton.current?.focus();
   };
   return (
-    <main className="campus-shell cube-campus">
+    <main ref={shell} className={`campus-shell cube-campus${immersive?" campus-immersive":""}`}>
+      {immersive && <nav className="campus-immersive-nav" aria-label="Fullscreen school tools">
+        <span className="campus-immersive-brand">sciencedojo.</span>
+        <button className="secondary" aria-pressed={schoolPanel==="map"} onClick={()=>openPanel("map")}>School map</button>
+        <button className="secondary" aria-pressed={schoolPanel==="sky"} onClick={()=>openPanel("sky")}>Sky &amp; view</button>
+        <button className="secondary" aria-pressed={schoolPanel==="desk"} onClick={()=>openPanel("desk")}>Study desk</button>
+        <Link href={dashboardHref} target="_blank" rel="noopener noreferrer">My dashboard ↗</Link>
+      </nav>}
+      {immersive && schoolPanel && <button className="campus-panel-close secondary" aria-label="Close school panel" onClick={closePanel}>×</button>}
       <header className="campus-header">
         <Link className="campus-brand" href={dashboardHref}>
           sciencedojo<span>.</span>
@@ -396,13 +418,14 @@ export default function CampusClient({
                 />
               </CanvasBoundary>
             )}
+            <button ref={fullscreenButton} className="secondary campus-fullscreen-button" aria-pressed={immersive} onClick={()=>{setSchoolPanel(null);if(immersive)exitFullscreen();else enterFullscreen();}}>{immersive?"Exit full screen":"Full screen"}</button>
             <div className="school-camera-controls" aria-label="School camera">
               <button className="secondary" aria-pressed={view === "exterior"} onClick={() => chooseCamera("exterior")}>The Cube</button>
               <button className="secondary" aria-pressed={view === "overview"} onClick={() => chooseCamera("overview")}>Whole school</button>
               <button className="secondary" aria-pressed={view === "follow"} onClick={() => chooseCamera("follow")}>Follow me</button>
               <button className="secondary" aria-pressed={view === "first-person"} onClick={() => chooseCamera("first-person")}>First person</button>
               <button className="secondary" aria-pressed={view === "orbit"} onClick={() => chooseCamera("orbit")}>Orbit view</button>
-              <button className="secondary" onClick={() => { stopMovement();people.current?.focus(); }}>People &amp; safety</button>
+              <button className="secondary" onClick={() => openPanel("people")}>People &amp; safety</button>
               {walkingTo && <button className="secondary" onClick={stopMovement}>Stop walking</button>}
             </div>
             {connected && !hub && <button className="campus-interact" disabled={!self?.seat&&!nearbyDesk} onClick={interact}><kbd>E</kbd> {interactionLabel}</button>}
@@ -411,7 +434,7 @@ export default function CampusClient({
               <span>{view === "exterior"?"A scientific school beneath one transparent sky.":view === "overview" ? "Choose a place on the map below." : "Connected places. Shared learning."}</span>
             </div>
           </div>
-          <section className="cube-world-controls" aria-label="Sky and camera controls">
+          <section className="cube-world-controls" data-campus-panel="sky" hidden={immersive&&schoolPanel!=="sky"} tabIndex={immersive?-1:undefined} aria-label="Sky and camera controls">
             <div className="cube-clock-heading"><div><p className="campus-eyebrow">Your sky · 24-hour world</p><time dateTime={clockLabel(hour)}>{clockLabel(hour)}</time></div><span>{manualHour===null?"Local time":"Your chosen time"} · {sky.phase}</span></div>
             <label className="cube-time-range">Time of day<input aria-label="Time of day" type="range" min="0" max="23.75" step="0.25" value={hour} onChange={event=>{stopMovement();setManualHour(Number(event.target.value));}}/></label>
             <div className="cube-time-presets">{[["Sunrise",6.25],["Daylight",12],["Sunset",17.75],["Night sky",22]].map(([name,time])=><button className="secondary" key={name} onClick={()=>{stopMovement();setManualHour(Number(time));}}>{name}</button>)}<button className="secondary" aria-pressed={manualHour===null} onClick={()=>setManualHour(null)}>Live local time</button></div>
@@ -423,6 +446,7 @@ export default function CampusClient({
             </div>}
           </section>
           <div className="campus-controls">
+            {immersive&&<span className="campus-immersive-presence">{snapshot.players.filter(p=>!blocked.includes(p.id)).length} here</span>}
             <div>
               <strong>{self?.pseudonym || "Your own quiet corner"}</strong>
               <p role="status">
@@ -446,15 +470,15 @@ export default function CampusClient({
               </button>
               <button
                 className="secondary"
-                onClick={() => setHelp(!help)}
-                aria-expanded={help}
+                onClick={() => {if(immersive)openPanel(schoolPanel==="controls"?null:"controls");else setHelp(!help);}}
+                aria-expanded={immersive?schoolPanel==="controls":help}
               >
                 Controls
               </button>
             </div>
           </div>
-          {(help || connected) && (
-            <div className="campus-help">
+          {(help || connected || immersive) && (
+            <div className="campus-help" data-campus-panel="controls" hidden={immersive&&schoolPanel!=="controls"} tabIndex={immersive?-1:undefined} aria-label="Movement controls">
               <p>
                 Focus the school and use WASD or arrow keys to walk. Tap a
                 direction button for a step, or hold it to keep walking. Move near
@@ -500,7 +524,7 @@ export default function CampusClient({
             </div>
           )}
           {walkingTo && <p className="school-route-status" role="status">Walking to {walkingTo}… <button className="secondary" onClick={stopMovement}>Stop walking</button></p>}
-          <section className="school-map-panel" aria-label="School map">
+          <section className="school-map-panel" data-campus-panel="map" hidden={immersive&&schoolPanel!=="map"} tabIndex={immersive?-1:undefined} aria-label="School map">
             <div className="school-map-heading"><div><p className="campus-eyebrow">Make yourself at home</p><h2>Find your place.</h2></div><span>15 places · 10 study stations</span></div>
             <div className="school-map-grid">
               {SCHOOL_PLACES.map(place => <button key={place.id} className={`school-map-place ${selectedPlace === place.id ? "selected" : ""}`} aria-pressed={selectedPlace === place.id}
@@ -520,7 +544,7 @@ export default function CampusClient({
           )}
         </section>
         <aside className="campus-sidebar">
-          <section className="campus-card">
+          <section className="campus-card" data-campus-panel="desk" hidden={immersive&&schoolPanel!=="desk"} tabIndex={immersive?-1:undefined} aria-label="Study desk">
             <p className="campus-eyebrow">Make yourself comfortable</p>
             <h2>Your study desk</h2>
             <p>
@@ -567,7 +591,7 @@ export default function CampusClient({
               </button>
             </div>
           </section>
-          <section className="campus-card" ref={people} tabIndex={-1} aria-label="People and safety">
+          <section className="campus-card" data-campus-panel="people" hidden={immersive&&schoolPanel!=="people"} ref={people} tabIndex={-1} aria-label="People and safety">
             <p className="campus-eyebrow">In good company</p>
             <h2>People at school</h2>
             <button className="secondary" onClick={leave} disabled={!connected}>Leave school</button>

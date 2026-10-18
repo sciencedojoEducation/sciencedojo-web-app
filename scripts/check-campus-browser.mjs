@@ -383,6 +383,9 @@ try {
     await a.waitForTimeout(450);
     if(await a.getByRole("button",{name:"Stand up",exact:true}).isEnabled())throw new Error("E interacted with a distant desk");
     await walkForwardTo(firstId, -1.2);
+    // E uses the visible snapshot prompt; the server can arrive one cadence
+    // before that snapshot reaches the browser.
+    await a.waitForFunction(()=>{const prompt=document.querySelector(".campus-interact");return prompt&&!prompt.disabled;});
     await a.keyboard.down("e");
     await a.keyboard.down("e");
     await a.keyboard.up("e");
@@ -655,6 +658,66 @@ try {
     if (await course.getByRole("textbox", { name: "Practice answer" }).inputValue() !== retainedBeforeTravel) throw new Error("Travel discarded retained course work");
     await a.getByRole("button", { name: "Return to school →", exact: true }).click();
     await a.getByRole("button", { name: "Stand up", exact: true }).click();
+    const overflowBefore=await a.evaluate(()=>document.body.style.overflow);
+    await a.getByRole("button",{name:"Full screen",exact:true}).scrollIntoViewIfNeeded();
+    const scrollBefore=await a.evaluate(()=>scrollY);
+    await a.getByRole("button",{name:"Full screen",exact:true}).click();
+    await a.waitForFunction(()=>document.fullscreenElement===document.querySelector(".campus-shell"));
+    const assertScreen=async()=>{
+      const fits=await a.locator(".campus-stage").evaluate(el=>{const r=el.getBoundingClientRect();return Math.abs(r.width-innerWidth)<2&&Math.abs(r.height-innerHeight)<2&&Math.abs(r.top)<2;});
+      if(!fits)throw new Error("Fullscreen scene does not fill the viewport");
+      for(const name of ["Exit full screen","Leave","Controls"]){if(!await a.getByRole("button",{name,exact:true}).isVisible())throw new Error("Fullscreen lost "+name);}
+    };
+    await assertScreen();
+    await stage.focus();await a.keyboard.press("e");
+    await a.getByText("In the school · seated",{exact:true}).waitFor();
+    await a.waitForTimeout(450);await a.keyboard.press("e");
+    await a.waitForFunction(()=>document.querySelector("dialog")?.open);
+    if(!await a.evaluate(()=>document.fullscreenElement?.contains(document.querySelector("dialog"))))throw new Error("Study Hub escaped the fullscreen ancestor");
+    if(await course.getByRole("textbox",{name:"Practice answer"}).inputValue()!==retainedBeforeTravel)throw new Error("Fullscreen discarded mounted course input");
+    await course.getByRole("textbox",{name:"Practice answer"}).press("Escape");
+    await a.waitForFunction(()=>!document.querySelector("dialog")?.open);
+    if(!await stage.evaluate(el=>el===document.activeElement))throw new Error("Retained course Escape did not return fullscreen focus to the school");
+    await a.waitForTimeout(450);await a.keyboard.press("e");
+    await a.getByText("In the school · walking",{exact:true}).waitFor();
+    const panelTools=[["School map","map"],["Sky & view","sky"],["Study desk","desk"],["Controls","controls"],["People & safety","people"]];
+    const inspectPanels=async()=>{
+      for(const [name,id] of panelTools){
+        await a.getByRole("button",{name,exact:true}).click();
+        const panel=a.locator(`[data-campus-panel="${id}"]`);
+        if(!await panel.isVisible())throw new Error("Fullscreen missing "+id+" panel");
+        if(!await panel.evaluate(el=>{const r=el.getBoundingClientRect();return r.left>=0&&r.right<=innerWidth+1&&r.top>=0&&r.bottom<=innerHeight+1&&el.scrollWidth<=el.clientWidth+1;}))throw new Error("Fullscreen panel overflows viewport: "+id);
+        await a.getByRole("button",{name:"Close school panel",exact:true}).click();
+      }
+    };
+    await inspectPanels();
+    await a.getByRole("button",{name:"First person",exact:true}).click();
+    await a.screenshot({path:join(directory,"fullscreen-school.png")});result.screenshots.push(join(directory,"fullscreen-school.png"));
+    await a.getByRole("button",{name:"Exit full screen",exact:true}).click();
+    await a.waitForFunction(()=>!document.fullscreenElement&&!document.querySelector(".campus-immersive"));
+    await a.waitForFunction(({overflow,y})=>document.body.style.overflow===overflow&&Math.abs(scrollY-y)<=2,{overflow:overflowBefore,y:scrollBefore},{timeout:3000});
+    await a.getByRole("button",{name:"Full screen",exact:true}).click();
+    await a.waitForFunction(()=>!!document.fullscreenElement);
+    await a.evaluate(()=>document.exitFullscreen());
+    await a.waitForFunction(()=>!document.querySelector(".campus-immersive"));
+    // A denied native request keeps the same controls in the viewport fallback.
+    await a.locator(".campus-shell").evaluate(el=>{el.requestFullscreen=()=>Promise.reject(new DOMException("Denied","NotAllowedError"));});
+    await a.setViewportSize({width:390,height:844});
+    await a.getByRole("button",{name:"Full screen",exact:true}).click();
+    await a.waitForFunction(()=>!!document.querySelector(".campus-immersive"));
+    await assertScreen();await inspectPanels();
+    const clearHint=await a.evaluate(()=>document.querySelector(".cube-look-hint").getBoundingClientRect().bottom<=document.querySelector(".campus-controls").getBoundingClientRect().top);
+    if(!clearHint)throw new Error("Fullscreen phone controls cover mouse guidance");
+    await a.screenshot({path:join(directory,"fullscreen-phone.png")});result.screenshots.push(join(directory,"fullscreen-phone.png"));
+    await a.getByRole("button",{name:"Sky & view",exact:true}).click();
+    await a.screenshot({path:join(directory,"fullscreen-phone-tools.png")});result.screenshots.push(join(directory,"fullscreen-phone-tools.png"));
+    await a.getByRole("button",{name:"Close school panel",exact:true}).click();
+    await a.setViewportSize({width:844,height:390});await assertScreen();await inspectPanels();
+    await stage.focus();await a.keyboard.press("Escape");
+    await a.waitForFunction(()=>!document.querySelector(".campus-immersive"));
+    if(await a.evaluate(()=>document.body.style.overflow)!==overflowBefore)throw new Error("Fallback Escape exit did not restore scrolling");
+    await a.locator(".campus-shell").evaluate(el=>{delete el.requestFullscreen;});
+    result.checks.push("Native fullscreen contains scene, tools, E study/stand and retained course; map/sky/desk/movement/safety panels fit desktop, phone and landscape; denied-native fallback and Escape/exit restore scrolling");
     await a.getByRole("button", { name: "Whole school", exact: true }).click();
     await a.setViewportSize({ width: 390, height: 844 });
     if (await a.evaluate(()=>document.documentElement.scrollWidth>innerWidth)) throw new Error("School map overflows phone width");
@@ -679,7 +742,7 @@ try {
       "/dashboard/academy/fixture",
       "/dashboard/student",
       "campus-wire-answer-canary-17oct",
-      "cameraYaw", "cameraPitch", "timeOfDay", "skyTime",
+      "cameraYaw", "cameraPitch", "timeOfDay", "skyTime", "fullscreenMode", "schoolPanel",
       ...issuedTickets,
     ])
       if (combined.includes(Buffer.from(canary)))

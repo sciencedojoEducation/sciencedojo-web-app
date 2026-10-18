@@ -562,3 +562,53 @@
 .cube-campus .campus-interact{position:absolute;bottom:106px;left:50%;transform:translateX(-50%);z-index:3;max-width:calc(100% - 24px);background:#102f40e8;color:#fff;border:1px solid #b4e2d785;border-radius:12px;padding:10px 16px;font-size:13px;line-height:1.4;}
 .campus-interact kbd{display:inline-block;margin-right:6px;border:1px solid #b4e2d7;border-radius:4px;padding:1px 5px;font:700 13px inherit;}
 .cube-campus .campus-interact:disabled{opacity:.8;color:#e3edee;}
+
+/* The same mounted school and course surfaces fill the screen. */
+.campus-shell [hidden]{display:none!important;}
+.campus-shell button.campus-fullscreen-button{position:absolute;right:15px;top:15px;z-index:7;background:#183c47ed;color:#fff;border-color:#a8c8c5;min-height:38px;padding:8px 14px;font-size:12px;}
+.cube-campus .school-camera-controls{max-width:calc(100% - 160px);}
+.campus-immersive{position:fixed;inset:0;width:100%;height:100dvh;min-height:0;z-index:9999;overflow:hidden;background:#102c3a;isolation:isolate;}
+.campus-immersive::backdrop{background:#102c3a;}
+.campus-immersive .campus-layout,.campus-immersive .campus-world-panel,.campus-immersive .campus-sidebar{display:contents;}
+.campus-immersive .campus-header,.campus-immersive .campus-world-heading,.campus-immersive .campus-direct,.campus-immersive .school-route-status{display:none;}
+.cube-campus.campus-immersive .campus-stage{position:absolute;inset:0;width:100%;height:100%;border:0;border-radius:0;box-shadow:none;}
+.campus-immersive .school-camera-controls{top:72px;left:18px;max-width:calc(100% - 36px);}
+.campus-immersive .campus-stage-caption{bottom:18px;left:auto;right:22px;text-align:right;}
+.campus-immersive .campus-interact{bottom:100px;}
+.campus-immersive .cube-look-hint{bottom:66px;}
+.campus-immersive-nav{position:absolute;top:max(16px,env(safe-area-inset-top));left:18px;max-width:calc(100% - 180px);display:flex;align-items:center;gap:7px;overflow-x:auto;white-space:nowrap;padding:2px 4px 8px;z-index:6;scrollbar-width:thin;}
+.campus-immersive-nav>*{flex-shrink:0;}
+.campus-immersive-brand{color:#f0faf4;font-size:23px;font-weight:700;letter-spacing:-1px;margin-right:12px;text-shadow:0 1px 5px #102c3a;}
+.campus-shell .campus-immersive-nav button,.campus-immersive-nav a{background:#fbfaf2ed;color:#285547;padding:9px 13px;border:1px solid #b3c5b2;border-radius:22px;font-size:12px;min-height:38px;text-decoration:none;}
+.campus-shell .campus-immersive-nav button[aria-pressed=true]{background:#214e42;color:#fff;}
+.campus-immersive [data-campus-panel]{position:absolute;right:18px;top:128px;width:360px;max-width:calc(100% - 36px);max-height:calc(100dvh - 230px);overflow-y:auto;overscroll-behavior:contain;padding:24px;margin:0;background:#f7f6eef5;border:1px solid #c5d3c8;border-radius:20px;box-shadow:0 16px 50px #071a2e4d;z-index:5;}
+.campus-immersive button.campus-panel-close{position:absolute;top:135px;right:25px;z-index:6;min-width:36px;min-height:36px;padding:3px;font-size:24px;background:#f7f6ee;color:#22463e;}
+.campus-immersive [data-campus-panel] h2,.campus-immersive [data-campus-panel] h3{padding-right:24px;}
+.campus-immersive .school-map-heading{display:block;}
+.campus-immersive .school-map-grid{grid-template-columns:repeat(2,minmax(0,1fr));}
+.campus-immersive .school-place-detail{display:block;}
+.campus-immersive .school-place-detail button{margin-top:12px;}
+.campus-immersive .campus-controls{position:absolute;bottom:max(16px,env(safe-area-inset-bottom));left:18px;z-index:5;display:flex;flex-wrap:wrap;max-width:calc(100% - 36px);gap:10px 18px;padding:12px 16px;background:#f7f6eef0;border:1px solid #bfd3c9;border-radius:18px;box-shadow:0 6px 24px #102c3a26;}
+.campus-immersive .campus-controls strong{font-size:12px;}.campus-immersive .campus-controls p{font-size:11px;margin:4px 0 0;}
+.campus-immersive .campus-controls button{min-height:36px;font-size:11px;padding:8px 13px;}
+.campus-immersive-presence{font-size:11px;color:#356a55;}
+.campus-immersive .campus-notice{position:absolute;top:128px;left:18px;z-index:4;max-width: min(360px,calc(100% - 36px));padding:12px 16px;border-radius:14px;background:#fff8e8ed;color:#473f2c;pointer-events:none;}
+@media(max-width:700px){
+ .campus-immersive-brand{display:none;}
+ .campus-immersive-nav{left:10px;max-width:calc(100% - 150px);}
+ .campus-shell button.campus-fullscreen-button{right:10px;}
+ .campus-immersive .campus-stage-caption{display:none;}
+ .campus-immersive [data-campus-panel]{right:12px;top:126px;max-width:calc(100% - 24px);width:360px;max-height:calc(100dvh - 260px);padding:20px;}
+ .campus-immersive button.campus-panel-close{right:18px;top:132px;}
+ .campus-immersive .campus-controls{left:12px;right:12px;max-width:none;padding:10px 12px;gap:8px;justify-content:space-between;}
+ .campus-immersive .campus-controls .campus-actions{margin-left:auto;}
+ .campus-immersive .campus-controls>div:first-of-type{width:calc(100% - 65px);order:-1;}
+ .campus-immersive .campus-controls .campus-actions{width:100%;justify-content:flex-end;}
+ .campus-immersive .campus-interact{bottom:178px;font-size:12px;}
+ .campus-immersive .cube-look-hint{bottom:146px;}
+}
+@media(max-height:520px){
+ .campus-immersive .campus-controls>div:first-of-type,.campus-immersive-presence,.campus-immersive .cube-look-hint{display:none;}
+ .campus-immersive [data-campus-panel]{top:120px;max-height:calc(100dvh - 195px);}
+ .campus-immersive .campus-interact{left:auto;right:14px;bottom:18px;transform:none;max-width:40%;}
+}
