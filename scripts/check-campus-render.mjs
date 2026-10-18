@@ -8,6 +8,7 @@ import { build } from "esbuild";
 import { chromium } from "@playwright/test";
 
 const directory = await mkdtemp(join(tmpdir(), "campus-render-"));
+const slowDevice=process.argv.includes("--slow-device");
 const fiber = resolve("node_modules/@react-three/fiber/dist/react-three-fiber.esm.js");
 await build({
   stdin: { contents: `import React,{useState,useEffect} from 'react';
@@ -29,7 +30,7 @@ await build({
       export * from ${JSON.stringify(fiber)};
       function Probe(){useFrame(({scene,gl,camera},delta)=>{
         let avatar;scene.traverse(o=>{if(o.geometry?.type==='RingGeometry')avatar=o.parent});
-        if(avatar){window.sceneFrames??=[];window.sceneFrames.push({t:performance.now(),ms:delta*1000,x:avatar.position.x,dpr:gl.getPixelRatio(),cameraX:camera.position.x,cameraY:camera.position.y,cameraZ:camera.position.z,calls:gl.info.render.calls,triangles:gl.info.render.triangles,geometries:gl.info.memory.geometries});}
+        if(avatar){window.sceneFrames??=[];window.sceneFrames.push({t:performance.now(),ms:delta*1000,x:avatar.position.x,dpr:gl.getPixelRatio(),shadows:gl.shadowMap.enabled,cameraX:camera.position.x,cameraY:camera.position.y,cameraZ:camera.position.z,calls:gl.info.render.calls,triangles:gl.info.render.triangles,geometries:gl.info.memory.geometries});}
         window.sceneReady=true;
       });return null;}
       export function Canvas(props){return <Base {...props}>{props.children}<Probe/></Base>}
@@ -38,14 +39,18 @@ await build({
 });
 const http = createServer(async (req, res) => {
   if (["/app.js","/app.css"].includes(req.url)) { res.setHeader("content-type",req.url.endsWith("css")?"text/css":"text/javascript");res.end(await readFile(join(directory, req.url.slice(1)))); }
-  else res.end('<!doctype html><link rel="stylesheet" href="/app.css"><div id="root" style="width:900px;height:600px"></div><script type="module" src="/app.js"></script>');
+  else res.end(`<!doctype html><link rel="stylesheet" href="/app.css"><div id="root" style="width:${slowDevice?1800:900}px;height:${slowDevice?1200:600}px"></div><script type="module" src="/app.js"></script>`);
 });
 let browser;
 try {
   await new Promise((resolve) => http.listen(0, "127.0.0.1", resolve));
   browser = await chromium.launch({ executablePath: process.env.CAMPUS_CHROMIUM_PATH || undefined, headless: true,
     args: ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader"] });
-  const page = await browser.newPage({ viewport: { width: 1000, height: 740 }, deviceScaleFactor: 2 });
+  const page = await browser.newPage({ viewport: slowDevice?{width:2000,height:1480}:{ width: 1000, height: 740 }, deviceScaleFactor: 2 });
+  if(slowDevice){
+    const session=await page.context().newCDPSession(page);
+    await session.send("Emulation.setCPUThrottlingRate",{rate:8});
+  }
   if(process.argv.includes("--reduced-motion"))await page.emulateMedia({reducedMotion:"reduce"});
   const errors = [];page.on("pageerror", e => errors.push(e.message));
   await page.goto(`http://127.0.0.1:${http.address().port}`);
@@ -72,10 +77,13 @@ try {
     distinctPositions: new Set(walking.map(f=>f.x.toFixed(4))).size,
     p95FrameGapMs: Math.round(gaps[Math.ceil(gaps.length*.95)-1]),
     minimumPixelRatio: Math.min(...frames.map(f=>f.dpr)),
+    decorativeShadowsDisabled: frames.some(f=>!f.shadows),
     maxDrawCalls: Math.max(...frames.map(f=>f.calls)), maxGeometries: Math.max(...frames.map(f=>f.geometries)),
     finalX: frames.at(-1).x, browserErrors: errors, evidence: join(directory, "evidence.json") };
   await writeFile(result.evidence, JSON.stringify(result, null, 2));console.log(JSON.stringify(result,null,2));
   assert.deepEqual(errors, []);
+  if(slowDevice)assert(result.minimumPixelRatio<1,"High-pixel-load, CPU-throttled probe must exercise adaptive rendering");
+  if(result.minimumPixelRatio<1)assert(result.decorativeShadowsDisabled,"Slow-device fallback must disable decorative shadows");
   if(process.argv.includes("--reduced-motion")){
     assert(frames.every(f=>Math.hypot(f.cameraX-frames[0].cameraX,f.cameraY-frames[0].cameraY,f.cameraZ-frames[0].cameraZ)<.0001),"Reduced motion must keep the selected-place camera anchored");
     result.reducedMotionCameraAnchored=true;
