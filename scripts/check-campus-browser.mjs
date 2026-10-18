@@ -367,11 +367,19 @@ try {
     }
     result.checks.push("Pointer taps and native keyboard button activation move a bounded step and stop");
     const stage = a.getByRole("region", { name: /3D school/ });
-    await stage.focus();
-    await a.keyboard.down("ArrowUp");
-    await new Promise((resolve) => setTimeout(resolve, 1400));
-    await a.keyboard.up("ArrowUp");
-    if ((await player()).z > 0) throw new Error("Keyboard movement did not reach the desks");
+    // Observe authoritative arrival, rather than assuming CI delivers a fixed
+    // number of input ticks during a wall-clock sleep. Speed is tested in SQL/JS.
+    const walkForwardTo = async (id, targetZ) => {
+      await stage.focus();await a.keyboard.down("ArrowUp");
+      const deadline = Date.now() + 8000;
+      try {
+        while ((await player(id)).z > targetZ) {
+          if (Date.now() > deadline) throw new Error("Held keyboard input did not reach the desk within eight seconds");
+          await new Promise(resolve => setTimeout(resolve, 100));
+        }
+      } finally { await a.keyboard.up("ArrowUp"); }
+    };
+    await walkForwardTo(firstId, -1.2);
     await a.getByRole("button", { name: "Desk 2 Sit →", exact: true }).click();
     await a
       .getByRole("button", { name: "Open Study Hub", exact: true })
@@ -586,7 +594,8 @@ try {
     await a.locator(".school-map-place").filter({ hasText: "Computer lab" }).click();
     await a.getByRole("button", { name: "Walk here →", exact: true }).click();
     await a.getByText("Arrived at Computer lab.", { exact: true }).waitFor({ timeout: 35000 });
-    await stage.focus();await a.keyboard.down("ArrowUp");await new Promise(resolve=>setTimeout(resolve,1400));await a.keyboard.up("ArrowUp");
+    const travelId = (await aContext.cookies()).find(cookie => cookie.name === "fixture").value;
+    await walkForwardTo(travelId, -2.3);
     await a.getByRole("button", { name: "Lab computer 2 Sit →", exact: true }).click();
     await a.waitForFunction(()=>!Array.from(document.querySelectorAll("button")).find(e=>e.textContent==="Open Study Hub")?.disabled);
     await a.getByRole("button", { name: "Open Study Hub", exact: true }).click();
