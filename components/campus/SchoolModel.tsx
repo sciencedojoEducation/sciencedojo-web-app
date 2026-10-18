@@ -1,11 +1,12 @@
 "use client";
-import {memo,useLayoutEffect,useRef} from "react";
-import {Color,Object3D,type InstancedMesh} from "three";
+import {memo,useLayoutEffect,useMemo,useRef} from "react";
+import {BoxGeometry,Color,MeshStandardMaterial,Object3D,Sphere,type InstancedMesh} from "three";
 import {SCHOOL_PLACES,STUDY_SEATS,type Place} from "@/lib/campus/school-layout";
 type V=[number,number,number];
-type Box={position:V;size:V;colour:string;seat?:number};
+type Box={position:V;size:V;colour:string;seat?:number;section:number};
 const boxes:Box[]=[], trees:{x:number;z:number;scale:number}[]=[];
-const box=(position:V,size:V,colour:string,seat?:number)=>boxes.push({position,size,colour,seat});
+let section=0;
+const box=(position:V,size:V,colour:string,seat?:number)=>boxes.push({position,size,colour,seat,section});
 box([0,-.5,1],[134,.8,88],"#9fb797");
 box([0,-.05,1],[130,.15,84],"#c6d1b9");
 // A connected school: broad east/west concourses and north/south corridors.
@@ -126,8 +127,9 @@ function room(p:Place){
   }
  }
 }
-SCHOOL_PLACES.forEach(room);
+SCHOOL_PLACES.forEach((place,i)=>{section=i+1;room(place);});
 STUDY_SEATS.forEach((seat,i)=>{
+ section=SCHOOL_PLACES.findIndex(p=>p.id===seat.place)+1;
  const at=(x:number,y:number,z:number):V=>[seat.x+x,y,seat.z+z];const laptop=i===2||i===3||i>=8;
  box(at(0,1.1,-.7),[2.3,.15,1.3],"#c5ac83");for(const x of [-.9,.9])box(at(x,.5,-.7),[.12,1,.9],"#55766b");
  box(at(0,laptop?1.45:1.58,-1),[1.05,laptop?.5:.67,.1],"#264c49");
@@ -135,16 +137,23 @@ STUDY_SEATS.forEach((seat,i)=>{
  box(at(0,1.21,-.65),[laptop?1.12:.8,.06,laptop?.7:.26],"#546c69");
  box(at(0,.55,0),[.8,.15,.8],"#53877b",i);box(at(0,.95,.38),[.8,.85,.12],"#53877b");
 });
+section=0;
 // Trees frame the school, leaving the connected paths open.
 for(const x of [-63,63])for(const z of [-37,-20,-7,17,38])trees.push({x,z,scale:1.7});
 for(const side of [-1,1]){box([side*5,2.2,40],[.7,4.4,.7],"#487469");box([side*2.7,3.9,40],[4.6,.35,.5],"#487469");}
 
+const batches=Array.from({length:SCHOOL_PLACES.length+1},(_,i)=>boxes.filter(b=>b.section===i));
 const SchoolModel=memo(function SchoolModel({occupied}:{occupied:number}){
- const mesh=useRef<InstancedMesh>(null),trunks=useRef<InstancedMesh>(null),leaves=useRef<InstancedMesh>(null);
+ const meshes=useRef<(InstancedMesh|null)[]>([]),trunks=useRef<InstancedMesh>(null),leaves=useRef<InstancedMesh>(null);
+ const geometry=useMemo(()=>new BoxGeometry(1,1,1),[]),material=useMemo(()=>new MeshStandardMaterial({roughness:.85}),[]);
  useLayoutEffect(()=>{
   const transform=new Object3D();
-  boxes.forEach((b,i)=>{transform.position.set(...b.position);transform.scale.set(...b.size);transform.updateMatrix();mesh.current!.setMatrixAt(i,transform.matrix);});
-  mesh.current!.instanceMatrix.needsUpdate=true;mesh.current!.computeBoundingSphere();
+  batches.forEach((batch,section)=>{
+   const mesh=meshes.current[section]!;
+   batch.forEach((b,i)=>{transform.position.set(...b.position);transform.scale.set(...b.size);transform.updateMatrix();mesh.setMatrixAt(i,transform.matrix);});
+   mesh.instanceMatrix.needsUpdate=true;mesh.computeBoundingBox();
+   mesh.boundingSphere=mesh.boundingBox!.getBoundingSphere(new Sphere());
+  });
   trees.forEach((tree,i)=>{
    transform.position.set(tree.x,.65*tree.scale,tree.z);transform.scale.set(tree.scale,tree.scale,tree.scale);transform.updateMatrix();trunks.current!.setMatrixAt(i,transform.matrix);
    transform.position.set(tree.x,2.1*tree.scale,tree.z);transform.updateMatrix();leaves.current!.setMatrixAt(i,transform.matrix);
@@ -152,15 +161,18 @@ const SchoolModel=memo(function SchoolModel({occupied}:{occupied:number}){
   for(const m of [trunks.current!,leaves.current!]){m.instanceMatrix.needsUpdate=true;m.computeBoundingSphere();}
  },[]);
  useLayoutEffect(()=>{
-  const colour=new Color();boxes.forEach((b,i)=>mesh.current!.setColorAt(i,colour.set(b.seat!==undefined&&(occupied&(1<<b.seat))?"#ae8965":b.colour)));
-  mesh.current!.instanceColor!.needsUpdate=true;
+  const colour=new Color();batches.forEach((batch,section)=>{
+   const mesh=meshes.current[section]!;
+   batch.forEach((b,i)=>mesh.setColorAt(i,colour.set(b.seat!==undefined&&(occupied&(1<<b.seat))?"#ae8965":b.colour)));
+   mesh.instanceColor!.needsUpdate=true;
+  });
  },[occupied]);
  return <>
   <color attach="background" args={["#d7e2d8"]}/><fog attach="fog" args={["#d7e2d8",200,400]}/>
   <ambientLight intensity={1.5}/><directionalLight position={[25,65,35]} intensity={2.4} castShadow shadow-mapSize={[2048,2048]}
     shadow-camera-left={-80} shadow-camera-right={80} shadow-camera-top={70} shadow-camera-bottom={-70} shadow-camera-far={180}
     shadow-autoUpdate={false} shadow-needsUpdate={true}/>
-  <instancedMesh ref={mesh} args={[undefined,undefined,boxes.length]} castShadow receiveShadow><boxGeometry args={[1,1,1]}/><meshStandardMaterial roughness={.85}/></instancedMesh>
+  {batches.map((batch,i)=><instancedMesh key={i} ref={el=>{meshes.current[i]=el;}} args={[geometry,material,batch.length]} castShadow receiveShadow/>)}
   <instancedMesh ref={trunks} args={[undefined,undefined,trees.length]} castShadow><cylinderGeometry args={[.38,.5,1.3,7]}/><meshStandardMaterial color="#a28465"/></instancedMesh>
   <instancedMesh ref={leaves} args={[undefined,undefined,trees.length]} castShadow><icosahedronGeometry args={[1.35,1]}/><meshStandardMaterial color="#799c75"/></instancedMesh>
  </>;

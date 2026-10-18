@@ -29,7 +29,7 @@ await build({
       export * from ${JSON.stringify(fiber)};
       function Probe(){useFrame(({scene,gl,camera},delta)=>{
         let avatar;scene.traverse(o=>{if(o.geometry?.type==='RingGeometry')avatar=o.parent});
-        if(avatar){window.sceneFrames??=[];window.sceneFrames.push({t:performance.now(),ms:delta*1000,x:avatar.position.x,cameraX:camera.position.x,cameraY:camera.position.y,cameraZ:camera.position.z,calls:gl.info.render.calls,triangles:gl.info.render.triangles,geometries:gl.info.memory.geometries});}
+        if(avatar){window.sceneFrames??=[];window.sceneFrames.push({t:performance.now(),ms:delta*1000,x:avatar.position.x,dpr:gl.getPixelRatio(),cameraX:camera.position.x,cameraY:camera.position.y,cameraZ:camera.position.z,calls:gl.info.render.calls,triangles:gl.info.render.triangles,geometries:gl.info.memory.geometries});}
         window.sceneReady=true;
       });return null;}
       export function Canvas(props){return <Base {...props}>{props.children}<Probe/></Base>}
@@ -71,8 +71,10 @@ try {
     renderedWalkingFrames: walking.length, changingPositionFrames: changed.length,
     distinctPositions: new Set(walking.map(f=>f.x.toFixed(4))).size,
     p95FrameGapMs: Math.round(gaps[Math.ceil(gaps.length*.95)-1]),
+    minimumPixelRatio: Math.min(...frames.map(f=>f.dpr)),
     maxDrawCalls: Math.max(...frames.map(f=>f.calls)), maxGeometries: Math.max(...frames.map(f=>f.geometries)),
     finalX: frames.at(-1).x, browserErrors: errors, evidence: join(directory, "evidence.json") };
+  await writeFile(result.evidence, JSON.stringify(result, null, 2));console.log(JSON.stringify(result,null,2));
   assert.deepEqual(errors, []);
   if(process.argv.includes("--reduced-motion")){
     assert(frames.every(f=>Math.hypot(f.cameraX-frames[0].cameraX,f.cameraY-frames[0].cameraY,f.cameraZ-frames[0].cameraZ)<.0001),"Reduced motion must keep the selected-place camera anchored");
@@ -87,5 +89,5 @@ try {
   await page.screenshot({ path: join(directory, "scene.png") });
   await page.evaluate(()=>window.showOverview());await page.waitForTimeout(2500);
   await page.screenshot({path:join(directory,"whole-school.png")});
-  await writeFile(result.evidence, JSON.stringify(result, null, 2));console.log(JSON.stringify(result,null,2));
+  await writeFile(result.evidence, JSON.stringify(result, null, 2));
 } finally { await browser?.close();http.closeAllConnections();await new Promise(r=>http.close(r)); }

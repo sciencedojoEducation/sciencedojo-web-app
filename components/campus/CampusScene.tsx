@@ -1,6 +1,6 @@
 "use client";
 import {Canvas,useFrame,useThree} from "@react-three/fiber";
-import {useCallback,useEffect,useLayoutEffect,useMemo,useRef} from "react";
+import {useCallback,useEffect,useLayoutEffect,useMemo,useRef,useState} from "react";
 import {Vector3,type Group} from "three";
 import {AVATAR_COLOURS,SEATS,type Player,type Snapshot} from "@/lib/campus/protocol";
 import {SCHOOL_PLACES} from "@/lib/campus/school-layout";
@@ -54,23 +54,35 @@ function Labels({elements,view}:{elements:Map<string,HTMLSpanElement>;view:Schoo
    point.project(camera);const x=(point.x+1)*size.width/2,y=(1-point.y)*size.height/2;
    const visible=point.z>-1&&point.z<1&&x>0&&x<size.width&&y>0&&y<size.height&&(view==='overview'||near);
    const display=visible?'block':'none';if(el.style.display!==display)el.style.display=display;
-   if(visible)el.style.transform=`translate(${Math.round(x)}px,${Math.round(y)}px) translate(-50%,-50%)`;
+   if(visible){const transform=`translate(${Math.round(x)}px,${Math.round(y)}px) translate(-50%,-50%)`;if(el.style.transform!==transform)el.style.transform=transform;}
   }
  });return null;
 }
+function RenderBudget({low,onSlow}:{low:boolean;onSlow:()=>void}){
+ const sample=useRef({average:1/60,elapsed:0,requested:false});
+ useFrame((_,delta)=>{
+  if(low||sample.current.requested)return;
+  if(delta>.5){sample.current.average=1/60;sample.current.elapsed=0;return;}
+  sample.current.average=sample.current.average*.85+delta*.15;sample.current.elapsed+=delta;
+  if(sample.current.elapsed>.9&&sample.current.average>.04){sample.current.requested=true;onSlow();}
+ });return null;
+}
 export default function CampusScene({snapshot,active,onUnavailable,view="follow",placeId="library"}:{snapshot:Snapshot;active:boolean;onUnavailable:()=>void;view?:SchoolView;placeId?:string}){
+ const [renderScale,setRenderScale]=useState(1);
+ const reduceResolution=useCallback(()=>setRenderScale(.65),[]);
  const focus=useRef({x:0,z:0}),elements=useMemo(()=>new Map<string,HTMLSpanElement>(),[]);
  const follow=useCallback((x:number,z:number)=>{focus.current.x=x;focus.current.z=z;},[]);
  useEffect(()=>{const canvas=document.createElement("canvas"),context=canvas.getContext("webgl2");if(!context)onUnavailable();else context.getExtension("WEBGL_lose_context")?.loseContext();},[onUnavailable]);
  const occupied=SEATS.reduce((mask,seat,i)=>mask|(snapshot.occupied.includes(seat.id)?1<<i:0),0);
  return <div className={`school-scene school-view-${view}`} style={{position:"relative",width:"100%",height:"100%"}}>
-  <Canvas shadows dpr={1} frameloop={active?"demand":"never"} camera={{fov:43,position:view==='overview'?[87,124,133]:[13,16,20],far:500}}
+  <Canvas shadows dpr={renderScale} frameloop={active?"demand":"never"} camera={{fov:43,position:view==='overview'?[87,124,133]:[13,16,20],far:500}}
     fallback={<p>3D is unavailable. You can open your courses directly.</p>}
     onCreated={({gl})=>gl.domElement.addEventListener("webglcontextlost",onUnavailable)}>
    <SchoolModel occupied={occupied}/>
    {snapshot.players.map(p=><Avatar key={p.id} player={p} self={p.id===snapshot.self} onPosition={follow}/>)}
    <Camera focus={focus} present={snapshot.players.some(p=>p.id===snapshot.self)} reducedMotion={typeof window!=="undefined"&&window.matchMedia("(prefers-reduced-motion: reduce)").matches} view={view} placeId={placeId}/>
    <Labels elements={elements} view={view}/>
+   <RenderBudget low={renderScale<1} onSlow={reduceResolution}/>
   </Canvas>
   <div className="school-signs" aria-hidden="true">{SCHOOL_PLACES.map(p=><span key={p.id} ref={el=>{if(el)elements.set(p.id,el);else elements.delete(p.id);}}>{p.name}</span>)}</div>
  </div>;
