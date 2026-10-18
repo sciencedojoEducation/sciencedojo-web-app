@@ -2,8 +2,10 @@ import { randomUUID } from "node:crypto";
 import type { WebSocket } from "ws";
 import { isInput, isSnapshot, SEATS, type Snapshot } from "./protocol.ts";
 import { hashTicket } from "./security.ts";
+import { SCHOOL_REVISION } from "./school-layout.ts";
 
 export type RuntimeResult = {
+  world_revision?: string;
   snapshot?: Snapshot;
   notice?: string | null;
   error?: string;
@@ -57,7 +59,7 @@ export function runVercelCampusSession(
     };
     const consume = (result: RuntimeResult, ready = false) => {
       if (closed) return;
-      if (result.ended || result.error || !isSnapshot(result.snapshot) || result.snapshot.self !== expectedCampus) {
+      if (result.ended || result.error || result.world_revision !== SCHOOL_REVISION || !isSnapshot(result.snapshot) || result.snapshot.self !== expectedCampus) {
         if (result.error === "Already connected in another tab." || result.error === "The library is full. Please try again later.")
           send("notice", result.error);
         end(4003);

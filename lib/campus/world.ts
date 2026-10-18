@@ -1,6 +1,6 @@
+import { walkSchool } from "./school-layout.ts";
 import {
   SEATS,
-  WORLD,
   isInput,
   type CampusIdentity,
   type Player,
@@ -64,15 +64,7 @@ export class CampusWorld {
     for (const [id, p] of this.players) {
       const input = this.inputs.get(id);
       if (!input || now - input.at > 350 || p.status !== "walking") continue;
-      const length = Math.max(1, Math.hypot(input.x, input.z));
-      p.x = Math.max(
-        WORLD.minX,
-        Math.min(WORLD.maxX, p.x + (input.x / length) * WORLD.speed * seconds),
-      );
-      p.z = Math.max(
-        WORLD.minZ,
-        Math.min(WORLD.maxZ, p.z + (input.z / length) * WORLD.speed * seconds),
-      );
+      Object.assign(p, walkSchool(p, input.x, input.z, seconds));
       if (input.x || input.z) p.rotation = Math.atan2(input.x, input.z);
     }
   }

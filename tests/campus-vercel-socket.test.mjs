@@ -207,3 +207,18 @@ test("liveness heartbeat removes an unresponsive peer despite continued database
     assert.equal(b.socket.readyState, WebSocket.OPEN, "native pong response keeps a healthy peer connected");
   } finally { await server.close(); await f.db.close(); }
 });
+
+
+test("expanded school fails closed against an older SQL world revision", { timeout: 10000 }, async () => {
+  const f = await runtimeFixture(1);
+  const server = await listener(f, {}, call => async args => {
+    const result = await call(args);
+    if (result.snapshot) delete result.world_revision;
+    return result;
+  });
+  try {
+    await assert.rejects(join(server, 1, await f.issueRaw(1)), /Admission denied/);
+    await Promise.all([...server.sessions]);
+    assert.equal((await f.db.query("SELECT count(*)::int AS n FROM campus_presence")).rows[0].n, 0);
+  } finally { await server.close();await f.db.close(); }
+});

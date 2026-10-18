@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { admissionLimiter } from "../services/campus-server/admission-limit.mjs";
 import { CampusWorld } from "../lib/campus/world.ts";
-import { isInput, isSnapshot, SEATS } from "../lib/campus/protocol.ts";
+import { isInput, isSnapshot, SEATS, WORLD } from "../lib/campus/protocol.ts";
 import {
   hashTicket,
   validServiceKey,
@@ -75,16 +75,16 @@ test("movement is authoritative, bounded, rate limited and rejects replay and ex
   assert.equal(world.input(p.id, { x: 1, z: 0, seq: 1 }, 0), false);
   const start = world.players.get(p.id).x;
   world.step(10, 100);
-  assert.equal(world.players.get(p.id).x, start + 0.3);
+  assert(Math.abs(world.players.get(p.id).x - start - .3) < 1e-9);
   world.step(1, 500);
-  assert.equal(world.players.get(p.id).x, start + 0.3, "stale movement stops");
+  assert(Math.abs(world.players.get(p.id).x - start - .3) < 1e-9, "stale movement stops");
   for (let i = 2; i < 80; i++) world.input(p.id, { x: 1, z: 0, seq: i }, 100);
   assert.equal(world.input(p.id, { x: 1, z: 0, seq: 100 }, 100), false);
   for (let i = 1; i <= 100; i++) {
     world.input(p.id, { x: 1, z: 1, seq: 100 + i }, i * 1000);
     world.step(0.1, i * 1000);
   }
-  assert.ok(world.players.get(p.id).x <= 9 && world.players.get(p.id).z <= 7);
+  assert.ok(world.players.get(p.id).x <= WORLD.maxX && world.players.get(p.id).z <= WORLD.maxZ);
 });
 test("seat race, study states, block filtering, copies, cleanup and no identity leakage", () => {
   const w = new CampusWorld(),

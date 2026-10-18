@@ -1,12 +1,8 @@
+import { SCHOOL_BOUNDS, STUDY_SEATS } from "./school-layout.ts";
 export const CAMPUS_NOTICE = "campus-adult-pilot-v1";
 export const CAMPUS_ROOM = "library";
-export const WORLD = { minX: -9, maxX: 9, minZ: -7, maxZ: 7, speed: 3 };
-export const SEATS = [
-  { id: "desk-1", x: -4.5, z: -3 },
-  { id: "desk-2", x: -1.5, z: -3 },
-  { id: "desk-3", x: 1.5, z: -3 },
-  { id: "desk-4", x: 4.5, z: -3 },
-] as const;
+export const WORLD = SCHOOL_BOUNDS;
+export const SEATS = STUDY_SEATS;
 export const AVATAR_COLOURS = [
   "#007f79",
   "#c88754",

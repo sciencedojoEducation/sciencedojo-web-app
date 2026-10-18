@@ -5,7 +5,7 @@ import { fixture, id } from "./course-pilot-fixture.mjs";
 export async function runtimeFixture(count = 2) {
   const f = await fixture();
   await f.db.exec("CREATE ROLE service_role BYPASSRLS");
-  for (const file of ["070_virtual_campus.sql", "071_campus_vercel_presence.sql"])
+  for (const file of ["070_virtual_campus.sql", "071_campus_vercel_presence.sql", "072_campus_school.sql"])
     await f.db.exec(await readFile(new URL(`../../sql/${file}`, import.meta.url), "utf8"));
   await f.db.query("INSERT INTO campus_staff(user_id) VALUES($1)", [id(15)]);
   await f.db.exec("UPDATE feature_flags SET enabled=true WHERE key='virtual_campus_enabled'");
