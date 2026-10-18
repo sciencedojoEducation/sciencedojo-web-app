@@ -31,8 +31,8 @@ await build({
       import React from 'react';import {Canvas as Base,useFrame} from ${JSON.stringify(fiber)};
       export * from ${JSON.stringify(fiber)};
       function Probe(){useFrame(({scene,gl,camera},delta)=>{
-        let avatar;scene.traverse(o=>{if(o.geometry?.type==='RingGeometry')avatar=o.parent});
-        if(avatar){window.sceneFrames??=[];window.sceneFrames.push({t:performance.now(),ms:delta*1000,x:avatar.position.x,dpr:gl.getPixelRatio(),shadows:gl.shadowMap.enabled,cameraX:camera.position.x,cameraY:camera.position.y,cameraZ:camera.position.z,calls:gl.info.render.calls,triangles:gl.info.render.triangles,geometries:gl.info.memory.geometries});}
+        let avatar,receivingShadows=false;scene.traverse(o=>{if(o.geometry?.type==='RingGeometry')avatar=o.parent;if(o.isMesh&&o.receiveShadow)receivingShadows=true;});
+        if(avatar){window.sceneFrames??=[];window.sceneFrames.push({t:performance.now(),ms:delta*1000,x:avatar.position.x,dpr:gl.getPixelRatio(),shadows:receivingShadows,shadowPipeline:gl.shadowMap.enabled,cameraX:camera.position.x,cameraY:camera.position.y,cameraZ:camera.position.z,calls:gl.info.render.calls,triangles:gl.info.render.triangles,geometries:gl.info.memory.geometries});}
         window.cubeDiagnostics={eye:camera.position.y,fov:camera.fov,selfVisible:avatar?.visible,
           stars:scene.getObjectByName('cube-stars')?.visible,moon:scene.getObjectByName('cube-moon')?.visible,
           sun:scene.getObjectByName('cube-sun')?.visible,envelope:scene.getObjectByName('cube-envelope')?.visible};
@@ -90,11 +90,13 @@ try {
     qualityTransitions: frames.filter((f,i)=>!i||f.dpr!==frames[i-1].dpr||f.shadows!==frames[i-1].shadows)
       .map(f=>({afterStartMs:Math.round(f.t-walk.started),pixelRatio:f.dpr,shadows:f.shadows})),
     decorativeShadowsDisabled: frames.some(f=>!f.shadows),
+    shadowPipelineStable: frames.every(f=>f.shadowPipeline),
     maxDrawCalls: Math.max(...frames.map(f=>f.calls)), maxGeometries: Math.max(...frames.map(f=>f.geometries)),
     finalX: frames.at(-1).x, browserErrors: errors, evidence: join(directory, "evidence.json") };
   await writeFile(result.evidence, JSON.stringify(result, null, 2));console.log(JSON.stringify(result,null,2));
   assert.deepEqual(errors, []);
   assert.equal(result.authoritativeTargetCount,20,"Probe must observe all twenty authoritative targets");
+  assert(result.shadowPipelineStable,"Adaptive quality must retain the cached shadow shader pipeline");
   if(slowDevice)assert(result.minimumPixelRatio<1,"High-pixel-load, CPU-throttled probe must exercise adaptive rendering");
   if(result.minimumPixelRatio<1)assert(result.decorativeShadowsDisabled,"Slow-device fallback must disable decorative shadows");
   if(process.argv.includes("--reduced-motion")){

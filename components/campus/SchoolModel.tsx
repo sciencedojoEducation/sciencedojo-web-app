@@ -148,7 +148,7 @@ for(const side of [-1,1]){box([side*5,2.2,40],[.7,4.4,.7],"#487469");box([side*2
 
 // Five contiguous school columns plus the global paths, sharing one geometry/material.
 const batches=Array.from({length:6},(_,i)=>boxes.filter(b=>b.section===0?i===0:(b.section-1)%5+1===i));
-const SchoolModel=memo(function SchoolModel({occupied}:{occupied:number}){
+const SchoolModel=memo(function SchoolModel({occupied,detailedShadows=true}:{occupied:number;detailedShadows?:boolean}){
  const glass=useRef<InstancedMesh>(null);
  const glassMaterial=useMemo(()=>new MeshBasicMaterial({color:"#a5dce5",transparent:true,opacity:.1,depthWrite:false}),[]);
  const meshes=useRef<(InstancedMesh|null)[]>([]),trunks=useRef<InstancedMesh>(null),leaves=useRef<InstancedMesh>(null);
@@ -178,7 +178,8 @@ const SchoolModel=memo(function SchoolModel({occupied}:{occupied:number}){
   });
  },[occupied]);
  return <>
-  {batches.map((batch,i)=><instancedMesh key={i} ref={el=>{meshes.current[i]=el;}} args={[geometry,material,batch.length]} castShadow receiveShadow/>)}
+  {/* Toggle the receiveShadow uniform, keeping the cached shader/map pipeline warm. */}
+  {batches.map((batch,i)=><instancedMesh key={i} ref={el=>{meshes.current[i]=el;}} args={[geometry,material,batch.length]} castShadow receiveShadow={detailedShadows}/>)}
   <instancedMesh ref={glass} args={[geometry,glassMaterial,glazing.length]} renderOrder={1}/>
   <instancedMesh ref={trunks} args={[undefined,undefined,trees.length]} castShadow><cylinderGeometry args={[.38,.5,1.3,7]}/><meshLambertMaterial color="#a28465"/></instancedMesh>
   <instancedMesh ref={leaves} args={[undefined,undefined,trees.length]} castShadow><icosahedronGeometry args={[1.35,1]}/><meshLambertMaterial color="#799c75"/></instancedMesh>

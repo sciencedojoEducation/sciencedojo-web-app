@@ -104,10 +104,10 @@ export default function CampusScene({snapshot,active,onUnavailable,view="follow"
    onPointerMove={event=>{const previous=dragRef.current;if(!previous||!interactive||!active)return;onLookChange?.(boundedLook({...angles,yaw:angles.yaw+(event.clientX-previous.x)*.006,pitch:angles.pitch-(event.clientY-previous.y)*.005},view));dragRef.current={x:event.clientX,y:event.clientY};}}
    onPointerUp={event=>{dragRef.current=null;if(event.currentTarget.hasPointerCapture(event.pointerId))event.currentTarget.releasePointerCapture(event.pointerId);}}
    onPointerCancel={()=>{dragRef.current=null;}} onLostPointerCapture={()=>{dragRef.current=null;}}>
-  <Canvas shadows={renderScale===1} dpr={renderScale} frameloop={active?"demand":"never"} camera={{fov:view==="first-person"?70:43,position:view==='exterior'?[215,92,245]:view==='overview'?[87,124,133]:[13,16,20],far:2200,near:.08}}
+  <Canvas shadows dpr={renderScale} frameloop={active?"demand":"never"} camera={{fov:view==="first-person"?70:43,position:view==='exterior'?[215,92,245]:view==='overview'?[87,124,133]:[13,16,20],far:2200,near:.08}}
     fallback={<p>3D is unavailable. You can open your courses directly.</p>}
     onCreated={({gl})=>gl.domElement.addEventListener("webglcontextlost",onUnavailable)}>
-   <CubeEnvironment hour={hour} cutaway={view==="overview"}/><SchoolModel occupied={occupied}/><CubeArchitecture cutaway={view==="overview"}/>
+   <CubeEnvironment hour={hour} cutaway={view==="overview"}/><SchoolModel occupied={occupied} detailedShadows={renderScale===1}/><CubeArchitecture cutaway={view==="overview"}/>
    {snapshot.players.map(p=><Avatar key={p.id} player={p} self={p.id===snapshot.self} onPosition={follow} activityRef={activityRef} hidden={view==="first-person"&&p.id===snapshot.self}/>)}
    <Camera focus={focus} present={snapshot.players.some(p=>p.id===snapshot.self)} reducedMotion={typeof window!=="undefined"&&window.matchMedia("(prefers-reduced-motion: reduce)").matches} view={view} placeId={placeId} activityRef={activityRef} angles={angles}/>
    <Labels elements={elements} view={view}/>
