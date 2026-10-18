@@ -114,7 +114,7 @@ function room(p:Place){
   box(at(0,.12,0),[16,.02,14],p.kind==='gym'?"#c89d6a":"#6b9b8d");
   for(const side of [-1,1]){box(at(side*8,.145,0),[.12,.03,14],"#f1e9d5");box(at(0,.145,side*7),[16,.03,.12],"#f1e9d5");
    box(at(0,1.9,side*7.5),[.2,3.8,.2],"#6c7d70");box(at(0,3.4,side*7),[2.5,1.5,.15],"#e9e7d9");
-   box(at(0,2.9,side*6.6),[1,.08,.8],"#bc8768");}
+   if(p.kind==='gym')box(at(0,2.9,side*6.6),[1,.08,.8],"#bc8768");}
   box(at(0,.145,0),[16,.03,.12],"#f1e9d5");
   for(const side of [-1,1]){box(at(side*5.5,.145,0),[.12,.01,5],"#f1e9d5");for(const z of [-2.5,2.5])box(at(side*6.7,.145,z),[2.6,.01,.12],"#f1e9d5");}
  }

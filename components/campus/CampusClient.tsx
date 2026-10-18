@@ -17,6 +17,8 @@ import { SCHOOL_PLACES, schoolPlaceAt, schoolRoute, type Point } from "@/lib/cam
 import {DEFAULT_LOOK,boundedLook,cameraDirection,clockLabel,schoolSky,type CameraLook,type SchoolView} from "@/lib/campus/cube-experience";
 import "./campus.css";
 import {useCampusFullscreen} from "./useCampusFullscreen";
+import BasketballHud from "./BasketballHud";
+import {HOOPS,COURT,onCourt,canTakeBasketball,basketballAim,currentShotPower,suggestedShot,type ShotControl} from "@/lib/campus/basketball";
 
 const subscribeClock=(notify:()=>void)=>{const timer=setInterval(notify,1000);return()=>clearInterval(timer);};
 const readLocalHour=()=>{const now=new Date();return now.getHours()+now.getMinutes()/60;};
@@ -76,6 +78,9 @@ export default function CampusClient({
   const rememberedLook=useRef<CameraLook>(DEFAULT_LOOK);
   const rememberLook=useCallback((next:CameraLook)=>{rememberedLook.current=next;cameraRef.current.yaw=next.yaw;},[]);
   const [usedDesk,setUsedDesk]=useState(false);
+  const [charging,setCharging]=useState(false),[shotPower,setShotPower]=useState(.55);
+  const [targetHoop,setTargetHoop]=useState<"north"|"south">("north");
+  const ballCharge=useRef<ShotControl>({started:null,power:.55});
   const lastInteraction=useRef(0);
   const [manualHour,setManualHour]=useState<number|null>(null);
   const liveHour=useSyncExternalStore(subscribeClock,readLocalHour,serverHour),hour=manualHour??liveHour;
@@ -114,6 +119,7 @@ export default function CampusClient({
     stepTimer.current = null;
     direction.current = { x: 0, z: 0 };
     navigation.current = null;setWalkingTo("");
+    ballCharge.current.started=null;setCharging(false);
   }, []);
   const {shell,button:fullscreenButton,immersive,enter:enterFullscreen,exit:exitFullscreen}=useCampusFullscreen(stopMovement);
   const [schoolPanel,setSchoolPanel]=useState<"map"|"sky"|"desk"|"people"|"controls"|null>(null);
@@ -167,6 +173,7 @@ export default function CampusClient({
       }
       next.onMessage<Snapshot>("snapshot", (data) => {
         latestSelf.current = data.players.find(p => p.id === data.self) ?? null;
+        if(data.basketball?.holder!==data.self&&ballCharge.current.started!==null){ballCharge.current.started=null;setCharging(false);}
         setSnapshot(data);
       });
       next.onMessage<string>("notice", (data) => setNotice(data));
@@ -280,11 +287,40 @@ export default function CampusClient({
   const nearbyDesk = self && !self.seat ? SEATS
     .filter(seat => !snapshot.occupied.includes(seat.id) && Math.hypot(self.x-seat.x,self.z-seat.z)<=2.1)
     .sort((a,b)=>Math.hypot(self.x-a.x,self.z-a.z)-Math.hypot(self.x-b.x,self.z-b.z))[0] : undefined;
-  const interactionLabel = self?.seat ? usedDesk ? "Stand up" : "Use computer" : nearbyDesk ? `Sit at ${nearbyDesk.name}` : "Move near a free study desk";
+  const ball=snapshot.basketball,mine=!!self&&ball?.holder===self.id;
+  const atCourt=!!self&&onCourt(self),takeBall=!!ball&&!!self&&canTakeBasketball(ball,self);
+  const setPower=(power:number)=>{ballCharge.current.power=power;setShotPower(power);};
+  const shootBall=(power=ballCharge.current.power)=>{
+    ballCharge.current.started=null;setCharging(false);
+    if(!connected||hub||!mine||!atCourt)return;
+    setPower(power);
+    send("basketball",{action:"shoot",...basketballAim(rememberedLook.current.yaw,rememberedLook.current.pitch),power});
+    stage.current?.focus();
+  };
+  const startShot=()=>{
+    if(!connected||hub||!mine||ballCharge.current.started!==null)return;
+    if(navigation.current){navigation.current=null;direction.current={x:0,z:0};setWalkingTo("");}
+    ballCharge.current.started=performance.now();setCharging(true);
+  };
+  const faceHoop=(side:"north"|"south")=>{
+    if(!self)return;
+    const hoop=HOOPS.find(h=>h.id===side)!;
+    setTargetHoop(side);
+    stopMovement();setView("first-person");
+    changeLook(boundedLook({...rememberedLook.current,yaw:Math.atan2(hoop.x-self.x,self.z-hoop.z),pitch:Math.atan2(COURT.rimY-1.67,Math.max(.1,Math.hypot(hoop.x-self.x,hoop.z-self.z)) )},"first-person"));
+    stage.current?.focus();
+  };
+  const courtInteraction=atCourt&&!!ball;
+  const interactionLabel = courtInteraction?(mine?charging?"Release E to shoot":"Hold E, release to shoot":takeBall?"Pick up basketball":ball.mode==="held"?"Ball in use · wait for a rebound":"Move near the basketball"):self?.seat ? usedDesk ? "Stand up" : "Use computer" : nearbyDesk ? `Sit at ${nearbyDesk.name}` : "Move near a free study desk";
   const interact = () => {
     if (!connected || hub || performance.now()-lastInteraction.current<400) return;
     lastInteraction.current=performance.now();
     stopMovement();
+    if(courtInteraction){
+      if(mine)shootBall();
+      else if(takeBall){send("basketball",{action:"take"});faceHoop(suggestedShot(self!).hoop.id);}
+      return;
+    }
     if (self?.seat) {
       if (usedDesk) { send("action","stand");setUsedDesk(false); }
       else openHub();
@@ -339,7 +375,7 @@ export default function CampusClient({
             tabIndex={0}
             ref={stage}
             role="region"
-            aria-label="3D school. Use arrow keys or WASD to walk. In First person, move the mouse to look. E interacts with a nearby desk. Escape releases the mouse. Tab to school controls."
+            aria-label="3D school. Use arrow keys or WASD to walk. In First person, move the mouse to look. E interacts with a nearby desk or basketball; hold and release E to shoot. Escape releases the mouse. Tab to school controls."
             onBlur={event => {
               if (event.relatedTarget !== event.currentTarget) {
                 stopMovement();
@@ -353,7 +389,7 @@ export default function CampusClient({
                 document.exitPointerLock?.();
                 return;
               }
-              if(event.key.toLowerCase()==="e"&&!event.altKey&&!event.ctrlKey&&!event.metaKey){event.preventDefault();if(!event.repeat)interact();return;}
+              if(event.key.toLowerCase()==="e"&&!event.altKey&&!event.ctrlKey&&!event.metaKey){event.preventDefault();if(!event.repeat){if(courtInteraction&&mine)startShot();else interact();}return;}
               if (!connected || self?.seat || hub) return;
               if (navigation.current) stopMovement();
               const key = event.key.toLowerCase();
@@ -376,6 +412,8 @@ export default function CampusClient({
               if (["arrowdown", "s"].includes(key)) direction.current.z = 1;
             }}
             onKeyUp={(event) => {
+              if(event.target!==event.currentTarget)return;
+              if(event.key.toLowerCase()==="e"&&ballCharge.current.started!==null){event.preventDefault();shootBall(currentShotPower(ballCharge.current,performance.now()));return;}
               if (
                 ["arrowleft", "a", "arrowright", "d"].includes(
                   event.key.toLowerCase(),
@@ -415,6 +453,9 @@ export default function CampusClient({
                   onLookChange={rememberLook}
                   canLock={connected}
                   onRelease={stopMovement}
+                  charge={ballCharge}
+                  charging={charging}
+                  shotPower={shotPower}
                 />
               </CanvasBoundary>
             )}
@@ -428,7 +469,13 @@ export default function CampusClient({
               <button className="secondary" onClick={() => openPanel("people")}>People &amp; safety</button>
               {walkingTo && <button className="secondary" onClick={stopMovement}>Stop walking</button>}
             </div>
-            {connected && !hub && <button className="campus-interact" disabled={!self?.seat&&!nearbyDesk} onClick={interact}><kbd>E</kbd> {interactionLabel}</button>}
+            {connected && !hub && <button className="campus-interact" disabled={courtInteraction?!mine&&!takeBall:!self?.seat&&!nearbyDesk}
+              onPointerDown={event=>{if(!mine)return;event.preventDefault();stage.current?.focus();event.currentTarget.setPointerCapture(event.pointerId);startShot();}}
+              onPointerUp={event=>{if(ballCharge.current.started!==null){shootBall(currentShotPower(ballCharge.current,performance.now()));if(event.currentTarget.hasPointerCapture(event.pointerId))event.currentTarget.releasePointerCapture(event.pointerId);}}}
+              onPointerCancel={()=>{ballCharge.current.started=null;setCharging(false);}}
+              onLostPointerCapture={()=>{if(ballCharge.current.started!==null){ballCharge.current.started=null;setCharging(false);}}}
+              onClick={event=>{if(mine){if(event.detail===0)shootBall();}else interact();}}><kbd>E</kbd> {interactionLabel}</button>}
+            {connected&&atCourt&&ball&&self&&!hub&&<BasketballHud ball={ball} self={self} charge={ballCharge} charging={charging} power={shotPower} target={targetHoop} onPower={setPower} onFace={faceHoop} onShoot={()=>shootBall()} onDrop={()=>{stopMovement();send("basketball",{action:"drop"});stage.current?.focus();}}/>}
             <div className="campus-stage-caption">
               THE CUBE / {view === "exterior"?"GLASS. NATURE. POSSIBILITY.":view === "overview" ? "WHOLE SCHOOL" : view === "place" ? selected.name.toUpperCase() : (currentPlace?.name ?? "Ground campus").toUpperCase()}
               <span>{view === "exterior"?"A scientific school beneath one transparent sky.":view === "overview" ? "Choose a place on the map below." : "Connected places. Shared learning."}</span>
@@ -486,7 +533,9 @@ export default function CampusClient({
                 returning to school, E stands up. In First person, move the mouse
                 to look; click the scene for continuous mouse look. Escape stops
                 walking and releases the mouse. Touch users can drag to look.
-                All actions also have visible buttons.
+                On the sports court, E picks up the basketball. Aim at a hoop,
+                hold E to charge and release to shoot. The dotted arc and power
+                guide help you line up shots. All actions also have visible buttons.
               </p>
               <div className="campus-direction-pad">
                 {[

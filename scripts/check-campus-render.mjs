@@ -13,15 +13,19 @@ const fiber = resolve("node_modules/@react-three/fiber/dist/react-three-fiber.es
 await build({
   stdin: { contents: `import React,{useState,useEffect} from 'react';
     import './components/campus/campus.css';import {createRoot} from 'react-dom/client';import Scene from './components/campus/CampusScene';
+    import {createBasketball,basketballAction,advanceBasketball,basketballSnapshot,basketballAim,suggestedShot} from './lib/campus/basketball';
     const player={id:'40000000-0000-0000-0000-000000000001',pseudonym:'Quiet Maple aaaa01',colour:0,x:-2,z:4,rotation:0,status:'walking',seat:null};
     const unavailable=()=>{window.noWebgl=true};
-    function App(){const [x,setX]=useState(-2),[z,setZ]=useState(4),[view,setView]=useState("follow"),[hour,setHour]=useState(12),[active,setActive]=useState(true),[look,setLook]=useState({yaw:0,pitch:.55,distance:36});useEffect(()=>{window.showOverview=()=>setView("overview");
+    function App(){const [x,setX]=useState(-2),[z,setZ]=useState(4),[view,setView]=useState("follow"),[hour,setHour]=useState(12),[active,setActive]=useState(true),[ball,setBall]=useState(undefined),[look,setLook]=useState({yaw:0,pitch:.55,distance:36});useEffect(()=>{window.showOverview=()=>setView("overview");
       window.showExterior=()=>{setView("exterior");setHour(12)};window.showNight=()=>setHour(22);window.pauseScene=()=>setActive(false);window.resumeScene=()=>setActive(true);
       window.showFirst=()=>{setZ(26);setView("first-person");setLook({yaw:-.64,pitch:.72,distance:36})};
+      const courtPlayer={...player,x:52,z:0};let courtBall;
+      window.showCourt=()=>{setX(52);setZ(0);setHour(12);setView('first-person');const aim=suggestedShot(courtPlayer);setLook({yaw:aim.yaw,pitch:aim.pitch,distance:36});courtBall=basketballAction(createBasketball(performance.now()),courtPlayer,{action:'take'},performance.now());setBall(basketballSnapshot(courtBall,[courtPlayer]));};
+      window.shootCourt=()=>{const aim=suggestedShot(courtPlayer);window.courtFrames=[];window.courtCapture=true;courtBall=basketballAction(courtBall,courtPlayer,{action:'shoot',...basketballAim(aim.yaw,aim.pitch),power:aim.power},performance.now());setBall(basketballSnapshot(courtBall,[courtPlayer]));const started=performance.now();const timer=setInterval(()=>{courtBall=advanceBasketball(courtBall,[courtPlayer],performance.now());setBall(basketballSnapshot(courtBall,[courtPlayer]));if(courtBall.north>0)window.courtScored=true;if(performance.now()-started>3500)clearInterval(timer);},100);};
       window.startWalk=()=>{window.sceneFrames=[];window.walkStartedAt=performance.now();window.walkArrivals=[];const gaps=[120,280,160,240,140,260,180,220];let i=0,elapsed=0;
         const step=()=>{const gap=gaps[i%gaps.length];setTimeout(()=>{elapsed+=gap;setX(-2+elapsed*.0015);
           window.walkArrivals.push(performance.now());if(++i===20){window.walkDoneAt=performance.now();window.walkDone=true;}else step();},gap);};step();};
-    },[]);return <Scene snapshot={{self:player.id,players:[{...player,x,z}],occupied:[]}} active={active} view={view} hour={hour} look={look} onUnavailable={unavailable}/>;}
+    },[]);return <Scene snapshot={{self:player.id,players:[{...player,x,z}],occupied:[],...(ball?{basketball:ball}:{})}} active={active} view={view} hour={hour} look={look} onUnavailable={unavailable}/>;}
     createRoot(document.getElementById('root')).render(<App/>);`, loader: "tsx", resolveDir: process.cwd() },
   bundle: true, platform: "browser", format: "esm", jsx: "automatic",
   outfile: join(directory, "app.js"), define: { "process.env.NODE_ENV": '"production"' },
@@ -31,12 +35,16 @@ await build({
       import React from 'react';import {Canvas as Base,useFrame} from ${JSON.stringify(fiber)};
       export * from ${JSON.stringify(fiber)};
       function Probe(){useFrame(({scene,gl,camera},delta)=>{
-        let avatar,receivingShadows=false;scene.traverse(o=>{if(o.geometry?.type==='RingGeometry')avatar=o.parent;if(o.isMesh&&o.receiveShadow)receivingShadows=true;});
+        const avatar=scene.getObjectByName('campus-self-avatar');let receivingShadows=false;scene.traverse(o=>{if(o.isMesh&&o.receiveShadow)receivingShadows=true;});
         if(avatar){window.sceneFrames??=[];window.sceneFrames.push({t:performance.now(),ms:delta*1000,x:avatar.position.x,dpr:gl.getPixelRatio(),shadows:receivingShadows,shadowPipeline:gl.shadowMap.enabled,cameraX:camera.position.x,cameraY:camera.position.y,cameraZ:camera.position.z,calls:gl.info.render.calls,triangles:gl.info.render.triangles,geometries:gl.info.memory.geometries});}
         window.cameraQuaternion=camera.quaternion.toArray();
         window.cubeDiagnostics={eye:camera.position.y,fov:camera.fov,selfVisible:avatar?.visible,
           stars:scene.getObjectByName('cube-stars')?.visible,moon:scene.getObjectByName('cube-moon')?.visible,
           sun:scene.getObjectByName('cube-sun')?.visible,envelope:scene.getObjectByName('cube-envelope')?.visible};
+        const ball=scene.getObjectByName('basketball'),guide=scene.getObjectByName('basketball-shot-guide');
+        const ballProjection=ball?.position.clone().project(camera);
+        window.courtDiagnostics={foregroundVisible:!!ballProjection&&Math.abs(ballProjection.x)<1&&Math.abs(ballProjection.y)<1&&ballProjection.z>-1&&ballProjection.z<1,rims:scene.getObjectByName('basketball-rims')?.count,nets:scene.getObjectByName('basketball-nets')?.count,visible:ball?.visible,guideVisible:guide?.visible,guidePoints:guide?.count};
+        if(window.courtCapture&&ball){window.courtFrames??=[];window.courtFrames.push({t:performance.now(),x:ball.position.x,y:ball.position.y,z:ball.position.z,calls:gl.info.render.calls});}
         window.sceneReady=true;
       });return null;}
       export function Canvas(props){return <Base {...props} onCreated={state=>{
@@ -170,6 +178,20 @@ try {
   assert.equal(await page.evaluate(()=>document.pointerLockElement),null);
   assert.deepEqual(errors,[],"Mouse-lock denial must retain hover look without uncaught errors");
   result.mouseLook={hover:true,lockedRelativeMovement:true,escapeReleaseAndPause:true,hubPauseRelease:true,viewChangeRelease:true,deniedLockHoverFallback:true};
-  await writeFile(result.evidence, JSON.stringify(result, null, 2));
+  await page.evaluate(()=>window.showCourt());
+  await page.waitForFunction(()=>window.courtDiagnostics?.guideVisible&&window.courtDiagnostics.guidePoints>5);
+  await page.waitForTimeout(600);
+  const court=await page.evaluate(()=>window.courtDiagnostics);
+  assert.equal(court.rims,2);assert.equal(court.nets,2);assert(court.visible&&court.foregroundVisible&&court.guideVisible&&court.guidePoints<=24,'Actual court must render ball, two real rims/nets and a bounded local shot guide');
+  await page.screenshot({path:join(directory,'basketball-court-aim.png')});
+  await page.evaluate(()=>window.shootCourt());
+  await page.waitForFunction(()=>window.courtScored,undefined,{timeout:7000});await page.waitForTimeout(450);
+  const ballFrames=await page.evaluate(()=>window.courtFrames);
+  const ballPositions=new Set(ballFrames.map(f=>[f.x,f.y,f.z].map(n=>n.toFixed(3)).join(','))).size;
+  const courtCalls=Math.max(...ballFrames.map(f=>f.calls));
+  assert(ballPositions>12,'Ball flight must render intermediate confirmed positions');assert(courtCalls<40,'Playable court exceeded the existing draw-call budget');
+  assert.deepEqual(errors,[],'Playable court must not introduce browser errors');
+  result.basketballRendering={rims:2,nets:2,firstPersonHeldBallVisible:true,localTrajectory:true,physicalBasket:true,distinctBallPositions:ballPositions,maxDrawCalls:courtCalls,reducedMotion:process.argv.includes('--reduced-motion')};
+  await page.screenshot({path:join(directory,'basketball-court-flight.png')});
   await writeFile(result.evidence, JSON.stringify(result, null, 2));
 } finally { await browser?.close();http.closeAllConnections();await new Promise(r=>http.close(r)); }

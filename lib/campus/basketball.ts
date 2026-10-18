@@ -88,14 +88,15 @@ export function aimDirection(yaw: number, pitch: number) {
 }
 /** Basketball is lofted above the sight line, so players can keep the rim in view. */
 export function basketballAim(yaw: number, pitch: number) { return aimDirection(yaw, clamp(.75 + pitch, -.25, 1.4)); }
-export function suggestedShot(p: {x: number; z: number}, eye = 1.67) {
-  const hoop = [...HOOPS].sort((a,b) => Math.hypot(a.x-p.x,a.z-p.z)-Math.hypot(b.x-p.x,b.z-p.z))[0];
+export function suggestedShot(p: {x: number; z: number}, eye = 1.67, target?: HoopId) {
+  const hoop = HOOPS.find(h=>h.id===target) ?? [...HOOPS].sort((a,b) => Math.hypot(a.x-p.x,a.z-p.z)-Math.hypot(b.x-p.x,b.z-p.z))[0];
   const distance = Math.hypot(hoop.x-p.x,hoop.z-p.z), yaw = Math.atan2(hoop.x-p.x,p.z-hoop.z);
   const pitch = Math.atan2(COURT.rimY-eye,Math.max(.1,distance)), angle = clamp(.75+pitch,-.25,1.4);
   const d = distance-Math.cos(angle)*.45, dy = COURT.rimY-(1.55+Math.sin(angle)*.45);
   const denominator = 2*Math.cos(angle)**2*(d*Math.tan(angle)-dy);
   const speed = denominator>0?Math.sqrt(COURT.gravity*d*d/denominator):13;
-  return {hoop,yaw,pitch,power:clamp((speed-4)/9,.12,1)};
+  const clear = distance >= 1.5 && (hoop.id === "north" ? p.z > hoop.z + .8 : p.z < hoop.z - .8);
+  return {hoop,yaw,pitch,power:clamp((speed-4)/9,.12,1),clear};
 }
 export type ShotControl = { started: number | null; power: number };
 export function currentShotPower(control: ShotControl, now: number) { return control.started === null ? control.power : chargePower(control.started, now); }
@@ -176,7 +177,7 @@ export function advanceBasketball(b: BasketballState, players: readonly CourtPla
   return next;
 }
 export function basketballAction(b: BasketballState, actor: CourtPlayer | undefined, command: unknown, now: number): BasketballState | null {
-  if (!actor || !eligible(actor) || !isBasketballCommand(command) || now - b.actionAt < 250) return null;
+  if (!actor || !eligible(actor) || !isBasketballCommand(command) || (command.action === "take" && now - b.actionAt < 250)) return null;
   const next = { ...b, at: now, actionAt: now };
   if (command.action === "take") {
     if (!canTakeBasketball(b, actor)) return null;

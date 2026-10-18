@@ -36,7 +36,9 @@ test('one reachable ball can be held; theft, distant/seated/off-court and replay
  const held=basketballAction(initial,a,{action:'take'},1000);assert.equal(held.holder,a.id);
  assert.equal(basketballAction(held,b,{action:'take'},1500),null);
  assert.equal(basketballAction(held,b,shotAt(b),1500),null);
- assert.equal(basketballAction(held,a,shotAt(a),1100),null);
+ const thrown=basketballAction(held,a,shotAt(a),1100);assert(thrown,'confirmed owner can shoot immediately');
+ assert.equal(basketballAction(thrown,a,{action:'take'},1150),null,'rapid recatch must not cancel a released shot');
+ assert.equal(basketballAction(held,a,{action:'drop'},1100).holder,null,'confirmed owner can put down immediately');
  assert.equal(basketballAction(held,{...a,x:65},shotAt(a),1500),null);
  assert.equal(basketballAction(held,a,{action:'drop'},1500).mode,'loose');
 });
@@ -102,10 +104,31 @@ test('shared SQL court is service-only, CAS ordered, observer-consistent and blo
   const loserIndex=loser===a?1:2;
   await f.as(loserIndex,()=>f.db.query('SELECT campus_block($1,true)',[state.holder]));
   assert.equal((await f.runtime(loser.connection,'step')).snapshot.basketball.holder,null);
+  // A normal duration handover keeps campus identity/possession, while its
+  // obsolete connection cannot update or remove the replacement's ball.
+  const priorConnection=winner.connection,winnerIndex=winner===a?1:2,replacement=randomUUID();
+  await f.db.query("UPDATE campus_presence SET opened_at=clock_timestamp()-interval '181 seconds' WHERE connection_id=$1",[priorConnection]);
+  const renewed=await f.runtime(replacement,'connect',[],await f.issue(winnerIndex),state.holder,true);
+  assert.equal(renewed.snapshot.basketball.holder,state.holder);
+  assert.deepEqual(await f.commitBasketball({game_connection:priorConnection,game_version:first.game.version,game_state:first.game.state}),{ended:true});
+  await f.runtime(priorConnection,'leave');winner.connection=replacement;
+  assert.equal((await f.runtime(winner.connection,'step')).snapshot.basketball.holder,state.holder);
   await f.db.query("UPDATE campus_presence SET lease_until=clock_timestamp()-interval '1 second' WHERE connection_id=$1",[winner.connection]);
   const released=await f.runtime(loser.connection,'step');assert.equal(released.snapshot.basketball.holder,null);assert.equal(released.snapshot.basketball.mode,'loose');
   for(const forbidden of ['game_connection','version','shotX','actionAt','lease_until',id(1),id(2)])assert.equal(JSON.stringify(released).includes(forbidden),false,forbidden);
   assert.deepEqual(await f.commitBasketball({game_connection:randomUUID(),game_version:0,game_state:createBasketball()}),{ended:true});
   await f.runtime(loser.connection,'leave');assert.deepEqual((await f.db.query('SELECT state FROM campus_basketball')).rows[0].state,createBasketball());
+ }finally{await f.db.close();}
+});
+test('shared service can catch a falling ball after advancing its prior database version',async()=>{
+ const f=await runtimeFixture(1);
+ try{
+  const a=await f.connect(1);
+  await f.db.exec('UPDATE campus_presence SET x=52,z=-2');
+  const now=(await f.rawRuntime(a.connection,'step')).game.now;
+  const falling={...createBasketball(now-150),x:52,y:2.8,z:-2,vy:-6,shot:true};
+  await f.db.query('UPDATE campus_basketball SET state=$1::jsonb',[JSON.stringify(falling)]);
+  const result=await f.runtime(a.connection,'step',[{type:'basketball',data:{action:'take'}}]);
+  assert.equal(result.snapshot.basketball.holder,f.members[0].id);
  }finally{await f.db.close();}
 });

@@ -41,7 +41,7 @@ END;
 $$;
 CREATE FUNCTION public.campus_basketball_commit(game_connection uuid,game_version bigint,game_state jsonb)
  RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public,pg_temp AS $$
-DECLARE own uuid; current_version bigint; current_state jsonb; candidate uuid; old_holder uuid; at_time timestamptz;
+DECLARE own uuid; current_version bigint; current_state jsonb; candidate uuid; old_holder uuid; at_time timestamptz; flight_time double precision; travel double precision;
 BEGIN
  PERFORM 1 FROM campus_runtime_lock WHERE room='library' FOR UPDATE;
  at_time:=clock_timestamp();
@@ -65,9 +65,14 @@ BEGIN
   RETURN jsonb_build_object('applied',false,'game',public.campus_basketball_envelope());
  END IF;
  IF candidate IS DISTINCT FROM old_holder AND candidate IS NOT NULL AND candidate<>own THEN RAISE EXCEPTION 'Court ownership denied'; END IF;
+ -- The trusted service first advances physics from this version to database time.
+ -- Its exact reach test uses that advanced position, while this conservative
+ -- bound prevents a second, stale-position check from rejecting a falling catch.
+ flight_time:=greatest(0,least(.5,((game_state->>'at')::double precision-(current_state->>'at')::double precision)/1000));
+ travel:=sqrt((current_state->>'vx')::double precision^2+(current_state->>'vy')::double precision^2+(current_state->>'vz')::double precision^2)*flight_time+9.81*flight_time^2/2;
  IF candidate IS DISTINCT FROM old_holder AND candidate IS NOT NULL AND NOT EXISTS(SELECT 1 FROM campus_presence WHERE campus_id=own
-  AND sqrt((x-(current_state->>'x')::double precision)^2+(z-(current_state->>'z')::double precision)^2)<=2.1
-  AND (current_state->>'y')::double precision<=2.3) THEN RAISE EXCEPTION 'Court pickup denied'; END IF;
+  AND sqrt((x-(current_state->>'x')::double precision)^2+(z-(current_state->>'z')::double precision)^2)<=2.1+travel
+  AND (current_state->>'y')::double precision<=2.3+travel) THEN RAISE EXCEPTION 'Court pickup denied'; END IF;
  UPDATE campus_basketball SET state=game_state,version=version+1 WHERE room='library';
  RETURN jsonb_build_object('applied',true,'game',public.campus_basketball_envelope());
 END;

@@ -11,6 +11,7 @@ import { createCampusServer } from "../services/campus-server/server.mjs";
 import { runtimeFixture } from "../tests/helpers/campus-runtime-fixture.mjs";
 import { runVercelCampusSession } from "../lib/campus/vercel-session.ts";
 import { validServiceKey } from "../lib/campus/security.ts";
+import {COURT,HOOPS,basketballAim} from "../lib/campus/basketball.ts";
 
 const vercel = process.argv.includes("--vercel");
 const shared = vercel ? await runtimeFixture(14) : null;
@@ -727,6 +728,98 @@ try {
     if (!(await a.getByRole("region", { name: "People and safety", exact: true }).evaluate(el=>el===document.activeElement))) throw new Error("Safety shortcut did not move keyboard focus to the participant controls");
     result.checks.push("School camera has a direct safety shortcut and stop-walking control; participant safety keeps a leave action at phone width");
     result.checks.push("All 15 places are discoverable; ordinary input navigation walks through doors to the Computer lab, its study station reuses retained course work, and the school map fits phone width");
+    // Play the actual shared court through ordinary movement and rendered controls.
+    await a.setViewportSize({width:1440,height:1050});
+    const ballState=async()=>shared?(await shared.db.query("SELECT state FROM campus_basketball")).rows[0].state:campus.room.world.basketball;
+    const untilCourt=async(predicate,message,timeout=10000)=>{const end=Date.now()+timeout;while(!await predicate()){if(Date.now()>end)throw new Error(message);await a.waitForTimeout(80);}};
+    const courtIds=await Promise.all([aContext,bContext].map(async context=>(await context.cookies()).find(cookie=>cookie.name==="fixture").value));
+    const travel=async page=>{await page.locator(".school-map-place").filter({hasText:"Sports court"}).click();await page.getByRole("button",{name:"Walk here →",exact:true}).click();await page.getByText("Arrived at Sports court.",{exact:true}).waitFor({timeout:50000});};
+    await Promise.all([travel(a),travel(b)]);
+    console.log("Basketball: both peers arrived by ordinary movement");
+    // Place wayfinding stops near its entrance; step toward the centre ball.
+    for(const page of [a,b])await page.getByRole('button',{name:'Walk forward',exact:true}).click();
+    for(const page of [a,b])await page.waitForFunction(()=>{const button=document.querySelector('.campus-interact');return button&&!button.disabled;});
+    await Promise.all([a,b].map(async page=>{await page.getByRole('region',{name:/3D school/}).focus();await page.keyboard.press('e');}));
+    await untilCourt(async()=>!!(await ballState()).holder,'No player acquired the shared basketball');
+    const holder=(await ballState()).holder,winner=holder===courtIds[0]?a:b,loser=winner===a?b:a;
+    const winnerId=winner===a?courtIds[0]:courtIds[1],loserId=loser===a?courtIds[0]:courtIds[1];
+    await winner.getByRole('button',{name:'Face north hoop',exact:true}).waitFor();
+    await loser.getByText('Ball in play · wait for a rebound',{exact:true}).waitFor();
+    const winnerStage=winner.getByRole('region',{name:/3D school/});
+    await winner.getByRole('button',{name:'Face north hoop',exact:true}).click();
+    // A quick E release is deliberately underpowered: it must miss and rebound.
+    await winnerStage.focus();await winner.keyboard.down('e');await winner.waitForTimeout(300);await winner.keyboard.up('e');
+    await untilCourt(async()=>{const ball=await ballState();return ball.holder===null&&ball.kind==='shot';},'E release did not launch the basketball');
+    await untilCourt(async()=>{const ball=await ballState();return ball.y<.38&&Math.hypot(ball.vx,ball.vy,ball.vz)<.09;},'Miss did not settle into a retrievable rebound',14000);
+    if((await ballState()).north+(await ballState()).south!==0)throw new Error('Underpowered miss incorrectly awarded points');
+    const moveCourt=async(page,own,destination)=>{
+      await page.getByRole('button',{name:'Whole school',exact:true}).click();const region=page.getByRole('region',{name:/3D school/});
+      for(const axis of ['x','z']){
+        const target=destination[axis],position=await player(own);
+        if(Math.abs(position[axis]-target)<.7)continue;
+        const sign=position[axis]>target?-1:1,key=axis==='x'?(sign<0?'ArrowLeft':'ArrowRight'):(sign<0?'ArrowUp':'ArrowDown');
+        await region.focus();await page.keyboard.down(key);
+        try{await untilCourt(async()=>sign*((await player(own))[axis]-target)>=-.6,'Could not walk across the court',12000);}finally{await page.keyboard.up(key);}
+      }
+      // Observe a stable stop so both the UI snapshot and confirmed-pose guide
+      // describe the same release position before lining up a physical shot.
+      let previous={...await player(own)},stableAt=Date.now();
+      await untilCourt(async()=>{const position=await player(own);if(Math.hypot(position.x-previous.x,position.z-previous.z)>.01){previous={...position};stableAt=Date.now();}return Date.now()-stableAt>450;},'Court movement did not stop');
+    };
+    const retrieve=async(page,own)=>{
+      const target=await ballState(),region=page.getByRole('region',{name:/3D school/});
+      await moveCourt(page,own,{x:target.x,z:Math.min(8,target.z+.75)});
+      await page.waitForFunction(()=>{const button=document.querySelector('.campus-interact');return button&&!button.disabled;});
+      await region.focus();await page.keyboard.press('e');
+      await untilCourt(async()=>(await ballState()).holder===own,'Rebound could not be picked up');
+      await page.getByRole('button',{name:'Face north hoop',exact:true}).waitFor();
+    };
+    await retrieve(loser,loserId);
+    // A rebound may settle behind a backboard. Carry it into the open court
+    // before requiring a clear shot; do not bypass real board/rim collisions.
+    await moveCourt(loser,loserId,{x:52,z:0});
+    if((await ballState()).holder!==loserId)throw new Error('Walking in the court lost carried possession');
+    const shooter=await player(loserId),hoop=HOOPS[0],distance=Math.hypot(shooter.x-hoop.x,shooter.z-hoop.z);
+    await loser.getByRole('button',{name:'Face north hoop',exact:true}).click();
+    const direction=basketballAim(Math.atan2(hoop.x-shooter.x,shooter.z-hoop.z),Math.atan2(COURT.rimY-1.67,distance));
+    const angle=Math.asin(direction.dy),d=distance-Math.cos(angle)*.45,dy=COURT.rimY-(1.55+direction.dy*.45);
+    const speed=Math.sqrt(COURT.gravity*d*d/(2*Math.cos(angle)**2*(d*Math.tan(angle)-dy))),power=Math.max(.12,Math.min(1,(speed-4)/9));
+    const slider=loser.getByRole('slider',{name:'Shot power',exact:true});await slider.focus();await slider.press('Home');
+    for(let i=0;i<Math.round((power-.12)/.005);i++)await slider.press('ArrowRight');
+    await loser.screenshot({path:join(directory,'basketball-aim.png')});result.screenshots.push(join(directory,'basketball-aim.png'));
+    await loser.getByRole('button',{name:'Shoot ball',exact:true}).click();
+    await untilCourt(async()=>(await ballState()).north>0,'A clean physically aimed shot did not score',8000);
+    const points=distance>=COURT.threePoint?3:2;
+    for(const page of [a,b])await untilCourt(async()=>Number(await page.locator('.basketball-score span').first().locator('b').textContent())===points,'Peers disagree on the court score');
+    await loser.screenshot({path:join(directory,'basketball-basket.png')});result.screenshots.push(join(directory,'basketball-basket.png'));
+    console.log("Basketball: E miss, rebound retrieval and shared physical basket passed");
+    await untilCourt(async()=>{const ball=await ballState();return ball.y<.38&&Math.hypot(ball.vx,ball.vy,ball.vz)<.09;},'Scored shot did not settle',14000);
+    await retrieve(b,courtIds[1]);
+    await b.getByRole('button',{name:'Put down ball',exact:true}).click();
+    await untilCourt(async()=>(await ballState()).holder===null,'Put down did not release possession');
+    await untilCourt(async()=>{const ball=await ballState();return ball.y<.38&&Math.hypot(ball.vx,ball.vy,ball.vz)<.09;},'Dropped ball did not settle',10000);
+    await retrieve(b,courtIds[1]);
+    await b.getByRole('button',{name:'Leave',exact:true}).click();
+    await untilCourt(async()=>(await ballState()).holder===null,'Disconnect retained basketball ownership');
+    await untilCourt(async()=>{const ball=await ballState();return ball.y<.38&&Math.hypot(ball.vx,ball.vy,ball.vz)<.09;},'Released basketball did not settle',10000);
+    await retrieve(a,courtIds[0]);
+    await a.setViewportSize({width:390,height:844});
+    if(await a.evaluate(()=>document.documentElement.scrollWidth>innerWidth))throw new Error('Basketball HUD overflows phone layout');
+    await a.getByRole('button',{name:'Full screen',exact:true}).click();
+    await a.waitForFunction(()=>!!document.querySelector('.campus-immersive'));
+    if(!await a.getByRole('region',{name:'Basketball court',exact:true}).isVisible())throw new Error('Basketball controls disappeared in fullscreen');
+    await a.screenshot({path:join(directory,'basketball-fullscreen-phone.png')});result.screenshots.push(join(directory,'basketball-fullscreen-phone.png'));
+    const touch=await aContext.newCDPSession(a);await touch.send('Emulation.setTouchEmulationEnabled',{enabled:true,maxTouchPoints:2});
+    const touchTarget=await a.locator('.campus-interact').boundingBox(),tx=touchTarget.x+touchTarget.width/2,ty=touchTarget.y+touchTarget.height/2;
+    await touch.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:tx,y:ty}]});
+    await a.getByText('Release E to shoot',{exact:false}).waitFor();
+    await touch.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
+    await untilCourt(async()=>{const ball=await ballState();return ball.holder===null&&ball.kind==='shot';},'Touch hold/release did not shoot the ball');
+    await touch.send('Emulation.setTouchEmulationEnabled',{enabled:false});await touch.detach();
+    await a.getByRole('button',{name:'Exit full screen',exact:true}).click();
+    await a.waitForFunction(()=>!document.querySelector('.campus-immersive'));
+    result.basketball={sharedOwnership:true,repeatSafePickup:true,keyboardChargeReleaseMiss:true,retrievedRebound:true,carryDribble:true,physicalBasketPoints:points,peerScoreAgreement:true,putDown:true,disconnectRelease:true,fullscreenPhone:true,touchChargeRelease:true};
+    result.checks.push('Actual court gameplay: two peers walk there, race for one ball, E charge/release misses and rebounds, another player retrieves and scores a physically aimed basket; both see the score, put-down/disconnect free the ball, and fullscreen phone controls remain visible');
     await Promise.all(ticketReads);
     if (vercel) {
       const issuedHashes = new Set(issuedTickets.map((ticket) => createHash("sha256").update(ticket).digest("hex")));
@@ -774,6 +867,12 @@ try {
       ),
     );
   }
+} catch(error) {
+  if(browser){let n=0;for(const context of browser.contexts())for(const page of context.pages()){
+    try{await page.screenshot({path:join(directory,`failure-${++n}.png`)});}catch{/* Retain any earlier evidence when the page already closed. */}
+  }}
+  console.error("Synthetic browser failure evidence:",directory);
+  throw error;
 } finally {
   await browser?.close();
   await campus?.close();

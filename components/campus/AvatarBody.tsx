@@ -8,8 +8,8 @@ type ActivityRef={current:boolean};
 const SKIN="#e9c5a0",HAIR="#3e3029",TROUSERS="#355450",SHOES="#203932";
 
 /** A built-in toy-like humanoid. All 23 body pieces use three draw calls. */
-export default function AvatarBody({colour,motion,seated,hidden,reducedMotion,activityRef}:{
- colour:string;motion:PoseRef;seated:boolean;hidden:boolean;reducedMotion:boolean;activityRef:ActivityRef;
+export default function AvatarBody({colour,motion,seated,hidden,reducedMotion,activityRef,ballHeld=false}:{
+ colour:string;motion:PoseRef;seated:boolean;hidden:boolean;reducedMotion:boolean;activityRef:ActivityRef;ballHeld?:boolean;
 }){
  const boxes=useRef<InstancedMesh>(null),round=useRef<InstancedMesh>(null),hair=useRef<Mesh>(null);
  const transform=useMemo(()=>new Object3D(),[]),invalidate=useThree(s=>s.invalidate);
@@ -27,7 +27,7 @@ export default function AvatarBody({colour,motion,seated,hidden,reducedMotion,ac
   part(spheres,0,0,head,0,.205,.22,.205);
   for(const side of [-1,1]){
    const swing=Math.sin(phase+(side===1?Math.PI:0))*.48*amount;
-   const arm=seated?-1.75:-swing,forearm=seated?-1.9:arm-.12;
+   const arm=seated?-1.75:ballHeld&&side===1?-.6:-swing,forearm=seated?-1.9:ballHeld&&side===1?-1.1:arm-.12;
    const shoulder=1.17+offset,x=side*.31,index=side===-1?3:5;
    const elbowY=shoulder-Math.cos(arm)*.22,elbowZ=-Math.sin(arm)*.22;
    const wristY=elbowY-Math.cos(forearm)*.23,wristZ=elbowZ-Math.sin(forearm)*.23;
@@ -48,7 +48,7 @@ export default function AvatarBody({colour,motion,seated,hidden,reducedMotion,ac
   for(const side of [-1,1])part(box,side===-1?17:18,side*.075,head+.025,.197,.035,.045,.025);
   hair.current.position.y=head;
   box.instanceMatrix.needsUpdate=true;spheres.instanceMatrix.needsUpdate=true;
- },[seated,transform]);
+ },[seated,ballHeld,transform]);
  useLayoutEffect(()=>{
   const box=boxes.current!,spheres=round.current!,tint=new Color();
   const colours=[colour,TROUSERS,SKIN,colour,SKIN,colour,SKIN,TROUSERS,TROUSERS,SHOES,TROUSERS,TROUSERS,SHOES,HAIR,HAIR,HAIR,HAIR,"#253734","#253734"];

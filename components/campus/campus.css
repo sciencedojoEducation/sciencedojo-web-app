@@ -612,3 +612,24 @@
  .campus-immersive [data-campus-panel]{top:120px;max-height:calc(100dvh - 195px);}
  .campus-immersive .campus-interact{left:auto;right:14px;bottom:18px;transform:none;max-width:40%;}
 }
+
+.basketball-hud{position:absolute;top:106px;right:16px;z-index:3;width:260px;max-width:calc(100% - 32px);padding:14px;border-radius:16px;background:#f8f5e9ee;border:1px solid #c5c8aa;color:#284b3f;box-shadow:0 6px 24px #16352724;}
+.basketball-score{display:flex;align-items:center;justify-content:space-between;gap:7px;font-size:10px;}
+.basketball-score>strong{font:500 19px Georgia,serif;}.basketball-score b{display:block;font-size:19px;text-align:center;}
+.basketball-result{font-size:11px;line-height:1.5;margin:9px 0 0;}
+.basketball-power{display:flex;flex-wrap:wrap;gap:7px;justify-content:space-between;margin-top:12px;font-size:11px;}
+.basketball-power meter{width:100%;height:13px;accent-color:#32846a;}.basketball-hud>input{width:100%;accent-color:#32846a;margin:4px 0;}
+.basketball-hud small{display:block;font-size:10px;line-height:1.4;}
+.basketball-buttons{display:flex;flex-wrap:wrap;gap:5px;margin-top:10px;}
+.campus-shell .basketball-buttons button{font-size:10px;min-height:34px;padding:7px 10px;}
+.campus-shell .basketball-buttons button.secondary{background:#fffaf0;color:#285547;}
+.campus-immersive .basketball-hud{top:128px;}
+@media(max-width:700px){
+ .basketball-hud{top:68px;right:12px;width:205px;padding:10px;max-height:calc(100% - 225px);overflow-y:auto;overscroll-behavior:contain;}
+ .basketball-score>strong{font-size:16px;}.basketball-score b{font-size:16px;}.basketball-result{font-size:10px;margin-top:5px;}
+ .campus-immersive .basketball-hud{top:128px;max-height:calc(100dvh - 340px);}
+}
+@media(max-height:520px){.campus-immersive .basketball-hud{top:120px;max-height:calc(100dvh - 200px);}}
+.basketball-power-bar{position:relative;width:100%;height:14px;}
+.basketball-power-bar meter{display:block;height:14px;margin:0;}
+.basketball-power-bar i{position:absolute;top:2px;bottom:2px;width:2px;background:#9a5527;pointer-events:none;}

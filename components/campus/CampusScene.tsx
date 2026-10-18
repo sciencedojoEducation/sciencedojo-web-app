@@ -12,10 +12,13 @@ import CubeArchitecture from "./CubeArchitecture";
 import CubeEnvironment from "./CubeEnvironment";
 import AvatarBody from "./AvatarBody";
 import {useSceneLook} from "./useSceneLook";
+import BasketballCourt from "./BasketballCourt";
+import {basketballSnapshot,createBasketball,type ShotControl} from "@/lib/campus/basketball";
+const DEFAULT_BALL=basketballSnapshot(createBasketball(),[]);
 type ViewPosition={current:{x:number;z:number;eye:number}};
 type FrameActivity={current:boolean};
 export type {SchoolView} from "@/lib/campus/cube-experience";
-function Avatar({ player, self, onPosition, activityRef,hidden,reducedMotion }: { player: Player; self: boolean; onPosition: (x: number, z: number,eye:number) => void; activityRef:FrameActivity;hidden:boolean;reducedMotion:boolean }) {
+function Avatar({ player, self, onPosition, activityRef,hidden,reducedMotion,ballHeld }: { player: Player; self: boolean; onPosition: (x: number, z: number,eye:number) => void; activityRef:FrameActivity;hidden:boolean;reducedMotion:boolean;ballHeld:boolean }) {
   const group = useRef<Group>(null);
   const motion = useRef(createPresentation(player, 0));
   const invalidate = useThree(s => s.invalidate);
@@ -28,8 +31,8 @@ function Avatar({ player, self, onPosition, activityRef,hidden,reducedMotion }: 
     if (self) onPosition(view.x, view.z,player.seat?1.25:1.67);
     if (moving) { activityRef.current=true; invalidate(); }
   }, -1);
-  return <group ref={group} visible={!hidden}>
-    <AvatarBody colour={AVATAR_COLOURS[player.colour]} motion={motion} seated={!!player.seat} hidden={hidden} reducedMotion={reducedMotion} activityRef={activityRef}/>
+  return <group name={self?"campus-self-avatar":"campus-avatar"} ref={group} visible={!hidden}>
+    <AvatarBody colour={AVATAR_COLOURS[player.colour]} motion={motion} seated={!!player.seat} hidden={hidden} reducedMotion={reducedMotion} activityRef={activityRef} ballHeld={ballHeld}/>
     {!player.seat && <mesh position={[0, .015, 0]} rotation={[-Math.PI / 2, 0, 0]}>
       <circleGeometry args={[.4, 16]} /><meshBasicMaterial color="#25483d" transparent opacity={.15} depthWrite={false} />
     </mesh>}
@@ -90,10 +93,11 @@ function RenderBudget({scale,onSlow,activityRef,active}:{scale:number;onSlow:()=
   if(reduceRenderQuality(sample.current,delta,continuous))onSlow();
  },-2);return null;
 }
-export default function CampusScene({snapshot,active,onUnavailable,view="follow",placeId="library",hour=12,look=DEFAULT_LOOK,onLookChange,canLock=true,onRelease}:{snapshot:Snapshot;active:boolean;onUnavailable:()=>void;view?:SchoolView;placeId?:string;hour?:number;look?:CameraLook;onLookChange?:(next:CameraLook)=>void;canLock?:boolean;onRelease?:()=>void}){
+export default function CampusScene({snapshot,active,onUnavailable,view="follow",placeId="library",hour=12,look=DEFAULT_LOOK,onLookChange,canLock=true,onRelease,charge,charging=false,shotPower=.55}:{snapshot:Snapshot;active:boolean;onUnavailable:()=>void;view?:SchoolView;placeId?:string;hour?:number;look?:CameraLook;onLookChange?:(next:CameraLook)=>void;canLock?:boolean;onRelease?:()=>void;charge?:{current:ShotControl};charging?:boolean;shotPower?:number}){
  const [renderScale,setRenderScale]=useState(1);
  const reduceResolution=useCallback(()=>setRenderScale(.45),[]);
  const activityRef=useRef(false);
+ const idleCharge=useRef<ShotControl>({started:null,power:.55});
  const focus=useRef({x:0,z:4,eye:1.67}),elements=useMemo(()=>new Map<string,HTMLSpanElement>(),[]);
  const follow=useCallback((x:number,z:number,eye:number)=>{focus.current={x,z,eye};},[]);
  const interactive=view==="first-person"||view==="orbit";
@@ -111,7 +115,8 @@ export default function CampusScene({snapshot,active,onUnavailable,view="follow"
      gl.domElement.addEventListener("webglcontextlost",onUnavailable);
     }}>
    <CubeEnvironment hour={hour} cutaway={view==="overview"}/><SchoolModel occupied={occupied} detailedShadows={renderScale===1}/><CubeArchitecture cutaway={view==="overview"}/>
-   {snapshot.players.map(p=><Avatar key={p.id} player={p} self={p.id===snapshot.self} onPosition={follow} activityRef={activityRef} hidden={view==="first-person"&&p.id===snapshot.self} reducedMotion={reducedMotion}/>)}
+   {snapshot.players.map(p=><Avatar key={p.id} player={p} self={p.id===snapshot.self} onPosition={follow} activityRef={activityRef} hidden={view==="first-person"&&p.id===snapshot.self} reducedMotion={reducedMotion} ballHeld={snapshot.basketball?.holder===p.id}/>)}
+   <BasketballCourt ball={snapshot.basketball??DEFAULT_BALL} players={snapshot.players} self={snapshot.self} view={view} angles={cameraAngles} focus={focus} charge={charge??idleCharge} charging={charging} power={shotPower} reducedMotion={reducedMotion} activityRef={activityRef}/>
    <Camera focus={focus} present={snapshot.players.some(p=>p.id===snapshot.self)} reducedMotion={reducedMotion} view={view} placeId={placeId} activityRef={activityRef} angles={cameraAngles}/>
    <Labels elements={elements} view={view}/>
    <RenderBudget scale={renderScale} onSlow={reduceResolution} activityRef={activityRef} active={active}/>
