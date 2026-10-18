@@ -1,12 +1,23 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {randomUUID} from 'node:crypto';
-import {COURT,HOOPS,createBasketball,advanceBasketball,basketballAction,basketballSnapshot,isBasketballSnapshot,isBasketballCommand,aimDirection,shotGuide,isBasketballState} from '../lib/campus/basketball.ts';
+import {COURT,HOOPS,createBasketball,advanceBasketball,basketballAction,basketballSnapshot,isBasketballSnapshot,isBasketballCommand,aimDirection,shotGuide,isBasketballState,chargePower,currentShotPower} from '../lib/campus/basketball.ts';
 import {CampusWorld} from '../lib/campus/world.ts';
 import {isSnapshot} from '../lib/campus/protocol.ts';
 import {runtimeFixture} from './helpers/campus-runtime-fixture.mjs';
 import {id} from './helpers/course-pilot-fixture.mjs';
 const player=(n=1,x=52,z=0)=>({id:`40000000-0000-0000-0000-${String(n).padStart(12,'0')}`,pseudonym:`Quiet Maple aaaa0${n}`,colour:0,blocked:[],x,z,rotation:0,status:'walking'});
+test('a held shot repeatedly rises and falls so power can be reduced before release',()=>{
+ const start=1000,control={started:start,power:.55};
+ for(const [elapsed,power] of [[0,.12],[700,.5],[1400,1],[2100,.5],[2800,.12],[3500,.5],[4200,1]]){
+  assert(Math.abs(chargePower(start,start+elapsed)-power)<1e-9);
+  assert.equal(currentShotPower(control,start+elapsed),chargePower(start,start+elapsed));
+ }
+ assert.equal(chargePower(start,start+300),300/1400,'the first rise retains its prior timing');
+ for(let elapsed=0;elapsed<30000;elapsed+=17){const value=chargePower(start,start+elapsed);assert(value>=.12&&value<=1);}
+ assert(Math.abs(chargePower(start,start+1399)-chargePower(start,start+1401))<1e-9,'no jump at the peak');
+ assert.equal(currentShotPower({started:null,power:.38},99999),.38,'selected/released power stays fixed');
+});
 function shotAt(p,hoop=HOOPS[0],angle=.85){
  const distance=Math.hypot(hoop.x-p.x,hoop.z-p.z),yaw=Math.atan2(hoop.x-p.x,p.z-hoop.z),direction=aimDirection(yaw,angle);
  // The release starts .45 units down the aim ray, matching actual authority.

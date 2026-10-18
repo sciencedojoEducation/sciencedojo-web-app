@@ -100,7 +100,12 @@ export function suggestedShot(p: {x: number; z: number}, eye = 1.67, target?: Ho
 }
 export type ShotControl = { started: number | null; power: number };
 export function currentShotPower(control: ShotControl, now: number) { return control.started === null ? control.power : chargePower(control.started, now); }
-export function chargePower(start: number, now: number) { return clamp((now - start) / 1400, .12, 1); }
+export function chargePower(start: number, now: number) {
+  // Keep the original first rise, then let a held shot come back down.
+  // The meter, trajectory and final release all use this same local clock.
+  const phase = (Math.max(0, now - start) / 1400) % 2;
+  return clamp(phase <= 1 ? phase : 2 - phase, .12, 1);
+}
 
 /** A live aim guide only. It never awards points or changes authoritative state. */
 export function shotGuide(p: {x: number; z: number}, c: Extract<BasketballCommand, { action: "shoot" }>, t: number) {

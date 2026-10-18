@@ -747,7 +747,18 @@ try {
     await loser.getByText('Ball in play · wait for a rebound',{exact:true}).waitFor();
     const winnerStage=winner.getByRole('region',{name:/3D school/});
     await winner.getByRole('button',{name:'Face north hoop',exact:true}).click();
-    // A quick E release is deliberately underpowered: it must miss and rebound.
+    // Keep E held past the peak: lowering power must not release possession.
+    await winnerStage.focus();await winner.keyboard.down('e');
+    await winner.waitForFunction(()=>document.querySelector('meter[aria-label="Shot charge"]')?.value>.9);
+    await winner.waitForFunction(()=>document.querySelector('meter[aria-label="Shot charge"]')?.value<.25);
+    if(!await winner.evaluate(()=>Math.abs(document.querySelector('meter[aria-label="Shot charge"]').value-Number(document.querySelector('#basketball-power').value))<.006))throw new Error('Displayed slider and charge meter disagree');
+    if((await ballState()).holder!==winnerId)throw new Error('A held up/down charge released the ball before E was released');
+    await winner.screenshot({path:join(directory,'basketball-power-lowered.png')});result.screenshots.push(join(directory,'basketball-power-lowered.png'));
+    // Escape cancels without a shot; releasing E afterward still keeps the ball.
+    await winner.keyboard.press('Escape');await winner.keyboard.up('e');
+    await winner.waitForTimeout(200);
+    if((await ballState()).holder!==winnerId)throw new Error('Cancelling charge lost the held basketball');
+    // A quick E release remains deliberately underpowered: miss and rebound.
     await winnerStage.focus();await winner.keyboard.down('e');await winner.waitForTimeout(300);await winner.keyboard.up('e');
     await untilCourt(async()=>{const ball=await ballState();return ball.holder===null&&ball.kind==='shot';},'E release did not launch the basketball');
     await untilCourt(async()=>{const ball=await ballState();return ball.y<.38&&Math.hypot(ball.vx,ball.vy,ball.vz)<.09;},'Miss did not settle into a retrievable rebound',14000);
@@ -813,13 +824,16 @@ try {
     const touchTarget=await a.locator('.campus-interact').boundingBox(),tx=touchTarget.x+touchTarget.width/2,ty=touchTarget.y+touchTarget.height/2;
     await touch.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:tx,y:ty}]});
     await a.getByText('Release E to shoot',{exact:false}).waitFor();
+    await a.waitForFunction(()=>document.querySelector('meter[aria-label="Shot charge"]')?.value>.9);
+    await a.waitForFunction(()=>document.querySelector('meter[aria-label="Shot charge"]')?.value<.25);
+    if((await ballState()).holder!==courtIds[0])throw new Error('Touch power reduction released the ball before touch end');
     await touch.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
     await untilCourt(async()=>{const ball=await ballState();return ball.holder===null&&ball.kind==='shot';},'Touch hold/release did not shoot the ball');
     await touch.send('Emulation.setTouchEmulationEnabled',{enabled:false});await touch.detach();
     await a.getByRole('button',{name:'Exit full screen',exact:true}).click();
     await a.waitForFunction(()=>!document.querySelector('.campus-immersive'));
-    result.basketball={sharedOwnership:true,repeatSafePickup:true,keyboardChargeReleaseMiss:true,retrievedRebound:true,carryDribble:true,physicalBasketPoints:points,peerScoreAgreement:true,putDown:true,disconnectRelease:true,fullscreenPhone:true,touchChargeRelease:true};
-    result.checks.push('Actual court gameplay: two peers walk there, race for one ball, E charge/release misses and rebounds, another player retrieves and scores a physically aimed basket; both see the score, put-down/disconnect free the ball, and fullscreen phone controls remain visible');
+    result.basketball={sharedOwnership:true,repeatSafePickup:true,heldPowerRisesAndFalls:true,lowerPowerKeepsPossession:true,cancelChargeKeepsBall:true,keyboardChargeReleaseMiss:true,retrievedRebound:true,carryDribble:true,physicalBasketPoints:points,peerScoreAgreement:true,putDown:true,disconnectRelease:true,fullscreenPhone:true,touchChargeRelease:true};
+    result.checks.push('Actual court gameplay: two peers walk there, race for one ball, hold E through rising/falling power without losing possession, cancel with Escape, then release a shot; another player retrieves and scores a physical basket with shared totals. Touch also lowers power while held and shoots only on release; fullscreen controls remain visible');
     await Promise.all(ticketReads);
     if (vercel) {
       const issuedHashes = new Set(issuedTickets.map((ticket) => createHash("sha256").update(ticket).digest("hex")));

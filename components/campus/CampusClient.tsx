@@ -534,7 +534,8 @@ export default function CampusClient({
                 to look; click the scene for continuous mouse look. Escape stops
                 walking and releases the mouse. Touch users can drag to look.
                 On the sports court, E picks up the basketball. Aim at a hoop,
-                hold E to charge and release to shoot. The dotted arc and power
+                hold E while power rises and falls, then release to shoot. Escape
+                cancels charging and keeps the ball. The dotted arc and power
                 guide help you line up shots. All actions also have visible buttons.
               </p>
               <div className="campus-direction-pad">
