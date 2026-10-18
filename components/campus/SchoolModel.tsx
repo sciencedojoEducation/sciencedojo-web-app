@@ -1,10 +1,11 @@
 "use client";
 import {memo,useLayoutEffect,useMemo,useRef} from "react";
-import {BoxGeometry,Color,MeshLambertMaterial,Object3D,Sphere,type InstancedMesh} from "three";
+import {BoxGeometry,Color,MeshBasicMaterial,MeshLambertMaterial,Object3D,Sphere,type InstancedMesh} from "three";
 import {SCHOOL_PLACES,STUDY_SEATS,type Place} from "@/lib/campus/school-layout";
 type V=[number,number,number];
 type Box={position:V;size:V;colour:string;seat?:number;section:number};
 const boxes:Box[]=[], trees:{x:number;z:number;scale:number}[]=[];
+const glazing:{position:V;size:V}[]=[];
 let section=0;
 const box=(position:V,size:V,colour:string,seat?:number)=>boxes.push({position,size,colour,seat,section});
 box([0,-.5,1],[134,.8,88],"#9fb797");
@@ -23,15 +24,18 @@ function board(p:Place){
 }
 function room(p:Place){
  const at=(x:number,y:number,z:number):V=>[p.x+x,y,p.z+z];
- box(at(0,-.03,0),[p.width,.18,p.depth],p.colour);
- box(at(0,.07,0),[p.width-.7,.04,p.depth-.7],p.colour);
+ const floor=p.outdoor?p.colour:p.kind==='gym'?p.colour:"#e5eef0";
+ box(at(0,-.03,0),[p.width,.18,p.depth],floor);
+ box(at(0,.07,0),[p.width-.7,.04,p.depth-.7],floor);
  if(!p.outdoor){
-  box(at(0,1.8,-9),[20,.0+3.6,.36],"#e1e2d6");
+  box(at(0,.12,-9),[20,.24,.36],"#c4d6dd");
+  glazing.push({position:at(0,2.2,-9),size:[20,4.2,.06]});
   for(const side of [-1,1]){
-   box(at(side*10,.7,0),[.36,1.4,18],"#cbd4c6");
-   box(at(side*6.2,.48,9),[7.6,.96,.36],"#cbd4c6");
+   box(at(side*10,.12,0),[.36,.24,18],"#c4d6dd");
+   glazing.push({position:at(side*10,2.2,0),size:[.06,4.2,18]},{position:at(side*6.2,2.2,9),size:[7.6,4.2,.06]});
+   box(at(side*6.2,.12,9),[7.6,.24,.36],"#c4d6dd");
    for(const z of [-9,9])box(at(side*10,2.2,z),[.42,4.4,.42],p.accent);
-   box(at(side*6.8,2.25,-8.75),[3.5,1.6,.08],"#a5c7c3");
+   box(at(side*10,4.25,0),[.25,.3,18.4],"#92acb7");
   }
   box(at(0,4.25,-9),[20.6,.3,.5],p.accent);
   for(const side of [-1,1])box(at(side*2.5,1.8,9),[.25,3.6,.3],p.accent);
@@ -142,8 +146,11 @@ section=0;
 for(const x of [-63,63])for(const z of [-37,-20,-7,17,38])trees.push({x,z,scale:1.7});
 for(const side of [-1,1]){box([side*5,2.2,40],[.7,4.4,.7],"#487469");box([side*2.7,3.9,40],[4.6,.35,.5],"#487469");}
 
-const batches=Array.from({length:SCHOOL_PLACES.length+1},(_,i)=>boxes.filter(b=>b.section===i));
+// Five contiguous school columns plus the global paths, sharing one geometry/material.
+const batches=Array.from({length:6},(_,i)=>boxes.filter(b=>b.section===0?i===0:(b.section-1)%5+1===i));
 const SchoolModel=memo(function SchoolModel({occupied}:{occupied:number}){
+ const glass=useRef<InstancedMesh>(null);
+ const glassMaterial=useMemo(()=>new MeshBasicMaterial({color:"#a5dce5",transparent:true,opacity:.1,depthWrite:false}),[]);
  const meshes=useRef<(InstancedMesh|null)[]>([]),trunks=useRef<InstancedMesh>(null),leaves=useRef<InstancedMesh>(null);
  // Diffuse props need no per-fragment metal/roughness calculations.
  const geometry=useMemo(()=>new BoxGeometry(1,1,1),[]),material=useMemo(()=>new MeshLambertMaterial(),[]);
@@ -155,6 +162,8 @@ const SchoolModel=memo(function SchoolModel({occupied}:{occupied:number}){
    mesh.instanceMatrix.needsUpdate=true;mesh.computeBoundingBox();
    mesh.boundingSphere=mesh.boundingBox!.getBoundingSphere(new Sphere());
   });
+  glazing.forEach((p,i)=>{transform.position.set(...p.position);transform.scale.set(...p.size);transform.updateMatrix();glass.current!.setMatrixAt(i,transform.matrix);});
+  glass.current!.instanceMatrix.needsUpdate=true;glass.current!.computeBoundingSphere();
   trees.forEach((tree,i)=>{
    transform.position.set(tree.x,.65*tree.scale,tree.z);transform.scale.set(tree.scale,tree.scale,tree.scale);transform.updateMatrix();trunks.current!.setMatrixAt(i,transform.matrix);
    transform.position.set(tree.x,2.1*tree.scale,tree.z);transform.updateMatrix();leaves.current!.setMatrixAt(i,transform.matrix);
@@ -169,11 +178,8 @@ const SchoolModel=memo(function SchoolModel({occupied}:{occupied:number}){
   });
  },[occupied]);
  return <>
-  <color attach="background" args={["#d7e2d8"]}/><fog attach="fog" args={["#d7e2d8",200,400]}/>
-  <ambientLight intensity={1.5}/><directionalLight position={[25,65,35]} intensity={2.4} castShadow shadow-mapSize={[1024,1024]} shadow-normalBias={.04}
-    shadow-camera-left={-80} shadow-camera-right={80} shadow-camera-top={70} shadow-camera-bottom={-70} shadow-camera-far={180}
-    shadow-autoUpdate={false} shadow-needsUpdate={true}/>
   {batches.map((batch,i)=><instancedMesh key={i} ref={el=>{meshes.current[i]=el;}} args={[geometry,material,batch.length]} castShadow receiveShadow/>)}
+  <instancedMesh ref={glass} args={[geometry,glassMaterial,glazing.length]} renderOrder={1}/>
   <instancedMesh ref={trunks} args={[undefined,undefined,trees.length]} castShadow><cylinderGeometry args={[.38,.5,1.3,7]}/><meshLambertMaterial color="#a28465"/></instancedMesh>
   <instancedMesh ref={leaves} args={[undefined,undefined,trees.length]} castShadow><icosahedronGeometry args={[1.35,1]}/><meshLambertMaterial color="#799c75"/></instancedMesh>
  </>;

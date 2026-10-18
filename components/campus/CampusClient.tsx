@@ -5,14 +5,21 @@ import {
   Component,
   useCallback,
   useEffect,
+  useLayoutEffect,
   useRef,
   useState,
+  useSyncExternalStore,
   type ReactNode,
 } from "react";
 import { connectCampus, requestCampusAdmission, type CampusConnection } from "@/lib/campus/connection";
 import { SEATS, type Snapshot } from "@/lib/campus/protocol";
 import { SCHOOL_PLACES, schoolPlaceAt, schoolRoute, type Point } from "@/lib/campus/school-layout";
+import {DEFAULT_LOOK,boundedLook,cameraDirection,clockLabel,schoolSky,type CameraLook,type SchoolView} from "@/lib/campus/cube-experience";
 import "./campus.css";
+
+const subscribeClock=(notify:()=>void)=>{const timer=setInterval(notify,1000);return()=>clearInterval(timer);};
+const readLocalHour=()=>{const now=new Date();return now.getHours()+now.getMinutes()/60;};
+const serverHour=()=>12;
 
 const Scene = dynamic(() => import("./CampusScene"), {
   ssr: false,
@@ -63,7 +70,13 @@ export default function CampusClient({
   const [reason, setReason] = useState("harassment"),
     [busy, setBusy] = useState(false),
     [help, setHelp] = useState(false);
-  const [view, setView] = useState<"overview" | "follow" | "place">("overview");
+  const [view, setView] = useState<SchoolView>("exterior");
+  const [look,setLook]=useState<CameraLook>(DEFAULT_LOOK);
+  const [manualHour,setManualHour]=useState<number|null>(null);
+  const liveHour=useSyncExternalStore(subscribeClock,readLocalHour,serverHour),hour=manualHour??liveHour;
+  const sky=schoolSky(hour);
+  const cameraRef=useRef({view: "exterior" as SchoolView,yaw:0});
+  useLayoutEffect(()=>{cameraRef.current={view,yaw:look.yaw};},[view,look.yaw]);
   const [selectedPlace, setSelectedPlace] = useState("library"), [walkingTo, setWalkingTo] = useState("");
   const navigation = useRef<{ points: Point[]; name: string } | null>(null);
   const latestSelf = useRef<Point | null>(null);
@@ -103,6 +116,12 @@ export default function CampusClient({
     // A native button click must last long enough to reach the input loop.
     stepTimer.current = setTimeout(stopMovement, 300);
   }, [stopMovement]);
+  const chooseCamera=(next:SchoolView)=>{
+    stopMovement();setView(next);
+    if(next==="first-person")setLook(previous=>boundedLook({...previous,pitch:0},next));
+    if(next==="orbit")setLook(previous=>boundedLook({...previous,pitch:.55},next));
+  };
+  const turn=(yaw:number,pitch=0)=>setLook(previous=>boundedLook({...previous,yaw:previous.yaw+yaw,pitch:previous.pitch+pitch},view));
   useEffect(() => {
     if (hub) hubDialog.current?.showModal();
     else hubDialog.current?.close();
@@ -173,7 +192,7 @@ export default function CampusClient({
       }
       if (room.current)
         room.current.send("input", {
-          ...direction.current,
+          ...(cameraRef.current.view==="first-person"&&!route?cameraDirection(direction.current.x,direction.current.z,cameraRef.current.yaw):direction.current),
           seq: sequence.current++,
         });
     }, 100);
@@ -239,7 +258,7 @@ export default function CampusClient({
     hubButton.current?.focus();
   };
   return (
-    <main className="campus-shell">
+    <main className="campus-shell cube-campus">
       <header className="campus-header">
         <Link className="campus-brand" href={dashboardHref}>
           sciencedojo<span>.</span>
@@ -253,9 +272,9 @@ export default function CampusClient({
         <section className="campus-world-panel" aria-label="Shared school">
           <div className="campus-world-heading">
             <div>
-              <p className="campus-eyebrow">Your school, together</p>
-              <h1>A whole school to explore.</h1>
-              <p className="campus-beta-note">15 places to discover. Your own courses, wherever you study.</p>
+              <p className="campus-eyebrow">The Cube · A school without ordinary walls</p>
+              <h1>A world of possibility.<br/>Inside one Cube.</h1>
+              <p className="campus-beta-note">Glass, green spaces and a sky that changes with your day. 15 places to discover.</p>
             </div>
             <span className="campus-presence">
               <i />
@@ -270,7 +289,7 @@ export default function CampusClient({
             tabIndex={0}
             ref={stage}
             role="region"
-            aria-label="3D school. Use arrow keys or WASD to walk. Tab to school controls."
+            aria-label="3D school. Use arrow keys or WASD to walk. In First person, drag to look or use Q and E to turn. Tab to school controls."
             onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) stopMovement(); }}
             onKeyDown={(event) => {
               if (event.key === "Escape") {
@@ -278,6 +297,7 @@ export default function CampusClient({
                 document.exitPointerLock?.();
                 return;
               }
+              if((view==="first-person"||view==="orbit")&&["q","e"].includes(event.key.toLowerCase())){event.preventDefault();turn(event.key.toLowerCase()==="q"?-.14:.14);return;}
               if (!connected || self?.seat || hub) return;
               if (navigation.current) stopMovement();
               const key = event.key.toLowerCase();
@@ -334,20 +354,37 @@ export default function CampusClient({
                   onUnavailable={unavailable}
                   view={view}
                   placeId={selectedPlace}
+                  hour={hour}
+                  look={look}
+                  onLookChange={setLook}
                 />
               </CanvasBoundary>
             )}
             <div className="school-camera-controls" aria-label="School camera">
-              <button className="secondary" aria-pressed={view === "overview"} onClick={() => setView("overview")}>Whole school</button>
-              <button className="secondary" aria-pressed={view === "follow"} onClick={() => setView("follow")}>Follow me</button>
+              <button className="secondary" aria-pressed={view === "exterior"} onClick={() => chooseCamera("exterior")}>The Cube</button>
+              <button className="secondary" aria-pressed={view === "overview"} onClick={() => chooseCamera("overview")}>Whole school</button>
+              <button className="secondary" aria-pressed={view === "follow"} onClick={() => chooseCamera("follow")}>Follow me</button>
+              <button className="secondary" aria-pressed={view === "first-person"} onClick={() => chooseCamera("first-person")}>First person</button>
+              <button className="secondary" aria-pressed={view === "orbit"} onClick={() => chooseCamera("orbit")}>Orbit view</button>
               <button className="secondary" onClick={() => { stopMovement();people.current?.focus(); }}>People &amp; safety</button>
               {walkingTo && <button className="secondary" onClick={stopMovement}>Stop walking</button>}
             </div>
             <div className="campus-stage-caption">
-              SCIENCEDOJO / {view === "overview" ? "WHOLE SCHOOL" : view === "place" ? selected.name.toUpperCase() : (currentPlace?.name ?? "School walkways").toUpperCase()}
-              <span>{view === "overview" ? "Choose a place on the map below." : "Connected places. Shared learning."}</span>
+              THE CUBE / {view === "exterior"?"GLASS. NATURE. POSSIBILITY.":view === "overview" ? "WHOLE SCHOOL" : view === "place" ? selected.name.toUpperCase() : (currentPlace?.name ?? "Ground campus").toUpperCase()}
+              <span>{view === "exterior"?"A scientific school beneath one transparent sky.":view === "overview" ? "Choose a place on the map below." : "Connected places. Shared learning."}</span>
             </div>
           </div>
+          <section className="cube-world-controls" aria-label="Sky and camera controls">
+            <div className="cube-clock-heading"><div><p className="campus-eyebrow">Your sky · 24-hour world</p><time dateTime={clockLabel(hour)}>{clockLabel(hour)}</time></div><span>{manualHour===null?"Local time":"Your chosen time"} · {sky.phase}</span></div>
+            <label className="cube-time-range">Time of day<input aria-label="Time of day" type="range" min="0" max="23.75" step="0.25" value={hour} onChange={event=>{stopMovement();setManualHour(Number(event.target.value));}}/></label>
+            <div className="cube-time-presets">{[["Sunrise",6.25],["Daylight",12],["Sunset",17.75],["Night sky",22]].map(([name,time])=><button className="secondary" key={name} onClick={()=>{stopMovement();setManualHour(Number(time));}}>{name}</button>)}<button className="secondary" aria-pressed={manualHour===null} onClick={()=>setManualHour(null)}>Live local time</button></div>
+            {(view==="first-person"||view==="orbit")&&<div className="cube-look-controls" aria-label="Look controls">
+              <span>{view==="first-person"?"Your eyes inside the Cube":"Orbit the school"}</span>
+              <button className="secondary" aria-label="Look left" onClick={()=>turn(-.22)}>←</button><button className="secondary" aria-label="Look right" onClick={()=>turn(.22)}>→</button>
+              <button className="secondary" aria-label="Look up" onClick={()=>turn(0,.18)}>↑</button><button className="secondary" aria-label="Look down" onClick={()=>turn(0,-.18)}>↓</button>
+              {view==="orbit"&&<><button className="secondary" aria-label="Zoom in" onClick={()=>setLook(previous=>boundedLook({...previous,distance:previous.distance*.8},view))}>＋</button><button className="secondary" aria-label="Zoom out" onClick={()=>setLook(previous=>boundedLook({...previous,distance:previous.distance*1.25},view))}>−</button></>}
+            </div>}
+          </section>
           <div className="campus-controls">
             <div>
               <strong>{self?.pseudonym || "Your own quiet corner"}</strong>

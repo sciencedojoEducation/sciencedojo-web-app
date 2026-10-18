@@ -15,11 +15,13 @@ await build({
     import './components/campus/campus.css';import {createRoot} from 'react-dom/client';import Scene from './components/campus/CampusScene';
     const player={id:'40000000-0000-0000-0000-000000000001',pseudonym:'Quiet Maple aaaa01',colour:0,x:-2,z:4,rotation:0,status:'walking',seat:null};
     const unavailable=()=>{window.noWebgl=true};
-    function App(){const [x,setX]=useState(-2),[view,setView]=useState("follow");useEffect(()=>{window.showOverview=()=>setView("overview");
+    function App(){const [x,setX]=useState(-2),[z,setZ]=useState(4),[view,setView]=useState("follow"),[hour,setHour]=useState(12),[look,setLook]=useState({yaw:0,pitch:.55,distance:36});useEffect(()=>{window.showOverview=()=>setView("overview");
+      window.showExterior=()=>{setView("exterior");setHour(12)};window.showNight=()=>setHour(22);
+      window.showFirst=()=>{setZ(26);setView("first-person");setLook({yaw:-.64,pitch:.72,distance:36})};
       window.startWalk=()=>{window.sceneFrames=[];window.walkStartedAt=performance.now();window.walkArrivals=[];const gaps=[120,280,160,240,140,260,180,220];let i=0,elapsed=0;
         const step=()=>{const gap=gaps[i%gaps.length];setTimeout(()=>{elapsed+=gap;setX(-2+elapsed*.0015);
           window.walkArrivals.push(performance.now());if(++i===20){window.walkDoneAt=performance.now();window.walkDone=true;}else step();},gap);};step();};
-    },[]);return <Scene snapshot={{self:player.id,players:[{...player,x}],occupied:[]}} active={true} view={view} onUnavailable={unavailable}/>;}
+    },[]);return <Scene snapshot={{self:player.id,players:[{...player,x,z}],occupied:[]}} active={true} view={view} hour={hour} look={look} onUnavailable={unavailable}/>;}
     createRoot(document.getElementById('root')).render(<App/>);`, loader: "tsx", resolveDir: process.cwd() },
   bundle: true, platform: "browser", format: "esm", jsx: "automatic",
   outfile: join(directory, "app.js"), define: { "process.env.NODE_ENV": '"production"' },
@@ -31,6 +33,9 @@ await build({
       function Probe(){useFrame(({scene,gl,camera},delta)=>{
         let avatar;scene.traverse(o=>{if(o.geometry?.type==='RingGeometry')avatar=o.parent});
         if(avatar){window.sceneFrames??=[];window.sceneFrames.push({t:performance.now(),ms:delta*1000,x:avatar.position.x,dpr:gl.getPixelRatio(),shadows:gl.shadowMap.enabled,cameraX:camera.position.x,cameraY:camera.position.y,cameraZ:camera.position.z,calls:gl.info.render.calls,triangles:gl.info.render.triangles,geometries:gl.info.memory.geometries});}
+        window.cubeDiagnostics={eye:camera.position.y,fov:camera.fov,selfVisible:avatar?.visible,
+          stars:scene.getObjectByName('cube-stars')?.visible,moon:scene.getObjectByName('cube-moon')?.visible,
+          sun:scene.getObjectByName('cube-sun')?.visible,envelope:scene.getObjectByName('cube-envelope')?.visible};
         window.sceneReady=true;
       });return null;}
       export function Canvas(props){return <Base {...props}>{props.children}<Probe/></Base>}
@@ -105,5 +110,18 @@ try {
   await page.screenshot({ path: join(directory, "scene.png") });
   await page.evaluate(()=>window.showOverview());await page.waitForTimeout(2500);
   await page.screenshot({path:join(directory,"whole-school.png")});
+  assert.equal((await page.evaluate(()=>window.cubeDiagnostics)).envelope,false,"Aerial cutaway must keep all ground destinations visible");
+  await page.evaluate(()=>window.showExterior());await page.waitForTimeout(2200);
+  const noon=await page.evaluate(()=>window.cubeDiagnostics);assert(noon.envelope&&noon.sun&&!noon.stars,"Daylight exterior must show the glass Cube and sun without stars");
+  await page.screenshot({path:join(directory,"cube-day.png")});
+  await page.evaluate(()=>window.showNight());await page.waitForTimeout(1000);
+  const night=await page.evaluate(()=>window.cubeDiagnostics);assert(night.stars&&night.moon&&!night.sun,"Night must show stars and moon, with the sun below the horizon");
+  await page.screenshot({path:join(directory,"cube-night.png")});
+  await page.evaluate(()=>window.showFirst());await page.waitForTimeout(700);
+  const eyes=await page.evaluate(()=>window.cubeDiagnostics);
+  console.log(JSON.stringify({cubeCamera:eyes}));
+  assert(Math.abs(eyes.eye-1.67)<.01&&Math.abs(eyes.fov-70)<.01&&!eyes.selfVisible,"First-person camera must be at eye level with the self avatar hidden");
+  await page.screenshot({path:join(directory,"cube-first-person-night.png")});
+  result.cubeViews={daylight:true,nightMoonStars:true,aerialCutaway:true,firstPersonEyeHeight:eyes.eye,firstPersonFov:eyes.fov};
   await writeFile(result.evidence, JSON.stringify(result, null, 2));
 } finally { await browser?.close();http.closeAllConnections();await new Promise(r=>http.close(r)); }

@@ -586,6 +586,40 @@ try {
     await a.getByRole("button", { name: "Enter school", exact: true }).click();
     await a.getByText("In the school · walking", { exact: true }).waitFor();
     result.checks.push("Leave and fresh admission restore standing presence");
+    const cubeId=(await aContext.cookies()).find(cookie=>cookie.name==="fixture").value;
+    await a.getByRole("button",{name:"First person",exact:true}).click();
+    await stage.focus();
+    for(let i=0;i<5;i++)await a.keyboard.press("e");
+    await a.waitForTimeout(150);
+    const facing={...await player(cubeId)};
+    await a.keyboard.down("ArrowUp");
+    try{
+      const deadline=Date.now()+6000;
+      while(Date.now()<deadline){const position=await player(cubeId);if(position.x>facing.x+.5&&position.z<facing.z-.5)break;await a.waitForTimeout(100);}
+    }finally{await a.keyboard.up("ArrowUp");}
+    await a.waitForTimeout(250);
+    const walked=await player(cubeId);
+    if(walked.x<=facing.x+.3||walked.z>=facing.z-.3)throw new Error("First-person forward input did not rotate with the local camera");
+    await a.getByRole("button",{name:"Night sky",exact:true}).click();
+    if((await a.locator(".cube-clock-heading time").textContent())!=="22:00")throw new Error("Night sky clock is not a24-hour manual selection");
+    for(let i=0;i<6;i++)await a.getByRole("button",{name:"Look left",exact:true}).click();
+    for(let i=0;i<4;i++)await a.getByRole("button",{name:"Look up",exact:true}).click();
+    await a.waitForTimeout(1500);
+    await a.locator(".campus-stage").screenshot({path:join(directory,"cube-first-person-night.png")});
+    result.screenshots.push(join(directory,"cube-first-person-night.png"));
+    await a.getByRole("button",{name:"Orbit view",exact:true}).click();
+    await a.getByRole("button",{name:"Zoom out",exact:true}).click();
+    if((await a.getByRole("button",{name:"Orbit view",exact:true}).getAttribute("aria-pressed"))!=="true")throw new Error("Orbit camera is not selectable");
+    await a.getByRole("button",{name:"The Cube",exact:true}).click();await a.waitForTimeout(1800);
+    await a.locator(".campus-stage").screenshot({path:join(directory,"cube-exterior-night.png")});result.screenshots.push(join(directory,"cube-exterior-night.png"));
+    await a.getByRole("button",{name:"Daylight",exact:true}).click();await a.waitForTimeout(700);
+    await a.locator(".campus-stage").screenshot({path:join(directory,"cube-exterior-day.png")});result.screenshots.push(join(directory,"cube-exterior-day.png"));
+    const timeRange=a.getByRole("slider",{name:"Time of day",exact:true});await timeRange.focus();await timeRange.press("Home");await timeRange.press("ArrowRight");
+    if((await a.locator(".cube-clock-heading time").textContent())!=="00:15")throw new Error("Sky time slider is not keyboard operable");
+    await a.getByRole("button",{name:"Live local time",exact:true}).click();
+    if((await a.getByRole("button",{name:"Live local time",exact:true}).getAttribute("aria-pressed"))!=="true")throw new Error("Local24-hour clock did not resume");
+    await a.getByRole("button",{name:"Daylight",exact:true}).click();
+    result.checks.push("Glass Cube exterior, first-person camera-relative walking, look/orbit/zoom controls, keyboard sky slider, night mode and resumed local24-hour clock work without new world-state fields");
     await a.getByRole("button", { name: "Whole school", exact: true }).click();
     if (await a.locator(".school-map-place").count() !== 15) throw new Error("Whole-school map is incomplete");
     await a.waitForTimeout(1800);
@@ -627,6 +661,7 @@ try {
       "/dashboard/academy/fixture",
       "/dashboard/student",
       "campus-wire-answer-canary-17oct",
+      "cameraYaw", "cameraPitch", "timeOfDay", "skyTime",
       ...issuedTickets,
     ])
       if (combined.includes(Buffer.from(canary)))

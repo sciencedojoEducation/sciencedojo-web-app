@@ -500,6 +500,32 @@
   color: inherit;
 }
 
+/* The Cube: glass architecture with accessible local sky/camera controls. */
+.cube-campus .campus-stage{background:#aac9da;border:1px solid #a4bec8;box-shadow:0 20px 65px #264b5b18;}
+.cube-campus .campus-stage-caption{color:#f1fbff;text-shadow:0 1px 5px #071b2c;pointer-events:none;z-index:2;}
+.cube-campus .campus-stage-caption span{color:#f1fbff;}
+.cube-crosshair{position:absolute;left:50%;top:50%;width:6px;height:6px;border:1px solid #ffffffb0;border-radius:50%;box-shadow:0 0 3px #102935;pointer-events:none;}
+.cube-look-hint{position:absolute;bottom:72px;left:50%;transform:translateX(-50%);font-size:10px;letter-spacing:.06em;white-space:nowrap;background:#0b263ab3;color:#edfaff;padding:7px 12px;border-radius:20px;pointer-events:none;}
+.cube-world-controls{margin-top:16px;padding:19px 22px;background:linear-gradient(120deg,#ecf4f4,#f7faf7);border:1px solid #c4d6da;border-radius:18px;}
+.cube-clock-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;}
+.cube-clock-heading .campus-eyebrow{font-size:9px;margin:0 0 4px;}
+.cube-clock-heading time{font:400 31px/1.2 Georgia,serif;font-variant-numeric:tabular-nums;color:#1d4958;}
+.cube-clock-heading>span{font-size:11px;color:#4e7079;text-align:right;}
+.cube-time-range{display:flex;align-items:center;gap:14px;font-size:11px;color:#41616b;margin:14px 0;}
+.cube-time-range input{flex:1;min-width:0;accent-color:#387a8a;cursor:pointer;}
+.cube-time-presets{display:flex;flex-wrap:wrap;gap:6px;}
+.campus-shell .cube-time-presets button{font-size:10px;min-height:35px;padding:7px 12px;background:#f9fcfb;color:#285362;border-color:#b8cfd3;}
+.campus-shell .cube-time-presets button[aria-pressed=true]{background:#285c6b;color:#fff;}
+.cube-look-controls{display:flex;align-items:center;flex-wrap:wrap;gap:6px;border-top:1px solid #ccdcdd;margin-top:14px;padding-top:13px;}
+.cube-look-controls>span{font-size:11px;color:#3f6571;margin-right:auto;}
+.campus-shell .cube-look-controls button{min-width:38px;min-height:38px;padding:7px;font-size:17px;background:#f6fbfb;color:#245461;border-color:#bbd0d4;}
+@media(max-width:600px){
+ .cube-world-controls{padding:15px;border-radius:15px;}.cube-clock-heading time{font-size:27px;}.cube-clock-heading>span{font-size:10px;}
+ .cube-look-controls>span{width:100%;margin-bottom:3px;}.cube-look-hint{font-size:9px;bottom:82px;}
+ .cube-campus .school-camera-controls{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;}
+ .cube-campus .school-camera-controls button{flex:0 0 auto;}
+}
+
 /* Whole-school cutaway and accessible place map. */
 .school-scene{position:relative;width:100%;height:100%;}
 .school-signs{position:absolute;inset:0;pointer-events:none;overflow:hidden;}

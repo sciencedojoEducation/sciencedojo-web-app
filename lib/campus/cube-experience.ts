@@ -15,7 +15,7 @@ function mix(a: string, b: string, amount: number) {
 export function schoolSky(hour: number) {
   const angle=(normalizeHour(hour)-6)/24*Math.PI*2, altitude=Math.sin(angle);
   const daylight=clamp((altitude+.12)/.5,0,1), twilight=clamp(1-Math.abs(altitude)/.3,0,1);
-  const sun={x:Math.cos(angle)*.6,y:altitude,z:Math.cos(angle)*.8};
+  const sun={x:-Math.cos(angle)*.6,y:altitude,z:-Math.cos(angle)*.8};
   return { daylight, stars:Math.pow(1-daylight,2), sun, moon:{x:-sun.x,y:-sun.y,z:-sun.z},
     zenith:mix(mix("#020611","#4a95ce",daylight),"#6a6a9b",twilight*.45),
     horizon:mix(mix("#101c32","#e2f2f4",daylight),"#f2aa77",twilight*.85),
@@ -29,5 +29,6 @@ export function boundedLook(look: CameraLook, view: SchoolView): CameraLook {
 /** Convert local movement axes only; the server still authorizes movement. */
 export function cameraDirection(x: number, z: number, yaw: number) {
   if(!x&&!z)return {x:0,z:0};
-  return {x:x*Math.cos(yaw)-z*Math.sin(yaw),z:x*Math.sin(yaw)+z*Math.cos(yaw)};
+  const length=Math.max(1,Math.hypot(x,z));
+  return {x:clamp((x*Math.cos(yaw)-z*Math.sin(yaw))/length,-1,1),z:clamp((x*Math.sin(yaw)+z*Math.cos(yaw))/length,-1,1)};
 }
