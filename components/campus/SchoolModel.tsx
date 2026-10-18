@@ -1,6 +1,6 @@
 "use client";
 import {memo,useLayoutEffect,useMemo,useRef} from "react";
-import {BoxGeometry,Color,MeshStandardMaterial,Object3D,Sphere,type InstancedMesh} from "three";
+import {BoxGeometry,Color,MeshLambertMaterial,Object3D,Sphere,type InstancedMesh} from "three";
 import {SCHOOL_PLACES,STUDY_SEATS,type Place} from "@/lib/campus/school-layout";
 type V=[number,number,number];
 type Box={position:V;size:V;colour:string;seat?:number;section:number};
@@ -145,7 +145,8 @@ for(const side of [-1,1]){box([side*5,2.2,40],[.7,4.4,.7],"#487469");box([side*2
 const batches=Array.from({length:SCHOOL_PLACES.length+1},(_,i)=>boxes.filter(b=>b.section===i));
 const SchoolModel=memo(function SchoolModel({occupied}:{occupied:number}){
  const meshes=useRef<(InstancedMesh|null)[]>([]),trunks=useRef<InstancedMesh>(null),leaves=useRef<InstancedMesh>(null);
- const geometry=useMemo(()=>new BoxGeometry(1,1,1),[]),material=useMemo(()=>new MeshStandardMaterial({roughness:.85}),[]);
+ // Diffuse props need no per-fragment metal/roughness calculations.
+ const geometry=useMemo(()=>new BoxGeometry(1,1,1),[]),material=useMemo(()=>new MeshLambertMaterial(),[]);
  useLayoutEffect(()=>{
   const transform=new Object3D();
   batches.forEach((batch,section)=>{
@@ -169,12 +170,12 @@ const SchoolModel=memo(function SchoolModel({occupied}:{occupied:number}){
  },[occupied]);
  return <>
   <color attach="background" args={["#d7e2d8"]}/><fog attach="fog" args={["#d7e2d8",200,400]}/>
-  <ambientLight intensity={1.5}/><directionalLight position={[25,65,35]} intensity={2.4} castShadow shadow-mapSize={[2048,2048]}
+  <ambientLight intensity={1.5}/><directionalLight position={[25,65,35]} intensity={2.4} castShadow shadow-mapSize={[1024,1024]} shadow-normalBias={.04}
     shadow-camera-left={-80} shadow-camera-right={80} shadow-camera-top={70} shadow-camera-bottom={-70} shadow-camera-far={180}
     shadow-autoUpdate={false} shadow-needsUpdate={true}/>
   {batches.map((batch,i)=><instancedMesh key={i} ref={el=>{meshes.current[i]=el;}} args={[geometry,material,batch.length]} castShadow receiveShadow/>)}
-  <instancedMesh ref={trunks} args={[undefined,undefined,trees.length]} castShadow><cylinderGeometry args={[.38,.5,1.3,7]}/><meshStandardMaterial color="#a28465"/></instancedMesh>
-  <instancedMesh ref={leaves} args={[undefined,undefined,trees.length]} castShadow><icosahedronGeometry args={[1.35,1]}/><meshStandardMaterial color="#799c75"/></instancedMesh>
+  <instancedMesh ref={trunks} args={[undefined,undefined,trees.length]} castShadow><cylinderGeometry args={[.38,.5,1.3,7]}/><meshLambertMaterial color="#a28465"/></instancedMesh>
+  <instancedMesh ref={leaves} args={[undefined,undefined,trees.length]} castShadow><icosahedronGeometry args={[1.35,1]}/><meshLambertMaterial color="#799c75"/></instancedMesh>
  </>;
 });
 export default SchoolModel;

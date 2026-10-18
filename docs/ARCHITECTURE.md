@@ -197,3 +197,5 @@ Implementation plan: one shared static layout defines room footprints, doors, bo
 Expanded shared-SQL admission requires the server-only `school-v1` revision returned by migration 072; sockets fail closed against an older world rather than admitting learners to incompatible bounds/seats. This revision stays outside peer snapshots. Migration 072 is prepared and tested in disposable local PGlite only; no hosted application is authorized or recorded.
 
 Whole-school rendering groups instanced boxes per room using accurate culling bounds and shared geometry/material. A sustained slow-frame detector can reduce canvas pixel ratio from one to 0.65 while keeping HTML sharp. Keep the existing movement/draw-call assertions; do not compensate for a larger world by weakening continuity checks.
+
+School props use shared diffuse Lambert materials and cached 1024-pixel shadows with normal bias; retain per-room culling and the adaptive canvas budget. This avoids unnecessary physically based shading for the low-poly scene.
