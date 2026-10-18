@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import {test} from "node:test";
-import {schoolSky,clockLabel,normalizeHour,boundedLook,cameraDirection} from "../lib/campus/cube-experience.ts";
+import {schoolSky,clockLabel,normalizeHour,boundedLook,cameraDirection,keyboardDirection} from "../lib/campus/cube-experience.ts";
 import {isInput} from "../lib/campus/protocol.ts";
 test("24-hour sky has an overhead noon sun and midnight moon with stars",()=>{
  const day=schoolSky(12),night=schoolSky(0);
@@ -14,11 +14,20 @@ test("sunrise/sunset and midnight wrap continuously and show a 24-hour clock",()
  assert.equal(clockLabel(23.5),"23:30");assert.equal(clockLabel(24),"00:00");
  assert.equal(normalizeHour(NaN),12);
 });
-test("first-person movement rotates bounded direction inputs with the camera",()=>{
+test("camera-relative movement rotates bounded direction inputs without faster diagonals",()=>{
  const forward=cameraDirection(0,-1,Math.PI/2);assert(Math.abs(forward.x-1)<1e-9);assert(Math.abs(forward.z)<1e-9);
  const diagonal=cameraDirection(1,-1,.72);assert(Math.abs(Math.hypot(diagonal.x,diagonal.z)-1)<1e-9);
  for(let yaw=-Math.PI;yaw<Math.PI;yaw+=.01)assert(isInput({...cameraDirection(1,-1,yaw),seq:0}));
  assert.deepEqual(cameraDirection(0,0,2),{x:0,z:0});
+});
+test("held movement keys cancel opposites and restore remaining keys and aliases on release",()=>{
+ const keys=new Set(['w','d']);assert.deepEqual(keyboardDirection(keys),{x:1,z:-1});
+ keys.add('s');assert.deepEqual(keyboardDirection(keys),{x:1,z:0});
+ keys.delete('s');assert.deepEqual(keyboardDirection(keys),{x:1,z:-1});
+ keys.add('arrowup');keys.delete('w');assert.deepEqual(keyboardDirection(keys),{x:1,z:-1});
+ keys.add('a');assert.deepEqual(keyboardDirection(keys),{x:0,z:-1});
+ keys.delete('d');assert.deepEqual(keyboardDirection(keys),{x:-1,z:-1});
+ keys.clear();assert.deepEqual(keyboardDirection(keys),{x:0,z:0});
 });
 test("look controls constrain pitch and distance without preventing first-person sky views",()=>{
  assert.equal(boundedLook({yaw:0,pitch:-10,distance:999},"orbit").pitch,.16);

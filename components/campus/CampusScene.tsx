@@ -62,6 +62,9 @@ function Camera({focus,present,reducedMotion,view,placeId,activityRef,angles}:{f
   else if(view==="orbit"){
    const x=present&&!reducedMotion?focus.current.x:place.x,z=present&&!reducedMotion?focus.current.z:place.z,d=facing.distance;
    target.set(x-Math.sin(facing.yaw)*Math.cos(facing.pitch)*d,2+Math.sin(facing.pitch)*d,z+Math.cos(facing.yaw)*Math.cos(facing.pitch)*d);aim.set(x,2,z);
+   // Confirmed avatar poses already provide smooth following. Apply orbit
+   // rotation immediately so WASD follows the view the player actually sees.
+   initializedRef.current=true;camera.position.copy(target);look.copy(aim);camera.lookAt(look);camera.updateMatrixWorld();return;
   }
   else{const x=view==="place"||reducedMotion?place.x:present?focus.current.x:0,z=view==="place"||reducedMotion?place.z:present?focus.current.z:0;
    target.set(x+13,16,z+20);aim.set(x,0,z-1);}

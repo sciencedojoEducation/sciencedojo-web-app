@@ -631,6 +631,46 @@ try {
     await a.getByRole("button",{name:"Orbit view",exact:true}).click();
     await a.getByRole("button",{name:"Zoom out",exact:true}).click();
     if((await a.getByRole("button",{name:"Orbit view",exact:true}).getAttribute("aria-pressed"))!=="true")throw new Error("Orbit camera is not selectable");
+    const orbitInput=async()=>shared
+      ? (await shared.db.query('SELECT input_x AS x,input_z AS z,sequence AS seq FROM campus_presence WHERE campus_id=$1',[cubeId])).rows[0]
+      : campus.room.world.inputs.get(cubeId);
+    const waitOrbitInput=async(expected,after=-1)=>{
+      const until=Date.now()+4000;
+      while(Date.now()<until){const input=await orbitInput();if(input&&Number(input.seq)>Number(after)&&expected(input))return input;await a.waitForTimeout(40);}
+      throw new Error('Orbit keys did not produce the expected camera-relative command');
+    };
+    const matches=expected=>input=>Math.hypot(input.x-expected.x,input.z-expected.z)<.001;
+    const orbitPulse=async(keys,expected)=>{
+      await stage.focus();const before={...await player(cubeId)},seq=(await orbitInput()).seq;
+      for(const key of keys)await a.keyboard.down(key);
+      let input;
+      try{
+        input=await waitOrbitInput(expected?matches(expected):i=>Math.hypot(i.x,i.z)>.99,seq);
+        const until=Date.now()+4000;
+        while(Date.now()<until){const position=await player(cubeId);if((position.x-before.x)*input.x+(position.z-before.z)*input.z>.12)break;await a.waitForTimeout(40);}
+        const position=await player(cubeId);
+        if((position.x-before.x)*input.x+(position.z-before.z)*input.z<=.1)throw new Error('Orbit command did not move the authoritative avatar in its intended direction');
+      }finally{for(const key of keys)await a.keyboard.up(key);}
+      await waitOrbitInput(matches({x:0,z:0}),input?.seq??seq);
+      return input;
+    };
+    const baseline=await orbitPulse(['w']);
+    for(let i=0;i<4;i++)await a.getByRole('button',{name:'Look right',exact:true}).click();
+    const c=Math.cos(.88),s=Math.sin(.88),fw={x:baseline.x*c-baseline.z*s,z:baseline.x*s+baseline.z*c};
+    const right={x:-fw.z,z:fw.x},left={x:fw.z,z:-fw.x};
+    for(const [keys,expected] of [[['w'],fw],[['s'],{x:-fw.x,z:-fw.z}],[['a'],left],[['d'],right],[['w','d'],{x:(fw.x+right.x)/Math.SQRT2,z:(fw.z+right.z)/Math.SQRT2}]])await orbitPulse(keys,expected);
+    // Opposite keys cancel; releasing one resumes the key still physically held.
+    await stage.focus();let seq=(await orbitInput()).seq;await a.keyboard.down('w');await waitOrbitInput(matches(fw),seq);
+    seq=(await orbitInput()).seq;await a.keyboard.down('s');await waitOrbitInput(matches({x:0,z:0}),seq);
+    seq=(await orbitInput()).seq;await a.keyboard.up('s');await waitOrbitInput(matches(fw),seq);
+    seq=(await orbitInput()).seq;await a.keyboard.down('ArrowUp');await a.keyboard.up('w');await waitOrbitInput(matches(fw),seq);
+    seq=(await orbitInput()).seq;await a.keyboard.up('ArrowUp');await waitOrbitInput(matches({x:0,z:0}),seq);
+    await stage.focus();await a.keyboard.down('a');await waitOrbitInput(matches(left));
+    seq=(await orbitInput()).seq;await a.keyboard.down('d');await waitOrbitInput(matches({x:0,z:0}),seq);
+    seq=(await orbitInput()).seq;await a.keyboard.up('d');await waitOrbitInput(matches(left),seq);
+    await a.getByRole('button',{name:'Look right',exact:true}).click();await a.keyboard.up('a');
+    await waitOrbitInput(matches({x:0,z:0}));
+    result.checks.push('Orbit WASD follows the rotated camera, moves the authoritative avatar forward/back/left/right with normalized diagonals, cancels opposing keys, restores remaining keys/aliases on release and clears movement on control focus');
     await a.getByRole("button",{name:"The Cube",exact:true}).click();await a.waitForTimeout(1800);
     await a.locator(".campus-stage").screenshot({path:join(directory,"cube-exterior-night.png")});result.screenshots.push(join(directory,"cube-exterior-night.png"));
     await a.getByRole("button",{name:"Daylight",exact:true}).click();await a.waitForTimeout(700);

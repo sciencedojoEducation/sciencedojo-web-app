@@ -28,6 +28,10 @@ export function boundedLook(look: CameraLook, view: SchoolView): CameraLook {
     distance:clamp(Number.isFinite(look.distance)?look.distance:36,10,260) };
 }
 /** Convert local movement axes only; the server still authorizes movement. */
+export function keyboardDirection(keys: ReadonlySet<string>) {
+  return { x:Number(keys.has("d")||keys.has("arrowright"))-Number(keys.has("a")||keys.has("arrowleft")),
+    z:Number(keys.has("s")||keys.has("arrowdown"))-Number(keys.has("w")||keys.has("arrowup")) };
+}
 export function cameraDirection(x: number, z: number, yaw: number) {
   if(!x&&!z)return {x:0,z:0};
   const length=Math.max(1,Math.hypot(x,z));

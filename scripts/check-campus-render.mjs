@@ -18,15 +18,17 @@ await build({
     const unavailable=()=>{window.noWebgl=true};
     function App(){const [x,setX]=useState(-2),[z,setZ]=useState(4),[view,setView]=useState("follow"),[hour,setHour]=useState(12),[active,setActive]=useState(true),[ball,setBall]=useState(undefined),[look,setLook]=useState({yaw:0,pitch:.55,distance:36});useEffect(()=>{window.showOverview=()=>setView("overview");
       window.showExterior=()=>{setView("exterior");setHour(12)};window.showNight=()=>setHour(22);window.pauseScene=()=>setActive(false);window.resumeScene=()=>setActive(true);
-      window.showFirst=()=>{setZ(26);setView("first-person");setLook({yaw:-.64,pitch:.72,distance:36})};
+      window.showFirst=()=>{window.watchOrbit=false;setZ(26);setView("first-person");setLook({yaw:-.64,pitch:.72,distance:36})};
       window.refreshSnapshot=()=>setX(x=>x+.2);
+      window.showOrbit=()=>{window.orbitFrames=[];window.watchOrbit=true;window.orbitExpectedYaw=.9;setView('orbit');setHour(12);setLook({yaw:.9,pitch:.55,distance:10});};
+      window.nudgeOrbit=()=>setZ(z=>z+.2);
       const courtPlayer={...player,x:52,z:0};let courtBall;
       window.showCourt=()=>{setX(52);setZ(0);setHour(12);setView('first-person');const aim=suggestedShot(courtPlayer);setLook({yaw:aim.yaw,pitch:aim.pitch,distance:36});courtBall=basketballAction(createBasketball(performance.now()),courtPlayer,{action:'take'},performance.now());setBall(basketballSnapshot(courtBall,[courtPlayer]));};
       window.shootCourt=()=>{const aim=suggestedShot(courtPlayer);window.courtFrames=[];window.courtCapture=true;courtBall=basketballAction(courtBall,courtPlayer,{action:'shoot',...basketballAim(aim.yaw,aim.pitch),power:aim.power},performance.now());setBall(basketballSnapshot(courtBall,[courtPlayer]));const started=performance.now();const timer=setInterval(()=>{courtBall=advanceBasketball(courtBall,[courtPlayer],performance.now());setBall(basketballSnapshot(courtBall,[courtPlayer]));if(courtBall.north>0)window.courtScored=true;if(performance.now()-started>3500)clearInterval(timer);},100);};
       window.startWalk=()=>{window.sceneFrames=[];window.walkStartedAt=performance.now();window.walkArrivals=[];const gaps=[120,280,160,240,140,260,180,220];let i=0,elapsed=0;
         const step=()=>{const gap=gaps[i%gaps.length];setTimeout(()=>{elapsed+=gap;setX(-2+elapsed*.0015);
           window.walkArrivals.push(performance.now());if(++i===20){window.walkDoneAt=performance.now();window.walkDone=true;}else step();},gap);};step();};
-    },[]);return <Scene snapshot={{self:player.id,players:[{...player,x,z}],occupied:[],...(ball?{basketball:ball}:{})}} active={active} view={view} hour={hour} look={look} onUnavailable={unavailable} onLookChange={next=>{window.lastLook=next;window.lookHistory??=[];window.lookHistory.push(next.yaw);}}/>;}
+    },[]);return <Scene snapshot={{self:player.id,players:[{...player,x,z}],occupied:[],...(ball?{basketball:ball}:{})}} active={active} view={view} hour={hour} look={look} onUnavailable={unavailable} onLookChange={next=>{window.lastLook=next;window.orbitExpectedYaw=next.yaw;window.lookHistory??=[];window.lookHistory.push(next.yaw);}}/>;}
     createRoot(document.getElementById('root')).render(<App/>);`, loader: "tsx", resolveDir: process.cwd() },
   bundle: true, platform: "browser", format: "esm", jsx: "automatic",
   outfile: join(directory, "app.js"), define: { "process.env.NODE_ENV": '"production"' },
@@ -37,9 +39,11 @@ await build({
       export * from ${JSON.stringify(fiber)};
       function Probe(){useFrame(({scene,gl,camera},delta)=>{
         const avatar=scene.getObjectByName('campus-self-avatar');let receivingShadows=false;scene.traverse(o=>{if(o.isMesh&&o.receiveShadow)receivingShadows=true;});
+        if(avatar)window.displayedAvatar={x:avatar.position.x,z:avatar.position.z};
         if(avatar){window.sceneFrames??=[];window.sceneFrames.push({t:performance.now(),ms:delta*1000,x:avatar.position.x,dpr:gl.getPixelRatio(),shadows:receivingShadows,shadowPipeline:gl.shadowMap.enabled,cameraX:camera.position.x,cameraY:camera.position.y,cameraZ:camera.position.z,calls:gl.info.render.calls,triangles:gl.info.render.triangles,geometries:gl.info.memory.geometries});}
         window.cameraQuaternion=camera.quaternion.toArray();
         window.cameraForward={x:-camera.matrixWorld.elements[8],y:-camera.matrixWorld.elements[9],z:-camera.matrixWorld.elements[10]};
+        if(window.watchOrbit){const yaw=Math.atan2(window.cameraForward.x,-window.cameraForward.z);window.orbitFrames.push({yaw,expected:window.orbitExpectedYaw,error:Math.abs(Math.atan2(Math.sin(yaw-window.orbitExpectedYaw),Math.cos(yaw-window.orbitExpectedYaw)))});}
         window.cubeDiagnostics={eye:camera.position.y,fov:camera.fov,selfVisible:avatar?.visible,
           stars:scene.getObjectByName('cube-stars')?.visible,moon:scene.getObjectByName('cube-moon')?.visible,
           sun:scene.getObjectByName('cube-sun')?.visible,envelope:scene.getObjectByName('cube-envelope')?.visible};
@@ -149,7 +153,18 @@ try {
   await page.evaluate(()=>window.showNight());await page.waitForTimeout(1000);
   const night=await page.evaluate(()=>window.cubeDiagnostics);assert(night.stars&&night.moon&&!night.sun,"Night must show stars and moon, with the sun below the horizon");
   await page.screenshot({path:join(directory,"cube-night.png")});
-  await page.evaluate(()=>window.showFirst());await page.waitForTimeout(700);
+  await page.evaluate(()=>window.showOrbit());
+  await page.waitForFunction(()=>window.orbitFrames.length>0);
+  await page.mouse.move(430,300);await page.mouse.down();await page.mouse.move(600,320,{steps:8});await page.mouse.up();
+  await page.waitForFunction(()=>Math.abs(window.orbitExpectedYaw-.9)>.4&&window.orbitFrames.at(-1).error<1e-6);
+  await page.evaluate(()=>window.nudgeOrbit());
+  await page.waitForFunction(()=>Math.abs(window.displayedAvatar.z-4.2)<.001);
+  const orbitFrames=await page.evaluate(()=>window.orbitFrames);
+  assert(orbitFrames.length>2&&orbitFrames.every(f=>f.error<1e-6),'Orbit mouse rotation must render the same heading immediately, without an eased-camera/input mismatch');
+  assert((await page.evaluate(()=>window.cubeDiagnostics)).selfVisible,'Third-person Orbit must retain the visible avatar');
+  await page.screenshot({path:join(directory,'orbit-camera.png')});
+  result.orbitControls={immediateRenderedHeading:true,mouseDrag:true,selfVisible:true,maxHeadingError:Math.max(...orbitFrames.map(f=>f.error))};
+  await page.evaluate(()=>{window.showFirst();window.showNight();});await page.waitForTimeout(700);
   const eyes=await page.evaluate(()=>window.cubeDiagnostics);
   console.log(JSON.stringify({cubeCamera:eyes}));
   assert(Math.abs(eyes.eye-1.67)<.01&&Math.abs(eyes.fov-70)<.01&&!eyes.selfVisible,"First-person camera must be at eye level with the self avatar hidden");

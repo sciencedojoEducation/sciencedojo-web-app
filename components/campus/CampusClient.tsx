@@ -14,7 +14,7 @@ import {
 import { connectCampus, requestCampusAdmission, type CampusConnection } from "@/lib/campus/connection";
 import { SEATS, type Snapshot } from "@/lib/campus/protocol";
 import { SCHOOL_PLACES, schoolPlaceAt, schoolRoute, type Point } from "@/lib/campus/school-layout";
-import {DEFAULT_LOOK,boundedLook,cameraDirection,clockLabel,schoolSky,type CameraLook,type SchoolView} from "@/lib/campus/cube-experience";
+import {DEFAULT_LOOK,boundedLook,cameraDirection,keyboardDirection,clockLabel,schoolSky,type CameraLook,type SchoolView} from "@/lib/campus/cube-experience";
 import "./campus.css";
 import {useCampusFullscreen} from "./useCampusFullscreen";
 import BasketballHud from "./BasketballHud";
@@ -90,6 +90,7 @@ export default function CampusClient({
   const [selectedPlace, setSelectedPlace] = useState("library"), [walkingTo, setWalkingTo] = useState("");
   const navigation = useRef<{ points: Point[]; name: string } | null>(null);
   const latestSelf = useRef<Point | null>(null);
+  const heldMovementKeys=useRef(new Set<string>());
   const room = useRef<CampusConnection | null>(null),
     direction = useRef({ x: 0, z: 0 }),
     stepTimer = useRef<ReturnType<typeof setTimeout> | null>(null),
@@ -118,6 +119,7 @@ export default function CampusClient({
     if (stepTimer.current) clearTimeout(stepTimer.current);
     stepTimer.current = null;
     direction.current = { x: 0, z: 0 };
+    heldMovementKeys.current.clear();
     navigation.current = null;setWalkingTo("");
     ballCharge.current.started=null;setCharging(false);
   }, []);
@@ -217,7 +219,7 @@ export default function CampusClient({
       }
       if (room.current)
         room.current.send("input", {
-          ...(cameraRef.current.view==="first-person"&&!route?cameraDirection(direction.current.x,direction.current.z,cameraRef.current.yaw):direction.current),
+          ...(["first-person","orbit"].includes(cameraRef.current.view)&&!route?cameraDirection(direction.current.x,direction.current.z,cameraRef.current.yaw):direction.current),
           seq: sequence.current++,
         });
     }, 100);
@@ -391,9 +393,8 @@ export default function CampusClient({
               }
               if(event.key.toLowerCase()==="e"&&!event.altKey&&!event.ctrlKey&&!event.metaKey){event.preventDefault();if(!event.repeat){if(courtInteraction&&mine)startShot();else interact();}return;}
               if (!connected || self?.seat || hub) return;
-              if (navigation.current) stopMovement();
               const key = event.key.toLowerCase();
-              if (
+              if (!(
                 [
                   "arrowleft",
                   "a",
@@ -404,28 +405,17 @@ export default function CampusClient({
                   "arrowdown",
                   "s",
                 ].includes(key)
-              )
-                event.preventDefault();
-              if (["arrowleft", "a"].includes(key)) direction.current.x = -1;
-              if (["arrowright", "d"].includes(key)) direction.current.x = 1;
-              if (["arrowup", "w"].includes(key)) direction.current.z = -1;
-              if (["arrowdown", "s"].includes(key)) direction.current.z = 1;
+              )||event.altKey||event.ctrlKey||event.metaKey) return;
+              event.preventDefault();
+              if (navigation.current) stopMovement();
+              heldMovementKeys.current.add(key);
+              direction.current=keyboardDirection(heldMovementKeys.current);
             }}
             onKeyUp={(event) => {
               if(event.target!==event.currentTarget)return;
               if(event.key.toLowerCase()==="e"&&ballCharge.current.started!==null){event.preventDefault();shootBall(currentShotPower(ballCharge.current,performance.now()));return;}
-              if (
-                ["arrowleft", "a", "arrowright", "d"].includes(
-                  event.key.toLowerCase(),
-                )
-              )
-                direction.current.x = 0;
-              if (
-                ["arrowup", "w", "arrowdown", "s"].includes(
-                  event.key.toLowerCase(),
-                )
-              )
-                direction.current.z = 0;
+              if(heldMovementKeys.current.delete(event.key.toLowerCase()))
+                direction.current=keyboardDirection(heldMovementKeys.current);
             }}
           >
             {no3d ? (
@@ -533,6 +523,8 @@ export default function CampusClient({
                 returning to school, E stands up. In First person, move the mouse
                 to look; click the scene for continuous mouse look. Escape stops
                 walking and releases the mouse. Touch users can drag to look.
+                In Orbit view, WASD follows the camera and your character faces
+                the direction of travel. Drag to rotate the camera.
                 On the sports court, E picks up the basketball. Aim at a hoop,
                 hold E while power rises and falls, then release to shoot. Escape
                 cancels charging and keeps the ball. The dotted arc and power
