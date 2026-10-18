@@ -379,8 +379,13 @@ try {
         }
       } finally { await a.keyboard.up("ArrowUp"); }
     };
+    await stage.focus();await a.keyboard.press("e");
+    await a.waitForTimeout(450);
+    if(await a.getByRole("button",{name:"Stand up",exact:true}).isEnabled())throw new Error("E interacted with a distant desk");
     await walkForwardTo(firstId, -1.2);
-    await a.getByRole("button", { name: "Desk 2 Sit →", exact: true }).click();
+    await a.keyboard.down("e");
+    await a.keyboard.down("e");
+    await a.keyboard.up("e");
     await a
       .getByRole("button", { name: "Open Study Hub", exact: true })
       .waitFor({ state: "visible" });
@@ -390,9 +395,9 @@ try {
           (e) => e.textContent === "Open Study Hub",
         )?.disabled,
     );
-    await a
-      .getByRole("button", { name: "Open Study Hub", exact: true })
-      .click();
+    if(await a.locator("dialog").evaluate(dialog=>dialog.open))throw new Error("Held E repeated the desk interaction");
+    await a.waitForTimeout(450);await stage.focus();await a.keyboard.press("e");
+    await a.waitForFunction(()=>document.querySelector("dialog")?.open);
     await a.getByText("VIRTUAL SCIENCEDOJO · BETA", { exact: true }).waitFor();
     const dashboardOpened = aContext.waitForEvent("page");
     await a.getByRole("link", { name: "My dashboard · opens a new tab ↗", exact: true }).click();
@@ -422,6 +427,9 @@ try {
     await course
       .getByRole("textbox", { name: "Practice answer" })
       .fill("campus-wire-answer-canary-17oct");
+    await course.getByRole("textbox", { name: "Practice answer" }).press("e");
+    if(!(await a.locator("dialog").evaluate(dialog=>dialog.open)))throw new Error("Course typing triggered a world interaction");
+    await course.getByRole("textbox", { name: "Practice answer" }).press("Backspace");
     await course
       .getByRole("textbox", { name: "Practice answer" })
       .press("Escape");
@@ -465,8 +473,9 @@ try {
     await course.getByRole("button", { name: "Save progress" }).click();
     await course.getByText("Saved", { exact: true }).waitFor();
     await a.getByRole("button", { name: "Return to school →" }).click();
-    await a.getByRole("button", { name: "Stand up", exact: true }).click();
+    await stage.focus();await a.keyboard.press("e");
     await a.getByText("In the school · walking", { exact: true }).waitFor();
+    result.checks.push("E ignores distant desks and repeat, sits at the nearest free station, opens its Hub and stands after return; course typing stays isolated");
     result.checks.push(
       "Keyboard walk, sit, Study Hub, identity notice, save, close/reopen retention and stand",
     );
@@ -586,10 +595,18 @@ try {
     await a.getByRole("button", { name: "Enter school", exact: true }).click();
     await a.getByText("In the school · walking", { exact: true }).waitFor();
     result.checks.push("Leave and fresh admission restore standing presence");
+    await a.setViewportSize({ width: 1440, height: 1050 });
     const cubeId=(await aContext.cookies()).find(cookie=>cookie.name==="fixture").value;
     await a.getByRole("button",{name:"First person",exact:true}).click();
-    await stage.focus();
-    for(let i=0;i<5;i++)await a.keyboard.press("e");
+    const scene=a.locator(".school-scene"),box=await scene.boundingBox(),cx=box.x+box.width/2,cy=box.y+box.height/2;
+    await a.mouse.move(cx,cy);await a.mouse.move(cx+210,cy,{steps:8});
+    await a.mouse.click(cx+210,cy);
+    await a.waitForFunction(()=>document.pointerLockElement===document.querySelector(".school-scene"));
+    await a.mouse.move(cx+240,cy,{steps:3});
+    await a.keyboard.press("Escape");
+    await a.waitForFunction(()=>document.pointerLockElement===null);
+    await a.getByText("Click school to resume mouse look · E to interact",{exact:true}).waitFor();
+    await stage.focus();await a.keyboard.press("e");
     await a.waitForTimeout(150);
     const facing={...await player(cubeId)};
     await a.keyboard.down("ArrowUp");
@@ -619,6 +636,7 @@ try {
     await a.getByRole("button",{name:"Live local time",exact:true}).click();
     if((await a.getByRole("button",{name:"Live local time",exact:true}).getAttribute("aria-pressed"))!=="true")throw new Error("Local24-hour clock did not resume");
     await a.getByRole("button",{name:"Daylight",exact:true}).click();
+    result.checks.push("First-person hover look, click-to-lock, locked relative motion, Escape release and E without camera turning work in actual Chromium");
     result.checks.push("Glass Cube exterior, first-person camera-relative walking, look/orbit/zoom controls, keyboard sky slider, night mode and resumed local24-hour clock work without new world-state fields");
     await a.getByRole("button", { name: "Whole school", exact: true }).click();
     if (await a.locator(".school-map-place").count() !== 15) throw new Error("Whole-school map is incomplete");

@@ -558,3 +558,7 @@
  .school-place-detail button{font-size:11px;padding:10px;}.school-view-overview .school-signs>span{font-size:6px;padding:2px 3px;}
  .school-camera-controls{top:10px;left:10px;}.campus-shell .school-camera-controls button{font-size:10px;padding:7px 10px;}
 }
+
+.cube-campus .campus-interact{position:absolute;bottom:106px;left:50%;transform:translateX(-50%);z-index:3;max-width:calc(100% - 24px);background:#102f40e8;color:#fff;border:1px solid #b4e2d785;border-radius:12px;padding:10px 16px;font-size:13px;line-height:1.4;}
+.campus-interact kbd{display:inline-block;margin-right:6px;border:1px solid #b4e2d7;border-radius:4px;padding:1px 5px;font:700 13px inherit;}
+.cube-campus .campus-interact:disabled{opacity:.8;color:#e3edee;}

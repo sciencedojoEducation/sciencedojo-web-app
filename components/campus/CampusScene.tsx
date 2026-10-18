@@ -6,11 +6,12 @@ import {AVATAR_COLOURS,SEATS,type Player,type Snapshot} from "@/lib/campus/proto
 import {SCHOOL_PLACES} from "@/lib/campus/school-layout";
 import {advancePresentation,createPresentation,receivePresentation} from "@/lib/campus/presentation";
 import {createRenderBudget,initialRenderScale,reduceRenderQuality} from "@/lib/campus/render-budget";
-import {DEFAULT_LOOK,boundedLook,type CameraLook,type SchoolView} from "@/lib/campus/cube-experience";
+import {DEFAULT_LOOK,type CameraLook,type SchoolView} from "@/lib/campus/cube-experience";
 import SchoolModel from "./SchoolModel";
 import CubeArchitecture from "./CubeArchitecture";
 import CubeEnvironment from "./CubeEnvironment";
 import AvatarBody from "./AvatarBody";
+import {useSceneLook} from "./useSceneLook";
 type ViewPosition={current:{x:number;z:number;eye:number}};
 type FrameActivity={current:boolean};
 export type {SchoolView} from "@/lib/campus/cube-experience";
@@ -37,7 +38,7 @@ function Avatar({ player, self, onPosition, activityRef,hidden,reducedMotion }: 
     </mesh>}
   </group>;
 }
-function Camera({focus,present,reducedMotion,view,placeId,activityRef,angles}:{focus:ViewPosition;present:boolean;reducedMotion:boolean;view:SchoolView;placeId:string;activityRef:FrameActivity;angles:CameraLook}) {
+function Camera({focus,present,reducedMotion,view,placeId,activityRef,angles}:{focus:ViewPosition;present:boolean;reducedMotion:boolean;view:SchoolView;placeId:string;activityRef:FrameActivity;angles:{current:CameraLook}}) {
  const camera=useThree(s=>s.camera),invalidate=useThree(s=>s.invalidate);
  const target=useMemo(()=>new Vector3(),[]),look=useMemo(()=>new Vector3(),[]),aim=useMemo(()=>new Vector3(),[]);
  const initializedRef=useRef(false);
@@ -47,16 +48,17 @@ function Camera({focus,present,reducedMotion,view,placeId,activityRef,angles}:{f
   invalidate();
  },[camera,view,invalidate]);
  useFrame((_,delta)=>{
+  const facing=angles.current;
   if(view==="first-person"){
    target.set(present?focus.current.x:0,present?focus.current.eye:1.67,present?focus.current.z:4);
-   aim.copy(target).add(look.set(Math.sin(angles.yaw)*Math.cos(angles.pitch),Math.sin(angles.pitch),-Math.cos(angles.yaw)*Math.cos(angles.pitch)));
+   aim.copy(target).add(look.set(Math.sin(facing.yaw)*Math.cos(facing.pitch),Math.sin(facing.pitch),-Math.cos(facing.yaw)*Math.cos(facing.pitch)));
    initializedRef.current=true;camera.position.copy(target);camera.lookAt(aim);camera.updateMatrixWorld();return;
   }
   if(view==="exterior"){target.set(215,92,245);aim.set(0,61,1);}
   else if(view==="overview"){target.set(87,124,133);aim.set(0,0,0);}
   else if(view==="orbit"){
-   const x=present&&!reducedMotion?focus.current.x:place.x,z=present&&!reducedMotion?focus.current.z:place.z,d=angles.distance;
-   target.set(x-Math.sin(angles.yaw)*Math.cos(angles.pitch)*d,2+Math.sin(angles.pitch)*d,z+Math.cos(angles.yaw)*Math.cos(angles.pitch)*d);aim.set(x,2,z);
+   const x=present&&!reducedMotion?focus.current.x:place.x,z=present&&!reducedMotion?focus.current.z:place.z,d=facing.distance;
+   target.set(x-Math.sin(facing.yaw)*Math.cos(facing.pitch)*d,2+Math.sin(facing.pitch)*d,z+Math.cos(facing.yaw)*Math.cos(facing.pitch)*d);aim.set(x,2,z);
   }
   else{const x=view==="place"||reducedMotion?place.x:present?focus.current.x:0,z=view==="place"||reducedMotion?place.z:present?focus.current.z:0;
    target.set(x+13,16,z+20);aim.set(x,0,z-1);}
@@ -88,38 +90,34 @@ function RenderBudget({scale,onSlow,activityRef,active}:{scale:number;onSlow:()=
   if(reduceRenderQuality(sample.current,delta,continuous))onSlow();
  },-2);return null;
 }
-export default function CampusScene({snapshot,active,onUnavailable,view="follow",placeId="library",hour=12,look=DEFAULT_LOOK,onLookChange}:{snapshot:Snapshot;active:boolean;onUnavailable:()=>void;view?:SchoolView;placeId?:string;hour?:number;look?:CameraLook;onLookChange?:(next:CameraLook)=>void}){
+export default function CampusScene({snapshot,active,onUnavailable,view="follow",placeId="library",hour=12,look=DEFAULT_LOOK,onLookChange,canLock=true,onRelease}:{snapshot:Snapshot;active:boolean;onUnavailable:()=>void;view?:SchoolView;placeId?:string;hour?:number;look?:CameraLook;onLookChange?:(next:CameraLook)=>void;canLock?:boolean;onRelease?:()=>void}){
  const [renderScale,setRenderScale]=useState(1);
  const reduceResolution=useCallback(()=>setRenderScale(.45),[]);
  const activityRef=useRef(false);
  const focus=useRef({x:0,z:4,eye:1.67}),elements=useMemo(()=>new Map<string,HTMLSpanElement>(),[]);
- const dragRef=useRef<{x:number;y:number}|null>(null);
  const follow=useCallback((x:number,z:number,eye:number)=>{focus.current={x,z,eye};},[]);
  const interactive=view==="first-person"||view==="orbit";
- const angles=boundedLook(look,view);
+ const {element:sceneElement,angles:cameraAngles,bindInvalidate,mode:lookMode,handlers:lookHandlers}=useSceneLook({look,view,active,canLock,onLookChange,onRelease});
  useEffect(()=>{const canvas=document.createElement("canvas"),context=canvas.getContext("webgl2");if(!context)onUnavailable();else context.getExtension("WEBGL_lose_context")?.loseContext();},[onUnavailable]);
  const occupied=SEATS.reduce((mask,seat,i)=>mask|(snapshot.occupied.includes(seat.id)?1<<i:0),0);
  const reducedMotion=typeof window!=="undefined"&&window.matchMedia("(prefers-reduced-motion: reduce)").matches;
- return <div className={`school-scene school-view-${view}`} style={{position:"relative",width:"100%",height:"100%",touchAction:interactive?"none":"auto",cursor:interactive?"grab":"default"}}
-   onPointerDown={event=>{if(!interactive||!active||event.button!==0)return;event.preventDefault();event.currentTarget.parentElement?.focus();event.currentTarget.setPointerCapture(event.pointerId);dragRef.current={x:event.clientX,y:event.clientY};}}
-   onPointerMove={event=>{const previous=dragRef.current;if(!previous||!interactive||!active)return;onLookChange?.(boundedLook({...angles,yaw:angles.yaw+(event.clientX-previous.x)*.006,pitch:angles.pitch-(event.clientY-previous.y)*.005},view));dragRef.current={x:event.clientX,y:event.clientY};}}
-   onPointerUp={event=>{dragRef.current=null;if(event.currentTarget.hasPointerCapture(event.pointerId))event.currentTarget.releasePointerCapture(event.pointerId);}}
-   onPointerCancel={()=>{dragRef.current=null;}} onLostPointerCapture={()=>{dragRef.current=null;}}>
+ return <div ref={sceneElement} {...lookHandlers} className={`school-scene school-view-${view}`} style={{position:"relative",width:"100%",height:"100%",touchAction:interactive?"none":"auto",cursor:view==="first-person"?lookMode==="locked"?"none":"crosshair":interactive?"grab":"default"}}>
   <Canvas shadows dpr={renderScale} frameloop={active?"demand":"never"} camera={{fov:view==="first-person"?70:43,position:view==='exterior'?[215,92,245]:view==='overview'?[87,124,133]:[13,16,20],far:2200,near:.08}}
     fallback={<p>3D is unavailable. You can open your courses directly.</p>}
-    onCreated={({gl})=>{
+    onCreated={({gl,invalidate})=>{
+     bindInvalidate(invalidate);
      const context=gl.getContext(),info=context.getExtension("WEBGL_debug_renderer_info");
      if(info)setRenderScale(initialRenderScale(String(context.getParameter(info.UNMASKED_RENDERER_WEBGL))));
      gl.domElement.addEventListener("webglcontextlost",onUnavailable);
     }}>
    <CubeEnvironment hour={hour} cutaway={view==="overview"}/><SchoolModel occupied={occupied} detailedShadows={renderScale===1}/><CubeArchitecture cutaway={view==="overview"}/>
    {snapshot.players.map(p=><Avatar key={p.id} player={p} self={p.id===snapshot.self} onPosition={follow} activityRef={activityRef} hidden={view==="first-person"&&p.id===snapshot.self} reducedMotion={reducedMotion}/>)}
-   <Camera focus={focus} present={snapshot.players.some(p=>p.id===snapshot.self)} reducedMotion={reducedMotion} view={view} placeId={placeId} activityRef={activityRef} angles={angles}/>
+   <Camera focus={focus} present={snapshot.players.some(p=>p.id===snapshot.self)} reducedMotion={reducedMotion} view={view} placeId={placeId} activityRef={activityRef} angles={cameraAngles}/>
    <Labels elements={elements} view={view}/>
    <RenderBudget scale={renderScale} onSlow={reduceResolution} activityRef={activityRef} active={active}/>
   </Canvas>
   <div className="school-signs" aria-hidden="true">{SCHOOL_PLACES.map(p=><span key={p.id} ref={el=>{if(el)elements.set(p.id,el);else elements.delete(p.id);}}>{p.name}</span>)}</div>
   {view==="first-person"&&<span className="cube-crosshair" aria-hidden="true"/>}
-  {interactive&&<span className="cube-look-hint">Drag to look · Q / E to turn</span>}
+  {interactive&&<span className="cube-look-hint">{view==="first-person"?(lookMode==="locked"?"Mouse to look · E to interact · Esc releases":lookMode==="paused"?"Click school to resume mouse look · E to interact":"Mouse to look · Click to lock · E to interact"):"Drag to orbit · Use look buttons to turn"}</span>}
  </div>;
 }

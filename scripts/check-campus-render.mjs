@@ -15,13 +15,13 @@ await build({
     import './components/campus/campus.css';import {createRoot} from 'react-dom/client';import Scene from './components/campus/CampusScene';
     const player={id:'40000000-0000-0000-0000-000000000001',pseudonym:'Quiet Maple aaaa01',colour:0,x:-2,z:4,rotation:0,status:'walking',seat:null};
     const unavailable=()=>{window.noWebgl=true};
-    function App(){const [x,setX]=useState(-2),[z,setZ]=useState(4),[view,setView]=useState("follow"),[hour,setHour]=useState(12),[look,setLook]=useState({yaw:0,pitch:.55,distance:36});useEffect(()=>{window.showOverview=()=>setView("overview");
-      window.showExterior=()=>{setView("exterior");setHour(12)};window.showNight=()=>setHour(22);
+    function App(){const [x,setX]=useState(-2),[z,setZ]=useState(4),[view,setView]=useState("follow"),[hour,setHour]=useState(12),[active,setActive]=useState(true),[look,setLook]=useState({yaw:0,pitch:.55,distance:36});useEffect(()=>{window.showOverview=()=>setView("overview");
+      window.showExterior=()=>{setView("exterior");setHour(12)};window.showNight=()=>setHour(22);window.pauseScene=()=>setActive(false);window.resumeScene=()=>setActive(true);
       window.showFirst=()=>{setZ(26);setView("first-person");setLook({yaw:-.64,pitch:.72,distance:36})};
       window.startWalk=()=>{window.sceneFrames=[];window.walkStartedAt=performance.now();window.walkArrivals=[];const gaps=[120,280,160,240,140,260,180,220];let i=0,elapsed=0;
         const step=()=>{const gap=gaps[i%gaps.length];setTimeout(()=>{elapsed+=gap;setX(-2+elapsed*.0015);
           window.walkArrivals.push(performance.now());if(++i===20){window.walkDoneAt=performance.now();window.walkDone=true;}else step();},gap);};step();};
-    },[]);return <Scene snapshot={{self:player.id,players:[{...player,x,z}],occupied:[]}} active={true} view={view} hour={hour} look={look} onUnavailable={unavailable}/>;}
+    },[]);return <Scene snapshot={{self:player.id,players:[{...player,x,z}],occupied:[]}} active={active} view={view} hour={hour} look={look} onUnavailable={unavailable}/>;}
     createRoot(document.getElementById('root')).render(<App/>);`, loader: "tsx", resolveDir: process.cwd() },
   bundle: true, platform: "browser", format: "esm", jsx: "automatic",
   outfile: join(directory, "app.js"), define: { "process.env.NODE_ENV": '"production"' },
@@ -33,6 +33,7 @@ await build({
       function Probe(){useFrame(({scene,gl,camera},delta)=>{
         let avatar,receivingShadows=false;scene.traverse(o=>{if(o.geometry?.type==='RingGeometry')avatar=o.parent;if(o.isMesh&&o.receiveShadow)receivingShadows=true;});
         if(avatar){window.sceneFrames??=[];window.sceneFrames.push({t:performance.now(),ms:delta*1000,x:avatar.position.x,dpr:gl.getPixelRatio(),shadows:receivingShadows,shadowPipeline:gl.shadowMap.enabled,cameraX:camera.position.x,cameraY:camera.position.y,cameraZ:camera.position.z,calls:gl.info.render.calls,triangles:gl.info.render.triangles,geometries:gl.info.memory.geometries});}
+        window.cameraQuaternion=camera.quaternion.toArray();
         window.cubeDiagnostics={eye:camera.position.y,fov:camera.fov,selfVisible:avatar?.visible,
           stars:scene.getObjectByName('cube-stars')?.visible,moon:scene.getObjectByName('cube-moon')?.visible,
           sun:scene.getObjectByName('cube-sun')?.visible,envelope:scene.getObjectByName('cube-envelope')?.visible};
@@ -144,5 +145,31 @@ try {
   assert(Math.abs(eyes.eye-1.67)<.01&&Math.abs(eyes.fov-70)<.01&&!eyes.selfVisible,"First-person camera must be at eye level with the self avatar hidden");
   await page.screenshot({path:join(directory,"cube-first-person-night.png")});
   result.cubeViews={daylight:true,nightMoonStars:true,aerialCutaway:true,firstPersonEyeHeight:eyes.eye,firstPersonFov:eyes.fov};
+  const orientation=()=>page.evaluate(()=>window.cameraQuaternion);
+  const moved=async(before)=>{await page.waitForFunction(before=>window.cameraQuaternion.some((v,i)=>Math.abs(v-before[i])>.0001),before);};
+  await page.mouse.move(430,300);const beforeHover=await orientation();
+  await page.mouse.move(510,320,{steps:6});await moved(beforeHover);
+  await page.mouse.click(510,320);
+  await page.waitForFunction(()=>document.pointerLockElement===document.querySelector(".school-scene"));
+  const beforeLocked=await orientation();await page.mouse.move(560,330,{steps:4});await moved(beforeLocked);
+  await page.keyboard.press("Escape");await page.waitForFunction(()=>!document.pointerLockElement);
+  const beforePaused=await orientation();await page.mouse.move(600,350);await page.waitForTimeout(200);
+  assert.deepEqual(await orientation(),beforePaused,"Escape must pause hover look for UI access");
+  await page.mouse.click(600,350);await page.waitForFunction(()=>!!document.pointerLockElement);
+  const beforeHubPause=await orientation();
+  await page.evaluate(()=>window.pauseScene());await page.waitForFunction(()=>!document.pointerLockElement);
+  await page.evaluate(()=>window.resumeScene());await page.waitForTimeout(200);
+  assert.deepEqual(await orientation(),beforeHubPause,"Returning from the Hub must retain the mouse-facing direction");
+  await page.mouse.click(600,350);await page.waitForFunction(()=>!!document.pointerLockElement);
+  await page.evaluate(()=>window.showOverview());await page.waitForFunction(()=>!document.pointerLockElement);
+  await page.evaluate(()=>window.showFirst());await page.waitForTimeout(200);
+  // Simulate a browser denying pointer lock, without changing production behavior.
+  await page.locator(".school-scene").evaluate(el=>{el.requestPointerLock=()=>Promise.reject(new DOMException("Denied","NotAllowedError"));});
+  await page.mouse.click(500,300);const beforeFallback=await orientation();
+  await page.mouse.move(550,300,{steps:4});await moved(beforeFallback);
+  assert.equal(await page.evaluate(()=>document.pointerLockElement),null);
+  assert.deepEqual(errors,[],"Mouse-lock denial must retain hover look without uncaught errors");
+  result.mouseLook={hover:true,lockedRelativeMovement:true,escapeReleaseAndPause:true,hubPauseRelease:true,viewChangeRelease:true,deniedLockHoverFallback:true};
+  await writeFile(result.evidence, JSON.stringify(result, null, 2));
   await writeFile(result.evidence, JSON.stringify(result, null, 2));
 } finally { await browser?.close();http.closeAllConnections();await new Promise(r=>http.close(r)); }

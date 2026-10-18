@@ -72,11 +72,15 @@ export default function CampusClient({
     [help, setHelp] = useState(false);
   const [view, setView] = useState<SchoolView>("exterior");
   const [look,setLook]=useState<CameraLook>(DEFAULT_LOOK);
+  const rememberedLook=useRef<CameraLook>(DEFAULT_LOOK);
+  const rememberLook=useCallback((next:CameraLook)=>{rememberedLook.current=next;cameraRef.current.yaw=next.yaw;},[]);
+  const [usedDesk,setUsedDesk]=useState(false);
+  const lastInteraction=useRef(0);
   const [manualHour,setManualHour]=useState<number|null>(null);
   const liveHour=useSyncExternalStore(subscribeClock,readLocalHour,serverHour),hour=manualHour??liveHour;
   const sky=schoolSky(hour);
   const cameraRef=useRef({view: "exterior" as SchoolView,yaw:0});
-  useLayoutEffect(()=>{cameraRef.current={view,yaw:look.yaw};},[view,look.yaw]);
+  useLayoutEffect(()=>{cameraRef.current={view,yaw:rememberedLook.current.yaw};},[view,look.yaw]);
   const [selectedPlace, setSelectedPlace] = useState("library"), [walkingTo, setWalkingTo] = useState("");
   const navigation = useRef<{ points: Point[]; name: string } | null>(null);
   const latestSelf = useRef<Point | null>(null);
@@ -116,12 +120,13 @@ export default function CampusClient({
     // A native button click must last long enough to reach the input loop.
     stepTimer.current = setTimeout(stopMovement, 300);
   }, [stopMovement]);
+  const changeLook=(next:CameraLook)=>{rememberLook(next);setLook(next);};
   const chooseCamera=(next:SchoolView)=>{
     stopMovement();setView(next);
-    if(next==="first-person")setLook(previous=>boundedLook({...previous,pitch:0},next));
-    if(next==="orbit")setLook(previous=>boundedLook({...previous,pitch:.55},next));
+    changeLook(boundedLook({...rememberedLook.current,pitch:next==="first-person"?0:next==="orbit"?.55:rememberedLook.current.pitch},next));
+    stage.current?.focus();
   };
-  const turn=(yaw:number,pitch=0)=>setLook(previous=>boundedLook({...previous,yaw:previous.yaw+yaw,pitch:previous.pitch+pitch},view));
+  const turn=(yaw:number,pitch=0)=>changeLook(boundedLook({...rememberedLook.current,yaw:rememberedLook.current.yaw+yaw,pitch:rememberedLook.current.pitch+pitch},view));
   useEffect(() => {
     if (hub) hubDialog.current?.showModal();
     else hubDialog.current?.close();
@@ -139,6 +144,7 @@ export default function CampusClient({
     const controller = new AbortController();
     admissionRequest.current = controller;
     setNotice("");
+    setUsedDesk(false);
     setConnection("Connecting…");
     try {
       const admission = await requestCampusAdmission({ signal: controller.signal });
@@ -251,11 +257,33 @@ export default function CampusClient({
       setBusy(false);
     }
   };
+  const openHub = () => {
+    stopMovement();
+    document.exitPointerLock?.();
+    send("action", "study");
+    setUsedDesk(true);
+    setHub(true);
+  };
+  const nearbyDesk = self && !self.seat ? SEATS
+    .filter(seat => !snapshot.occupied.includes(seat.id) && Math.hypot(self.x-seat.x,self.z-seat.z)<=2.1)
+    .sort((a,b)=>Math.hypot(self.x-a.x,self.z-a.z)-Math.hypot(self.x-b.x,self.z-b.z))[0] : undefined;
+  const interactionLabel = self?.seat ? usedDesk ? "Stand up" : "Use computer" : nearbyDesk ? `Sit at ${nearbyDesk.name}` : "Move near a free study desk";
+  const interact = () => {
+    if (!connected || hub || performance.now()-lastInteraction.current<400) return;
+    lastInteraction.current=performance.now();
+    stopMovement();
+    if (self?.seat) {
+      if (usedDesk) { send("action","stand");setUsedDesk(false); }
+      else openHub();
+    } else if (nearbyDesk) { setUsedDesk(false);send("sit",nearbyDesk.id); }
+  };
   const closeHub = () => {
     // Retain the mounted frame and its DOM, including unsaved local answers and in-flight saves.
+    hubDialog.current?.close();
     setHub(false);
     send("action", "close");
-    hubButton.current?.focus();
+    if (view==="first-person") stage.current?.focus();
+    else hubButton.current?.focus();
   };
   return (
     <main className="campus-shell cube-campus">
@@ -289,15 +317,21 @@ export default function CampusClient({
             tabIndex={0}
             ref={stage}
             role="region"
-            aria-label="3D school. Use arrow keys or WASD to walk. In First person, drag to look or use Q and E to turn. Tab to school controls."
-            onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) stopMovement(); }}
+            aria-label="3D school. Use arrow keys or WASD to walk. In First person, move the mouse to look. E interacts with a nearby desk. Escape releases the mouse. Tab to school controls."
+            onBlur={event => {
+              if (event.relatedTarget !== event.currentTarget) {
+                stopMovement();
+                if (event.currentTarget.contains(document.pointerLockElement)) document.exitPointerLock?.();
+              }
+            }}
             onKeyDown={(event) => {
+              if (event.target !== event.currentTarget) return;
               if (event.key === "Escape") {
                 stopMovement();
                 document.exitPointerLock?.();
                 return;
               }
-              if((view==="first-person"||view==="orbit")&&["q","e"].includes(event.key.toLowerCase())){event.preventDefault();turn(event.key.toLowerCase()==="q"?-.14:.14);return;}
+              if(event.key.toLowerCase()==="e"&&!event.altKey&&!event.ctrlKey&&!event.metaKey){event.preventDefault();if(!event.repeat)interact();return;}
               if (!connected || self?.seat || hub) return;
               if (navigation.current) stopMovement();
               const key = event.key.toLowerCase();
@@ -356,7 +390,9 @@ export default function CampusClient({
                   placeId={selectedPlace}
                   hour={hour}
                   look={look}
-                  onLookChange={setLook}
+                  onLookChange={rememberLook}
+                  canLock={connected}
+                  onRelease={stopMovement}
                 />
               </CanvasBoundary>
             )}
@@ -369,6 +405,7 @@ export default function CampusClient({
               <button className="secondary" onClick={() => { stopMovement();people.current?.focus(); }}>People &amp; safety</button>
               {walkingTo && <button className="secondary" onClick={stopMovement}>Stop walking</button>}
             </div>
+            {connected && !hub && <button className="campus-interact" disabled={!self?.seat&&!nearbyDesk} onClick={interact}><kbd>E</kbd> {interactionLabel}</button>}
             <div className="campus-stage-caption">
               THE CUBE / {view === "exterior"?"GLASS. NATURE. POSSIBILITY.":view === "overview" ? "WHOLE SCHOOL" : view === "place" ? selected.name.toUpperCase() : (currentPlace?.name ?? "Ground campus").toUpperCase()}
               <span>{view === "exterior"?"A scientific school beneath one transparent sky.":view === "overview" ? "Choose a place on the map below." : "Connected places. Shared learning."}</span>
@@ -382,7 +419,7 @@ export default function CampusClient({
               <span>{view==="first-person"?"Your eyes inside the Cube":"Orbit the school"}</span>
               <button className="secondary" aria-label="Look left" onClick={()=>turn(-.22)}>←</button><button className="secondary" aria-label="Look right" onClick={()=>turn(.22)}>→</button>
               <button className="secondary" aria-label="Look up" onClick={()=>turn(0,.18)}>↑</button><button className="secondary" aria-label="Look down" onClick={()=>turn(0,-.18)}>↓</button>
-              {view==="orbit"&&<><button className="secondary" aria-label="Zoom in" onClick={()=>setLook(previous=>boundedLook({...previous,distance:previous.distance*.8},view))}>＋</button><button className="secondary" aria-label="Zoom out" onClick={()=>setLook(previous=>boundedLook({...previous,distance:previous.distance*1.25},view))}>−</button></>}
+              {view==="orbit"&&<><button className="secondary" aria-label="Zoom in" onClick={()=>changeLook(boundedLook({...rememberedLook.current,distance:rememberedLook.current.distance*.8},view))}>＋</button><button className="secondary" aria-label="Zoom out" onClick={()=>changeLook(boundedLook({...rememberedLook.current,distance:rememberedLook.current.distance*1.25},view))}>−</button></>}
             </div>}
           </section>
           <div className="campus-controls">
@@ -421,8 +458,11 @@ export default function CampusClient({
               <p>
                 Focus the school and use WASD or arrow keys to walk. Tap a
                 direction button for a step, or hold it to keep walking. Move near
-                a desk, then choose its Sit button. Escape stops movement. All
-                actions are available below without pointer capture.
+                a desk and press E to sit, then E to use its computer. After
+                returning to school, E stands up. In First person, move the mouse
+                to look; click the scene for continuous mouse look. Escape stops
+                walking and releases the mouse. Touch users can drag to look.
+                All actions also have visible buttons.
               </p>
               <div className="campus-direction-pad">
                 {[
@@ -497,7 +537,7 @@ export default function CampusClient({
                     Boolean(self?.seat) ||
                     snapshot.occupied.includes(seat.id)
                   }
-                  onClick={() => send("sit", seat.id)}
+                  onClick={() => { setUsedDesk(false);send("sit", seat.id); }}
                 >
                   <span>{seat.name}</span>
                   <small>
@@ -514,18 +554,14 @@ export default function CampusClient({
               <button
                 ref={hubButton}
                 disabled={connected ? !self?.seat : !course}
-                onClick={() => {
-                  stopMovement();
-                  send("action", "study");
-                  setHub(true);
-                }}
+                onClick={openHub}
               >
                 Open Study Hub
               </button>
               <button
                 className="secondary"
                 disabled={!connected || !self?.seat}
-                onClick={() => send("action", "stand")}
+                onClick={() => {setUsedDesk(false);send("action", "stand");}}
               >
                 Stand up
               </button>
