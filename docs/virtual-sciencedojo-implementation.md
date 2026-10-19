@@ -1032,3 +1032,7 @@ applied again. Private source hashes, actual outputs and evidence paths are in
 `.campus-private/wortquest-evidence.json`. Specific friends/EU/EEA confirmation,
 deployment access, actual multiplayer/human results and applicable operating
 gates remain pending. Keep the full requested friend-test goal incomplete.
+
+### Shared database security maintenance
+
+Shared profile/flag authorization and storage controls are documented in [security hardening](security-hardening.md), with independent forward migrations 078/079 and role-based SQL regressions. These changes do not apply WortQuest migration 077, admit friends, change learning data or establish a new campus release gate. Use the ignored security-advisor baseline/final/API records for environment-specific execution evidence; do not copy deployed authorization findings into public PR descriptions.

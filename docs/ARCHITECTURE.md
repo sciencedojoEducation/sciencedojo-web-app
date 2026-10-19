@@ -364,3 +364,7 @@ confirm continuation. Scores update after everyone answers. One membership per
 account spans all three games. Block, revocation, lease expiry, empty table and
 switch-off cleanup retain the existing boundaries. 077 and the vocabulary app
 are not hosted; exact hosted approval and actual integration remain separate.
+
+## Platform security maintenance
+
+Keep the [database authorization contract](security-hardening.md) when maintaining shared profile/flag policies and storage access. Campus staff admission remains separately allowlisted. Security-advisor cleanup must preserve necessary auth-bound RPCs and service-only deny-by-default tables; it must not apply pending game migrations or alter feature/admission state. Hosted authorization evidence belongs in ignored private records.
