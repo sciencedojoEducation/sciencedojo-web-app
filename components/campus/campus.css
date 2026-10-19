@@ -653,3 +653,7 @@
 .campus-body-tools>span{pointer-events:none}
 .campus-immersive .campus-body-tools{top:116px}
 @media(max-height:520px){.campus-immersive .campus-body-tools{top:112px;max-width:45%}.campus-immersive .campus-body-tools>span{display:none}}
+
+/* Keep the invitation indicator and camera buttons on one keyboard-scrollable row. */
+.cube-campus .school-camera-controls{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}
+.cube-campus .school-camera-controls>*{flex:0 0 auto}

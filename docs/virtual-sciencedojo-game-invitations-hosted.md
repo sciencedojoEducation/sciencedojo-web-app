@@ -65,3 +65,8 @@ and prepare a separately reviewed forward recovery.
 Both the forward migration and this contingency must pass local rollback/replay
 protection checks before requesting hosted approval. Exact final hashes and
 software verification are recorded in the invitation plan/runbook.
+
+Prepared SQL SHA-256 (compare again before action):
+
+- `sql/080_campus_room_games_invitations.sql`: `8db8d51a7bad28a1afe21139755a82b12afc222a649316813d5c9d68dc0d6329`.
+- `docs/virtual-sciencedojo-game-invitations-rollback.sql`: `201f5efc5bd8841298962228048f95c18cef5353ed06db95bd394b3b08c97290`.

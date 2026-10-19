@@ -12,6 +12,7 @@ export default function PlayTogether({connected,suppressed,onOpen,onNavigate,onS
   const [state,setState]=useState<PlayState>({invitation:null,nearby:[]});
   const [game,setGame]=useState<GameKind>("four"),[muted,setMuted]=useState(false),[busy,setBusy]=useState(false),[message,setMessage]=useState("");
   const previous=useRef<PlayInvitation|null>(null),quiet=useRef(suppressed);quiet.current=suppressed;
+  const availability=useRef<(value:boolean)=>void>(()=>{});
   const action=useRef<(body:object)=>void>(()=>{}),mute=useRef(false);mute.current=muted;
   useEffect(()=>{
     if(!connected)return;
@@ -36,16 +37,19 @@ export default function PlayTogether({connected,suppressed,onOpen,onNavigate,onS
       finally{running=false;if(!stopped){setBusy(false);if(queued){const next=queued;queued=undefined;void request(next);}}}
     }
     action.current=body=>{onOpen();void request(body);};
+    let applied=mute.current||quiet.current;
+    availability.current=value=>{if(value===applied)return;applied=value;void request({action:'mute',muted:value});};
     const poll=async()=>{if(!document.hidden)await request();if(!stopped)timer=setTimeout(poll,1500);};
-    void request({action:'mute',muted:mute.current}).then(poll);
-    return()=>{stopped=true;controller.abort();clearTimeout(timer);action.current=()=>{};};
+    void request({action:'mute',muted:applied}).then(poll);
+    return()=>{stopped=true;controller.abort();clearTimeout(timer);action.current=()=>{};availability.current=()=>{};};
   },[connected,onOpen,gameHeaders]);
+  useEffect(()=>{if(connected)availability.current(muted||suppressed);},[connected,muted,suppressed]);
   if(!connected||suppressed)return null;
   const invite=state.invitation,table=GAME_TABLES.find(t=>t.id===invite?.table);
   return <>{anchor.current&&createPortal(<button className="secondary" onClick={()=>{onOpen();if(choices.current)choices.current.open=true;panel.current?.scrollIntoView({block:"nearest"});panel.current?.focus({preventScroll:true});}}>Play together{invite?.state==='pending'&&invite.incoming?" · New invite":invite?.state==='accepted'?" · Meet at table":""}</button>,anchor.current)}
   <aside ref={panel} tabIndex={-1} className="campus-play-together" aria-label="Play together">
     <details ref={choices}><summary onClick={onOpen}>Play together{invite?" · invitation":state.nearby.length?` · ${state.nearby.length} nearby`:""}</summary>
-      <label><input type="checkbox" checked={muted} onChange={e=>{setMuted(e.target.checked);action.current({action:"mute",muted:e.target.checked});}}/>Mute play invitations</label>
+      <label><input type="checkbox" checked={muted} onChange={e=>{onOpen();setMuted(e.target.checked);}}/>Mute play invitations</label>
       {!invite&&<><p>Meet someone nearby and invite them to a table in the Level 2 Games Lounge.</p>
         <label>Invitation game<select value={game} onChange={e=>setGame(e.target.value as GameKind)}>{GAME_TABLES.map(t=><option key={t.id} value={t.id}>{t.name} · {t.id==='four'?'2':'2–4'} players</option>)}</select></label>
         {!state.nearby.length&&<p>No available players nearby.</p>}

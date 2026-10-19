@@ -198,3 +198,15 @@ test('reviewed hosted contingency restores only prior game/runtime authority, em
   await assert.rejects(f.db.exec(await readFile(new URL('../sql/080_campus_room_games_invitations.sql',import.meta.url),'utf8')),/Expected reviewed/);await f.db.exec('ROLLBACK');
  }finally{await f.db.close();}
 });
+test('client hints and SQL gates agree on physical table reach, room bounds, posture state and floor',async()=>{
+ const {atGameTable}=await import('../lib/campus/game-location.ts');
+ const {GAME_TABLES}=await import('../lib/campus/board-games.ts');
+ const f=await roomGamesFixture();
+ try{
+  for(const t of GAME_TABLES)for(const extra of [{},{x:t.x+2.39},{x:t.x+2.4},{x:t.x+2.41},{floor:1},{travel:'lift'},{status:'studying',seat:'quiet-1'},{x:16},{z:35}]){
+   const p={x:t.x+1,z:t.z,floor:2,status:'walking',seat:null,travel:null,...extra};
+   const sql=(await f.db.query('SELECT campus_game_near($1,$2) AS allowed',[{...p,travel:!!p.travel},t.id])).rows[0].allowed;
+   assert.equal(atGameTable(p,t.id),sql,JSON.stringify({t:t.id,p}));
+  }
+ }finally{await f.db.close();}
+});

@@ -82,12 +82,18 @@ await build({
   outfile: join(directory, "app.js"),
   define: { "process.env.NODE_ENV": '"development"' },
 });
+const sourcePaths=['app/api/campus/play/route.ts','app/api/campus/admission/route.ts','lib/campus/board-game-server.ts',
+ 'lib/campus/game-context.ts','lib/campus/game-location.ts','scripts/check-campus-browser.mjs','scripts/campus-board-games-acceptance.mjs','scripts/campus-vocabulary-acceptance.mjs','components/campus/CampusClient.tsx','components/campus/BoardGames.tsx','components/campus/PlayTogether.tsx',
+ 'components/campus/campus.css','components/campus/play-together.css','lib/campus/board-game-api.ts','lib/campus/play-api.ts',
+ 'lib/campus/connection.ts','lib/campus/security.ts','services/campus-server/server.mjs','sql/080_campus_room_games_invitations.sql'];
+const sourceHashes=Object.fromEntries(await Promise.all(sourcePaths.map(async path=>[path,createHash('sha256').update(await readFile(path)).digest('hex')])));
 const wireFrames = [],
   ticketReads = [],
   issuedTickets = [],
   handshakeHashes = [];
 const errors = [],
   result = {
+    sourceHashes,
     fixture: vercel ? "Synthetic UI/course fixture with independent WebSocket handlers and shared SQL runtime" : "Synthetic UI/course fixture with real Colyseus WebSockets",
     checks: [],
     screenshots: [],
@@ -426,9 +432,9 @@ try {
       }
       throw new Error('Game duration handover did not complete');
     }:null;
-    const gameFetch=async(page,url)=>{
+    const gameFetch=async(page,url,body)=>{
       const own=(await page.context().cookies()).find(c=>c.name==='fixture')?.value;
-      return page.evaluate(async({url,key})=>{const response=await fetch(url,{headers:{'X-Campus-Game-Key':key}});return {status:response.status,body:response.headers.get('content-type')?.includes('json')?await response.json():null};},{url,key:gameKeys.get(own)});
+      return page.evaluate(async({url,key,body})=>{const response=await fetch(url,{method:body?'POST':'GET',headers:{'X-Campus-Game-Key':key,...(body?{'Content-Type':'application/json'}:{})},body:body?JSON.stringify(body):undefined});return {status:response.status,body:response.headers.get('content-type')?.includes('json')?await response.json():null};},{url,key:gameKeys.get(own),body});
     };
     if(checkingGames){
       await (checkingVocabulary?checkWortQuest:checkBoardGames)({a,b,browser,origin,identities,shared,gameFixture,campus,result,directory,wireFrames,issuedTickets,handshakeHashes,errors,gameFetch,renewGames});
@@ -1022,7 +1028,7 @@ try {
       "campus-wire-answer-canary-17oct",
       "campus-private-dashboard-canary",
       "cameraYaw", "cameraPitch", "timeOfDay", "skyTime", "fullscreenMode", "schoolPanel", "graphicsQuality", "renderScale", "pixelRatio",
-      ...issuedTickets,...gameCanaries,...gameKeys.values(),...[...gameKeys.values()].map(key=>createHash('sha256').update(key).digest('hex')),
+      ...issuedTickets,...gameCanaries,...issuedTickets.map(gameAccessKey),...issuedTickets.map(ticket=>createHash('sha256').update(gameAccessKey(ticket)).digest('hex')),
       'sender_connection','recipient_connection','Accept invitation','quiz-answer', 
     ])
       if (combined.includes(Buffer.from(canary)))

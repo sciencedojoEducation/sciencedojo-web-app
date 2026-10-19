@@ -152,3 +152,11 @@ snapshot checks are being repeated against this refinement.
 
 The separately approvable [hosted procedure](virtual-sciencedojo-game-invitations-hosted.md)
 and exact guarded rollback are prepared, not executed.
+
+Final UI refinements keep the invitation indicator at the start of a scrollable
+world-toolbar row, clear invitation UI on reconnection, and privately suppress
+new invitations while a game/study panel is in use. This availability preference
+stays outside world state. Browser evidence records source hashes, checks actual
+30-second expiry, phone/keyboard actions, open-panel room exit and duration
+handover, and scans all issued game credentials/invitation IDs separately from
+the unchanged protected admission handshakes.

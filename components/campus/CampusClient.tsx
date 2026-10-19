@@ -527,6 +527,7 @@ export default function CampusClient({
             )}
             <button ref={fullscreenButton} className="secondary campus-fullscreen-button" aria-pressed={immersive} onClick={()=>{setSchoolPanel(null);if(immersive)exitFullscreen();else enterFullscreen();}}>{immersive?"Exit full screen":"Full screen"}</button>
             <div className="school-camera-controls" aria-label="School camera">
+              <span ref={playAnchor}/>
               <button className="secondary" aria-pressed={view === "exterior"} onClick={() => chooseCamera("exterior")}>The Cube</button>
               <button className="secondary" aria-pressed={view === "overview"} onClick={() => chooseCamera("overview")}>Whole school</button>
               <button className="secondary" aria-pressed={view === "follow"} onClick={() => chooseCamera("follow")}>Follow me</button>
@@ -534,7 +535,6 @@ export default function CampusClient({
               <button className="secondary" aria-pressed={view === "orbit"} onClick={() => chooseCamera("orbit")}>Orbit view</button>
               <button className="secondary" onClick={() => openPanel("people")}>People &amp; safety</button>
               <button className="secondary" disabled={!connected||hub} onClick={()=>{setSelectedPlace("commons");openPanel("map");}}>Find Games Lounge</button>
-              <span ref={playAnchor}/>
               {walkingTo && <button className="secondary" onClick={stopMovement}>Stop walking</button>}
             </div>
             {connected && !hub && <button className="campus-interact" disabled={!!self?.travel||(!journey&&!switchRoom&&!nearbyGame&&(courtInteraction?!mine&&!takeBall:!self?.seat&&!nearbyDesk))}

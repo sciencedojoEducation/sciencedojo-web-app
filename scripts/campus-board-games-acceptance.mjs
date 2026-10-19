@@ -45,8 +45,7 @@ export async function checkBoardGames({a,b,browser,origin,identities,shared,game
   await expect(a.getByRole('button',{name:'Cancel invitation',exact:true})).toHaveCount(0,{timeout:10000});
   await store.db.exec("UPDATE campus_play_limits SET last_sent='-infinity' WHERE connection IS NOT NULL; DELETE FROM campus_play_backoff WHERE sender IS NOT NULL");
   await invite();await b.getByRole('button',{name:'Accept invitation',exact:true}).waitFor({timeout:10000});
-  await store.db.exec("UPDATE campus_play_invites SET expires=clock_timestamp()-interval '1 second' WHERE state='pending'");
-  await expect(b.getByRole('button',{name:'Accept invitation',exact:true})).toHaveCount(0,{timeout:10000});
+  await expect(b.getByRole('button',{name:'Accept invitation',exact:true})).toHaveCount(0,{timeout:35000});
   await expect(b.getByRole('alert').filter({hasText:'Invitation expired'})).toBeVisible();
   await store.db.exec("UPDATE campus_play_limits SET last_sent='-infinity' WHERE connection IS NOT NULL");
   await invite();await b.getByRole('button',{name:'Play together · New invite',exact:true}).waitFor({timeout:10000});

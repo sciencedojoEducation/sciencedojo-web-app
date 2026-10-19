@@ -57,6 +57,12 @@ export async function checkWortQuest({a,b,browser,origin,identities,shared,gameF
    await dialog(a).getByRole('button',{name:'Choose another level',exact:true}).click();
   }
   result.checks.push('Actual E entry and keyboard study-card reveal; ten-card solo quizzes completed at A1/A2/B1/B2/C1/C2 with correct totals, a wrong-answer/private-review case and no duplicate cards in rules coverage');
+  const peer=[...identities.keys()][1];
+  if(shared)await shared.db.query("UPDATE campus_presence SET x=$2,z=$3,floor=2,elevation=24,seat=NULL,status='walking' WHERE campus_id=$1",[peer,spot.x+1,spot.z]);
+  else Object.assign(campus.room.world.players.get(peer),{x:spot.x+1,z:spot.z,floor:2,elevation:24,seat:null,status:'walking'});
+  await expect.poll(async()=>(await gameFetch(b,'/api/campus/play',{action:'send',target:own,table:'four'})).status,{timeout:10000}).toBe(409);
+  expect(await a.locator('.campus-play-card').count()).toBe(0);
+  result.checks.push('An active solo/study-card panel suppresses prompts and privately marks the connected player unavailable to new invitations');
   await open(b);
   const joinTable=async(page,index)=>{
    await dialog(page).getByRole('button',{name:'Play with friends',exact:true}).click();
