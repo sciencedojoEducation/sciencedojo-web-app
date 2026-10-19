@@ -534,7 +534,7 @@ export default function CampusClient({
               <button className="secondary" aria-pressed={view === "first-person"} onClick={() => chooseCamera("first-person")}>First person</button>
               <button className="secondary" aria-pressed={view === "orbit"} onClick={() => chooseCamera("orbit")}>Orbit view</button>
               <button className="secondary" onClick={() => openPanel("people")}>People &amp; safety</button>
-              <button className="secondary" disabled={!connected||hub} onClick={()=>{setSelectedPlace("commons");openPanel("map");}}>Find Games Lounge</button>
+              <button className="secondary" disabled={!connected||hub} onClick={()=>{setSelectedPlace("commons");openPanel("map");if(!immersive)requestAnimationFrame(()=>{const panel=shell.current?.querySelector<HTMLElement>('[data-campus-panel="map"]');panel?.focus();panel?.scrollIntoView({block:"start"});});}}>Find Games Lounge</button>
               {walkingTo && <button className="secondary" onClick={stopMovement}>Stop walking</button>}
             </div>
             {connected && !hub && <button className="campus-interact" disabled={!!self?.travel||(!journey&&!switchRoom&&!nearbyGame&&(courtInteraction?!mine&&!takeBall:!self?.seat&&!nearbyDesk))}
@@ -666,7 +666,7 @@ export default function CampusClient({
             </div>
           )}
           {walkingTo && <p className="school-route-status" role="status">Walking to {walkingTo}… <button className="secondary" onClick={stopMovement}>Stop walking</button></p>}
-          <section className="school-map-panel" data-campus-panel="map" hidden={immersive&&schoolPanel!=="map"} tabIndex={immersive?-1:undefined} aria-label="School map">
+          <section className="school-map-panel" data-campus-panel="map" hidden={immersive&&schoolPanel!=="map"} tabIndex={-1} aria-label="School map">
             <div className="school-map-heading"><div><p className="campus-eyebrow">Make yourself at home</p><h2>Find your place.</h2></div><span>3 levels · 27 places · 20 study stations</span></div>
             <div className="school-floor-tabs" aria-label="School levels">{SCHOOL_FLOORS.map(f=><button key={f.id} className="secondary" aria-pressed={(selected.floor??0)===f.id} onClick={()=>{stopMovement();setSelectedPlace(SCHOOL_PLACES.find(p=>(p.floor??0)===f.id)!.id);setView("place");}}>{f.name}</button>)}</div>
             <div className="school-map-grid">

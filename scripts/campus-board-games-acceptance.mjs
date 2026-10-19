@@ -59,6 +59,7 @@ export async function checkBoardGames({a,b,browser,origin,identities,shared,game
   expect((await store.db.query('SELECT count(*) AS n FROM campus_game_members')).rows[0].n).toBe(0);
   // Synthetic starting point outside the upper room; actual server input walks through its door.
   for(let i=0;i<2;i++)await pose(i,26,38,2);
+  for(const page of pages)await expect(page.locator('.campus-body-tools>span')).toContainText('Level 2',{timeout:10000});
   for(const page of pages){await page.getByRole('button',{name:'Walk to reserved table',exact:true}).click();await page.getByRole('button',{name:/E Play Four in a Row/}).waitFor({timeout:30000});}
   const stage=a.getByRole('region',{name:/3D school/});await stage.focus();await a.keyboard.press('e');
   await dialog(a).waitFor();await joinGame(a,0);
