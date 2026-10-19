@@ -726,3 +726,40 @@ configured for this environment. Adult/EU/EEA confirmation is pending; no owner
 invitation or release flag was enabled and no notice accepted on their behalf.
 Approval is retained. Actual owner-account interaction, a separate student and
 G1–G9 remain pending. No paid infrastructure or public protection bypass was used.
+
+## Protected owner Preview configuration — 19 October 2026
+
+The owner completed Vercel sign-in and directly confirmed adulthood and EU/EEA
+residence. Evidence is recorded privately as owner self-confirmation, without
+claiming independent identity-document verification. An action-time automatic
+review required confirmation before saving the hosting settings; the owner
+explicitly approved both settings, and the subsequent save succeeded.
+`CAMPUS_TRANSPORT=vercel` and `CAMPUS_PILOT_READY=true` are scoped only to the beta
+Git branch's protected Preview. Existing server credentials are inherited;
+no credential values, production settings, public bypass or paid plan changed.
+The matching e83cd0c source deployment is rebuilding with these settings. An
+unauthenticated external request still redirects to Vercel sign-in; the signed-in
+browser reaches the ScienceDojo login page. Owner invitation activation and
+actual account notice/dashboard/desk interaction remain pending at this checkpoint.
+
+The actual initial hosted quality attempt on e83cd0c failed its first-person
+movement assertion after pointer capture; its failure screenshot shows the view
+at the upper pitch limit. Cron and the Vercel build passed. Retained evidence was
+inspected and one unchanged hosted quality rerun requested. Do not infer that the
+rerun passed or that the failure is a confirmed application defect from that
+screenshot. Local software checks and the earlier scoped owner library acceptance
+remain distinct from this hosted outcome and the new real-account review.
+
+The configured protected Preview subsequently reached **Ready** on e83cd0c
+(build 3m 40s). After a fresh account/environment/eligibility baseline check,
+only the owner's existing account was provisioned as an enabled member, with an
+audit entry and the campus flag enabled for this review. Independent post-write
+queries verify one member, zero staff, unchanged active student profile and no
+accepted notice. Service identity still returns null before personal notice
+acceptance; an unknown runtime connection returns an ended session. No staff/admin
+role, course entitlement or notice acceptance was granted by the agent. The
+Preview's ScienceDojo login is open for the account holder; actual sidebar,
+notice, school, dashboard/desk and leave interaction remain pending. Disable the
+owner membership/flag and restore the two branch-only settings when this owner
+review ends; do not mistake the enabled owner review for a separate learner launch.
+The hosted quality rerun is still in progress at this checkpoint.

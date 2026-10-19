@@ -165,3 +165,15 @@ confirmation and actual account acceptance/testing are pending. The safe-update
 compatibility repair (075) passed local checks and the actual service API; it
 retains the target database safety guard and existing authorization. This does not admit a
 student cohort or complete the operational gates.
+
+The owner subsequently completed Vercel sign-in and self-confirmed adulthood and
+EU/EEA residence. Branch-only protected Preview transport/release settings were
+saved after explicit action-time confirmation. The actual owner account's notice
+acceptance and school/dashboard interaction remain to be observed; separate
+student admission and operational gates are unchanged.
+
+The protected Preview subsequently reached Ready. Exactly one owner invitation
+and the campus flag are now enabled for the approved review, with zero campus
+staff and unchanged student/course permissions. Notice acceptance remains a
+personal application action; actual owner walkthrough evidence remains pending.
+Close this review by disabling its membership/flag and restoring branch controls.

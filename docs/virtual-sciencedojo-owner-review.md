@@ -1,6 +1,6 @@
 # sciencedojo. — protected owner-account review
 
-Approved by the owner on 19 October 2026. **Activation remains incomplete.** This plan
+Approved by the owner on 19 October 2026. **Owner invitation enabled; personal sign-in and notice acceptance pending.** This plan
 covers the owner's existing account, not admission of a separate student cohort.
 Account identifiers, environment details and read-only evidence are held in
 `.campus-private/owner-account-preflight.json`, outside Git and public PR material.
@@ -84,7 +84,7 @@ schema/authorization baseline was saved, explicitly not a learner-data backup.
 Exact 070–074 source statements were rehearsed locally and then applied in one
 guarded transaction. Post-application checks found 11 campus tables with RLS,
 three restrictive flag-write policies, the Living Cube revision and service-only
-runtime execution. The beta flag remains false, with zero members/staff/presence.
+runtime execution. At this schema checkpoint the beta flag remained false, with zero members/staff/presence.
 
 The first service RPC exposed the target's safe-update protection rejecting two
 unqualified focus-glass updates in 074. A bounded forward repair is prepared in
@@ -92,10 +92,16 @@ unqualified focus-glass updates in 074. A bounded forward repair is prepared in
 predicates while retaining the guard and existing function grants/settings.
 It was applied after local checks. The actual service RPC now returns HTTP 200
 with an ended session for an unknown connection; anonymous execution remains
-denied and direct service-table access remains forbidden. The flag is still off
-and membership remains empty.
+denied and direct service-table access remains forbidden. At that repair checkpoint the flag remained off
+and membership empty; the later owner activation is recorded below.
 
-Protected Preview configuration is pending Vercel two-factor sign-in. The owner's
-18+/EU/EEA confirmation is also pending. Neither the invitation nor the release
-flag is enabled; the account holder must accept the notice in the application.
-This approval remains valid; do not request the same approval again.
+The owner completed Vercel sign-in and explicitly confirmed adulthood and
+EU/EEA residence. After a required action-time confirmation, the two campus
+variables were saved only for the beta branch's protected Preview. No credentials,
+production settings or public protection bypass were changed. Its matching
+source revision rebuilt successfully. The owner-only invitation and campus flag
+are enabled, with one member and zero campus staff. The existing student profile
+and course authorization are unchanged. The owner has not yet signed in to this
+Preview or accepted the notice; service identity remains unavailable until that
+acceptance. Actual school/dashboard/desk interaction remains pending.
+Approval is retained; do not request the completed confirmations again.

@@ -288,3 +288,17 @@ permissions or disabling that guard. It is now applied in the same approved acco
 passes while anonymous execution remains denied. The runbook records the bounds. Vercel two-factor sign-in, protected branch Preview configuration,
 eligibility confirmation and real-account testing remain pending. No public
 bypass, production application deployment or separate learner release is approved.
+
+The owner subsequently completed sign-in, confirmed adult/EU/EEA eligibility and
+explicitly confirmed the two branch-only Preview variables. Their save succeeded,
+and the matching source is rebuilding. Existing inherited server credentials and
+production settings are unchanged. An unauthenticated request still redirects to
+Vercel sign-in. Actual personal account admission/testing remains pending; retain
+the notice acceptance handoff and closed separate-student release.
+
+The configured Preview reached Ready on e83cd0c (3m 40s). Exactly one existing
+owner member and the campus flag are enabled for this review, without a staff
+role or course entitlement change. The unaccepted notice still denies world
+identity. Personal application sign-in/notice and the actual hosted study loop
+remain pending. Restore both branch settings and disable the owner member/flag
+when the review ends. Hosted quality's unchanged rerun is not yet a recorded pass.

@@ -274,9 +274,11 @@ Existing learning, identity and operational gates remain unchanged.
 
 The [owner-review plan](virtual-sciencedojo-owner-review.md) is approved for the
 existing owner account, using a protected branch Preview. Its account database
-now has 070–074 applied with RLS and the beta disabled; showcase staging is
+received 070–074 with RLS while the beta was disabled; showcase staging is
 unchanged. Earlier local-only migration notes are historical checkpoints.
-The target safe-update guard requires the bounded [075 forward repair](../sql/075_campus_focus_safe_updates.sql).
-Preview configuration, eligibility confirmation and actual account interaction
-remain pending. No production application deployment, separate-student admission,
+The bounded [075 forward repair](../sql/075_campus_focus_safe_updates.sql) is also applied, retaining the target safe-update guard.
+The owner subsequently completed Vercel sign-in, self-confirmed adult/EU/EEA
+eligibility and explicitly confirmed the two branch-only Preview settings. The
+protected Preview is ready, with one owner invitation enabled and no campus staff;
+personal notice acceptance and actual account interaction remain pending. No production application deployment, separate-student admission,
 paid service or G1–G9 completion is established.
