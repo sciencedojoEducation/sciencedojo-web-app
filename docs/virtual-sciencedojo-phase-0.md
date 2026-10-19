@@ -232,3 +232,12 @@ campus staff/course authority or agent notice acceptance is provided. See the
 [vocabulary record](virtual-sciencedojo-german-vocabulary.md) and ignored private
 evidence. Actual hosted multiplayer, friends/human usability and the applicable
 operating gates remain separate; no production application release is established.
+
+### Proposed social game interaction — 20 October 2026
+
+The owner clarified that games should appear inside a dedicated room and users
+who meet can invite each other to play. The [prepared phase plan](virtual-sciencedojo-game-invitations.md)
+keeps invitations fixed/targeted in the authenticated application, preserves
+pseudonyms before game Join and guides users to the actual lounge/table.
+Implementation approval remains pending. Existing owner-review/admission,
+private-learning and release boundaries remain; no general chat is introduced.

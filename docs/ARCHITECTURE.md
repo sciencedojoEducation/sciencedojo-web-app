@@ -380,3 +380,14 @@ campus staff/course authority or agent notice acceptance is provided. See the
 [vocabulary record](virtual-sciencedojo-german-vocabulary.md) and ignored private
 evidence. Actual hosted multiplayer, friends/human usability and the applicable
 operating gates remain separate; no production application release is established.
+
+### Proposed room-only games and nearby play invitations — 20 October 2026
+
+The owner clarified the desired social flow: games belong in the Games Lounge,
+and nearby users can invite each other to play. The [concrete invitation plan](virtual-sciencedojo-game-invitations.md)
+supersedes the global game-panel shortcut once approved and implemented. It uses
+fixed targeted application invitations, ordinary navigation to the physical room,
+deliberate profile sharing at Join and server-owned room/table eligibility on
+both transports. No functional code or hosted schema is changed by this plan;
+implementation-phase approval is pending. Existing learning/privacy/admission
+boundaries remain.

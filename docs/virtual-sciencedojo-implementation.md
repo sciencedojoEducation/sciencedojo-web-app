@@ -1070,3 +1070,16 @@ new-account notice acceptance and an actual shared match remain pending. Use
 two isolated browser sessions/devices for the two accounts. Later real friends
 still need specifically identified accounts and applicable admission/operating
 evidence. The original full friend-test goal stays open.
+
+### Room games and nearby invitation clarification — 20 October 2026
+
+The owner requested room-only game access and a meet/invite/play flow. Inspection
+confirmed the current global HUD button opens the game panel anywhere, while
+the game authority has no live room-location gate. A concrete next-phase plan is
+prepared in [game invitations](virtual-sciencedojo-game-invitations.md): targeted
+fixed invitations using campus pseudonyms, travel to the Level 2 lounge, explicit
+Join/profile sharing, capacity-aware reservations and real server location checks
+on both transports. Approval of this prepared phase is pending; no application,
+service, migration, membership or hosted setting changed. The previous owner
+match feedback remains unproven and is not a prerequisite for planning this
+newly requested experience.

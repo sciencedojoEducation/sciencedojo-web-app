@@ -218,3 +218,12 @@ invited account must accept its own notice. The owner must sign in using separat
 browser sessions/devices to test shared moves and visible profiles. Deployment
 and backend permission evidence do not establish that human multiplayer test;
 later actual friend accounts remain separately scoped.
+
+### Owner clarification — 20 October 2026
+
+The owner now requires room-only games and nearby invitations to play. The
+[prepared next-phase plan](virtual-sciencedojo-game-invitations.md) replaces the
+global open-games shortcut after approval/implementation. It retains these
+existing games, table/profile-sharing rules and the Level 2 room, while adding
+ordinary navigation, targeted fixed invitations and real server presence gates.
+No new functional/hosted change is made by preparing the plan.
