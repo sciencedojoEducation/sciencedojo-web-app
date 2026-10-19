@@ -1,10 +1,12 @@
 import {readFile} from "node:fs/promises";
 import {fixture,id} from "./course-pilot-fixture.mjs";
+import {hashTicket} from "../../lib/campus/security.ts";
+import {createPlayApi} from "../../lib/campus/play-api.ts";
 import {createGameApi} from "../../lib/campus/board-game-api.ts";
-export async function gamesFixture() {
+export async function gamesFixture(located=false) {
   const f=await fixture();
   await f.db.exec("CREATE ROLE service_role BYPASSRLS; GRANT USAGE ON SCHEMA public TO service_role;");
-  for(const file of ["070_virtual_campus.sql","076_campus_board_games.sql","077_campus_german_vocabulary.sql"])
+  for(const file of ["070_virtual_campus.sql",...(located?["071_campus_vercel_presence.sql","072_campus_school.sql","073_campus_basketball.sql","074_campus_living_cube.sql","075_campus_focus_safe_updates.sql"]:[]),"076_campus_board_games.sql","077_campus_german_vocabulary.sql",...(located?["080_campus_room_games_invitations.sql"]:[])])
     await f.db.exec(await readFile(new URL(`../../sql/${file}`,import.meta.url),"utf8"));
   await f.db.query("INSERT INTO campus_staff(user_id) VALUES($1)",[id(15)]);
   await f.db.exec("UPDATE feature_flags SET enabled=true WHERE key='virtual_campus_enabled'");
@@ -30,12 +32,12 @@ export async function gamesFixture() {
   };
   return {...f,identities,rpc,api,request,command,clearRate};
 }
-export function attachGamesApi(f){
-  const rpc=(actor,table,operation,payload={})=>f.db.transaction(async tx=>{
+export function attachGamesApi(f,context){
+  const rpc=async(actor,table,operation,payload={},key)=>{const trusted=context?await context():[];return f.db.transaction(async tx=>{
     await tx.exec("SET LOCAL ROLE service_role");
-    return (await tx.query("SELECT campus_game($1,$2,$3,$4::jsonb) AS x",[actor,table,operation,JSON.stringify(payload)])).rows[0].x;
-  });
-  const api=(n,fetchPhoto)=>createGameApi({supabaseUrl:"https://fixture.supabase.co",fetchPhoto,rpc,session:async()=>{
+    return (await tx.query(context?"SELECT campus_game($1,$2,$3,$4::jsonb,$5,$6::jsonb,$7) AS x":"SELECT campus_game($1,$2,$3,$4::jsonb) AS x",[actor,table,operation,JSON.stringify(payload),...trusted,...(context?[hashTicket(key??"")]:[])])).rows[0].x;
+  });};
+  const api=(n,fetchPhoto)=>createGameApi({requireKey:!!context,supabaseUrl:"https://fixture.supabase.co",fetchPhoto,rpc,session:async()=>{
     if(!n)return null;
     return {userId:id(n),profile:(await f.db.query("SELECT full_name,avatar_url FROM profiles WHERE id=$1",[id(n)])).rows[0],
       safety:async(action,target,reason)=>{
@@ -43,6 +45,11 @@ export function attachGamesApi(f){
         return true;
       }};
   }});
-  return {rpc,api};
+  const playRpc=async(actor,operation,payload={},key)=>{const trusted=await context();return f.db.transaction(async tx=>{
+    await tx.exec("SET LOCAL ROLE service_role");
+    return (await tx.query("SELECT campus_play($1,$2,$3::jsonb,$4,$5::jsonb,$6) AS x",[actor,operation,JSON.stringify(payload),...trusted,hashTicket(key??"")])).rows[0].x;
+  });};
+  const playApi=n=>createPlayApi({requireKey:!!context,session:async()=>n?{userId:id(n)}:null,rpc:playRpc});
+  return {rpc,api,playRpc,playApi};
 }
 

@@ -78,6 +78,12 @@ test(
         JSON.stringify(snap),
         /user_id|email|ticket|grade|course/,
       );
+      const contextUrl="http://127.0.0.1:2568/games-context";
+      assert.equal((await fetch(contextUrl)).status,401);
+      const context=await(await fetch(contextUrl,{headers:{authorization:`Bearer ${key}`}})).json();
+      assert.equal(context.players.length,2);assert.ok(Math.abs(context.at-Date.now())<2000);
+      for(const p of context.players){assert.equal(p.connection,campus.room.owners.get(p.id));assert.equal(p.x,campus.room.world.players.get(p.id).x);}
+      assert.doesNotMatch(JSON.stringify(context),/email|user_id|pseudonym|course|input/);
       const [aid, bid] = snap.players.map((p) => p.id);
       // Two valid reservations can race before either WebSocket joins. A failed
       // duplicate must never remove the connection that actually owns the avatar.

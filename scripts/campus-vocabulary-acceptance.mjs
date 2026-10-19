@@ -4,13 +4,17 @@ import {createHash} from 'node:crypto';
 import {GERMAN_LEVELS,VOCABULARY} from '../lib/campus/german-vocabulary.ts';
 import {GAME_TABLES} from '../lib/campus/board-games.ts';
 
-export async function checkWortQuest({a,b,browser,origin,identities,shared,gameFixture,campus,result,directory,wireFrames,issuedTickets,handshakeHashes,errors}){
+export async function checkWortQuest({a,b,browser,origin,identities,shared,gameFixture,campus,result,directory,wireFrames,issuedTickets,handshakeHashes,errors,gameFetch}){
  const dialog=page=>page.getByRole('dialog',{name:'Games Lounge',exact:true});
  a.setDefaultTimeout(15000);b.setDefaultTimeout(15000);
  const pages=[a,b],contexts=[],names=['VocabFriendOne','VocabFriendTwo','VocabFriendThree','VocabFriendFour'];
  const store=shared??gameFixture;
- const open=async page=>{await page.getByRole('button',{name:'Games Lounge',exact:true}).click();await dialog(page).getByRole('button',{name:/^WortQuest/}).click();await dialog(page).getByRole('button',{name:'Reveal explanation',exact:true}).waitFor();};
- const snapshot=page=>page.evaluate(async()=>(await(await fetch('/api/campus/games?table=wortquest')).json()).game);
+ const open=async page=>{
+  const spot=GAME_TABLES.find(t=>t.id==='wortquest'),own=(await page.context().cookies()).find(c=>c.name==='fixture').value;
+  if(shared)await shared.db.query("UPDATE campus_presence SET x=$2,z=$3,floor=2,elevation=24,seat=NULL,status='walking' WHERE campus_id=$1",[own,spot.x+1,spot.z]);
+  else Object.assign(campus.room.world.players.get(own),{x:spot.x+1,z:spot.z,floor:2,elevation:24,seat:null,status:'walking'});
+  await page.getByRole('button',{name:/E Play WortQuest/}).waitFor();await page.getByRole('button',{name:/E Play WortQuest/}).click();await dialog(page).getByRole('button',{name:'Reveal explanation',exact:true}).waitFor();};
+ const snapshot=async page=>(await gameFetch(page,'/api/campus/games?table=wortquest')).body.game;
  const solve=q=>q.options.indexOf(VOCABULARY.find(c=>c.id===q.id).explanation);
  try{
   const spot=GAME_TABLES.find(t=>t.id==='wortquest'), own=[...identities.keys()][0];
@@ -108,8 +112,9 @@ export async function checkWortQuest({a,b,browser,origin,identities,shared,gameF
     await pages[3].screenshot({path:join(directory,'wortquest-four-player-phone.png')});result.screenshots.push(join(directory,'wortquest-four-player-phone.png'));
     await a.screenshot({path:join(directory,'wortquest-four-player-score.png')});result.screenshots.push(join(directory,'wortquest-four-player-score.png'));
     const strangerContext=await browser.newContext();const stranger=await strangerContext.newPage();await stranger.goto(origin);await stranger.getByRole('button',{name:'Enter school',exact:true}).click();await stranger.getByText('In the school · walking',{exact:true}).waitFor();
+    await open(stranger);await dialog(stranger).getByRole('button',{name:'Return to school →',exact:true}).click();
     const hidden=await snapshot(stranger);expect(hidden.quiz).toBeNull();expect(hidden.members).toEqual([]);expect(hidden.level).toBeNull();
-    const denied=await stranger.evaluate(async player=>(await fetch(`/api/campus/games/photo?table=wortquest&player=${player}`)).status,(await snapshot(a)).self);expect(denied).toBe(404);
+    const denied=(await gameFetch(stranger,`/api/campus/games/photo?table=wortquest&player=${(await snapshot(a)).self}`)).status;expect(denied).toBe(404);
     await stranger.getByRole('button',{name:'Leave',exact:true}).click();await strangerContext.close();
    }
    for(const page of pages.slice(0,size)){
@@ -119,7 +124,7 @@ export async function checkWortQuest({a,b,browser,origin,identities,shared,gameF
   }
   expect((await store.db.query('SELECT count(*) AS n FROM campus_game_members')).rows[0].n).toBe(0);
   const empty=(await store.db.query("SELECT state,quiz_level FROM campus_game_tables WHERE table_id='wortquest'")).rows[0];expect(empty.state).toBeNull();expect(empty.quiz_level).toBe('A1');
-  await dialog(a).getByRole('button',{name:'Return to school →',exact:true}).click();await place(-4.5,-3);await a.getByRole('button',{name:'Study desk',exact:true}).click();await a.getByRole('button',{name:/Sit at Desk 1$/}).waitFor({timeout:10000});await a.getByRole('button',{name:/Sit at Desk 1$/}).click();await a.getByRole('button',{name:'Open Study Hub',exact:true}).click();await expect(a.frameLocator('iframe[title="Your Academy course"]').getByLabel('Practice answer')).toHaveValue('vocabulary-private-draft-canary');await a.getByRole('button',{name:'Return to school →',exact:true}).click();await a.getByRole('button',{name:'Games Lounge',exact:true}).click();
+  await dialog(a).getByRole('button',{name:'Return to school →',exact:true}).click();await place(-4.5,-3);await a.getByRole('button',{name:'Study desk',exact:true}).click();await a.getByRole('button',{name:/Sit at Desk 1$/}).waitFor({timeout:10000});await a.getByRole('button',{name:/Sit at Desk 1$/}).click();await a.getByRole('button',{name:'Open Study Hub',exact:true}).click();await expect(a.frameLocator('iframe[title="Your Academy course"]').getByLabel('Practice answer')).toHaveValue('vocabulary-private-draft-canary');await a.getByRole('button',{name:'Return to school →',exact:true}).click();await open(a);
   result.checks.push('Vocabulary games remain inside native fullscreen and preserve the mounted lesson document and unsent practice answer');
   const privateLabels=['vocabulary-private-draft-canary','VocabFriend','de-a1-','de-a2-','de-b1-','de-b2-','de-c1-','de-c2-','quiz-answer','WORTQUEST'];
   for(const frame of wireFrames)for(const label of privateLabels)expect(frame.includes(Buffer.from(label))).toBe(false);

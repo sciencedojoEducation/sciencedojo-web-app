@@ -1,6 +1,6 @@
 import { CAMPUS_ROOM, isSnapshot, type Snapshot } from "./protocol.ts";
 
-type CampusAdmission = { transport?: string; endpoint: string; room: string; ticket: string };
+type CampusAdmission = { transport?: string; gameKey?:string;endpoint: string; room: string; ticket: string };
 
 /** Both initial entry and renewal must remain bounded and cancellable. */
 export async function requestCampusAdmission({ renew = false, signal }: { renew?: boolean; signal?: AbortSignal } = {}): Promise<CampusAdmission> {
@@ -16,9 +16,10 @@ export async function requestCampusAdmission({ renew = false, signal }: { renew?
     if (!response.ok) throw new Error(typeof data?.error === "string" ? data.error : "Campus unavailable. Please try again.");
     if (!data || typeof data !== "object" || typeof data.endpoint !== "string" || data.room !== CAMPUS_ROOM ||
       typeof data.ticket !== "string" || !/^[0-9a-f]{64}$/.test(data.ticket) ||
+      (data.gameKey!==undefined&&(typeof data.gameKey!=="string"||!/^[0-9a-f]{64}$/.test(data.gameKey))) ||
       (data.transport !== undefined && !["vercel", "colyseus"].includes(data.transport)))
       throw new Error("Invalid campus admission response.");
-    return { endpoint: data.endpoint, room: data.room, ticket: data.ticket, transport: data.transport };
+    return { endpoint: data.endpoint, room: data.room, ticket: data.ticket,gameKey:data.gameKey, transport: data.transport };
   } catch (error) {
     if (controller.signal.aborted) throw new Error("Campus admission was interrupted or timed out. Your course stays open.");
     throw error;
@@ -26,6 +27,7 @@ export async function requestCampusAdmission({ renew = false, signal }: { renew?
 }
 
 export type CampusConnection = {
+  gameKey?:()=>string|undefined;
   send(type: string, data?: unknown): void;
   leave(): Promise<unknown>;
   onMessage<T>(type: string, handler: (data: T) => void): unknown;
@@ -35,11 +37,13 @@ export type CampusConnection = {
 
 /** Same UI contract as the existing room; authentication stays in the protected handshake. */
 export async function connectCampus(admission: CampusAdmission): Promise<CampusConnection> {
+  const derive=async(ticket:string)=>Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256",new TextEncoder().encode("campus-games-http-v1:"+ticket)))).map(b=>b.toString(16).padStart(2,"0")).join("");
+  let gameKey=admission.gameKey??await derive(admission.ticket);
   if (admission.transport !== "vercel") {
     const { Client } = await import("@colyseus/sdk");
     const room = await new Client(admission.endpoint).joinById(admission.room, { ticket: admission.ticket });
     room.reconnection.enabled = false;
-    return room;
+    return Object.assign(room,{gameKey:()=>gameKey});
   }
   const endpoint = new URL(admission.endpoint, location.origin);
   if (endpoint.origin !== location.origin || endpoint.pathname !== "/api/campus/socket" || endpoint.search || endpoint.hash)
@@ -71,6 +75,7 @@ export async function connectCampus(admission: CampusAdmission): Promise<CampusC
     for (const handler of left) handler();
   };
   const connection: CampusConnection = {
+    gameKey:()=>stopping?undefined:gameKey,
     send: (type, data = null) => { if (socket?.readyState === WebSocket.OPEN) socket.send(JSON.stringify({ type, data })); },
     leave: async () => { ended(); },
     onMessage: <T>(type: string, handler: (value: T) => void) => {
@@ -125,7 +130,7 @@ export async function connectCampus(admission: CampusAdmission): Promise<CampusC
     try {
       const next = await requestCampusAdmission({ renew: true, signal: renewalAbort.signal });
       if (next.transport !== "vercel" || next.endpoint !== "/api/campus/socket") throw new Error("Renewal unavailable");
-      await open(next.ticket, true);
+      await open(next.ticket, true);gameKey=next.gameKey??await derive(next.ticket);
     } catch {
       if (!stopping) emit("notice", "Library connection could not renew. Your course stays open.");
       if (socket?.readyState !== WebSocket.OPEN) ended();

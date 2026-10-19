@@ -2,7 +2,7 @@ import { randomBytes } from "node:crypto";
 import { campusSession, campusJson } from "@/lib/campus/server";
 import {
   campusConfiguration,
-  hashTicket,
+  hashTicket,gameAccessKey,
   sameOrigin,
 } from "@/lib/campus/security";
 import { CAMPUS_ROOM } from "@/lib/campus/protocol";
@@ -27,5 +27,5 @@ export async function POST(request: Request) {
       },
       429,
     );
-  return campusJson({ ticket, transport: config.transport, endpoint: config.publicUrl, room: CAMPUS_ROOM });
+  return campusJson({ ticket,gameKey:gameAccessKey(ticket), transport: config.transport, endpoint: config.publicUrl, room: CAMPUS_ROOM });
 }

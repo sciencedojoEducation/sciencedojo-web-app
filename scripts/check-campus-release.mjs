@@ -145,6 +145,12 @@ try {
   const first = start();
   await healthy(first);
   const oldTicket = issue(), learner = await connect(oldTicket);
+  const privateContext=async()=>{
+    const response=await fetch(`http://127.0.0.1:${port}/games-context`,{headers:{authorization:`Bearer ${serviceKey}`},signal:AbortSignal.timeout(1500)});
+    assert.equal(response.status,200);return response.json();
+  };
+  assert.equal((await fetch(`http://127.0.0.1:${port}/games-context`)).status,401);
+  const beforeContext=await privateContext();assert.equal(beforeContext.players.length,1);
   let seq = 0;
   const deadline = Date.now() + 5000;
   while (learner.latest.players[0].z > -1.5 && Date.now() < deadline) {
@@ -162,6 +168,9 @@ try {
   await healthy(second);
   await assert.rejects(connect(oldTicket));
   const fresh = await connect(issue());
+  const afterContext=await privateContext();assert.equal(afterContext.players.length,1);
+  assert.notEqual(afterContext.players[0].connection,beforeContext.players[0].connection);
+  checks.push("Private live game context denies unauthenticated requests and binds fresh process admission to a new connection generation");
   assert.equal(fresh.latest.players.length, 1);
   assert.equal(fresh.latest.players[0].status, "walking");
   assert.equal(fresh.latest.players[0].seat, null);

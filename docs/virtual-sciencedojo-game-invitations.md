@@ -1,6 +1,6 @@
 # sciencedojo. — room games and play invitations
 
-20 October 2026. Status: concrete next-phase plan prepared for owner approval.
+20 October 2026. Status: owner approved this software phase; implementation and browser verification are in progress.
 The owner clarified that games should exist inside a room, with invitations to
 play when users meet in the world. This replaces the current global Games Lounge
 panel shortcut. Existing board games, vocabulary content and owner review remain
@@ -118,3 +118,25 @@ apply only after the environment-specific hosted step is approved. Existing
 owner invitations, notice acceptance, roles/courses and hosting protection stay
 within their recorded scope. This plan does not establish a completed human
 friend match or a wider learner release.
+
+## Local implementation checkpoint — 20 October 2026
+
+The owner replied “approve” to this concrete plan. The first implementation adds
+forward migration 080, authoritative table eligibility, fixed targeted invitations
+and capacity-aware reservations. The legacy game implementation is private to the
+new wrapper; its direct service grant is removed. Both transports keep world
+snapshots unchanged. Seven new SQL/integration regressions and all 92 campus
+regressions pass locally; browser, clean-build and service-release evidence is
+still in progress at this checkpoint. No hosted statement has been applied.
+
+Game HTTP access is bound to the admitted connection using a separate,
+domain-derived credential. Admission returns it privately; only the admission
+ticket enters the existing protected handshake. The world service derives the
+same credential hash from that handshake. Vercel binds its hash to the server-only
+connection ID after successful admission. Neither hash nor credential enters a
+world snapshot. Requests use a private header; pictures use authorized fetch/blob
+URLs so credentials stay out of image URLs. A stale tab or old cleanup request
+cannot inherit or release a new Join. Colyseus context is read afresh for each
+request, authenticated service-to-service, with a two-second freshness bound and
+monotonic ordering; unavailable or superseded contexts fail closed. This bounded
+cross-service snapshot is not a claim of a distributed atomic transaction.

@@ -22,6 +22,8 @@ import "./campus.css";
 import {useCampusFullscreen} from "./useCampusFullscreen";
 import BasketballHud from "./BasketballHud";
 import BoardGames from "./BoardGames";
+import PlayTogether from "./PlayTogether";
+import {atGameTable} from "@/lib/campus/game-location";
 import {GAME_TABLES,type GameKind} from "@/lib/campus/board-games";
 import {HOOPS,COURT,onCourt,canTakeBasketball,basketballAim,currentShotPower,suggestedShot,type ShotControl} from "@/lib/campus/basketball";
 
@@ -325,10 +327,22 @@ export default function CampusClient({
     setUsedDesk(true);
     setHub(true);
   };
-  const openGames=(table:GameKind="four")=>{stopMovement();document.exitPointerLock?.();setSchoolPanel(null);setGames(table);};
+  const openGames=(table:GameKind="four")=>{if(!connected||hub||!atGameTable(self,table))return;stopMovement();document.exitPointerLock?.();setSchoolPanel(null);setGames(table);};
+  const openPlay=useCallback(()=>{stopMovement();document.exitPointerLock?.();},[stopMovement]);
+  const walkToGame=(table:GameKind)=>{
+    if(!self||self.seat||self.travel){setNotice("Stand up before walking to the Games Lounge.");return;}
+    const t=GAME_TABLES.find(t=>t.id===table)!;stopMovement();setSelectedPlace("commons");setView("follow");
+    const different=(self.floor??0)!==2;
+    const target=different?{x:SCHOOL_CONNECTORS[0].x,z:SCHOOL_CONNECTORS[0].z,floor:self.floor}:{x:t.x+1.6,z:t.z,floor:2};
+    const points=schoolRoute(self,target);
+    if(!points.length){setNotice("Move to an open path first.");return;}
+    navigation.current={points,name:different?"Glass elevator · choose level 2":t.name};setWalkingTo(different?"Glass elevator · choose level 2":t.name);stage.current?.focus();
+  };
+  const gameHeaders=useCallback(()=>({"X-Campus-Game-Key":room.current?.gameKey?.()??""}),[]);
   const gameSafety=useCallback(()=>room.current?.send("refresh"),[]);
-  const closeGames=()=>{setGames(null);requestAnimationFrame(()=>stage.current?.focus());};
-  const nearbyGame=self&&!self.seat&&!self.travel?GAME_TABLES.find(t=>(self.floor??0)===t.floor&&Math.hypot(self.x-t.x,self.z-t.z)<2.4):undefined;
+  const closeGames=useCallback(()=>{setGames(null);requestAnimationFrame(()=>stage.current?.focus());},[]);
+  useEffect(()=>{if(games&&(!connected||hub||!atGameTable(self,games)))closeGames();},[games,connected,hub,self,closeGames]);
+  const nearbyGame=self&&!self.seat&&!self.travel?GAME_TABLES.find(t=>atGameTable(self,t.id)):undefined;
   const nearbyDesk = self && !self.seat ? SEATS
     .filter(seat => (seat.floor??0)===(self.floor??0)&&!self.travel&&Math.abs((self.elevation??0)-floorHeight(self.floor))<.05&&!snapshot.occupied.includes(seat.id) && Math.hypot(self.x-seat.x,self.z-seat.z)<=2.1)
     .sort((a,b)=>Math.hypot(self.x-a.x,self.z-a.z)-Math.hypot(self.x-b.x,self.z-b.z))[0] : undefined;
@@ -518,7 +532,7 @@ export default function CampusClient({
               <button className="secondary" aria-pressed={view === "first-person"} onClick={() => chooseCamera("first-person")}>First person</button>
               <button className="secondary" aria-pressed={view === "orbit"} onClick={() => chooseCamera("orbit")}>Orbit view</button>
               <button className="secondary" onClick={() => openPanel("people")}>People &amp; safety</button>
-              <button className="secondary" disabled={!connected||hub} onClick={()=>openGames()}>Games Lounge</button>
+              <button className="secondary" disabled={!connected||hub} onClick={()=>{setSelectedPlace("commons");openPanel("map");}}>Find Games Lounge</button>
               {walkingTo && <button className="secondary" onClick={stopMovement}>Stop walking</button>}
             </div>
             {connected && !hub && <button className="campus-interact" disabled={!!self?.travel||(!journey&&!switchRoom&&!nearbyGame&&(courtInteraction?!mine&&!takeBall:!self?.seat&&!nearbyDesk))}
@@ -538,6 +552,7 @@ export default function CampusClient({
               <span>{view === "exterior"?"A scientific school beneath one transparent sky.":view === "overview" ? "Choose a place on the map below." : "Connected places. Shared learning."}</span>
             </div>
           </div>
+            <PlayTogether gameHeaders={gameHeaders} connected={connected} suppressed={hub||!!games} onOpen={openPlay} onNavigate={walkToGame} onSafety={(target,action)=>{void safety(target,action);}}/>
           <section className="cube-world-controls" data-campus-panel="sky" hidden={immersive&&schoolPanel!=="sky"} tabIndex={immersive?-1:undefined} aria-label="Sky and camera controls">
             <div className="cube-clock-heading"><div><p className="campus-eyebrow">Your sky · 24-hour world</p><time dateTime={clockLabel(hour)}>{clockLabel(hour)}</time></div><span>{manualHour===null?"Local time":"Your chosen time"} · {sky.phase}</span></div>
             <label className="cube-time-range">Time of day<input aria-label="Time of day" type="range" min="0" max="23.75" step="0.25" value={hour} onChange={event=>{stopMovement();setManualHour(Number(event.target.value));}}/></label>
@@ -793,7 +808,7 @@ export default function CampusClient({
           </Link>
         </aside>
       </div>
-      {games&&<BoardGames initialTable={games} connected={connected} onSafety={gameSafety} onClose={closeGames} onLeaveSchool={()=>{closeGames();leave();}}/>}
+      {games&&<BoardGames gameHeaders={gameHeaders} initialTable={games} connected={connected} onSafety={gameSafety} onClose={closeGames} onLeaveSchool={()=>{closeGames();leave();}}/>}
       <dialog
         ref={hubDialog}
         className={`campus-hub ${hub ? "is-open" : ""}`}

@@ -15,18 +15,22 @@ import { chromium } from "@playwright/test";
 import { createCampusServer } from "../services/campus-server/server.mjs";
 import { runtimeFixture } from "../tests/helpers/campus-runtime-fixture.mjs";
 import { runVercelCampusSession } from "../lib/campus/vercel-session.ts";
-import { validServiceKey } from "../lib/campus/security.ts";
+import { validServiceKey,gameAccessKey } from "../lib/campus/security.ts";
 import {COURT,HOOPS,basketballAim} from "../lib/campus/basketball.ts";
 
 const vercel = process.argv.includes("--vercel");
 const shared = vercel ? await runtimeFixture(14) : null;
 const checkingVocabulary=process.argv.includes('--vocabulary');
 const checkingGames=process.argv.includes('--games')||checkingVocabulary;
-let gameFixture=null,gameApi;
+let gameFixture=null,gameApi,playApi;
 if(checkingGames){
- if(shared){for(const file of ['076_campus_board_games.sql','077_campus_german_vocabulary.sql'])await shared.db.exec(await readFile(new URL('../sql/'+file,import.meta.url),'utf8'));gameApi=attachGamesApi(shared).api;
+ if(shared){for(const file of ['076_campus_board_games.sql','077_campus_german_vocabulary.sql','080_campus_room_games_invitations.sql'])await shared.db.exec(await readFile(new URL('../sql/'+file,import.meta.url),'utf8'));({api:gameApi,playApi}=attachGamesApi(shared,async()=>["vercel","{}"]));
   for(let n=1;n<=6;n++)await shared.db.query('UPDATE profiles SET full_name=$2,avatar_url=$3 WHERE id=$1',[`30000000-0000-0000-0000-${String(n).padStart(12,'0')}`,`Game Friend ${n}`,`https://fixture.supabase.co/storage/v1/object/public/avatars/fixture-${n}.png`]);
- }else{gameFixture=await gamesFixture();gameApi=gameFixture.api;}
+ }else{gameFixture=await gamesFixture(true);
+  ({api:gameApi,playApi}=attachGamesApi(gameFixture,async()=>{
+    const response=await fetch('http://127.0.0.1:2569/games-context',{headers:{authorization:`Bearer ${serviceKey}`},signal:AbortSignal.timeout(1500)});
+    if(!response.ok)throw new Error('Live context unavailable');return ['colyseus',JSON.stringify(await response.json())];
+  }));}
 }
 const fixturePictures=checkingGames?await Promise.all(['#167c79','#b95e47','#7461a2','#8c710e','#467bad','#b28460'].map(background=>sharp({create:{width:40,height:40,channels:3,background}}).png().toBuffer())):[];
 
@@ -35,6 +39,7 @@ const origin = "http://127.0.0.1:3012",
   serviceKey = randomBytes(32).toString("hex");
 const identities = new Map(),
   tickets = new Map();
+const gameKeys=new Map();
 const runtimeSockets = new Map(), runtimeDurations = [];
 const stalledRenewals = new Set();
 const quietSnapshots = new Set();
@@ -99,13 +104,13 @@ const http = createServer(async (req, res) => {
       );
       return res.end(await readFile(join(directory, path.slice(1))));
     }
-    if(checkingGames&&path.startsWith('/api/campus/games')){
+    if(checkingGames&&(path.startsWith('/api/campus/games')||path==='/api/campus/play')){
       const own=/fixture=([0-9a-f-]+)/.exec(req.headers.cookie||'')?.[1];
       const members=shared?.members??gameFixture.identities;
       const account=members.findIndex(m=>m.id===own)+1;
       let data='';for await(const chunk of req)data+=chunk;
       const request=new Request(new URL(req.url,origin),{method:req.method,headers:req.headers,body:data||undefined});
-      const api=gameApi(account,async source=>new Response(fixturePictures[(Number(String(source).match(/(\d+)\.png$/)?.[1])||1)-1],{headers:{'content-type':'image/png'}}));
+      const api=path==='/api/campus/play'?playApi(account):gameApi(account,async source=>new Response(fixturePictures[(Number(String(source).match(/(\d+)\.png$/)?.[1])||1)-1],{headers:{'content-type':'image/png'}}));
       const reply=await api[path.endsWith('/photo')?'PHOTO':req.method](request);
       res.writeHead(reply.status,Object.fromEntries(reply.headers));return res.end(Buffer.from(await reply.arrayBuffer()));
     }
@@ -126,7 +131,7 @@ const http = createServer(async (req, res) => {
       identities.set(who.id, who);
       const account = shared ? shared.members.findIndex((member) => member.id === who.id) + 1 : next;
       const ticket = shared ? await shared.issueRaw(account) : randomBytes(32).toString("hex");
-      tickets.set(ticket, who);
+      tickets.set(ticket, who);gameKeys.set(who.id,gameAccessKey(ticket));
       res.setHeader(
         "set-cookie",
         `fixture=${who.id}; HttpOnly; SameSite=Strict; Path=/`,
@@ -134,7 +139,7 @@ const http = createServer(async (req, res) => {
       res.setHeader("content-type", "application/json");
       return res.end(
         JSON.stringify({
-          ticket,
+          ticket,gameKey:gameAccessKey(ticket),
           endpoint: shared ? "/api/campus/socket" : "ws://127.0.0.1:2569",
           transport: shared ? "vercel" : "colyseus",
           room: "library",
@@ -229,7 +234,9 @@ try {
           const started = performance.now();
           try { return await shared.runtime(args.runtime_connection, args.runtime_operation, args.runtime_commands, args.ticket_hash, args.expected_campus, args.runtime_renew); }
           finally { runtimeDurations.push(performance.now() - started); }
-        });
+        },checkingGames?{bindGames:async(connection,credential)=>{
+          const result=await shared.db.query('SELECT campus_game_bind($1,$2) AS x',[connection,credential]);if(!result.rows[0].x)throw new Error('Game connection unavailable');
+        }}:{});
         sessions.add(done); void done.finally(() => { sessions.delete(done); runtimeSockets.delete(ws); });
       });
     });
@@ -408,8 +415,12 @@ try {
       result.checks.push('Local graphics modes change the actual canvas resolution through pointer and keyboard controls, remain available in fullscreen, and preserve the connected world');
     };
     if(!process.argv.includes('--dashboard-only'))await checkGraphics();
+    const gameFetch=async(page,url)=>{
+      const own=(await page.context().cookies()).find(c=>c.name==='fixture')?.value;
+      return page.evaluate(async({url,key})=>{const response=await fetch(url,{headers:{'X-Campus-Game-Key':key}});return {status:response.status,body:response.headers.get('content-type')?.includes('json')?await response.json():null};},{url,key:gameKeys.get(own)});
+    };
     if(checkingGames){
-      await (checkingVocabulary?checkWortQuest:checkBoardGames)({a,b,browser,origin,identities,shared,gameFixture,campus,result,directory,wireFrames,issuedTickets,handshakeHashes,errors});
+      await (checkingVocabulary?checkWortQuest:checkBoardGames)({a,b,browser,origin,identities,shared,gameFixture,campus,result,directory,wireFrames,issuedTickets,handshakeHashes,errors,gameFetch});
     }else if(process.argv.includes("--graphics-only")){
       // The focused display check still performs the shared wire/privacy audit below.
     }else if(process.argv.includes("--living-cube-only")){

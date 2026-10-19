@@ -6,19 +6,26 @@ import WortQuest, {type WortMode} from "./WortQuest";
 
 const colours = ["#167c79", "#b95e47", "#7461a2", "#8c710e"];
 const symbols = ["A", "B", "C", "D"];
-function Picture({url,name}: {url:string | null;name:string}) {
-  const [failed,setFailed] = useState(false);
-  return <span className="game-picture">{url && !failed ?
-    // Same-origin, participant-authorized images deliberately bypass public image caching.
+function Picture({url,name,gameHeaders}: {url:string | null;name:string;gameHeaders:()=>Record<string,string>}) {
+  const [source,setSource]=useState<string|null>(null);
+  useEffect(()=>{if(!url)return;const controller=new AbortController();let objectUrl:string|undefined;
+    void fetch(url,{cache:"no-store",headers:gameHeaders(),signal:controller.signal}).then(async response=>{
+      if(!response.ok)throw new Error("Picture unavailable");const blob=await response.blob();if(controller.signal.aborted)return;
+      objectUrl=URL.createObjectURL(blob);setSource(objectUrl);
+    }).catch(()=>{});
+    return()=>{controller.abort();if(objectUrl)URL.revokeObjectURL(objectUrl);};
+  },[url,gameHeaders]);
+  return <span className="game-picture">{source ?
+    // Private authorized fetches avoid putting the connection credential in image URLs.
     // eslint-disable-next-line @next/next/no-img-element
-    <img src={url} alt={`${name}'s profile picture`} referrerPolicy="same-origin" onError={() => setFailed(true)}/> :
+    <img src={source} alt={`${name}'s profile picture`} onError={() => setSource(null)}/> :
     <span aria-label={`${name}, initials`}>{name.trim().slice(0,2).toUpperCase()}</span>}</span>;
 }
-export default function BoardGames({initialTable,connected,onClose,onLeaveSchool,onSafety}: {
-  initialTable:GameKind; connected:boolean; onClose:() => void; onLeaveSchool:() => void; onSafety:() => void;
+export default function BoardGames({initialTable,connected,onClose,onLeaveSchool,onSafety,gameHeaders}: {
+  gameHeaders:()=>Record<string,string>;initialTable:GameKind; connected:boolean; onClose:() => void; onLeaveSchool:() => void; onSafety:() => void;
 }) {
   const dialog = useRef<HTMLDialogElement>(null);
-  const [table,setTable] = useState<GameKind>(initialTable);
+  const table = initialTable;
   const [wortMode,setWortMode]=useState<WortMode>("study");
   const [game,setGame] = useState<GameSnapshot | null>(null);
   const [profile,setProfile] = useState<{username:string;photo:boolean} | null>(null);
@@ -30,6 +37,9 @@ export default function BoardGames({initialTable,connected,onClose,onLeaveSchool
   const generation = useRef(0);
   const nextWrite = useRef(0);
   const leavingSchool = useRef(false);
+  const memberRef=useRef<string|null>(null);memberRef.current=game?.self??null;
+  useEffect(()=>()=>{if(leavingSchool.current)return;void fetch(`/api/campus/games?table=${initialTable}`,{method:"POST",headers:{...gameHeaders(),"Content-Type":"application/json"},
+    body:JSON.stringify({action:"leave",member:memberRef.current}),credentials:"same-origin",keepalive:true,signal:AbortSignal.timeout(3000)}).catch(()=>{});},[initialTable,gameHeaders]);
   const online = useRef(connected); online.current = connected;
   useEffect(() => {const el=dialog.current; el?.showModal(); return () => el?.close();},[]);
   useEffect(() => {
@@ -52,12 +62,12 @@ export default function BoardGames({initialTable,connected,onClose,onLeaveSchool
           if(stopped||controller.signal.aborted)return;
         }
         const response = await fetch(endpoint,{method:body ? "POST" : "GET",cache:"no-store",credentials:"same-origin",
-          headers:body ? {"Content-Type":"application/json"} : undefined,
+          headers:{...gameHeaders(),...(body ? {"Content-Type":"application/json"} : {})},
           body:body ? JSON.stringify(body) : undefined,signal:controller.signal});
         const result = await response.json();
         if (stopped || attempt !== generation.current) return;
         if (!response.ok) {
-          if (response.status === 403 || response.status === 503) setGame(null);
+          if (response.status === 403 || response.status === 503) {setGame(null);if(response.status===403)onClose();}
           setMessage(result.error || "Unable to update this game.");
           return;
         }
@@ -83,13 +93,13 @@ export default function BoardGames({initialTable,connected,onClose,onLeaveSchool
     };
     void poll();
     return () => {stopped=true; clearTimeout(timer); inflight.current?.abort(); inflight.current=null;};
-  },[table,onSafety]);
+  },[table,onSafety,onClose,gameHeaders]);
   const send = (body:object) => {void requestAction.current(body);};
   const leaveSchool=async()=>{
     if(leavingSchool.current)return;
     leavingSchool.current=true;
     setBusy(true);inflight.current?.abort();
-    try{await fetch(`/api/campus/games?table=${table}`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"leave"}),credentials:"same-origin",keepalive:true,signal:AbortSignal.timeout(3000)});}catch{/* A lost connection expires the seat. */}
+    try{await fetch(`/api/campus/games?table=${table}`,{method:"POST",headers:{...gameHeaders(),"Content-Type":"application/json"},body:JSON.stringify({action:"leave"}),credentials:"same-origin",keepalive:true,signal:AbortSignal.timeout(3000)});}catch{/* A lost connection expires the seat. */}
     finally{onLeaveSchool();}
   };
   const current = GAME_TABLES.find(t => t.id === table)!;
@@ -108,21 +118,21 @@ export default function BoardGames({initialTable,connected,onClose,onLeaveSchool
     state.winners.length === 0 ? "Draw — well played!" :
     `${state.winners.map(i => game.members.find(m => m.id === state.players[i])?.username ?? "Player").join(" & ")}${state.winners.length > 1 ? " tie" : " wins"}!`;
   const roster=game&&member?<div className="game-roster" aria-label="Players at this table">{game.members.map((m,i) => <article key={m.id} className={turn?.id === m.id && playing ? "is-turn" : ""} style={{"--player-colour":colours[i]} as CSSProperties}>
-        <Picture name={m.username} url={m.photo ? `/api/campus/games/photo?table=${table}&player=${m.id}` : null}/>
+        <Picture gameHeaders={gameHeaders} name={m.username} url={m.photo ? `/api/campus/games/photo?table=${table}&player=${m.id}` : null}/>
         <div><strong>{m.username}{m.id === game.self ? " · you" : ""}</strong><span>{table==="wortquest" ? game.quiz ? `${game.quiz.scores[i]} / 100 points` : m.ready ? "Level confirmed" : "Not ready" : <>Piece {symbols[i]}{playing ? turn?.id === m.id ? " · playing" : " · waiting" : m.ready ? " · ready" : " · not ready"}</>}</span>
         {state?.kind === "boxes" && <span>{state.scores[state.players.indexOf(m.id)] ?? 0} boxes</span>}</div>
       </article>)}</div>:null;
   return <dialog ref={dialog} className="campus-games" aria-label="Games Lounge" onCancel={event => {event.preventDefault();onClose();}}>
     <header><div><p className="campus-eyebrow">SKY COMMONS · LEVEL 2</p><h2>Games Lounge</h2></div><button onClick={onClose}>Return to school →</button></header>
     <nav aria-label="Board games">{GAME_TABLES.map(t => <button key={t.id} aria-pressed={table === t.id}
-      disabled={!!member && t.id !== table} onClick={() => {setGame(null);setMessage("");setTable(t.id);}}>{t.name}<small>{t.id === "four" ? "2 players" : t.id === "wortquest" ? "Cards · solo or 2–4 friends" : "2–4 players"}</small></button>)}</nav>
+      disabled={t.id !== table}>{t.name}<small>{t.id === "four" ? "2 players" : t.id === "wortquest" ? "Cards · solo or 2–4 friends" : "2–4 players"}</small></button>)}</nav>
     <p className="game-live" role="status" aria-live="polite">{table === "wortquest" ? "WortQuest · German vocabulary" : status}</p>
     {table==="wortquest"&&roster}
-    {table==="wortquest"&&<WortQuest game={game} mode={wortMode} onMode={setWortMode} busy={busy} connected={connected} send={send}/>}
+    {table==="wortquest"&&game&&<WortQuest game={game} mode={wortMode} onMode={setWortMode} busy={busy} connected={connected} send={send}/>}
     {message && <p role="alert" className="game-message">{message}</p>}
     {!connected ? <p>Inactive game seats expire after 45 seconds. Your course work stays open.</p> :
     game && !member && (table!=="wortquest"||wortMode==="friends") ? <section className="game-join">
-      <Picture key={`${table}-self`} name={username || "Player"} url={profile?.photo ? `/api/campus/games/photo?table=${table}&player=self` : null}/>
+      <Picture gameHeaders={gameHeaders} key={`${table}-self`} name={username || "Player"} url={profile?.photo ? `/api/campus/games/photo?table=${table}&player=self` : null}/>
       <div><h3>Choose how your friends see you</h3><label>Game username<input value={username} maxLength={24} autoComplete="off" onChange={event => setUsername(event.target.value)}/></label>
       <p>Joining shares this username and your existing profile picture with the players at this table. Your campus pseudonym stays in the school.</p>
       <button disabled={busy || !username.trim() || game.count >= current.capacity} onClick={() => send({action:"join",username})}>Join {current.name}</button></div>
@@ -147,7 +157,7 @@ export default function BoardGames({initialTable,connected,onClose,onLeaveSchool
             aria-label={`${horizontal ? "Horizontal" : "Vertical"} edge ${edge+1}${owner < 0 ? "" : `, piece ${symbols[owner]}`}`} onClick={() => move(edge)}/>;
         })}</div>}
       </div>}
-      <div className="game-leave"><button disabled={busy} onClick={() => send({action:"leave"})}>Leave table</button><p>Closing this panel holds your seat for up to 45 seconds. Leaving during play ends the round.</p></div>
+      <div className="game-leave"><button disabled={busy} onClick={() => send({action:"leave"})}>Leave table</button><p>Returning to school releases your seat. Leaving during play ends the round.</p></div>
       <details className="game-safety"><summary>Report or block a player</summary><label>Report reason<select value={reason} onChange={event => setReason(event.target.value)}><option value="harassment">Harassment</option><option value="inappropriate-behaviour">Inappropriate behaviour</option><option value="technical">Technical problem</option><option value="other">Other</option></select></label>
         {game.members.filter(m => m.id !== game.self).map(m => <div key={m.id}><span>{m.username}</span><button disabled={busy} onClick={() => send({action:"report",player:m.id,reason})}>Report {m.username}</button><button disabled={busy} onClick={() => send({action:"block",player:m.id})}>Block {m.username}</button></div>)}
         <p>Contact the supervisor named in your invitation for immediate help.</p></details>

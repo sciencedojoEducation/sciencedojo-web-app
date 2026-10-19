@@ -2,6 +2,9 @@ import { createHash, timingSafeEqual } from "node:crypto";
 export function hashTicket(ticket: string) {
   return createHash("sha256").update(ticket).digest("hex");
 }
+export function gameAccessKey(ticket:string) {
+  return createHash("sha256").update("campus-games-http-v1:"+ticket).digest("hex");
+}
 export function validServiceKey(
   actual: string | null,
   secret: string | undefined,

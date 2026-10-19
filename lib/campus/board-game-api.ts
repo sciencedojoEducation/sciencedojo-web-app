@@ -8,8 +8,8 @@ export type GamesSession = {userId: string; profile: {full_name: string | null; 
   safety: (action: string, target: string, reason?: string) => Promise<boolean>};
 export type GameApiDependencies = {
   session: () => Promise<GamesSession | null>;
-  rpc: (user: string, table: GameKind, operation: string, payload?: object) => Promise<RpcResult>;
-  supabaseUrl?: string; fetchPhoto?: typeof fetch;
+  rpc: (user: string, table: GameKind, operation: string, payload?: object,key?:string) => Promise<RpcResult>;
+  requireKey?:boolean;supabaseUrl?: string; fetchPhoto?: typeof fetch;
 };
 const headers = {"Cache-Control":"private, no-store", "X-Content-Type-Options":"nosniff", "Vary":"Cookie"};
 const json = (value: unknown, status = 200) => Response.json(value, {status, headers});
@@ -25,7 +25,13 @@ export function createGameApi(deps: GameApiDependencies) {
     try {
       const session = await deps.session();
       if (!session) return json({error:"Campus access required"},403);
-      const rpc = (operation: string, payload: object = {}) => deps.rpc(session.userId, kind, operation, payload);
+      const key=request.headers.get("x-campus-game-key")??undefined;
+      if(deps.requireKey&&!/^[0-9a-f]{64}$/.test(key??""))return json({error:"Use the connected school tab to play"},403);
+      const body=request.method==="POST"?await readCampusJson(request):null;
+      const rpc = (operation: string, payload: object = {}) => deps.rpc(session.userId, kind, operation, payload,key);
+      if(body?.action==="leave" && Object.keys(body).every(k=>["action","member"].includes(k))) {
+        const result=await rpc("leave",Object.hasOwn(body,"member")?{member:body.member}:{});return result.error?json({error:result.error},409):json({game:result});
+      }
       // A database check also covers real notice, confirmed account and revocation.
       const current = await rpc("read");
       if (current.error) return json({error:current.error},403);
@@ -44,7 +50,6 @@ export function createGameApi(deps: GameApiDependencies) {
       if (request.method === "GET") return json({game:current, profile:{
         username:gameUsername(session.profile.full_name) ?? "Player",
         photo:!!allowedGamePhoto(session.profile.avatar_url,deps.supabaseUrl)}});
-      const body = await readCampusJson(request);
       if (!body || typeof body.action !== "string") return json({error:"Invalid game request"},400);
       const keys: Record<string,string[]> = {join:["action","username"],ready:["action","ready","round","version","level"],
         start:["action","round","version"],move:["action","move","round","version"],leave:["action"],

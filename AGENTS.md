@@ -152,3 +152,14 @@ For the initial test the owner named their already admitted account and existing
 ## Proposed room games and play invitations — 20 October 2026
 
 The owner clarified that games must be accessed inside the Games Lounge and nearby users can invite one another to play. Read docs/virtual-sciencedojo-game-invitations.md: the concrete next-phase plan is prepared, with implementation approval pending. It replaces the global game-panel shortcut with room/table-only access and optional navigation; targeted fixed invitations can guide nearby users to the room. Preserve campus pseudonyms before deliberate Join, participant-only game pictures/usernames, learning retention, both transport authorities and server-owned presence checks. No free-text chat, automatic acceptance, teleportation, new account admission or hosted schema/configuration change is authorized by preparation of this plan. Do not treat the prior game's local/browser/hosted evidence as verification of this new flow.
+
+
+On 20 October 2026 the owner approved docs/virtual-sciencedojo-game-invitations.md.
+Room-only games and nearby fixed play invitations are authorized local software
+work. Migration 080 is local preparation only; its hosted application still needs
+the plan's environment-specific approval. Preserve connection-bound private HTTP
+game access on both transports, fresh service context, deliberate Join/profile
+sharing, bounded invitations/reservations and the unchanged world protocol.
+Seven new authority tests and all 92 campus regressions passed at the first
+checkpoint; browser/build/release verification is still in progress. Do not infer
+current-head hosted or human friend-match acceptance from these results.

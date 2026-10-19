@@ -391,3 +391,15 @@ deliberate profile sharing at Join and server-owned room/table eligibility on
 both transports. No functional code or hosted schema is changed by this plan;
 implementation-phase approval is pending. Existing learning/privacy/admission
 boundaries remain.
+
+### Room invitation software approval — 20 October 2026
+
+The owner approved the [room/invitation phase](virtual-sciencedojo-game-invitations.md).
+Local implementation is in progress: server-owned room/table gates on both
+transports, connection-bound private HTTP access, pseudonym-only invitations,
+30-second replies and two-minute capacity-aware reservations. The new 080
+migration remains unapplied to hosted databases. Seven added authority tests and
+all 92 campus regressions pass locally; browser, clean-build and release checks
+remain in progress. Existing owner access, deliberate notice/profile acceptance,
+course retention and protected Preview scope remain unchanged. No human friend
+match or learner release is established.

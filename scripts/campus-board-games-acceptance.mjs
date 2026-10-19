@@ -3,7 +3,7 @@ import {join} from "node:path";
 import {createHash} from "node:crypto";
 import {GAME_TABLES} from "../lib/campus/board-games.ts";
 
-export async function checkBoardGames({a,b,browser,origin,identities,shared,gameFixture,campus,result,directory,wireFrames,issuedTickets,handshakeHashes,errors}){
+export async function checkBoardGames({a,b,browser,origin,identities,shared,gameFixture,campus,result,directory,wireFrames,issuedTickets,handshakeHashes,errors,gameFetch}){
   console.log('Games walkthrough: two connected campus browsers');
   const pages=[a,b],contexts=[], names=['FriendOne','FriendTwo','FriendThree','FriendFour'];
   const store=shared??gameFixture;
@@ -15,9 +15,11 @@ export async function checkBoardGames({a,b,browser,origin,identities,shared,game
   };
   const dialog=page=>page.getByRole('dialog',{name:'Games Lounge',exact:true});
   const open=async(page,table='four')=>{
-    await page.getByRole('button',{name:'Games Lounge',exact:true}).click();
+    const t=GAME_TABLES.find(t=>t.id===table), own=(await page.context().cookies()).find(c=>c.name==='fixture').value;
+    if(shared)await shared.db.query("UPDATE campus_presence SET x=$2,z=$3,floor=2,elevation=24,seat=NULL,status='walking' WHERE campus_id=$1",[own,t.x+1,t.z]);
+    else Object.assign(campus.room.world.players.get(own),{x:t.x+1,z:t.z,floor:2,elevation:24,seat:null,status:'walking'});
+    const interaction=page.getByRole('button',{name:`E Play ${t.name}`,exact:true});await interaction.waitFor({timeout:10000});await interaction.click();
     await dialog(page).waitFor();
-    if(table==='boxes')await dialog(page).getByRole('button',{name:/Dots & Boxes/}).click();
     await page.waitForFunction(()=>!!document.querySelector('dialog.campus-games[open] .game-join,dialog.campus-games[open] .game-roster'));
   };
   const joinGame=async(page,index,table='four')=>{
@@ -31,24 +33,32 @@ export async function checkBoardGames({a,b,browser,origin,identities,shared,game
     await expect(start).toBeEnabled({timeout:10000});await start.click();
     for(const page of active)await expect(dialog(page).getByRole('status')).toContainText("FriendOne's turn",{timeout:10000});
   };
-  // E activation uses the existing authoritative world, never a production teleport.
-  await pose(0,GAME_TABLES[0].x+1,GAME_TABLES[0].z);
-  const interaction=a.getByRole('button',{name:/Play Four in a Row/});
-  await interaction.waitFor({timeout:10000});
+  // Meet outside the room. Accepting reserves a place without sharing profiles.
+  expect(await a.getByRole('button',{name:'Games Lounge',exact:true}).count()).toBe(0);
+  expect(await a.evaluate(async()=>(await fetch('/api/campus/games?table=four')).status)).toBe(403);
+  await a.getByRole('button',{name:'Find Games Lounge',exact:true}).click();expect(await dialog(a).count()).toBe(0);
+  await a.locator('.campus-play-together > details > summary').click();
+  await a.getByRole('button',{name:new RegExp('Play together with ')}).click();
+  await b.getByRole('button',{name:'Accept invitation',exact:true}).waitFor({timeout:10000});
+  await b.screenshot({path:join(directory,'play-invitation.png')});result.screenshots.push(join(directory,'play-invitation.png'));
+  await b.getByRole('button',{name:'Accept invitation',exact:true}).press('Enter');
+  for(const page of pages)await page.getByRole('button',{name:'Walk to reserved table',exact:true}).waitFor({timeout:10000});
+  expect((await store.db.query('SELECT count(*) AS n FROM campus_game_members')).rows[0].n).toBe(0);
+  // Synthetic starting point outside the upper room; actual server input walks through its door.
+  for(let i=0;i<2;i++)await pose(i,26,38,2);
+  for(const page of pages){await page.getByRole('button',{name:'Walk to reserved table',exact:true}).click();await page.getByRole('button',{name:/E Play Four in a Row/}).waitFor({timeout:30000});}
   const stage=a.getByRole('region',{name:/3D school/});await stage.focus();await a.keyboard.press('e');
-  await dialog(a).waitFor();
-  console.log('Games walkthrough: E opened the table');
-  await joinGame(a,0);await open(b);await joinGame(b,1);
+  await dialog(a).waitFor();await joinGame(a,0);
+  await b.getByRole('button',{name:/E Play Four in a Row/}).click();await joinGame(b,1);
+  result.checks.push('Outside-room requests denied; explicit pseudonym-only invitation/keyboard acceptance, no profile before Join, real navigation through the lounge door and E interaction at the reserved table');
   await expect(dialog(a).locator('.game-roster strong')).toHaveCount(2);
   for(const page of pages)await page.waitForFunction(()=>[...document.querySelectorAll('.game-roster img')].length===2&&[...document.querySelectorAll('.game-roster img')].every(i=>i.complete&&i.naturalWidth===40));
-  const own=await a.evaluate(async()=> (await(await fetch('/api/campus/games?table=four')).json()).game.self);
+  const own=(await gameFetch(a,'/api/campus/games?table=four')).body.game.self;
   const outsider=await browser.newContext();contexts.push(outsider);const spectator=await outsider.newPage();
   await spectator.goto(origin);await spectator.getByRole('button',{name:'Enter school',exact:true}).click();await spectator.getByText('In the school · walking',{exact:true}).waitFor();
-  const outsiderPrivacy=await spectator.evaluate(async player=>{
-    const game=await(await fetch('/api/campus/games?table=four')).json();
-    const photo=await fetch(`/api/campus/games/photo?table=four&player=${player}`);
-    return {members:game.game.members,state:game.game.state,photo:photo.status};
-  },own);
+  await open(spectator);await dialog(spectator).getByRole('button',{name:'Return to school →',exact:true}).click();
+  const outsiderGame=(await gameFetch(spectator,'/api/campus/games?table=four')).body.game;
+  const outsiderPrivacy={members:outsiderGame.members,state:outsiderGame.state,photo:(await gameFetch(spectator,`/api/campus/games/photo?table=four&player=${own}`)).status};
   expect(outsiderPrivacy).toEqual({members:[],state:null,photo:404});
   await spectator.getByRole('button',{name:'Leave',exact:true}).click();await outsider.close();contexts.pop();
   // Typing game usernames/using arrows must not move a player.
@@ -98,24 +108,24 @@ export async function checkBoardGames({a,b,browser,origin,identities,shared,game
   await readyStart(pages);
   console.log('Games walkthrough: four-player Dots & Boxes started');
   for(let edge=0;edge<40;edge++){
-    const game=await a.evaluate(async()=> (await(await fetch('/api/campus/games?table=boxes')).json()).game);
+    const game=(await gameFetch(a,'/api/campus/games?table=boxes')).body.game;
     const index=game.state.turn,page=pages[index];
     const button=dialog(page).getByRole('button',{name:new RegExp(`^(Horizontal|Vertical) edge ${edge+1}(,|$)`)});
     await expect(button).toBeEnabled({timeout:10000});if(index===3)await button.tap();else await button.click();
     await expect(button).toBeDisabled({timeout:10000});
     // Wait for authoritative confirmation, not merely the local busy state.
-    await expect.poll(async()=>a.evaluate(async e=>(await(await fetch('/api/campus/games?table=boxes')).json()).game.state.board[e],edge),{timeout:10000}).toBeGreaterThanOrEqual(0);
+    await expect.poll(async()=>(await gameFetch(a,'/api/campus/games?table=boxes')).body.game.state.board[edge],{timeout:10000}).toBeGreaterThanOrEqual(0);
   }
   for(const page of pages)await expect(dialog(page).getByRole('status')).toContainText(/wins|tie/,{timeout:10000});
-  const final=await a.evaluate(async()=> (await(await fetch('/api/campus/games?table=boxes')).json()).game);
+  const final=(await gameFetch(a,'/api/campus/games?table=boxes')).body.game;
   expect(final.state.scores.reduce((a,b)=>a+b)).toBe(16);
   await a.screenshot({path:join(directory,'board-boxes-four-player-fullscreen.png')});result.screenshots.push(join(directory,'board-boxes-four-player-fullscreen.png'));
   await pages[3].screenshot({path:join(directory,'board-boxes-phone.png')});result.screenshots.push(join(directory,'board-boxes-phone.png'));
   await dialog(a).getByRole('button',{name:'Return to school →',exact:true}).click();
-  await a.getByRole('button',{name:'Study desk',exact:true}).click();await a.getByRole('button',{name:'Open Study Hub',exact:true}).click();
+  await pose(0,-4.5,-3,0);await a.getByRole('button',{name:'Study desk',exact:true}).click();await a.getByRole('button',{name:/Sit at Desk 1$/}).waitFor();await a.getByRole('button',{name:/Sit at Desk 1$/}).click();await a.getByRole('button',{name:'Open Study Hub',exact:true}).click();
   await expect(a.frameLocator('iframe[title="Your Academy course"]').getByLabel('Practice answer')).toHaveValue('board-games-retained-course-canary');
   await a.getByRole('button',{name:'Return to school →',exact:true}).click();
-  await open(a,'boxes');await dialog(a).getByText('Report or block a player',{exact:true}).click();await dialog(a).getByRole('button',{name:'Report FriendTwo',exact:true}).click();await dialog(a).getByRole('alert').filter({hasText:'Report saved'}).waitFor();
+  await open(a,'boxes');await joinGame(a,0,'boxes');await dialog(a).getByText('Report or block a player',{exact:true}).click();await dialog(a).getByRole('button',{name:'Report FriendTwo',exact:true}).click();await dialog(a).getByRole('alert').filter({hasText:'Report saved'}).waitFor();
   await dialog(a).getByRole('button',{name:'Block FriendTwo',exact:true}).click();
   await dialog(a).getByLabel('Game username',{exact:true}).waitFor();await dialog(b).getByLabel('Game username',{exact:true}).waitFor();
   for(const page of pages.slice(2,3)){await dialog(page).getByRole('button',{name:'Leave table',exact:true}).click();await dialog(page).getByLabel('Game username',{exact:true}).waitFor();}

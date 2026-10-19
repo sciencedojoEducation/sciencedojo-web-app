@@ -1,4 +1,4 @@
-import { randomBytes, timingSafeEqual } from "node:crypto";
+import { randomBytes, timingSafeEqual, createHash } from "node:crypto";
 import { Room, Server, matchMaker } from "@colyseus/core";
 import { WebSocketTransport } from "@colyseus/ws-transport";
 import { CampusWorld } from "../../lib/campus/world.ts";
@@ -36,6 +36,7 @@ export async function createCampusServer({
   const bootstrap = randomBytes(32).toString("hex");
   const allowAdmission = admissionLimiter(bootstrap);
   let liveRoom;
+  let contextTime = 0;
   class LibraryRoom extends Room {
     onCreate(options) {
       if (options?.bootstrap !== bootstrap || liveRoom)
@@ -109,7 +110,8 @@ export async function createCampusServer({
         throw new Error("Admission expired or unavailable");
       if (liveRoom?.world.players.has(identity.id))
         throw new Error("Already connected in another tab");
-      return identity;
+      const key=createHash("sha256").update("campus-games-http-v1:"+options.ticket).digest("hex");
+      return {...identity,gameHash:createHash("sha256").update(key).digest("hex")};
     }
     async onJoin(client) {
       const current = await refresh(client.auth.id);
@@ -185,6 +187,20 @@ export async function createCampusServer({
         next();
       });
       app.get("/health", (_req, res) => res.json({ ready: Boolean(liveRoom) }));
+      // Private application callback only: no browser positions, accounts or learning data.
+      app.get("/games-context", (req, res) => {
+        if (!secretMatches(req.headers.authorization, `Bearer ${serviceKey}`))
+          return res.status(401).end();
+        if (!liveRoom) return res.status(503).end();
+        contextTime = Math.max(Date.now(), contextTime + 1);
+        const players = [...liveRoom.world.players.values()].flatMap(p => {
+          const connection = liveRoom.owners.get(p.id);
+          const client=liveRoom.clients.find(c=>c.sessionId===connection);
+          return connection && client ? [{credential:client.auth.gameHash,id:p.id,connection,x:p.x,z:p.z,floor:p.floor??0,
+            status:p.status,seat:p.seat,travel:!!p.travel}] : [];
+        });
+        return res.json({at:contextTime,players});
+      });
       app.post("/remove/:id", (req, res) => {
         if (!secretMatches(req.headers.authorization, `Bearer ${serviceKey}`))
           return res.status(401).end();
