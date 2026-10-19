@@ -1,5 +1,14 @@
 -- WortQuest software phase; hosted application requires a separate reviewed approval.
 BEGIN;
+DO $guard$
+BEGIN
+ IF NOT EXISTS (SELECT 1 FROM pg_proc p WHERE p.oid=to_regprocedure('public.campus_game(uuid,text,text,jsonb)') AND md5(p.prosrc)='2d6f57f551bc7b90a63980bc4da76c69') THEN
+   RAISE EXCEPTION 'Expected reviewed 076 game authority; stop and inspect migration state';
+ END IF;
+ IF to_regprocedure('public.campus_quiz_view(jsonb,text,text)') IS NOT NULL THEN
+   RAISE EXCEPTION 'Vocabulary migration already present; do not replay';
+ END IF;
+END; $guard$;
 ALTER TABLE public.campus_game_tables DROP CONSTRAINT campus_game_tables_table_id_check;
 ALTER TABLE public.campus_game_tables ADD CONSTRAINT campus_game_tables_table_id_check CHECK(table_id IN ('four','boxes','wortquest'));
 ALTER TABLE public.campus_game_tables ADD COLUMN quiz_level text NOT NULL DEFAULT 'A1' CHECK(quiz_level IN ('A1','A2','B1','B2','C1','C2'));
@@ -84,8 +93,8 @@ BEGIN
  UPDATE campus_game_tables g SET state=jsonb_set(g.state,'{phase}','"abandoned"'),version=g.version+1
  WHERE g.table_id IN ('four','boxes','wortquest') AND g.state->>'phase'='playing'
  AND (SELECT count(*) FROM campus_game_members m WHERE m.table_id=g.table_id)<>jsonb_array_length(g.state->'players');
- UPDATE campus_game_tables g SET state=NULL,round=gen_random_uuid(),version=g.version+1
- WHERE g.table_id IN ('four','boxes','wortquest') AND g.state IS NOT NULL
+ UPDATE campus_game_tables g SET state=NULL,quiz_level=CASE WHEN g.table_id='wortquest' THEN 'A1' ELSE g.quiz_level END,round=gen_random_uuid(),version=g.version+1
+ WHERE g.table_id IN ('four','boxes','wortquest') AND (g.state IS NOT NULL OR (g.table_id='wortquest' AND g.quiz_level<>'A1'))
  AND NOT EXISTS(SELECT 1 FROM campus_game_members m WHERE m.table_id=g.table_id);
  SELECT * INTO person FROM campus_members WHERE user_id=actor;
  IF NOT FOUND OR NOT public.campus_allowed(person.campus_id) THEN
@@ -176,7 +185,7 @@ BEGIN
    UPDATE campus_game_tables SET state=CASE WHEN state IS NULL THEN NULL ELSE jsonb_set(state,'{phase}','"abandoned"') END,version=version+1 WHERE table_id=game_table RETURNING * INTO t;
    own=NULL;
    IF NOT EXISTS(SELECT 1 FROM campus_game_members m WHERE m.table_id=game_table) THEN
-     UPDATE campus_game_tables SET state=NULL,round=gen_random_uuid(),version=version+1 WHERE table_id=game_table RETURNING * INTO t;
+     UPDATE campus_game_tables SET state=NULL,quiz_level=CASE WHEN game_table='wortquest' THEN 'A1' ELSE quiz_level END,round=gen_random_uuid(),version=version+1 WHERE table_id=game_table RETURNING * INTO t;
    END IF;
  ELSIF operation IN ('photo','target') THEN
    IF operation='photo' AND payload->>'player'='self' THEN RETURN jsonb_build_object('photo',(SELECT avatar_url FROM profiles WHERE id=actor)); END IF;
@@ -202,7 +211,7 @@ BEGIN
  IF (TG_OP='DELETE' AND OLD.key='virtual_campus_enabled') OR
     (TG_OP='UPDATE' AND NEW.key='virtual_campus_enabled' AND NOT coalesce(NEW.enabled,false)) THEN
    DELETE FROM campus_game_members WHERE table_id IN ('four','boxes','wortquest');
-   UPDATE campus_game_tables SET state=NULL,round=gen_random_uuid(),version=version+1 WHERE table_id IN ('four','boxes','wortquest');
+   UPDATE campus_game_tables SET state=NULL,quiz_level='A1',round=gen_random_uuid(),version=version+1 WHERE table_id IN ('four','boxes','wortquest');
  END IF;
  RETURN NULL;
 END; $$;

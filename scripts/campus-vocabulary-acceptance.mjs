@@ -34,15 +34,16 @@ export async function checkWortQuest({a,b,browser,origin,identities,shared,gameF
    for(let card=0;card<10;card++){
     const term=await dialog(a).locator('.vocabulary-card h3').textContent();
     const material=VOCABULARY.find(c=>c.level===level&&c.term===term);
-    const option=dialog(a).locator('.vocabulary-options button').filter({hasText:material.explanation});
-    await option.click();await expect(dialog(a).getByText('Correct · +10 points',{exact:true})).toBeVisible();
+    const wrong=level==='C2'&&card===0;
+    const option=dialog(a).locator('.vocabulary-options button').filter({hasText:wrong?material.distractors[0]:material.explanation});
+    await option.click();await expect(dialog(a).getByText(wrong?'Not quite · 0 points':'Correct · +10 points',{exact:true})).toBeVisible();
     await dialog(a).getByRole('button',{name:card===9?'See my score':'Next question',exact:true}).click();
    }
-   await expect(dialog(a).getByRole('heading',{name:'Quiz complete · 100 / 100 points',exact:true})).toBeVisible();
+   await expect(dialog(a).getByRole('heading',{name:`Quiz complete · ${level==='C2'?90:100} / 100 points`,exact:true})).toBeVisible();
+   if(level==='C2'){await a.screenshot({path:join(directory,'wortquest-solo-levels.png')});result.screenshots.push(join(directory,'wortquest-solo-levels.png'));}
    await dialog(a).getByRole('button',{name:'Choose another level',exact:true}).click();
   }
-  result.checks.push('Actual E entry and keyboard study-card reveal; ten-card solo quizzes completed at A1/A2/B1/B2/C1/C2 with correct score 100 and no duplicate cards in rules coverage');
-  await a.screenshot({path:join(directory,'wortquest-solo-levels.png')});result.screenshots.push(join(directory,'wortquest-solo-levels.png'));
+  result.checks.push('Actual E entry and keyboard study-card reveal; ten-card solo quizzes completed at A1/A2/B1/B2/C1/C2 with correct totals, a wrong-answer/private-review case and no duplicate cards in rules coverage');
   await open(b);
   const joinTable=async(page,index)=>{
    await dialog(page).getByRole('button',{name:'Play with friends',exact:true}).click();
@@ -108,7 +109,7 @@ export async function checkWortQuest({a,b,browser,origin,identities,shared,gameF
    result.checks.push(`Real ${size}-browser ${level} match: independent answer privacy, synchronized score 100/tie, all-player continuation and rendered pictures/usernames${size===4?', touch/phone layout and unjoined fifth-player roster/photo denial':''}`);
   }
   expect((await store.db.query('SELECT count(*) AS n FROM campus_game_members')).rows[0].n).toBe(0);
-  expect((await store.db.query("SELECT state FROM campus_game_tables WHERE table_id='wortquest'")).rows[0].state).toBeNull();
+  const empty=(await store.db.query("SELECT state,quiz_level FROM campus_game_tables WHERE table_id='wortquest'")).rows[0];expect(empty.state).toBeNull();expect(empty.quiz_level).toBe('A1');
   await dialog(a).getByRole('button',{name:'Return to school →',exact:true}).click();await place(-4.5,-3);await a.getByRole('button',{name:'Study desk',exact:true}).click();await a.getByRole('button',{name:/Sit at Desk 1$/}).waitFor({timeout:10000});await a.getByRole('button',{name:/Sit at Desk 1$/}).click();await a.getByRole('button',{name:'Open Study Hub',exact:true}).click();await expect(a.frameLocator('iframe[title="Your Academy course"]').getByLabel('Practice answer')).toHaveValue('vocabulary-private-draft-canary');await a.getByRole('button',{name:'Return to school →',exact:true}).click();await a.getByRole('button',{name:'Games Lounge',exact:true}).click();
   result.checks.push('Vocabulary games remain inside native fullscreen and preserve the mounted lesson document and unsent practice answer');
   const privateLabels=['vocabulary-private-draft-canary','VocabFriend','de-a1-','de-a2-','de-b1-','de-b2-','de-c1-','de-c2-','quiz-answer','WORTQUEST'];

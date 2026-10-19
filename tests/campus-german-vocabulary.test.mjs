@@ -64,7 +64,7 @@ test('friend quizzes commute answers privately, score once, progress by agreemen
    const end=await snapshot(f,1);assert.equal(end.quiz.phase,'finished');assert.deepEqual(end.quiz.winners,Array.from({length:size},(_,i)=>i));assert.equal(end.quiz.review.length,10);assert.equal(end.quiz.review.filter(r=>!r.correct).length,5);
    const outsider=await snapshot(f,6);assert.equal(outsider.quiz,null);assert.equal(outsider.level,null);assert.deepEqual(outsider.members,[]);
    for(let n=1;n<=size;n++)await f.request(n,'wortquest',{action:'leave'});
-   assert.equal((await f.db.query("SELECT state FROM campus_game_tables WHERE table_id='wortquest'")).rows[0].state,null);
+   const empty=(await f.db.query("SELECT state,quiz_level FROM campus_game_tables WHERE table_id='wortquest'")).rows[0];assert.equal(empty.state,null);assert.equal(empty.quiz_level,'A1');
   }
  }finally{await f.db.close();}
 });
@@ -72,6 +72,8 @@ test('friend quizzes commute answers privately, score once, progress by agreemen
 test('quiz level confirmation, score/identity forgery, block/revocation/expiry and switch cleanup remain enforced',async()=>{
  const f=await gamesFixture();
  try{
+  await assert.rejects(f.db.exec(await (await import('node:fs/promises')).readFile(new URL('../sql/077_campus_german_vocabulary.sql',import.meta.url),'utf8')),/Expected reviewed 076|already present/);
+  await f.db.exec('ROLLBACK');
   for(const role of ['anon','authenticated','service_role']){
    await f.db.exec(`SET ROLE ${role}`);
    await assert.rejects(f.db.query("SELECT campus_quiz_view('{}','x','A1')"),/permission/);
@@ -114,14 +116,14 @@ test('different players receive only their own missed-word choices; final answer
   for(let index=0;index<10;index++){
    const {quiz}=await snapshot(f,1);
    await f.request(1,'wortquest',{action:'quiz-answer',round,card:quiz.question.id,choice:correct(quiz.question)});
-   last={action:'quiz-answer',round,card:quiz.question.id,choice:-1};
+   last={action:'quiz-answer',round,card:quiz.question.id,choice:index<5?(correct(quiz.question)+1)%4:-1};
    await f.request(2,'wortquest',last);
    if(index<9)await Promise.all([1,2].map(n=>f.request(n,'wortquest',{action:'quiz-next',round,card:quiz.question.id})));
   }
   assert.equal((await f.request(2,'wortquest',last)).status,200,'lost final response can be retried safely');
   const winner=await snapshot(f,1),other=await snapshot(f,2);
   assert.deepEqual(winner.quiz.scores,[100,0]);assert.deepEqual(winner.quiz.winners,[0]);
-  assert.ok(winner.quiz.review.every(r=>r.correct&&r.chosen===r.explanation));assert.ok(other.quiz.review.every(r=>!r.correct&&r.chosen===null));
+  assert.ok(winner.quiz.review.every(r=>r.correct&&r.chosen===r.explanation));assert.ok(other.quiz.review.every(r=>!r.correct));assert.ok(other.quiz.review.slice(0,5).every(r=>r.chosen!==null&&r.chosen!==r.explanation));assert.ok(other.quiz.review.slice(5).every(r=>r.chosen===null));
   await ready(f,1,'A1');assert.equal((await f.command(1,'wortquest',{action:'start'})).status,409);
   await ready(f,2,'A1');const rematch=(await f.command(1,'wortquest',{action:'start'})).body.game;
   assert.notEqual(rematch.round,round);assert.deepEqual(rematch.quiz.scores,[0,0]);assert.deepEqual(rematch.quiz.review,[]);assert.equal(rematch.quiz.solution,undefined);
