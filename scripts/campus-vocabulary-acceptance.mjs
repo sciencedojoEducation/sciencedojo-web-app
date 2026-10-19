@@ -21,6 +21,15 @@ export async function checkWortQuest({a,b,browser,origin,identities,shared,gameF
   await a.getByRole('button',{name:/Play WortQuest/}).waitFor({timeout:10000});
   await a.getByRole('region',{name:/3D school/}).focus();await a.keyboard.press('e');
   await dialog(a).getByRole('button',{name:'Reveal explanation',exact:true}).waitFor();
+  if(process.argv.includes('--vocabulary-location-only')){
+   await dialog(a).getByRole('button',{name:'Reveal explanation',exact:true}).click();
+   await expect(dialog(a).getByText(VOCABULARY[0].explanation,{exact:true})).toBeVisible();
+   await a.screenshot({path:join(directory,'wortquest-study-card.png')});result.screenshots.push(join(directory,'wortquest-study-card.png'));
+   result.checks.push('Final WortQuest interaction uses the existing rear lounge side table; real E entry reveals the German word and English explanation inside fullscreen');
+   await dialog(a).getByRole('button',{name:'Return to school →',exact:true}).click();
+   for(const page of pages)await page.getByRole('button',{name:'Leave',exact:true}).click();
+   return;
+  }
   console.log('WortQuest: real E entry, study cards and solo scores across all levels');
   for(const level of GERMAN_LEVELS){
    console.log('WortQuest solo level',level);
