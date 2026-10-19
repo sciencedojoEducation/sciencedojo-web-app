@@ -8,14 +8,24 @@ import {
   type ClaimedBusinessEnquiry,
   type EnquiryReceipt,
   type NotificationResult,
+  type EnquirySubmissionDependencies,
 } from "./business-enquiry-service";
+import { handleEngineeringEnquirySubmission } from "./engineering-enquiry";
 import { isBusinessEmail, type BusinessEnquiryValues } from "./business-enquiry-validation";
 import { businessEnquiryHash, getBusinessEnquiryRequestIp } from "./business-enquiry-security";
 
 type RequestHeaders = { get(name: string): string | null };
 
 export async function submitBusinessEnquiryRecord(formData: FormData, requestHeaders: RequestHeaders) {
-  return handleBusinessEnquirySubmission(formData, {
+  return handleBusinessEnquirySubmission(formData, submissionDependencies(requestHeaders));
+}
+
+export async function submitEngineeringEnquiryRecord(formData: FormData, requestHeaders: RequestHeaders) {
+  return handleEngineeringEnquirySubmission(formData, submissionDependencies(requestHeaders));
+}
+
+function submissionDependencies(requestHeaders: RequestHeaders): EnquirySubmissionDependencies {
+  return {
     generateToken: randomUUID,
     async persist(id, values) {
       // A dedicated key is preferable; the existing private service key is a strong server-only fallback.
@@ -36,7 +46,7 @@ export async function submitBusinessEnquiryRecord(formData: FormData, requestHea
       return { id: receipt.enquiry_id, outcome: receipt.outcome } as EnquiryReceipt;
     },
     notify: runBusinessEnquiryNotifications,
-  });
+  };
 }
 
 function isClaimedRecord(value: unknown): value is ClaimedBusinessEnquiry {

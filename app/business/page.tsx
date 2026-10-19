@@ -46,9 +46,10 @@ export default async function BusinessPage() {
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-5">
           <Link href="/business" aria-label="ScienceDojo for Business home" className={focus}>
             <BusinessBrand />
-            <span className="mt-1 block text-[10px] font-bold uppercase tracking-[0.22em] text-[#526071]">For Business</span>
+            <span className="mt-1 block text-[10px] font-bold uppercase tracking-[0.22em] text-[#526071]">Instructional design</span>
           </Link>
           <nav aria-label="Business navigation" className="flex flex-wrap items-center gap-x-5 gap-y-3 text-sm font-semibold">
+            <Link href="/business/engineering" className={`py-2 hover:text-[#006B70] ${focus}`}>Engineering</Link>
             {navItems.map(([label, id]) => <a key={id} href={`#${id}`} className={`py-2 hover:text-[#006B70] ${focus}`}>{label}</a>)}
             <a href="#contact" className={`inline-flex min-h-11 items-center gap-2 py-2 text-[#006B70] hover:underline ${focus}`}>Discuss your project <ArrowRight className="h-4 w-4" aria-hidden="true" /></a>
           </nav>

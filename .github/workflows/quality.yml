@@ -34,8 +34,34 @@ jobs:
       - name: Lint latency hotfix files
         run: npm run lint:latency
 
+      - name: Lint engineering page files
+        run: npm run lint:engineering
+
       - name: Build production application
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: https://synthetic.invalid
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: synthetic-public-key
         run: npm run build
+
+      - name: Install Chromium for engineering acceptance
+        run: npx playwright install --with-deps chromium
+
+      - name: Check engineering page in Chromium
+        timeout-minutes: 5
+        env:
+          TMPDIR: ${{ runner.temp }}
+        run: npm run test:engineering:browser
+
+      - name: Save synthetic engineering browser evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: engineering-browser-evidence
+          path: |
+            ${{ runner.temp }}/sciencedojo-engineering-browser-*/evidence.json
+            ${{ runner.temp }}/sciencedojo-engineering-browser-*/*.png
+          if-no-files-found: ignore
+          retention-days: 7
 
       - name: Verify private workbook build traces
         run: node scripts/verify-aspekte-build.mjs

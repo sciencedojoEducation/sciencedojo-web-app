@@ -119,7 +119,7 @@ test("notification HTML escapes user content and cannot inject headers through t
   assert.doesNotMatch(message.html, /<script>|<img |<a href='bad'/);
   assert.match(message.html, /&lt;script&gt;/);
   assert.match(message.html, /Click &amp; send/);
-  assert.equal(message.subject, "ScienceDojo for Business: new pilot enquiry");
+  assert.equal(message.subject, "ScienceDojo for Business: new enquiry");
 });
 
 test("only the platform-overwritten IP is trusted in Vercel production; arbitrary chains fail closed", () => {

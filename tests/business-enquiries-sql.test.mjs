@@ -235,3 +235,39 @@ test("stalled notification transport is aborted, original enquiry remains saved,
     assert.equal((await claim(id)).length, 0);
   } finally { await db.close(); }
 });
+
+test("engineering context survives the existing private SQL contract, deduplicates and queues retryable notifications", async () => {
+  const { handleEngineeringEnquirySubmission } = await import("../lib/engineering-enquiry.ts");
+  const { db, receive, claim, finish } = await fixture();
+  const id = randomUUID();
+  const form = new FormData();
+  for (const [key, value] of Object.entries({ name: "Synthetic QA", email: "qa@example.com", organisation: "Example team", goal: "Connect two request tools.", interest: "integration", timing: "", website: "", submissionToken: id })) form.set(key, value);
+  const dependency = {
+    generateToken: randomUUID,
+    persist: async (token, values) => {
+      const receipt = await receive({ id: token, ...values, payload: businessEnquiryHash("synthetic-test-secret".repeat(3), "payload", JSON.stringify(values)) });
+      return { id: receipt.enquiry_id, outcome: receipt.outcome };
+    },
+    notify: async () => { throw new Error("Synthetic unavailable provider"); },
+  };
+  try {
+    await db.exec("SET ROLE service_role");
+    assert.equal((await handleEngineeringEnquirySubmission(form, dependency)).status, "success");
+    assert.equal((await handleEngineeringEnquirySubmission(form, dependency)).status, "success");
+    const { rows } = await db.query("SELECT goal FROM business_enquiries WHERE id=$1", [id]);
+    assert.equal(rows.length, 1);
+    assert.match(rows[0].goal, /^Service: Software & Product Engineering\nInterest: Connected tools or workflow\n\nConnect two request tools\.$/);
+    const [queued] = await claim(id);
+    assert.equal(queued.goal, rows[0].goal);
+    assert.equal(await finish(queued, false), true);
+    await db.exec("UPDATE business_enquiries SET next_notification_at=now()-interval '1 minute' WHERE notification_status='queued'");
+    const [retried] = await claim(id);
+    assert.equal(retried.notification_attempts, 2);
+    assert.equal(await finish(retried), true);
+    assert.equal((await claim(id)).length, 0);
+    form.set("interest", "application");
+    const conflict = await handleEngineeringEnquirySubmission(form, dependency);
+    assert.equal(conflict.status, "error");
+    assert.notEqual(conflict.submissionToken, id);
+  } finally { await db.close(); }
+});

@@ -6,6 +6,7 @@ import { signOut } from "@/app/login/actions";
 import BookAssessmentLink from "@/components/analytics/BookAssessmentLink";
 import Logo from "@/components/Logo";
 import MobileNavbarMenu from "@/components/MobileNavbarMenu";
+import BusinessNavigationMenu from "@/components/BusinessNavigationMenu";
 import type { FeatureFlagKey } from "@/lib/feature-flags";
 import { createClient } from "@/utils/supabase/client";
 
@@ -72,7 +73,7 @@ export default function NavbarClient({ flags }: { flags: PublicFlagMap }) {
           <Link href="/how-it-works" className="text-sm font-medium text-secondary/70 hover:text-primary transition-colors">How It Works</Link>
           {flags.practice_dojo_enabled && <Link href="/ai-practice-studio" className="text-sm font-medium text-secondary/70 hover:text-primary transition-colors">Free Practice</Link>}
           {flags.learning_hub_enabled && <Link href="/learning-hub" className="text-sm font-medium text-secondary/70 hover:text-primary transition-colors">Resources</Link>}
-          <Link href="/business" className="inline-flex min-h-11 items-center whitespace-nowrap rounded-sm text-sm font-medium text-secondary/70 transition-colors hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary">For Business</Link>
+          <BusinessNavigationMenu />
         </nav>
 
         <div className="hidden items-center gap-4 xl:flex">

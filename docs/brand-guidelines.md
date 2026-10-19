@@ -8,3 +8,5 @@ The logo is the simple lowercase wordmark **sciencedojo.**: one continuous word 
 - Keep legal company names and ordinary references in their appropriate written form. The lowercase wordmark rule does not alter the registered company name **ScienceDojo (Pvt) Ltd** or require every prose mention to become a logo.
 
 References: the `BusinessBrand` component in `app/business/page.tsx` and the existing lowercase wordmark in `components/Logo.tsx`. Both PDF generators must preserve this rule when documents are regenerated.
+
+On 19 October 2026, Piumal requested restoring the original main-site palette specifically for the engineering page: primary blue `#0066FF`, navy `#001A44`, cyan `#00D2FF`, and white/pale-blue surfaces. Its continuous lowercase wordmark follows the main-site navy “science”, blue “dojo” and cyan trailing-dot treatment. The established learning/business-document navy-and-teal palette is unchanged.

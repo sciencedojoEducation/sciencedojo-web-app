@@ -84,7 +84,7 @@ export function buildBusinessEnquiryNotification(id: string, values: BusinessEnq
   const safe = Object.fromEntries((Object.keys(BUSINESS_ENQUIRY_LIMITS) as (keyof BusinessEnquiryValues)[])
     .map((key) => [key, escapeBusinessEnquiryHtml(values[key])]));
   return {
-    subject: "ScienceDojo for Business: new pilot enquiry",
-    html: `<div style="font-family:Arial,sans-serif;color:#12243A;max-width:640px"><h1>New pilot enquiry</h1><p>Reference: ${escapeBusinessEnquiryHtml(id)}</p><dl><dt>Name</dt><dd>${safe.name}</dd><dt>Email</dt><dd>${safe.email}</dd><dt>Organisation</dt><dd>${safe.organisation}</dd><dt>What should their people be able to do?</dt><dd style="white-space:pre-wrap">${safe.goal}</dd><dt>Timing</dt><dd>${safe.timing || "Not specified"}</dd></dl><p>Reply to this message to contact the prospect.</p></div>`,
+    subject: "ScienceDojo for Business: new enquiry",
+    html: `<div style="font-family:Arial,sans-serif;color:#12243A;max-width:640px"><h1>New business enquiry</h1><p>Reference: ${escapeBusinessEnquiryHtml(id)}</p><dl><dt>Name</dt><dd>${safe.name}</dd><dt>Email</dt><dd>${safe.email}</dd><dt>Organisation</dt><dd>${safe.organisation}</dd><dt>Project brief</dt><dd style="white-space:pre-wrap">${safe.goal}</dd><dt>Timing</dt><dd>${safe.timing || "Not specified"}</dd></dl><p>Reply to this message to contact the prospect.</p></div>`,
   };
 }

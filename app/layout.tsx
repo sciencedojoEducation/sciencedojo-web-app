@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { Inter } from "next/font/google";
 import Navbar from "@/components/Navbar";
+import PublicNavigationFallback from "@/components/PublicNavigationFallback";
 import Footer from "@/components/Footer";
 import PrivateWorkbookTrackingGate from "@/components/PrivateWorkbookTrackingGate";
 import Analytics from "@/components/Analytics";
@@ -70,7 +71,7 @@ export default function RootLayout({
         <Suspense fallback={null}><PrivateWorkbookTrackingGate><Analytics /><MetaPixel /></PrivateWorkbookTrackingGate></Suspense>
         {!isMaintenanceMode && (
           <PublicChromeGate>
-            <Suspense fallback={<div className="h-20 border-b border-primary/[0.08] bg-white" aria-hidden="true" />}>
+            <Suspense fallback={<PublicNavigationFallback />}>
               <Navbar />
             </Suspense>
           </PublicChromeGate>

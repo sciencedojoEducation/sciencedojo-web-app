@@ -5,6 +5,7 @@ import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import BookAssessmentLink from "@/components/analytics/BookAssessmentLink";
 import { signOut } from "@/app/login/actions";
+import { businessNavigationItems } from "@/lib/business-navigation";
 
 const navLinkClass =
   "rounded-2xl border border-transparent px-4 py-3 text-sm font-medium text-secondary/80 transition-colors hover:border-primary/10 hover:bg-primary/5 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2";
@@ -181,9 +182,10 @@ export default function MobileNavbarMenu({
                 FocusDojo
               </Link>
             )}
-            <Link href="/business" onClick={closeMenu} className={navLinkClass}>
-              For Business
-            </Link>
+            <div className="my-2 grid gap-1 border-y border-secondary/10 py-3" role="group" aria-labelledby={`${menuId}-business`}>
+              <p id={`${menuId}-business`} className="px-4 pb-1 text-xs font-semibold uppercase tracking-wider text-secondary/60">For Business</p>
+              {businessNavigationItems.map(item => <Link key={item.href} href={item.href} onClick={closeMenu} className={navLinkClass}>{item.label}</Link>)}
+            </div>
             {showFreeAssessment && (
               <BookAssessmentLink
                 source="navbar_mobile"
