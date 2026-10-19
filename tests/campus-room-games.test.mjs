@@ -25,7 +25,7 @@ for(const transport of ['vercel','colyseus']){
    await f.pose(1);await f.game(1,'join',{username:'One'});
    await f.db.query('UPDATE campus_presence SET connection_id=$2 WHERE campus_id=$1',[f.members[0].id,randomUUID()]);
    assert.ok((await f.game(1)).error,'old key cannot act for a new connection');
-   await f.db.query('SELECT campus_game_bind(connection_id,$2) FROM campus_presence WHERE campus_id=$1',[f.members[0].id,hashTicket(f.keys[0])]);
+   await f.db.query('INSERT INTO campus_play_keys SELECT campus_id,connection_id,$2 FROM campus_presence WHERE campus_id=$1 ON CONFLICT(campus_id) DO UPDATE SET connection=excluded.connection,credential=excluded.credential',[f.members[0].id,hashTicket(f.keys[0])]);
    assert.equal((await f.game(1)).self,null);
    await f.db.query("UPDATE campus_presence SET travel='{}' WHERE campus_id=$1",[f.members[0].id]);assert.match((await f.game(1)).error,/Walk to/);
    await f.pose(1);await f.game(1,'join',{username:'One'});
@@ -64,7 +64,7 @@ for(const transport of ['vercel','colyseus']){
    const pending=await f.play(4,'send',{target:f.members[4].id,table:'boxes'});assert.ok(pending.invitation);
    await f.db.query('UPDATE campus_presence SET connection_id=$2 WHERE campus_id=$1',[f.members[4].id,randomUUID()]);
    assert.ok((await f.play(5)).error);
-   await f.db.query('SELECT campus_game_bind(connection_id,$2) FROM campus_presence WHERE campus_id=$1',[f.members[4].id,hashTicket(f.keys[4])]);
+   await f.db.query('INSERT INTO campus_play_keys SELECT campus_id,connection_id,$2 FROM campus_presence WHERE campus_id=$1 ON CONFLICT(campus_id) DO UPDATE SET connection=excluded.connection,credential=excluded.credential',[f.members[4].id,hashTicket(f.keys[4])]);
    assert.equal((await f.play(5)).invitation,null);assert.ok((await f.play(5,'accept',{id:pending.invitation.id})).error);
    const expiring=await f.play(6,'send',{target:f.members[3].id,table:'boxes'});assert.ok(expiring.invitation);
    await f.db.exec("UPDATE campus_play_invites SET expires=clock_timestamp()-interval '1 second' WHERE state='pending'");
@@ -127,5 +127,74 @@ for(const transport of ['vercel','colyseus'])test(`${transport}: four-place rese
   assert.ok((await f.play(4,'send',{target:f.members[2].id,table:'four'})).error,'studying target unavailable');
   await f.db.query('UPDATE campus_members SET enabled=false WHERE user_id=$1',[id(4)]);assert.ok((await f.play(4)).error);
   assert.ok(first);
+ }finally{await f.db.close();}
+});
+test('simultaneous invites reserve one pair, accepted expiry frees capacity and missing tab keys deny the HTTP API',async()=>{
+ const f=await roomGamesFixture();
+ try{
+  const opposite=await Promise.all([f.play(1,'send',{target:f.members[1].id,table:'four'}),f.play(2,'send',{target:f.members[0].id,table:'four'})]);
+  assert.equal(opposite.filter(r=>r.invitation).length,1);
+  const card=(await f.play(1)).invitation,recipient=card.incoming?1:2;
+  await f.play(recipient,'accept',{id:card.id});
+  await f.db.query("UPDATE campus_play_invites SET expires=clock_timestamp()-interval '1 second' WHERE id=$1",[card.id]);
+  assert.equal((await f.play(1)).invitation,null);
+  assert.equal((await f.game(3,'join',{username:'Three'})).error,undefined,'expired reservation releases capacity');
+  const api=f.api(1),url='http://localhost/api/campus/games?table=four';
+  assert.equal((await api.GET(new Request(url))).status,403);
+  assert.equal((await api.GET(new Request(url,{headers:{'x-campus-game-key':f.keys[1]}}))).status,403);
+  assert.equal((await api.GET(new Request(url,{headers:{'x-campus-game-key':f.keys[0]}}))).status,200);
+  const forged=await api.POST(new Request(url,{method:'POST',headers:{origin:'http://localhost','x-campus-game-key':f.keys[0]},body:JSON.stringify({action:'join',username:'One',x:21.7,z:28.3,floor:2})}));
+  assert.equal(forged.status,400);
+ }finally{await f.db.close();}
+});
+test('atomic Vercel duration handover retains joined profiles and invitations while denying old HTTP keys and old-socket cleanup',async()=>{
+ const f=await roomGamesFixture();
+ try{
+  await f.game(1,'join',{username:'One'});await f.game(2,'join',{username:'Two'});
+  const original=await f.game(1),oldKey=f.keys[0],oldConnection=f.connections[0];
+  const renew=async(n)=>{
+   const raw=await f.issueRaw(n),connection=randomUUID();
+   await f.db.query("UPDATE campus_presence SET opened_at=clock_timestamp()-interval '181 seconds' WHERE campus_id=$1",[f.members[n-1].id]);
+   const result=await f.runtime(connection,'connect',[],hashTicket(raw),f.members[n-1].id,true);
+   assert.ok(result.snapshot);f.keys[n-1]=(await import('../lib/campus/security.ts')).gameAccessKey(raw);return connection;
+  };
+  const nextConnection=await renew(1);
+  assert.ok((await f.rpc(id(1),'four','read',{},oldKey)).error);
+  assert.equal((await f.game(1)).self,original.self);assert.equal((await f.game(2)).members.length,2);
+  assert.equal((await f.game(1)).round,original.round);
+  await f.runtime(oldConnection,'leave');assert.equal((await f.game(1)).self,original.self);
+  for(let n=3;n<=4;n++)await f.pose(n,n,0,0);
+  const pending=await f.play(3,'send',{target:f.members[3].id,table:'boxes'});
+  await f.play(4,'accept',{id:pending.invitation.id});const oldInviteKey=f.keys[2];await renew(3);
+  assert.equal((await f.play(3)).invitation.id,pending.invitation.id);assert.equal((await f.play(4)).invitation.state,'accepted');
+  assert.ok((await f.playRpc(id(3),'read',{},oldInviteKey)).error);
+  await f.pose(5,21.7,21.3,2);const before=await f.game(5,'join',{username:'Five'},'wortquest');assert.ok(before.self);
+  await f.runtime(f.connections[4],'leave');
+  const raw=await f.issueRaw(5);await f.runtime(randomUUID(),'connect',[],hashTicket(raw),f.members[4].id);
+  f.keys[4]=(await import('../lib/campus/security.ts')).gameAccessKey(raw);await f.pose(5,21.7,21.3,2);
+  assert.equal((await f.game(5,'read',{},'wortquest')).self,null,'fresh admission cannot inherit a prior profile even at the same table');
+  assert.notEqual(nextConnection,oldConnection);
+ }finally{await f.db.close();}
+});
+test('reviewed hosted contingency restores only prior game/runtime authority, empties private game state and refuses replay',async()=>{
+ const {readFile}=await import('node:fs/promises');
+ const f=await roomGamesFixture();
+ try{
+  await f.game(1,'join',{username:'One'});
+  await f.play(3,'send',{target:f.members[3].id,table:'boxes'});
+  const before=(await f.db.query('SELECT id,role FROM profiles ORDER BY id')).rows;
+  const rollback=await readFile(new URL('../docs/virtual-sciencedojo-game-invitations-rollback.sql',import.meta.url),'utf8');
+  await f.db.exec(rollback);
+  for(const table of ['campus_game_members','campus_play_invites','campus_play_keys','campus_play_limits','campus_play_backoff'])assert.equal((await f.db.query(`SELECT count(*) AS n FROM ${table}`)).rows[0].n,0);
+  assert.deepEqual((await f.db.query('SELECT id,role FROM profiles ORDER BY id')).rows,before);
+  assert.equal((await f.db.query("SELECT enabled FROM feature_flags WHERE key='virtual_campus_enabled'")).rows[0].enabled,true);
+  assert.equal((await f.db.query("SELECT md5(prosrc) AS hash FROM pg_proc WHERE oid='public.campus_game(uuid,text,text,jsonb)'::regprocedure")).rows[0].hash,'799024042d23ff9780e4f19227e4f3b2');
+  assert.equal((await f.db.query("SELECT md5(prosrc) AS hash FROM pg_proc WHERE oid='public.campus_runtime(uuid,text,jsonb,text,uuid,boolean)'::regprocedure")).rows[0].hash,'8adafe8c10039412724a99b3ab5eebbb');
+  await f.db.exec('SET ROLE service_role');
+  assert.equal((await f.db.query("SELECT campus_game($1,'four','read') AS x",[id(1)])).rows[0].x.error,undefined);
+  await assert.rejects(f.db.query("SELECT campus_play($1,'read')",[id(1)]),/permission/);await f.db.exec('RESET ROLE');
+  await f.runtime(f.connections[0],'leave');assert.ok((await f.connect(1)).result.snapshot);
+  await assert.rejects(f.db.exec(rollback),/Unexpected/);await f.db.exec('ROLLBACK');
+  await assert.rejects(f.db.exec(await readFile(new URL('../sql/080_campus_room_games_invitations.sql',import.meta.url),'utf8')),/Expected reviewed/);await f.db.exec('ROLLBACK');
  }finally{await f.db.close();}
 });

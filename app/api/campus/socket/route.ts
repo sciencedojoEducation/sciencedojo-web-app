@@ -25,8 +25,5 @@ export async function GET(request: Request) {
     if (error || !data) throw new Error("Court runtime unavailable");
     return data;
   });
-  return upgradeWebSocket((socket) => runVercelCampusSession(socket, session.identity.id, sharedRuntime,{bindGames:async(connection,credential)=>{
-    const {data,error}=await supabase.rpc("campus_game_bind",{connection,credential}).abortSignal(AbortSignal.timeout(3000));
-    if(error||data!==true)throw new Error("Game connection unavailable");
-  }}), { maxPayload: 2048 });
+  return upgradeWebSocket((socket) => runVercelCampusSession(socket, session.identity.id, sharedRuntime), { maxPayload: 2048 });
 }

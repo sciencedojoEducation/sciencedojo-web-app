@@ -39,7 +39,7 @@ const origin = "http://127.0.0.1:3012",
   serviceKey = randomBytes(32).toString("hex");
 const identities = new Map(),
   tickets = new Map();
-const gameKeys=new Map();
+const gameKeys=new Map(),gameCanaries=new Set();
 const runtimeSockets = new Map(), runtimeDurations = [];
 const stalledRenewals = new Set();
 const quietSnapshots = new Set();
@@ -112,7 +112,9 @@ const http = createServer(async (req, res) => {
       const request=new Request(new URL(req.url,origin),{method:req.method,headers:req.headers,body:data||undefined});
       const api=path==='/api/campus/play'?playApi(account):gameApi(account,async source=>new Response(fixturePictures[(Number(String(source).match(/(\d+)\.png$/)?.[1])||1)-1],{headers:{'content-type':'image/png'}}));
       const reply=await api[path.endsWith('/photo')?'PHOTO':req.method](request);
-      res.writeHead(reply.status,Object.fromEntries(reply.headers));return res.end(Buffer.from(await reply.arrayBuffer()));
+      const bytes=Buffer.from(await reply.arrayBuffer());
+      if(path==='/api/campus/play'&&reply.ok){const body=JSON.parse(bytes.toString());if(body.invitation)gameCanaries.add(body.invitation.id);}
+      res.writeHead(reply.status,Object.fromEntries(reply.headers));return res.end(bytes);
     }
     if (path === "/api/campus/admission") {
       let renewal = false;
@@ -234,9 +236,7 @@ try {
           const started = performance.now();
           try { return await shared.runtime(args.runtime_connection, args.runtime_operation, args.runtime_commands, args.ticket_hash, args.expected_campus, args.runtime_renew); }
           finally { runtimeDurations.push(performance.now() - started); }
-        },checkingGames?{bindGames:async(connection,credential)=>{
-          const result=await shared.db.query('SELECT campus_game_bind($1,$2) AS x',[connection,credential]);if(!result.rows[0].x)throw new Error('Game connection unavailable');
-        }}:{});
+        });
         sessions.add(done); void done.finally(() => { sessions.delete(done); runtimeSockets.delete(ws); });
       });
     });
@@ -415,12 +415,23 @@ try {
       result.checks.push('Local graphics modes change the actual canvas resolution through pointer and keyboard controls, remain available in fullscreen, and preserve the connected world');
     };
     if(!process.argv.includes('--dashboard-only'))await checkGraphics();
+    const renewGames=vercel?async()=>{
+      await shared.db.query("UPDATE campus_presence SET opened_at=clock_timestamp()-interval '181 seconds' WHERE campus_id=$1",[firstId]);
+      const before=(await shared.db.query('SELECT connection_id FROM campus_presence WHERE campus_id=$1',[firstId])).rows[0].connection_id;
+      for(const [ws,own] of runtimeSockets)if(own===firstId)ws.send(JSON.stringify({type:'renew',data:null}));
+      const until=Date.now()+10000;while(Date.now()<until){
+        const row=(await shared.db.query('SELECT p.connection_id,k.connection FROM campus_presence p LEFT JOIN campus_play_keys k USING(campus_id) WHERE p.campus_id=$1',[firstId])).rows[0];
+        if(row&&row.connection_id!==before&&row.connection_id===row.connection)return;
+        await new Promise(resolve=>setTimeout(resolve,50));
+      }
+      throw new Error('Game duration handover did not complete');
+    }:null;
     const gameFetch=async(page,url)=>{
       const own=(await page.context().cookies()).find(c=>c.name==='fixture')?.value;
       return page.evaluate(async({url,key})=>{const response=await fetch(url,{headers:{'X-Campus-Game-Key':key}});return {status:response.status,body:response.headers.get('content-type')?.includes('json')?await response.json():null};},{url,key:gameKeys.get(own)});
     };
     if(checkingGames){
-      await (checkingVocabulary?checkWortQuest:checkBoardGames)({a,b,browser,origin,identities,shared,gameFixture,campus,result,directory,wireFrames,issuedTickets,handshakeHashes,errors,gameFetch});
+      await (checkingVocabulary?checkWortQuest:checkBoardGames)({a,b,browser,origin,identities,shared,gameFixture,campus,result,directory,wireFrames,issuedTickets,handshakeHashes,errors,gameFetch,renewGames});
     }else if(process.argv.includes("--graphics-only")){
       // The focused display check still performs the shared wire/privacy audit below.
     }else if(process.argv.includes("--living-cube-only")){
@@ -1011,7 +1022,8 @@ try {
       "campus-wire-answer-canary-17oct",
       "campus-private-dashboard-canary",
       "cameraYaw", "cameraPitch", "timeOfDay", "skyTime", "fullscreenMode", "schoolPanel", "graphicsQuality", "renderScale", "pixelRatio",
-      ...issuedTickets,
+      ...issuedTickets,...gameCanaries,...gameKeys.values(),...[...gameKeys.values()].map(key=>createHash('sha256').update(key).digest('hex')),
+      'sender_connection','recipient_connection','Accept invitation','quiz-answer', 
     ])
       if (combined.includes(Buffer.from(canary)))
         throw new Error(
@@ -1020,7 +1032,7 @@ try {
     result.checks.push(
       "Wire audit: " +
         wireFrames.length +
-        " WebSocket frames inspected; no dashboard/course path, course title, answer canary or issued admission ticket found",
+        " WebSocket frames inspected; no dashboard/course path, course title, answer canary, invitation identifier, game credential or issued admission ticket found",
     );
     if (errors.length) throw new Error(errors.join("\n"));
     result.checks.push("No uncaught browser errors");

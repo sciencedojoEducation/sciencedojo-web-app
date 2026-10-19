@@ -1,14 +1,17 @@
 "use client";
-import {useEffect,useRef,useState} from "react";
+import {useEffect,useRef,useState,type RefObject} from "react";
+import {createPortal} from "react-dom";
 import {GAME_TABLES,type GameKind} from "@/lib/campus/board-games";
-import type {PlayState} from "@/lib/campus/game-location";
+import type {PlayState,PlayInvitation} from "@/lib/campus/game-location";
 import "./play-together.css";
-export default function PlayTogether({connected,suppressed,onOpen,onNavigate,onSafety,gameHeaders}: {
-  gameHeaders:()=>Record<string,string>;connected:boolean;suppressed:boolean;onOpen:()=>void;onNavigate:(table:GameKind)=>void;
+export default function PlayTogether({connected,suppressed,onOpen,onNavigate,onSafety,gameHeaders,anchor}: {
+  anchor:RefObject<HTMLSpanElement|null>;gameHeaders:()=>Record<string,string>;connected:boolean;suppressed:boolean;onOpen:()=>void;onNavigate:(table:GameKind)=>void;
   onSafety:(target:string,action:"block"|"report")=>void;
 }){
+  const panel=useRef<HTMLElement>(null),choices=useRef<HTMLDetailsElement>(null);
   const [state,setState]=useState<PlayState>({invitation:null,nearby:[]});
   const [game,setGame]=useState<GameKind>("four"),[muted,setMuted]=useState(false),[busy,setBusy]=useState(false),[message,setMessage]=useState("");
+  const previous=useRef<PlayInvitation|null>(null),quiet=useRef(suppressed);quiet.current=suppressed;
   const action=useRef<(body:object)=>void>(()=>{}),mute=useRef(false);mute.current=muted;
   useEffect(()=>{
     if(!connected)return;
@@ -23,7 +26,11 @@ export default function PlayTogether({connected,suppressed,onOpen,onNavigate,onS
           headers:{...gameHeaders(),...(body?{'Content-Type':'application/json'}:{})},body:body?JSON.stringify(body):undefined,
           signal:AbortSignal.any([controller.signal,AbortSignal.timeout(5000)])});
         const next=await response.json();if(stopped)return;
-        if(response.ok){setState(next);if(body)setMessage("");}
+        if(response.ok){
+          if(previous.current&&!next.invitation&&!body&&!quiet.current)setMessage(new Date(previous.current.expires).getTime()<=Date.now()?
+            previous.current.state==='accepted'?"Table reservation expired. You can arrange another game.":"Invitation expired. You can invite again.":"Invitation ended or the other player became unavailable.");
+          previous.current=next.invitation;setState(next);if(body)setMessage("");
+        }
         else {setState({invitation:null,nearby:[]});if(body)setMessage(next.error||"Unable to update invitation.");}
       }catch{if(!stopped){setState({invitation:null,nearby:[]});if(body)setMessage("Play invitations are temporarily unavailable.");}}
       finally{running=false;if(!stopped){setBusy(false);if(queued){const next=queued;queued=undefined;void request(next);}}}
@@ -35,8 +42,9 @@ export default function PlayTogether({connected,suppressed,onOpen,onNavigate,onS
   },[connected,onOpen,gameHeaders]);
   if(!connected||suppressed)return null;
   const invite=state.invitation,table=GAME_TABLES.find(t=>t.id===invite?.table);
-  return <aside className="campus-play-together" aria-label="Play together">
-    <details><summary onClick={onOpen}>Play together{invite?" · invitation":state.nearby.length?` · ${state.nearby.length} nearby`:""}</summary>
+  return <>{anchor.current&&createPortal(<button className="secondary" onClick={()=>{onOpen();if(choices.current)choices.current.open=true;panel.current?.scrollIntoView({block:"nearest"});panel.current?.focus({preventScroll:true});}}>Play together{invite?.state==='pending'&&invite.incoming?" · New invite":invite?.state==='accepted'?" · Meet at table":""}</button>,anchor.current)}
+  <aside ref={panel} tabIndex={-1} className="campus-play-together" aria-label="Play together">
+    <details ref={choices}><summary onClick={onOpen}>Play together{invite?" · invitation":state.nearby.length?` · ${state.nearby.length} nearby`:""}</summary>
       <label><input type="checkbox" checked={muted} onChange={e=>{setMuted(e.target.checked);action.current({action:"mute",muted:e.target.checked});}}/>Mute play invitations</label>
       {!invite&&<><p>Meet someone nearby and invite them to a table in the Level 2 Games Lounge.</p>
         <label>Invitation game<select value={game} onChange={e=>setGame(e.target.value as GameKind)}>{GAME_TABLES.map(t=><option key={t.id} value={t.id}>{t.name} · {t.id==='four'?'2':'2–4'} players</option>)}</select></label>
@@ -53,5 +61,5 @@ export default function PlayTogether({connected,suppressed,onOpen,onNavigate,onS
       <details><summary onClick={onOpen}>Report or block inviter</summary><button onClick={()=>{onOpen();onSafety(invite.peer,'report');}}>Report invitation</button><button onClick={()=>{onOpen();onSafety(invite.peer,'block');}}>Block player</button></details>
     </div>}
     {message&&<p role="alert">{message}</p>}
-  </aside>;
+  </aside></>;
 }

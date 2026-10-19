@@ -1,7 +1,10 @@
 -- Approved local software phase. Hosted application requires environment-specific approval.
 BEGIN;
+SET LOCAL lock_timeout='5s';
+SET LOCAL statement_timeout='30s';
 DO $guard$ BEGIN
  IF NOT EXISTS(SELECT 1 FROM pg_proc WHERE oid=to_regprocedure('public.campus_game(uuid,text,text,jsonb)') AND md5(prosrc)='799024042d23ff9780e4f19227e4f3b2')
+ OR NOT EXISTS(SELECT 1 FROM pg_proc WHERE oid=to_regprocedure('public.campus_runtime(uuid,text,jsonb,text,uuid,boolean)') AND md5(prosrc)='8adafe8c10039412724a99b3ab5eebbb')
  OR to_regprocedure('public.campus_play(uuid,text,jsonb,text,jsonb,text)') IS NOT NULL THEN
    RAISE EXCEPTION 'Expected reviewed 077 authority; stop and inspect migration state';
  END IF;
@@ -23,19 +26,40 @@ CREATE TABLE public.campus_play_keys(campus_id uuid PRIMARY KEY REFERENCES publi
  connection uuid UNIQUE NOT NULL,credential text NOT NULL CHECK(credential ~ '^[0-9a-f]{64}$'));
 ALTER TABLE public.campus_play_keys ENABLE ROW LEVEL SECURITY;
 REVOKE ALL ON public.campus_play_keys FROM PUBLIC,anon,authenticated,service_role;
-CREATE FUNCTION public.campus_game_bind(connection uuid,credential text) RETURNS boolean
-LANGUAGE plpgsql SECURITY DEFINER SET search_path=public,pg_temp SET lock_timeout='2s' AS $$
-DECLARE own uuid;
+-- Bind HTTP game authority in the same transaction as admission and duration handover.
+-- No connection IDs or new authentication fields are exposed in world messages.
+ALTER FUNCTION public.campus_runtime(uuid,text,jsonb,text,uuid,boolean) RENAME TO campus_runtime_before_play;
+REVOKE ALL ON FUNCTION public.campus_runtime_before_play(uuid,text,jsonb,text,uuid,boolean) FROM PUBLIC,anon,authenticated,service_role;
+CREATE FUNCTION public.campus_game_credential(ticket_hash text) RETURNS text LANGUAGE sql IMMUTABLE SET search_path=public,pg_temp AS $$
+ SELECT encode(sha256(convert_to(encode(sha256(convert_to('campus-games-http-v1:'||ticket_hash,'UTF8')),'hex'),'UTF8')),'hex');
+$$;
+REVOKE ALL ON FUNCTION public.campus_game_credential(text) FROM PUBLIC,anon,authenticated,service_role;
+CREATE FUNCTION public.campus_runtime(runtime_connection uuid,runtime_operation text,runtime_commands jsonb DEFAULT '[]',
+ ticket_hash text DEFAULT NULL,expected_campus uuid DEFAULT NULL,runtime_renew boolean DEFAULT false)
+RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public,pg_temp SET lock_timeout='2s' SET statement_timeout='4s' AS $$
+DECLARE result jsonb; old_connection uuid; own_user uuid;
 BEGIN
- IF credential IS NULL OR credential !~ '^[0-9a-f]{64}$' THEN RETURN false; END IF;
- PERFORM 1 FROM campus_runtime_lock WHERE room='library' FOR UPDATE;
- SELECT campus_id INTO own FROM campus_presence WHERE connection_id=connection AND lease_until>clock_timestamp();
- IF NOT FOUND THEN RETURN false; END IF;
- INSERT INTO campus_play_keys VALUES(own,connection,credential) ON CONFLICT(campus_id) DO UPDATE SET connection=excluded.connection,credential=excluded.credential;
- RETURN true;
+ result=campus_runtime_before_play(runtime_connection,runtime_operation,runtime_commands,ticket_hash,expected_campus,runtime_renew);
+ IF runtime_operation='connect' AND result ? 'snapshot' THEN
+   -- The existing authority still holds the room lock. Requests cannot observe a half-handover.
+   PERFORM pg_advisory_xact_lock(760076);
+   SELECT connection INTO old_connection FROM campus_play_keys WHERE campus_id=expected_campus;
+   SELECT user_id INTO own_user FROM campus_members WHERE campus_id=expected_campus;
+   IF runtime_renew IS TRUE AND old_connection IS NOT NULL THEN
+     UPDATE campus_game_members SET connection=runtime_connection::text WHERE user_id=own_user AND connection=old_connection::text;
+     UPDATE campus_play_invites SET sender_connection=runtime_connection::text WHERE sender=own_user AND sender_connection=old_connection::text;
+     UPDATE campus_play_invites SET recipient_connection=runtime_connection::text WHERE recipient=own_user AND recipient_connection=old_connection::text;
+     UPDATE campus_play_limits SET connection=runtime_connection::text WHERE user_id=own_user AND connection=old_connection::text;
+   END IF;
+   INSERT INTO campus_play_keys VALUES(expected_campus,runtime_connection,campus_game_credential(ticket_hash))
+    ON CONFLICT(campus_id) DO UPDATE SET connection=excluded.connection,credential=excluded.credential WHERE campus_play_keys.campus_id=expected_campus;
+ ELSIF runtime_operation='leave' THEN
+   DELETE FROM campus_play_keys WHERE connection=runtime_connection;
+ END IF;
+ RETURN result;
 END; $$;
-REVOKE ALL ON FUNCTION public.campus_game_bind(uuid,text) FROM PUBLIC,anon,authenticated;
-GRANT EXECUTE ON FUNCTION public.campus_game_bind(uuid,text) TO service_role;
+REVOKE ALL ON FUNCTION public.campus_runtime(uuid,text,jsonb,text,uuid,boolean) FROM PUBLIC,anon,authenticated;
+GRANT EXECUTE ON FUNCTION public.campus_runtime(uuid,text,jsonb,text,uuid,boolean) TO service_role;
 CREATE TABLE public.campus_play_context(singleton boolean PRIMARY KEY DEFAULT true CHECK(singleton),last_at bigint NOT NULL DEFAULT 0);
 INSERT INTO public.campus_play_context DEFAULT VALUES;
 ALTER TABLE public.campus_play_invites ENABLE ROW LEVEL SECURITY;
@@ -87,12 +111,13 @@ BEGIN
  DELETE FROM campus_game_members m WHERE m.lease_until<=clock_timestamp() OR NOT EXISTS(SELECT 1 FROM jsonb_array_elements(live) p JOIN campus_members c ON c.campus_id=(p->>'id')::uuid
    WHERE c.user_id=m.user_id AND p->>'connection'=m.connection AND campus_game_near(p,m.table_id));
  DELETE FROM campus_play_invites i WHERE i.expires<=clock_timestamp()
-   OR NOT EXISTS(SELECT 1 FROM jsonb_array_elements(live) p JOIN campus_members c ON c.campus_id=(p->>'id')::uuid WHERE c.user_id=i.sender AND p->>'connection'=i.sender_connection AND p->>'status'='walking' AND p->>'seat' IS NULL)
-   OR NOT EXISTS(SELECT 1 FROM jsonb_array_elements(live) p JOIN campus_members c ON c.campus_id=(p->>'id')::uuid WHERE c.user_id=i.recipient AND p->>'connection'=i.recipient_connection AND p->>'status'='walking' AND p->>'seat' IS NULL)
+   OR NOT EXISTS(SELECT 1 FROM jsonb_array_elements(live) p JOIN campus_members c ON c.campus_id=(p->>'id')::uuid WHERE c.user_id=i.sender AND p->>'connection'=i.sender_connection AND p->>'status'='walking' AND p->>'seat' IS NULL AND (i.state='accepted' OR NOT (p->>'travel')::boolean))
+   OR NOT EXISTS(SELECT 1 FROM jsonb_array_elements(live) p JOIN campus_members c ON c.campus_id=(p->>'id')::uuid WHERE c.user_id=i.recipient AND p->>'connection'=i.recipient_connection AND p->>'status'='walking' AND p->>'seat' IS NULL AND (i.state='accepted' OR NOT (p->>'travel')::boolean))
    OR EXISTS(SELECT 1 FROM campus_blocks b JOIN campus_members s ON s.user_id=i.sender JOIN campus_members r ON r.user_id=i.recipient
       WHERE (b.owner_id=i.sender AND b.target=r.campus_id) OR (b.owner_id=i.recipient AND b.target=s.campus_id));
  DELETE FROM campus_play_keys k WHERE NOT EXISTS(SELECT 1 FROM campus_presence p WHERE p.campus_id=k.campus_id AND p.connection_id=k.connection AND p.lease_until>clock_timestamp());
- DELETE FROM campus_play_limits l WHERE NOT EXISTS(SELECT 1 FROM jsonb_array_elements(live) p JOIN campus_members c ON c.campus_id=(p->>'id')::uuid WHERE c.user_id=l.user_id AND p->>'connection'=l.connection);
+ UPDATE campus_play_limits l SET muted=false,connection='' WHERE NOT EXISTS(SELECT 1 FROM jsonb_array_elements(live) p JOIN campus_members c ON c.campus_id=(p->>'id')::uuid WHERE c.user_id=l.user_id AND p->>'connection'=l.connection);
+ DELETE FROM campus_play_limits WHERE connection='' AND last_sent<=clock_timestamp()-interval '10 seconds';
  DELETE FROM campus_play_backoff WHERE until_at<=clock_timestamp();
  UPDATE campus_game_tables g SET state=jsonb_set(g.state,'{phase}','"abandoned"'),version=g.version+1
  WHERE g.table_id IN ('four','boxes','wortquest') AND g.state->>'phase'='playing'
@@ -156,7 +181,7 @@ BEGIN
  IF operation='mute' THEN
    IF jsonb_typeof(payload->'muted') IS DISTINCT FROM 'boolean' THEN RETURN jsonb_build_object('error','Invalid preference'); END IF;
    INSERT INTO campus_play_limits(user_id,connection,muted) VALUES(actor,own->>'connection',(payload->>'muted')::boolean)
-   ON CONFLICT(user_id) DO UPDATE SET muted=excluded.muted,connection=excluded.connection;
+   ON CONFLICT(user_id) DO UPDATE SET muted=excluded.muted,connection=excluded.connection WHERE campus_play_limits.user_id=actor;
    IF (payload->>'muted')::boolean THEN DELETE FROM campus_play_invites WHERE recipient=actor AND state='pending'; END IF;
  ELSIF operation='send' THEN
    IF coalesce(payload->>'table','') NOT IN ('four','boxes','wortquest') OR coalesce(payload->>'target','') !~ '^[0-9a-f-]{36}$' THEN RETURN jsonb_build_object('error','Choose a nearby player and game'); END IF;
@@ -172,7 +197,7 @@ BEGIN
    IF EXISTS(SELECT 1 FROM campus_play_limits WHERE user_id=actor AND last_sent>clock_timestamp()-interval '10 seconds')
      OR EXISTS(SELECT 1 FROM campus_play_backoff WHERE sender=actor AND recipient=other.user_id) THEN RETURN jsonb_build_object('error','Please wait before inviting again'); END IF;
    INSERT INTO campus_play_limits(user_id,connection,last_sent) VALUES(actor,own->>'connection',clock_timestamp())
-     ON CONFLICT(user_id) DO UPDATE SET last_sent=excluded.last_sent,connection=excluded.connection;
+     ON CONFLICT(user_id) DO UPDATE SET last_sent=excluded.last_sent,connection=excluded.connection WHERE campus_play_limits.user_id=actor;
    INSERT INTO campus_play_invites(sender,recipient,sender_connection,recipient_connection,table_id,state,expires)
      VALUES(actor,other.user_id,own->>'connection',peer->>'connection',payload->>'table','pending',clock_timestamp()+interval '30 seconds');
  ELSIF operation IN ('accept','decline','cancel') THEN
@@ -195,7 +220,7 @@ BEGIN
      UPDATE campus_play_invites SET state='accepted',expires=clock_timestamp()+interval '2 minutes' WHERE id=invite.id;
    ELSE
      IF operation='decline' THEN
-       INSERT INTO campus_play_backoff VALUES(invite.sender,invite.recipient,clock_timestamp()+interval '60 seconds') ON CONFLICT(sender,recipient) DO UPDATE SET until_at=excluded.until_at;
+       INSERT INTO campus_play_backoff VALUES(invite.sender,invite.recipient,clock_timestamp()+interval '60 seconds') ON CONFLICT(sender,recipient) DO UPDATE SET until_at=excluded.until_at WHERE campus_play_backoff.sender=invite.sender AND campus_play_backoff.recipient=invite.recipient;
      END IF;
      DELETE FROM campus_play_invites WHERE id=invite.id;
      IF invite.state='accepted' THEN
@@ -213,6 +238,9 @@ BEGIN
  FROM jsonb_array_elements(live) p JOIN campus_members c ON c.campus_id=(p->>'id')::uuid
  WHERE c.user_id<>actor AND own->>'status'='walking' AND p->>'status'='walking' AND NOT (own->>'travel')::boolean AND NOT (p->>'travel')::boolean
  AND own->>'floor'=p->>'floor' AND power((own->>'x')::float8-(p->>'x')::float8,2)+power((own->>'z')::float8-(p->>'z')::float8,2)<=25
+ AND NOT EXISTS(SELECT 1 FROM campus_game_members WHERE user_id=c.user_id)
+ AND NOT EXISTS(SELECT 1 FROM campus_play_limits WHERE user_id=c.user_id AND muted)
+ AND NOT EXISTS(SELECT 1 FROM campus_play_invites WHERE sender=c.user_id OR recipient=c.user_id)
  AND NOT EXISTS(SELECT 1 FROM campus_blocks WHERE (owner_id=actor AND target=c.campus_id) OR (owner_id=c.user_id AND target=person.campus_id));
  RETURN jsonb_build_object('invitation',card,'nearby',nearby);
 END; $$;

@@ -37,7 +37,10 @@ export type CampusConnection = {
 
 /** Same UI contract as the existing room; authentication stays in the protected handshake. */
 export async function connectCampus(admission: CampusAdmission): Promise<CampusConnection> {
-  const derive=async(ticket:string)=>Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256",new TextEncoder().encode("campus-games-http-v1:"+ticket)))).map(b=>b.toString(16).padStart(2,"0")).join("");
+  const derive=async(ticket:string)=>{
+    const digest=async(s:string)=>Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256",new TextEncoder().encode(s)))).map(b=>b.toString(16).padStart(2,"0")).join("");
+    return digest("campus-games-http-v1:"+await digest(ticket));
+  };
   let gameKey=admission.gameKey??await derive(admission.ticket);
   if (admission.transport !== "vercel") {
     const { Client } = await import("@colyseus/sdk");

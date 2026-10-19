@@ -170,6 +170,7 @@ try {
   const fresh = await connect(issue());
   const afterContext=await privateContext();assert.equal(afterContext.players.length,1);
   assert.notEqual(afterContext.players[0].connection,beforeContext.players[0].connection);
+  assert.notEqual(afterContext.players[0].credential,beforeContext.players[0].credential);
   checks.push("Private live game context denies unauthenticated requests and binds fresh process admission to a new connection generation");
   assert.equal(fresh.latest.players.length, 1);
   assert.equal(fresh.latest.players[0].status, "walking");

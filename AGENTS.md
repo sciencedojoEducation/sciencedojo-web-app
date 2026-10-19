@@ -163,3 +163,11 @@ sharing, bounded invitations/reservations and the unchanged world protocol.
 Seven new authority tests and all 92 campus regressions passed at the first
 checkpoint; browser/build/release verification is still in progress. Do not infer
 current-head hosted or human friend-match acceptance from these results.
+
+
+The room-game refinement binds private HTTP game credentials in the same SQL
+transaction as Vercel admission/renewal. Preserve legitimate duration handover
+without inheriting a game on fresh admission, reject old keys/sockets and late
+cleanup, and leave existing world handshakes/snapshots unchanged. Ten focused
+authority/rollback cases pass; final browser/build verification remains in
+progress. The prepared hosted procedure and rollback are not executed.

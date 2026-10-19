@@ -8,17 +8,16 @@ import type {GamesSession} from "./board-game-api";
 import {createGameApi} from "./board-game-api";
 
 const session:()=>Promise<GamesSession|null> = async () => {
-
-    const session = await campusSession();
-    if (!session) return null;
-    const {data:profile,error} = await session.supabase.from("profiles").select("full_name,avatar_url").eq("id",session.userId).single();
-    if (error || !profile) return null;
-    return {userId:session.userId,profile,safety:async (action,target,reason) => {
-      const {error} = await session.supabase.rpc(action === "block" ? "campus_block" : "campus_report",
-        action === "block" ? {target_id:target,blocked:true} : {target_id:target,report_reason:reason});
-      return !error;
-    }};
-  };
+  const current = await campusSession();
+  if (!current) return null;
+  const {data:profile,error} = await current.supabase.from("profiles").select("full_name,avatar_url").eq("id",current.userId).single();
+  if (error || !profile) return null;
+  return {userId:current.userId,profile,safety:async (action,target,reason) => {
+    const {error} = await current.supabase.rpc(action === "block" ? "campus_block" : "campus_report",
+      action === "block" ? {target_id:target,blocked:true} : {target_id:target,report_reason:reason});
+    return !error;
+  }};
+};
 export const gameApi = createGameApi({
   requireKey:true,supabaseUrl:process.env.NEXT_PUBLIC_SUPABASE_URL, session,
   rpc:async (actor,game_table,operation,payload={},key) => {

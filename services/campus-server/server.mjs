@@ -110,7 +110,7 @@ export async function createCampusServer({
         throw new Error("Admission expired or unavailable");
       if (liveRoom?.world.players.has(identity.id))
         throw new Error("Already connected in another tab");
-      const key=createHash("sha256").update("campus-games-http-v1:"+options.ticket).digest("hex");
+      const key=createHash("sha256").update("campus-games-http-v1:"+createHash("sha256").update(options.ticket).digest("hex")).digest("hex");
       return {...identity,gameHash:createHash("sha256").update(key).digest("hex")};
     }
     async onJoin(client) {

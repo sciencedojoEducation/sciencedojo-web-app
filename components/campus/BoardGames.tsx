@@ -9,7 +9,9 @@ const symbols = ["A", "B", "C", "D"];
 function Picture({url,name,gameHeaders}: {url:string | null;name:string;gameHeaders:()=>Record<string,string>}) {
   const [source,setSource]=useState<string|null>(null);
   useEffect(()=>{if(!url)return;const controller=new AbortController();let objectUrl:string|undefined;
-    void fetch(url,{cache:"no-store",headers:gameHeaders(),signal:controller.signal}).then(async response=>{
+    const load=()=>fetch(url,{cache:"no-store",headers:gameHeaders(),signal:AbortSignal.any([controller.signal,AbortSignal.timeout(8000)])});
+    void load().then(async response=>{
+      if(response.status===403){await new Promise(resolve=>setTimeout(resolve,250));if(controller.signal.aborted)return;response=await load();}
       if(!response.ok)throw new Error("Picture unavailable");const blob=await response.blob();if(controller.signal.aborted)return;
       objectUrl=URL.createObjectURL(blob);setSource(objectUrl);
     }).catch(()=>{});
@@ -61,9 +63,13 @@ export default function BoardGames({initialTable,connected,onClose,onLeaveSchool
           if(wait)await new Promise(resolve=>setTimeout(resolve,wait));
           if(stopped||controller.signal.aborted)return;
         }
-        const response = await fetch(endpoint,{method:body ? "POST" : "GET",cache:"no-store",credentials:"same-origin",
+        const fetchGame=()=>fetch(endpoint,{method:body ? "POST" : "GET",cache:"no-store",credentials:"same-origin",
           headers:{...gameHeaders(),...(body ? {"Content-Type":"application/json"} : {})},
           body:body ? JSON.stringify(body) : undefined,signal:controller.signal});
+        let response=await fetchGame();
+        // A duration handover rotates the private key atomically. Give its ready
+        // handshake one short, bounded retry before treating a 403 as final.
+        if(response.status===403&&online.current){await new Promise(resolve=>setTimeout(resolve,250));if(stopped)return;response=await fetchGame();}
         const result = await response.json();
         if (stopped || attempt !== generation.current) return;
         if (!response.ok) {

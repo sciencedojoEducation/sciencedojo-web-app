@@ -140,3 +140,15 @@ cannot inherit or release a new Join. Colyseus context is read afresh for each
 request, authenticated service-to-service, with a two-second freshness bound and
 monotonic ordering; unavailable or superseded contexts fail closed. This bounded
 cross-service snapshot is not a claim of a distributed atomic transaction.
+
+The refinement binds Vercel game credentials inside the same SQL admission
+transaction, preserving game membership and accepted meetings across legitimate
+duration handover while denying the old key/socket. Fresh admission still needs
+a deliberate Join. A visible world-toolbar invitation indicator opens the normal
+card or fullscreen panel without stealing focus on arrival; expiry/availability
+messages explain ended meetings. Ten focused authority/rollback cases pass,
+including the guarded contingency and refusal to replay. Final browser and clean
+snapshot checks are being repeated against this refinement.
+
+The separately approvable [hosted procedure](virtual-sciencedojo-game-invitations-hosted.md)
+and exact guarded rollback are prepared, not executed.

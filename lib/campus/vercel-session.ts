@@ -2,7 +2,7 @@ import {isEnvironmentCommand} from "./locomotion.ts";
 import { randomUUID } from "node:crypto";
 import type { WebSocket } from "ws";
 import { isInput, isSnapshot, SEATS, type Input, type Snapshot } from "./protocol.ts";
-import { hashTicket,gameAccessKey } from "./security.ts";
+import { hashTicket } from "./security.ts";
 import { SCHOOL_REVISION } from "./school-layout.ts";
 import { isBasketballCommand } from "./basketball.ts";
 
@@ -28,7 +28,7 @@ export function runVercelCampusSession(
   expectedCampus: string,
   runtime: RuntimeCall,
   { intervalMs = 200, lifetimeMs = 240000, admissionMs = 5000, renewAfterMs = 200000,
-    heartbeatMs = 3000, pongTimeoutMs = 6000, bindGames=undefined as undefined|((connection:string,hash:string)=>Promise<void>) } = {},
+    heartbeatMs = 3000, pongTimeoutMs = 6000 } = {},
 ) {
   return new Promise<void>((resolve) => {
     const connection = randomUUID();
@@ -122,8 +122,7 @@ export function runVercelCampusSession(
         const startedAt = performance.now();
         work = runtime({ runtime_connection: connection, runtime_operation: "connect",
           ticket_hash: hashTicket(message.ticket), expected_campus: expectedCampus, runtime_renew: message.renew === true })
-          .then(async(result) => {
-            if(bindGames&&result.snapshot&&!result.error&&!result.ended)await bindGames(connection,hashTicket(gameAccessKey(message.ticket)));
+          .then((result) => {
             if (closed) return;
             admitted = true; lastPong = performance.now(); clearTimeout(admissionTimer); consume(result, true);
           }).catch(() => end(4003)).finally(() => { schedule(startedAt); });

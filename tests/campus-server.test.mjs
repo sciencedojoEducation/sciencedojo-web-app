@@ -1,3 +1,4 @@
+import {createHash} from "node:crypto";
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import NodeWebSocket from "../services/campus-server/node_modules/ws/wrapper.mjs";
@@ -81,6 +82,8 @@ test(
       const contextUrl="http://127.0.0.1:2568/games-context";
       assert.equal((await fetch(contextUrl)).status,401);
       const context=await(await fetch(contextUrl,{headers:{authorization:`Bearer ${key}`}})).json();
+      const httpKey=createHash('sha256').update('campus-games-http-v1:'+createHash('sha256').update(ticket).digest('hex')).digest('hex');
+      assert.equal(context.players.find(p=>p.id===snap.self).credential,createHash('sha256').update(httpKey).digest('hex'));
       assert.equal(context.players.length,2);assert.ok(Math.abs(context.at-Date.now())<2000);
       for(const p of context.players){assert.equal(p.connection,campus.room.owners.get(p.id));assert.equal(p.x,campus.room.world.players.get(p.id).x);}
       assert.doesNotMatch(JSON.stringify(context),/email|user_id|pseudonym|course|input/);

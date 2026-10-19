@@ -116,6 +116,7 @@ export default function CampusClient({
     admissionRequest = useRef<AbortController | null>(null),
     generation = useRef(0);
   const people = useRef<HTMLElement>(null);
+  const playAnchor=useRef<HTMLSpanElement>(null);
   const stage = useRef<HTMLDivElement>(null),
     frame = useRef<HTMLIFrameElement>(null),
     hubButton = useRef<HTMLButtonElement>(null),
@@ -533,6 +534,7 @@ export default function CampusClient({
               <button className="secondary" aria-pressed={view === "orbit"} onClick={() => chooseCamera("orbit")}>Orbit view</button>
               <button className="secondary" onClick={() => openPanel("people")}>People &amp; safety</button>
               <button className="secondary" disabled={!connected||hub} onClick={()=>{setSelectedPlace("commons");openPanel("map");}}>Find Games Lounge</button>
+              <span ref={playAnchor}/>
               {walkingTo && <button className="secondary" onClick={stopMovement}>Stop walking</button>}
             </div>
             {connected && !hub && <button className="campus-interact" disabled={!!self?.travel||(!journey&&!switchRoom&&!nearbyGame&&(courtInteraction?!mine&&!takeBall:!self?.seat&&!nearbyDesk))}
@@ -552,7 +554,7 @@ export default function CampusClient({
               <span>{view === "exterior"?"A scientific school beneath one transparent sky.":view === "overview" ? "Choose a place on the map below." : "Connected places. Shared learning."}</span>
             </div>
           </div>
-            <PlayTogether gameHeaders={gameHeaders} connected={connected} suppressed={hub||!!games} onOpen={openPlay} onNavigate={walkToGame} onSafety={(target,action)=>{void safety(target,action);}}/>
+            <PlayTogether key={connected?generation.current:"away"} anchor={playAnchor} gameHeaders={gameHeaders} connected={connected} suppressed={hub||!!games} onOpen={openPlay} onNavigate={walkToGame} onSafety={(target,action)=>{void safety(target,action);}}/>
           <section className="cube-world-controls" data-campus-panel="sky" hidden={immersive&&schoolPanel!=="sky"} tabIndex={immersive?-1:undefined} aria-label="Sky and camera controls">
             <div className="cube-clock-heading"><div><p className="campus-eyebrow">Your sky · 24-hour world</p><time dateTime={clockLabel(hour)}>{clockLabel(hour)}</time></div><span>{manualHour===null?"Local time":"Your chosen time"} · {sky.phase}</span></div>
             <label className="cube-time-range">Time of day<input aria-label="Time of day" type="range" min="0" max="23.75" step="0.25" value={hour} onChange={event=>{stopMovement();setManualHour(Number(event.target.value));}}/></label>

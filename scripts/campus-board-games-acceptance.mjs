@@ -3,7 +3,7 @@ import {join} from "node:path";
 import {createHash} from "node:crypto";
 import {GAME_TABLES} from "../lib/campus/board-games.ts";
 
-export async function checkBoardGames({a,b,browser,origin,identities,shared,gameFixture,campus,result,directory,wireFrames,issuedTickets,handshakeHashes,errors,gameFetch}){
+export async function checkBoardGames({a,b,browser,origin,identities,shared,gameFixture,campus,result,directory,wireFrames,issuedTickets,handshakeHashes,errors,gameFetch,renewGames}){
   console.log('Games walkthrough: two connected campus browsers');
   const pages=[a,b],contexts=[], names=['FriendOne','FriendTwo','FriendThree','FriendFour'];
   const store=shared??gameFixture;
@@ -37,11 +37,25 @@ export async function checkBoardGames({a,b,browser,origin,identities,shared,game
   expect(await a.getByRole('button',{name:'Games Lounge',exact:true}).count()).toBe(0);
   expect(await a.evaluate(async()=>(await fetch('/api/campus/games?table=four')).status)).toBe(403);
   await a.getByRole('button',{name:'Find Games Lounge',exact:true}).click();expect(await dialog(a).count()).toBe(0);
-  await a.locator('.campus-play-together > details > summary').click();
-  await a.getByRole('button',{name:new RegExp('Play together with ')}).click();
-  await b.getByRole('button',{name:'Accept invitation',exact:true}).waitFor({timeout:10000});
-  await b.screenshot({path:join(directory,'play-invitation.png')});result.screenshots.push(join(directory,'play-invitation.png'));
+  await a.getByRole('button',{name:'Play together',exact:true}).click();
+  const invite=()=>a.getByRole('button',{name:new RegExp('Play together with ')}).click();
+  await invite();
+  await b.getByRole('button',{name:'Play together · New invite',exact:true}).waitFor({timeout:10000});
+  await b.getByRole('button',{name:'Decline invitation',exact:true}).click();
+  await expect(a.getByRole('button',{name:'Cancel invitation',exact:true})).toHaveCount(0,{timeout:10000});
+  await store.db.exec("UPDATE campus_play_limits SET last_sent='-infinity' WHERE connection IS NOT NULL; DELETE FROM campus_play_backoff WHERE sender IS NOT NULL");
+  await invite();await b.getByRole('button',{name:'Accept invitation',exact:true}).waitFor({timeout:10000});
+  await store.db.exec("UPDATE campus_play_invites SET expires=clock_timestamp()-interval '1 second' WHERE state='pending'");
+  await expect(b.getByRole('button',{name:'Accept invitation',exact:true})).toHaveCount(0,{timeout:10000});
+  await expect(b.getByRole('alert').filter({hasText:'Invitation expired'})).toBeVisible();
+  await store.db.exec("UPDATE campus_play_limits SET last_sent='-infinity' WHERE connection IS NOT NULL");
+  await invite();await b.getByRole('button',{name:'Play together · New invite',exact:true}).waitFor({timeout:10000});
+  await b.setViewportSize({width:390,height:844});
+  await b.getByRole('button',{name:'Play together · New invite',exact:true}).click();
+  expect(await b.locator('.campus-play-together').evaluate(el=>el.scrollWidth<=el.clientWidth+1)).toBe(true);
+  await b.screenshot({path:join(directory,'play-invitation-phone.png')});result.screenshots.push(join(directory,'play-invitation-phone.png'));
   await b.getByRole('button',{name:'Accept invitation',exact:true}).press('Enter');
+  await b.setViewportSize({width:1280,height:900});
   for(const page of pages)await page.getByRole('button',{name:'Walk to reserved table',exact:true}).waitFor({timeout:10000});
   expect((await store.db.query('SELECT count(*) AS n FROM campus_game_members')).rows[0].n).toBe(0);
   // Synthetic starting point outside the upper room; actual server input walks through its door.
@@ -50,7 +64,7 @@ export async function checkBoardGames({a,b,browser,origin,identities,shared,game
   const stage=a.getByRole('region',{name:/3D school/});await stage.focus();await a.keyboard.press('e');
   await dialog(a).waitFor();await joinGame(a,0);
   await b.getByRole('button',{name:/E Play Four in a Row/}).click();await joinGame(b,1);
-  result.checks.push('Outside-room requests denied; explicit pseudonym-only invitation/keyboard acceptance, no profile before Join, real navigation through the lounge door and E interaction at the reserved table');
+  result.checks.push('Outside-room requests denied; real decline/expiry, visible in-world badge, phone layout, explicit pseudonym-only invitation/keyboard acceptance, no profile before Join, real navigation through the lounge door and E interaction at the reserved table');
   await expect(dialog(a).locator('.game-roster strong')).toHaveCount(2);
   for(const page of pages)await page.waitForFunction(()=>[...document.querySelectorAll('.game-roster img')].length===2&&[...document.querySelectorAll('.game-roster img')].every(i=>i.complete&&i.naturalWidth===40));
   const own=(await gameFetch(a,'/api/campus/games?table=four')).body.game.self;
@@ -66,6 +80,14 @@ export async function checkBoardGames({a,b,browser,origin,identities,shared,game
   const frozen={x:before.x,z:before.z};await dialog(a).getByRole('button',{name:'Ready to play',exact:true}).focus();await a.keyboard.press('w');await a.keyboard.press('ArrowLeft');
   console.log('Games walkthrough: joined profiles, private roster and keyboard isolation');
   await readyStart(pages);
+  if(renewGames){
+    const before=(await gameFetch(a,'/api/campus/games?table=four')).body.game;
+    await renewGames();
+    await expect(dialog(a).locator('.game-roster article')).toHaveCount(2);
+    const after=(await gameFetch(a,'/api/campus/games?table=four')).body.game;
+    expect(after.self).toBe(before.self);expect(after.round).toBe(before.round);
+    result.checks.push('Actual SQL/WebSocket duration handover rotates the private game key while preserving the open board, participant identities and round');
+  }
   const after=shared?(await shared.db.query('SELECT x,z FROM campus_presence WHERE campus_id=$1',[identityList()[0]])).rows[0]:campus.room.world.players.get(identityList()[0]);expect({x:after.x,z:after.z}).toEqual(frozen);
   for(const [index,col] of [[0,1],[1,2],[0,1],[1,2],[0,1],[1,2],[0,1]]){
     const page=pages[index],drop=dialog(page).getByRole('button',{name:`Drop in column ${col}`,exact:true});
@@ -76,6 +98,8 @@ export async function checkBoardGames({a,b,browser,origin,identities,shared,game
   for(const page of pages)await expect(dialog(page).getByRole('status')).toHaveText('FriendOne wins!',{timeout:10000});
   await a.screenshot({path:join(directory,'board-four-two-player-win.png')});result.screenshots.push(join(directory,'board-four-two-player-win.png'));
   await readyStart(pages);await expect(dialog(a).locator('.game-four-cells span').filter({hasText:/[AB]/})).toHaveCount(0);
+  await pose(0,26,38,2);await expect(dialog(a)).toHaveCount(0,{timeout:10000});
+  await open(a);await joinGame(a,0);
   for(const page of pages){await dialog(page).getByRole('button',{name:'Leave table',exact:true}).click();await dialog(page).getByLabel('Game username',{exact:true}).waitFor();await dialog(page).getByRole('button',{name:'Return to school →',exact:true}).click();}
   result.checks.push('Real E table entry, two-browser Four in a Row win/unanimous rematch, rendered profile photos/usernames, isolated keyboard input, and unjoined-browser roster/photo denial');
   console.log('Games walkthrough: two-player win and rematch complete');

@@ -99,7 +99,7 @@ export function createGameApi(deps: GameApiDependencies) {
           result = await rpc("commit",{...stamp,state,start:body.action === "start"});
         }
       }
-      return result.error ? json({error:result.error},409) : json({game:result});
+      return result.error ? json({error:result.error},result.error==="Use the connected school tab to play"?403:409) : json({game:result});
     } catch {return json({error:"Games are temporarily unavailable. Your course work is retained."},503);}
   }
   return {GET:(request:Request) => handle(request),POST:(request:Request) => handle(request),PHOTO:(request:Request) => handle(request,true)};
