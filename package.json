@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "lint:cron": "eslint app/api/cron/daily-community-post/route.ts app/api/cron/tutor-followups/route.ts lib/cronAuth.ts tests/cron-auth.test.mjs",
-    "lint:latency": "eslint app/page.tsx app/layout.tsx proxy.ts instrumentation.ts components/AuthenticatedHomeRedirect.tsx components/HomeTutorDirectory.tsx components/Navbar.tsx components/NavbarClient.tsx components/PublicSeoConversionCtas.tsx lib/feature-flags.ts lib/public-render.ts lib/public-tutors.ts lib/server-tracing.ts scripts/check-public-latency.mjs utils/supabase/public.ts tests/public-render.test.mjs",
+    "lint:latency": "eslint app/page.tsx app/layout.tsx proxy.ts instrumentation.ts components/AuthenticatedHomeRedirect.tsx components/HomeTutorDirectory.tsx components/Navbar.tsx components/NavbarClient.tsx components/PublicSeoConversionCtas.tsx lib/feature-flags.ts lib/public-render.ts lib/public-tutors.ts lib/server-tracing.ts scripts/check-public-latency.mjs utils/supabase/public.ts lib/public-data-fetch.ts tests/public-data-fetch.test.mjs tests/public-render.test.mjs",
     "test": "node --experimental-strip-types --test tests/*.test.mjs",
     "test:latency": "node scripts/check-public-latency.mjs",
     "typecheck": "tsc --noEmit",

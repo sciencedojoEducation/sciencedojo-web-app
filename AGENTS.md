@@ -12,6 +12,9 @@ Reuse completed work rather than rebuilding it. Preserve owner-approved claims, 
 
 ## ScienceDojo branding
 
+The 20 October header release encountered existing public-data prerender timeouts. The prepared anonymous Supabase fetch deadline from the earlier timeout patch is reused: preserve its five-second deadline, caller/body cancellation, framework fetch options and existing success/fallback behaviour. Session/authenticated clients and feature defaults remain unchanged. See the business release record for actual deployment checks.
+
+
 On 20 October the owner requested the Engineering descriptor beneath the engineering wordmark at all widths and a sticky instructional-design header. Preserve both arm descriptors, native navigation, responsive anchor clearance and the shared progress line below the actual header; use the dated release record for verification.
 
 

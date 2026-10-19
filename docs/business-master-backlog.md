@@ -50,7 +50,7 @@ Piumal reported an agency reply requesting further examples after finding no cli
 
 ### Business headers — 20 October 2026
 
-Piumal requested Engineering below its wordmark and instructional-design navigation to remain visible while scrolling. The engineering brand stacks at every width; the instructional header is sticky with responsive anchor clearance and existing shared progress alignment. Verification/publication are in the dated release record. E1 maintenance only; B3/S1/R1 and commercial/tested-delivery gates remain intact.
+Piumal requested Engineering below its wordmark and instructional-design navigation to remain visible while scrolling. The engineering brand stacks at every width; the instructional header is sticky with responsive anchor clearance and existing shared progress alignment. Verification/publication are in the dated release record, including a bounded anonymous public-data fetch repair reused from the existing timeout patch after tutoring-page prerender retries blocked deployment. E1 maintenance only; B3/S1/R1 and commercial/tested-delivery gates remain intact.
 
 
 ### Instructional-design route — 19 October 2026
