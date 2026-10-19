@@ -4,10 +4,17 @@ import NavigationPending from "@/components/NavigationPending";
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import {useSyncExternalStore} from "react";
 import { DashboardMenuBadge } from "./DashboardBadgeProvider";
 import DashboardNavIcon from "./DashboardNavIcon";
 import type { DashboardBadgeKey } from "@/lib/dashboard-badges";
 import { isDashboardNavItemActive, type DashboardNavIconName } from "@/lib/dashboard-navigation";
+
+const subscribeFrame=()=>()=>{};
+const outsideFrame=()=>false;
+function insideCampusDashboard(){
+  try{return window.frameElement?.getAttribute("data-campus-dashboard")==="true";}catch{return false;}
+}
 
 interface SidebarLinkProps {
   href: string;
@@ -21,8 +28,10 @@ interface SidebarLinkProps {
 
 export default function SidebarLink({ href, name, iconName, badgeKey, exact = false, tourId, appearance = "dark" }: SidebarLinkProps) {
   const pathname = usePathname();
+  const embedded=useSyncExternalStore(subscribeFrame,insideCampusDashboard,outsideFrame);
   const isActive = isDashboardNavItemActive(pathname, { href, exact });
   const light = appearance === "light";
+  if(href==="/campus"&&embedded)return null;
 
   return (
     <Link

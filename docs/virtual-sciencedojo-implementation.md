@@ -644,3 +644,40 @@ devices; Auto remains the default. Owner visual/performance acceptance is pendin
 No schema, hosted settings, course rules, operational gates or unrelated platform
 features changed. Evidence is retained with the private local review artifacts;
 no current-head hosted CI result is claimed.
+
+## Owner account and embedded dashboard — 19 October 2026
+
+The owner clarified that the requested account is their own, for owner testing
+before a separate student test. The read-only account preflight is private; it
+found an active, email-confirmed student account and existing course-pilot tables,
+but no campus flag/membership/presence/game/focus tables in the connected database.
+Zero-row GET requests verified missing-table errors; HEAD results that omitted
+error bodies were discarded. No hosted account, schema, flag or configuration
+was changed. A real-account invitation alone cannot make this backend usable.
+
+The authorized local software work adds **My dashboard** within the desk's Study
+Hub. It embeds the existing server-selected dashboard destination, keeps the
+dashboard and course documents mounted independently, retains drafts across
+Escape/school pauses/tool switches, and preserves the external-tab shortcuts.
+Normal dashboard links require configured release/service settings, the beta flag
+and successful admitted `campus_self` identity. Editable metadata and RPC failure
+cannot grant the entry. Inside the owned dashboard frame the campus link is hidden
+to prevent a nested world. All dashboard routes now exclude marketing tag
+initialization/events under the shared private-study boundary.
+
+Local campus regressions, scoped lint/type checks and the production build passed.
+Focused two-peer checks on both transports verified actual E desk access,
+dashboard/course draft retention, keyboard isolation, phone panel fit, native
+fullscreen containment, Escape return and clean shared-frame canaries. These use
+synthetic local dashboards/courses; they are not evidence that the owner's hosted
+account has entered the world. The ordinary full acceptance keeps its existing
+movement/course/recovery assertions; focused dashboard mode skips unrelated timed
+direction activation and long campus/game tours. Its first attempt hit the
+existing fixed-time direction threshold under concurrent test load; this was not
+reported as a dashboard failure or resolved by relaxing the full-test assertion.
+
+The [owner-review plan](virtual-sciencedojo-owner-review.md) prepares exact
+070–074 application, protected Preview configuration, private eligibility review,
+only the owner invitation, actual account tests and rollback. Existing staging
+approvals are not approval to modify this separate database. Hosted activation,
+real account evidence, separate-student admission and G1–G9 remain pending.

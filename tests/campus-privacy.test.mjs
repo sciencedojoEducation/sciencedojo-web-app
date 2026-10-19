@@ -13,12 +13,15 @@ test("study privacy covers exact routes, nested paths and auth returns without s
     "/campus?mode=quiet",
     "/dashboard/academy",
     "/dashboard/academy/one",
+    "/dashboard/student",
+    "/dashboard/user?view=home",
+    "/dashboard/internal/projects",
     "/workbooks/aspekte-neu-b2",
   ])
     assert.equal(isPrivateStudyPath(path), true, path);
   for (const path of [
     "/campus-events",
-    "/dashboard/academy-news",
+    "/dashboard-news",
     "/courses",
     "/business",
   ])
@@ -27,6 +30,7 @@ test("study privacy covers exact routes, nested paths and auth returns without s
     "/campus",
     "/login?next=%2Fcampus%3Fmode%3Dquiet",
     "/signup?next=%2Fdashboard%2Facademy%2Fone",
+    "/login?next=%2Fdashboard%2Fstudent",
   ])
     assert.equal(
       isPrivateStudyLocation(`https://example.test${path}`),
@@ -70,6 +74,8 @@ test("manual analytics cannot send study events through a previously initialized
     globalThis.window.location.href =
       "https://example.test/dashboard/academy/one";
     trackEvent("answer_saved", { answer: "private-answer-canary" });
+    globalThis.window.location.href="https://example.test/dashboard/student";
+    trackEvent("dashboard_opened",{detail:"private-dashboard-canary"});
     assert.deepEqual(calls, []);
     globalThis.window.location.href = "https://example.test/business";
     trackEvent("public_example_open", { source: "business" });

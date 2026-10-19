@@ -177,7 +177,7 @@ const http = createServer(async (req, res) => {
     }
     if (path === "/dashboard/student") {
       res.setHeader("content-type", "text/html; charset=utf-8");
-      return res.end("<!doctype html><html><body><h1>Synthetic personal dashboard</h1><p>Existing dashboard destination; no real learner data.</p></body></html>");
+      return res.end('<!doctype html><html><body><h1>Synthetic personal dashboard</h1><p>Existing dashboard destination; no real learner data.</p><label>Dashboard draft <textarea></textarea></label></body></html>');
     }
     res.setHeader("content-type", "text/html; charset=utf-8");
     res.end(
@@ -378,13 +378,14 @@ try {
       result.graphics={pointerAndKeyboard:true,performanceRatio:.45,sharpRatio,autoIdleRatio,fullscreenPreferenceRetained:true};
       result.checks.push('Local graphics modes change the actual canvas resolution through pointer and keyboard controls, remain available in fullscreen, and preserve the connected world');
     };
-    await checkGraphics();
+    if(!process.argv.includes('--dashboard-only'))await checkGraphics();
     if(process.argv.includes("--graphics-only")){
       // The focused display check still performs the shared wire/privacy audit below.
     }else if(process.argv.includes("--living-cube-only")){
       await checkLivingCube({page:a,peer:b,stage:a.getByRole("region",{name:/3D school/}),player,id:firstId,result,directory});
     }else{
     const me = await player();
+    if(!process.argv.includes('--dashboard-only')){
     for (const activate of [() => forward.click(), () => forward.press("Enter")]) {
       const before = (await player()).z;
       await activate();
@@ -395,6 +396,7 @@ try {
       if (Math.abs((await player()).z - stopped) > 0.05) throw new Error("Direction step did not stop");
     }
     result.checks.push("Pointer taps and native keyboard button activation move a bounded step and stop");
+    }
     const stage = a.getByRole("region", { name: /3D school/ });
     // Observe authoritative arrival, rather than assuming CI delivers a fixed
     // number of input ticks during a wall-clock sleep. Speed is tested in SQL/JS.
@@ -430,6 +432,46 @@ try {
     if(await a.locator("dialog").evaluate(dialog=>dialog.open))throw new Error("Held E repeated the desk interaction");
     await a.waitForTimeout(450);await stage.focus();await a.keyboard.press("e");
     await a.waitForFunction(()=>document.querySelector("dialog")?.open);
+    await a.getByRole('button',{name:'My dashboard',exact:true}).click();
+    const embeddedDashboard=a.frameLocator('iframe[title="Your personal dashboard"]');
+    await embeddedDashboard.getByRole('heading',{name:'Synthetic personal dashboard',exact:true}).waitFor();
+    await embeddedDashboard.getByRole('textbox',{name:'Dashboard draft',exact:true}).fill('campus-private-dashboard-canary');
+    const beforeDashboardKeys={x:(await player()).x,z:(await player()).z};
+    await embeddedDashboard.getByRole('textbox',{name:'Dashboard draft',exact:true}).press('e');
+    await embeddedDashboard.getByRole('textbox',{name:'Dashboard draft',exact:true}).press('Backspace');
+    if(Math.hypot((await player()).x-beforeDashboardKeys.x,(await player()).z-beforeDashboardKeys.z)>.01)throw new Error('Typing in the dashboard moved the avatar');
+    await embeddedDashboard.getByRole('textbox',{name:'Dashboard draft',exact:true}).press('Escape');
+    await a.waitForFunction(()=>!document.querySelector('dialog')?.open);
+    await a.getByRole('button',{name:'Open Study Hub',exact:true}).click();
+    if(await embeddedDashboard.getByRole('textbox',{name:'Dashboard draft',exact:true}).inputValue()!=='campus-private-dashboard-canary')throw new Error('Dashboard draft was discarded across a school pause');
+    await a.setViewportSize({width:390,height:844});
+    if(await a.locator('iframe[title="Your personal dashboard"]').evaluate(el=>el.getBoundingClientRect().right>innerWidth+1))throw new Error('Embedded dashboard overflows the phone computer panel');
+    await a.setViewportSize({width:1440,height:1050});
+    await a.screenshot({path:join(directory,'computer-dashboard.png')});result.screenshots.push(join(directory,'computer-dashboard.png'));
+    await a.getByRole('button',{name:'My courses',exact:true}).click();
+    if(await a.locator('iframe[title="Your personal dashboard"]').count()!==1)throw new Error('Tool switching unmounted the dashboard');
+    result.checks.push('Desk E interaction opens Study Hub; its embedded existing dashboard retains unsent input across Escape/school pauses and tool switches, isolates typing from movement and fits the phone panel');
+    if(process.argv.includes('--dashboard-only')){
+      await a.getByRole('checkbox').check();
+      await a.getByRole('button',{name:/Synthetic test course/}).click();
+      const embeddedCourse=a.frameLocator('iframe[title="Your Academy course"]');
+      await embeddedCourse.getByRole('textbox',{name:'Practice answer'}).fill('campus-wire-answer-canary-17oct');
+      await a.getByRole('button',{name:'My dashboard',exact:true}).click();
+      if(await embeddedDashboard.getByRole('textbox',{name:'Dashboard draft'}).inputValue()!=='campus-private-dashboard-canary')throw new Error('Opening a course reset the dashboard');
+      await a.getByRole('button',{name:'My courses',exact:true}).click();
+      if(await embeddedCourse.getByRole('textbox',{name:'Practice answer'}).inputValue()!=='campus-wire-answer-canary-17oct')throw new Error('Opening the dashboard reset the course');
+      await a.getByRole('button',{name:'Return to school →',exact:true}).click();
+      await a.getByRole('button',{name:'Full screen',exact:true}).click();
+      await a.getByRole('button',{name:'Study desk',exact:true}).click();
+      await a.getByRole('button',{name:'Open Study Hub',exact:true}).click();
+      await a.getByRole('button',{name:'My dashboard',exact:true}).click();
+      if(!await a.evaluate(()=>document.fullscreenElement?.contains(document.querySelector('iframe[title="Your personal dashboard"]'))))throw new Error('Embedded dashboard escaped fullscreen');
+      await a.screenshot({path:join(directory,'computer-dashboard-fullscreen.png')});result.screenshots.push(join(directory,'computer-dashboard-fullscreen.png'));
+      await embeddedDashboard.getByRole('textbox',{name:'Dashboard draft'}).press('Escape');
+      await a.getByRole('button',{name:'Exit full screen',exact:true}).click();
+      result.checks.push('Both dashboard and course retain independent drafts across tool switches; the real dashboard iframe stays inside the native fullscreen ancestor and Escape returns to the school');
+    }
+    if(!process.argv.includes('--dashboard-only')){
     await a.getByText("VIRTUAL SCIENCEDOJO · BETA", { exact: true }).waitFor();
     const dashboardOpened = aContext.waitForEvent("page");
     await a.getByRole("link", { name: "My dashboard · opens a new tab ↗", exact: true }).click();
@@ -904,6 +946,7 @@ try {
     result.checks.push('Actual court gameplay: two peers walk there, race for one ball, hold E through rising/falling power without losing possession, cancel with Escape, then release a shot; another player retrieves and scores a physical basket with shared totals. Touch also lowers power while held and shoots only on release; fullscreen controls remain visible');
     await checkLivingCube({page:a,peer:b,stage,player,id:courtIds[0],result,directory});
     }
+    }
     await Promise.all(ticketReads);
     if (vercel) {
       const issuedHashes = new Set(issuedTickets.map((ticket) => createHash("sha256").update(ticket).digest("hex")));
@@ -919,6 +962,7 @@ try {
       "/dashboard/academy/fixture",
       "/dashboard/student",
       "campus-wire-answer-canary-17oct",
+      "campus-private-dashboard-canary",
       "cameraYaw", "cameraPitch", "timeOfDay", "skyTime", "fullscreenMode", "schoolPanel", "graphicsQuality", "renderScale", "pixelRatio",
       ...issuedTickets,
     ])

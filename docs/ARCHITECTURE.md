@@ -150,6 +150,23 @@ The campus layout now withholds its UI until the browser confirms a clean docume
 
 ## Deployment and implementation sequence
 
+### Owner-account review and Cube dashboard — 19 October 2026
+
+The owner requested testing through their own existing account before inviting a
+student. The authorized software change adds an embedded existing-dashboard tool
+to the desk's Study Hub, retains both dashboard and course DOM across tool switches
+and school pauses, and limits the dashboard's optional-beta entry to admitted
+members with configured service/release controls. All dashboard documents used
+inside the Cube must exclude marketing initialization/events. Hide the campus
+entry within the embedded dashboard to avoid nested worlds; retain external-tab
+access as a fallback. Reuse dashboard auth/roles and existing course access;
+do not include private account/dashboard data in world messages.
+
+Prepare and test this locally with synthetic accounts. The owner's private account
+preflight found no campus schema/flag in the currently connected database. Hosted
+schema/configuration changes require a concrete reviewed plan and explicit
+environment approval; own-account testing does not establish student-pilot gates.
+
 Preserve the current Next.js hosting arrangement. Historical records identify the Vercel project `sciencedojo-s-projects/sciencedojo-web-app`. Read-only production hosting metadata was checked on 17 October and recorded privately; this public document does not disclose the locations or detailed deployed findings. G5's broader vendor/privacy and account review remains pending. Consult the private record before repeating that investigation. No production configuration, deployment or data changed. Do not infer a region from a project URL, copy secrets into docs or migrate the existing project to satisfy an assumption.
 
 Separate staging evidence on 17 October: the Supabase dashboard identifies `sciencedojo-showcase-staging` in `eu-west-2` (London). It was paused with a non-resolving API hostname. The owner approved restoration including the announced Postgres update; restoration completed with a Healthy dashboard, HTTP 200 schema API and a read-only SQL query reporting Postgres 17.6. This does not establish production settings or authorize real-learner use.

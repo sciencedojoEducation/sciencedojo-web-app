@@ -8,8 +8,8 @@ export function isPrivateStudyPath(path: string) {
   return (
     isCampusPath(pathname) ||
     pathname.startsWith("/workbooks/") ||
-    pathname === "/dashboard/academy" ||
-    pathname.startsWith("/dashboard/academy/")
+    pathname === "/dashboard" ||
+    pathname.startsWith("/dashboard/")
   );
 }
 

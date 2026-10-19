@@ -69,6 +69,7 @@ export default function CampusClient({
   const [notice, setNotice] = useState(""),
     [hub, setHub] = useState(false),
     [course, setCourse] = useState("");
+  const [hubTool,setHubTool]=useState<"courses"|"dashboard">("courses"),[dashboardReady,setDashboardReady]=useState(false);
   const [identityRead, setIdentityRead] = useState(false),
     [no3d, setNo3d] = useState(false),
     [blocked, setBlocked] = useState(initialBlocked);
@@ -787,6 +788,8 @@ export default function CampusClient({
         </header>
         <nav className="campus-hub-shortcuts" aria-label="Your existing learning tools">
           <p>This beta connects to your existing ScienceDojo account.</p>
+          <button aria-pressed={hubTool==="dashboard"} onClick={()=>{setDashboardReady(true);setHubTool("dashboard");}}>My dashboard</button>
+          <button aria-pressed={hubTool==="courses"} onClick={()=>setHubTool("courses")}>My courses</button>
           <Link href={dashboardHref} target="_blank" rel="noopener noreferrer">
             My dashboard · opens a new tab ↗
           </Link>
@@ -794,6 +797,15 @@ export default function CampusClient({
             My Courses · opens a new tab ↗
           </Link>
         </nav>
+        {dashboardReady&&<div className="campus-tool-panel" hidden={hubTool!=="dashboard"}>
+          <iframe title="Your personal dashboard" data-campus-dashboard="true" src={dashboardHref} referrerPolicy="same-origin"
+            onLoad={event=>{
+              try{event.currentTarget.contentDocument?.addEventListener("keydown",key=>{
+                if(key.key==="Escape"&&!key.defaultPrevented){key.preventDefault();closeHub();}
+              });}catch{/* The visible return control remains available after external navigation. */}
+            }}/>
+        </div>}
+        <div className="campus-tool-panel" hidden={hubTool!=="courses"}>
         {!course ? (
           <div className="campus-hub-courses">
             <p>
@@ -866,6 +878,7 @@ export default function CampusClient({
             />
           </>
         )}
+        </div>
       </dialog>
     </main>
   );
