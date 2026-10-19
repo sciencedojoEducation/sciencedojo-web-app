@@ -261,7 +261,7 @@ try {
   } else {
     browser = await chromium.launch({
       executablePath: process.env.CAMPUS_CHROMIUM_PATH || undefined,
-      headless: true,
+      headless: !process.argv.includes('--headed'),
       args: [
         "--use-gl=angle",
         "--use-angle=swiftshader",
@@ -373,6 +373,7 @@ try {
     result.checks.push(
       "Two browser contexts join the same real room with pseudonyms",
     );
+    await a.bringToFront();
     await a.getByRole("button", { name: "Controls", exact: true }).click();
     const forward = a.getByRole("button", { name: "Walk forward", exact: true });
     const firstId = identities.keys().next().value;
@@ -703,7 +704,7 @@ try {
     await a.getByRole("button",{name:"First person",exact:true}).click();
     const scene=a.locator(".school-scene"),box=await scene.boundingBox(),cx=box.x+box.width/2,cy=box.y+box.height/2;
     await a.mouse.move(cx,cy);await a.mouse.move(cx+210,cy,{steps:8});
-    await a.mouse.click(cx+210,cy);
+    await a.bringToFront();await a.mouse.click(cx+210,cy);
     await a.waitForFunction(()=>document.pointerLockElement===document.querySelector(".school-scene"));
     await a.mouse.move(cx+240,cy,{steps:3});
     await a.keyboard.press("Escape");

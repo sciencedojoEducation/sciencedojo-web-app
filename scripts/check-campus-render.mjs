@@ -10,6 +10,7 @@ import { chromium } from "@playwright/test";
 const directory = await mkdtemp(join(tmpdir(), "campus-render-"));
 const slowDevice=process.argv.includes("--slow-device");
 const reducedMotion=process.argv.includes("--reduced-motion");
+const headed=process.argv.includes("--headed");
 const fiber = resolve("node_modules/@react-three/fiber/dist/react-three-fiber.esm.js");
 await build({
   stdin: { contents: `import React,{useState,useEffect} from 'react';
@@ -76,12 +77,12 @@ await build({
 });
 const http = createServer(async (req, res) => {
   if (["/app.js","/app.css"].includes(req.url)) { res.setHeader("content-type",req.url.endsWith("css")?"text/css":"text/javascript");res.end(await readFile(join(directory, req.url.slice(1)))); }
-  else res.end(`<!doctype html><link rel="stylesheet" href="/app.css"><div id="root" style="width:${slowDevice?1800:900}px;height:${slowDevice?1200:600}px"></div><script type="module" src="/app.js"></script>`);
+  else res.end(`<!doctype html><link rel="stylesheet" href="/app.css"><div id="root" tabindex="0" style="width:${slowDevice?1800:900}px;height:${slowDevice?1200:600}px"></div><script type="module" src="/app.js"></script>`);
 });
 let browser,page;
 try {
   await new Promise((resolve) => http.listen(0, "127.0.0.1", resolve));
-  browser = await chromium.launch({ executablePath: process.env.CAMPUS_CHROMIUM_PATH || undefined, headless: true,
+  browser = await chromium.launch({ executablePath: process.env.CAMPUS_CHROMIUM_PATH || undefined, headless: !headed,
     args: ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader"] });
   page = await browser.newPage({ viewport: slowDevice?{width:2000,height:1480}:{ width: 1000, height: 740 }, deviceScaleFactor: 2 });
   if(slowDevice){
@@ -122,7 +123,7 @@ try {
     else maxMovementPauseMs = Math.max(maxMovementPauseMs, core[i].t - lastMoveAt);
   }
   const gaps = walking.slice(1).map((f,i)=>f.t-walking[i].t).sort((a,b)=>a-b);
-  const result = { scope: "Synthetic actual scene, headless Chrome / SwiftShader; not hardware or hosted FPS",
+  const result = { scope: `Synthetic actual scene, ${headed?"headed":"headless"} Chrome / SwiftShader; not hardware or hosted FPS`,
     followCameraLagError:reducedMotion?null:Math.max(...walking.map(f=>Math.abs(f.cameraX-f.x-9))),
     authoritativeTargetCount: walk.arrivals.length, observedWalkMs: Math.round(walk.finished-walk.started),
     observedArrivalGapsMs: walk.arrivals.map((at,i)=>Math.round(at-(i?walk.arrivals[i-1]:walk.started))),
@@ -201,6 +202,11 @@ try {
   await page.mouse.move(430,300);const beforeHover=await orientation();
   await page.mouse.move(510,320,{steps:6});await moved(beforeHover);
   await page.waitForFunction(()=>{const c=document.querySelector('canvas');return c&&Math.abs(c.width/c.clientWidth-.45)<.01;});
+  await page.bringToFront();
+  await page.evaluate(()=>{
+    const scene=document.querySelector('.school-scene'),native=scene.requestPointerLock.bind(scene);
+    scene.requestPointerLock=(...args)=>{const result=native(...args);result?.catch(error=>{window.nativeCaptureFailure={name:error.name,message:error.message,focused:document.hasFocus(),visible:document.visibilityState};});return result;};
+  });
   await page.mouse.click(510,320);
   await page.waitForFunction(()=>document.pointerLockElement===document.querySelector(".school-scene"));
   const beforeLocked=await orientation();await page.mouse.move(560,330,{steps:4});await moved(beforeLocked);
@@ -212,6 +218,12 @@ try {
   await page.waitForFunction(()=>window.cameraForward.y<-.9998);
   await page.screenshot({path:join(directory,'mouse-look-down.png')});
   await page.evaluate(()=>window.showFirst());
+  // The fixture reset is a React update. Measure captured turns only after
+  // its requested baseline has actually rendered, never from the previous pole.
+  await page.waitForFunction(()=>{
+    const d=window.cameraForward;
+    return Math.abs(Math.atan2(Math.sin(Math.atan2(d.x,-d.z)+.64),Math.cos(Math.atan2(d.x,-d.z)+.64)))<1e-6&&Math.abs(d.y-Math.sin(.72))<1e-6;
+  });
   const agrees=()=>page.waitForFunction(()=>{
     const a=window.lastLook,d=window.cameraForward;
     if(!a||!d)return false;
@@ -323,6 +335,6 @@ try {
   assert.deepEqual(errors,[],'Graphics changes must not introduce browser errors');
   await writeFile(result.evidence, JSON.stringify(result, null, 2));
 } catch(error) {
-  if(page){await writeFile(join(directory,'mouse-look-failure.json'),JSON.stringify(await page.evaluate(()=>({look:window.lastLook,forward:window.cameraForward,turns:window.lookHistory,locked:!!document.pointerLockElement})),null,2));console.error('Camera failure evidence:',directory);}
+  if(page){await writeFile(join(directory,'mouse-look-failure.json'),JSON.stringify(await page.evaluate(()=>({look:window.lastLook,forward:window.cameraForward,turns:window.lookHistory,locked:!!document.pointerLockElement,nativeCaptureFailure:window.nativeCaptureFailure})),null,2));console.error('Camera failure evidence:',directory);}
   throw error;
 } finally { await browser?.close();http.closeAllConnections();await new Promise(r=>http.close(r)); }
