@@ -811,3 +811,31 @@ motion. Idle snapshots still invalidate a frame, but do not trigger continuous
 animation. Normal/reduced-motion scene checks, an isolated original entry check,
 the complete shared browser flow and the final build are being verified against
 this follow-up. No graphics assertion or movement threshold was relaxed.
+
+### Final responsiveness verification and protected Preview
+
+The final original-transport entry/graphics check and the complete shared-SQL
+browser flow passed after the idle repair. Combined with the complete original
+walkthrough and both normal/reduced-motion actual-scene probes, these retain real
+E/touch movement, run/jump/crouch/prone, furniture/glass, all three journeys,
+basketball power/rebounds/scoring, retained dashboard/course drafts, safety,
+recovery and full world-frame/handshake canary checks. Normal/reduced probes
+recorded 103/118 distinct walking positions, zero stationary pauses and 27 draw
+calls; Follow tracking error was zero in the normal probe, reduced-motion
+anchoring held, and repeated stationary ball snapshots kept Auto sharp. These
+are synthetic local Chrome/SwiftShader results, not intended-device FPS.
+
+All 74 campus regressions, final scoped lint/type checks and the clean application
+production build passed. The final shared run made 3,165 local fixture SQL calls
+(p95 3ms, maximum 13ms); those are not hosted latency/throughput/cost measurements.
+The generated clean-build copy was removed after success; logs, hashes and browser
+artifacts remain in private evidence and the maintained seven-day CI artifacts.
+
+Application revision **7c43836** was pushed to the existing draft beta branch and
+its Vercel deployment check succeeded. The same protected Preview link serves the
+update; an unauthenticated request still redirects to Vercel sign-in. Hosted
+quality/cron workflows were still in progress at the last check, so no completed
+hosted CI result is inferred. No schema, account/course authorization, hosting
+setting, production deployment or operational gate changed. The owner's retest
+of this lag correction remains pending. Refresh the existing private Preview to
+load its new client bundle; the existing Shift run control remains available.

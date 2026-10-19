@@ -105,3 +105,15 @@ and course authorization are unchanged. The owner has not yet signed in to this
 Preview or accepted the notice; service identity remains unavailable until that
 acceptance. Actual school/dashboard/desk interaction remains pending.
 Approval is retained; do not request the completed confirmations again.
+
+## Movement responsiveness follow-up
+
+The owner likes the experience but reported slow/lagging movement. The correction
+is deployed on the same protected Preview at application revision 7c43836: bounded
+prompt input, no skipped polling interval after slow RPCs, direct Follow tracking
+and no continuous redraw for stationary ball snapshots. The 300ms confirmed-pose
+buffer and authoritative speed/collision rules remain. All 74 campus regressions,
+both browser transport flows, normal/reduced rendering, type/lint and clean build
+passed locally; the Vercel deployment passed, while hosted quality/cron completion
+and subjective owner acceptance were not inferred. Refresh this Preview to retest.
+This does not establish a full independent study walkthrough or learner launch.
