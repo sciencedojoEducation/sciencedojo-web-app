@@ -12,6 +12,9 @@ Reuse completed work rather than rebuilding it. Preserve owner-approved claims, 
 
 ## ScienceDojo branding
 
+On 19 October the owner moved instructional design to `/business/instructional-design`, parallel to `/business/engineering`. Use the new route in current navigation, canonical/sharing metadata and sitemap. Preserve exact permanent redirects from `/business` and its old sharing-image URL, including query/hash navigation; do not redirect `/business/*` or move the existing downloadable examples. This supersedes the earlier root instructional-design route.
+
+
 On 19 October the owner requested aligning instructional design at `/business` with the main-site navy `#001A44`, blue `#0066FF`, cyan `#00D2FF` and white/pale-blue palette, matching engineering. Preserve its softer artwork, approved offer/price, downloadable materials and enquiry behaviour; existing business documents retain their established palette. Use the brand guidelines and dated release record for verification.
 
 

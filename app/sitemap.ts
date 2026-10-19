@@ -25,7 +25,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 1,
     },
     {
-      url: `${siteUrl}/business`,
+      url: `${siteUrl}/business/instructional-design`,
       lastModified: now,
       changeFrequency: "monthly",
       priority: 0.8,

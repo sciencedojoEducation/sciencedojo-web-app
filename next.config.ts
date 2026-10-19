@@ -32,6 +32,12 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  async redirects() {
+    return [
+      { source: "/business", destination: "/business/instructional-design", permanent: true },
+      { source: "/business/opengraph-image", destination: "/business/instructional-design/opengraph-image", permanent: true },
+    ];
+  },
   async headers() {
     return [
       {

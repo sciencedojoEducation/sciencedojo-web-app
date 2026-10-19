@@ -136,7 +136,7 @@ try {
     await expect.poll(() => screenshot.evaluate(img => img.complete && img.naturalWidth > 0)).toBe(true);
   }
   await expect(page.getByRole("link", { name: "ScienceDojo Engineering home" })).toHaveAttribute("href", "/business/engineering");
-  await expect(page.getByRole("navigation", { name: "Engineering navigation", exact: true }).getByRole("link", { name: /Instructional design/ })).toHaveAttribute("href", "/business");
+  await expect(page.getByRole("navigation", { name: "Engineering navigation", exact: true }).getByRole("link", { name: /Instructional design/ })).toHaveAttribute("href", "/business/instructional-design");
   for (const name of ["Piumal", "Tharindu", "Yelka"]) await expect(page.getByRole("heading", { name, exact: true })).toBeVisible();
   const people = page.locator("[data-engineering-team]");
   await expect(people.locator("img")).toHaveCount(3);
@@ -253,14 +253,32 @@ try {
   await expect(page.locator("#engineering-organisation")).toHaveAttribute("aria-describedby", "engineering-organisation-hint engineering-organisation-error");
   await expect(page.locator("#engineering-organisation-hint")).toBeVisible();
   evidence.checks.push("Invalid server-action submission, focused error summary, editable interest and retained draft; no save attempted");
-  await page.goto(`${origin}/business`);
+  const legacy = await context.request.get(`${origin}/business?ref=legacy`, { maxRedirects: 0 });
+  assert.equal(legacy.status(), 308);
+  assert.equal(new URL(legacy.headers().location, origin).pathname, "/business/instructional-design");
+  assert.equal(new URL(legacy.headers().location, origin).searchParams.get("ref"), "legacy");
+  await page.goto(`${origin}/business?ref=legacy#contact`);
+  await expect(page).toHaveURL(`${origin}/business/instructional-design?ref=legacy#contact`);
+  await page.goto(`${origin}/business/instructional-design`);
+  await expect(page.locator('link[rel="canonical"]')).toHaveAttribute("href", /\/business\/instructional-design$/);
+  await expect(page.locator('meta[property="og:url"]')).toHaveAttribute("content", /\/business\/instructional-design$/);
+  const share = await context.request.get(`${origin}/business/instructional-design/opengraph-image`);
+  assert.equal(share.status(), 200);
+  assert.match(share.headers()["content-type"], /image\/png/);
+  const oldShare = await context.request.get(`${origin}/business/opengraph-image`, { maxRedirects: 0 });
+  assert.equal(oldShare.status(), 308);
+  evidence.checks.push("Instructional-design canonical route, permanent legacy redirects with query/hash, new share PNG and preserved legacy share URL");
   await expect(page.getByRole("link", { name: "Engineering", exact: true })).toBeVisible();
   assert.match(await page.locator("body").innerText(), /€1,490/);
   await expect(page.locator("#learning-demo")).toBeAttached();
   const downloads = await page.locator('a[href^="/business/examples/"]').evaluateAll(links => [...new Set(links.map(link => link.getAttribute("href")))]);
   assert.ok(downloads.some(link => link.endsWith(".pdf")));
   for (const path of downloads) assert.equal((await context.request.get(`${origin}${path}`)).status(), 200, path);
-  evidence.checks.push("Learning offer price, existing example, engineering discovery link and supporting download responses");
+  await page.locator("#business-goal").fill("Synthetic route-move draft retained after invalid submission");
+  await page.getByRole("button", { name: "Send enquiry", exact: true }).click();
+  await expect(page.locator("#business-name")).toHaveAttribute("aria-invalid", "true");
+  await expect(page.locator("#business-goal")).toHaveValue("Synthetic route-move draft retained after invalid submission");
+  evidence.checks.push("Learning offer price, example/download responses and invalid server action with retained draft on the new route; no save attempted");
   // Main-site entry points: native disclosure + hover, keyboard and phone links.
   for (const width of [1280, 1440]) {
     await page.setViewportSize({ width, height: 900 });
@@ -271,7 +289,7 @@ try {
     await expect(businessMenu).not.toHaveAttribute("open", "");
     await trigger.hover();
     await expect(businessMenu).toHaveAttribute("open", "");
-    await expect(businessMenu.getByRole("link", { name: /Instructional design/ })).toHaveAttribute("href", "/business");
+    await expect(businessMenu.getByRole("link", { name: /Instructional design/ })).toHaveAttribute("href", "/business/instructional-design");
     const engineeringLink = businessMenu.getByRole("link", { name: /Engineering/ });
     await expect(engineeringLink).toHaveAttribute("href", "/business/engineering");
     await engineeringLink.hover();
@@ -302,13 +320,13 @@ try {
     await expect(page).toHaveURL(`${origin}/business/engineering`);
     await expect(page.getByRole("heading", { level: 1 })).toHaveText("Better websites.Useful software.Connected work.");
   }
-  for (const [label, path] of [["Instructional design", "/business"], ["Engineering", "/business/engineering"]]) {
+  for (const [label, path] of [["Instructional design", "/business/instructional-design"], ["Engineering", "/business/engineering"]]) {
     await page.setViewportSize({ width: 375, height: 667 });
     await page.goto(origin);
     await page.getByLabel("Open menu", { exact: true }).click();
     const mobile = page.getByRole("dialog", { name: "Mobile navigation" });
     const business = mobile.getByRole("group", { name: "For Business" });
-    await expect(business.getByRole("link", { name: "Instructional design", exact: true })).toHaveAttribute("href", "/business");
+    await expect(business.getByRole("link", { name: "Instructional design", exact: true })).toHaveAttribute("href", "/business/instructional-design");
     await expect(business.getByRole("link", { name: "Engineering", exact: true })).toHaveAttribute("href", "/business/engineering");
     await business.scrollIntoViewIfNeeded();
     const phoneScreen = join(output, `main-business-mobile-${label === "Engineering" ? "engineering" : "instructional"}.png`);
@@ -325,7 +343,7 @@ try {
   await plainTrigger.click();
   await expect(plainTrigger.locator("..").getByRole("link", { name: /Engineering/ })).toBeVisible();
   await plainTrigger.locator("..").getByRole("link", { name: /Instructional design/ }).click();
-  await expect(plainPage).toHaveURL(`${origin}/business`);
+  await expect(plainPage).toHaveURL(`${origin}/business/instructional-design`);
   await plainPage.goto(`${origin}/business/engineering`);
   assert.equal(await plainPage.getByRole("navigation", { name: "Main navigation without JavaScript" }).count(), 0);
   assert.equal(await plainPage.locator("header").count(), 1);

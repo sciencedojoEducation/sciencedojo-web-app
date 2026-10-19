@@ -1,7 +1,7 @@
 export const businessNavigationItems = [
   {
     label: "Instructional design",
-    href: "/business",
+    href: "/business/instructional-design",
     description: "Learning experiences for your team.",
   },
   {

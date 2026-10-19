@@ -27,7 +27,7 @@ const footerGroups = [
     title: "Company",
     links: [
       ["About ScienceDojo", "/about"],
-      ["For Business", "/business"],
+      ["For Business", "/business/instructional-design"],
       ["Dashboard", "/login"],
       ["Code of Conduct", "/code-of-conduct"],
       ["Community Guidelines", "/community/guidelines"],

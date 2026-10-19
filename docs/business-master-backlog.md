@@ -48,6 +48,11 @@ Piumal reported an agency reply requesting further examples after finding no cli
 
 ## Existing decisions and completed work
 
+### Instructional-design route — 19 October 2026
+
+Piumal requested `/business/instructional-design`, parallel to engineering. The page/share image, menu/footer/cross-links, canonical metadata and sitemap use the new route; exact permanent redirects preserve old page/share links while downloads keep their existing URLs. Verification/publication belong in the dated release record. E1 maintenance only; B3/S1/R1 and all permission/delivery gates remain intact.
+
+
 ### Instructional-design brand alignment — 19 October 2026
 
 At Piumal’s request, the instructional-design website now shares the main-site navy/blue/cyan palette across its page, demos, process drawings, form and sharing image. Softer artwork, approved offer/price and existing downloads are preserved. Verification/publication results belong in the dated release record. This is E1 maintenance; B3/S1/R1 and permission/delivery gates remain intact.

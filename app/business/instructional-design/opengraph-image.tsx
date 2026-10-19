@@ -17,7 +17,7 @@ export default async function BusinessSharingImage() {
         <div style={{ display: "flex", marginTop: 24, fontSize: 24, lineHeight: 1.4, color: "#52647C" }}>Practical onboarding for IT service and software implementation teams.</div>
         <div style={{ display: "flex", marginTop: 24, fontSize: 30, fontWeight: 700, color: "#0066FF" }}>From €1,490 per project</div>
         <div style={{ display: "flex", marginTop: 8, fontSize: 16, color: "#52647C" }}>Scope, delivery, dates, and applicable taxes agreed in the proposal.</div>
-        <div style={{ display: "flex", marginTop: 27, fontSize: 17, color: "#001A44" }}>sciencedojo.co.uk/business</div>
+        <div style={{ display: "flex", marginTop: 27, fontSize: 17, color: "#001A44" }}>sciencedojo.co.uk/business/instructional-design</div>
       </div>
       <div style={{ display: "flex", flexDirection: "column", width: 510 }}>
         {/* ImageResponse renders plain image elements into the sharing image. */}

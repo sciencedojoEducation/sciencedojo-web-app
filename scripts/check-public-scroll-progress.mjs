@@ -14,7 +14,7 @@ export async function checkPublicScrollProgress(page, origin, output) {
 
   for (const width of [1440, 390]) {
     await page.setViewportSize({ width, height: width === 1440 ? 1000 : 844 });
-    for (const path of ["/", "/privacy", "/business", "/business/engineering"]) {
+    for (const path of ["/", "/privacy", "/business/instructional-design", "/business/engineering"]) {
       await page.goto(`${origin}${path}`);
       await expect(page.getByRole("heading", { level: 1 }).first()).toBeVisible();
       await page.evaluate(() => document.fonts.ready);

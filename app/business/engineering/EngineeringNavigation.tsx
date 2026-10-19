@@ -26,10 +26,10 @@ export default function EngineeringNavigation() {
   }} onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget as Node)) setOpen(false); }}>
     <div className={`${s.container} ${s.headerInner}`}>
       <Link href="/business/engineering" className={s.brand} aria-label="ScienceDojo Engineering home"><span>science<span className={s.brandDojo}>dojo</span><span className={s.dot}>.</span></span><small>ENGINEERING</small></Link>
-      <nav aria-label="Engineering navigation" className={s.desktopNav}>{links.map(([label, id]) => <a key={id} href={`#${id}`}>{label}</a>)}<Link href="/business" className={s.armLink}>Instructional design <ArrowUpRight size={13} aria-hidden="true" /></Link></nav>
+      <nav aria-label="Engineering navigation" className={s.desktopNav}>{links.map(([label, id]) => <a key={id} href={`#${id}`}>{label}</a>)}<Link href="/business/instructional-design" className={s.armLink}>Instructional design <ArrowUpRight size={13} aria-hidden="true" /></Link></nav>
       <a href="#contact" className={s.headerCta}>Let’s talk <ArrowUpRight size={15} aria-hidden="true" /></a>
       <button ref={trigger} className={s.menuToggle} aria-label={open ? "Close menu" : "Open menu"} aria-expanded={open} aria-controls="engineering-menu" onClick={() => setOpen(!open)}>{open ? <X aria-hidden="true" /> : <Menu aria-hidden="true" />}</button>
-      <nav id="engineering-menu" aria-label="Mobile engineering navigation" className={s.mobileNav} hidden={!open}>{links.map(([label, id], index) => <a key={id} ref={index === 0 ? first : undefined} href={`#${id}`} onClick={() => { setOpen(false); trigger.current?.focus(); }}>{label}</a>)}<Link href="/business" onClick={() => setOpen(false)}>Instructional design</Link></nav>
+      <nav id="engineering-menu" aria-label="Mobile engineering navigation" className={s.mobileNav} hidden={!open}>{links.map(([label, id], index) => <a key={id} ref={index === 0 ? first : undefined} href={`#${id}`} onClick={() => { setOpen(false); trigger.current?.focus(); }}>{label}</a>)}<Link href="/business/instructional-design" onClick={() => setOpen(false)}>Instructional design</Link></nav>
     </div>
   </header>;
 }

@@ -49,7 +49,7 @@ try {
       }
     }
   }
-  for (const path of ["/business","/privacy","/terms"]) assert.equal((await context.request.get(`${origin}${path}`)).status(),200,path);
+  for (const path of ["/business/instructional-design","/privacy","/terms"]) assert.equal((await context.request.get(`${origin}${path}`)).status(),200,path);
   console.log(JSON.stringify({output, views:report.views.map(({width,pageHeight,proofTop,contactTop,smallControls,scriptCount,scriptEncodedBytes})=>({width,pageHeight,proofTop,contactTop,smallControls,scriptCount,scriptEncodedBytes}))},null,2));
 } finally {
   await writeFile(`${output}/audit.json`,JSON.stringify(report,null,2));

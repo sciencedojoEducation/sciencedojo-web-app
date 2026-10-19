@@ -4,10 +4,10 @@ import { connection } from "next/server";
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, BookOpen, Code2, Sparkles } from "lucide-react";
-import BusinessOffer from "./BusinessOffer";
-import BusinessEvidence from "./BusinessEvidence";
-import BusinessProcess from "./BusinessProcess";
-import BusinessEnquiryForm from "./BusinessEnquiryForm";
+import BusinessOffer from "../BusinessOffer";
+import BusinessEvidence from "../BusinessEvidence";
+import BusinessProcess from "../BusinessProcess";
+import BusinessEnquiryForm from "../BusinessEnquiryForm";
 import { getPublicFeatureFlagMap } from "@/lib/feature-flags";
 import { siteUrl } from "@/lib/seo";
 
@@ -26,9 +26,9 @@ const services = [
 export const metadata: Metadata = {
   title: { absolute: title },
   description,
-  alternates: { canonical: `${siteUrl}/business` },
-  openGraph: { title, description, url: `${siteUrl}/business`, siteName: "ScienceDojo for Business", type: "website", images: [{ url: `${siteUrl}/business/opengraph-image`, width: 1200, height: 630, alt: "ScienceDojo Custom Onboarding Module — From €1,490 per project, subject to agreed scope" }] },
-  twitter: { card: "summary_large_image", title, description, images: [{ url: `${siteUrl}/business/opengraph-image`, alt: "ScienceDojo Custom Onboarding Module — From €1,490 per project, subject to agreed scope" }] },
+  alternates: { canonical: `${siteUrl}/business/instructional-design` },
+  openGraph: { title, description, url: `${siteUrl}/business/instructional-design`, siteName: "ScienceDojo for Business", type: "website", images: [{ url: `${siteUrl}/business/instructional-design/opengraph-image`, width: 1200, height: 630, alt: "ScienceDojo Custom Onboarding Module — From €1,490 per project, subject to agreed scope" }] },
+  twitter: { card: "summary_large_image", title, description, images: [{ url: `${siteUrl}/business/instructional-design/opengraph-image`, alt: "ScienceDojo Custom Onboarding Module — From €1,490 per project, subject to agreed scope" }] },
 };
 
 function BusinessBrand() {
@@ -44,7 +44,7 @@ export default async function BusinessPage() {
       <a href="#business-content" className={`sr-only z-50 rounded-lg bg-white p-4 focus:not-sr-only focus:absolute focus:left-4 focus:top-4 ${focus}`}>Skip to content</a>
       <header data-public-site-header className="border-b border-[#DCE7F5] bg-white px-5 py-5 md:px-8">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-5">
-          <Link href="/business" aria-label="ScienceDojo for Business home" className={focus}>
+          <Link href="/business/instructional-design" aria-label="ScienceDojo for Business home" className={focus}>
             <BusinessBrand />
             <span className="mt-1 block text-[10px] font-bold uppercase tracking-[0.22em] text-[#52647C]">Instructional design</span>
           </Link>

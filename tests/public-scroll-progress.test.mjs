@@ -4,7 +4,7 @@ import { showsPublicScrollProgress } from "../lib/public-scroll-progress.ts";
 
 test("public marketing, articles, profiles and both business arms keep scroll progress", () => {
   for (const path of ["/", "/about", "/privacy", "/terms", "/how-it-works", "/contact",
-    "/business", "/business/engineering#contact", "/learning-hub/article?ref=sample",
+    "/business", "/business/instructional-design", "/business/engineering#contact", "/learning-hub/article?ref=sample",
     "/community/news/update", "/courses/example", "/t/example", "/tutor/example",
     "/online-physics-tutor", "/dashboard-guide"]) {
     assert.equal(showsPublicScrollProgress(path), true, path);
