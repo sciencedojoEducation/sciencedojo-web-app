@@ -6,8 +6,8 @@ SET LOCAL lock_timeout='5s';
 SET LOCAL statement_timeout='30s';
 DO $guard$ BEGIN
  IF NOT EXISTS(SELECT 1 FROM pg_proc WHERE oid=to_regprocedure('public.campus_runtime(uuid,text,jsonb,text,uuid,boolean)') AND md5(prosrc)='9036bbc9f5d4732ff4e18f09a193f318') THEN RAISE EXCEPTION 'Unexpected campus_runtime; stop and inspect'; END IF;
- IF NOT EXISTS(SELECT 1 FROM pg_proc WHERE oid=to_regprocedure('public.campus_game(uuid,text,text,jsonb,text,jsonb,text)') AND md5(prosrc)='0e085c42b91d1ac14a3cfe3dfa45b138') THEN RAISE EXCEPTION 'Unexpected campus_game; stop and inspect'; END IF;
- IF NOT EXISTS(SELECT 1 FROM pg_proc WHERE oid=to_regprocedure('public.campus_play(uuid,text,jsonb,text,jsonb,text)') AND md5(prosrc)='07264f0a79b1c7b698837ad8fdedaebe') THEN RAISE EXCEPTION 'Unexpected campus_play; stop and inspect'; END IF;
+ IF NOT EXISTS(SELECT 1 FROM pg_proc WHERE oid=to_regprocedure('public.campus_game(uuid,text,text,jsonb,text,jsonb,text)') AND md5(prosrc)='43a3883b84ba11afb143957baf7c7bdb') THEN RAISE EXCEPTION 'Unexpected campus_game; stop and inspect'; END IF;
+ IF NOT EXISTS(SELECT 1 FROM pg_proc WHERE oid=to_regprocedure('public.campus_play(uuid,text,jsonb,text,jsonb,text)') AND md5(prosrc)='c85c125dd7dad40ec8dfc2005a72a9fd') THEN RAISE EXCEPTION 'Unexpected campus_play; stop and inspect'; END IF;
  IF NOT EXISTS(SELECT 1 FROM pg_proc WHERE oid=to_regprocedure('public.campus_runtime_before_play(uuid,text,jsonb,text,uuid,boolean)') AND md5(prosrc)='8adafe8c10039412724a99b3ab5eebbb') THEN RAISE EXCEPTION 'Unexpected preserved campus_runtime_before_play; stop and inspect'; END IF;
  IF NOT EXISTS(SELECT 1 FROM pg_proc WHERE oid=to_regprocedure('public.campus_game_unlocated(uuid,text,text,jsonb)') AND md5(prosrc)='799024042d23ff9780e4f19227e4f3b2') THEN RAISE EXCEPTION 'Unexpected preserved campus_game_unlocated; stop and inspect'; END IF;
 END; $guard$;

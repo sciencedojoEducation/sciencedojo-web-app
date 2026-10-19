@@ -169,3 +169,9 @@ remove a current membership; no remaining browser poll is needed for normal
 leave. Outage fallback remains logical leases/TTL and cleanup on next activity or
 switch-off, without claiming physical erasure/backups cleanup during an outage.
 The maintained school browser fixtures now include 080 even outside game checks.
+
+SQL review keeps switch locking before member FK locks, then room/game locks.
+Invitation FK key-share locks are acquired in stable account order before room
+admission can wait on them. In-flight game writes finish before switch-off's
+cleanup, preventing a later insert from escaping that cleanup. Fixture concurrency
+checks do not substitute for an actual hosted multi-transaction/load run.

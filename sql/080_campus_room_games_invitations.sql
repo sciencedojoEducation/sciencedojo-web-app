@@ -133,6 +133,8 @@ CREATE FUNCTION public.campus_game(actor uuid,game_table text,operation text,pay
 RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public,pg_temp SET lock_timeout='2s' AS $$
 DECLARE live jsonb; own jsonb; result jsonb; occupied integer;
 BEGIN
+ -- Serialize a game request before switch-off/deletion cleanup.
+ PERFORM 1 FROM feature_flags WHERE key='virtual_campus_enabled' FOR SHARE;
  live=campus_games_prepare(actor,transport,proof);
  SELECT p INTO own FROM jsonb_array_elements(live) p JOIN campus_members c ON c.campus_id=(p->>'id')::uuid WHERE c.user_id=actor;
  IF own IS NULL OR credential IS NULL OR credential !~ '^[0-9a-f]{64}$' OR own->>'credential' IS DISTINCT FROM credential THEN RETURN jsonb_build_object('error','Use the connected school tab to play'); END IF;
@@ -175,6 +177,15 @@ RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public,pg_temp S
 DECLARE live jsonb; own jsonb; peer jsonb; person campus_members; other campus_members; invite campus_play_invites; n integer; card jsonb; nearby jsonb;
 BEGIN
  IF operation NOT IN ('read','send','accept','decline','cancel','mute') OR jsonb_typeof(payload) IS DISTINCT FROM 'object' OR octet_length(payload::text)>512 THEN RETURN jsonb_build_object('error','Invalid invitation'); END IF;
+ PERFORM 1 FROM feature_flags WHERE key='virtual_campus_enabled' FOR SHARE;
+ -- Admission locks members before the room. Take invitation FK locks first,
+ -- in stable order, so an invite cannot deadlock against a concurrent connect.
+ PERFORM 1 FROM campus_members c WHERE c.user_id=actor
+ OR (operation='send' AND c.campus_id::text=payload->>'target')
+ OR (operation IN ('accept','decline','cancel') AND c.user_id IN (
+   SELECT sender FROM campus_play_invites WHERE id::text=payload->>'id' AND (sender=actor OR recipient=actor)
+   UNION SELECT recipient FROM campus_play_invites WHERE id::text=payload->>'id' AND (sender=actor OR recipient=actor)))
+ ORDER BY c.user_id FOR KEY SHARE;
  live=campus_games_prepare(actor,transport,proof);
  SELECT * INTO person FROM campus_members WHERE user_id=actor;
  SELECT p INTO own FROM jsonb_array_elements(live) p WHERE p->>'id'=person.campus_id::text;

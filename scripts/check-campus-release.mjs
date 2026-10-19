@@ -31,7 +31,7 @@ const app = createServer(async (request, response) => {
     let body = "";
     for await (const chunk of request) { body += chunk; assert(body.length <= 2048); }
     const payload = JSON.parse(body);
-    assert.deepEqual(Object.keys(payload).sort(), ["operation", "value"]);
+    assert.deepEqual(Object.keys(payload).sort(), payload.operation==="depart"?["connection","operation","value"]:["operation", "value"]);
     callbackRequests++;
     if(payload.operation==='depart'&&payload.value===who.id&&/^[A-Za-z0-9_-]{8,64}$/.test(payload.connection)){
       departures.push(payload.connection);response.writeHead(200,{'content-type':'application/json'});return response.end('true');
