@@ -201,8 +201,22 @@ those identities. It does not change campus pseudonyms, add chat, replace
 dashboards/courses, or authorize disclosure through world messages.
 
 The prepared additive 076 migration uses service-only game operations and
-RLS-protected ephemeral records. It is not hosted yet. The approved owner review
+RLS-protected ephemeral records. The owner subsequently approved applying 076 and publishing the board games
+to the protected Preview (`1358e11`, Ready). Friend admission remains pending. The approved owner review
 still admits only the owner; friend accounts, deployment access, environment-
 specific changes and applicable operating/admission requirements remain pending.
 See the implementation runbook for actual software evidence. Synthetic matches
 do not establish a real friend walkthrough, current-head hosted CI or G1–G9.
+
+## German vocabulary — owner-approved software, 19 October 2026
+
+The owner approved [WortQuest](virtual-sciencedojo-german-vocabulary.md): original
+A1–C2 practice cards with English explanations, examples and translations; solo
+and two-to-four-player ten-card quizzes with session points. Joining a friend
+quiz deliberately shares the chosen level and aggregate game points only with
+its participants. Selected answers/private review and all existing course data
+remain outside world state. No certified proficiency, teacher review or learner
+outcome is established. Migration 077 and vocabulary publication remain pending
+separate hosted approval. The owner confirmed friends are adults; account emails,
+EU/EEA confirmation, deployment access, actual friend tests and applicable
+operating/release evidence remain pending. No general learner launch is inferred.

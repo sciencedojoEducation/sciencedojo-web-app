@@ -961,3 +961,74 @@ membership was published by this work. Apply 076 and publish the game update onl
 after its separate environment-specific approval. Named friend accounts,
 applicable eligibility/notices/operating decisions, deployment-protection access
 and the real friend walkthrough remain pending. The full goal is still active.
+
+## Games Lounge — approved hosted owner update, 19 October 2026
+
+The owner replied “approve” to the pending 076/protected Preview activation and
+WortQuest software plan. Read-only duplicate/prerequisite checks found no 076
+objects, existing admission/RLS and one owner membership with zero staff. Exact
+076 was applied in the verified owner-review database. The complete editor
+document was compared with the reviewed source before successful execution.
+Both game tables have RLS; direct anon/authenticated/service table access is
+denied; only the service role may execute the game RPC. An actual service call
+for an unadmitted opaque identity returns Campus access required, anonymous RPC
+and direct-table requests are denied, and the Preview remains Vercel-protected.
+No friend account, staff authority, course grant, production app/settings, paid
+plan or hosting bypass was added. Private activation evidence retains the hash
+and actual results; do not replay 076.
+
+The tested committed board-games source `1358e11` was pushed to the beta branch
+and Vercel reports Ready/Preview (deployment `uTgUHiwvp4aFqXxgsxBucM9NdLcS`).
+PR #17 is still open/draft/unmerged. Hosted quality checks for that new revision
+were not observed; previous-run success is not current-head evidence. Real
+signed-in multiplayer games and a human friend walkthrough remain pending.
+
+The owner also approved the WortQuest software plan. Core vocabulary authority
+and content are committed as `4977946`; the UI/browser checks as `373e431`.
+The new 077 migration is forward-only local preparation, not covered by the
+076 hosted SQL approval. Local vocabulary verification subsequently completed as recorded below. The
+owner confirmed their friends are 18+; exact account emails and EU/EEA residence
+confirmation remain pending, along with deployment access and operating gates.
+
+### WortQuest — completed local verification
+
+The game contains 180 original starter cards across A1/A2/B1/B2/C1/C2, with
+English explanations, German examples/translations, grammar forms, shuffled
+four-option ten-card quizzes, 0–100 points, private missed-word review and
+unanimous friend rematches. Pictures/names/scores appear above the friend quiz.
+All 85 campus regressions, both full two/four-browser vocabulary flows and both
+existing board-game browser flows passed. The final full original flow also
+checks an incorrect answer yields a 90-point total/private review; the shared
+flow checks all six levels and shared score agreement. Focused checks on both
+transports cover the final physical side-table E location without replaying the
+already completed matches. No geometry, collision/SQL parity, speed, pose buffer,
+render thresholds or world protocol changed.
+
+Original/shared full vocabulary evidence inspected 3,024/1,421 world frames and
+four separately validated shared admission handshakes without identity/course/
+quiz canaries. Original/shared board games inspected 2,390/1,246 frames and five
+shared handshakes without canaries. These are loopback synthetic observations,
+not hosted throughput, device FPS or human acceptance. Course input remained
+mounted, and game members/answers were cleared on empty/switch off; level resets
+to A1. Final-answer retries do not rescore, reviewers get only their own choices,
+and migration drift/replay guards passed.
+
+Type/scoped lint and the isolated clean webpack build passed. Build archive
+`39aaa61` matches all six application files by SHA-256. Test-only commit
+`00a957a` adds a focused location check; it changes no build application file.
+No local environment file was copied into the archive. The explicit service
+release allowlist is unchanged from `ff5cb72`; the earlier clean service
+release/restart remains its evidence rather than a new application-wide test.
+The maintained CI commands include both vocabulary transports and seven-day
+evidence retention. Current local commits are not hosted CI or hosted games
+integration evidence. The retained local preview is synthetic/loopback-only and
+shows an A1 card with its English explanation; no owner notice was accepted.
+
+Read-only hosted preflight confirms the exact reviewed 076 game authority body,
+no 077 helper, zero game members, one existing owner membership and zero staff.
+077 and the vocabulary source remain local pending their separate approval. The
+owner's completed 076/protected board-games approval must not be requested or
+applied again. Private source hashes, actual outputs and evidence paths are in
+`.campus-private/wortquest-evidence.json`. Specific friends/EU/EEA confirmation,
+deployment access, actual multiplayer/human results and applicable operating
+gates remain pending. Keep the full requested friend-test goal incomplete.

@@ -1,7 +1,8 @@
 # sciencedojo. — Games Lounge plan
 
 19 October 2026. Status: owner approved implementation on 19 October; software
-implementation and local verification are complete; hosted friend access is pending. This is a new campus software phase, not a change to
+implementation and local verification are complete; 076 and the protected
+board-games Preview were subsequently approved and applied; friend access is pending. This is a new campus software phase, not a change to
 the business offer or permission to admit additional accounts.
 
 ## Requested result
@@ -194,6 +195,14 @@ slow school exit sends one request, clears the final game seat and permits fresh
 admission without a delayed second exit. These results are synthetic, not
 hosted/friend/device acceptance. See the runbook and private evidence record.
 
-The implementation is ready for review. 076, the updated protected Preview,
-named friend invitations and any deployment share-link approval remain pending;
-no hosted settings/data or invitations were changed by this work.
+The owner subsequently approved exact 076 and protected Preview publication on
+19 October. The transaction succeeded, both new tables have RLS, all three runtime
+roles lack direct table access, the RPC is service-only, and an unknown identity
+is denied. Source `1358e11` reached Ready as a Preview and its branch URL still
+redirects unauthenticated requests to Vercel authentication. One existing owner
+membership and zero staff remain; no friend was added. See the runbook/private
+activation record. The separate WortQuest extension remains local pending its
+077 approval. Named friend accounts, EU/EEA confirmation, deployment-protection
+access, applicable operating requirements and actual friend usability are pending.
+The owner has confirmed that the intended friends are 18+. No production app or
+settings, paid plan, hosting bypass or course permission was changed.

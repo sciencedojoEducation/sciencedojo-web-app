@@ -337,8 +337,30 @@ game identities and boards transactionally even after application admission
 closes. Normal lease expiry is lazy cleanup, not a new background job or a
 physical backup-retention guarantee. No chat, durable rankings or game history.
 
-076 and the new software remain local until the separate hosted activation
-procedure is approved. Existing owner-only invitations, protected Preview and
+The owner subsequently approved 076 and the board-games protected Preview
+activation. Exact 076 is applied in the owner-review database, and source
+`1358e11` reached Ready as a protected Preview; do not replay the migration. Existing owner-only invitations, protected Preview and
 operating gates are unchanged; named friends need their own authorized admission
 and deployment access. Read the runbook for actual verification rather than
 inferring hosted or human acceptance from synthetic browser matches.
+
+## WortQuest — approved software, 19 October 2026
+
+The owner approved [the German vocabulary plan](virtual-sciencedojo-german-vocabulary.md).
+WortQuest adds original A1–C2 practice cards and ten-card scored quizzes inside
+the existing Games Lounge dialog. Solo study/answers/score stay local. In a
+voluntary two-to-four-player game, level and aggregate session points are shared
+only with joined participants; each selected answer and missed-word review stays
+private in the application/database boundary. No course grades/progress or quiz
+metadata enters either world protocol. Profile sharing keeps the explicit
+preview/Join and participant-authorized picture proxy. This is practice, not a
+proficiency qualification or a persistent learning record.
+
+Local forward migration 077 extends the constrained table registry and service
+RPC; it does not edit/replay 076. Private helpers score answers atomically and
+project only the caller's choices/review. Concurrent players can answer once
+without version conflicts, final-answer retries are idempotent, and all players
+confirm continuation. Scores update after everyone answers. One membership per
+account spans all three games. Block, revocation, lease expiry, empty table and
+switch-off cleanup retain the existing boundaries. 077 and the vocabulary app
+are not hosted; exact hosted approval and actual integration remain separate.

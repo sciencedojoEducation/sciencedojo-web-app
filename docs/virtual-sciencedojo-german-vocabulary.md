@@ -1,7 +1,7 @@
 # sciencedojo. — WortQuest German vocabulary game
 
-19 October 2026. Status: proposed software phase for owner approval; not
-implemented or deployed. Extends the existing Games Lounge request. Existing
+19 October 2026. Status: owner approved the software plan on 19 October; implemented
+locally with verification complete; not deployed. Extends the existing Games Lounge request. Existing
 Four in a Row/Dots & Boxes verification and the pending hosted activation in
 [the board-games plan](virtual-sciencedojo-board-games.md) remain valid.
 
@@ -123,5 +123,61 @@ Hosted SQL application, protected Preview publication and friend admission
 remain the separate, concrete environment-specific approval step already
 defined in the Games Lounge plan. No hosted migration, account invitation,
 production app/settings change or paid infrastructure is authorized by this
-proposed plan. The earlier hosted-activation approval question remains pending;
-this feature request is not an answer to that question.
+proposed plan. The owner subsequently approved the earlier hosted activation: exact 076 was
+applied and board-games source `1358e11` reached Ready in the protected Preview.
+That approval did not name the new 077 migration. Prepare its exact reviewed
+activation after local verification; keep WortQuest local until that scoped
+hosted change is approved. Friend account emails and EU/EEA confirmation remain
+pending; the owner has confirmed their friends are 18+.
+
+## Content review record
+
+The 180 explanations, examples and translations were authored for this starter
+collection and checked for sense, forms and ambiguous choices during this
+implementation. Targeted dictionary checks confirmed the displayed noun forms
+for [Verantwortung](https://www.duden.de/rechtschreibung/Verantwortung),
+[Aufwand](https://www.duden.de/rechtschreibung/Aufwand) and
+[Understatement](https://www.duden.de/rechtschreibung/Understatement). These
+limited checks are not independent teacher review or validation of every level
+assignment. Keep the existing practice-level wording in the game.
+
+## Verified local result and prepared hosted change
+
+All 85 campus regressions passed. Both maintained transports completed real
+synthetic two- and four-browser friend quizzes, with all-player continuation,
+score/tie agreement, actual rendered pictures/usernames, keyboard/touch, phone
+layout, fullscreen, unjoined roster/photo denial and retained course input. All
+six solo levels completed; the final original-transport flow also verified a
+wrong answer gives zero points, a 90-point total and private missed-word review.
+Both existing board-game walkthroughs passed after the extension. Focused final
+checks on both transports verified E at the existing rear lounge side table
+(x=20.7/z=21.3/floor=2); no solid geometry or movement revision changed.
+
+Type, scoped lint and an isolated webpack production build passed. The clean
+archive of `39aaa61` matches all six current application files by SHA-256, and
+contains no copied local environment files. The explicit service runtime
+allowlist is unchanged from the previously verified release; no new service
+process test is claimed. Integrated graphics resolution/fullscreen checks pass;
+full scene render/device evidence keeps its earlier recorded scope. CI includes
+the two vocabulary commands and retains synthetic evidence for seven days, but
+these new commits have not run in hosted CI or been published.
+
+A loopback-only shared-SQL synthetic preview is retained at port 3012 with the
+study card open for review. Use `npm run campus:preview -- --vercel --vocabulary`
+only when replacing that owned preview intentionally; do not start a second
+process on the same port. It is not the real owner account or hosted friend test.
+
+The exact [077 migration](../sql/077_campus_german_vocabulary.sql) is ready for
+separate approval in the same verified owner-review database. Its guard checks
+the reviewed 076 authority body and rejects replay/drift before schema changes.
+A read-only hosted check confirmed that body matches and 077 is absent. Apply
+the reviewed transaction once after approval, verify unchanged RLS/restricted
+grants and private helper access, then publish only the protected beta Preview.
+Recheck the specific target and hash at action time; do not reapply 076. Reuse
+the existing owner invitation and two Preview settings. No new environment
+variables, paid service or friend membership is needed for software publication.
+
+Named friend admission and an actual signed-in multiplayer walkthrough remain
+pending. The owner confirmed 18+; account emails, EU/EEA confirmation, deployment
+protection access and applicable operating requirements are still needed. Do not
+infer permission to admit every registered account from “everyone can test.”
