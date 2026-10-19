@@ -793,3 +793,21 @@ checking passed before final browser/render/build verification. The actual-scene
 probe adds Follow/character position agreement without changing its original
 continuity, exact-target, buffer or draw-call assertions. Final full transport,
 scene/build and hosted application outcomes are recorded below when available.
+
+The complete original-transport school/course/basketball walkthrough passed.
+Normal/reduced-motion actual-scene checks also passed; Follow position error was
+zero and the original continuity/exact-target/draw-call limits held. A clean
+committed-snapshot webpack production build passed, excluding concurrent business
+work. The new render probe initially referenced an undefined CLI flag variable;
+that fixture typo was corrected without changing application behavior.
+
+The first shared browser run then exposed a pre-existing stationary-ball redraw
+classification defect: its repeated identical samples counted as continuous motion,
+keeping Auto at its movement pixel ratio while idle. A dedicated actual-scene
+repeated-idle-snapshot regression reproduced the failure before repair. The court
+now requests continuous flight frames only while buffered confirmed positions
+differ from the displayed ball; held dribble remains separately gated by reduced
+motion. Idle snapshots still invalidate a frame, but do not trigger continuous
+animation. Normal/reduced-motion scene checks, an isolated original entry check,
+the complete shared browser flow and the final build are being verified against
+this follow-up. No graphics assertion or movement threshold was relaxed.

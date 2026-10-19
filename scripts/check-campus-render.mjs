@@ -9,6 +9,7 @@ import { chromium } from "@playwright/test";
 
 const directory = await mkdtemp(join(tmpdir(), "campus-render-"));
 const slowDevice=process.argv.includes("--slow-device");
+const reducedMotion=process.argv.includes("--reduced-motion");
 const fiber = resolve("node_modules/@react-three/fiber/dist/react-three-fiber.esm.js");
 await build({
   stdin: { contents: `import React,{useState,useEffect} from 'react';
@@ -21,6 +22,7 @@ await build({
       window.showExterior=()=>{setView("exterior");setHour(12)};window.showNight=()=>setHour(22);window.pauseScene=()=>setActive(false);window.resumeScene=()=>setActive(true);
       window.showFirst=()=>{window.watchOrbit=false;setZ(26);setView("first-person");setLook({yaw:-.64,pitch:.72,distance:36})};
       window.refreshSnapshot=()=>setX(x=>x+.2);
+      window.startIdleBallSnapshots=()=>{window.idleBallStartedAt=performance.now();let n=0;const timer=setInterval(()=>{setBall(basketballSnapshot(createBasketball(performance.now()),[]));if(++n===15){clearInterval(timer);window.idleBallDone=true;}},100);};
       window.showOrbit=()=>{window.orbitFrames=[];window.watchOrbit=true;window.orbitExpectedYaw=.9;setView('orbit');setHour(12);setLook({yaw:.9,pitch:.55,distance:10});};
       window.nudgeOrbit=()=>setZ(z=>z+.2);
       const courtPlayer={...player,x:52,z:0};let courtBall;
@@ -158,7 +160,11 @@ try {
   }
   // Assert actual framebuffer recovery after the walk, not just a pure scale calculation.
   await page.waitForFunction(()=>{const c=document.querySelector('canvas');return c&&Math.abs(c.width/c.clientWidth-1)<.01;},null,{timeout:5000});
-  result.graphics={autoSharpensAfterMotion:true};
+  await page.evaluate(()=>window.startIdleBallSnapshots());
+  await page.waitForFunction(()=>window.idleBallDone);
+  const idleFrames=await page.evaluate(()=>window.sceneFrames.filter(f=>f.t>window.idleBallStartedAt+800));
+  assert(idleFrames.length>2&&idleFrames.every(f=>Math.abs(f.dpr-1)<.01),"Stationary ball snapshots must not be classified as continuous motion or blur Auto graphics");
+  result.graphics={autoSharpensAfterMotion:true,idleBallSnapshotsStaySharp:true};
   await page.screenshot({ path: join(directory, "scene.png") });
   await page.evaluate(()=>window.showOverview());await page.waitForTimeout(2500);
   await page.screenshot({path:join(directory,"whole-school.png")});

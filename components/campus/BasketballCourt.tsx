@@ -93,7 +93,10 @@ export default function BasketballCourt({ball,players,self,view,angles,focus,cha
    }
   }
   const near=Math.hypot(camera.position.x-x,camera.position.z-z,camera.position.y-y)<60;
-  if((near&&(samples.length>1||(ball.mode==='held'&&!!owner&&!reducedMotion)))||(aiming&&charge.current.started!==null)){
+  // A fresh stationary snapshot is not animation. Only request continuous
+  // frames while confirmed ball positions still differ from the displayed pose.
+  const pendingMotion=ball.mode!=='held'&&samples.some(sample=>Math.hypot(sample.x-x,sample.y-y,sample.z-z)>.000001);
+  if((near&&(pendingMotion||(ball.mode==='held'&&!!owner&&!reducedMotion)))||(aiming&&charge.current.started!==null)){
    activityRef.current=true;invalidate();
   }
  });

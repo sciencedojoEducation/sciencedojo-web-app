@@ -296,3 +296,9 @@ tracks the confirmed interpolated pose directly, preserving easing for exterior
 and overview transitions and reduced-motion anchoring. The 300ms pose buffer and
 authoritative speed, geometry, seats and all public fields stay unchanged.
 Verification and hosted application are recorded separately in the runbook.
+
+Repeated stationary court snapshots must not mark the render activity budget as
+continuous animation. Buffered flight requests frames only for actual outstanding
+position changes; held dribble uses its separate reduced-motion-aware branch.
+The actual-scene idle-stream regression must retain sharp Auto graphics while
+new identical snapshots continue arriving.
