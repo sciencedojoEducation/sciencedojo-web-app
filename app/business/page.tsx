@@ -42,7 +42,7 @@ export default async function BusinessPage() {
   return (
     <div className="min-w-0 bg-white text-[#12243A]">
       <a href="#business-content" className={`sr-only z-50 rounded-lg bg-white p-4 focus:not-sr-only focus:absolute focus:left-4 focus:top-4 ${focus}`}>Skip to content</a>
-      <header className="border-b border-[#dce2e8] bg-white px-5 py-5 md:px-8">
+      <header data-public-site-header className="border-b border-[#dce2e8] bg-white px-5 py-5 md:px-8">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-5">
           <Link href="/business" aria-label="ScienceDojo for Business home" className={focus}>
             <BusinessBrand />

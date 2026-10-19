@@ -1,0 +1,16 @@
+.line {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  z-index: 60;
+  pointer-events: none;
+  visibility: hidden;
+  background: linear-gradient(90deg, #0066ff, #00d2ff);
+  transform: scaleX(var(--public-reading-progress, 0));
+  transform-origin: left;
+  transition: none;
+}
+
+.line[data-scrollable="true"] { visibility: visible; }

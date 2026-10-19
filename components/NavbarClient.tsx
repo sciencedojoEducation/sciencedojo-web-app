@@ -48,7 +48,7 @@ export default function NavbarClient({ flags }: { flags: PublicFlagMap }) {
   const dashboardHref = session ? `/dashboard/${role}` : undefined;
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-primary/[0.08] bg-white/90 shadow-[0_1px_14px_rgba(0,26,68,0.05)] backdrop-blur-lg transition-all">
+    <header data-public-site-header className="sticky top-0 z-50 w-full border-b border-primary/[0.08] bg-white/90 shadow-[0_1px_14px_rgba(0,26,68,0.05)] backdrop-blur-lg transition-all">
       <div className={`${session ? "w-full px-8" : "container mx-auto px-4 md:px-8"} h-20 flex items-center justify-between transition-all duration-300`}>
         <div className="flex items-center gap-3">
           <MobileNavbarMenu

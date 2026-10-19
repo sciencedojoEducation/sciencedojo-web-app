@@ -21,7 +21,7 @@ export default function EngineeringNavigation() {
     document.addEventListener("pointerdown", dismiss);
     return () => document.removeEventListener("pointerdown", dismiss);
   }, [open]);
-  return <header className={s.header} ref={header} onKeyDown={(event) => {
+  return <header data-public-site-header className={s.header} ref={header} onKeyDown={(event) => {
     if (event.key === "Escape" && open) { setOpen(false); trigger.current?.focus(); }
   }} onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget as Node)) setOpen(false); }}>
     <div className={`${s.container} ${s.headerInner}`}>

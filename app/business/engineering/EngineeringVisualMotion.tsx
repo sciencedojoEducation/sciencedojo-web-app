@@ -36,23 +36,6 @@ export default function EngineeringVisualMotion({ children }: { children: ReactN
   useEffect(() => {
     const node = root.current;
     if (!node) return;
-    let frame = 0;
-    const update = () => {
-      frame = 0;
-      const bounds = node.getBoundingClientRect();
-      const range = Math.max(1, node.scrollHeight - innerHeight);
-      node.style.setProperty("--reading-progress", String(Math.max(0, Math.min(1, -bounds.top / range))));
-    };
-    const schedule = () => { if (!frame) frame = requestAnimationFrame(update); };
-    update();
-    window.addEventListener("scroll", schedule, { passive: true });
-    window.addEventListener("resize", schedule);
-    return () => { cancelAnimationFrame(frame); window.removeEventListener("scroll", schedule); window.removeEventListener("resize", schedule); };
-  }, []);
-
-  useEffect(() => {
-    const node = root.current;
-    if (!node) return;
     const animations = new Set<Animation>();
     const observer = new IntersectionObserver(entries => {
       for (const entry of entries) {
@@ -94,6 +77,6 @@ export default function EngineeringVisualMotion({ children }: { children: ReactN
   }, [enabled]);
 
   return <MotionContext.Provider value={{ paused, reduced, enabled, toggle: () => setPaused(value => !value) }}><div ref={root} className={s.page} data-engineering-motion data-motion={enabled ? "on" : "off"}>
-    <div className={s.readingProgress} aria-hidden="true" />{children}
+    {children}
   </div></MotionContext.Provider>;
 }

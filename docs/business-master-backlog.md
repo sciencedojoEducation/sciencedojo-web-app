@@ -48,6 +48,11 @@ Piumal reported an agency reply requesting further examples after finding no cli
 
 ## Existing decisions and completed work
 
+### Shared public scroll-progress line — 19 October 2026
+
+Piumal requested the engineering page's filling scroll line across public website pages, excluding dashboards. A single shared indicator replaces the engineering-only copy, follows each public header, adjusts to content/viewport changes and hides on non-scrollable pages. Dashboard/admin/study/campus/account/onboarding/booking screens are excluded; no tracking, storage, backend or learning-progress change is introduced. See `public-scroll-progress.md` and the dated release record for actual tests/publication. This is E1/public-navigation maintenance, not a fourth active task; B3/S1/R1 and paid-work/tested-delivery gates remain intact.
+
+
 ### Engineering main-branch release authorised — 19 October 2026
 
 After being told the page/menu were local only, Piumal explicitly requested pushing them. This authorises publication of the current engineering page and its main-site business destinations. A clean release checkout is based on current main, excluding campus-beta source/configuration and unrelated dirty work. Its full 455-test regression suite, type/lint checks, production build, private-workbook trace guard and production-mode engineering/navigation browser acceptance passed. The release adds only a pinned browser-test development dependency, preserving main's runtime dependencies. See the dated release record for push/hosted/live evidence when observed. This remains E1 maintenance; B3/S1/R1 and paid-work/tested-delivery gates remain intact.

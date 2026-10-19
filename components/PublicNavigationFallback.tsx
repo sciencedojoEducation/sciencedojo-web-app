@@ -4,7 +4,7 @@ import { businessNavigationItems } from "@/lib/business-navigation";
 
 /** Streamed navigation needs a readable fallback when scripts cannot reveal it. */
 export default function PublicNavigationFallback() {
-  return <div className="h-20 border-b border-primary/[0.08] bg-white">
+  return <div data-public-site-header className="h-20 border-b border-primary/[0.08] bg-white">
     <noscript>
       <nav aria-label="Main navigation without JavaScript" className="mx-auto flex h-20 max-w-7xl items-center justify-between gap-4 px-5 text-sm text-secondary">
         <Link href="/" aria-label="ScienceDojo home"><Logo className="text-xl" /></Link>

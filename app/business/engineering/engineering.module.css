@@ -378,7 +378,6 @@
 }
 
 /* Original engineering artwork and bounded, user-controlled motion. */
-.readingProgress { position: fixed; top: 74px; left: 0; width: 100%; height: 2px; background: linear-gradient(90deg,var(--primary),var(--cyan)); transform: scaleX(var(--reading-progress,0)); transform-origin: left; z-index: 45; pointer-events: none; }
 .heroGrid { grid-template-columns: 1.08fr 1fr; gap: 44px 60px; }
 .heroArtwork { min-width: 0; }
 .connectedArtwork { display: block; width: 100%; height: auto; overflow: visible; }
@@ -474,7 +473,6 @@
   .productCaption { flex-direction: row; }
 }
 @media (max-width: 760px) {
-  .readingProgress { top: 76px; }
   .heroArtwork { margin-top: 9px !important; }
   .artFrame { aspect-ratio: 560/520; }
   .heroArtImage { border-radius: 8px; object-position: 53% 50%; }

@@ -6,6 +6,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { createServer } from "node:net";
 import { chromium, expect } from "@playwright/test";
+import { checkPublicScrollProgress } from "./check-public-scroll-progress.mjs";
 
 const output = await mkdtemp(join(tmpdir(), "sciencedojo-engineering-browser-"));
 const urlIndex = process.argv.indexOf("--url");
@@ -88,6 +89,7 @@ try {
   await expect(staticPage.locator("#problems")).toContainText("Someone finds the right course");
   await expect(staticPage.locator("#work")).toContainText("In-house product");
   await expect(staticPage.locator("[data-visual-motion-toggle]")).toBeHidden();
+  await expect(staticPage.locator("[data-public-scroll-progress]")).toBeHidden();
   evidence.checks.push("No-JavaScript opening, explanatory default example and email fallback");
   await noJs.close();
   for (const [width, height] of [[320,667],[390,844],[768,1024],[1280,900],[1440,1000],[390,568]]) {
@@ -331,6 +333,9 @@ try {
   assert.equal(await plainPage.getByRole("navigation", { name: "Main navigation without JavaScript" }).count(), 0);
   await plain.close();
   evidence.checks.push("Main For Business disclosure: desktop hover/leave, pointer bridge, keyboard open/tab/Escape/focus and outside dismissal; 1280/1440 fit; both phone destinations and scroll cleanup; native no-script navigation");
+  const publicProgress = await checkPublicScrollProgress(page, origin, output);
+  evidence.checks.push(...publicProgress.checks);
+  evidence.screenshots.push(...publicProgress.screenshots);
   assert.deepEqual(errors, []);
   evidence.checks.push("No browser page errors");
   evidence.passed = true;

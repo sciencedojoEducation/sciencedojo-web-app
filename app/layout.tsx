@@ -3,6 +3,7 @@ import { Suspense } from "react";
 import { Inter } from "next/font/google";
 import Navbar from "@/components/Navbar";
 import PublicNavigationFallback from "@/components/PublicNavigationFallback";
+import PublicScrollProgress from "@/components/PublicScrollProgress";
 import Footer from "@/components/Footer";
 import PrivateWorkbookTrackingGate from "@/components/PrivateWorkbookTrackingGate";
 import Analytics from "@/components/Analytics";
@@ -69,6 +70,7 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col font-sans" suppressHydrationWarning>
         <Suspense fallback={null}><PrivateWorkbookTrackingGate><Analytics /><MetaPixel /></PrivateWorkbookTrackingGate></Suspense>
+        {!isMaintenanceMode && <Suspense fallback={null}><PublicScrollProgress /></Suspense>}
         {!isMaintenanceMode && (
           <PublicChromeGate>
             <Suspense fallback={<PublicNavigationFallback />}>

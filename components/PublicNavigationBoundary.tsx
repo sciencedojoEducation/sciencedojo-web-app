@@ -22,7 +22,7 @@ export default class PublicNavigationBoundary extends Component<
     if (!this.state.failed) return this.props.children;
 
     return (
-      <header className="border-b border-slate-200 bg-white px-4 py-5">
+      <header data-public-site-header className="border-b border-slate-200 bg-white px-4 py-5">
         <nav aria-label="Main navigation" className="mx-auto flex max-w-6xl flex-wrap items-center gap-6 text-sm font-semibold text-secondary">
           {/* Recovery links use full navigation even if the client router failed. */}
           {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
