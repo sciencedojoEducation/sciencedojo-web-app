@@ -163,6 +163,9 @@ try {
   await page.evaluate(()=>window.startIdleBallSnapshots());
   await page.waitForFunction(()=>window.idleBallDone);
   const idleFrames=await page.evaluate(()=>window.sceneFrames.filter(f=>f.t>window.idleBallStartedAt+800));
+  result.idleBallFrameEvidence={count:idleFrames.length,ratios:idleFrames.map(f=>f.dpr)};
+  await writeFile(result.evidence,JSON.stringify(result,null,2));
+  console.log("Idle ball quality evidence:",JSON.stringify(result.idleBallFrameEvidence));
   assert(idleFrames.length>2&&idleFrames.every(f=>Math.abs(f.dpr-1)<.01),"Stationary ball snapshots must not be classified as continuous motion or blur Auto graphics");
   result.graphics={autoSharpensAfterMotion:true,idleBallSnapshotsStaySharp:true};
   await page.screenshot({ path: join(directory, "scene.png") });

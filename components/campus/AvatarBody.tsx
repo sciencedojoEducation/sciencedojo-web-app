@@ -75,7 +75,9 @@ export default function AvatarBody({colour,motion,seated,hidden,reducedMotion,ac
    if(Math.abs(target-state.amount)<.01)state.amount=target;
   }
   if(travel>.00001||previous!==state.amount)pose(state.phase,state.amount);
-  if(!walking&&state.amount>0){activityRef.current=true;invalidate();}
+  // The final confirmed movement can consume the last scheduled world frame.
+  // Keep the gait running so it settles before Auto restores sharp rendering.
+  if(walking||state.amount>0){activityRef.current=true;invalidate();}
  },-.5);
  return <group name="avatar-body" rotation={stance==="prone"?[Math.PI/2,0,0]:[0,0,0]} position={stance==="prone"?[0,.25,-.7]:[0,0,0]}>
   <instancedMesh name="avatar-parts" ref={boxes} args={[undefined,undefined,19]}>
