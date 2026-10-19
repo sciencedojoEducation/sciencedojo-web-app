@@ -79,9 +79,11 @@ test('invitation/private context authority denies direct roles, stale/reordered 
  try{
   for(const role of ['anon','authenticated','service_role']){
    await f.db.exec(`SET ROLE ${role}`);
-   for(const table of ['campus_play_invites','campus_play_limits','campus_play_backoff','campus_play_context'])await assert.rejects(f.db.query(`SELECT * FROM ${table}`),/permission/);
+   for(const table of ['campus_play_invites','campus_play_limits','campus_play_backoff','campus_play_context','campus_play_keys'])await assert.rejects(f.db.query(`SELECT * FROM ${table}`),/permission/);
    await assert.rejects(f.db.query("SELECT campus_game_unlocated($1,'four','read')",[id(1)]),/permission/);
    await assert.rejects(f.db.query("SELECT campus_games_prepare($1,'vercel','{}')",[id(1)]),/permission/);
+   await assert.rejects(f.db.query("SELECT campus_runtime_before_play(NULL,'leave')"),/permission/);
+   await assert.rejects(f.db.query("SELECT campus_game_credential($1)",['0'.repeat(64)]),/permission/);
    if(role!=='service_role')await assert.rejects(f.db.query("SELECT campus_play($1,'read')",[id(1)]),/permission/);
    await f.db.exec('RESET ROLE');
   }

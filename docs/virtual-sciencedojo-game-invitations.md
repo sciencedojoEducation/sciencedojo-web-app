@@ -175,3 +175,9 @@ Invitation FK key-share locks are acquired in stable account order before room
 admission can wait on them. In-flight game writes finish before switch-off's
 cleanup, preventing a later insert from escaping that cleanup. Fixture concurrency
 checks do not substitute for an actual hosted multi-transaction/load run.
+
+Fullscreen invitation tools reuse the existing exclusive school-panel mechanism.
+An incoming toolbar indicator opens the invitation controls deliberately; a
+collapsed invitation tool does not cover basketball, map or study controls.
+The normal-page card remains alongside the world. No invitation arrival steals
+focus or mouse capture. Phone/fullscreen acceptance exercises this panel directly.

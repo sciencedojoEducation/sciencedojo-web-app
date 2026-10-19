@@ -50,21 +50,29 @@ export async function checkBoardGames({a,b,browser,origin,identities,shared,game
   await store.db.exec("UPDATE campus_play_limits SET last_sent='-infinity' WHERE connection IS NOT NULL");
   await invite();await b.getByRole('button',{name:'Play together · New invite',exact:true}).waitFor({timeout:10000});
   await b.setViewportSize({width:390,height:844});
+  await b.getByRole('button',{name:'Full screen',exact:true}).click();
   await b.getByRole('button',{name:'Play together · New invite',exact:true}).click();
   expect(await b.locator('.campus-play-together').evaluate(el=>el.scrollWidth<=el.clientWidth+1)).toBe(true);
   await b.screenshot({path:join(directory,'play-invitation-phone.png')});result.screenshots.push(join(directory,'play-invitation-phone.png'));
   await b.getByRole('button',{name:'Accept invitation',exact:true}).press('Enter');
+  await b.getByRole('button',{name:'Exit full screen',exact:true}).click();
+  await b.waitForFunction(()=>!document.fullscreenElement&&!document.querySelector('.campus-immersive'));
   await b.setViewportSize({width:1280,height:900});
   for(const page of pages)await page.getByRole('button',{name:'Walk to reserved table',exact:true}).waitFor({timeout:10000});
   expect((await store.db.query('SELECT count(*) AS n FROM campus_game_members')).rows[0].n).toBe(0);
-  // Synthetic starting point outside the upper room; actual server input walks through its door.
-  for(let i=0;i<2;i++)await pose(i,26,38,2);
-  for(const page of pages)await expect(page.locator('.campus-body-tools>span')).toContainText('Level 2',{timeout:10000});
-  for(const page of pages){await page.getByRole('button',{name:'Walk to reserved table',exact:true}).click();await page.getByRole('button',{name:/E Play Four in a Row/}).waitFor({timeout:30000});}
+  // The accepted meeting guides real walking and a lift ride from the ground floor.
+  for(const page of pages){
+    await page.getByRole('button',{name:'Walk to reserved table',exact:true}).click();
+    const lift=page.getByRole('button',{name:/^E Glass elevator → level 2$/});
+    await lift.waitFor({timeout:35000});await lift.click();
+    await expect(page.locator('.campus-body-tools>span')).toContainText('Level 2',{timeout:10000});
+    await page.getByRole('button',{name:'Walk to reserved table',exact:true}).click();
+    await page.getByRole('button',{name:/E Play Four in a Row/}).waitFor({timeout:35000});
+  }
   const stage=a.getByRole('region',{name:/3D school/});await stage.focus();await a.keyboard.press('e');
   await dialog(a).waitFor();await joinGame(a,0);
   await b.getByRole('button',{name:/E Play Four in a Row/}).click();await joinGame(b,1);
-  result.checks.push('Outside-room requests denied; real decline/expiry, visible in-world badge, phone layout, explicit pseudonym-only invitation/keyboard acceptance, no profile before Join, real navigation through the lounge door and E interaction at the reserved table');
+  result.checks.push('Outside-room requests denied; real decline/expiry, visible in-world badge, phone layout, explicit pseudonym-only invitation/keyboard acceptance, no profile before Join, real ground-floor walking, E elevator ride to Level 2, navigation through the lounge door and E interaction at the reserved table');
   await expect(dialog(a).locator('.game-roster strong')).toHaveCount(2);
   for(const page of pages)await page.waitForFunction(()=>[...document.querySelectorAll('.game-roster img')].length===2&&[...document.querySelectorAll('.game-roster img')].every(i=>i.complete&&i.naturalWidth===40));
   const own=(await gameFetch(a,'/api/campus/games?table=four')).body.game.self;

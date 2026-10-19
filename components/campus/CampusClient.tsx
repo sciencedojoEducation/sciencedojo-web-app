@@ -152,7 +152,7 @@ export default function CampusClient({
     requestInput.current();
   }, []);
   const {shell,button:fullscreenButton,immersive,enter:enterFullscreen,exit:exitFullscreen}=useCampusFullscreen(stopMovement);
-  const [schoolPanel,setSchoolPanel]=useState<"map"|"sky"|"desk"|"people"|"controls"|null>(null);
+  const [schoolPanel,setSchoolPanel]=useState<"map"|"sky"|"desk"|"people"|"controls"|"play"|null>(null);
   const openPanel=(panel:typeof schoolPanel)=>{
     stopMovement();document.exitPointerLock?.();setSchoolPanel(panel);
     if (!immersive && panel==="people") people.current?.focus();
@@ -329,7 +329,7 @@ export default function CampusClient({
     setHub(true);
   };
   const openGames=(table:GameKind="four")=>{if(!connected||hub||!atGameTable(self,table))return;stopMovement();document.exitPointerLock?.();setSchoolPanel(null);setGames(table);};
-  const openPlay=useCallback(()=>{stopMovement();document.exitPointerLock?.();},[stopMovement]);
+  const openPlay=useCallback(()=>{stopMovement();document.exitPointerLock?.();setSchoolPanel("play");},[stopMovement]);
   const walkToGame=(table:GameKind)=>{
     if(!self||self.seat||self.travel){setNotice("Stand up before walking to the Games Lounge.");return;}
     const t=GAME_TABLES.find(t=>t.id===table)!;stopMovement();setSelectedPlace("commons");setView("follow");
@@ -554,7 +554,7 @@ export default function CampusClient({
               <span>{view === "exterior"?"A scientific school beneath one transparent sky.":view === "overview" ? "Choose a place on the map below." : "Connected places. Shared learning."}</span>
             </div>
           </div>
-            <PlayTogether key={connected?generation.current:"away"} anchor={playAnchor} gameHeaders={gameHeaders} connected={connected} suppressed={hub||!!games} onOpen={openPlay} onNavigate={walkToGame} onSafety={(target,action)=>{void safety(target,action);}}/>
+            <PlayTogether immersive={immersive} expanded={schoolPanel==="play"} key={connected?generation.current:"away"} anchor={playAnchor} gameHeaders={gameHeaders} connected={connected} suppressed={hub||!!games} onOpen={openPlay} onNavigate={walkToGame} onSafety={(target,action)=>{void safety(target,action);}}/>
           <section className="cube-world-controls" data-campus-panel="sky" hidden={immersive&&schoolPanel!=="sky"} tabIndex={immersive?-1:undefined} aria-label="Sky and camera controls">
             <div className="cube-clock-heading"><div><p className="campus-eyebrow">Your sky · 24-hour world</p><time dateTime={clockLabel(hour)}>{clockLabel(hour)}</time></div><span>{manualHour===null?"Local time":"Your chosen time"} · {sky.phase}</span></div>
             <label className="cube-time-range">Time of day<input aria-label="Time of day" type="range" min="0" max="23.75" step="0.25" value={hour} onChange={event=>{stopMovement();setManualHour(Number(event.target.value));}}/></label>

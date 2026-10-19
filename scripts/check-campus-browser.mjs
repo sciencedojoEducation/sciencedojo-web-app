@@ -990,6 +990,7 @@ try {
     await untilCourt(async()=>{const ball=await ballState();return ball.y<.38&&Math.hypot(ball.vx,ball.vy,ball.vz)<.09;},'Released basketball did not settle',10000);
     await retrieve(a,courtIds[0]);
     await a.setViewportSize({width:390,height:844});
+    if(await a.getByRole('button',{name:'Exit full screen',exact:true}).count()){await a.getByRole('button',{name:'Exit full screen',exact:true}).click();await a.waitForFunction(()=>!document.fullscreenElement&&!document.querySelector('.campus-immersive'));}
     if(await a.evaluate(()=>document.documentElement.scrollWidth>innerWidth))throw new Error('Basketball HUD overflows phone layout');
     await a.getByRole('button',{name:'Full screen',exact:true}).click();
     await a.waitForFunction(()=>!!document.querySelector('.campus-immersive'));

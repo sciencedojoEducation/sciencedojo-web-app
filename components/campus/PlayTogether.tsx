@@ -4,8 +4,8 @@ import {createPortal} from "react-dom";
 import {GAME_TABLES,type GameKind} from "@/lib/campus/board-games";
 import type {PlayState,PlayInvitation} from "@/lib/campus/game-location";
 import "./play-together.css";
-export default function PlayTogether({connected,suppressed,onOpen,onNavigate,onSafety,gameHeaders,anchor}: {
-  anchor:RefObject<HTMLSpanElement|null>;gameHeaders:()=>Record<string,string>;connected:boolean;suppressed:boolean;onOpen:()=>void;onNavigate:(table:GameKind)=>void;
+export default function PlayTogether({connected,suppressed,onOpen,onNavigate,onSafety,gameHeaders,anchor,immersive,expanded}: {
+  immersive:boolean;expanded:boolean;anchor:RefObject<HTMLSpanElement|null>;gameHeaders:()=>Record<string,string>;connected:boolean;suppressed:boolean;onOpen:()=>void;onNavigate:(table:GameKind)=>void;
   onSafety:(target:string,action:"block"|"report")=>void;
 }){
   const panel=useRef<HTMLElement>(null),choices=useRef<HTMLDetailsElement>(null);
@@ -46,8 +46,8 @@ export default function PlayTogether({connected,suppressed,onOpen,onNavigate,onS
   useEffect(()=>{if(connected)availability.current(muted||suppressed);},[connected,muted,suppressed]);
   if(!connected||suppressed)return null;
   const invite=state.invitation,table=GAME_TABLES.find(t=>t.id===invite?.table);
-  return <>{anchor.current&&createPortal(<button className="secondary" onClick={()=>{onOpen();if(choices.current)choices.current.open=true;panel.current?.scrollIntoView({block:"nearest"});panel.current?.focus({preventScroll:true});}}>Play together{invite?.state==='pending'&&invite.incoming?" · New invite":invite?.state==='accepted'?" · Meet at table":""}</button>,anchor.current)}
-  <aside ref={panel} tabIndex={-1} className="campus-play-together" aria-label="Play together">
+  return <>{anchor.current&&createPortal(<button className="secondary" aria-live="polite" title={invite?.incoming?`${invite.pseudonym} invites you to ${table?.name}`:"Invite a nearby player"} onClick={()=>{onOpen();if(choices.current)choices.current.open=true;panel.current?.scrollIntoView({block:"nearest"});panel.current?.focus({preventScroll:true});}}>Play together{invite?.state==='pending'&&invite.incoming?" · New invite":invite?.state==='accepted'?" · Meet at table":""}</button>,anchor.current)}
+  <aside ref={panel} data-campus-panel="play" hidden={immersive&&!expanded} tabIndex={-1} className="campus-play-together" aria-label="Play together">
     <details ref={choices}><summary onClick={onOpen}>Play together{invite?" · invitation":state.nearby.length?` · ${state.nearby.length} nearby`:""}</summary>
       <label><input type="checkbox" checked={muted} onChange={e=>{onOpen();setMuted(e.target.checked);}}/>Mute play invitations</label>
       {!invite&&<><p>Meet someone nearby and invite them to a table in the Level 2 Games Lounge.</p>
