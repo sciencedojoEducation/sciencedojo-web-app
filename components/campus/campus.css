@@ -518,6 +518,9 @@
 .campus-shell .cube-time-presets button[aria-pressed=true]{background:#285c6b;color:#fff;}
 .cube-look-controls{display:flex;align-items:center;flex-wrap:wrap;gap:6px;border-top:1px solid #ccdcdd;margin-top:14px;padding-top:13px;}
 .cube-look-controls>span{font-size:11px;color:#3f6571;margin-right:auto;}
+.cube-graphics-controls{border:0;border-top:1px solid #ccdcdd;margin:14px 0 0;padding:13px 0 0;min-width:0;}
+.cube-graphics-controls legend{font-size:12px;color:#285362;padding:0 8px 0 0;}
+.cube-graphics-controls p{font-size:11px;color:#41616b;margin:9px 0 0;line-height:1.5;}
 .campus-shell .cube-look-controls button{min-width:38px;min-height:38px;padding:7px;font-size:17px;background:#f6fbfb;color:#245461;border-color:#bbd0d4;}
 @media(max-width:600px){
  .cube-world-controls{padding:15px;border-radius:15px;}.cube-clock-heading time{font-size:27px;}.cube-clock-heading>span{font-size:10px;}

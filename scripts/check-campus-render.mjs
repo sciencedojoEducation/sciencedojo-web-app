@@ -16,7 +16,7 @@ await build({
     import {createBasketball,basketballAction,advanceBasketball,basketballSnapshot,basketballAim,suggestedShot} from './lib/campus/basketball';
     const player={id:'40000000-0000-0000-0000-000000000001',pseudonym:'Quiet Maple aaaa01',colour:0,x:-2,z:4,rotation:0,status:'walking',seat:null};
     const unavailable=()=>{window.noWebgl=true};
-    function App(){const [living,setLiving]=useState({floor:0,elevation:0,stance:"stand",travel:null}),[frosted,setFrosted]=useState([]);const [x,setX]=useState(-2),[z,setZ]=useState(4),[view,setView]=useState("follow"),[hour,setHour]=useState(12),[active,setActive]=useState(true),[ball,setBall]=useState(undefined),[look,setLook]=useState({yaw:0,pitch:.55,distance:36});useEffect(()=>{window.showOverview=()=>setView("overview");
+    function App(){const [quality,setQuality]=useState("auto");const [living,setLiving]=useState({floor:0,elevation:0,stance:"stand",travel:null}),[frosted,setFrosted]=useState([]);const [x,setX]=useState(-2),[z,setZ]=useState(4),[view,setView]=useState("follow"),[hour,setHour]=useState(12),[active,setActive]=useState(true),[ball,setBall]=useState(undefined),[look,setLook]=useState({yaw:0,pitch:.55,distance:36});useEffect(()=>{window.setGraphics=setQuality;window.showOverview=()=>setView("overview");
       window.showLiving=(pose)=>{window.watchOrbit=false;setLiving({floor:2,elevation:24,stance:"stand",travel:null,...pose});setX(26);setZ(-24);setView(pose.view??"first-person");setLook({yaw:0,pitch:0,distance:16});setHour(12);};window.screenLiving=()=>setFrosted(["quiet"]);
       window.showExterior=()=>{setView("exterior");setHour(12)};window.showNight=()=>setHour(22);window.pauseScene=()=>setActive(false);window.resumeScene=()=>setActive(true);
       window.showFirst=()=>{window.watchOrbit=false;setZ(26);setView("first-person");setLook({yaw:-.64,pitch:.72,distance:36})};
@@ -29,7 +29,7 @@ await build({
       window.startWalk=()=>{window.sceneFrames=[];window.walkStartedAt=performance.now();window.walkArrivals=[];const gaps=[120,280,160,240,140,260,180,220];let i=0,elapsed=0;
         const step=()=>{const gap=gaps[i%gaps.length];setTimeout(()=>{elapsed+=gap;setX(-2+elapsed*.0015);
           window.walkArrivals.push(performance.now());if(++i===20){window.walkDoneAt=performance.now();window.walkDone=true;}else step();},gap);};step();};
-    },[]);return <Scene snapshot={{self:player.id,players:[{...player,x,z,...living}],occupied:[],frosted,...(ball?{basketball:ball}:{})}} active={active} view={view} hour={hour} look={look} onUnavailable={unavailable} onLookChange={next=>{window.lastLook=next;window.orbitExpectedYaw=next.yaw;window.lookHistory??=[];window.lookHistory.push(next.yaw);}}/>;}
+    },[]);return <Scene snapshot={{self:player.id,players:[{...player,x,z,...living}],occupied:[],frosted,...(ball?{basketball:ball}:{})}} quality={quality} active={active} view={view} hour={hour} look={look} onUnavailable={unavailable} onLookChange={next=>{window.lastLook=next;window.orbitExpectedYaw=next.yaw;window.lookHistory??=[];window.lookHistory.push(next.yaw);}}/>;}
     createRoot(document.getElementById('root')).render(<App/>);`, loader: "tsx", resolveDir: process.cwd() },
   bundle: true, platform: "browser", format: "esm", jsx: "automatic",
   outfile: join(directory, "app.js"), define: { "process.env.NODE_ENV": '"production"' },
@@ -150,6 +150,9 @@ try {
     assert(result.maxDrawCalls < 40, "Static scene draw calls regressed");
     assert(Math.abs(result.finalX-4)<.01, "Presentation must settle at the authoritative target");
   }
+  // Assert actual framebuffer recovery after the walk, not just a pure scale calculation.
+  await page.waitForFunction(()=>{const c=document.querySelector('canvas');return c&&Math.abs(c.width/c.clientWidth-1)<.01;},null,{timeout:5000});
+  result.graphics={autoSharpensAfterMotion:true};
   await page.screenshot({ path: join(directory, "scene.png") });
   await page.evaluate(()=>window.showOverview());await page.waitForTimeout(2500);
   await page.screenshot({path:join(directory,"whole-school.png")});
@@ -179,8 +182,10 @@ try {
   result.cubeViews={daylight:true,nightMoonStars:true,aerialCutaway:true,firstPersonEyeHeight:eyes.eye,firstPersonFov:eyes.fov};
   const orientation=()=>page.evaluate(()=>window.cameraQuaternion);
   const moved=async(before)=>{await page.waitForFunction(before=>window.cameraQuaternion.some((v,i)=>Math.abs(v-before[i])>.0001),before);};
+  await page.waitForFunction(()=>{const c=document.querySelector('canvas');return c&&Math.abs(c.width/c.clientWidth-1)<.01;});
   await page.mouse.move(430,300);const beforeHover=await orientation();
   await page.mouse.move(510,320,{steps:6});await moved(beforeHover);
+  await page.waitForFunction(()=>{const c=document.querySelector('canvas');return c&&Math.abs(c.width/c.clientWidth-.45)<.01;});
   await page.mouse.click(510,320);
   await page.waitForFunction(()=>document.pointerLockElement===document.querySelector(".school-scene"));
   const beforeLocked=await orientation();await page.mouse.move(560,330,{steps:4});await moved(beforeLocked);
@@ -216,6 +221,8 @@ try {
   await page.keyboard.press("Escape");await page.waitForFunction(()=>!document.pointerLockElement);
   const beforePaused=await orientation();await page.mouse.move(600,350);await page.waitForTimeout(200);
   assert.deepEqual(await orientation(),beforePaused,"Escape must pause hover look for UI access");
+  await page.waitForFunction(()=>{const c=document.querySelector('canvas');return c&&Math.abs(c.width/c.clientWidth-1)<.01;});
+  result.graphics.autoMouseLookAndRestRecovery=true;
   await page.mouse.click(600,350);await page.waitForFunction(()=>!!document.pointerLockElement);
   const beforeHubPause=await orientation();
   await page.evaluate(()=>window.pauseScene());await page.waitForFunction(()=>!document.pointerLockElement);
@@ -287,6 +294,18 @@ try {
   await page.waitForTimeout(1200);await page.screenshot({path:join(directory,'living-cube-upper-lounge.png')});
   const living=await page.evaluate(()=>window.livingDiagnostics);assert(living.calls<40,'Expanded floors exceeded the unchanged draw-call budget');assert.deepEqual(errors,[]);
   result.livingCubeRendering={threeLevels:true,standingEye:standing.eye,crouchedEye:crouching.eye,proneEye:prone.eye,realLoweredCrouchHead:true,realHorizontalProneBody:true,confirmedJumpElevation:true,opaqueGlassPanels:living.opaque,roundedBeanbagParts:living.bags,maxDrawCalls:living.calls};
+  await page.evaluate(()=>window.setGraphics('sharp'));
+  await page.waitForFunction(()=>{const c=document.querySelector('canvas');return c&&Math.abs(c.width/c.clientWidth-2)<.01;});
+  await page.evaluate(()=>window.refreshSnapshot());
+  await page.waitForFunction(()=>Math.abs(window.displayedAvatar.x-26.2)<.001);
+  assert(await page.evaluate(()=>{const c=document.querySelector('canvas');return Math.abs(c.width/c.clientWidth-2)<.01;}),'Sharp must retain high resolution through confirmed movement on a software GPU');
+  await page.screenshot({path:join(directory,'living-cube-sharp.png')});
+  await page.evaluate(()=>window.setGraphics('performance'));
+  await page.waitForFunction(()=>{const c=document.querySelector('canvas');return c&&Math.abs(c.width/c.clientWidth-.45)<.01;});
+  await page.evaluate(()=>window.setGraphics('auto'));
+  await page.waitForFunction(()=>{const c=document.querySelector('canvas');return c&&Math.abs(c.width/c.clientWidth-1)<.01;});
+  result.graphics={...result.graphics,sharpRetinaRatio:2,sharpRetainedDuringMovement:true,performanceRatio:.45,autoRestored:true};
+  assert.deepEqual(errors,[],'Graphics changes must not introduce browser errors');
   await writeFile(result.evidence, JSON.stringify(result, null, 2));
 } catch(error) {
   if(page){await writeFile(join(directory,'mouse-look-failure.json'),JSON.stringify(await page.evaluate(()=>({look:window.lastLook,forward:window.cameraForward,turns:window.lookHistory,locked:!!document.pointerLockElement})),null,2));console.error('Camera failure evidence:',directory);}

@@ -5,7 +5,7 @@ import {PerspectiveCamera,Vector3,type Group} from "three";
 import {AVATAR_COLOURS,SEATS,type Player,type Snapshot} from "@/lib/campus/protocol";
 import {SCHOOL_PLACES,schoolPlaceAt,floorHeight,postureEye} from "@/lib/campus/school-layout";
 import {advancePresentation,createPresentation,receivePresentation} from "@/lib/campus/presentation";
-import {createRenderBudget,initialRenderScale,reduceRenderQuality} from "@/lib/campus/render-budget";
+import {createRenderBudget,initialRenderScale,reduceRenderQuality,renderPixelRatio,type GraphicsQuality} from "@/lib/campus/render-budget";
 import {DEFAULT_LOOK,type CameraLook,type SchoolView} from "@/lib/campus/cube-experience";
 import CampusTransport from "./CampusTransport";
 import SchoolModel from "./SchoolModel";
@@ -47,6 +47,7 @@ function Camera({focus,present,reducedMotion,view,placeId,activityRef,angles}:{f
  const camera=useThree(s=>s.camera),invalidate=useThree(s=>s.invalidate);
  const target=useMemo(()=>new Vector3(),[]),look=useMemo(()=>new Vector3(),[]),aim=useMemo(()=>new Vector3(),[]);
  const initializedRef=useRef(false);
+ const previousLook=useRef<CameraLook|null>(null);
  const place=SCHOOL_PLACES.find(p=>p.id===placeId)??SCHOOL_PLACES[7];
  useLayoutEffect(()=>{
   if(camera instanceof PerspectiveCamera)camera.setFocalLength(camera.getFilmHeight()/(2*Math.tan((view==="first-person"?70:43)*Math.PI/360)));
@@ -54,6 +55,11 @@ function Camera({focus,present,reducedMotion,view,placeId,activityRef,angles}:{f
  },[camera,view,invalidate]);
  useFrame((_,delta)=>{
   const facing=angles.current;
+  const previous=previousLook.current;
+  if(previous&&(previous.yaw!==facing.yaw||previous.pitch!==facing.pitch||previous.distance!==facing.distance)){
+   activityRef.current=true;invalidate();
+  }
+  previousLook.current={...facing};
   if(view==="first-person"){
    target.set(present?focus.current.x:0,present?focus.current.eye:1.67,present?focus.current.z:4);
    aim.copy(target).add(look.set(Math.sin(facing.yaw)*Math.cos(facing.pitch),Math.sin(facing.pitch),-Math.cos(facing.yaw)*Math.cos(facing.pitch)));
@@ -89,17 +95,27 @@ function Labels({elements,view,floor}:{elements:Map<string,HTMLSpanElement>;view
   }
  });return null;
 }
-function RenderBudget({scale,onSlow,activityRef,active}:{scale:number;onSlow:()=>void;activityRef:FrameActivity;active:boolean}){
+function RenderBudget({scale,onSlow,onMotion,quality,activityRef,active}:{scale:number;onSlow:()=>void;onMotion:(moving:boolean)=>void;quality:GraphicsQuality;activityRef:FrameActivity;active:boolean}){
  const sample=useRef(createRenderBudget());
- useLayoutEffect(()=>{sample.current=createRenderBudget();activityRef.current=false;},[scale,active,activityRef]);
+ const moving=useRef(false),settled=useRef<ReturnType<typeof setTimeout>|null>(null);
+ useEffect(()=>()=>{if(settled.current!==null)clearTimeout(settled.current);},[]);
+ useLayoutEffect(()=>{sample.current=createRenderBudget();activityRef.current=false;},[scale,active,quality,activityRef]);
  useFrame((_,delta)=>{
   const continuous=activityRef.current;activityRef.current=false;
-  if(scale<=.45||sample.current.requested)return;
+  if(continuous){
+   if(!moving.current){moving.current=true;onMotion(true);}
+   if(settled.current!==null)clearTimeout(settled.current);
+   // Hysteresis keeps snapshots and brief gaps from repeatedly resizing the canvas.
+   settled.current=setTimeout(()=>{settled.current=null;moving.current=false;onMotion(false);},600);
+  }
+  if(quality!=="auto"||scale<=.45||sample.current.requested)return;
   if(reduceRenderQuality(sample.current,delta,continuous))onSlow();
  },-2);return null;
 }
-export default function CampusScene({snapshot,active,onUnavailable,view="follow",placeId="library",hour=12,look=DEFAULT_LOOK,onLookChange,canLock=true,onRelease,charge,charging=false,shotPower=.55}:{snapshot:Snapshot;active:boolean;onUnavailable:()=>void;view?:SchoolView;placeId?:string;hour?:number;look?:CameraLook;onLookChange?:(next:CameraLook)=>void;canLock?:boolean;onRelease?:()=>void;charge?:{current:ShotControl};charging?:boolean;shotPower?:number}){
+export default function CampusScene({snapshot,active,onUnavailable,view="follow",placeId="library",hour=12,look=DEFAULT_LOOK,onLookChange,canLock=true,onRelease,charge,charging=false,shotPower=.55,quality="auto"}:{snapshot:Snapshot;active:boolean;onUnavailable:()=>void;view?:SchoolView;placeId?:string;hour?:number;look?:CameraLook;onLookChange?:(next:CameraLook)=>void;canLock?:boolean;onRelease?:()=>void;charge?:{current:ShotControl};charging?:boolean;shotPower?:number;quality?:GraphicsQuality}){
  const [renderScale,setRenderScale]=useState(1);
+ const [moving,setMoving]=useState(false);
+ const pixelRatio=renderPixelRatio(quality,moving,renderScale,typeof window==="undefined"?1:window.devicePixelRatio);
  const reduceResolution=useCallback(()=>setRenderScale(.45),[]);
  const activityRef=useRef(false);
  const idleCharge=useRef<ShotControl>({started:null,power:.55});
@@ -113,7 +129,7 @@ export default function CampusScene({snapshot,active,onUnavailable,view="follow"
  const occupied=SEATS.reduce((mask,seat,i)=>mask|(snapshot.occupied.includes(seat.id)?1<<i:0),0);
  const reducedMotion=typeof window!=="undefined"&&window.matchMedia("(prefers-reduced-motion: reduce)").matches;
  return <div ref={sceneElement} {...lookHandlers} className={`school-scene school-view-${view}`} style={{position:"relative",width:"100%",height:"100%",touchAction:interactive?"none":"auto",cursor:view==="first-person"?lookMode==="locked"?"none":"crosshair":interactive?"grab":"default"}}>
-  <Canvas shadows dpr={renderScale} frameloop={active?"demand":"never"} camera={{fov:view==="first-person"?70:43,position:view==='exterior'?[215,92,245]:view==='overview'?[87,124,133]:[13,16,20],far:2200,near:.08}}
+  <Canvas shadows dpr={pixelRatio} frameloop={active?"demand":"never"} camera={{fov:view==="first-person"?70:43,position:view==='exterior'?[215,92,245]:view==='overview'?[87,124,133]:[13,16,20],far:2200,near:.08}}
     fallback={<p>3D is unavailable. You can open your courses directly.</p>}
     onCreated={({gl,invalidate})=>{
      bindInvalidate(invalidate);
@@ -126,7 +142,7 @@ export default function CampusScene({snapshot,active,onUnavailable,view="follow"
    <BasketballCourt ball={snapshot.basketball??DEFAULT_BALL} players={snapshot.players} self={snapshot.self} view={view} angles={cameraAngles} focus={focus} charge={charge??idleCharge} charging={charging} power={shotPower} reducedMotion={reducedMotion} activityRef={activityRef}/>
    <Camera focus={focus} present={snapshot.players.some(p=>p.id===snapshot.self)} reducedMotion={reducedMotion} view={view} placeId={reducedMotion&&current&&["follow","orbit"].includes(view)?schoolPlaceAt(current)?.id??placeId:placeId} activityRef={activityRef} angles={cameraAngles}/>
    <Labels elements={elements} view={view} floor={shownFloor}/>
-   <RenderBudget scale={renderScale} onSlow={reduceResolution} activityRef={activityRef} active={active}/>
+   <RenderBudget scale={renderScale} onSlow={reduceResolution} onMotion={setMoving} quality={quality} activityRef={activityRef} active={active}/>
   </Canvas>
   <div className="school-signs" aria-hidden="true">{SCHOOL_PLACES.map(p=><span key={p.id} ref={el=>{if(el)elements.set(p.id,el);else elements.delete(p.id);}}>{p.name}</span>)}</div>
   {view==="first-person"&&<span className="cube-crosshair" aria-hidden="true"/>}

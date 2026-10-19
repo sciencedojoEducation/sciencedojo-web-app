@@ -1,5 +1,13 @@
 export const createRenderBudget = () => ({ average: 1 / 60, slowSeconds: 0, requested: false });
 export type RenderBudgetSample = ReturnType<typeof createRenderBudget>;
+export type GraphicsQuality = "auto" | "sharp" | "performance";
+
+/** Local display choice. Auto restores detail once continuous animation settles. */
+export function renderPixelRatio(quality: GraphicsQuality, moving: boolean, motionScale: number, deviceRatio: number) {
+  if (quality === "performance") return .45;
+  if (quality === "sharp") return Math.max(1, Math.min(2, Number.isFinite(deviceRatio) ? deviceRatio : 1));
+  return moving ? motionScale : 1;
+}
 
 /** Local capability choice only; never retain or transmit the renderer string. */
 export function initialRenderScale(renderer: string): 1 | .45 {

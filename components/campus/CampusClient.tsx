@@ -13,6 +13,7 @@ import {
 } from "react";
 import { connectCampus, requestCampusAdmission, type CampusConnection } from "@/lib/campus/connection";
 import {availableJourneys,nearbyGlassSwitch} from "@/lib/campus/locomotion";
+import type {GraphicsQuality} from "@/lib/campus/render-budget";
 import { SEATS, type Snapshot } from "@/lib/campus/protocol";
 import { SCHOOL_PLACES,SCHOOL_FLOORS,SCHOOL_CONNECTORS,floorHeight, type Stance, schoolPlaceAt, schoolRoute, type Point } from "@/lib/campus/school-layout";
 import {DEFAULT_LOOK,boundedLook,cameraDirection,keyboardDirection,clockLabel,schoolSky,type CameraLook,type SchoolView} from "@/lib/campus/cube-experience";
@@ -75,6 +76,7 @@ export default function CampusClient({
     [busy, setBusy] = useState(false),
     [help, setHelp] = useState(false);
   const [view, setView] = useState<SchoolView>("exterior");
+  const [graphics,setGraphics]=useState<GraphicsQuality>("auto");
   const [look,setLook]=useState<CameraLook>(DEFAULT_LOOK);
   const rememberedLook=useRef<CameraLook>(DEFAULT_LOOK);
   const rememberLook=useCallback((next:CameraLook)=>{rememberedLook.current=next;cameraRef.current.yaw=next.yaw;},[]);
@@ -482,6 +484,7 @@ export default function CampusClient({
                   charge={ballCharge}
                   charging={charging}
                   shotPower={shotPower}
+                  quality={graphics}
                 />
               </CanvasBoundary>
             )}
@@ -516,6 +519,10 @@ export default function CampusClient({
             <div className="cube-clock-heading"><div><p className="campus-eyebrow">Your sky · 24-hour world</p><time dateTime={clockLabel(hour)}>{clockLabel(hour)}</time></div><span>{manualHour===null?"Local time":"Your chosen time"} · {sky.phase}</span></div>
             <label className="cube-time-range">Time of day<input aria-label="Time of day" type="range" min="0" max="23.75" step="0.25" value={hour} onChange={event=>{stopMovement();setManualHour(Number(event.target.value));}}/></label>
             <div className="cube-time-presets">{[["Sunrise",6.25],["Daylight",12],["Sunset",17.75],["Night sky",22]].map(([name,time])=><button className="secondary" key={name} onClick={()=>{stopMovement();setManualHour(Number(time));}}>{name}</button>)}<button className="secondary" aria-pressed={manualHour===null} onClick={()=>setManualHour(null)}>Live local time</button></div>
+            <fieldset className="cube-graphics-controls"><legend>Graphics</legend>
+              <div className="cube-time-presets">{([["auto","Auto"],["sharp","Sharp"],["performance","Performance"]] as const).map(([value,label])=><button key={value} className="secondary" aria-pressed={graphics===value} onClick={()=>setGraphics(value)}>{label}</button>)}</div>
+              <p>{graphics==="auto"?"Sharper when still; adjusts while moving to keep controls smooth.":graphics==="sharp"?"Clearer edges and detail. May reduce frame rate on slower devices.":"Lower resolution for smoother movement and less GPU work."}</p>
+            </fieldset>
             {(view==="first-person"||view==="orbit")&&<div className="cube-look-controls" aria-label="Look controls">
               <span>{view==="first-person"?"Your eyes inside the Cube":"Orbit the school"}</span>
               <button className="secondary" aria-label="Look left" onClick={()=>turn(-.22)}>←</button><button className="secondary" aria-label="Look right" onClick={()=>turn(.22)}>→</button>

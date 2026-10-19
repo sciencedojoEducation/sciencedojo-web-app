@@ -357,7 +357,31 @@ try {
     const player = async (id = firstId) => shared
       ? (await shared.db.query("SELECT campus_id AS id,x,z,floor,elevation,stance,travel->>'via' AS travel,seat,status FROM campus_presence WHERE campus_id=$1", [id])).rows[0]
       : campus.room.world.players.get(id);
-    if(process.argv.includes("--living-cube-only")){
+    const checkGraphics=async()=>{
+      const canvas=a.locator('.school-scene canvas');
+      const ratio=async()=>canvas.evaluate(c=>c.width/c.clientWidth);
+      await a.getByRole('button',{name:'Performance',exact:true}).click();
+      await a.waitForFunction(()=>{const c=document.querySelector('.school-scene canvas');return c&&Math.abs(c.width/c.clientWidth-.45)<.01;});
+      await a.getByRole('button',{name:'Sharp',exact:true}).press('Enter');
+      await a.waitForFunction(()=>{const c=document.querySelector('.school-scene canvas');return c&&Math.abs(c.width/c.clientWidth-Math.min(2,devicePixelRatio))<.01;});
+      const sharpRatio=await ratio();
+      await a.getByRole('button',{name:'Full screen',exact:true}).click();
+      await a.getByRole('button',{name:'Sky & view',exact:true}).click();
+      if(!await a.getByRole('group',{name:'Graphics',exact:true}).isVisible())throw new Error('Fullscreen lost graphics controls');
+      if(await a.getByRole('button',{name:'Sharp',exact:true}).getAttribute('aria-pressed')!=='true')throw new Error('Fullscreen discarded graphics preference');
+      await a.screenshot({path:join(directory,'fullscreen-graphics.png')});result.screenshots.push(join(directory,'fullscreen-graphics.png'));
+      await a.getByRole('button',{name:'Auto',exact:true}).click();
+      const autoResolution=await a.waitForFunction(()=>{const c=document.querySelector('.school-scene canvas');const value=c?c.width/c.clientWidth:0;return Math.abs(value-1)<.01?value:false;});
+      const autoIdleRatio=await autoResolution.jsonValue();await autoResolution.dispose();
+      await a.getByRole('button',{name:'Close school panel',exact:true}).click();
+      await a.getByRole('button',{name:'Exit full screen',exact:true}).click();
+      result.graphics={pointerAndKeyboard:true,performanceRatio:.45,sharpRatio,autoIdleRatio,fullscreenPreferenceRetained:true};
+      result.checks.push('Local graphics modes change the actual canvas resolution through pointer and keyboard controls, remain available in fullscreen, and preserve the connected world');
+    };
+    await checkGraphics();
+    if(process.argv.includes("--graphics-only")){
+      // The focused display check still performs the shared wire/privacy audit below.
+    }else if(process.argv.includes("--living-cube-only")){
       await checkLivingCube({page:a,peer:b,stage:a.getByRole("region",{name:/3D school/}),player,id:firstId,result,directory});
     }else{
     const me = await player();
@@ -895,7 +919,7 @@ try {
       "/dashboard/academy/fixture",
       "/dashboard/student",
       "campus-wire-answer-canary-17oct",
-      "cameraYaw", "cameraPitch", "timeOfDay", "skyTime", "fullscreenMode", "schoolPanel",
+      "cameraYaw", "cameraPitch", "timeOfDay", "skyTime", "fullscreenMode", "schoolPanel", "graphicsQuality", "renderScale", "pixelRatio",
       ...issuedTickets,
     ])
       if (combined.includes(Buffer.from(canary)))

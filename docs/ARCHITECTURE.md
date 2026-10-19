@@ -134,7 +134,15 @@ Show the Phase 0 identity notice before opening the frame, including the existin
 
 Direction buttons support a short step from a pointer tap or native keyboard/assistive activation, as well as continuous pointer holding; WASD/arrows remain available. Movement timers stop on blur, exit and disconnect. Leaving/disconnection clears the client snapshot so old participants and seat claims are not presented as current. An already-mounted course can be reopened while offline, preserving unsent work without a new campus connection or course entitlement.
 
-Render avatar positions from a 300ms buffer of confirmed poses, interpolating the buffered timeline across uneven arrivals rather than restarting a segment at each packet; never modify snapshots, extrapolate movement or send client-computed positions. Snap seat changes, large corrections and long-gap recovery immediately. Follow the displayed position with the camera. Batch fixed library boxes with instancing, cache static shadows, cap the canvas pixel ratio at one and render on demand while movement/camera settling needs frames. Keep reduced-motion camera anchoring and pause the canvas while studying.
+Render avatar positions from a 300ms buffer of confirmed poses, interpolating the buffered timeline across uneven arrivals rather than restarting a segment at each packet; never modify snapshots, extrapolate movement or send client-computed positions. Snap seat changes, large corrections and long-gap recovery immediately. Follow the displayed position with the camera. Batch fixed library boxes with instancing, cache static shadows, cap the automatic canvas pixel ratio at one and render on demand while movement/camera settling needs frames. Keep reduced-motion camera anchoring and pause the canvas while studying.
+
+The owner's 19 October pixelation report prompted a local display correction: Auto
+retains the existing low-device motion scale but restores DPR 1 after 600ms without
+continuous animation. Explicit Sharp mode uses the display ratio capped at 2;
+Performance keeps DPR 0.45. These choices stay local to the mounted client and
+remain accessible in the fullscreen Sky & view panel. Resolution changes retain
+the cached shadow pipeline; they do not change world authority, course access or
+the 300ms confirmed-pose buffer. Manual Sharp may cost frame rate on slow devices.
 
 Pause unnecessary canvas rendering while the course is open. Exclude learning content from world logs and review shared root analytics before real use. Direct Academy access remains available if the campus service is unavailable or the campus feature is disabled, provided existing course flags/access allow it.
 

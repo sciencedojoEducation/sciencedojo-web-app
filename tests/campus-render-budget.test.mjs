@@ -1,8 +1,21 @@
 import assert from "node:assert/strict";
 import {test} from "node:test";
-import {createRenderBudget,initialRenderScale,reduceRenderQuality} from "../lib/campus/render-budget.ts";
+import {createRenderBudget,initialRenderScale,reduceRenderQuality,renderPixelRatio} from "../lib/campus/render-budget.ts";
 
-test("software rasterizers start with a light canvas; hardware and unknown renderers retain quality",()=>{
+test("Auto restores full resolution at rest while manual quality overrides motion fallback",()=>{
+  assert.equal(renderPixelRatio("auto",true,.45,2),.45);
+  assert.equal(renderPixelRatio("auto",false,.45,2),1);
+  assert.equal(renderPixelRatio("auto",true,1,2),1);
+  for(const moving of [true,false]){
+    assert.equal(renderPixelRatio("sharp",moving,.45,2),2);
+    assert.equal(renderPixelRatio("sharp",moving,.45,3),2);
+    assert.equal(renderPixelRatio("sharp",moving,.45,1),1);
+    assert.equal(renderPixelRatio("sharp",moving,.45,NaN),1);
+    assert.equal(renderPixelRatio("performance",moving,1,2),.45);
+  }
+});
+
+test("software rasterizers select a light motion profile; hardware and unknown renderers retain quality",()=>{
   for(const name of ["ANGLE (Google, SwiftShader Device)","llvmpipe (LLVM)","softpipe","Software Rasterizer","Microsoft Basic Render Driver"])
     assert.equal(initialRenderScale(name),.45);
   for(const name of ["","WebKit WebGL","ANGLE (Apple, Metal)","Intel UHD Graphics"])

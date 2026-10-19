@@ -611,3 +611,36 @@ ignored private review record and prepared local artifacts. No new-feature owner
 acceptance, live lesson operation, hosted migration or G1–G9 completion is inferred.
 072/073/074 remain local-only; the PR remains draft and the release controls stay
 disabled on hosted environments. The existing platform/course boundary remains.
+
+## Pixelation correction — 19 October 2026
+
+The owner reported blocky graphics. Read-only inspection of the actual preview
+found a 351 × 264 framebuffer stretched over about 781 × 588 CSS pixels on a
+DPR-2 display: the earlier permanent DPR-0.45 fallback caused the visible softness.
+The correction plan preserves the motion fallback, restores detail at rest, and
+provides an explicit local quality choice instead of silently forcing more GPU
+work during all movement.
+
+Auto now returns to DPR 1 after 600ms without continuous animation; walking,
+camera settling and mouse look use the selected/adaptive motion profile. Sharp
+uses the display ratio capped at 2 and Performance keeps DPR 0.45. These controls
+work with pointer/keyboard and inside fullscreen Sky & view. The choice belongs
+only to the mounted browser client; no graphics preference, renderer string or
+camera data enters shared state. The cached shadow pipeline, course-frame pause,
+300ms confirmed interpolation and existing acceptance limits are retained.
+
+All 68 campus regressions, scoped lint/type checks and the local production build
+passed. Focused two-peer UI checks passed on both maintained transports, including
+fullscreen, actual framebuffer changes and the shared-frame privacy audit. Actual
+scene checks passed normal, reduced-motion and CPU-throttled modes with the
+unchanged walking/pause/draw-call limits; the final normal run additionally checks
+mouse-only motion fallback and recovery. DPR-2 Sharp retained resolution through
+confirmed movement, and Auto restored DPR 1 afterward. These are synthetic local
+Chrome/SwiftShader checks, not intended-device FPS or new learner-release evidence.
+
+The refreshed owner preview was inspected with Sharp selected: its actual canvas
+is now 1562 × 1176 over the same display area. Sharp may reduce frame rate on slow
+devices; Auto remains the default. Owner visual/performance acceptance is pending.
+No schema, hosted settings, course rules, operational gates or unrelated platform
+features changed. Evidence is retained with the private local review artifacts;
+no current-head hosted CI result is claimed.
