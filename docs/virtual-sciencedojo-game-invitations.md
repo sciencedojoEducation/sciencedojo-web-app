@@ -160,3 +160,12 @@ stays outside world state. Browser evidence records source hashes, checks actual
 30-second expiry, phone/keyboard actions, open-panel room exit and duration
 handover, and scans all issued game credentials/invitation IDs separately from
 the unchanged protected admission handshakes.
+
+Disconnect review added direct, generation-bound cleanup: SQL Leave removes game/
+meeting state in its transaction, while Colyseus releases the avatar immediately
+and notifies the application through its existing authenticated service boundary.
+Graceful disposal awaits the bounded callback. Old-connection callbacks cannot
+remove a current membership; no remaining browser poll is needed for normal
+leave. Outage fallback remains logical leases/TTL and cleanup on next activity or
+switch-off, without claiming physical erasure/backups cleanup during an outage.
+The maintained school browser fixtures now include 080 even outside game checks.

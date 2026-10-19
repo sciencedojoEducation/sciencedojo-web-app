@@ -53,8 +53,9 @@ BEGIN
    END IF;
    INSERT INTO campus_play_keys VALUES(expected_campus,runtime_connection,campus_game_credential(ticket_hash))
     ON CONFLICT(campus_id) DO UPDATE SET connection=excluded.connection,credential=excluded.credential WHERE campus_play_keys.campus_id=expected_campus;
- ELSIF runtime_operation='leave' THEN
-   DELETE FROM campus_play_keys WHERE connection=runtime_connection;
+ END IF;
+ IF runtime_operation='leave' OR EXISTS(SELECT 1 FROM campus_play_keys k WHERE NOT EXISTS(SELECT 1 FROM campus_presence p WHERE p.connection_id=k.connection AND p.lease_until>clock_timestamp())) THEN
+   PERFORM campus_games_prepare(NULL,'vercel','{}');
  END IF;
  RETURN result;
 END; $$;
@@ -244,6 +245,22 @@ BEGIN
  AND NOT EXISTS(SELECT 1 FROM campus_blocks WHERE (owner_id=actor AND target=c.campus_id) OR (owner_id=c.user_id AND target=person.campus_id));
  RETURN jsonb_build_object('invitation',card,'nearby',nearby);
 END; $$;
+CREATE FUNCTION public.campus_play_depart(target uuid,owner_connection text) RETURNS boolean
+LANGUAGE plpgsql SECURITY DEFINER SET search_path=public,pg_temp SET lock_timeout='2s' AS $$
+DECLARE actor uuid;
+BEGIN
+ IF owner_connection IS NULL OR owner_connection !~ '^[A-Za-z0-9_-]{8,64}$' THEN RETURN false; END IF;
+ PERFORM pg_advisory_xact_lock(760076);
+ SELECT user_id INTO actor FROM campus_members WHERE campus_id=target;
+ DELETE FROM campus_play_invites WHERE (sender=actor AND sender_connection=owner_connection) OR (recipient=actor AND recipient_connection=owner_connection);
+ DELETE FROM campus_game_members WHERE user_id=actor AND connection=owner_connection;
+ UPDATE campus_play_limits SET connection='',muted=false WHERE user_id=actor AND connection=owner_connection;
+ -- Reuse the preserved roster-loss/empty-table cleanup, discarding its projection.
+ PERFORM campus_game_unlocated(NULL,'four','read','{}');
+ RETURN true;
+END; $$;
+REVOKE ALL ON FUNCTION public.campus_play_depart(uuid,text) FROM PUBLIC,anon,authenticated;
+GRANT EXECUTE ON FUNCTION public.campus_play_depart(uuid,text) TO service_role;
 REVOKE ALL ON FUNCTION public.campus_game_near(jsonb,text),public.campus_games_prepare(uuid,text,jsonb) FROM PUBLIC,anon,authenticated,service_role;
 REVOKE ALL ON FUNCTION public.campus_game(uuid,text,text,jsonb,text,jsonb,text),public.campus_play(uuid,text,jsonb,text,jsonb,text) FROM PUBLIC,anon,authenticated;
 GRANT EXECUTE ON FUNCTION public.campus_game(uuid,text,text,jsonb,text,jsonb,text),public.campus_play(uuid,text,jsonb,text,jsonb,text) TO service_role;

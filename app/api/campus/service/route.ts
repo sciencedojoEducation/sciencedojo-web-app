@@ -29,6 +29,8 @@ export async function POST(request: Request) {
     result = await supabase.rpc("campus_service_identity", {
       target: body.value,
     });
+  else if(body.operation==="depart" && /^[0-9a-f-]{36}$/i.test(body.value) && typeof body.connection==="string" && /^[A-Za-z0-9_-]{8,64}$/.test(body.connection))
+    result=await supabase.rpc("campus_play_depart",{target:body.value,owner_connection:body.connection}).abortSignal(AbortSignal.timeout(1500));
   else return campusJson(null, 400);
   if (result.error || !result.data) return campusJson(null, 403);
   return campusJson(result.data);

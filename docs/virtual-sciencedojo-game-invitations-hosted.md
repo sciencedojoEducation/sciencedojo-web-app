@@ -68,5 +68,5 @@ software verification are recorded in the invitation plan/runbook.
 
 Prepared SQL SHA-256 (compare again before action):
 
-- `sql/080_campus_room_games_invitations.sql`: `8db8d51a7bad28a1afe21139755a82b12afc222a649316813d5c9d68dc0d6329`.
-- `docs/virtual-sciencedojo-game-invitations-rollback.sql`: `201f5efc5bd8841298962228048f95c18cef5353ed06db95bd394b3b08c97290`.
+- `sql/080_campus_room_games_invitations.sql`: `a48abf5d51ed55684cc2dbba917c987bb53c92fde6c8be63e16b8baecb71f5ef`.
+- `docs/virtual-sciencedojo-game-invitations-rollback.sql`: `b0fbe6ba1270ac8a43115d783fa5d4fa8acdf0dd82880b436e1ec08f1e0a5c9d`.

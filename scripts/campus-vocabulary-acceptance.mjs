@@ -13,7 +13,7 @@ export async function checkWortQuest({a,b,browser,origin,identities,shared,gameF
   const spot=GAME_TABLES.find(t=>t.id==='wortquest'),own=(await page.context().cookies()).find(c=>c.name==='fixture').value;
   if(shared)await shared.db.query("UPDATE campus_presence SET x=$2,z=$3,floor=2,elevation=24,seat=NULL,status='walking' WHERE campus_id=$1",[own,spot.x+1,spot.z]);
   else Object.assign(campus.room.world.players.get(own),{x:spot.x+1,z:spot.z,floor:2,elevation:24,seat:null,status:'walking'});
-  await page.getByRole('button',{name:/E Play WortQuest/}).waitFor();await page.getByRole('button',{name:/E Play WortQuest/}).click();await dialog(page).getByRole('button',{name:'Reveal explanation',exact:true}).waitFor();};
+  await page.getByRole('button',{name:/E Play WortQuest/}).waitFor();await page.waitForTimeout(450);await page.getByRole('button',{name:/E Play WortQuest/}).click();await dialog(page).getByRole('button',{name:'Reveal explanation',exact:true}).waitFor();};
  const snapshot=async page=>(await gameFetch(page,'/api/campus/games?table=wortquest')).body.game;
  const solve=q=>q.options.indexOf(VOCABULARY.find(c=>c.id===q.id).explanation);
  try{

@@ -3,7 +3,7 @@ import {fixture,id} from "./course-pilot-fixture.mjs";
 import {hashTicket} from "../../lib/campus/security.ts";
 import {createPlayApi} from "../../lib/campus/play-api.ts";
 import {createGameApi} from "../../lib/campus/board-game-api.ts";
-export async function gamesFixture(located=false) {
+export async function gamesFixture(located=false,count=6) {
   const f=await fixture();
   await f.db.exec("CREATE ROLE service_role BYPASSRLS; GRANT USAGE ON SCHEMA public TO service_role;");
   for(const file of ["070_virtual_campus.sql",...(located?["071_campus_vercel_presence.sql","072_campus_school.sql","073_campus_basketball.sql","074_campus_living_cube.sql","075_campus_focus_safe_updates.sql"]:[]),"076_campus_board_games.sql","077_campus_german_vocabulary.sql",...(located?["080_campus_room_games_invitations.sql"]:[])])
@@ -11,7 +11,7 @@ export async function gamesFixture(located=false) {
   await f.db.query("INSERT INTO campus_staff(user_id) VALUES($1)",[id(15)]);
   await f.db.exec("UPDATE feature_flags SET enabled=true WHERE key='virtual_campus_enabled'");
   const identities=[];
-  for(let n=1;n<=6;n++){
+  for(let n=1;n<=count;n++){
     await f.as(15,()=>f.db.query("SELECT campus_manage_member($1,true,true,true)",[id(n)]));
     await f.as(n,()=>f.db.query("SELECT campus_accept_notice('campus-adult-pilot-v1')"));
     identities.push((await f.as(n,()=>f.db.query("SELECT campus_self() AS x"))).rows[0].x);

@@ -69,3 +69,24 @@ service, select the reviewed release directory, verify/install its lockfile, and
 restart. Rehearse actual shutdown/restart and course recovery on the target host.
 No database migration, account creation, feature switch or hosting purchase is
 performed by the packager or verifier.
+
+### Private room-game context and departure cleanup
+
+Room games use the existing service credential for the application's private
+`GET /games-context` callback. It returns bounded live poses, connection
+ownership and a derived game-credential hash; it is never a browser/world feed.
+The application rechecks fresh context for each game/invitation request. Keep
+this endpoint behind the same TLS/origin/service controls as removal; never
+publish its response or credential in a URL, snapshot or log.
+
+The service also notifies `/api/campus/service` with the fixed `depart` operation
+and the departed opaque campus ID/current connection. Migration 080 provides its
+service-only, generation-bound cleanup. Public world removal is immediate;
+graceful disposal awaits bounded callbacks (two-second HTTP deadline). If an
+application/database outage prevents cleanup, membership/meeting eligibility
+still expires, and the next admitted game request/switch-off clears stale state.
+This is logical expiry, not a promise of immediate erasure during an outage.
+
+Use the matching application/080 schema for this local service revision. The
+owner-review hosted procedure currently targets the existing Vercel transport;
+this package does not authorize a new hosted Colyseus service or infrastructure.

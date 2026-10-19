@@ -22,17 +22,18 @@ const vercel = process.argv.includes("--vercel");
 const shared = vercel ? await runtimeFixture(14) : null;
 const checkingVocabulary=process.argv.includes('--vocabulary');
 const checkingGames=process.argv.includes('--games')||checkingVocabulary;
+const gameBackend=true;
 let gameFixture=null,gameApi,playApi;
-if(checkingGames){
+if(gameBackend){
  if(shared){for(const file of ['076_campus_board_games.sql','077_campus_german_vocabulary.sql','080_campus_room_games_invitations.sql'])await shared.db.exec(await readFile(new URL('../sql/'+file,import.meta.url),'utf8'));({api:gameApi,playApi}=attachGamesApi(shared,async()=>["vercel","{}"]));
   for(let n=1;n<=6;n++)await shared.db.query('UPDATE profiles SET full_name=$2,avatar_url=$3 WHERE id=$1',[`30000000-0000-0000-0000-${String(n).padStart(12,'0')}`,`Game Friend ${n}`,`https://fixture.supabase.co/storage/v1/object/public/avatars/fixture-${n}.png`]);
- }else{gameFixture=await gamesFixture(true);
+ }else{gameFixture=await gamesFixture(true,14);
   ({api:gameApi,playApi}=attachGamesApi(gameFixture,async()=>{
     const response=await fetch('http://127.0.0.1:2569/games-context',{headers:{authorization:`Bearer ${serviceKey}`},signal:AbortSignal.timeout(1500)});
     if(!response.ok)throw new Error('Live context unavailable');return ['colyseus',JSON.stringify(await response.json())];
   }));}
 }
-const fixturePictures=checkingGames?await Promise.all(['#167c79','#b95e47','#7461a2','#8c710e','#467bad','#b28460'].map(background=>sharp({create:{width:40,height:40,channels:3,background}}).png().toBuffer())):[];
+const fixturePictures=gameBackend?await Promise.all(['#167c79','#b95e47','#7461a2','#8c710e','#467bad','#b28460'].map(background=>sharp({create:{width:40,height:40,channels:3,background}}).png().toBuffer())):[];
 
 const directory = await mkdtemp(join(tmpdir(), "sciencedojo-campus-browser-"));
 const origin = "http://127.0.0.1:3012",
@@ -83,7 +84,7 @@ await build({
   define: { "process.env.NODE_ENV": '"development"' },
 });
 const sourcePaths=['app/api/campus/play/route.ts','app/api/campus/admission/route.ts','lib/campus/board-game-server.ts',
- 'lib/campus/game-context.ts','lib/campus/game-location.ts','scripts/check-campus-browser.mjs','scripts/campus-board-games-acceptance.mjs','scripts/campus-vocabulary-acceptance.mjs','components/campus/CampusClient.tsx','components/campus/BoardGames.tsx','components/campus/PlayTogether.tsx',
+ 'app/api/campus/service/route.ts','services/campus-server/index.mjs','lib/campus/game-context.ts','lib/campus/game-location.ts','scripts/check-campus-browser.mjs','scripts/campus-board-games-acceptance.mjs','scripts/campus-vocabulary-acceptance.mjs','components/campus/CampusClient.tsx','components/campus/BoardGames.tsx','components/campus/PlayTogether.tsx',
  'components/campus/campus.css','components/campus/play-together.css','lib/campus/board-game-api.ts','lib/campus/play-api.ts',
  'lib/campus/connection.ts','lib/campus/security.ts','services/campus-server/server.mjs','sql/080_campus_room_games_invitations.sql'];
 const sourceHashes=Object.fromEntries(await Promise.all(sourcePaths.map(async path=>[path,createHash('sha256').update(await readFile(path)).digest('hex')])));
@@ -110,7 +111,7 @@ const http = createServer(async (req, res) => {
       );
       return res.end(await readFile(join(directory, path.slice(1))));
     }
-    if(checkingGames&&(path.startsWith('/api/campus/games')||path==='/api/campus/play')){
+    if(gameBackend&&(path.startsWith('/api/campus/games')||path==='/api/campus/play')){
       const own=/fixture=([0-9a-f-]+)/.exec(req.headers.cookie||'')?.[1];
       const members=shared?.members??gameFixture.identities;
       const account=members.findIndex(m=>m.id===own)+1;
@@ -167,10 +168,11 @@ const http = createServer(async (req, res) => {
       if (action.action === "block") who.blocked.push(action.target);
       if (action.action === "unblock")
         who.blocked = who.blocked.filter((id) => id !== action.target);
-      if (shared) {
-        const account = shared.members.findIndex((m) => m.id === own) + 1;
-        if (action.action === "report") await shared.as(account, () => shared.db.query("SELECT campus_report($1,$2)", [action.target, action.reason]));
-        else await shared.as(account, () => shared.db.query("SELECT campus_block($1,$2)", [action.target, action.action === "block"]));
+      if (shared||gameFixture) {
+        const data=shared??gameFixture,members=shared?.members??gameFixture.identities;
+        const account = members.findIndex((m) => m.id === own) + 1;
+        if (action.action === "report") await data.as(account, () => data.db.query("SELECT campus_report($1,$2)", [action.target, action.reason]));
+        else await data.as(account, () => data.db.query("SELECT campus_block($1,$2)", [action.target, action.action === "block"]));
       }
       res.setHeader("content-type", "application/json");
       return res.end('{"saved":true}');
@@ -261,7 +263,10 @@ try {
       tickets.delete(t);
       return who;
     },
-    refresh: async (id) => checkingGames ? (await gameFixture.db.query("SELECT campus_service_identity($1) AS value",[id])).rows[0].value : identities.get(id),
+    departed:gameFixture?async(target,owner_connection)=>{
+      await gameFixture.db.transaction(async tx=>{await tx.exec('SET LOCAL ROLE service_role');await tx.query('SELECT campus_play_depart($1,$2)',[target,owner_connection]);});
+    }:undefined,
+    refresh: async (id) => gameBackend ? (await gameFixture.db.query("SELECT campus_service_identity($1) AS value",[id])).rows[0].value : identities.get(id),
   });
   if (process.argv.includes("--preview")) {
     console.log(
@@ -1020,7 +1025,7 @@ try {
       throw new Error("Wire observation missing");
     for (const canary of [
       "board-games-retained-course-canary",
-      ...(checkingGames?Array.from({length:6},(_,i)=>`30000000-0000-0000-0000-${String(i+1).padStart(12,"0")}`):[]),
+      ...(gameBackend?Array.from({length:14},(_,i)=>`30000000-0000-0000-0000-${String(i+1).padStart(12,"0")}`):[]),
       "Game Friend", "FriendOne", "FriendTwo", "FriendThree", "FriendFour", "fixture.supabase.co/storage",
       "Synthetic test course",
       "/dashboard/academy/fixture",

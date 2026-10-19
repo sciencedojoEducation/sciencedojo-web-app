@@ -18,7 +18,7 @@ export async function checkBoardGames({a,b,browser,origin,identities,shared,game
     const t=GAME_TABLES.find(t=>t.id===table), own=(await page.context().cookies()).find(c=>c.name==='fixture').value;
     if(shared)await shared.db.query("UPDATE campus_presence SET x=$2,z=$3,floor=2,elevation=24,seat=NULL,status='walking' WHERE campus_id=$1",[own,t.x+1,t.z]);
     else Object.assign(campus.room.world.players.get(own),{x:t.x+1,z:t.z,floor:2,elevation:24,seat:null,status:'walking'});
-    const interaction=page.getByRole('button',{name:`E Play ${t.name}`,exact:true});await interaction.waitFor({timeout:10000});await interaction.click();
+    const interaction=page.getByRole('button',{name:`E Play ${t.name}`,exact:true});await interaction.waitFor({timeout:10000});await page.waitForTimeout(450);await interaction.click();
     await dialog(page).waitFor();
     await page.waitForFunction(()=>!!document.querySelector('dialog.campus-games[open] .game-join,dialog.campus-games[open] .game-roster'));
   };

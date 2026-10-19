@@ -12,15 +12,15 @@ if (
   !["localhost", "127.0.0.1"].includes(url.hostname)
 )
   throw new Error("HTTPS required outside loopback");
-async function request(operation, value) {
+async function request(operation, value, connection) {
   const response = await fetch(new URL("/api/campus/service", appOrigin), {
     method: "POST",
     headers: {
       authorization: `Bearer ${serviceKey}`,
       "content-type": "application/json",
     },
-    body: JSON.stringify({ operation, value }),
-    signal: AbortSignal.timeout(5000),
+    body: JSON.stringify({ operation, value, ...(connection?{connection}:{}) }),
+    signal: AbortSignal.timeout(operation==="depart"?2000:5000),
   });
   if (!response.ok) throw new Error("Campus authorization unavailable");
   return response.json();
@@ -32,6 +32,7 @@ const campus = await createCampusServer({
   serviceKey,
   verify: (value) => request("redeem", value),
   refresh: (value) => request("check", value),
+  departed:(value,connection)=>request("depart",value,connection),
 });
 console.log(
   "Campus server listening; room capacity 10. No learner data logged.",

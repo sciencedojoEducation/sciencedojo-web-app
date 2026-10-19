@@ -23,6 +23,7 @@ const serviceKey = randomBytes(32).toString("hex"), tickets = new Map();
 const issuedTickets = [];
 const who = { id: "40000000-0000-0000-0000-000000000001", pseudonym: "Quiet Maple abc123", colour: 1, blocked: [] };
 let callbackRequests = 0;
+const departures=[];
 const app = createServer(async (request, response) => {
   try {
     assert.equal(request.url, "/api/campus/service");
@@ -32,6 +33,9 @@ const app = createServer(async (request, response) => {
     const payload = JSON.parse(body);
     assert.deepEqual(Object.keys(payload).sort(), ["operation", "value"]);
     callbackRequests++;
+    if(payload.operation==='depart'&&payload.value===who.id&&/^[A-Za-z0-9_-]{8,64}$/.test(payload.connection)){
+      departures.push(payload.connection);response.writeHead(200,{'content-type':'application/json'});return response.end('true');
+    }
     let identity;
     if (payload.operation === "redeem") { identity = tickets.get(payload.value); tickets.delete(payload.value); }
     else if (payload.operation === "check" && payload.value === who.id) identity = who;
@@ -163,6 +167,8 @@ try {
   assert(callbackRequests >= 2);
   checks.push("Actual packaged process authenticates through the protected synthetic app callback and owns a seat");
   await stop(first);
+  await until(()=>departures.includes(beforeContext.players[0].connection),'authenticated departure callback');
+  checks.push("Packaged shutdown notifies the application of the exact departed connection before exit");
   await until(() => !learner.connection.isOpen, "old connection closed");
   const second = start();
   await healthy(second);

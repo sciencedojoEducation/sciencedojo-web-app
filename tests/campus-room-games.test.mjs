@@ -210,3 +210,31 @@ test('client hints and SQL gates agree on physical table reach, room bounds, pos
   }
  }finally{await f.db.close();}
 });
+test('Vercel leave cleans invitations and game identities immediately even with no further browser game poll',async()=>{
+ const f=await roomGamesFixture();
+ try{
+  await f.game(1,'join',{username:'One'});await f.game(2,'join',{username:'Two'});
+  await f.play(3,'send',{target:f.members[3].id,table:'boxes'});
+  for(const n of [1,2,3,4])await f.runtime(f.connections[n-1],'leave');
+  assert.equal((await f.db.query('SELECT count(*) AS n FROM campus_game_members')).rows[0].n,0);
+  assert.equal((await f.db.query('SELECT count(*) AS n FROM campus_play_invites')).rows[0].n,0);
+  assert.equal((await f.db.query("SELECT state FROM campus_game_tables WHERE table_id='four'")).rows[0].state,null);
+ }finally{await f.db.close();}
+});
+test('authenticated Colyseus departure is generation-bound and clears both departed participants without a remaining polling client',async()=>{
+ const f=await roomGamesFixture('colyseus');
+ const depart=(n,connection)=>f.db.transaction(async tx=>{await tx.exec('SET LOCAL ROLE service_role');return tx.query('SELECT campus_play_depart($1,$2)',[f.members[n-1].id,connection]);});
+ try{
+  await f.game(1,'join',{username:'One'});await f.game(2,'join',{username:'Two'});
+  const old=(await f.db.query('SELECT connection FROM campus_game_members WHERE user_id=$1',[id(1)])).rows[0].connection;
+  await depart(1,'wrong-connection');assert.equal((await f.db.query('SELECT count(*) AS n FROM campus_game_members')).rows[0].n,2);
+  await f.play(3,'send',{target:f.members[3].id,table:'boxes'});
+  const connection3=(await f.play(3)).invitation?f.connections[2].replaceAll('-',''):null;
+  await depart(3,connection3);assert.equal((await f.db.query('SELECT count(*) AS n FROM campus_play_invites')).rows[0].n,0);
+  await depart(1,old);await depart(2,f.connections[1].replaceAll('-',''));
+  assert.equal((await f.db.query('SELECT count(*) AS n FROM campus_game_members')).rows[0].n,0);
+  for(const role of ['anon','authenticated']){
+   await f.db.exec(`SET ROLE ${role}`);await assert.rejects(f.db.query('SELECT campus_play_depart($1,$2)',[f.members[0].id,old]),/permission/);await f.db.exec('RESET ROLE');
+  }
+ }finally{await f.db.close();}
+});

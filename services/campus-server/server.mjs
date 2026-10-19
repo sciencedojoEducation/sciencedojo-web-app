@@ -25,6 +25,7 @@ export async function createCampusServer({
   serviceKey,
   verify,
   refresh,
+  departed,
 }) {
   if (
     !origin ||
@@ -51,6 +52,7 @@ export async function createCampusServer({
       this.owners = new Map();
       this.checking = false;
       this.checks = new Map();
+      this.departures = new Set();
       this.onMessage("input", (client, input) =>
         this.world.input(client.auth.id, input, Date.now()),
       );
@@ -132,6 +134,10 @@ export async function createCampusServer({
       if (this.owners.get(id) === client.sessionId) {
         this.world.remove(id);
         this.owners.delete(id);
+        if(departed){
+          const task=Promise.resolve().then(()=>departed(id,client.sessionId)).catch(()=>{});
+          this.departures.add(task);void task.finally(()=>this.departures.delete(task));
+        }
       }
     }
     async checkClient(client) {
@@ -158,8 +164,9 @@ export async function createCampusServer({
         client.leave(4003, "Campus access ended");
       }
     }
-    onDispose() {
+    async onDispose() {
       if (liveRoom === this) liveRoom = undefined;
+      await Promise.all(this.departures);
     }
   }
   const server = new Server({
