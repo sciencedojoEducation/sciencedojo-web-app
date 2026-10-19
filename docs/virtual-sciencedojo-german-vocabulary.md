@@ -1,8 +1,9 @@
 # sciencedojo. — WortQuest German vocabulary game
 
 19 October 2026. Status: owner approved the software plan on 19 October; implemented
-locally with verification complete; not deployed. Extends the existing Games Lounge request. Existing
-Four in a Row/Dots & Boxes verification and the pending hosted activation in
+locally with verification complete; subsequently approved and published to the protected Preview.
+Extends the existing Games Lounge request. Existing
+Four in a Row/Dots & Boxes verification and hosted activation in
 [the board-games plan](virtual-sciencedojo-board-games.md) remain valid.
 
 ## Player experience
@@ -167,7 +168,7 @@ study card open for review. Use `npm run campus:preview -- --vercel --vocabulary
 only when replacing that owned preview intentionally; do not start a second
 process on the same port. It is not the real owner account or hosted friend test.
 
-The exact [077 migration](../sql/077_campus_german_vocabulary.sql) is ready for
+The exact [077 migration](../sql/077_campus_german_vocabulary.sql) was prepared for
 separate approval in the same verified owner-review database. Its guard checks
 the reviewed 076 authority body and rejects replay/drift before schema changes.
 A read-only hosted check confirmed that body matches and 077 is absent. Apply
@@ -181,3 +182,37 @@ Named friend admission and an actual signed-in multiplayer walkthrough remain
 pending. The owner confirmed 18+; account emails, EU/EEA confirmation, deployment
 protection access and applicable operating requirements are still needed. Do not
 infer permission to admit every registered account from “everyone can test.”
+
+
+## Approved hosted owner review — 19 October 2026
+
+The owner subsequently approved exact 077 and protected Preview publication.
+The guarded transaction succeeded after verifying the current 076 authority,
+absence of the quiz helpers and no joined game members. Both game tables retain
+RLS and denied direct runtime access; quiz helpers remain private and the game
+RPC remains service-only. Live anonymous/unadmitted/explicit-helper denial
+checks passed. Seven vocabulary/board SQL regressions also passed immediately
+before publication, alongside the previously recorded complete local evidence.
+
+Application source `c0bf028` reached Ready in Vercel Preview. All six vocabulary
+application hashes match the verified clean build. The branch retains Vercel
+authentication; no bypass, paid service, production application deployment or
+configuration change was made. PR #17 remains draft/open/unmerged. Only Vercel
+and its Preview-comment checks were observed for this head; a hosted full quality
+or cron pass is not inferred.
+
+For the initial test the owner selected their existing owner and admin accounts,
+then explicitly confirmed both belong to them under the same adult/EU/EEA
+self-confirmation. The additional owner invitation is enabled without new campus
+staff, application roles, course permissions or agent notice acceptance. The
+previously accepted owner can read WortQuest through the live authority; the new
+admin invitation is denied game/world access until the owner accepts its notice.
+Private account/activation/rollback evidence stays in ignored records.
+
+Sign in through the protected beta Preview, enter the school, then open **Games
+Lounge** on Level 2. Choose **WortQuest** for study cards, solo quizzes or a friend
+quiz. Use separate browser sessions/devices for the two existing accounts;
+joining explicitly shares the chosen game username and current picture. Each
+account must handle its own sign-in/notice. No hosted multiplayer match or actual
+friend walkthrough is claimed from these deployment/access checks. Those human
+steps and later specifically identified friends remain pending.

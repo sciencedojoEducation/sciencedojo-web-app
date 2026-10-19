@@ -1036,3 +1036,37 @@ gates remain pending. Keep the full requested friend-test goal incomplete.
 ### Shared database security maintenance
 
 Shared profile/flag authorization and storage controls are documented in [security hardening](security-hardening.md), with independent forward migrations 078/079 and role-based SQL regressions. These changes do not apply WortQuest migration 077, admit friends, change learning data or establish a new campus release gate. Use the ignored security-advisor baseline/final/API records for environment-specific execution evidence; do not copy deployed authorization findings into public PR descriptions.
+
+
+### Approved WortQuest publication and two-account owner review — 19 October 2026
+
+The owner approved the concrete 077/Preview step, then selected their existing
+owner account and admin account for the initial test. Exact guarded 077 source
+was compared with the SQL editor and applied once after current-state preflight;
+076 was not replayed. RLS/direct-access/service-RPC/private-helper restrictions
+passed afterward. Live denied requests confirmed anonymous/unadmitted game
+access and direct helper execution remain unavailable. Seven focused SQL/deck
+regressions passed before deployment; the broader local evidence retains its
+previously recorded scope.
+
+Source `c0bf028` was pushed to the beta branch and Vercel deployment
+`2xsPK9PjtT6HCgxsbEMpMR9hubML` reached Ready as Preview. All six application hashes
+still match the earlier clean build. Vercel/Preview-comment checks passed for
+this head; no hosted full quality/cron success was observed. PR #17 remains
+open/draft/unmerged. No production application/settings, paid plan or bypass was
+changed; the approved owner database did receive 077.
+
+The owner explicitly confirmed that the identified existing admin account is
+also theirs and uses their existing 18+/EU/EEA self-confirmation. Its one new
+campus invitation and audit entry were applied in a guarded transaction. Existing
+student/admin roles and course permissions are unchanged; no campus staff was
+granted. The owner account can read the live WortQuest authority. The newly
+invited account remains denied world/game access until the owner accepts its
+notice; the agent did not accept it. Record exact identity/baseline/rollback in
+ignored private files, not public PR material.
+
+The hosted sign-in page is prepared with a campus return path. Human sign-in,
+new-account notice acceptance and an actual shared match remain pending. Use
+two isolated browser sessions/devices for the two accounts. Later real friends
+still need specifically identified accounts and applicable admission/operating
+evidence. The original full friend-test goal stays open.

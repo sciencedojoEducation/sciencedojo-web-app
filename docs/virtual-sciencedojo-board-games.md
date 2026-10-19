@@ -201,8 +201,20 @@ roles lack direct table access, the RPC is service-only, and an unknown identity
 is denied. Source `1358e11` reached Ready as a Preview and its branch URL still
 redirects unauthenticated requests to Vercel authentication. One existing owner
 membership and zero staff remain; no friend was added. See the runbook/private
-activation record. The separate WortQuest extension remains local pending its
-077 approval. Named friend accounts, EU/EEA confirmation, deployment-protection
+activation record. The separate WortQuest extension was later approved and published after its
+077 transaction; see the vocabulary guide. Named friend accounts, EU/EEA confirmation, deployment-protection
 access, applicable operating requirements and actual friend usability are pending.
 The owner has confirmed that the intended friends are 18+. No production app or
 settings, paid plan, hosting bypass or course permission was changed.
+
+
+### Initial two-account owner test
+
+The owner subsequently chose their own existing admin account and the already
+admitted owner account for the initial test, and confirmed shared ownership and
+the same existing 18+/EU/EEA self-confirmation. Both invitations are prepared in
+the protected review, with no new campus staff/course permissions. The newly
+invited account must accept its own notice. The owner must sign in using separate
+browser sessions/devices to test shared moves and visible profiles. Deployment
+and backend permission evidence do not establish that human multiplayer test;
+later actual friend accounts remain separately scoped.

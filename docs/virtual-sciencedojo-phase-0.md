@@ -220,3 +220,15 @@ outcome is established. Migration 077 and vocabulary publication remain pending
 separate hosted approval. The owner confirmed friends are adults; account emails,
 EU/EEA confirmation, deployment access, actual friend tests and applicable
 operating/release evidence remain pending. No general learner launch is inferred.
+
+
+### Hosted vocabulary owner review — 19 October 2026
+
+The owner subsequently approved exact 077 and the protected vocabulary Preview.
+The transaction and restricted-access checks passed; source `c0bf028` reached
+Ready in Vercel Preview. The initial review uses two existing accounts explicitly
+confirmed as the owner's, under the same adult/EU/EEA self-confirmation. No new
+campus staff/course authority or agent notice acceptance is provided. See the
+[vocabulary record](virtual-sciencedojo-german-vocabulary.md) and ignored private
+evidence. Actual hosted multiplayer, friends/human usability and the applicable
+operating gates remain separate; no production application release is established.

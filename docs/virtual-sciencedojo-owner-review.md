@@ -117,3 +117,16 @@ both browser transport flows, normal/reduced rendering, type/lint and clean buil
 passed locally; the Vercel deployment passed, while hosted quality/cron completion
 and subjective owner acceptance were not inferred. Refresh this Preview to retest.
 This does not establish a full independent study walkthrough or learner launch.
+
+
+## Initial games review using two owner accounts
+
+On 19 October the owner chose their existing admin account alongside their
+already admitted owner account, and confirmed both belong to them under the same
+previous 18+/EU/EEA self-confirmation. The additional invitation is enabled;
+no campus staff or course access was granted and its notice remains for the owner
+to accept. WortQuest 077 and protected Preview publication were separately
+approved and completed. Read the vocabulary guide/runbook and ignored private
+identity/rollback evidence. Actual sign-in/shared-game testing remains a human
+step, using separate browser sessions/devices. Later friends and a wider release
+remain separately scoped.

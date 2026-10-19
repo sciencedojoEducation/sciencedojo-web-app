@@ -368,3 +368,15 @@ are not hosted; exact hosted approval and actual integration remain separate.
 ## Platform security maintenance
 
 Keep the [database authorization contract](security-hardening.md) when maintaining shared profile/flag policies and storage access. Campus staff admission remains separately allowlisted. Security-advisor cleanup must preserve necessary auth-bound RPCs and service-only deny-by-default tables; it must not apply pending game migrations or alter feature/admission state. Hosted authorization evidence belongs in ignored private records.
+
+
+### Hosted vocabulary owner review — 19 October 2026
+
+The owner subsequently approved exact 077 and the protected vocabulary Preview.
+The transaction and restricted-access checks passed; source `c0bf028` reached
+Ready in Vercel Preview. The initial review uses two existing accounts explicitly
+confirmed as the owner's, under the same adult/EU/EEA self-confirmation. No new
+campus staff/course authority or agent notice acceptance is provided. See the
+[vocabulary record](virtual-sciencedojo-german-vocabulary.md) and ignored private
+evidence. Actual hosted multiplayer, friends/human usability and the applicable
+operating gates remain separate; no production application release is established.
