@@ -4,7 +4,7 @@ import {createGameApi} from "../../lib/campus/board-game-api.ts";
 export async function gamesFixture() {
   const f=await fixture();
   await f.db.exec("CREATE ROLE service_role BYPASSRLS; GRANT USAGE ON SCHEMA public TO service_role;");
-  for(const file of ["070_virtual_campus.sql","076_campus_board_games.sql"])
+  for(const file of ["070_virtual_campus.sql","076_campus_board_games.sql","077_campus_german_vocabulary.sql"])
     await f.db.exec(await readFile(new URL(`../../sql/${file}`,import.meta.url),"utf8"));
   await f.db.query("INSERT INTO campus_staff(user_id) VALUES($1)",[id(15)]);
   await f.db.exec("UPDATE feature_flags SET enabled=true WHERE key='virtual_campus_enabled'");
@@ -16,7 +16,7 @@ export async function gamesFixture() {
     await f.db.query("UPDATE profiles SET full_name=$2,avatar_url=$3 WHERE id=$1",[id(n),`Game Friend ${n}`,`https://fixture.supabase.co/storage/v1/object/public/avatars/${id(n)}.png`]);
   }
   const {rpc,api}=attachGamesApi(f);
-  const clearRate=()=>f.db.exec("UPDATE campus_game_members SET last_action='-infinity' WHERE table_id IN ('four','boxes')");
+  const clearRate=()=>f.db.exec("UPDATE campus_game_members SET last_action='-infinity' WHERE table_id IN ('four','boxes','wortquest')");
   const request=async(n,table,body,fetchPhoto)=>{
     const handler=api(n,fetchPhoto),url=`http://127.0.0.1:3012/api/campus/games?table=${table}`;
     const req=new Request(url,{method:body?'POST':'GET',headers:body?{origin:"http://127.0.0.1:3012","content-type":"application/json"}:{},body:body?JSON.stringify(body):undefined});

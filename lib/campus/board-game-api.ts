@@ -1,4 +1,5 @@
 import {GAME_TABLES, gameUsername, newBoard, playBoard, type GameKind, type GameSnapshot} from "./board-games.ts";
+import {GERMAN_LEVELS,vocabularyQuiz,type GermanLevel} from "./german-vocabulary.ts";
 import {sameOrigin, readCampusJson} from "./security.ts";
 import {allowedGamePhoto, readGamePhoto} from "./board-game-photo.ts";
 
@@ -45,8 +46,9 @@ export function createGameApi(deps: GameApiDependencies) {
         photo:!!allowedGamePhoto(session.profile.avatar_url,deps.supabaseUrl)}});
       const body = await readCampusJson(request);
       if (!body || typeof body.action !== "string") return json({error:"Invalid game request"},400);
-      const keys: Record<string,string[]> = {join:["action","username"],ready:["action","ready","round","version"],
+      const keys: Record<string,string[]> = {join:["action","username"],ready:["action","ready","round","version","level"],
         start:["action","round","version"],move:["action","move","round","version"],leave:["action"],
+        "quiz-level":["action","level","round"],"quiz-answer":["action","card","choice","round"],"quiz-next":["action","card","round"],
         block:["action","player"],report:["action","player","reason"]};
       const allowed = Object.hasOwn(keys,body.action) ? keys[body.action] : undefined;
       if (!allowed || Object.keys(body).some(k => !allowed.includes(k))) return json({error:"Invalid game request"},400);
@@ -62,13 +64,22 @@ export function createGameApi(deps: GameApiDependencies) {
         const target = await rpc("target",{player:body.player});
         if (!target.target || !await session.safety(body.action,target.target,body.reason as string)) return json({error:"Unable to save. Contact your session supervisor."},400);
         result = await rpc("read");
+      } else if (body.action.startsWith("quiz-")) {
+        if (kind!=="wortquest" || !current.self) return json({error:"Join WortQuest first"},403);
+        if (body.round!==current.round) return json({error:"The round changed. Try again."},409);
+        if (body.action==="quiz-level" && !GERMAN_LEVELS.includes(body.level as GermanLevel)) return json({error:"Choose a practice level"},400);
+        if (body.action!=="quiz-level" && (typeof body.card!=="string" || (body.action==="quiz-answer" && (!Number.isInteger(body.choice) || Number(body.choice)<-1 || Number(body.choice)>3)))) return json({error:"Invalid quiz answer"},400);
+        const {action,...payload}=body;result=await rpc(action,payload);
       } else {
         if (!current.self) return json({error:"Join this table first"},403);
         if (body.round !== current.round || (body.action!=="ready" && body.version !== current.version)) return json({error:"The table changed. Try again."},409);
         const stamp = {round:body.round,version:body.version};
         if (body.action === "ready") {
           if (typeof body.ready !== "boolean") return json({error:"Invalid ready state"},400);
-          result = await rpc("ready",{...stamp,ready:body.ready});
+          result = await rpc("ready",{...stamp,ready:body.ready,...(kind==="wortquest"?{level:body.level}:{})});
+        } else if (kind==="wortquest") {
+          if (body.action!=="start" || !GERMAN_LEVELS.includes(current.level as GermanLevel)) return json({error:"Choose a quiz action"},400);
+          result=await rpc("quiz-start",{...stamp,level:current.level,questions:vocabularyQuiz(current.level as GermanLevel,()=>crypto.getRandomValues(new Uint32Array(1))[0]/2**32)});
         } else {
           let state;
           try {

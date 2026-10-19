@@ -1,16 +1,19 @@
 /** Pure server-authoritative rules. No account/profile data belongs in a board. */
-export type GameKind = "four" | "boxes";
+import type {VocabularyView} from "./german-vocabulary.ts";
+export type BoardKind = "four" | "boxes";
+export type GameKind = BoardKind | "wortquest";
 export type BoardState = {
-  kind: GameKind; phase: "playing" | "finished" | "abandoned";
+  kind: BoardKind; phase: "playing" | "finished" | "abandoned";
   players: string[]; turn: number; board: number[]; boxes: number[];
   scores: number[]; winners: number[];
 };
 export const GAME_TABLES = [
   { id: "four", name: "Four in a Row", capacity: 2, x: 20.7, z: 28.3, floor: 2 },
   { id: "boxes", name: "Dots & Boxes", capacity: 4, x: 32.7, z: 28.3, floor: 2 },
+  { id: "wortquest", name: "WortQuest", capacity: 4, x: 26.7, z: 28.3, floor: 2 },
 ] as const;
-export function newBoard(kind: GameKind, players: string[]): BoardState {
-  if (!GAME_TABLES.some(t => t.id === kind) || players.length < 2 ||
+export function newBoard(kind: BoardKind, players: string[]): BoardState {
+  if (!["four","boxes"].includes(kind) || players.length < 2 ||
     players.length > (kind === "four" ? 2 : 4) || new Set(players).size !== players.length)
     throw new Error("Two ready players are needed; Dots & Boxes supports up to four.");
   return {kind, phase: "playing", players: [...players], turn: 0,
@@ -69,7 +72,7 @@ export function playBoard(state: BoardState, player: string, move: number): Boar
 export type GameMember = {id: string; username: string; ready: boolean; photo: boolean};
 export type GameSnapshot = {
   table: GameKind; round: string; version: number; self: string | null;
-  count: number; members: GameMember[]; state: BoardState | null;
+  count: number; members: GameMember[]; state: BoardState | null; quiz?: VocabularyView | null; level?: string;
 };
 export function gameUsername(value: unknown): string | null {
   if (typeof value !== "string") return null;
