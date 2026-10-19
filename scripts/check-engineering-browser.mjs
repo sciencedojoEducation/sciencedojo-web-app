@@ -97,6 +97,10 @@ try {
     await page.goto(route);
     assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), `Overflow at ${width}×${height}`);
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+    const brand = page.getByRole("link", { name: "ScienceDojo Engineering home" });
+    const wordmark = await brand.locator(":scope > span").boundingBox();
+    const descriptor = await brand.locator("small").boundingBox();
+    assert.ok(wordmark && descriptor && descriptor.y >= wordmark.y + wordmark.height && Math.abs(descriptor.x - wordmark.x) < 1, `Engineering sits below its wordmark at ${width}`);
     await expect(page.getByRole("img", { name: /Concept illustration: one continuous route/ })).toBeVisible();
     const path = join(output, `${width}-${height}.png`);
     await page.screenshot({ path, fullPage: true }); evidence.screenshots.push(path);
@@ -279,6 +283,24 @@ try {
   await expect(page.locator("#business-name")).toHaveAttribute("aria-invalid", "true");
   await expect(page.locator("#business-goal")).toHaveValue("Synthetic route-move draft retained after invalid submission");
   evidence.checks.push("Learning offer price, example/download responses and invalid server action with retained draft on the new route; no save attempted");
+  for (const [width, height] of [[320,568],[390,844],[768,1024],[1440,1000]]) {
+    await page.setViewportSize({ width, height });
+    await page.goto(`${origin}/business/instructional-design`);
+    await expect(page.locator("#business-heading")).toBeVisible();
+    await page.evaluate(() => document.fonts.ready);
+    for (const [label, heading] of [["The offer", "offer-heading"],["Work", "work-heading"],["Process", "process-heading"],["Studio", "about-heading"],["Discuss your project", "contact-heading"]]) {
+      await page.getByRole("navigation", { name: "Business navigation", exact: true }).getByRole("link", { name: label, exact: true }).click();
+      await expect.poll(() => page.evaluate(id => {
+        const header = document.querySelector("header").getBoundingClientRect();
+        const target = document.getElementById(id).getBoundingClientRect();
+        return scrollY > 100 && Math.abs(header.top) < 1 && target.top >= header.bottom && target.top < innerHeight;
+      }, heading), { message: `Sticky instructional header and visible ${label} target at ${width}` }).toBe(true);
+    }
+    assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1));
+    const screenshot = join(output, `instructional-sticky-${width}.png`);
+    await page.screenshot({ path: screenshot }); evidence.screenshots.push(screenshot);
+  }
+  evidence.checks.push("Engineering descriptor below wordmark at every responsive width; instructional header stays at top with all five navigation targets visible below it on desktop/tablet/phones");
   // Main-site entry points: native disclosure + hover, keyboard and phone links.
   for (const width of [1280, 1440]) {
     await page.setViewportSize({ width, height: 900 });

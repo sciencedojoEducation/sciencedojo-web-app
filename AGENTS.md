@@ -12,6 +12,9 @@ Reuse completed work rather than rebuilding it. Preserve owner-approved claims, 
 
 ## ScienceDojo branding
 
+On 20 October the owner requested the Engineering descriptor beneath the engineering wordmark at all widths and a sticky instructional-design header. Preserve both arm descriptors, native navigation, responsive anchor clearance and the shared progress line below the actual header; use the dated release record for verification.
+
+
 On 19 October the owner moved instructional design to `/business/instructional-design`, parallel to `/business/engineering`. Use the new route in current navigation, canonical/sharing metadata and sitemap. Preserve exact permanent redirects from `/business` and its old sharing-image URL, including query/hash navigation; do not redirect `/business/*` or move the existing downloadable examples. This supersedes the earlier root instructional-design route.
 
 

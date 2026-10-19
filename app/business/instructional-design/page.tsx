@@ -10,6 +10,7 @@ import BusinessProcess from "../BusinessProcess";
 import BusinessEnquiryForm from "../BusinessEnquiryForm";
 import { getPublicFeatureFlagMap } from "@/lib/feature-flags";
 import { siteUrl } from "@/lib/seo";
+import s from "./instructional-design.module.css";
 
 const title = "Custom Onboarding Module | ScienceDojo for Business";
 const description = "Custom onboarding for English-speaking IT service and software implementation teams. One task, realistic practice, an assessment, and a browser module you can keep. From €1,490 per project.";
@@ -40,15 +41,15 @@ export default async function BusinessPage() {
   const submissionToken = randomUUID();
   const flags = await getPublicFeatureFlagMap();
   return (
-    <div className="min-w-0 bg-white text-[#001A44]">
+    <div className={`${s.page} min-w-0 bg-white text-[#001A44]`}>
       <a href="#business-content" className={`sr-only z-50 rounded-lg bg-white p-4 focus:not-sr-only focus:absolute focus:left-4 focus:top-4 ${focus}`}>Skip to content</a>
-      <header data-public-site-header className="border-b border-[#DCE7F5] bg-white px-5 py-5 md:px-8">
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-5">
+      <header data-public-site-header className={`${s.header} border-b border-[#DCE7F5] bg-white px-5 py-4 md:px-8 md:py-5`}>
+        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 md:gap-5">
           <Link href="/business/instructional-design" aria-label="ScienceDojo for Business home" className={focus}>
             <BusinessBrand />
             <span className="mt-1 block text-[10px] font-bold uppercase tracking-[0.22em] text-[#52647C]">Instructional design</span>
           </Link>
-          <nav aria-label="Business navigation" className="flex flex-wrap items-center gap-x-5 gap-y-3 text-sm font-semibold">
+          <nav aria-label="Business navigation" className="flex flex-wrap items-center gap-x-3 gap-y-0 text-sm font-semibold md:gap-x-5 md:gap-y-3">
             <Link href="/business/engineering" className={`py-2 hover:text-[#0066FF] ${focus}`}>Engineering</Link>
             {navItems.map(([label, id]) => <a key={id} href={`#${id}`} className={`py-2 hover:text-[#0066FF] ${focus}`}>{label}</a>)}
             <a href="#contact" className={`inline-flex min-h-11 items-center gap-2 py-2 text-[#0066FF] hover:underline ${focus}`}>Discuss your project <ArrowRight className="h-4 w-4" aria-hidden="true" /></a>

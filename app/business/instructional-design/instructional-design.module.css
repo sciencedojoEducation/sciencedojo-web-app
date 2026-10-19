@@ -1,0 +1,9 @@
+/* Leave room for the wrapped phone navigation when following section links. */
+.page :where([id]) { scroll-margin-top: 15rem; }
+.header { position: sticky; top: 0; z-index: 40; }
+@media (min-width: 768px) {
+  .page :where([id]) { scroll-margin-top: 10rem; }
+}
+@media (min-width: 1024px) {
+  .page :where([id]) { scroll-margin-top: 7rem; }
+}

@@ -48,6 +48,11 @@ Piumal reported an agency reply requesting further examples after finding no cli
 
 ## Existing decisions and completed work
 
+### Business headers — 20 October 2026
+
+Piumal requested Engineering below its wordmark and instructional-design navigation to remain visible while scrolling. The engineering brand stacks at every width; the instructional header is sticky with responsive anchor clearance and existing shared progress alignment. Verification/publication are in the dated release record. E1 maintenance only; B3/S1/R1 and commercial/tested-delivery gates remain intact.
+
+
 ### Instructional-design route — 19 October 2026
 
 Piumal requested `/business/instructional-design`, parallel to engineering. The page/share image, menu/footer/cross-links, canonical metadata and sitemap use the new route; exact permanent redirects preserve old page/share links while downloads keep their existing URLs. Verification/publication belong in the dated release record. E1 maintenance only; B3/S1/R1 and all permission/delivery gates remain intact.
