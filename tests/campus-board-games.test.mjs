@@ -1,5 +1,6 @@
 import {test} from "node:test";
 import assert from "node:assert/strict";
+import {createServer} from "node:http";
 import {newBoard,playBoard,boxEdges,gameUsername} from "../lib/campus/board-games.ts";
 import {allowedGamePhoto,readGamePhoto} from "../lib/campus/board-game-photo.ts";
 
@@ -58,4 +59,19 @@ test("game usernames and existing avatar proxy reject addresses, credentials, re
   assert.equal(await readGamePhoto(url,async()=>new Response('svg',{headers:{'content-type':'image/svg+xml'}})),null);
   assert.equal(await readGamePhoto(url,async()=>new Response(new Uint8Array(1_048_577),{headers:{'content-type':'image/png'}})),null);
   let options;await readGamePhoto(url,async(_url,opts)=>{options=opts;throw Error('redirect');});assert.equal(options.redirect,'error');
+});
+
+test("rejecting an upstream avatar closes its actual unfinished response",async()=>{
+  let closed;
+  const disconnected=new Promise(resolve=>{closed=resolve;});
+  const server=createServer((_request,response)=>{
+    response.writeHead(200,{'content-type':'image/svg+xml'});response.write('<svg>');
+    response.once('close',closed);
+  });
+  await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
+  let deadline;
+  try{
+    assert.equal(await readGamePhoto(new URL(`http://127.0.0.1:${server.address().port}/avatar`)),null);
+    await Promise.race([disconnected,new Promise((_resolve,reject)=>{deadline=setTimeout(()=>reject(Error('Rejected upstream response remained open')),1000);})]);
+  }finally{clearTimeout(deadline);server.closeAllConnections();await new Promise(resolve=>server.close(resolve));}
 });

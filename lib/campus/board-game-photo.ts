@@ -35,5 +35,5 @@ export async function readGamePhoto(url: URL, fetcher: typeof fetch = fetch): Pr
       type === "image/gif" ? new TextDecoder().decode(bytes.slice(0,6)).match(/^GIF8[79]a$/) :
       new TextDecoder().decode(bytes.slice(0,4)) === "RIFF" && new TextDecoder().decode(bytes.slice(8,12)) === "WEBP";
     return valid ? {bytes, type} : null;
-  } catch {return null;} finally {clearTimeout(timer);}
+  } catch {return null;} finally {controller.abort();clearTimeout(timer);}
 }
