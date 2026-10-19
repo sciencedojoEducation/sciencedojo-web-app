@@ -48,6 +48,10 @@ Piumal reported an agency reply requesting further examples after finding no cli
 
 ## Existing decisions and completed work
 
+### Instructional-design brand alignment — 19 October 2026
+
+At Piumal’s request, the instructional-design website now shares the main-site navy/blue/cyan palette across its page, demos, process drawings, form and sharing image. Softer artwork, approved offer/price and existing downloads are preserved. Verification/publication results belong in the dated release record. This is E1 maintenance; B3/S1/R1 and permission/delivery gates remain intact.
+
 ### Shared public scroll-progress line — 19 October 2026
 
 Piumal requested the engineering page's filling scroll line across public website pages, excluding dashboards. A single shared indicator replaces the engineering-only copy, follows each public header, adjusts to content/viewport changes and hides on non-scrollable pages. Dashboard/admin/study/campus/account/onboarding/booking screens are excluded; no tracking, storage, backend or learning-progress change is introduced. See `public-scroll-progress.md` and the dated release record for actual tests/publication. This is E1/public-navigation maintenance, not a fourth active task; B3/S1/R1 and paid-work/tested-delivery gates remain intact.

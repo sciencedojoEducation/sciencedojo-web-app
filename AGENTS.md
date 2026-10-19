@@ -12,6 +12,9 @@ Reuse completed work rather than rebuilding it. Preserve owner-approved claims, 
 
 ## ScienceDojo branding
 
+On 19 October the owner requested aligning instructional design at `/business` with the main-site navy `#001A44`, blue `#0066FF`, cyan `#00D2FF` and white/pale-blue palette, matching engineering. Preserve its softer artwork, approved offer/price, downloadable materials and enquiry behaviour; existing business documents retain their established palette. Use the brand guidelines and dated release record for verification.
+
+
 On 19 October the owner requested two main-site destinations under a hoverable **For Business** menu: **Instructional design** at `/business` and **Engineering** at `/business/engineering`. Keep the native desktop disclosure usable by pointer, keyboard and without JavaScript, and expose both routes together in the mobile drawer. The no-script fallback belongs inside the existing public chrome/Suspense boundary; do not move it outside private/auth/business exclusions. Preserve existing feature flags/session navigation, scoped page headers, instructional-design offer/price and private campus chrome/tracking boundaries. The local navigation change does not itself establish production publication; use the dated business release record for verification.
 
 The 19 October client-comprehension/visual UX follow-through is recorded in `docs/business-engineering-client-ux-review-2026-10-19.md`. Retain descriptive section headings, recognisable desired-change choices with explicit service subtitles and selected-state cues, the continuous concept SVG route, named first contact and persistent associated form hints. Preserve existing motion/privacy/demo boundaries. Published UX principles inform hypotheses, not measured client psychology or conversion; software acceptance does not complete independent human review. See the release record for actual scoped checks and any unrelated repository build blocker.

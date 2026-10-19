@@ -5,8 +5,8 @@ import WorkplaceDemo from "./WorkplaceDemo";
 import HandoverApplication from "./HandoverApplication";
 import { handoverBrief, handoverDocuments, handoverEvaluationPlan, handoverRubric, handoverStoryboard } from "./handover-example";
 
-const focus = "focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#006B70]";
-const documentFocus = "focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-[#006B70]";
+const focus = "focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#0066FF]";
+const documentFocus = "focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-[#0066FF]";
 const designChoices = [
   ["Decisions before explanations", "Learners choose what to do with a realistic request, then see the consequence and reasoning."],
   ["A connected scenario", "Earlier decisions change the context of the next step, so the task develops as a single experience."],
@@ -45,23 +45,23 @@ const documentPreviews = [
 function PracticePreview() {
   return (
     <figure>
-      <div className="flex min-h-[238px] flex-col justify-center rounded-lg border border-[#dce2e8] bg-[#F3F5F7] p-5">
-        <div className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.13em] text-[#526071]">
-          <span className="h-1.5 w-1.5 rounded-full bg-[#006B70]" aria-hidden="true" />Try · Check · Understand
+      <div className="flex min-h-[238px] flex-col justify-center rounded-lg border border-[#DCE7F5] bg-[#F4F8FF] p-5">
+        <div className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.13em] text-[#52647C]">
+          <span className="h-1.5 w-1.5 rounded-full bg-[#0066FF]" aria-hidden="true" />Try · Check · Understand
         </div>
-        <p className="mt-5 text-xs text-[#526071]">An example practice question</p>
-        <p className="mt-2 text-2xl font-semibold tracking-tight text-[#12243A]">3x + 7 = 31</p>
-        <details className="group mt-5 rounded-md border border-[#c7dedf] bg-white">
-          <summary className={`flex min-h-11 cursor-pointer items-center justify-between gap-3 px-3 py-2 text-xs font-semibold text-[#006B70] ${focus}`}>
+        <p className="mt-5 text-xs text-[#52647C]">An example practice question</p>
+        <p className="mt-2 text-2xl font-semibold tracking-tight text-[#001A44]">3x + 7 = 31</p>
+        <details className="group mt-5 rounded-md border border-[#C6DBF7] bg-white">
+          <summary className={`flex min-h-11 cursor-pointer items-center justify-between gap-3 px-3 py-2 text-xs font-semibold text-[#0066FF] ${focus}`}>
             Reveal the reasoning <span className="text-base group-open:rotate-90" aria-hidden="true">→</span>
           </summary>
-          <div className="border-t border-[#dce2e8] px-3 py-3 text-xs leading-5 text-[#526071]">
-            <p className="font-semibold text-[#12243A]">x = 8</p>
+          <div className="border-t border-[#DCE7F5] px-3 py-3 text-xs leading-5 text-[#52647C]">
+            <p className="font-semibold text-[#001A44]">x = 8</p>
             <p className="mt-1">Subtract 7: 3x = 24. Then divide both sides by 3.</p>
           </div>
         </details>
       </div>
-      <figcaption className="mt-2 text-[11px] leading-5 text-[#526071]">Illustrative practice flow · Try the answer reveal</figcaption>
+      <figcaption className="mt-2 text-[11px] leading-5 text-[#52647C]">Illustrative practice flow · Try the answer reveal</figcaption>
     </figure>
   );
 }
@@ -69,17 +69,17 @@ function PracticePreview() {
 function FocusPreview() {
   return (
     <figure>
-      <div className="flex min-h-[238px] flex-col items-center justify-center rounded-lg border border-[#dce2e8] bg-[#edf5f5] p-5">
+      <div className="flex min-h-[238px] flex-col items-center justify-center rounded-lg border border-[#DCE7F5] bg-[#F4F8FF] p-5">
         <div className="relative flex h-36 w-36 items-center justify-center">
           <svg viewBox="0 0 160 160" className="absolute inset-0 h-full w-full -rotate-90" aria-hidden="true">
-            <circle cx="80" cy="80" r="70" fill="none" stroke="#d3e6e7" strokeWidth="4" />
-            <circle cx="80" cy="80" r="70" fill="none" stroke="#006B70" strokeWidth="4" strokeDasharray="330 440" strokeLinecap="round" />
+            <circle cx="80" cy="80" r="70" fill="none" stroke="#DCE7F5" strokeWidth="4" />
+            <circle cx="80" cy="80" r="70" fill="none" stroke="#0066FF" strokeWidth="4" strokeDasharray="330 440" strokeLinecap="round" />
           </svg>
-          <div className="text-center"><p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#526071]">Focus session</p><p className="mt-2 text-3xl font-semibold tabular-nums tracking-tight text-[#12243A]">25:00</p></div>
+          <div className="text-center"><p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#52647C]">Focus session</p><p className="mt-2 text-3xl font-semibold tabular-nums tracking-tight text-[#001A44]">25:00</p></div>
         </div>
-        <div className="mt-4 flex items-center gap-2 text-[10px] font-medium text-[#526071]"><span className="rounded bg-white px-2 py-1 text-[#006B70]">Focus</span><span aria-hidden="true">→</span><span>Break</span><span aria-hidden="true">→</span><span>Return</span></div>
+        <div className="mt-4 flex items-center gap-2 text-[10px] font-medium text-[#52647C]"><span className="rounded bg-white px-2 py-1 text-[#0066FF]">Focus</span><span aria-hidden="true">→</span><span>Break</span><span aria-hidden="true">→</span><span>Return</span></div>
       </div>
-      <figcaption className="mt-2 text-[11px] leading-5 text-[#526071]">Illustrative timer preview · A structured learning rhythm</figcaption>
+      <figcaption className="mt-2 text-[11px] leading-5 text-[#52647C]">Illustrative timer preview · A structured learning rhythm</figcaption>
     </figure>
   );
 }
@@ -88,130 +88,130 @@ export default function BusinessEvidence({ practiceEnabled, focusEnabled }: { pr
   return (
     <section id="work" className="scroll-mt-6 px-5 py-16 md:px-8 md:py-20" aria-labelledby="work-heading">
       <div className="mx-auto max-w-6xl">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#526071]">The work &amp; the thinking</p>
+        <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#52647C]">The work &amp; the thinking</p>
         <h2 id="work-heading" className="mt-3 max-w-2xl text-3xl font-bold tracking-tight sm:text-4xl">A realistic task. A visible design process.</h2>
-        <p className="mt-4 max-w-3xl leading-7 text-[#526071]">See what a small custom module can contain: a clear brief, realistic decisions with feedback, a practical handover exercise, and a scoring guide. {handoverBrief.suggestedMinutes}</p>
-        <article className="mt-8 overflow-hidden rounded-lg border border-[#dce2e8]">
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#dce2e8] px-6 py-4 text-xs"><span className="font-semibold">Client-request handover · Onboarding</span><span className="rounded bg-[#edf5f5] px-3 py-1.5 font-medium text-[#006B70]">Studio concept · Fictional scenario</span></div>
+        <p className="mt-4 max-w-3xl leading-7 text-[#52647C]">See what a small custom module can contain: a clear brief, realistic decisions with feedback, a practical handover exercise, and a scoring guide. {handoverBrief.suggestedMinutes}</p>
+        <article className="mt-8 overflow-hidden rounded-lg border border-[#DCE7F5]">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#DCE7F5] px-6 py-4 text-xs"><span className="font-semibold">Client-request handover · Onboarding</span><span className="rounded bg-[#F4F8FF] px-3 py-1.5 font-medium text-[#0066FF]">Studio concept · Fictional scenario</span></div>
           <div className="grid lg:grid-cols-[0.95fr_1.05fr]">
-            <div className="bg-[#12243A] text-white">
-              <div className="relative aspect-[16/9] overflow-hidden bg-[#edf5f5]">
+            <div className="bg-[#001A44] text-white">
+              <div className="relative aspect-[16/9] overflow-hidden bg-[#F4F8FF]">
                 <Image src="/images/business/handover-scenario-v1.webp" alt="Illustration of two colleagues reviewing a project brief beside a laptop" fill sizes="(max-width: 1023px) 90vw, 550px" className="object-cover" />
               </div>
               <div className="p-6 sm:p-8">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#b9e0df]">The brief</p>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#78D8FF]">The brief</p>
               <h3 className="mt-4 text-2xl font-bold tracking-tight sm:text-3xl">Turn a vague request into a clear handover.</h3>
-              <p className="mt-4 text-sm leading-7 text-[#d1dfec]">A new project coordinator receives an urgent client request. The delivery team needs a clear scope, an accountable owner, and a confirmed deadline before work begins.</p>
-              <dl className="mt-6 space-y-4 text-sm"><div><dt className="font-semibold text-[#b9e0df]">Audience</dt><dd className="mt-1 text-[#d1dfec]">{handoverBrief.audience}</dd></div><div><dt className="font-semibold text-[#b9e0df]">Learning objective</dt><dd className="mt-1 leading-6 text-[#d1dfec]">{handoverBrief.objectives[0]}</dd></div></dl>
-              <a href="#learning-demo" className={`mt-7 inline-flex min-h-12 items-center gap-3 rounded bg-white px-5 py-3 text-sm font-semibold text-[#12243A] hover:bg-[#edf5f5] ${focus}`}>Try the quick excerpt <ArrowRight className="h-4 w-4 shrink-0" aria-hidden="true" /></a>
+              <p className="mt-4 text-sm leading-7 text-[#D6E4F7]">A new project coordinator receives an urgent client request. The delivery team needs a clear scope, an accountable owner, and a confirmed deadline before work begins.</p>
+              <dl className="mt-6 space-y-4 text-sm"><div><dt className="font-semibold text-[#78D8FF]">Audience</dt><dd className="mt-1 text-[#D6E4F7]">{handoverBrief.audience}</dd></div><div><dt className="font-semibold text-[#78D8FF]">Learning objective</dt><dd className="mt-1 leading-6 text-[#D6E4F7]">{handoverBrief.objectives[0]}</dd></div></dl>
+              <a href="#learning-demo" className={`mt-7 inline-flex min-h-12 items-center gap-3 rounded bg-white px-5 py-3 text-sm font-semibold text-[#001A44] hover:bg-[#F4F8FF] ${focus}`}>Try the quick excerpt <ArrowRight className="h-4 w-4 shrink-0" aria-hidden="true" /></a>
               </div>
             </div>
-            <div id="learning-demo" className="min-w-0 scroll-mt-6 bg-[#F3F5F7] p-4 sm:p-6">
-              <p className="mb-2 text-xs font-semibold text-[#006B70]">01 · Quick excerpt · 3 decisions · ~2 minutes</p>
-              <p className="mb-4 text-sm leading-6 text-[#526071]">You are the coordinator. Read the fictional request, choose a response, and inspect the feedback. Continue below to apply it in a written handover.</p>
+            <div id="learning-demo" className="min-w-0 scroll-mt-6 bg-[#F4F8FF] p-4 sm:p-6">
+              <p className="mb-2 text-xs font-semibold text-[#0066FF]">01 · Quick excerpt · 3 decisions · ~2 minutes</p>
+              <p className="mb-4 text-sm leading-6 text-[#52647C]">You are the coordinator. Read the fictional request, choose a response, and inspect the feedback. Continue below to apply it in a written handover.</p>
               <WorkplaceDemo />
-              <a href="#handover-application" className={`mt-4 inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-[#006B70] ${focus}`}>Continue to the application exercise <ArrowRight className="h-4 w-4 shrink-0" aria-hidden="true" /></a>
+              <a href="#handover-application" className={`mt-4 inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-[#0066FF] ${focus}`}>Continue to the application exercise <ArrowRight className="h-4 w-4 shrink-0" aria-hidden="true" /></a>
             </div>
           </div>
           <HandoverApplication />
-          <div id="example-package" className="scroll-mt-6 border-t border-[#dce2e8] bg-[#F3F5F7] p-6 sm:p-8">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#006B70]">03 · Inspect the supporting documents</p>
+          <div id="example-package" className="scroll-mt-6 border-t border-[#DCE7F5] bg-[#F4F8FF] p-6 sm:p-8">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#0066FF]">03 · Inspect the supporting documents</p>
             <h3 className="mt-3 text-xl font-semibold tracking-tight">Explore a sample delivery package.</h3>
-            <p className="mt-3 max-w-3xl text-sm leading-7 text-[#526071]">Download the interactive example and four supporting PDFs. Editable text versions are also available. All materials belong to this fictional demonstration.</p>
-            <div className="mt-6 grid overflow-hidden rounded-xl border border-[#c7dedf] bg-white md:grid-cols-[0.9fr_1.1fr]">
-              <div className="flex flex-col justify-center bg-[#12243A] p-6 text-white sm:p-7">
-                <div className="flex items-center gap-3 text-[#b9e0df]"><MonitorPlay className="h-6 w-6" aria-hidden="true" /><p className="text-[11px] font-semibold uppercase tracking-[0.14em]">Complete browser module · HTML</p></div>
+            <p className="mt-3 max-w-3xl text-sm leading-7 text-[#52647C]">Download the interactive example and four supporting PDFs. Editable text versions are also available. All materials belong to this fictional demonstration.</p>
+            <div className="mt-6 grid overflow-hidden rounded-xl border border-[#C6DBF7] bg-white md:grid-cols-[0.9fr_1.1fr]">
+              <div className="flex flex-col justify-center bg-[#001A44] p-6 text-white sm:p-7">
+                <div className="flex items-center gap-3 text-[#78D8FF]"><MonitorPlay className="h-6 w-6" aria-hidden="true" /><p className="text-[11px] font-semibold uppercase tracking-[0.14em]">Complete browser module · HTML</p></div>
                 <h4 className="mt-4 text-xl font-semibold tracking-tight">Take the example with you.</h4>
-                <p className="mt-3 text-sm leading-6 text-[#d1dfec]">The same decisions, written exercise, and worked review. No ScienceDojo account or subscription needed.</p>
-                <a href="/business/examples/client-handover-module.html" download className={`mt-5 inline-flex min-h-12 w-fit items-center gap-3 rounded-md bg-white px-4 py-3 text-sm font-semibold text-[#12243A] hover:bg-[#edf5f5] ${focus}`}>Download the example module <ArrowDownToLine className="h-4 w-4 shrink-0" aria-hidden="true" /></a>
+                <p className="mt-3 text-sm leading-6 text-[#D6E4F7]">The same decisions, written exercise, and worked review. No ScienceDojo account or subscription needed.</p>
+                <a href="/business/examples/client-handover-module.html" download className={`mt-5 inline-flex min-h-12 w-fit items-center gap-3 rounded-md bg-white px-4 py-3 text-sm font-semibold text-[#001A44] hover:bg-[#F4F8FF] ${focus}`}>Download the example module <ArrowDownToLine className="h-4 w-4 shrink-0" aria-hidden="true" /></a>
               </div>
-              <figure className="flex flex-col justify-center bg-[#edf5f5] p-6 sm:p-7">
-                <div className="overflow-hidden rounded-lg border border-[#c7dedf] bg-white shadow-sm">
-                  <div className="flex items-center gap-3 border-b border-[#dce2e8] bg-[#F3F5F7] px-4 py-3"><div className="flex gap-1" aria-hidden="true"><span className="h-1.5 w-1.5 rounded-full bg-[#97a5b2]" /><span className="h-1.5 w-1.5 rounded-full bg-[#97a5b2]" /><span className="h-1.5 w-1.5 rounded-full bg-[#97a5b2]" /></div><span className="min-w-0 break-all text-[10px] font-medium text-[#526071]">client-handover-module.html</span></div>
-                  <div className="p-5"><p className="text-[10px] font-semibold uppercase tracking-[0.13em] text-[#006B70]">Fictional studio concept</p><p className="mt-3 text-lg font-semibold tracking-tight">{handoverBrief.title}</p><ol className="mt-5 grid gap-2 text-[11px] font-semibold text-[#006B70] sm:grid-cols-3 sm:text-center">{["Decisions", "Application", "Review"].map((step, index) => <li key={step} className="flex items-center gap-2 rounded-md bg-[#edf5f5] px-3 py-2 sm:block sm:px-1 sm:py-3"><span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-[#c7dedf] bg-white sm:mx-auto sm:mb-2">{index + 1}</span>{step}</li>)}</ol></div>
+              <figure className="flex flex-col justify-center bg-[#F4F8FF] p-6 sm:p-7">
+                <div className="overflow-hidden rounded-lg border border-[#C6DBF7] bg-white shadow-sm">
+                  <div className="flex items-center gap-3 border-b border-[#DCE7F5] bg-[#F4F8FF] px-4 py-3"><div className="flex gap-1" aria-hidden="true"><span className="h-1.5 w-1.5 rounded-full bg-[#97a5b2]" /><span className="h-1.5 w-1.5 rounded-full bg-[#97a5b2]" /><span className="h-1.5 w-1.5 rounded-full bg-[#97a5b2]" /></div><span className="min-w-0 break-all text-[10px] font-medium text-[#52647C]">client-handover-module.html</span></div>
+                  <div className="p-5"><p className="text-[10px] font-semibold uppercase tracking-[0.13em] text-[#0066FF]">Fictional studio concept</p><p className="mt-3 text-lg font-semibold tracking-tight">{handoverBrief.title}</p><ol className="mt-5 grid gap-2 text-[11px] font-semibold text-[#0066FF] sm:grid-cols-3 sm:text-center">{["Decisions", "Application", "Review"].map((step, index) => <li key={step} className="flex items-center gap-2 rounded-md bg-[#F4F8FF] px-3 py-2 sm:block sm:px-1 sm:py-3"><span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-[#C6DBF7] bg-white sm:mx-auto sm:mb-2">{index + 1}</span>{step}</li>)}</ol></div>
                 </div>
-                <figcaption className="mt-3 text-[11px] leading-5 text-[#526071]">Contents preview · Readable, editable HTML, CSS, and JavaScript</figcaption>
+                <figcaption className="mt-3 text-[11px] leading-5 text-[#52647C]">Contents preview · Readable, editable HTML, CSS, and JavaScript</figcaption>
               </figure>
             </div>
             <div className="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-              {documentPreviews.map(({ title, file, icon: Icon, caption, excerpt }) => <article key={file} className="flex flex-col overflow-hidden rounded-lg border border-[#dce2e8] bg-white transition-colors hover:border-[#006B70]">
+              {documentPreviews.map(({ title, file, icon: Icon, caption, excerpt }) => <article key={file} className="flex flex-col overflow-hidden rounded-lg border border-[#DCE7F5] bg-white transition-colors hover:border-[#0066FF]">
                 <a href={`/business/examples/${file.replace(/\.md$/, ".pdf")}`} download aria-label={`Download ${title} (PDF)`} className={`group flex flex-1 flex-col ${documentFocus}`}>
                 <div className="flex flex-1 flex-col p-4">
-                  <div className="flex items-center justify-between gap-3"><Icon className="h-5 w-5 text-[#006B70]" aria-hidden="true" /><span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#526071]">PDF document</span></div>
+                  <div className="flex items-center justify-between gap-3"><Icon className="h-5 w-5 text-[#0066FF]" aria-hidden="true" /><span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#52647C]">PDF document</span></div>
                   <p className="mt-4 text-sm font-semibold">{title}</p>
-                  <div className="mt-4 flex-1 border-l-2 border-[#c7dedf] pl-3"><p className="text-[11px] font-semibold uppercase tracking-wide text-[#006B70]">{caption}</p><p className="mt-2 break-words text-[13px] leading-5 text-[#526071]">{excerpt}</p>{file === "assessment-guide.md" && <div className="mt-3 flex flex-wrap gap-1.5">{handoverRubric[0].levels.map(({ rating }) => <span key={rating} className="rounded bg-[#F3F5F7] px-2 py-1 text-[11px] leading-4 text-[#526071]">{rating}</span>)}</div>}{file === "client-review-checklist.md" && <div className="mt-3 flex items-center gap-2 text-[11px] font-medium text-[#006B70]"><Check className="h-3.5 w-3.5 shrink-0" aria-hidden="true" /><span>Process · Facts · Criteria</span></div>}</div>
+                  <div className="mt-4 flex-1 border-l-2 border-[#C6DBF7] pl-3"><p className="text-[11px] font-semibold uppercase tracking-wide text-[#0066FF]">{caption}</p><p className="mt-2 break-words text-[13px] leading-5 text-[#52647C]">{excerpt}</p>{file === "assessment-guide.md" && <div className="mt-3 flex flex-wrap gap-1.5">{handoverRubric[0].levels.map(({ rating }) => <span key={rating} className="rounded bg-[#F4F8FF] px-2 py-1 text-[11px] leading-4 text-[#52647C]">{rating}</span>)}</div>}{file === "client-review-checklist.md" && <div className="mt-3 flex items-center gap-2 text-[11px] font-medium text-[#0066FF]"><Check className="h-3.5 w-3.5 shrink-0" aria-hidden="true" /><span>Process · Facts · Criteria</span></div>}</div>
                 </div>
-                <span className="flex min-h-11 items-center justify-between gap-2 border-t border-[#dce2e8] bg-[#F3F5F7] px-4 py-3 text-xs font-semibold text-[#006B70] group-hover:bg-[#edf5f5]">Download PDF <ArrowDownToLine className="h-3.5 w-3.5 shrink-0" aria-hidden="true" /></span>
+                <span className="flex min-h-11 items-center justify-between gap-2 border-t border-[#DCE7F5] bg-[#F4F8FF] px-4 py-3 text-xs font-semibold text-[#0066FF] group-hover:bg-[#F4F8FF]">Download PDF <ArrowDownToLine className="h-3.5 w-3.5 shrink-0" aria-hidden="true" /></span>
                 </a>
-                <a href={`/business/examples/${file}`} download aria-label={`Download editable text for ${title} (.md)`} className={`inline-flex min-h-11 items-center border-t border-[#dce2e8] px-4 py-3 text-xs text-[#526071] underline underline-offset-4 hover:text-[#006B70] ${documentFocus}`}>Editable text (.md)</a>
+                <a href={`/business/examples/${file}`} download aria-label={`Download editable text for ${title} (.md)`} className={`inline-flex min-h-11 items-center border-t border-[#DCE7F5] px-4 py-3 text-xs text-[#52647C] underline underline-offset-4 hover:text-[#0066FF] ${documentFocus}`}>Editable text (.md)</a>
               </article>)}
             </div>
-            <p className="mt-4 text-xs leading-6 text-[#526071]">The PDFs are for reading, printing, and sharing; the text versions can be edited in a text editor. The interactive example is a separate browser file. Practice drafts stay in the current page only; there is no central learner record or LMS completion report.</p>
+            <p className="mt-4 text-xs leading-6 text-[#52647C]">The PDFs are for reading, printing, and sharing; the text versions can be edited in a text editor. The interactive example is a separate browser file. Practice drafts stay in the current page only; there is no central learner record or LMS completion report.</p>
             <div className="mt-5 grid gap-4 md:grid-cols-2">
-              <details className="rounded-lg border border-[#dce2e8] bg-white p-5">
-                <summary className={`min-h-11 cursor-pointer text-sm font-semibold text-[#006B70] ${focus}`}>Learning brief &amp; storyboard</summary>
-                <dl className="mt-3 space-y-4 text-sm leading-6 text-[#526071]">
-                  <div><dt className="font-semibold text-[#12243A]">Task and audience</dt><dd>{handoverBrief.task} {handoverBrief.audience}</dd></div>
-                  <div><dt className="font-semibold text-[#12243A]">Observable objective</dt><dd>{handoverBrief.objectives[0]}</dd></div>
-                  <div><dt className="font-semibold text-[#12243A]">Sequence</dt><dd><ol className="mt-2 list-decimal space-y-2 pl-5">{handoverStoryboard.map((step) => <li key={step}>{step}</li>)}</ol></dd></div>
-                  <div><dt className="font-semibold text-[#12243A]">Feedback plan</dt><dd>Each decision reveals its consequence and reasoning. The written task receives criterion-based review by a subject expert.</dd></div>
+              <details className="rounded-lg border border-[#DCE7F5] bg-white p-5">
+                <summary className={`min-h-11 cursor-pointer text-sm font-semibold text-[#0066FF] ${focus}`}>Learning brief &amp; storyboard</summary>
+                <dl className="mt-3 space-y-4 text-sm leading-6 text-[#52647C]">
+                  <div><dt className="font-semibold text-[#001A44]">Task and audience</dt><dd>{handoverBrief.task} {handoverBrief.audience}</dd></div>
+                  <div><dt className="font-semibold text-[#001A44]">Observable objective</dt><dd>{handoverBrief.objectives[0]}</dd></div>
+                  <div><dt className="font-semibold text-[#001A44]">Sequence</dt><dd><ol className="mt-2 list-decimal space-y-2 pl-5">{handoverStoryboard.map((step) => <li key={step}>{step}</li>)}</ol></dd></div>
+                  <div><dt className="font-semibold text-[#001A44]">Feedback plan</dt><dd>Each decision reveals its consequence and reasoning. The written task receives criterion-based review by a subject expert.</dd></div>
                 </dl>
               </details>
-              <details className="rounded-lg border border-[#dce2e8] bg-white p-5">
-                <summary className={`min-h-11 cursor-pointer text-sm font-semibold text-[#006B70] ${focus}`}>Application exercise &amp; scoring guide</summary>
-                <p className="mt-3 text-sm leading-6 text-[#526071]">Use the source notes and written brief above as the work sample. Rate each criterion as missing, partly demonstrated, or clearly demonstrated, and cite the response that supports the rating.</p>
-                <dl className="mt-4 space-y-4 text-sm leading-6">{handoverRubric.map(({ criterion, description, levels }) => <div key={criterion}><dt className="font-semibold">{criterion}</dt><dd className="text-[#526071]"><p>{description}</p><ul className="mt-2 space-y-2">{levels.map(({ rating, description: levelDescription }) => <li key={rating}><strong className="font-medium text-[#12243A]">{rating}:</strong> {levelDescription}</li>)}</ul></dd></div>)}</dl>
-                <p className="mt-4 text-xs leading-6 text-[#526071]">The worked review above demonstrates how to use this guide. Completion of the choices alone does not demonstrate workplace readiness.</p>
+              <details className="rounded-lg border border-[#DCE7F5] bg-white p-5">
+                <summary className={`min-h-11 cursor-pointer text-sm font-semibold text-[#0066FF] ${focus}`}>Application exercise &amp; scoring guide</summary>
+                <p className="mt-3 text-sm leading-6 text-[#52647C]">Use the source notes and written brief above as the work sample. Rate each criterion as missing, partly demonstrated, or clearly demonstrated, and cite the response that supports the rating.</p>
+                <dl className="mt-4 space-y-4 text-sm leading-6">{handoverRubric.map(({ criterion, description, levels }) => <div key={criterion}><dt className="font-semibold">{criterion}</dt><dd className="text-[#52647C]"><p>{description}</p><ul className="mt-2 space-y-2">{levels.map(({ rating, description: levelDescription }) => <li key={rating}><strong className="font-medium text-[#001A44]">{rating}:</strong> {levelDescription}</li>)}</ul></dd></div>)}</dl>
+                <p className="mt-4 text-xs leading-6 text-[#52647C]">The worked review above demonstrates how to use this guide. Completion of the choices alone does not demonstrate workplace readiness.</p>
               </details>
-              <details className="rounded-lg border border-[#dce2e8] bg-white p-5">
-                <summary className={`min-h-11 cursor-pointer text-sm font-semibold text-[#006B70] ${focus}`}>Client review &amp; handover checklist</summary>
-                <ul className="mt-3 space-y-3 text-sm leading-6 text-[#526071]">
+              <details className="rounded-lg border border-[#DCE7F5] bg-white p-5">
+                <summary className={`min-h-11 cursor-pointer text-sm font-semibold text-[#0066FF] ${focus}`}>Client review &amp; handover checklist</summary>
+                <ul className="mt-3 space-y-3 text-sm leading-6 text-[#52647C]">
                   {handoverDocuments[2].items.map((item) => <li key={item}>{item}</li>)}
                 </ul>
               </details>
-              <details className="rounded-lg border border-[#dce2e8] bg-white p-5">
-                <summary className={`min-h-11 cursor-pointer text-sm font-semibold text-[#006B70] ${focus}`}>Evaluation plan for a real team</summary>
-                <ul className="mt-3 space-y-3 text-sm leading-6 text-[#526071]">
+              <details className="rounded-lg border border-[#DCE7F5] bg-white p-5">
+                <summary className={`min-h-11 cursor-pointer text-sm font-semibold text-[#0066FF] ${focus}`}>Evaluation plan for a real team</summary>
+                <ul className="mt-3 space-y-3 text-sm leading-6 text-[#52647C]">
                   {handoverEvaluationPlan.map((item) => <li key={item}>{item}</li>)}
                 </ul>
-                <p className="mt-4 text-xs font-semibold leading-6 text-[#006B70]">Proposed plan only. No client outcome data exists for this fictional example.</p>
+                <p className="mt-4 text-xs font-semibold leading-6 text-[#0066FF]">Proposed plan only. No client outcome data exists for this fictional example.</p>
               </details>
             </div>
           </div>
-          <div className="border-t border-[#dce2e8] p-6 sm:p-8">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#526071]">Why it is designed this way</p>
-            <ol className="mt-5 grid gap-6 md:grid-cols-3">{designChoices.map(([heading, text], index) => <li key={heading}><span className="text-xs font-semibold text-[#006B70]">0{index + 1}</span><h4 className="mt-3 text-sm font-semibold">{heading}</h4><p className="mt-2 text-sm leading-6 text-[#526071]">{text}</p></li>)}</ol>
-            <p className="mt-6 border-t border-[#dce2e8] pt-5 text-xs leading-6 text-[#526071]">This is a sample we designed and built to demonstrate our approach. It has not been evaluated with a client team.</p>
+          <div className="border-t border-[#DCE7F5] p-6 sm:p-8">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#52647C]">Why it is designed this way</p>
+            <ol className="mt-5 grid gap-6 md:grid-cols-3">{designChoices.map(([heading, text], index) => <li key={heading}><span className="text-xs font-semibold text-[#0066FF]">0{index + 1}</span><h4 className="mt-3 text-sm font-semibold">{heading}</h4><p className="mt-2 text-sm leading-6 text-[#52647C]">{text}</p></li>)}</ol>
+            <p className="mt-6 border-t border-[#DCE7F5] pt-5 text-xs leading-6 text-[#52647C]">This is a sample we designed and built to demonstrate our approach. It has not been evaluated with a client team.</p>
           </div>
         </article>
 
-        <div className="mt-12 border-t border-[#dce2e8] pt-8">
+        <div className="mt-12 border-t border-[#DCE7F5] pt-8">
           <h3 className="text-xl font-semibold tracking-tight">Technical capability, demonstrated in ScienceDojo.</h3>
-          <p className="mt-3 max-w-2xl text-sm leading-6 text-[#526071]">These education products show our development work in practice, feedback, and connected learning experiences. They demonstrate technical capability; they are not client results or features included in the €1,490 offer.</p>
+          <p className="mt-3 max-w-2xl text-sm leading-6 text-[#52647C]">These education products show our development work in practice, feedback, and connected learning experiences. They demonstrate technical capability; they are not client results or features included in the €1,490 offer.</p>
           <div className="mt-7 grid gap-8 md:grid-cols-3">
             <article>
               <PracticePreview />
-              <div className="mt-5 border-t border-[#dce2e8] pt-5">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[#526071]">Practice &amp; feedback</p><h4 className="mt-2 text-lg font-semibold">PracticeDojo</h4><p className="mt-3 text-sm leading-6 text-[#526071]">Topic-based, AI-generated educational practice with revealable answers and worked guidance.</p><p className="mt-3 text-sm leading-6"><span className="font-semibold">Relevance to your team:</span> practice a task, inspect feedback, and revisit the reasoning.</p>
-              {practiceEnabled ? <Link href="/ai-practice-studio" className={`mt-3 inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-[#006B70] ${focus}`}>Explore PracticeDojo <ArrowRight className="h-4 w-4" aria-hidden="true" /></Link> : <p className="mt-3 text-xs text-[#526071]">Live product currently unavailable</p>}
+              <div className="mt-5 border-t border-[#DCE7F5] pt-5">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[#52647C]">Practice &amp; feedback</p><h4 className="mt-2 text-lg font-semibold">PracticeDojo</h4><p className="mt-3 text-sm leading-6 text-[#52647C]">Topic-based, AI-generated educational practice with revealable answers and worked guidance.</p><p className="mt-3 text-sm leading-6"><span className="font-semibold">Relevance to your team:</span> practice a task, inspect feedback, and revisit the reasoning.</p>
+              {practiceEnabled ? <Link href="/ai-practice-studio" className={`mt-3 inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-[#0066FF] ${focus}`}>Explore PracticeDojo <ArrowRight className="h-4 w-4" aria-hidden="true" /></Link> : <p className="mt-3 text-xs text-[#52647C]">Live product currently unavailable</p>}
               </div>
             </article>
             <article>
               <FocusPreview />
-              <div className="mt-5 border-t border-[#dce2e8] pt-5">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[#526071]">Learning routines</p><h4 className="mt-2 text-lg font-semibold">FocusDojo</h4><p className="mt-3 text-sm leading-6 text-[#526071]">Goal-based timed sessions, structured breaks, and session recovery.</p><p className="mt-3 text-sm leading-6"><span className="font-semibold">Relevance to your team:</span> build tools that support a learning routine beyond the course.</p>
-              {focusEnabled ? <Link href="/focus-dojo" className={`mt-3 inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-[#006B70] ${focus}`}>Explore FocusDojo <ArrowRight className="h-4 w-4" aria-hidden="true" /></Link> : <p className="mt-3 text-xs text-[#526071]">Live product currently unavailable</p>}
+              <div className="mt-5 border-t border-[#DCE7F5] pt-5">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[#52647C]">Learning routines</p><h4 className="mt-2 text-lg font-semibold">FocusDojo</h4><p className="mt-3 text-sm leading-6 text-[#52647C]">Goal-based timed sessions, structured breaks, and session recovery.</p><p className="mt-3 text-sm leading-6"><span className="font-semibold">Relevance to your team:</span> build tools that support a learning routine beyond the course.</p>
+              {focusEnabled ? <Link href="/focus-dojo" className={`mt-3 inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-[#0066FF] ${focus}`}>Explore FocusDojo <ArrowRight className="h-4 w-4" aria-hidden="true" /></Link> : <p className="mt-3 text-xs text-[#52647C]">Live product currently unavailable</p>}
               </div>
             </article>
             <article>
               <figure>
-                <div className="relative min-h-[238px] overflow-hidden rounded-lg border border-[#dce2e8] bg-[#F3F5F7]">
+                <div className="relative min-h-[238px] overflow-hidden rounded-lg border border-[#DCE7F5] bg-[#F4F8FF]">
                   <Image src="/images/product-tour/student-home.webp" alt="ScienceDojo student dashboard showing sample lessons, assignments, and learning activity" fill sizes="(max-width: 767px) 90vw, 360px" className="object-contain" />
                 </div>
-                <figcaption className="mt-2 text-[11px] leading-5 text-[#526071]">Product screenshot · Sample data</figcaption>
+                <figcaption className="mt-2 text-[11px] leading-5 text-[#52647C]">Product screenshot · Sample data</figcaption>
               </figure>
-              <div className="mt-5 border-t border-[#dce2e8] pt-5">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[#526071]">Platform development</p><h4 className="mt-2 text-lg font-semibold">Connected learning</h4><p className="mt-3 text-sm leading-6 text-[#526071]">Lessons, assignments, guided practice, and a learner&apos;s next action in one dashboard.</p><p className="mt-3 text-sm leading-6"><span className="font-semibold">Relevance to your team:</span> connect content and learning tools into a coherent experience.</p>
+              <div className="mt-5 border-t border-[#DCE7F5] pt-5">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[#52647C]">Platform development</p><h4 className="mt-2 text-lg font-semibold">Connected learning</h4><p className="mt-3 text-sm leading-6 text-[#52647C]">Lessons, assignments, guided practice, and a learner&apos;s next action in one dashboard.</p><p className="mt-3 text-sm leading-6"><span className="font-semibold">Relevance to your team:</span> connect content and learning tools into a coherent experience.</p>
               </div>
             </article>
           </div>

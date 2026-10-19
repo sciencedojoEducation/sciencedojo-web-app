@@ -11,8 +11,8 @@ import {
 } from "@/lib/business-enquiry-validation";
 import { submitBusinessEnquiry } from "./actions";
 
-const focus = "focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#006B70]";
-const inputClass = `mt-2 min-h-12 w-full rounded-md border border-[#a9b6c4] bg-white px-3 py-3 text-base text-[#12243A] placeholder:text-[#667487] disabled:opacity-70 ${focus}`;
+const focus = "focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#0066FF]";
+const inputClass = `mt-2 min-h-12 w-full rounded-md border border-[#a9b6c4] bg-white px-3 py-3 text-base text-[#001A44] placeholder:text-[#667487] disabled:opacity-70 ${focus}`;
 const fieldLabels: Record<keyof BusinessEnquiryValues, string> = {
   name: "Name",
   email: "Email",
@@ -49,9 +49,9 @@ export default function BusinessEnquiryForm({ initialSubmissionToken }: { initia
 
   if (state.status === "success") {
     return (
-      <div ref={outcome} tabIndex={-1} role="status" className={`self-start rounded-lg border border-[#b6d5d6] bg-white p-6 ${focus}`}>
+      <div ref={outcome} tabIndex={-1} role="status" className={`self-start rounded-lg border border-[#C6DBF7] bg-white p-6 ${focus}`}>
         <h3 className="text-xl font-bold">Enquiry received</h3>
-        <p className="mt-3 whitespace-pre-line text-sm leading-7 text-[#526071]">{state.message}</p>
+        <p className="mt-3 whitespace-pre-line text-sm leading-7 text-[#52647C]">{state.message}</p>
       </div>
     );
   }
@@ -69,13 +69,13 @@ export default function BusinessEnquiryForm({ initialSubmissionToken }: { initia
 
       {state.status === "error" && (
         <div ref={outcome} tabIndex={-1} role="alert" className={`mb-6 rounded-md border border-[#dfbab6] bg-white p-4 ${focus}`}>
-          <p className="font-semibold text-[#12243A]">{state.message}</p>
+          <p className="font-semibold text-[#001A44]">{state.message}</p>
           {errorFields.length > 0 && <ul className="mt-3 space-y-2 text-sm text-[#a12e25]">{errorFields.map((field) => <li key={field}><a href={`#business-${field}`} className={`underline underline-offset-4 ${focus}`}>{fieldLabels[field]}: {errors[field]}</a></li>)}</ul>}
         </div>
       )}
 
       <fieldset disabled={pending} className="min-w-0 space-y-5">
-        <legend className="mb-5 text-sm leading-6 text-[#526071]">All fields are required except timing.</legend>
+        <legend className="mb-5 text-sm leading-6 text-[#52647C]">All fields are required except timing.</legend>
         <div className="grid gap-5 sm:grid-cols-2">
           <div>
             <label htmlFor="business-name" className="text-sm font-semibold">Name</label>
@@ -95,20 +95,20 @@ export default function BusinessEnquiryForm({ initialSubmissionToken }: { initia
         </div>
         <div>
           <label htmlFor="business-goal" className="text-sm font-semibold">What should your people be able to do?</label>
-          <p id="business-goal-hint" className="mt-1 text-sm leading-6 text-[#526071]">Describe the workplace task or process you want them to practise.</p>
+          <p id="business-goal-hint" className="mt-1 text-sm leading-6 text-[#52647C]">Describe the workplace task or process you want them to practise.</p>
           <textarea id="business-goal" name="goal" rows={5} required maxLength={BUSINESS_ENQUIRY_LIMITS.goal} value={draft.goal} onChange={(event) => change("goal", event.target.value)} aria-invalid={Boolean(errors.goal)} aria-describedby={`business-goal-hint${errors.goal ? " business-goal-error" : ""}`} className={`${inputClass} resize-y`} />
           <FieldError field="goal" errors={errors} />
         </div>
         <div>
-          <label htmlFor="business-timing" className="text-sm font-semibold">Timing <span className="font-normal text-[#526071]">(optional)</span></label>
+          <label htmlFor="business-timing" className="text-sm font-semibold">Timing <span className="font-normal text-[#52647C]">(optional)</span></label>
           <input id="business-timing" name="timing" type="text" maxLength={BUSINESS_ENQUIRY_LIMITS.timing} value={draft.timing} onChange={(event) => change("timing", event.target.value)} aria-invalid={Boolean(errors.timing)} aria-describedby={errors.timing ? "business-timing-error" : undefined} className={inputClass} />
           <FieldError field="timing" errors={errors} />
         </div>
-        <button type="submit" disabled={pending} className={`inline-flex min-h-12 items-center justify-center gap-3 rounded-md bg-[#006B70] px-6 py-3 text-sm font-bold text-white hover:bg-[#00565B] disabled:cursor-wait disabled:opacity-70 ${focus}`}>
+        <button type="submit" disabled={pending} className={`inline-flex min-h-12 items-center justify-center gap-3 rounded-md bg-[#0066FF] px-6 py-3 text-sm font-bold text-white hover:bg-[#0052CC] disabled:cursor-wait disabled:opacity-70 ${focus}`}>
           {pending ? "Sending…" : "Send enquiry"}<ArrowRight className="h-4 w-4" aria-hidden="true" />
         </button>
       </fieldset>
-      <p className="mt-4 text-xs leading-6 text-[#526071]">We use these details to respond to your enquiry and discuss the project. Read our <Link href="/privacy" className={`font-semibold text-[#006B70] underline underline-offset-4 ${focus}`}>privacy notice</Link>.</p>
+      <p className="mt-4 text-xs leading-6 text-[#52647C]">We use these details to respond to your enquiry and discuss the project. Read our <Link href="/privacy" className={`font-semibold text-[#0066FF] underline underline-offset-4 ${focus}`}>privacy notice</Link>.</p>
       <p role="status" aria-live="polite" className="sr-only">{pending ? "Sending your enquiry. Please wait." : ""}</p>
     </form>
   );
