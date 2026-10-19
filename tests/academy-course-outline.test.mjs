@@ -62,7 +62,7 @@ test("previews supply an outline; learners use their existing themed course navi
     assert.match(source, /outline=\{<AcademyCourseOutline course=\{course\}/);
     assert.doesNotMatch(source, /courseOutline=/);
   }
-  for (const file of ["app/dashboard/tutor/academy/courses/[courseKey]/lessons/[lessonSlug]/page.tsx", "app/dashboard/tutor/academy/lessons/[lessonSlug]/page.tsx"]) {
+  for (const file of ["lib/academy-course-lesson-page.tsx", "app/dashboard/tutor/academy/lessons/[lessonSlug]/page.tsx"]) {
     const source = readFileSync(new URL(`../${file}`, import.meta.url), "utf8");
     assert.doesNotMatch(source, /AcademyCourseOutline|courseOutline=/);
   }

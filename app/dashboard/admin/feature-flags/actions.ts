@@ -46,10 +46,19 @@ export async function toggleFeatureFlag(formData: FormData) {
     return;
   }
 
-  const { user, error: authError } = await requireAdmin();
+  const { supabase, user, error: authError } = await requireAdmin();
   if (authError || !user) {
     console.error("[feature-flags] Unauthorized toggle attempt.");
     return;
+  }
+
+  // The privileged writer bypasses RLS; check campus authority before using it.
+  if (key === "virtual_campus_enabled") {
+    const { data: staff, error } = await supabase.rpc("campus_is_staff");
+    if (error || staff !== true) {
+      console.error("[feature-flags] Campus staff authorization required.");
+      return;
+    }
   }
 
   const definition = FEATURE_FLAG_DEFINITIONS.find((flag) => flag.key === key);

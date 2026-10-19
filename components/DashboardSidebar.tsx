@@ -7,6 +7,7 @@ import DashboardBadgeProvider from "./DashboardBadgeProvider";
 import DashboardAccountMenu from "./DashboardAccountMenu";
 import { workbookFeatureEnabled } from "@/lib/workbook-access";
 import { isFeatureEnabled } from "@/lib/feature-flags";
+import {campusConfiguration} from "@/lib/campus/security";
 import { getDashboardNavSections } from "@/lib/dashboard-navigation";
 import {
   createEmptyDashboardBadgeCounts,
@@ -46,6 +47,11 @@ export default async function DashboardSidebar({ role }: { role: DashboardRole }
     ? await isFeatureEnabled("tutor_academy_enabled")
     : false;
   const sections = getDashboardNavSections(role, { tutorMarketplaceEnabled, tutorAcademyEnabled }).map(section => ({ ...section, items: [...section.items] }));
+  if (role === "admin") sections.push({ title: "Virtual campus", items: [{ name: "Campus moderation", href: "/dashboard/admin/campus", iconName: "academy" }] });
+  if (user&&campusConfiguration()&&await isFeatureEnabled("virtual_campus_enabled")) {
+    const {data:campusIdentity,error}=await supabase.rpc("campus_self");
+    if(!error&&campusIdentity) sections.push({ title: "Optional beta", items: [{ name: "Virtual ScienceDojo · Beta", href: "/campus", iconName: "academy" }] });
+  }
   if (await isFeatureEnabled("course_pilot_enabled")) {
     for (const section of sections) section.items = section.items.filter(item => item.href !== "/dashboard/academy");
     sections.push({ title: "Courses", items: [{ name: "My Courses", href: "/dashboard/academy", iconName: "academy" }, { name: "Browse courses", href: "/courses", iconName: "academy" }] });

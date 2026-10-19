@@ -1,8 +1,9 @@
 "use client";
 import { usePathname, useSearchParams } from "next/navigation";
-/** Keep private workbook and invitation-return URLs out of marketing tag initialization. */
+import { isPrivateStudyPath } from "@/lib/private-study";
+/** Keep private learning and invitation-return URLs out of marketing tag initialization. */
 export default function PrivateWorkbookTrackingGate({ children }: { children: React.ReactNode }) {
   const pathname = usePathname(); const params = useSearchParams();
-  const privateEntry = pathname.startsWith("/workbooks/") || (["/login", "/signup"].includes(pathname) && params.get("next")?.startsWith("/workbooks/"));
+  const privateEntry = isPrivateStudyPath(pathname) || (["/login", "/signup"].includes(pathname) && isPrivateStudyPath(params.get("next") || ""));
   return privateEntry ? null : children;
 }

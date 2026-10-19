@@ -1,3 +1,5 @@
+import { isPrivateStudyLocation } from "./private-study.ts";
+
 type AnalyticsValue = string | number | boolean | null | undefined;
 
 type AnalyticsParams = Record<string, AnalyticsValue>;
@@ -9,7 +11,7 @@ declare global {
 }
 
 export function trackEvent(eventName: string, params: AnalyticsParams = {}) {
-  if (typeof window === "undefined" || typeof window.gtag !== "function") {
+  if (typeof window === "undefined" || isPrivateStudyLocation(window.location.href) || typeof window.gtag !== "function") {
     return;
   }
 
