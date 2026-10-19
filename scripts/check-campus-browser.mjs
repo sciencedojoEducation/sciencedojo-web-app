@@ -995,6 +995,7 @@ try {
     await a.getByRole('button',{name:'Full screen',exact:true}).click();
     await a.waitForFunction(()=>!!document.querySelector('.campus-immersive'));
     if(!await a.getByRole('region',{name:'Basketball court',exact:true}).isVisible())throw new Error('Basketball controls disappeared in fullscreen');
+    if(await a.locator('[data-campus-panel=play]').isVisible())throw new Error('Inactive invitation tools cover the court controls');
     await a.screenshot({path:join(directory,'basketball-fullscreen-phone.png')});result.screenshots.push(join(directory,'basketball-fullscreen-phone.png'));
     const touch=await aContext.newCDPSession(a);await touch.send('Emulation.setTouchEmulationEnabled',{enabled:true,maxTouchPoints:2});
     const touchTarget=await a.locator('.campus-interact').boundingBox(),tx=touchTarget.x+touchTarget.width/2,ty=touchTarget.y+touchTarget.height/2;

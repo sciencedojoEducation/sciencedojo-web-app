@@ -30,7 +30,8 @@ export default function PlayTogether({connected,suppressed,onOpen,onNavigate,onS
         if(response.ok){
           if(previous.current&&!next.invitation&&!body&&!quiet.current)setMessage(new Date(previous.current.expires).getTime()<=Date.now()?
             previous.current.state==='accepted'?"Table reservation expired. You can arrange another game.":"Invitation expired. You can invite again.":"Invitation ended or the other player became unavailable.");
-          previous.current=next.invitation;setState(next);if(body)setMessage("");
+          if(body||(next.invitation&&next.invitation.id!==previous.current?.id))setMessage("");
+          previous.current=next.invitation;setState(next);
         }
         else {setState({invitation:null,nearby:[]});if(body)setMessage(next.error||"Unable to update invitation.");}
       }catch{if(!stopped){setState({invitation:null,nearby:[]});if(body)setMessage("Play invitations are temporarily unavailable.");}}

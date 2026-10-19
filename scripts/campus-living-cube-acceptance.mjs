@@ -18,8 +18,9 @@ export async function checkLivingCube({page:a,peer:b,stage,player,id,result,dire
  await a.locator('.campus-stage').screenshot({path:join(directory,'library-screened-glass.png')});result.screenshots.push(join(directory,'library-screened-glass.png'));
  await a.getByRole('button',{name:'Clear room glass',exact:true}).click();
  await a.getByRole('button',{name:'First person',exact:true}).click();
- await stage.focus();const before={...await player(id)};await a.keyboard.down('Shift');await a.keyboard.down('d');await a.waitForTimeout(550);await a.keyboard.up('d');await a.keyboard.up('Shift');
- await until(async()=>Math.hypot((await player(id)).x-before.x,(await player(id)).z-before.z)>.6,'Running did not move the authority');
+ await stage.focus();const before={...await player(id)};await a.keyboard.down('Shift');await a.keyboard.down('d');
+ try{await until(async()=>Math.hypot((await player(id)).x-before.x,(await player(id)).z-before.z)>.6,'Running did not move the authority');}
+ finally{await a.keyboard.up('d');await a.keyboard.up('Shift');}
  await stage.focus();await a.keyboard.press('c');await until(async()=>(await player(id)).stance==='crouch','C did not crouch');
  await a.keyboard.press('z');await until(async()=>(await player(id)).stance==='prone','Z did not lie prone');
  await a.keyboard.press('z');await until(async()=>(await player(id)).stance==='stand','Z did not stand');

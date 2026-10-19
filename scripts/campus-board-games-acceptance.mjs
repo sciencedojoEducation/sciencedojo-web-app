@@ -52,6 +52,7 @@ export async function checkBoardGames({a,b,browser,origin,identities,shared,game
   await b.setViewportSize({width:390,height:844});
   await b.getByRole('button',{name:'Full screen',exact:true}).click();
   await b.getByRole('button',{name:'Play together · New invite',exact:true}).click();
+  await expect(b.getByRole('alert').filter({hasText:'Invitation expired'})).toHaveCount(0);
   expect(await b.locator('.campus-play-together').evaluate(el=>el.scrollWidth<=el.clientWidth+1)).toBe(true);
   await b.screenshot({path:join(directory,'play-invitation-phone.png')});result.screenshots.push(join(directory,'play-invitation-phone.png'));
   await b.getByRole('button',{name:'Accept invitation',exact:true}).press('Enter');
@@ -61,14 +62,14 @@ export async function checkBoardGames({a,b,browser,origin,identities,shared,game
   for(const page of pages)await page.getByRole('button',{name:'Walk to reserved table',exact:true}).waitFor({timeout:10000});
   expect((await store.db.query('SELECT count(*) AS n FROM campus_game_members')).rows[0].n).toBe(0);
   // The accepted meeting guides real walking and a lift ride from the ground floor.
-  for(const page of pages){
+  await Promise.all(pages.map(async page=>{
     await page.getByRole('button',{name:'Walk to reserved table',exact:true}).click();
     const lift=page.getByRole('button',{name:/^E Glass elevator → level 2$/});
     await lift.waitFor({timeout:35000});await lift.click();
     await expect(page.locator('.campus-body-tools>span')).toContainText('Level 2',{timeout:10000});
     await page.getByRole('button',{name:'Walk to reserved table',exact:true}).click();
     await page.getByRole('button',{name:/E Play Four in a Row/}).waitFor({timeout:35000});
-  }
+  }));
   const stage=a.getByRole('region',{name:/3D school/});await stage.focus();await a.keyboard.press('e');
   await dialog(a).waitFor();await joinGame(a,0);
   await b.getByRole('button',{name:/E Play Four in a Row/}).click();await joinGame(b,1);
