@@ -95,6 +95,7 @@ jobs:
           path: |
             ${{ runner.temp }}/campus-render-*/evidence.json
             ${{ runner.temp }}/campus-render-*/*.png
+            ${{ runner.temp }}/campus-render-*/mouse-look-failure.json
           if-no-files-found: ignore
           retention-days: 7
 

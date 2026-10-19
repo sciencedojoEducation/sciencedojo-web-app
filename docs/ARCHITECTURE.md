@@ -302,3 +302,43 @@ continuous animation. Buffered flight requests frames only for actual outstandin
 position changes; held dribble uses its separate reduced-motion-aware branch.
 The actual-scene idle-stream regression must retain sharp Auto graphics while
 new identical snapshots continue arriving.
+## Games Lounge — owner-approved software, 19 October 2026
+
+The owner approved the [board-games plan](virtual-sciencedojo-board-games.md):
+Four in a Row for two players and Dots & Boxes for two to four. The existing
+Level 2 `commons` becomes Sky Commons · Games Lounge. Thin board markings reuse
+its side tables and beanbags; all collision footprints and the deployed
+`school-v3-living-cube` movement revision remain unchanged.
+
+E near a game table, or the accessible Games Lounge action, opens a native HTML
+dialog inside the campus fullscreen shell. It releases mouse capture, stops
+movement, pauses the scene and isolates game input. Study Hub/course/dashboard
+DOM and unsent work stay mounted. Games use existing signed-in campus admission;
+they grant no course/staff entitlement.
+
+This is an explicit, limited identity extension: after previewing and choosing
+Join, players share their existing profile picture and chosen game username
+with fellow table participants. The school keeps pseudonyms. Game profiles,
+account IDs and picture URLs never enter either movement transport. Unjoined
+visitors get only bounded occupancy, never the roster or board. The authenticated
+application resolves opaque game IDs privately and proxies supported raster
+avatars through no-store, participant-authorized same-origin endpoints.
+
+The common server rules module owns moves/wins/scores. Additive migration 076
+holds two bounded game tables and private ephemeral membership under RLS, with
+no direct anon/authenticated/service table grants. A service-only RPC serializes
+join/capacity/blocks, frozen rosters and CAS moves under one transaction lock.
+Ready intents commute within the same round; moves/start retain strict version
+checks. The client schedules quick bonus turns around the server rate limit.
+Polling is bounded and stops in hidden/closed panels; leases are 45 seconds.
+Explicit Leave removes membership; expiration/revocation/block cleanup runs on
+game requests and abandons incomplete rounds. Switch-off/deletion clears private
+game identities and boards transactionally even after application admission
+closes. Normal lease expiry is lazy cleanup, not a new background job or a
+physical backup-retention guarantee. No chat, durable rankings or game history.
+
+076 and the new software remain local until the separate hosted activation
+procedure is approved. Existing owner-only invitations, protected Preview and
+operating gates are unchanged; named friends need their own authorized admission
+and deployment access. Read the runbook for actual verification rather than
+inferring hosted or human acceptance from synthetic browser matches.

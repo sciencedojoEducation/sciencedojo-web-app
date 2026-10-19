@@ -190,3 +190,19 @@ speed/collision/seat authority, immediate corrections, graphics limits and cours
 retention. Verify input/start/stop/rapid-change timing, slow-RPC lifecycle/cadence,
 both transports, actual Follow tracking and existing rendering/privacy checks.
 No schema, hosting settings, cohort or learning entitlement change is needed.
+## Games Lounge extension — 19 October 2026
+
+The owner approved implementing the [Games Lounge plan](virtual-sciencedojo-board-games.md)
+for easy games with friends: two-player Four in a Row and two-to-four-player
+Dots & Boxes in the existing upper Sky Commons. This extends the beta software
+with session-only game turns/results and explicit table-level picture/username
+sharing. After a sharing preview and deliberate Join, only fellow players see
+those identities. It does not change campus pseudonyms, add chat, replace
+dashboards/courses, or authorize disclosure through world messages.
+
+The prepared additive 076 migration uses service-only game operations and
+RLS-protected ephemeral records. It is not hosted yet. The approved owner review
+still admits only the owner; friend accounts, deployment access, environment-
+specific changes and applicable operating/admission requirements remain pending.
+See the implementation runbook for actual software evidence. Synthetic matches
+do not establish a real friend walkthrough, current-head hosted CI or G1–G9.

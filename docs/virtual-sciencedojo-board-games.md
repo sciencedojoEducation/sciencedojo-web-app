@@ -1,7 +1,7 @@
 # sciencedojo. — Games Lounge plan
 
 19 October 2026. Status: owner approved implementation on 19 October; software
-work is in progress and games are not yet available to friends. This is a new campus software phase, not a change to
+implementation and local verification are complete; hosted friend access is pending. This is a new campus software phase, not a change to
 the business offer or permission to admit additional accounts.
 
 ## Requested result
@@ -179,3 +179,21 @@ or until the owner explicitly changes its scope.
    Do not describe a 45-second lease as a physical backup/log retention guarantee.
    Roll back the application to its previous protected Preview if needed; do not
    drop the additive schema or alter production as an incidental rollback.
+
+
+## Verified local result
+
+Implemented Four in a Row and Dots & Boxes, the dedicated upper Games Lounge,
+explicit picture/username sharing, private authorization, safe lifecycle and
+retained learning. All 81 campus regressions, both two/four-browser game flows,
+both complete original/shared campus walkthroughs, normal/reduced actual-scene
+checks, clean application build, type/lint and service release/restart passed
+locally. Native capture was exercised in a visible testing browser on macOS;
+headless native capture denial is recorded separately. Repeated touch during a
+slow school exit sends one request, clears the final game seat and permits fresh
+admission without a delayed second exit. These results are synthetic, not
+hosted/friend/device acceptance. See the runbook and private evidence record.
+
+The implementation is ready for review. 076, the updated protected Preview,
+named friend invitations and any deployment share-link approval remain pending;
+no hosted settings/data or invitations were changed by this work.

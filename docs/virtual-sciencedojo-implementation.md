@@ -839,3 +839,125 @@ hosted CI result is inferred. No schema, account/course authorization, hosting
 setting, production deployment or operational gate changed. The owner's retest
 of this lag correction remains pending. Refresh the existing private Preview to
 load its new client bundle; the existing Shift run control remains available.
+## Games Lounge — 19 October 2026
+
+The owner approved the prepared Games Lounge implementation plan. Local feature
+commits `9d77e5b` and `ff5cb72`, followed by verified corrections through
+`4d376a2`, implement two-player Four in a Row and two-to-four-
+player Dots & Boxes in the existing Level 2 Sky Commons. Existing table surfaces
+and beanbags are reused, with thin instanced board markings. Exact SQL collision
+parity and the existing movement revision remain unchanged. E and an accessible
+Games Lounge button open the native fullscreen-compatible game dialog; existing
+course/dashboard documents remain mounted.
+
+Joining deliberately shares the previewed existing picture and chosen game
+username only with fellow table participants. Account/campus identity mapping
+stays private. An authenticated same-origin image proxy restricts origin/path,
+redirects, raster signatures, bytes and time; unsupported/missing images use
+initials. No profile information or new game data enters either world transport.
+Game reports/blocks resolve opaque game IDs privately through existing safety
+operations. Direct reads of game records are denied to anonymous, authenticated
+and service roles; the privileged application uses a service-only RPC.
+
+Migration 076 has not been applied to a hosted environment by this work. It adds two RLS
+tables, serialized membership/capacity/lease/CAS operations and a restricted
+switch-off cleanup trigger. The latter clears private names and boards even
+when the disabled campus switch prevents application admission. Ready intents
+are independent within a round; moves/start retain strict version checks. A
+short client scheduling delay protects fast bonus turns without weakening the
+server command limit. Incomplete games are abandoned on lost participants,
+not recorded as fabricated wins. Empty games reset; idle lease cleanup is lazy
+on the next RPC and is not a physical backup/log-retention guarantee.
+
+Actual local evidence on the feature revision:
+
+- All 81 campus regressions passed. The seven board-game tests execute the real
+  rules, application request factory and SQL/role grants. They cover every win
+  direction/draw, two-box capture, 2/3/4-player rotation, scores/ties, unanimous
+  rematch, concurrent capacity/Ready/move/version behavior, origin/payload
+  validation, cross-table/unjoined photo denial, blocks/reports, revocation,
+  expiration and transactional switch-off/deletion cleanup. A native unfinished
+  upstream-image response is closed immediately on rejection.
+- Both maintained transports completed two- and four-browser game walkthroughs,
+  including a real E table entry, rendered distinct synthetic profile pictures
+  and usernames, keyboard Four in a Row, touch-enabled phone-context Dots &
+  Boxes, a completed physical board with equal shared results, a rematch,
+  fullscreen, no horizontal phone overflow, retained unsent course input and
+  report/block/complete table cleanup, plus a delayed repeated-touch school exit
+  that releases the final seat once and preserves fresh admission. This is loopback fixture evidence, not
+  real sign-in, actual phone hardware or friend usability.
+- Final original/shared game checks observed 2,042 original and 1,219 shared world frames, plus five exact protected
+  admission handshakes checked separately. Existing course/dashboard
+  canaries plus game usernames, profile paths and synthetic account IDs were
+  absent from observed world traffic. Exact shared-transport admission
+  handshakes were checked separately; credentials were not saved as evidence.
+- The clean application build passed from an isolated tracked-source snapshot
+  with only campus edits overlaid. No concurrent business edits or environment
+  files were copied. The first macOS temporary-path alias build compiled and
+  generated pages but failed standalone tracing; the canonical temporary-path
+  build completed. Scoped type/lint checks passed, including the final avatar correction; the clean
+  final build matches all 12 changed application files by SHA-256.
+- Clean service release/install/actual-process restart passed on `ff5cb72` with
+  the original explicit file allowlist. The later avatar-only correction does
+  not change the service package contents. This is not a deployed service test.
+
+The graphics check also reproduced a pre-existing final-step scheduling defect:
+the final confirmed pose could consume the last requested movement frame while
+the visible gait was still active. Auto then restored full resolution before
+that gait finished and briefly lowered it again on a subsequent snapshot. The
+avatar now requests frames for walking as well as settling. Keep all continuity,
+draw-call, 300ms interpolation, reduced-motion and shadow thresholds unchanged.
+The probe retains exact idle frame counts/ratios. Final graphics outcomes are recorded
+in the completion addendum below.
+
+Hosted activation and an actual friend walkthrough are still pending. No source
+was pushed/deployed for this phase, no hosted SQL/settings/memberships changed,
+and no friend was invited. The existing owner-only review remains as previously
+approved. Follow the Games Lounge activation sequence for exact 076 approval,
+named accounts, deployment-protection access, eligibility/notices and the
+applicable operating requirements. The added browser CI commands retain
+synthetic evidence for seven days; local checks do not establish hosted CI.
+
+
+### Local verification complete; hosted activation pending
+
+All requested game software is implemented locally. Final code includes the
+one-shot game exit guard and closed rejected avatar streams. Both new game
+walkthroughs passed on both transports (9/10 checks, real keyboard/touch, distinct
+rendered synthetic pictures/usernames, safe delayed exit and fresh admission).
+The existing full campus walkthroughs also passed: 23 original / 28 shared
+checks, retaining courses/dashboard work, controls, basketball, disconnect and
+handover/revocation recovery, all three floors and ordinary lift/escalator/slide
+journeys. Their additional wire checks observed 8,199 / 5,005 world frames and
+ten protected shared handshakes. These are fixture observations, not hosted
+sessions or real-account acceptance.
+
+Final normal/reduced-motion actual-scene checks passed in headed Chrome with
+SwiftShader: 111/118 distinct walking positions, no observed stationary pause,
+27 maximum draw calls, exact terminal pose, retained shadow pipeline, idle Auto
+DPR 1 throughout all eight sampled stationary frames, full native mouse capture,
+turns/range/release/denial fallback, first-person eye/self hiding, sky, manual
+quality, physical basketball and Living Cube posture/glass/levels. No numerical
+hardware FPS claim follows. This macOS headless environment rejected native
+capture with a recorded `WrongDocumentError`; a Playwright maintainer documents
+this [native macOS view-focus failure](https://github.com/microsoft/playwright/issues/20956).
+The explicit `--headed` test mode keeps every capture assertion; it does not mock
+success or weaken default CI. The probe now waits for its requested camera reset
+to actually render before measuring full circles. Browser drivers foreground the
+active student after interacting with a peer, preserving all timed input checks.
+
+Final type checking, scoped lint and the clean webpack application build passed.
+The isolated build matches all 12 changed application files by SHA-256 and leaves
+concurrent business work out. The unchanged service-only release contents retain
+the earlier clean-install/restart proof. All synthetic processes/contexts closed
+and fixture game rows were cleared; no hosted account/data cleanup was necessary
+because this phase used no hosted fixtures. Exact evidence and final source hashes
+are in ignored `.campus-private/board-games-evidence.json`; CI fixture retention
+is seven days, including native-capture failure details. Hosted CI was not run for
+these local commits.
+
+The remote beta branch remains on `7c43836`; no source/configuration/schema or
+membership was published by this work. Apply 076 and publish the game update only
+after its separate environment-specific approval. Named friend accounts,
+applicable eligibility/notices/operating decisions, deployment-protection access
+and the real friend walkthrough remain pending. The full goal is still active.
