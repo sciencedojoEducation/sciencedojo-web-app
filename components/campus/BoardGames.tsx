@@ -27,6 +27,7 @@ export default function BoardGames({initialTable,connected,onClose,onLeaveSchool
   const inflight = useRef<AbortController | null>(null), requestAction = useRef<(body:object) => Promise<void>>(async () => {});
   const generation = useRef(0);
   const nextWrite = useRef(0);
+  const leavingSchool = useRef(false);
   const online = useRef(connected); online.current = connected;
   useEffect(() => {const el=dialog.current; el?.showModal(); return () => el?.close();},[]);
   useEffect(() => {
@@ -35,7 +36,7 @@ export default function BoardGames({initialTable,connected,onClose,onLeaveSchool
     let stopped = false, timer: ReturnType<typeof setTimeout>;
     const endpoint = `/api/campus/games?table=${table}`;
     async function request(body?: object) {
-      if (stopped || !online.current) return;
+      if (stopped || leavingSchool.current || !online.current) return;
       if (inflight.current) {if(body){queued=body;setBusy(true);}return;}
       const controller = new AbortController(); inflight.current = controller;
       const deadline = setTimeout(() => controller.abort(),8000);
@@ -68,7 +69,7 @@ export default function BoardGames({initialTable,connected,onClose,onLeaveSchool
         if(body)nextWrite.current=Date.now()+180;
         clearTimeout(deadline);
         if (inflight.current === controller) inflight.current = null;
-        if (!stopped) {setBusy(false); if(queued){const next=queued;queued=undefined;void request(next);}}
+        if (!stopped&&!leavingSchool.current) {setBusy(false); if(queued){const next=queued;queued=undefined;void request(next);}}
       }
     }
     requestAction.current = request;
@@ -82,6 +83,8 @@ export default function BoardGames({initialTable,connected,onClose,onLeaveSchool
   },[table,onSafety]);
   const send = (body:object) => {void requestAction.current(body);};
   const leaveSchool=async()=>{
+    if(leavingSchool.current)return;
+    leavingSchool.current=true;
     setBusy(true);inflight.current?.abort();
     try{await fetch(`/api/campus/games?table=${table}`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"leave"}),credentials:"same-origin",keepalive:true,signal:AbortSignal.timeout(3000)});}catch{/* A lost connection expires the seat. */}
     finally{onLeaveSchool();}
@@ -144,6 +147,6 @@ export default function BoardGames({initialTable,connected,onClose,onLeaveSchool
         <p>Contact the supervisor named in your invitation for immediate help.</p></details>
     </>}
     <details className="game-rules"><summary>How to play {current.name}</summary><p>{table === "four" ? "Take turns dropping a piece into a column. Four connected pieces horizontally, vertically or diagonally win. A full board without four is a draw." : "Take turns drawing one edge between two dots. Complete a box to claim it and play again. You can close two boxes with one edge. After all sixteen boxes are claimed, the most boxes wins; equal scores tie."}</p></details>
-    <footer><span>Pictures and usernames are shared only with players at your table.</span><button className="secondary" onClick={()=>void leaveSchool()}>Leave school</button></footer>
+    <footer><span>Pictures and usernames are shared only with players at your table.</span><button className="secondary" disabled={busy} onClick={()=>void leaveSchool()}>Leave school</button></footer>
   </dialog>;
 }

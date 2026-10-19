@@ -12,6 +12,7 @@ export async function checkLivingCube({page:a,peer:b,stage,player,id,result,dire
  await walk('Walk here →','Library');
  if(await b.getByRole('button',{name:'Enter school',exact:true}).isVisible())await b.getByRole('button',{name:'Enter school',exact:true}).click();
  await b.getByText('In the school · walking',{exact:true}).waitFor();
+ await a.bringToFront();
  const screen=a.getByRole('button',{name:'Screen room glass',exact:true});await screen.click();
  await a.getByRole('button',{name:'Clear room glass',exact:true}).waitFor();await b.getByRole('button',{name:'Clear room glass',exact:true}).waitFor();
  await a.locator('.campus-stage').screenshot({path:join(directory,'library-screened-glass.png')});result.screenshots.push(join(directory,'library-screened-glass.png'));

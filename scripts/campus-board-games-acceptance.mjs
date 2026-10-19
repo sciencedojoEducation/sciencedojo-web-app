@@ -118,8 +118,24 @@ export async function checkBoardGames({a,b,browser,origin,identities,shared,game
   await open(a,'boxes');await dialog(a).getByText('Report or block a player',{exact:true}).click();await dialog(a).getByRole('button',{name:'Report FriendTwo',exact:true}).click();await dialog(a).getByRole('alert').filter({hasText:'Report saved'}).waitFor();
   await dialog(a).getByRole('button',{name:'Block FriendTwo',exact:true}).click();
   await dialog(a).getByLabel('Game username',{exact:true}).waitFor();await dialog(b).getByLabel('Game username',{exact:true}).waitFor();
-  for(const page of pages.slice(2)){await dialog(page).getByRole('button',{name:'Leave table',exact:true}).click();await dialog(page).getByLabel('Game username',{exact:true}).waitFor();}
+  for(const page of pages.slice(2,3)){await dialog(page).getByRole('button',{name:'Leave table',exact:true}).click();await dialog(page).getByLabel('Game username',{exact:true}).waitFor();}
+  const exiting=pages[3];let leaveRequests=0;
+  await exiting.route('**/api/campus/games?table=boxes',async route=>{
+    if(route.request().method()==='POST'&&JSON.parse(route.request().postData()||'{}').action==='leave'){
+      leaveRequests++;await exiting.waitForTimeout(600);
+    }
+    await route.continue();
+  });
+  const exit=dialog(exiting).getByRole('button',{name:'Leave school',exact:true});
+  await exit.tap();await expect(exit).toBeDisabled();
+  const exitBox=await exit.boundingBox();if(exitBox)await exiting.touchscreen.tap(exitBox.x+exitBox.width/2,exitBox.y+exitBox.height/2);
+  await exiting.getByRole('button',{name:'Enter school',exact:true}).waitFor();
+  expect(leaveRequests).toBe(1);
   expect((await store.db.query('SELECT count(*) AS n FROM campus_game_members')).rows[0].n).toBe(0);
+  await exiting.getByRole('button',{name:'Enter school',exact:true}).tap();
+  await exiting.getByText('In the school · walking',{exact:true}).waitFor();
+  await exiting.waitForTimeout(3200);await expect(exiting.getByText('In the school · walking',{exact:true})).toBeVisible();
   result.checks.push('Four actual browser contexts complete Dots & Boxes with shared scores/turns, fullscreen and phone layout; course input is retained, report/block works and all game identities are cleaned');
+  result.checks.push('Real delayed Leave school releases the final table seat; a repeated touch creates one request and cannot cancel fresh campus admission');
   for(const context of contexts)await context.close();
 }
