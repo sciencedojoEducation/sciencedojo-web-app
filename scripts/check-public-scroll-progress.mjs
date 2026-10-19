@@ -57,6 +57,12 @@ export async function checkPublicScrollProgress(page, origin, output) {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.goto(`${origin}/privacy`);
+  // Wait for the streamed page before measuring its reduced-motion scroll range.
+  await expect(page.getByRole("heading", { level: 1 }).first()).toBeVisible();
+  await page.evaluate(() => document.fonts.ready);
+  await expect(bar).toHaveAttribute("data-scrollable", "true");
+  await scroll(0);
+  await expect.poll(fraction).toBeLessThan(.001);
   await scroll(.5);
   await expect.poll(async () => Math.abs(await fraction() - .5)).toBeLessThan(.01);
   assert.equal(await bar.evaluate(node => getComputedStyle(node).transitionDuration), "0s");
