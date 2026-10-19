@@ -1,10 +1,10 @@
 # sciencedojo. — room games and play invitations
 
-20 October 2026. Status: owner approved this software phase; implementation and browser verification are in progress.
+20 October 2026. Status: owner-approved software implemented for local review; protected hosted publication remains separately approvable.
 The owner clarified that games should exist inside a room, with invitations to
-play when users meet in the world. This replaces the current global Games Lounge
-panel shortcut. Existing board games, vocabulary content and owner review remain
-available until the approved revision is implemented and verified.
+play when users meet in the world. The local revision replaces the global Games Lounge
+panel shortcut. The hosted owner-review beta remains on its previous revision
+until the separately scoped migration/publication step is approved.
 
 ## Experience to build
 
@@ -181,3 +181,54 @@ An incoming toolbar indicator opens the invitation controls deliberately; a
 collapsed invitation tool does not cover basketball, map or study controls.
 The normal-page card remains alongside the world. No invitation arrival steals
 focus or mouse capture. Phone/fullscreen acceptance exercises this panel directly.
+
+## Local review result — 20 October 2026
+
+Application revision `f56eeb2` implements room-only access, nearby invitations,
+capacity-aware meetings, ordinary walking/lift guidance and explicit table Join.
+Fullscreen invitations reuse the school tools panel; an incoming indicator does
+not cover court controls or take focus automatically. A new invitation clears a
+previous expiry message. Learning documents and unsent input remain mounted.
+
+Local evidence:
+
+- All 98 campus regressions pass, including 13 room/invitation authority cases,
+  generation-bound cleanup, atomic duration handover, role restrictions, SQL/
+  client reach parity and exact guarded rollback/refused replay.
+- Complete board-game walkthroughs pass on both transports: actual 30-second
+  expiry, decline, phone/keyboard acceptance, both players walking from ground
+  level, an E lift ride to level 2, room/table arrival, explicit Join, two-player
+  win/rematch and four-player play. A focused recheck covers the final expiry
+  message correction, participant pictures and returning both places.
+- Complete A1–C2 solo and two/four-player vocabulary checks pass on the same game
+  authority. These predate the final invitation-panel/message-only refinement;
+  the raw source hashes retain that distinction. Full school checks pass on
+  both transports; the Vercel run includes the final fullscreen-panel change.
+  Mouse capture, retained dashboard/course work, recovery, basketball and real
+  three-floor journeys passed in those school walkthroughs.
+- Type checking, scoped lint and the isolated tracked-source Next.js build pass.
+  All 15 changed application files match that build; its private-workbook trace
+  check passes. The clean service install/actual-process restart check passes,
+  and all 15 packaged source files match this final application revision.
+- Normal/reduced-motion actual-scene continuity meets the unchanged limits:
+  100/92 distinct walking positions, no observed stationary pause, 27 maximum
+  draw calls, exact terminal position, stable shadow pipeline and eight sharp
+  idle frames in each run. Both complete graphics commands subsequently stop
+  at native mouse capture with WrongDocumentError. Computer-use inventory
+  confirms the Mac is locked. These are partial graphics results, not complete
+  camera-probe passes; the earlier full school native-capture results remain
+  separate. No capture assertion was removed or mocked.
+
+Commands/evidence and exact source differences are retained in the ignored
+`.campus-private/room-games-verification.json` record. The focused UI command is
+`node --experimental-strip-types scripts/check-campus-browser.mjs --games --invitation-only`
+with `--vercel` for the shared-SQL transport. Default CI still runs the complete
+game walkthrough. Synthetic JSON/screenshots retain the existing seven-day CI
+policy. These are local fixture results, not hosted CI, intended-device FPS,
+human friend matches or learner-release evidence.
+
+080 and its guarded contingency remain unapplied. Follow the separately scoped
+[protected Preview procedure](virtual-sciencedojo-game-invitations-hosted.md)
+after owner approval; keep existing accounts/roles, notice acceptance, course
+permissions, hosting protection and operational gates within their recorded
+scope. No production application, hosted setting or learner record changed.

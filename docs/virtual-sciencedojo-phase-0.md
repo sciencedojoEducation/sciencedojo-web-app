@@ -233,23 +233,20 @@ campus staff/course authority or agent notice acceptance is provided. See the
 evidence. Actual hosted multiplayer, friends/human usability and the applicable
 operating gates remain separate; no production application release is established.
 
-### Proposed social game interaction — 20 October 2026
+### Owner-approved room games and nearby invitations — 20 October 2026
 
-The owner clarified that games should appear inside a dedicated room and users
-who meet can invite each other to play. The [prepared phase plan](virtual-sciencedojo-game-invitations.md)
-keeps invitations fixed/targeted in the authenticated application, preserves
-pseudonyms before game Join and guides users to the actual lounge/table.
-Implementation approval remains pending. Existing owner-review/admission,
-private-learning and release boundaries remain; no general chat is introduced.
+The owner approved the [room/invitation software plan](virtual-sciencedojo-game-invitations.md).
+Local software now uses actual lounge/table eligibility on both transports,
+fixed targeted pseudonym invitations, deliberate acceptance and profile sharing
+only at Join. Private HTTP credentials bind game actions to the admitted
+connection; no invitation, game profile, quiz answer or learning state enters
+world frames. Existing learning documents/input are retained across world tools.
 
-### Room invitation software approval — 20 October 2026
-
-The owner approved the [room/invitation phase](virtual-sciencedojo-game-invitations.md).
-Local implementation is in progress: server-owned room/table gates on both
-transports, connection-bound private HTTP access, pseudonym-only invitations,
-30-second replies and two-minute capacity-aware reservations. The new 080
-migration remains unapplied to hosted databases. Seven added authority tests and
-all 92 campus regressions pass locally; browser, clean-build and release checks
-remain in progress. Existing owner access, deliberate notice/profile acceptance,
-course retention and protected Preview scope remain unchanged. No human friend
-match or learner release is established.
+Migration 080 and the matching protected Preview publication remain separately
+approvable through the [prepared hosted procedure](virtual-sciencedojo-game-invitations-hosted.md).
+Local authority/rollback, both game transports, school flows, build and service
+release evidence is recorded in the invitation plan/runbook. Normal/reduced
+scene continuity passes its limits; complete graphics rechecks stop at native
+capture while the Mac is locked. Owner/friend sign-in, notice acceptance, intended devices, human
+usability and applicable G1–G9 remain unproven. No wider admission, production
+application release, paid infrastructure or general chat is authorized.

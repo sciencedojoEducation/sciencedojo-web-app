@@ -381,25 +381,32 @@ campus staff/course authority or agent notice acceptance is provided. See the
 evidence. Actual hosted multiplayer, friends/human usability and the applicable
 operating gates remain separate; no production application release is established.
 
-### Proposed room-only games and nearby play invitations — 20 October 2026
+### Room-only games and nearby play invitations — 20 October 2026
 
-The owner clarified the desired social flow: games belong in the Games Lounge,
-and nearby users can invite each other to play. The [concrete invitation plan](virtual-sciencedojo-game-invitations.md)
-supersedes the global game-panel shortcut once approved and implemented. It uses
-fixed targeted application invitations, ordinary navigation to the physical room,
-deliberate profile sharing at Join and server-owned room/table eligibility on
-both transports. No functional code or hosted schema is changed by this plan;
-implementation-phase approval is pending. Existing learning/privacy/admission
-boundaries remain.
+The owner approved the [invitation phase](virtual-sciencedojo-game-invitations.md).
+Games open at their physical Level 2 Sky Commons tables, within 2.4m and on the
+correct authoritative floor. The toolbar locates the room; it cannot open a
+remote board or study deck. Nearby available players can send fixed targeted
+invitations, accept/decline and use ordinary walking/lift guidance. Replies expire
+in 30 seconds; accepted pairs have a capacity-aware two-minute reservation.
+Accepting alone shares only campus pseudonyms. Profiles remain behind explicit
+Join and the participant-authorized image proxy.
 
-### Room invitation software approval — 20 October 2026
+All game/invitation requests use an account- and connection-bound private HTTP
+credential, never a world field or image URL. Vercel binds it atomically with
+admission/legitimate duration handover; fresh admission requires a new Join.
+Colyseus supplies authenticated live context with a two-second freshness bound,
+monotonic ordering and actual connection ownership. Late cleanup/old keys cannot
+inherit or release a newer membership. RLS-protected records stay in the app/
+Supabase boundary. Room exit, revocation, block, logical expiry and explicit
+server disconnect clean up matches/meetings without inventing a winner.
 
-The owner approved the [room/invitation phase](virtual-sciencedojo-game-invitations.md).
-Local implementation is in progress: server-owned room/table gates on both
-transports, connection-bound private HTTP access, pseudonym-only invitations,
-30-second replies and two-minute capacity-aware reservations. The new 080
-migration remains unapplied to hosted databases. Seven added authority tests and
-all 92 campus regressions pass locally; browser, clean-build and release checks
-remain in progress. Existing owner access, deliberate notice/profile acceptance,
-course retention and protected Preview scope remain unchanged. No human friend
-match or learner release is established.
+Forward migration 080 preserves the reviewed legacy authorities privately and
+keeps switch/member/room/game lock order. It is local preparation only. The
+[hosted procedure and guarded contingency](virtual-sciencedojo-game-invitations-hosted.md)
+await separate environment-specific approval. Existing owner admission, course
+permissions, marketing isolation and production application remain within their
+recorded scope. Local authority, complete game/vocabulary and school browser,
+build and release evidence is recorded in the invitation plan/runbook, with exact
+source scopes. Scene continuity meets existing limits; full graphics capture
+rechecks stop while the Mac is locked. No hosted or human acceptance is inferred.

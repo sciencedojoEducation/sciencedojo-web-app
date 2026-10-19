@@ -3,7 +3,7 @@ import {join} from "node:path";
 import {createHash} from "node:crypto";
 import {GAME_TABLES} from "../lib/campus/board-games.ts";
 
-export async function checkBoardGames({a,b,browser,origin,identities,shared,gameFixture,campus,result,directory,wireFrames,issuedTickets,handshakeHashes,errors,gameFetch,renewGames}){
+export async function checkBoardGames({a,b,browser,origin,identities,shared,gameFixture,campus,result,directory,wireFrames,issuedTickets,handshakeHashes,errors,gameFetch,renewGames,invitationOnly=false}){
   console.log('Games walkthrough: two connected campus browsers');
   const pages=[a,b],contexts=[], names=['FriendOne','FriendTwo','FriendThree','FriendFour'];
   const store=shared??gameFixture;
@@ -76,6 +76,12 @@ export async function checkBoardGames({a,b,browser,origin,identities,shared,game
   result.checks.push('Outside-room requests denied; real decline/expiry, visible in-world badge, phone layout, explicit pseudonym-only invitation/keyboard acceptance, no profile before Join, real ground-floor walking, E elevator ride to Level 2, navigation through the lounge door and E interaction at the reserved table');
   await expect(dialog(a).locator('.game-roster strong')).toHaveCount(2);
   for(const page of pages)await page.waitForFunction(()=>[...document.querySelectorAll('.game-roster img')].length===2&&[...document.querySelectorAll('.game-roster img')].every(i=>i.complete&&i.naturalWidth===40));
+  if(invitationOnly){
+    for(const page of pages)await dialog(page).getByRole('button',{name:'Return to school →',exact:true}).click();
+    await expect.poll(async()=>(await store.db.query('SELECT count(*) AS n FROM campus_game_members')).rows[0].n).toBe(0);
+    result.checks.push('Focused invitation UI recheck: a fresh invitation clears the previous expiry alert; both explicit joins display participant pictures and returning to school releases both game places. Full match scoring is covered by the separate complete game walkthrough.');
+    return;
+  }
   const own=(await gameFetch(a,'/api/campus/games?table=four')).body.game.self;
   const outsider=await browser.newContext();contexts.push(outsider);const spectator=await outsider.newPage();
   await spectator.goto(origin);await spectator.getByRole('button',{name:'Enter school',exact:true}).click();await spectator.getByText('In the school · walking',{exact:true}).waitFor();

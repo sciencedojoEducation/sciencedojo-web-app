@@ -442,7 +442,7 @@ try {
       return page.evaluate(async({url,key,body})=>{const response=await fetch(url,{method:body?'POST':'GET',headers:{'X-Campus-Game-Key':key,...(body?{'Content-Type':'application/json'}:{})},body:body?JSON.stringify(body):undefined});return {status:response.status,body:response.headers.get('content-type')?.includes('json')?await response.json():null};},{url,key:gameKeys.get(own),body});
     };
     if(checkingGames){
-      await (checkingVocabulary?checkWortQuest:checkBoardGames)({a,b,browser,origin,identities,shared,gameFixture,campus,result,directory,wireFrames,issuedTickets,handshakeHashes,errors,gameFetch,renewGames});
+      await (checkingVocabulary?checkWortQuest:checkBoardGames)({a,b,browser,origin,identities,shared,gameFixture,campus,result,directory,wireFrames,issuedTickets,handshakeHashes,errors,gameFetch,renewGames,invitationOnly:process.argv.includes('--invitation-only')});
     }else if(process.argv.includes("--graphics-only")){
       // The focused display check still performs the shared wire/privacy audit below.
     }else if(process.argv.includes("--living-cube-only")){

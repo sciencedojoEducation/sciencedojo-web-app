@@ -1071,27 +1071,81 @@ two isolated browser sessions/devices for the two accounts. Later real friends
 still need specifically identified accounts and applicable admission/operating
 evidence. The original full friend-test goal stays open.
 
-### Room games and nearby invitation clarification — 20 October 2026
+### Approved room games and nearby invitations — 20 October 2026
 
-The owner requested room-only game access and a meet/invite/play flow. Inspection
-confirmed the current global HUD button opens the game panel anywhere, while
-the game authority has no live room-location gate. A concrete next-phase plan is
-prepared in [game invitations](virtual-sciencedojo-game-invitations.md): targeted
-fixed invitations using campus pseudonyms, travel to the Level 2 lounge, explicit
-Join/profile sharing, capacity-aware reservations and real server location checks
-on both transports. Approval of this prepared phase is pending; no application,
-service, migration, membership or hosted setting changed. The previous owner
-match feedback remains unproven and is not a prerequisite for planning this
-newly requested experience.
+The owner requested games inside a room and a meet/invite/play flow, then approved
+[the concrete software phase](virtual-sciencedojo-game-invitations.md). Application
+revision `f56eeb2` is implemented locally. The existing website/dashboard and
+hosted beta remain within their prior scope; migration 080 is not hosted and no
+branch push/deployment, environment, invitation, notice or role change occurred.
 
-### Room invitation software approval — 20 October 2026
+Games require the real Level 2 lounge/table position, correct floor, a live
+admitted connection and explicit Join. Find Games Lounge locates/focuses the map
+and guides ordinary walking/lift use. A nearby player's fixed invitation carries
+only campus pseudonyms; replies last 30 seconds and accepted pairs reserve table
+capacity for two minutes. Profiles are shared only after voluntary Join. Phone/
+keyboard/fullscreen controls reuse the exclusive school tools panel. Fresh
+invitations clear an earlier expiry message. Course/dashboard documents and
+unsent input survive game tools, school pauses and recovery.
 
-The owner approved the [room/invitation phase](virtual-sciencedojo-game-invitations.md).
-Local implementation is in progress: server-owned room/table gates on both
-transports, connection-bound private HTTP access, pseudonym-only invitations,
-30-second replies and two-minute capacity-aware reservations. The new 080
-migration remains unapplied to hosted databases. Seven added authority tests and
-all 92 campus regressions pass locally; browser, clean-build and release checks
-remain in progress. Existing owner access, deliberate notice/profile acceptance,
-course retention and protected Preview scope remain unchanged. No human friend
-match or learner release is established.
+Private HTTP credentials bind game requests to the admitted connection without
+entering world frames or photo URLs. Vercel rotates them atomically during a
+legitimate duration handover while preserving the existing match/participant
+identities. Fresh admission requires a new Join; stale keys and late callbacks
+cannot affect a new generation. Colyseus uses authenticated, fresh, monotonic
+service context. This bounded cross-service snapshot is not a distributed atomic
+transaction. Explicit SQL Leave and exact-generation Colyseus departure clean
+up without requiring a remaining browser poll. Outage fallback is logical TTL/
+leases plus next-activity/switch cleanup, not a physical-erasure claim.
+
+080 keeps all five new tables under RLS and denies direct application-role
+access. Preserved legacy authorities and helpers remain private. Stable member
+key-share locks precede room/game locks; the feature-switch lock prevents a late
+insert escaping switch-off cleanup. The guarded rollback restores the preserved
+previous authorities, empties only game/invitation/key state and refuses an
+unreviewed replay. Neither forward nor rollback SQL was applied to a host.
+
+Verification (synthetic/local; retain exact source scopes):
+
+- 98 campus regressions, including 13 focused room/invitation authority cases,
+  pass. Type checking and scoped lint pass. The isolated tracked-source Next.js
+  build and private-workbook trace guard pass; all 15 changed application sources
+  match the final build. Clean service install/actual-process restart passes,
+  with all 15 release sources unchanged through the final revision.
+- Both complete game transports pass decline/real expiry, phone keyboard
+  acceptance, ground-floor walking, E lift to level 2, reserved-table arrival,
+  explicit Join, profile pictures, two-player win/rematch, four-player play,
+  touch/fullscreen, room exit, safety and retained learning input. The Vercel
+  game run also preserves the open board/participant identities across actual
+  duration renewal. Focused invitation rechecks cover the final expiry-message
+  correction and release both joined places; they do not repeat match scoring.
+- Both vocabulary transports pass A1–C2 solo scoring, two/four-player points/
+  ties, private answers/review, pictures, touch/fullscreen and retained course
+  work. Those runs precede only the final invitation-panel/message refinement;
+  keep their source hashes rather than claiming an unchanged full application.
+- Both complete school transports pass recovery, retained dashboard/course
+  input, native mouse capture, fullscreen/phone, camera-relative movement,
+  basketball and real three-level lift/escalator/slide journeys. The Vercel run
+  includes the final fullscreen panel; the earlier Colyseus run precedes that
+  panel-only refinement. Final game checks exercise that panel on both paths.
+- Normal/reduced actual-scene continuity passes unchanged thresholds: 100/92
+  distinct positions, no stationary pause, 27 maximum draw calls, exact target,
+  stable shadow pipeline and sharp idle Auto. Full graphics commands later
+  fail at native capture with WrongDocumentError; computer-use inventory reports
+  the Mac locked. These partial graphics results do not constitute full camera
+  probe passes, despite earlier full-school native capture passing. Preserve
+  every native capture assertion and the prior macOS guidance above.
+
+Private evidence records exact outputs, source hashes/differences, screenshots,
+SQL checksums and the seven-day synthetic CI retention scope. No current-head
+hosted quality run, real friend match, intended-device FPS, independent human
+usability or G1–G9 completion is established. The protected beta still has only
+the two previously approved owner accounts and zero campus staff; personal
+notice acceptance remains the owner's action.
+
+[The protected Preview procedure](virtual-sciencedojo-game-invitations-hosted.md)
+is prepared for one separate environment-specific approval: exact guarded 080
+in the existing owner-review database, then only the matching protected branch
+Preview. No production application, new accounts, staff/course authority, paid
+plan, environment change or protection bypass is included. Keep PR #17 draft/
+unmerged. The local synthetic loopback preview is for owner review only.
