@@ -29,7 +29,7 @@
 .headerInner { height: 76px; display: flex; align-items: center; gap: 24px; position: relative; }
 .brand { text-decoration: none; line-height: 1; flex-shrink: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 7px; }
 .brand > span { font-size: 25px; font-weight: 750; letter-spacing: -.075em; }
-.dot,.footerBrand > span:last-child { color: var(--cyan); }
+.dot { color: var(--cyan); }
 .brandDojo { color: var(--primary); }
 .brand small { font-size: 10px; font-weight: 550; letter-spacing: .13em; color: var(--muted); }
 .desktopNav { margin-left: auto; display: flex; align-items: center; gap: 22px; }
@@ -44,7 +44,7 @@
 
 .hero { padding-top: 68px; padding-bottom: 32px; background: radial-gradient(ellipse at 78% 35%,#eaf5ff 0,transparent 62%),#fbfdff; border-bottom: 1px solid var(--line); }
 .heroGrid { display: grid; grid-template-columns: 1.25fr 1fr; gap: 48px 64px; align-items: center; }
-.hero h1 { font-size: clamp(50px,5.4vw,78px); line-height: 1.025; letter-spacing: -.052em; font-weight: 600; margin-top: 26px; }
+.hero h1 { margin-top: 26px; }
 .hero h1 span { color: var(--primary); }
 .heroDescription { font-size: 19px; line-height: 1.65; max-width: 520px; color: var(--muted); margin-top: 25px; }
 .heroActions { display: flex; align-items: center; gap: 24px; flex-wrap: wrap; margin-top: 30px; }
@@ -247,7 +247,6 @@
   .desktopNav { gap: 20px; }
   .desktopNav .armLink { display: none; }
   .heroGrid { gap: 40px; grid-template-columns: 1.2fr 1fr; }
-  .hero h1 { font-size: clamp(50px,5.9vw,68px); }
   .journey { padding: 22px; }
   .journey li { gap: 14px; }
   .journey h2 { font-size: 19px; }
@@ -258,7 +257,6 @@
 }
 @media (max-width: 850px) {
   .heroGrid { grid-template-columns: 1fr; gap: 34px; }
-  .hero h1 { font-size: 72px; }
   .heroDescription { max-width: 600px; }
   .journey { display: none; }
   .heroFoot { grid-column: auto; }
@@ -289,7 +287,7 @@
   .mobileNav:not([hidden]) { display: grid; position: absolute; top: 77px; left: 0; right: 0; background: #fff; padding: 10px 20px 17px; border: 1px solid var(--line); box-shadow: 0 12px 22px #001a4410; max-height: calc(100dvh - 90px); overflow-y: auto; }
   .mobileNav a { font-size: 15px; padding: 12px 0; text-decoration: none; }
   .hero { padding-top: 40px; padding-bottom: 27px; }
-  .hero h1 { font-size: clamp(39px,9.1vw,66px); letter-spacing: -.057em; margin-top: 23px; }
+  .hero h1 { margin-top: 23px; }
   .hero .eyebrow { font-size: 10px; letter-spacing: .1em; }
   .heroDescription { font-size: 17px; line-height: 1.8; margin-top: 22px; }
   .heroActions { gap: 12px 22px; margin-top: 24px; }
@@ -363,7 +361,6 @@
   .headerInner { gap: 7px; }
   .brand > span { font-size: 23px; }
   .headerCta { padding-inline: 11px; gap: 8px; font-size: 12px; }
-  .hero h1 { font-size: 37px; }
   .caseHeader { flex-direction: column; gap: 12px; }
   .caseHeader .eyebrow { max-width: unset; }
   .page h2,.caseIntro h2 { font-size: 34px; }
@@ -583,7 +580,6 @@
 @media (max-width: 760px) {
   .brand { display: block; }
   .brand small { display: block; font-size: 9px; margin-top: 8px; }
-  .hero h1 { font-size: clamp(37px,9vw,65px); font-weight: 600; }
   .hero .eyebrow { font-size: 11px; }
   .heroDescription { font-size: 17px; }
   .heroSecondary { font-size: 13px; }

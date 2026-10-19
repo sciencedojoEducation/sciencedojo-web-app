@@ -48,7 +48,7 @@ function HandoverKitGraphic() {
 export default function BusinessOffer() {
   return (
     <section id="offer" className="scroll-mt-6 bg-[#F4F8FF] px-5 py-14 md:px-8 md:py-16" aria-labelledby="offer-heading">
-      <div className="mx-auto max-w-6xl">
+      <div data-business-container className="mx-auto max-w-6xl">
         <div className="grid gap-10 lg:grid-cols-[0.95fr_1.05fr] lg:gap-12">
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#52647C]">A practical place to start</p>

@@ -124,7 +124,7 @@ const practicalDetails = [
 export default function BusinessProcess() {
   return (
     <section id="process" className="scroll-mt-6 px-5 py-16 md:px-8 md:py-20" aria-labelledby="process-heading">
-      <div className="mx-auto max-w-6xl">
+      <div data-business-container className="mx-auto max-w-6xl">
         <div className="max-w-2xl">
           <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#0066FF]">How we work</p>
           <h2 id="process-heading" className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">Make the work reviewable at every stage.</h2>

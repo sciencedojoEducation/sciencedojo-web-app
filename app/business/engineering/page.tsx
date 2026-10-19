@@ -12,6 +12,7 @@ import EngineeringHeroArtwork from "./EngineeringHeroArtwork";
 import EngineeringVisualMotion from "./EngineeringVisualMotion";
 import { approach, faqs, team } from "./content";
 import s from "./engineering.module.css";
+import BusinessBrand from "../shared/BusinessBrand";
 
 const title = "Websites, Web Apps & Integrations | ScienceDojo Engineering";
 const description = "A small Sri Lankan team building websites, improving web applications and connecting business workflows. In-house learning-platform experience. Focused or ongoing work.";
@@ -74,6 +75,6 @@ export default function EngineeringPage() {
         <section id="contact" className={`${s.section} ${s.contact}`} aria-labelledby="contact-heading"><div className={`${s.container} ${s.contactGrid}`}><div className={s.contactCopy}><p className={s.eyebrow}>05 / Start a conversation</p><h2 id="contact-heading">Start with<br /><span>a conversation.</span></h2><p>A few sentences about your current tools and the change you want will help Piumal understand the work.</p><div className={s.nextSteps}><span className={s.label}>Your first point of contact</span><p className={s.contactPerson}><strong>Piumal</strong><span>Discovery, requirements & client communication</span></p><ol className={s.contactSteps}><li>Piumal reviews the brief and follows up by email.</li><li>We clarify fit, requirements and any access needed.</li><li>If the work fits, we agree scope, fees and dates before development.</li></ol></div><a className={s.textLink} href="mailto:hello@sciencedojo.co.uk?subject=ScienceDojo%20Engineering%20enquiry">Prefer email? <ArrowUpRight size={16} aria-hidden="true" /></a><a className={s.email} href="mailto:hello@sciencedojo.co.uk">hello@sciencedojo.co.uk</a></div><EngineeringEnquiryForm /></div></section>
       </div>
     </EngineeringExperience>
-    <footer className={s.footer}><div className={`${s.container} ${s.footerInner}`}><div><Link href="/business/engineering" className={s.footerBrand}>science<span className={s.brandDojo}>dojo</span><span>.</span></Link><p>Engineering, with a human touch.</p></div><nav aria-label="Engineering footer"><Link href="/business/engineering">Engineering</Link><Link href="/business/instructional-design">Learning design</Link><Link href="/">ScienceDojo</Link><Link href="/privacy">Privacy</Link><Link href="/terms">Terms</Link></nav><small>© {new Date().getFullYear()} ScienceDojo (Pvt) Ltd</small></div></footer>
+    <footer className={s.footer}><div className={`${s.container} ${s.footerInner}`}><div><Link href="/business/engineering" className={s.footerBrand}><BusinessBrand /></Link><p>Engineering, with a human touch.</p></div><nav aria-label="Engineering footer"><Link href="/business/engineering">Engineering</Link><Link href="/business/instructional-design">Learning design</Link><Link href="/">ScienceDojo</Link><Link href="/privacy">Privacy</Link><Link href="/terms">Terms</Link></nav><small>© {new Date().getFullYear()} ScienceDojo (Pvt) Ltd</small></div></footer>
   </EngineeringVisualMotion>;
 }

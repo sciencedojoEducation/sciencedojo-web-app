@@ -1,9 +1,2 @@
-/* Leave room for the wrapped phone navigation when following section links. */
-.page :where([id]) { scroll-margin-top: 15rem; }
-.header { position: sticky; top: 0; z-index: 40; }
-@media (min-width: 768px) {
-  .page :where([id]) { scroll-margin-top: 10rem; }
-}
-@media (min-width: 1024px) {
-  .page :where([id]) { scroll-margin-top: 7rem; }
-}
+/* Shared containers align the content with the common business header. */
+.page > [id="business-content"] > section,.page > footer { padding-inline: 0; }

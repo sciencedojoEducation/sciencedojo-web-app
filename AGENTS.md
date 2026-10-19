@@ -12,6 +12,9 @@ Reuse completed work rather than rebuilding it. Preserve owner-approved claims, 
 
 ## ScienceDojo branding
 
+On 20 October the owner selected the engineering page’s typography and logo/header layout for both business arms. Reuse the shared BusinessHeader/BusinessBrand/business CSS; retain matching hero type/wordmark geometry, 1240px content alignment, arm descriptors, sticky header/anchor clearance, native keyboard/no-script mobile navigation and public progress boundary. Preserve instructional-design content/offer and engineering proof/motion/privacy; see the dated release record.
+
+
 The 20 October header release encountered existing public-data prerender timeouts. The prepared anonymous Supabase fetch deadline from the earlier timeout patch is reused: preserve its five-second deadline, caller/body cancellation, framework fetch options and existing success/fallback behaviour. Session/authenticated clients and feature defaults remain unchanged. See the business release record for actual deployment checks.
 
 

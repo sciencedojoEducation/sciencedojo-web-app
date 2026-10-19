@@ -87,7 +87,7 @@ function FocusPreview() {
 export default function BusinessEvidence({ practiceEnabled, focusEnabled }: { practiceEnabled: boolean; focusEnabled: boolean }) {
   return (
     <section id="work" className="scroll-mt-6 px-5 py-16 md:px-8 md:py-20" aria-labelledby="work-heading">
-      <div className="mx-auto max-w-6xl">
+      <div data-business-container className="mx-auto max-w-6xl">
         <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#52647C]">The work &amp; the thinking</p>
         <h2 id="work-heading" className="mt-3 max-w-2xl text-3xl font-bold tracking-tight sm:text-4xl">A realistic task. A visible design process.</h2>
         <p className="mt-4 max-w-3xl leading-7 text-[#52647C]">See what a small custom module can contain: a clear brief, realistic decisions with feedback, a practical handover exercise, and a scoring guide. {handoverBrief.suggestedMinutes}</p>

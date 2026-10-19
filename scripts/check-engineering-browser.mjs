@@ -289,7 +289,14 @@ try {
     await expect(page.locator("#business-heading")).toBeVisible();
     await page.evaluate(() => document.fonts.ready);
     for (const [label, heading] of [["The offer", "offer-heading"],["Work", "work-heading"],["Process", "process-heading"],["Studio", "about-heading"],["Discuss your project", "contact-heading"]]) {
-      await page.getByRole("navigation", { name: "Business navigation", exact: true }).getByRole("link", { name: label, exact: true }).click();
+      const desktop = page.getByRole("navigation", { name: "Business navigation", exact: true });
+      if (await desktop.isVisible()) {
+        if (label === "Discuss your project") await page.locator("header").getByRole("link", { name: label, exact: true }).click();
+        else await desktop.getByRole("link", { name: label, exact: true }).click();
+      } else {
+        await page.getByRole("button", { name: "Open menu", exact: true }).click();
+        await page.getByRole("navigation", { name: "Mobile business navigation", exact: true }).getByRole("link", { name: label, exact: true }).click();
+      }
       await expect.poll(() => page.evaluate(id => {
         const header = document.querySelector("header").getBoundingClientRect();
         const target = document.getElementById(id).getBoundingClientRect();
@@ -301,6 +308,32 @@ try {
     await page.screenshot({ path: screenshot }); evidence.screenshots.push(screenshot);
   }
   evidence.checks.push("Engineering descriptor below wordmark at every responsive width; instructional header stays at top with all five navigation targets visible below it on desktop/tablet/phones");
+  for (const width of [320,390,768,1120,1440]) {
+    await page.setViewportSize({ width, height: 900 });
+    const metrics = [];
+    for (const arm of ["engineering","instructional-design"]) {
+      await page.goto(`${origin}/business/${arm}`);
+      await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+      await page.evaluate(() => document.fonts.ready);
+      metrics.push(await page.locator("header").evaluate(header => {
+        const logo = header.querySelector('a[aria-label$="home"] > span');
+        const r = logo.getBoundingClientRect(), h = header.getBoundingClientRect(), d = header.querySelector("small").getBoundingClientRect();
+        const type = getComputedStyle(document.querySelector("h1")), brand = getComputedStyle(logo);
+        return { x:r.x,y:r.y,height:h.height,wordmarkSize:brand.fontSize,wordmarkWeight:brand.fontWeight,descriptorY:d.y,headingFamily:type.fontFamily,headingWeight:type.fontWeight,headingSize:type.fontSize,headingLine:type.lineHeight,headingTracking:type.letterSpacing };
+      }));
+      const shot = join(output, `business-type-${arm}-${width}.png`);
+      await page.screenshot({ path: shot }); evidence.screenshots.push(shot);
+      if (width < 1021) {
+        await page.getByRole("button", { name: "Open menu", exact: true }).focus();
+        await page.keyboard.press("Enter");
+        await expect(page.getByRole("navigation", { name: arm === "engineering" ? "Mobile engineering navigation" : "Mobile business navigation", exact: true })).toBeVisible();
+        await page.keyboard.press("Escape");
+        await expect(page.getByRole("button", { name: "Open menu", exact: true })).toBeFocused();
+      }
+    }
+    assert.deepEqual(metrics[0], metrics[1], `Both business arms share rendered typography and brand/header geometry at ${width}`);
+  }
+  evidence.checks.push("Identical rendered hero typography, logo position/size/descriptor baseline and header height across both business arms at five widths; native mobile keyboard entry/Escape retained");
   // Main-site entry points: native disclosure + hover, keyboard and phone links.
   for (const width of [1280, 1440]) {
     await page.setViewportSize({ width, height: 900 });
@@ -366,6 +399,11 @@ try {
   await expect(plainTrigger.locator("..").getByRole("link", { name: /Engineering/ })).toBeVisible();
   await plainTrigger.locator("..").getByRole("link", { name: /Instructional design/ }).click();
   await expect(plainPage).toHaveURL(`${origin}/business/instructional-design`);
+  await plainPage.setViewportSize({ width: 390, height: 844 });
+  await plainPage.getByRole("button", { name: "Open menu", exact: true }).click();
+  await expect(plainPage.getByRole("navigation", { name: "Mobile business navigation", exact: true })).toBeVisible();
+  await plainPage.getByRole("navigation", { name: "Mobile business navigation", exact: true }).getByRole("link", { name: "Engineering", exact: true }).click();
+  await expect(plainPage).toHaveURL(`${origin}/business/engineering`);
   await plainPage.goto(`${origin}/business/engineering`);
   assert.equal(await plainPage.getByRole("navigation", { name: "Main navigation without JavaScript" }).count(), 0);
   assert.equal(await plainPage.locator("header").count(), 1);

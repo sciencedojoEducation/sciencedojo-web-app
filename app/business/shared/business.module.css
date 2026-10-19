@@ -1,0 +1,62 @@
+/* Shared business typography, brand metrics and header geometry. */
+.page { font-family: var(--font-inter), Arial, sans-serif; font-size: 16px; line-height: 1.65; }
+.page :where(h1,h2,h3) { font-weight: 600; }
+.page[data-business-layout="instructional-design"] :where(h3) { line-height: 1.25; letter-spacing: -.025em; }
+.lead { font-size: 19px; line-height: 1.65; }
+.eyebrow { font-size: 12px; font-weight: 650; letter-spacing: .13em; line-height: 1.6; }
+.page h1 { font-size: clamp(50px,5.4vw,78px); line-height: 1.025; letter-spacing: -.052em; }
+.page[data-business-layout="instructional-design"] h2[id] { font-size: clamp(36px,4.2vw,58px); line-height: 1.09; letter-spacing: -.052em; }
+.page :where(section,[id]) { scroll-margin-top: 112px; }
+.container,.page [data-business-container] { max-width: 1240px; width: calc(100% - 104px); margin-inline: auto; }
+.header { --business-header-height: 76px; position: sticky; top: 0; z-index: 40; background: rgba(255,255,255,.98); color: #001a44; border-bottom: 1px solid #d9e4ef; font-family: var(--font-inter),Arial,sans-serif; }
+.headerInner { height: var(--business-header-height); display: flex; align-items: center; gap: 24px; position: relative; }
+.brand { flex-shrink: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 7px; text-decoration: none; line-height: 1; }
+.wordmark { display: inline-flex; align-items: baseline; font-size: 25px; font-weight: 750; letter-spacing: -.075em; line-height: 1; color: #001a44; }
+.dojo { color: #0066ff; } .dot { color: #00d2ff; }
+.descriptor { font-size: 10px; font-weight: 550; letter-spacing: .13em; line-height: 1; color: #526579; text-transform: uppercase; }
+.desktopNav { margin-left: auto; display: flex; align-items: center; gap: 22px; }
+.desktopNav a,.headerCta { font-size: 14px; font-weight: 500; text-decoration: none; }
+.desktopNav a { padding-block: 12px; }
+.desktopNav a:hover { color: #0052cc; }
+.desktopNav .armLink { display: flex; align-items: center; gap: 6px; color: #526579; padding-left: 22px; border-left: 1px solid #d9e4ef; }
+.headerCta { background: #0066ff; color: #fff !important; display: inline-flex; align-items: center; justify-content: center; gap: 14px; padding: 11px 18px; border-radius: 28px; min-height: 46px; }
+.headerCta:hover { background: #0052cc; }
+.menu { display: none; } .shortLabel { display: none; }
+.header :where(a,summary):focus-visible { outline: 2px solid #0066ff; outline-offset: 5px; }
+@media (max-width: 1150px) {
+ .page h1 { font-size: clamp(50px,5.9vw,68px); }
+ .desktopNav { gap: 17px; } .desktopNav .armLink { padding-left: 16px; }
+}
+@media (max-width: 1150px) {
+ .container,.page [data-business-container] { width: calc(100% - 64px); }
+}
+@media (max-width: 1020px) {
+ .page h1 { font-size: 72px; }
+ .desktopNav { display: none; } .headerCta { margin-left: auto; margin-right: 54px; }
+ .menu { display: block; position: absolute; inset: 0; pointer-events: none; }
+ .menu:not([open]) .mobileNav { display: none; }
+ .menu summary { position: absolute; right: 0; top: calc((var(--business-header-height) - 44px) / 2); pointer-events: auto; list-style: none; display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; cursor: pointer; }
+ .menu summary::-webkit-details-marker { display: none; }
+ .menu summary svg { width: 21px; } .closeIcon { display: none; }
+ .menu[open] .openIcon { display: none; } .menu[open] .closeIcon { display: block; }
+ .mobileNav { display: grid; pointer-events: auto; position: absolute; top: calc(var(--business-header-height) - 1px); left: 0; right: 0; background: #fff; padding: 10px 20px 17px; border: 1px solid #d9e4ef; box-shadow: 0 12px 22px #001a4410; max-height: calc(100dvh - 90px); overflow-y: auto; }
+ .mobileNav a { font-size: 15px; font-weight: 500; padding: 12px 0; text-decoration: none; min-height: 44px; }
+ .longLabel { display: none; } .shortLabel { display: inline; }
+}
+@media (max-width: 760px) {
+ .container,.page [data-business-container] { width: calc(100% - 40px); }
+ .header { --business-header-height: 78px; }
+ .headerInner { gap: 10px; }
+ .headerCta { font-size: 13px; padding: 10px 12px; gap: 8px; }
+ .descriptor { font-size: 9px; }
+ .page h1 { font-size: clamp(37px,9vw,65px); letter-spacing: -.057em; }
+ .lead { font-size: 17px; line-height: 1.8; }
+ .eyebrow { font-size: 11px; letter-spacing: .1em; }
+ .page[data-business-layout="instructional-design"] h2[id] { font-size: 38px; }
+}
+@media (max-width: 370px) {
+ .page[data-business-layout="instructional-design"] h2[id] { font-size: 34px; }
+ .headerInner { gap: 6px; } .wordmark { font-size: 23px; }
+ .descriptor { font-size: 8.5px; letter-spacing: .11em; }
+ .headerCta { font-size: 12px; padding-inline: 10px; gap: 6px; }
+}

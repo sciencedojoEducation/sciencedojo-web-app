@@ -11,13 +11,15 @@ import BusinessEnquiryForm from "../BusinessEnquiryForm";
 import { getPublicFeatureFlagMap } from "@/lib/feature-flags";
 import { siteUrl } from "@/lib/seo";
 import s from "./instructional-design.module.css";
+import shared from "../shared/business.module.css";
+import BusinessBrand from "../shared/BusinessBrand";
+import BusinessHeader from "../shared/BusinessHeader";
 
 const title = "Custom Onboarding Module | ScienceDojo for Business";
 const description = "Custom onboarding for English-speaking IT service and software implementation teams. One task, realistic practice, an assessment, and a browser module you can keep. From €1,490 per project.";
 const emailHref = `mailto:hello@sciencedojo.co.uk?subject=${encodeURIComponent("ScienceDojo Custom Onboarding Module — Enquiry")}&body=${encodeURIComponent("Hello Piumal,\n\nI'd like to discuss a custom onboarding module.\n\nOrganisation: \nWhat should our people be able to do? \n\nThank you!")}`;
 const focus = "focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#0066FF]";
 const button = `inline-flex min-h-12 items-center justify-center gap-3 rounded-md bg-[#0066FF] px-6 py-3 text-sm font-bold text-white transition-colors hover:bg-[#0052CC] ${focus}`;
-const navItems = [["The offer", "offer"], ["Work", "work"], ["Process", "process"], ["Studio", "about"]];
 const services = [
   { icon: BookOpen, title: "Further tasks & learning journeys", text: "Build on your first module with additional approved tasks, roles, or learning experiences.", deliverable: "A separately scoped learning plan, practice activities, and assessment aligned to your next brief.", example: "Example brief: extend a handover module to a second role or an agreed escalation process." },
   { icon: Code2, title: "Design support for learning agencies", text: "Bring Piumal into a defined part of a project you already manage, using your agreed requirements and production process.", deliverable: "A scenario, storyboard, or assessment, quoted separately for the contribution you need.", example: "Example brief: develop a reviewable scenario and scoring guide for your production team." },
@@ -32,38 +34,23 @@ export const metadata: Metadata = {
   twitter: { card: "summary_large_image", title, description, images: [{ url: `${siteUrl}/business/instructional-design/opengraph-image`, alt: "ScienceDojo Custom Onboarding Module — From €1,490 per project, subject to agreed scope" }] },
 };
 
-function BusinessBrand() {
-  return <span className="inline-flex items-baseline text-2xl font-bold tracking-[-0.06em] text-[#001A44]">science<span className="text-[#0066FF]">dojo</span><span className="text-[#00D2FF]">.</span></span>;
-}
-
 export default async function BusinessPage() {
   await connection();
   const submissionToken = randomUUID();
   const flags = await getPublicFeatureFlagMap();
   return (
-    <div className={`${s.page} min-w-0 bg-white text-[#001A44]`}>
+    <div data-business-layout="instructional-design" className={`${s.page} ${shared.page} min-w-0 bg-white text-[#001A44]`}>
       <a href="#business-content" className={`sr-only z-50 rounded-lg bg-white p-4 focus:not-sr-only focus:absolute focus:left-4 focus:top-4 ${focus}`}>Skip to content</a>
-      <header data-public-site-header className={`${s.header} border-b border-[#DCE7F5] bg-white px-5 py-4 md:px-8 md:py-5`}>
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 md:gap-5">
-          <Link href="/business/instructional-design" aria-label="ScienceDojo for Business home" className={focus}>
-            <BusinessBrand />
-            <span className="mt-1 block text-[10px] font-bold uppercase tracking-[0.22em] text-[#52647C]">Instructional design</span>
-          </Link>
-          <nav aria-label="Business navigation" className="flex flex-wrap items-center gap-x-3 gap-y-0 text-sm font-semibold md:gap-x-5 md:gap-y-3">
-            <Link href="/business/engineering" className={`py-2 hover:text-[#0066FF] ${focus}`}>Engineering</Link>
-            {navItems.map(([label, id]) => <a key={id} href={`#${id}`} className={`py-2 hover:text-[#0066FF] ${focus}`}>{label}</a>)}
-            <a href="#contact" className={`inline-flex min-h-11 items-center gap-2 py-2 text-[#0066FF] hover:underline ${focus}`}>Discuss your project <ArrowRight className="h-4 w-4" aria-hidden="true" /></a>
-          </nav>
-        </div>
-      </header>
+      <noscript><style>{'@layer theme{div[hidden]:has([data-business-layout="instructional-design"]){display:block!important}}body:has([data-business-layout="instructional-design"]) [data-route-loading]{display:none!important}'}</style></noscript>
+      <BusinessHeader arm="instructional-design" />
 
       <div id="business-content" tabIndex={-1}>
         <section className="bg-white px-5 py-12 md:px-8 md:py-16" aria-labelledby="business-heading">
-          <div className="mx-auto grid max-w-6xl items-center gap-x-10 gap-y-7 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)] lg:gap-x-12">
+          <div data-business-container className="mx-auto grid max-w-6xl items-center gap-x-10 gap-y-7 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)] lg:gap-x-12">
             <div className="lg:col-start-1 lg:row-start-1">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#52647C]">Practical onboarding for IT service teams</p>
+              <p className={`${shared.eyebrow} uppercase text-[#52647C]`}>Practical onboarding for IT service teams</p>
               <h1 id="business-heading" className="mt-5 text-4xl font-bold leading-[1.04] tracking-[-0.045em] text-[#001A44] sm:text-5xl lg:text-[3.5rem]">Help new starters practise an important workplace task.</h1>
-              <p className="mt-6 max-w-lg text-base leading-7 text-[#52647C] sm:text-lg sm:leading-8">For English-speaking IT service and software implementation teams whose new starters have instructions but need practice applying them.</p>
+              <p className={`${shared.lead} mt-6 max-w-lg text-[#52647C]`}>For English-speaking IT service and software implementation teams whose new starters have instructions but need practice applying them.</p>
               <p className="mt-4 max-w-lg text-sm leading-7 text-[#52647C]">We turn your approved process into a custom onboarding module with realistic decisions, explanatory feedback, and a practical assessment. From €1,490 per project, including design, development, reviews, and browser-file handover.</p>
             </div>
             <figure className="min-w-0 lg:col-start-2 lg:row-span-3 lg:row-start-1">
@@ -87,7 +74,7 @@ export default async function BusinessPage() {
         <BusinessEvidence practiceEnabled={flags.practice_dojo_enabled} focusEnabled={flags.focus_dojo_enabled} />
 
         <section id="services" className="scroll-mt-6 bg-[#F4F8FF] px-5 py-16 md:px-8 md:py-20" aria-labelledby="services-heading">
-          <div className="mx-auto max-w-6xl">
+          <div data-business-container className="mx-auto max-w-6xl">
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#0066FF]">Separately scoped services</p>
             <h2 id="services-heading" className="mt-3 max-w-2xl text-3xl font-bold tracking-tight sm:text-4xl">Other ways to work together.</h2>
             <div className="mt-9 grid gap-8 md:grid-cols-3">
@@ -100,7 +87,7 @@ export default async function BusinessPage() {
         <BusinessProcess />
 
         <section id="about" className="scroll-mt-6 bg-[#001A44] px-5 py-16 text-white md:px-8 md:py-20" aria-labelledby="about-heading">
-          <div className="mx-auto grid max-w-6xl gap-8 md:grid-cols-[0.7fr_1fr]">
+          <div data-business-container className="mx-auto grid max-w-6xl gap-8 md:grid-cols-[0.7fr_1fr]">
             <div><p className="text-xs font-bold uppercase tracking-[0.18em] text-[#78D8FF]">Meet the founder</p><h2 id="about-heading" className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">Teaching, learning design, and development.</h2></div>
             <div>
               <p className="text-lg leading-8 text-[#D6E4F7]">I&apos;m Piumal Mahawasala, the educational technologist behind ScienceDojo. My background brings together STEM teaching, learning design, and software development. My portfolio includes interactive e-learning projects and MSc thesis research at Saarland University into question design and the evaluation of AI-supported scientific reading.</p>
@@ -114,14 +101,14 @@ export default async function BusinessPage() {
         </section>
 
         <section id="contact" className="scroll-mt-6 px-5 py-16 md:px-8 md:py-24" aria-labelledby="contact-heading">
-          <div className="mx-auto grid max-w-6xl gap-10 rounded-lg bg-[#F4F8FF] px-6 py-10 sm:p-12 lg:grid-cols-[0.85fr_1.15fr]">
+          <div data-business-container className="mx-auto grid max-w-6xl gap-10 rounded-lg bg-[#F4F8FF] px-6 py-10 sm:p-12 lg:grid-cols-[0.85fr_1.15fr]">
             <div><p className="text-xs font-bold uppercase tracking-[0.18em] text-[#0066FF]">Discuss your project</p><h2 id="contact-heading" className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">What should your people be able to do?</h2><p className="mt-5 leading-7 text-[#52647C]">Tell Piumal about the task you want new starters to practise. We&apos;ll discuss whether it fits the one-task module, then agree scope, delivery arrangements, and dates before work begins.</p><p className="mt-4 text-sm leading-6 text-[#52647C]">No account required. Timing is optional.</p><p className="mt-6 text-sm leading-6 text-[#52647C]">Prefer email? <a href={emailHref} className={`break-all font-semibold text-[#0066FF] underline underline-offset-4 ${focus}`}>hello@sciencedojo.co.uk</a></p></div>
             <BusinessEnquiryForm initialSubmissionToken={submissionToken} />
           </div>
         </section>
       </div>
 
-      <footer className="border-t border-[#DCE7F5] px-5 py-8 md:px-8"><div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-5"><div><BusinessBrand /><p className="mt-2 text-xs text-[#52647C]">For Business · A learning design studio led by Piumal.</p></div><nav aria-label="Business footer" className="flex flex-wrap gap-5 text-sm text-[#52647C]"><Link href="/" className={`hover:text-[#0066FF] ${focus}`}>ScienceDojo tutoring</Link><Link href="/privacy" className={focus}>Privacy</Link><Link href="/terms" className={focus}>Terms</Link></nav><p className="text-xs text-[#52647C]">© {new Date().getFullYear()} ScienceDojo</p></div></footer>
+      <footer className="border-t border-[#DCE7F5] px-5 py-8 md:px-8"><div data-business-container className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-5"><div><BusinessBrand /><p className="mt-2 text-xs text-[#52647C]">For Business · A learning design studio led by Piumal.</p></div><nav aria-label="Business footer" className="flex flex-wrap gap-5 text-sm text-[#52647C]"><Link href="/" className={`hover:text-[#0066FF] ${focus}`}>ScienceDojo tutoring</Link><Link href="/privacy" className={focus}>Privacy</Link><Link href="/terms" className={focus}>Terms</Link></nav><p className="text-xs text-[#52647C]">© {new Date().getFullYear()} ScienceDojo</p></div></footer>
     </div>
   );
 }

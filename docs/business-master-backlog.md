@@ -1,6 +1,6 @@
 # ScienceDojo Business ordered backlog
 
-Updated 19 October 2026. This is the working reference for the business launch, maintained by Piumal and Codex.
+Updated 20 October 2026. This is the working reference for the business launch, maintained by Piumal and Codex.
 
 **Phase 1 goal:** secure a well-scoped paid pilot, or gather clear buyer evidence about what prevents a purchase. Keep only three tasks active. Complete the smallest useful output, reuse existing work, and start relevant conversations without waiting for the entire backlog.
 
@@ -47,6 +47,11 @@ Piumal requested committing and pushing the accumulated navigation, supporting-d
 Piumal reported an agency reply requesting further examples after finding no client projects in the portfolio. This establishes at least one agency approach and reply; earlier zero-approach statements describe the previous recorded state. The immediate follow-up is to share relevant existing work with its fictional/research labels and accurate personal contribution. The reply is an invitation to review examples, not a qualified brief or purchase commitment. At Piumal’s explicit request, Codex sent a reply in the existing email thread on 15 October 2026; Gmail returned a message with the SENT label. The reply accurately labelled the fictional workplace demonstration and university group project, linked both examples, and offered a short sample brief or assessment task with scope to be agreed. No assessment brief, client engagement or purchase commitment has been received or inferred. Recipient details and correspondence remain outside this repository. B3, S1 and R1 remain the three active tasks.
 
 ## Existing decisions and completed work
+
+### Consistent business typography and branding — 20 October 2026
+
+Piumal selected engineering’s visual style for both business arms. The shared header/wordmark and hero typography now use matching metrics, grid alignment and native compact mobile navigation. Instructional-design content, artwork, offer/price, demos and forms remain. Verification/publication belong in the dated release record. E1 maintenance only; B3/S1/R1 and commercial/tested-delivery gates remain intact.
+
 
 ### Business headers — 20 October 2026
 

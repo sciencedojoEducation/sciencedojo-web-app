@@ -3,6 +3,7 @@
 import { createContext, useContext, useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 import { Pause, Play } from "lucide-react";
 import s from "./engineering.module.css";
+import shared from "../shared/business.module.css";
 
 const MotionContext = createContext({ paused: false, reduced: false, enabled: false, toggle: () => {} });
 
@@ -76,7 +77,7 @@ export default function EngineeringVisualMotion({ children }: { children: ReactN
     return () => { observer.disconnect(); animations.forEach(animation => animation.cancel()); disposers.forEach(dispose => dispose()); };
   }, [enabled]);
 
-  return <MotionContext.Provider value={{ paused, reduced, enabled, toggle: () => setPaused(value => !value) }}><div ref={root} className={s.page} data-engineering-motion data-motion={enabled ? "on" : "off"}>
+  return <MotionContext.Provider value={{ paused, reduced, enabled, toggle: () => setPaused(value => !value) }}><div ref={root} className={`${s.page} ${shared.page}`} data-engineering-motion data-motion={enabled ? "on" : "off"}>
     {children}
   </div></MotionContext.Provider>;
 }
