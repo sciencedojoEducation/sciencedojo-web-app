@@ -681,3 +681,48 @@ The [owner-review plan](virtual-sciencedojo-owner-review.md) prepares exact
 only the owner invitation, actual account tests and rollback. Existing staging
 approvals are not approval to modify this separate database. Hosted activation,
 real account evidence, separate-student admission and G1–G9 remain pending.
+
+## Approved owner-account preparation and runtime repair — 19 October 2026
+
+The owner approved the [protected review plan](virtual-sciencedojo-owner-review.md).
+The separately bound account database had the required 067 helpers and no campus
+schema. A scoped schema/authorization baseline was saved privately; automatic
+full backups were unavailable, and this baseline is not a learner-data backup.
+Exact 070–074 source statements passed a local atomic rehearsal and were applied
+in one guarded transaction. An initial editor attempt failed SQL parsing before
+any transaction began; the complete editor model was replaced and copy-verified
+against the reviewed source before the successful run. Do not replay these
+non-idempotent migrations. Showcase staging and the production application
+configuration/deployment were unchanged.
+
+The actual service RPC then returned PostgreSQL 21000, “UPDATE requires a WHERE
+clause.” The target's safety guard exposed two unqualified singleton focus-glass
+updates in 074. Forward migration [075](../sql/075_campus_focus_safe_updates.sql)
+adds only explicit `room='library'` predicates through source-guarded function
+replacement, preserving ownership, grants, settings and the existing safe-update
+protection. It passed local tests and was applied to this same approved target.
+The real service RPC now returns HTTP 200 with `{ended:true}` for an unknown
+connection. Anonymous runtime execution remains denied (42501); direct runtime
+table access by the service remains forbidden, as designed. Eleven campus tables
+have RLS, three restrictive flag-write policies remain, and the Living Cube
+revision is present. The beta is disabled, with zero members, staff and presence.
+Exact hashes, scoped baseline, catalog and API outcomes remain private.
+
+All **70 campus regressions** passed locally, including the repair's room filters
+and preserved outer/internal function grants. A hosted quality failure on 82242ea
+occurred when direction activation started immediately after asynchronous native
+fullscreen focus restoration. The browser harness now waits for actual fullscreen,
+scroll-style and focus restoration before retaining the original movement
+assertions. The full shared-SQL browser flow passed locally, including the court,
+three floors, retained learning, safety and wire checks. Original-transport focused
+graphics/fullscreen and direction activation also passed. A first focused attempt
+timed out waiting for Auto idle resolution while other checks ran; that failure
+is retained, and the isolated rerun passed without changing the quality behavior
+or assertion. Actual hosted status is recorded separately; local results do not
+establish current-head hosted integration.
+
+Vercel two-factor sign-in is pending, so the protected branch Preview is not yet
+configured for this environment. Adult/EU/EEA confirmation is pending; no owner
+invitation or release flag was enabled and no notice accepted on their behalf.
+Approval is retained. Actual owner-account interaction, a separate student and
+G1–G9 remain pending. No paid infrastructure or public protection bypass was used.

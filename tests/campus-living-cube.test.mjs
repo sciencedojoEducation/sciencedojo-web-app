@@ -122,3 +122,24 @@ test('upper slabs contain real lift/escalator openings and solid landings, with 
   assert.equal(covered(lift.x,39),true);assert.equal(schoolWalkable(lift.shaftX,39,floor),false);assert(schoolWalkable(lift.x,39,floor));
  }
 });
+
+test('focus-glass forward repair bounds singleton updates and preserves runtime grants',async()=>{
+ const f=await runtimeFixture(1);
+ try{
+  for(const name of ['campus_runtime_school','campus_runtime']){
+   const {definition,anon,authenticated,service}= (await f.db.query(`SELECT pg_get_functiondef(p.oid) AS definition,
+    has_function_privilege('anon',p.oid,'execute') AS anon,
+    has_function_privilege('authenticated',p.oid,'execute') AS authenticated,
+    has_function_privilege('service_role',p.oid,'execute') AS service
+    FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace
+    WHERE n.nspname='public' AND p.proname=$1`,[name])).rows[0];
+   const updates=definition.match(/UPDATE campus_focus_glass[^;]+;/g);
+   assert(updates.length>0);
+   for(const update of updates)assert.match(update,/\bWHERE\b/);
+   assert.equal(anon,false);assert.equal(authenticated,false);assert.equal(service,name==='campus_runtime');
+   assert.match(definition,/SECURITY DEFINER/);
+   assert.match(definition,/search_path/);
+  }
+  assert.deepEqual(await f.rawRuntime('99999999-9999-4999-8999-999999999999','step'),{ended:true});
+ }finally{await f.db.close();}
+});

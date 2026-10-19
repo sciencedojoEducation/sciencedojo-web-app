@@ -365,6 +365,7 @@ try {
       await a.getByRole('button',{name:'Sharp',exact:true}).press('Enter');
       await a.waitForFunction(()=>{const c=document.querySelector('.school-scene canvas');return c&&Math.abs(c.width/c.clientWidth-Math.min(2,devicePixelRatio))<.01;});
       const sharpRatio=await ratio();
+      const outsideOverflow=await a.evaluate(()=>document.body.style.overflow);
       await a.getByRole('button',{name:'Full screen',exact:true}).click();
       await a.getByRole('button',{name:'Sky & view',exact:true}).click();
       if(!await a.getByRole('group',{name:'Graphics',exact:true}).isVisible())throw new Error('Fullscreen lost graphics controls');
@@ -375,6 +376,9 @@ try {
       const autoIdleRatio=await autoResolution.jsonValue();await autoResolution.dispose();
       await a.getByRole('button',{name:'Close school panel',exact:true}).click();
       await a.getByRole('button',{name:'Exit full screen',exact:true}).click();
+      // Fullscreen exit restores focus asynchronously. Starting the movement
+      // test before it finishes can blur its button and cancel that input.
+      await a.waitForFunction(overflow=>!document.fullscreenElement&&!document.querySelector('.campus-immersive')&&document.body.style.overflow===overflow&&document.activeElement===document.querySelector('.campus-fullscreen-button'),outsideOverflow);
       result.graphics={pointerAndKeyboard:true,performanceRatio:.45,sharpRatio,autoIdleRatio,fullscreenPreferenceRetained:true};
       result.checks.push('Local graphics modes change the actual canvas resolution through pointer and keyboard controls, remain available in fullscreen, and preserve the connected world');
     };
@@ -397,6 +401,7 @@ try {
     }
     result.checks.push("Pointer taps and native keyboard button activation move a bounded step and stop");
     }
+    if(!process.argv.includes('--entry-only')){
     const stage = a.getByRole("region", { name: /3D school/ });
     // Observe authoritative arrival, rather than assuming CI delivers a fixed
     // number of input ticks during a wall-clock sleep. Speed is tested in SQL/JS.
@@ -945,6 +950,7 @@ try {
     result.basketball={sharedOwnership:true,repeatSafePickup:true,heldPowerRisesAndFalls:true,lowerPowerKeepsPossession:true,cancelChargeKeepsBall:true,keyboardChargeReleaseMiss:true,retrievedRebound:true,carryDribble:true,physicalBasketPoints:points,peerScoreAgreement:true,putDown:true,disconnectRelease:true,fullscreenPhone:true,touchChargeRelease:true};
     result.checks.push('Actual court gameplay: two peers walk there, race for one ball, hold E through rising/falling power without losing possession, cancel with Escape, then release a shot; another player retrieves and scores a physical basket with shared totals. Touch also lowers power while held and shoots only on release; fullscreen controls remain visible');
     await checkLivingCube({page:a,peer:b,stage,player,id:courtIds[0],result,directory});
+    }
     }
     }
     await Promise.all(ticketReads);

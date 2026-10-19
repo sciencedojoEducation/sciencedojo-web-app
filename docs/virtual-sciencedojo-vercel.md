@@ -274,3 +274,17 @@ The required revision is now `school-v3-living-cube`. This is local preparation:
 and application/service versions before any separately approved deployment. Room
 screening is visual focus only, with open doors and shared presence. G1–G9 remain
 pending. See the [runbook](virtual-sciencedojo-implementation.md) for evidence.
+
+## Approved owner-account environment — 19 October 2026
+
+The [owner-review plan](virtual-sciencedojo-owner-review.md) is approved. Exact
+070–074 statements are now applied in its separately verified account database,
+with 11 campus tables under RLS and the feature disabled/zero members. Existing
+showcase staging is unchanged; do not replay its migrations. These results
+supersede local-only statements above only for the recorded owner environment.
+The first runtime API check exposed a hosted safe-update guard; 075 adds explicit
+singleton predicates to the two affected focus-glass updates without changing
+permissions or disabling that guard. It is now applied in the same approved account environment: the service RPC
+passes while anonymous execution remains denied. The runbook records the bounds. Vercel two-factor sign-in, protected branch Preview configuration,
+eligibility confirmation and real-account testing remain pending. No public
+bypass, production application deployment or separate learner release is approved.

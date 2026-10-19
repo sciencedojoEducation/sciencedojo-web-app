@@ -154,3 +154,14 @@ The owner authorized movement/posture, furniture collision, shared focus glass a
 usable upper floors. The [implementation plan](virtual-sciencedojo-living-cube.md)
 supersedes the earlier decorative-terrace limit for this private software phase.
 Existing learning, identity and operational gates remain unchanged.
+
+## Owner-account review approval — 19 October 2026
+
+The owner approved the bounded [owner-review plan](virtual-sciencedojo-owner-review.md).
+070–074 are applied to that separately verified account database, with all campus
+RLS enabled, zero invitations and the beta off. Earlier local-only schema notes
+remain historical. Preview setup awaits Vercel two-factor sign-in; adult/EU/EEA
+confirmation and actual account acceptance/testing are pending. The safe-update
+compatibility repair (075) passed local checks and the actual service API; it
+retains the target database safety guard and existing authorization. This does not admit a
+student cohort or complete the operational gates.

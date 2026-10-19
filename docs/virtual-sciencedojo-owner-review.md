@@ -1,6 +1,6 @@
 # sciencedojo. — protected owner-account review
 
-Prepared 19 October 2026. **Hosted activation is awaiting approval.** This plan
+Approved by the owner on 19 October 2026. **Activation remains incomplete.** This plan
 covers the owner's existing account, not admission of a separate student cohort.
 Account identifiers, environment details and read-only evidence are held in
 `.campus-private/owner-account-preflight.json`, outside Git and public PR material.
@@ -22,7 +22,7 @@ Dashboard documents exclude marketing tag initialization/events, and the campus
 link is hidden within the owned dashboard frame to avoid opening a nested world.
 Only existing coarse presence enters the room; private dashboard input never does.
 
-## Read-only findings
+## Initial read-only findings
 
 The specified account exists, has the student role, is not suspended and has a
 confirmed email. This does not establish age/residence review or pilot readiness.
@@ -34,7 +34,7 @@ The earlier showcase-staging approvals and applied migrations do not authorize
 changes to this separate account database. Do not reapply schemas to staging or
 infer that missing tables alone verify every prerequisite, policy or backup.
 
-## Requested hosted approval
+## Approved hosted scope
 
 - Use a **protected branch Preview** in the existing ScienceDojo Vercel project,
   with the database containing the owner's existing account. Do not merge the
@@ -75,3 +75,27 @@ Verify denied fresh admission and expired/cleared presence. Keep the additive
 schema available for reviewed recovery; do not drop tables as a casual rollback.
 Existing dashboard/course access must keep working. Retain private evidence
 without credentials. G1–G9 and separate-student admission remain pending.
+
+## Execution — 19 October 2026
+
+The owner approved this plan. The target binding and existing 067 prerequisites
+were verified privately. No automatic full backup was available; a scoped
+schema/authorization baseline was saved, explicitly not a learner-data backup.
+Exact 070–074 source statements were rehearsed locally and then applied in one
+guarded transaction. Post-application checks found 11 campus tables with RLS,
+three restrictive flag-write policies, the Living Cube revision and service-only
+runtime execution. The beta flag remains false, with zero members/staff/presence.
+
+The first service RPC exposed the target's safe-update protection rejecting two
+unqualified focus-glass updates in 074. A bounded forward repair is prepared in
+[075](../sql/075_campus_focus_safe_updates.sql), adding explicit singleton room
+predicates while retaining the guard and existing function grants/settings.
+It was applied after local checks. The actual service RPC now returns HTTP 200
+with an ended session for an unknown connection; anonymous execution remains
+denied and direct service-table access remains forbidden. The flag is still off
+and membership remains empty.
+
+Protected Preview configuration is pending Vercel two-factor sign-in. The owner's
+18+/EU/EEA confirmation is also pending. Neither the invitation nor the release
+flag is enabled; the account holder must accept the notice in the application.
+This approval remains valid; do not request the same approval again.

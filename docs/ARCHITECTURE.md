@@ -1,6 +1,6 @@
 # ScienceDojo architecture and proposed virtual campus
 
-Updated 17 October 2026. The campus foundation and first study slice are implemented locally. Live configuration is only established where separately recorded; the campus migration has not been applied to production and no pilot has launched. Read the [Phase 0 decisions and launch gates](virtual-sciencedojo-phase-0.md) and [implementation/runbook record](virtual-sciencedojo-implementation.md) before continuing.
+Updated 19 October 2026. The campus and Living Cube are implemented. Hosted schemas/configuration are established only in the separately recorded approved environments; no learner pilot has launched. Read the [Phase 0 decisions and launch gates](virtual-sciencedojo-phase-0.md) and [implementation/runbook record](virtual-sciencedojo-implementation.md) before continuing.
 
 ## Existing platform and evidence
 
@@ -269,3 +269,14 @@ The owner authorized movement/posture, furniture collision, shared focus glass a
 usable upper floors. The [implementation plan](virtual-sciencedojo-living-cube.md)
 supersedes the earlier decorative-terrace limit for this private software phase.
 Existing learning, identity and operational gates remain unchanged.
+
+## Approved owner-account preparation — 19 October 2026
+
+The [owner-review plan](virtual-sciencedojo-owner-review.md) is approved for the
+existing owner account, using a protected branch Preview. Its account database
+now has 070–074 applied with RLS and the beta disabled; showcase staging is
+unchanged. Earlier local-only migration notes are historical checkpoints.
+The target safe-update guard requires the bounded [075 forward repair](../sql/075_campus_focus_safe_updates.sql).
+Preview configuration, eligibility confirmation and actual account interaction
+remain pending. No production application deployment, separate-student admission,
+paid service or G1–G9 completion is established.
