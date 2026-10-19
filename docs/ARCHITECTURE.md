@@ -282,3 +282,17 @@ eligibility and explicitly confirmed the two branch-only Preview settings. The
 protected Preview is ready, with one owner invitation enabled and no campus staff;
 personal notice acceptance and actual account interaction remain pending. No production application deployment, separate-student admission,
 paid service or G1–G9 completion is established.
+
+## Movement responsiveness correction — 19 October 2026
+
+Owner-reported hosted input lag authorizes the correction recorded in Phase 0.
+The local input dispatcher coalesces changes within 50ms, suppresses stationary
+repeats and retains 100ms active refreshes, capped at 20 input messages/second
+within the unchanged total socket guard. The shared-SQL session schedules each
+next call against the prior start/completion rather than skipping a fixed slot
+when the prior call exceeded 200ms. Calls remain sequential and starts remain
+bounded by the existing 200ms minimum; there is no catch-up burst. Follow view
+tracks the confirmed interpolated pose directly, preserving easing for exterior
+and overview transitions and reduced-motion anchoring. The 300ms pose buffer and
+authoritative speed, geometry, seats and all public fields stay unchanged.
+Verification and hosted application are recorded separately in the runbook.

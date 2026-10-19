@@ -234,3 +234,26 @@ test('coalescing keeps one short jump edge while retaining the newest movement a
   peer.send('input',{x:0,z:0,seq:3,jump:false});
  }finally{await server.close();await f.db.close();}
 });
+
+test('slow runtime replies resume at the next eligible instant without overlap or a skipped polling slot',{timeout:15000},async()=>{
+ const f=await runtimeFixture(1);let release,started,settledAt=0,secondAt=0,active=0,maxActive=0;
+ const gate=new Promise(resolve=>{release=resolve;}),first=new Promise(resolve=>{started=resolve;});const times=[];
+ const server=await listener(f,{intervalMs:200},call=>async args=>{
+  if(args.runtime_operation!=='step')return call(args);
+  times.push(performance.now());active++;maxActive=Math.max(maxActive,active);
+  try{
+   if(times.length===1){started();await gate;settledAt=performance.now();}
+   else if(times.length===2)secondAt=performance.now();
+   return await call(args);
+  }finally{active--;}
+ });
+ try{
+  const peer=await join(server,1,await f.issueRaw(1));const origin=peer.frames[0].data.players[0].x;await first;
+  peer.send('input',{x:1,z:0,seq:1});
+  await new Promise(resolve=>setTimeout(resolve,300));release();
+  await peer.snapshot(s=>s.players[0].x>origin+.1);
+  assert(secondAt-settledAt<80,`Slow RPC added ${secondAt-settledAt}ms of polling wait`);
+  await new Promise(resolve=>setTimeout(resolve,450));
+  assert.equal(maxActive,1);assert(times.slice(1).every((at,i)=>at-times[i]>=195),'Keep the existing maximum 5Hz start cadence');
+ }finally{release();await server.close();await f.db.close();}
+});

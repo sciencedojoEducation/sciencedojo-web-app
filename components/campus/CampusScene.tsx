@@ -76,8 +76,10 @@ function Camera({focus,present,reducedMotion,view,placeId,activityRef,angles}:{f
   }
   else{const x=view==="place"||reducedMotion?place.x:present?focus.current.x:0,z=view==="place"||reducedMotion?place.z:present?focus.current.z:0;
    const y=view==="place"||reducedMotion?floorHeight(place.floor):present?focus.current.eye-1.67:0;target.set(x+9,y+9,z+13);aim.set(x,y+1,z-1);}
+  // The confirmed avatar is already interpolated. Follow it directly rather
+  // than adding another easing delay behind every start, stop and turn.
   const settled=camera.position.distanceToSquared(target)<.00001&&look.distanceToSquared(aim)<.00001;
-  if(!initializedRef.current||reducedMotion||settled){initializedRef.current=true;camera.position.copy(target);look.copy(aim);}
+  if(!initializedRef.current||reducedMotion||settled||(view==="follow"&&present)){initializedRef.current=true;camera.position.copy(target);look.copy(aim);}
   else{const step=1-Math.exp(-delta*4);camera.position.lerp(target,step);look.lerp(aim,step);activityRef.current=true;invalidate();}
   camera.lookAt(look);
   camera.updateMatrixWorld();

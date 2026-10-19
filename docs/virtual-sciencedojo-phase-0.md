@@ -177,3 +177,16 @@ and the campus flag are now enabled for the approved review, with zero campus
 staff and unchanged student/course permissions. Notice acceptance remains a
 personal application action; actual owner walkthrough evidence remains pending.
 Close this review by disabling its membership/flag and restoring branch controls.
+
+## Hosted movement responsiveness — owner report, 19 October 2026
+
+The owner likes the experience but reports slightly slow/lagging movement and
+requests a fix. Authorized correction: send bounded changed input without waiting
+for the periodic browser sample, keep active-input refreshes and idle suppression,
+resume slow shared-SQL calls at the next eligible instant without overlapping or
+raising the 5Hz ceiling, and remove duplicate Follow camera easing behind the
+already-interpolated avatar. Preserve the 300ms confirmed-pose buffer, server
+speed/collision/seat authority, immediate corrections, graphics limits and course
+retention. Verify input/start/stop/rapid-change timing, slow-RPC lifecycle/cadence,
+both transports, actual Follow tracking and existing rendering/privacy checks.
+No schema, hosting settings, cohort or learning entitlement change is needed.

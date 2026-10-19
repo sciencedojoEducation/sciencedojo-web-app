@@ -302,3 +302,16 @@ role or course entitlement change. The unaccepted notice still denies world
 identity. Personal application sign-in/notice and the actual hosted study loop
 remain pending. Restore both branch settings and disable the owner member/flag
 when the review ends. Hosted quality's unchanged rerun is not yet a recorded pass.
+
+## Movement input responsiveness — 19 October 2026
+
+The owner reports hosted movement lag. The correction retains the 200ms minimum
+between runtime starts and one in-flight call, while scheduling from actual
+completion when a slow RPC overruns that interval. A 300ms RPC therefore need
+not wait for a 400ms fixed timer slot. There is no accumulated tick backlog or
+increased polling ceiling. Client changes are coalesced within 50ms, active
+refreshes remain 100ms and idle repeats are suppressed. Protocol/rate guards,
+short-jump coalescing, lease/heartbeat, release/revocation and shared SQL authority
+remain intact. Follow rendering removes its second easing stage while retaining
+the confirmed 300ms buffer. Check the runbook for actual verification/deployment;
+these design bounds are not measured intended-device latency or cost results.

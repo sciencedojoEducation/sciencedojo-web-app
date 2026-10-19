@@ -763,3 +763,33 @@ notice, school, dashboard/desk and leave interaction remain pending. Disable the
 owner membership/flag and restore the two branch-only settings when this owner
 review ends; do not mistake the enabled owner review for a separate learner launch.
 The hosted quality rerun is still in progress at this checkpoint.
+
+## Hosted movement responsiveness — owner report, 19 October 2026
+
+The owner said they like the experience but movement feels slightly slow/laggy.
+This is scoped experience feedback, not evidence of a complete independent study
+walkthrough. Inspection found a periodic browser input wait, fixed-slot SQL polling
+that skipped a further interval after slow RPCs, and Follow camera easing behind
+an already-buffered character.
+
+The correction sends/coalesces changed input within 50ms, suppresses idle repeats
+and keeps active refreshes at 100ms. Its 20-input/second bound stays below the
+unchanged total 30-message socket guard. Sequence numbers are allocated on actual
+send; pending work samples the latest intent and disposal cancels delayed input.
+The shared-SQL handler resumes at the next eligible instant after a slow call,
+keeping one in-flight operation, the existing 200ms minimum start interval,
+bounded latest-input/action queues and deferred cleanup. Follow view directly
+tracks the interpolated avatar; exterior/overview easing and reduced-motion
+anchoring remain. The 300ms confirmed-pose buffer, authoritative speed/collision,
+seats, posture/journey rules and graphics thresholds are unchanged. No prediction,
+new protocol fields, schema, hosting configuration or learning entitlement change.
+
+All **74 campus regressions** passed locally, including deterministic input
+start/stop/reversal/rate tests and actual shared-SQL/WebSocket slow-response timing,
+no-overlap and cadence checks. The first new slow-response test assumed a zero
+spawn and timed out; its assertion now uses displacement from the fixture's
+actual spawn, with the same timing/cadence requirements. Scoped lint and type
+checking passed before final browser/render/build verification. The actual-scene
+probe adds Follow/character position agreement without changing its original
+continuity, exact-target, buffer or draw-call assertions. Final full transport,
+scene/build and hosted application outcomes are recorded below when available.

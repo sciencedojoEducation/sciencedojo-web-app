@@ -38,6 +38,7 @@ export function runVercelCampusSession(
     let rateAt = Date.now(), rateCount = 0;
     let work: Promise<void> = Promise.resolve();
     let lastPong = performance.now();
+    let tick: ReturnType<typeof setTimeout> | undefined;
     const send = (type: string, data: unknown) => {
       if (!closed && socket.readyState === 1) socket.send(JSON.stringify({ type, data }));
     };
@@ -45,7 +46,7 @@ export function runVercelCampusSession(
       if (closed) return;
       closed = true;
       clearTimeout(admissionTimer); clearTimeout(lifetimeTimer); clearTimeout(renewTimer);
-      clearInterval(tick); clearInterval(heartbeat);
+      clearTimeout(tick); clearInterval(heartbeat);
       pendingInput = undefined; commands.length = 0;
       // Release after the last operation settles, including an interrupted join.
       // If the host is killed, the database lease still expires after 15 seconds.
@@ -83,14 +84,23 @@ export function runVercelCampusSession(
       try { socket.ping(); } catch { socket.terminate(); finish(); }
     }, heartbeatMs);
     socket.on("pong", () => { lastPong = performance.now(); });
-    const tick = setInterval(() => {
+    const schedule = (startedAt: number) => {
+      if (!closed) tick = setTimeout(step, Math.max(0, Math.ceil(intervalMs - (performance.now() - startedAt))));
+    };
+    const step = () => {
       if (!admitted || closed || inFlight) return;
+      const startedAt = performance.now();
       inFlight = true;
       const batch = pendingInput ? [pendingInput, ...commands.splice(0)] : commands.splice(0);
       pendingInput = undefined;
       work = runtime({ runtime_connection: connection, runtime_operation: "step", runtime_commands: batch })
-        .then((result) => consume(result)).catch(() => end(1011)).finally(() => { inFlight = false; });
-    }, intervalMs);
+        .then((result) => consume(result)).catch(() => end(1011)).finally(() => {
+          inFlight = false;
+          // Keep the 5Hz ceiling, but do not lose another whole tick when an RPC
+          // takes longer than 200ms. Never overlap calls or queue stale input.
+          schedule(startedAt);
+        });
+    };
     socket.once("close", finish);
     socket.once("error", () => { socket.terminate(); finish(); });
     socket.on("message", (raw, binary) => {
@@ -109,12 +119,13 @@ export function runVercelCampusSession(
           end(4003); return;
         }
         admitting = true;
+        const startedAt = performance.now();
         work = runtime({ runtime_connection: connection, runtime_operation: "connect",
           ticket_hash: hashTicket(message.ticket), expected_campus: expectedCampus, runtime_renew: message.renew === true })
           .then((result) => {
             if (closed) return;
             admitted = true; lastPong = performance.now(); clearTimeout(admissionTimer); consume(result, true);
-          }).catch(() => end(4003));
+          }).catch(() => end(4003)).finally(() => { schedule(startedAt); });
         return;
       }
       if (Object.keys(message).sort().join(",") !== "data,type") { end(1008); return; }

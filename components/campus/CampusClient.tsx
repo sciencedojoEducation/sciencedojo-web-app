@@ -13,6 +13,7 @@ import {
 } from "react";
 import { connectCampus, requestCampusAdmission, type CampusConnection } from "@/lib/campus/connection";
 import {availableJourneys,nearbyGlassSwitch} from "@/lib/campus/locomotion";
+import {createInputDispatcher} from "@/lib/campus/input-dispatch";
 import type {GraphicsQuality} from "@/lib/campus/render-budget";
 import { SEATS, type Snapshot } from "@/lib/campus/protocol";
 import { SCHOOL_PLACES,SCHOOL_FLOORS,SCHOOL_CONNECTORS,floorHeight, type Stance, schoolPlaceAt, schoolRoute, type Point } from "@/lib/campus/school-layout";
@@ -59,6 +60,7 @@ export default function CampusClient({
   dashboardHref?: string;
   initialBlocked?: string[];
 }) {
+  const requestInput=useRef<() => void>(() => {});
   const [snapshot, setSnapshot] = useState<Snapshot>({
     self: "",
     players: [],
@@ -80,7 +82,7 @@ export default function CampusClient({
   const [graphics,setGraphics]=useState<GraphicsQuality>("auto");
   const [look,setLook]=useState<CameraLook>(DEFAULT_LOOK);
   const rememberedLook=useRef<CameraLook>(DEFAULT_LOOK);
-  const rememberLook=useCallback((next:CameraLook)=>{rememberedLook.current=next;cameraRef.current.yaw=next.yaw;},[]);
+  const rememberLook=useCallback((next:CameraLook)=>{rememberedLook.current=next;cameraRef.current.yaw=next.yaw;requestInput.current();},[]);
   const [usedDesk,setUsedDesk]=useState(false);
   const [charging,setCharging]=useState(false),[shotPower,setShotPower]=useState(.55);
   const [targetHoop,setTargetHoop]=useState<"north"|"south">("north");
@@ -97,8 +99,8 @@ export default function CampusClient({
   const motionIntent=useRef({run:false,jump:false,stance:"stand" as Stance});
   const [stance,setStance]=useState<Stance>("stand");
   const [touchRun,setTouchRun]=useState(false);const touchRunMode=useRef(false);
-  const posture=(next:Stance)=>{motionIntent.current.stance=next;setStance(next);stage.current?.focus();};
-  const jump=()=>{motionIntent.current.jump=true;motionIntent.current.stance="stand";setStance("stand");stage.current?.focus();};
+  const posture=(next:Stance)=>{motionIntent.current.stance=next;setStance(next);stage.current?.focus();requestInput.current();};
+  const jump=()=>{motionIntent.current.jump=true;motionIntent.current.stance="stand";setStance("stand");stage.current?.focus();requestInput.current();};
   const heldMovementKeys=useRef(new Set<string>());
   const room = useRef<CampusConnection | null>(null),
     direction = useRef({ x: 0, z: 0 }),
@@ -141,6 +143,7 @@ export default function CampusClient({
     heldMovementKeys.current.clear();motionIntent.current.run=false;motionIntent.current.jump=false;
     navigation.current = null;setWalkingTo("");
     ballCharge.current.started=null;setCharging(false);
+    requestInput.current();
   }, []);
   const {shell,button:fullscreenButton,immersive,enter:enterFullscreen,exit:exitFullscreen}=useCampusFullscreen(stopMovement);
   const [schoolPanel,setSchoolPanel]=useState<"map"|"sky"|"desk"|"people"|"controls"|null>(null);
@@ -156,6 +159,7 @@ export default function CampusClient({
   const stepDirection = useCallback((x: number, z: number) => {
     stopMovement();
     direction.current = { x, z };
+    requestInput.current();
     // A native button click must last long enough to reach the input loop.
     stepTimer.current = setTimeout(stopMovement, 300);
   }, [stopMovement]);
@@ -234,6 +238,17 @@ export default function CampusClient({
     }
   };
   useEffect(() => {
+    const dispatcher=createInputDispatcher(() => {
+      if(!room.current) return null;
+      const route=navigation.current;
+      return {...(["first-person","orbit"].includes(cameraRef.current.view)&&!route
+        ?cameraDirection(direction.current.x,direction.current.z,cameraRef.current.yaw):direction.current),
+        run:motionIntent.current.run||touchRunMode.current,jump:motionIntent.current.jump,stance:motionIntent.current.stance};
+    }, input => {
+      room.current?.send("input",{...input,seq:sequence.current++});
+      motionIntent.current.jump=false;
+    });
+    requestInput.current=dispatcher.request;
     const timer = setInterval(() => {
       const route = navigation.current, position = latestSelf.current;
       if (route && position) {
@@ -241,12 +256,7 @@ export default function CampusClient({
         if (!route.points.length) { navigation.current = null;setWalkingTo("");direction.current = { x: 0, z: 0 };setNotice(`Arrived at ${route.name}.`); }
         else { const dx = route.points[0].x - position.x, dz = route.points[0].z - position.z, length = Math.max(1, Math.hypot(dx, dz));direction.current = { x: dx / length, z: dz / length }; }
       }
-      if (room.current)
-        room.current.send("input", {
-          ...(["first-person","orbit"].includes(cameraRef.current.view)&&!route?cameraDirection(direction.current.x,direction.current.z,cameraRef.current.yaw):direction.current),
-          seq: sequence.current++,run:motionIntent.current.run||touchRunMode.current,jump:motionIntent.current.jump,stance:motionIntent.current.stance,
-        });
-      motionIntent.current.jump=false;
+      dispatcher.request();
     }, 100);
     const stop = stopMovement;
     window.addEventListener("blur", stop);
@@ -257,6 +267,7 @@ export default function CampusClient({
       generation.current++;
       admissionRequest.current?.abort();
       stop();
+      dispatcher.dispose();requestInput.current=()=>{};
       clearInterval(timer);
       window.removeEventListener("blur", stop);
       document.removeEventListener("visibilitychange", stop);
@@ -428,7 +439,7 @@ export default function CampusClient({
               if (!connected || self?.seat || hub) return;
               const key = event.key.toLowerCase();
               if(!event.altKey&&!event.ctrlKey&&!event.metaKey){
-                if(key==="shift"){event.preventDefault();motionIntent.current.run=true;return;}
+                if(key==="shift"){event.preventDefault();motionIntent.current.run=true;requestInput.current();return;}
                 if(key===" "){event.preventDefault();if(!event.repeat)jump();return;}
                 if(key==="c"||key==="z"){event.preventDefault();if(!event.repeat){const next=key==="c"?"crouch":"prone";posture(motionIntent.current.stance===next?"stand":next);}return;}
               }
@@ -448,6 +459,7 @@ export default function CampusClient({
               if (navigation.current) stopMovement();
               heldMovementKeys.current.add(key);
               direction.current=keyboardDirection(heldMovementKeys.current);
+              requestInput.current();
             }}
             onKeyUp={(event) => {
               if(event.target!==event.currentTarget)return;
@@ -455,6 +467,7 @@ export default function CampusClient({
               if(event.key==="Shift"){motionIntent.current.run=false;}
               if(heldMovementKeys.current.delete(event.key.toLowerCase()))
                 direction.current=keyboardDirection(heldMovementKeys.current);
+              requestInput.current();
             }}
           >
             {no3d ? (
@@ -585,7 +598,7 @@ export default function CampusClient({
                 focus; doors stay open and presence stays shared. All actions also have visible buttons.
               </p>
               <div className="campus-posture-controls" aria-label="Posture controls">
-              <button className="secondary" disabled={!connected||!!self?.seat||!!self?.travel} aria-pressed={touchRun} onClick={()=>{touchRunMode.current=!touchRunMode.current;setTouchRun(touchRunMode.current);stage.current?.focus();}}>Run · Shift</button>
+              <button className="secondary" disabled={!connected||!!self?.seat||!!self?.travel} aria-pressed={touchRun} onClick={()=>{touchRunMode.current=!touchRunMode.current;setTouchRun(touchRunMode.current);stage.current?.focus();requestInput.current();}}>Run · Shift</button>
               <button className="secondary" disabled={!connected||!!self?.seat||!!self?.travel} onClick={jump}>Jump · Space</button>
               <button className="secondary" disabled={!connected||!!self?.seat||!!self?.travel} aria-pressed={stance==="crouch"} onClick={()=>posture(stance==="crouch"?"stand":"crouch")}>Crouch · C</button>
               <button className="secondary" disabled={!connected||!!self?.seat||!!self?.travel} aria-pressed={stance==="prone"} onClick={()=>posture(stance==="prone"?"stand":"prone")}>Lie down · Z</button>
@@ -606,6 +619,7 @@ export default function CampusClient({
                       pointerStarted.current = performance.now();
                       e.currentTarget.setPointerCapture(e.pointerId);
                       direction.current = { x: d.x, z: d.z };
+                      requestInput.current();
                     }}
                     onPointerUp={() => {
                       if (performance.now() - pointerStarted.current < 200)

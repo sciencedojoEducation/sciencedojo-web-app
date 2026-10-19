@@ -108,6 +108,11 @@ try {
   // Compare interpolation over all twenty arrivals, including the 300ms buffer.
   const walking = frames.filter(f => f.t <= walk.finished + 300);
   const changed = walking.filter((f, i) => i && Math.abs(f.x - walking[i - 1].x) > .0001);
+  if(!reducedMotion){
+    const followError=Math.max(...walking.map(f=>Math.abs(f.cameraX-f.x-9)));
+    assert(followError<.00001,"Follow camera must not add easing latency behind the already-buffered avatar");
+
+  }
   const core = walking.filter(f => f.t > walk.started + 700 && f.t < walk.finished - 400);
   let lastMoveAt = core[0]?.t ?? 0, maxMovementPauseMs = 0;
   for (let i = 1; i < core.length; i++) {
@@ -116,6 +121,7 @@ try {
   }
   const gaps = walking.slice(1).map((f,i)=>f.t-walking[i].t).sort((a,b)=>a-b);
   const result = { scope: "Synthetic actual scene, headless Chrome / SwiftShader; not hardware or hosted FPS",
+    followCameraLagError:reducedMotion?null:Math.max(...walking.map(f=>Math.abs(f.cameraX-f.x-9))),
     authoritativeTargetCount: walk.arrivals.length, observedWalkMs: Math.round(walk.finished-walk.started),
     observedArrivalGapsMs: walk.arrivals.map((at,i)=>Math.round(at-(i?walk.arrivals[i-1]:walk.started))),
     arrivalGapsMs: [120,280,160,240,140,260,180,220], maxMovementPauseMs: Math.round(maxMovementPauseMs),
