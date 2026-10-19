@@ -10,6 +10,7 @@ test("game database enforces capacity, private rosters, atomic turns/version, re
    await f.db.exec(`SET ROLE ${role}`);
    await assert.rejects(f.db.query('SELECT * FROM campus_game_members'),/permission/);
    await assert.rejects(f.db.query('SELECT * FROM campus_game_tables'),/permission/);
+   await assert.rejects(f.db.query('SELECT campus_games_switch_cleanup()'),/permission/);
    if(role!=='service_role')await assert.rejects(f.db.query("SELECT campus_game($1,'four','read')",[id(1)]),/permission/);
    await f.db.exec('RESET ROLE');
   }
@@ -71,8 +72,14 @@ test("four-player games protect photos/rosters, block both ways, revoke and expi
   await f.request(2,'boxes',{action:'join',username:'Blair'});
   assert.equal((await f.request(1,'boxes',{action:'join',username:'Alex'})).status,409);
   await f.db.exec("UPDATE feature_flags SET enabled=false WHERE key='virtual_campus_enabled'");
+  assert.equal((await f.db.query('SELECT count(*) AS n FROM campus_game_members')).rows[0].n,0,'switch-off cleans game identities before another API request');
   assert.equal((await f.request(2,'boxes')).status,403);
   assert.equal((await f.db.query('SELECT count(*) AS n FROM campus_game_members')).rows[0].n,0);
+  await f.db.exec("UPDATE feature_flags SET enabled=true WHERE key='virtual_campus_enabled'");
+  await f.request(2,'boxes',{action:'join',username:'Blair'});
+  assert.equal((await f.db.query('SELECT count(*) AS n FROM campus_game_members')).rows[0].n,1);
+  await f.db.exec("DELETE FROM feature_flags WHERE key='virtual_campus_enabled'");
+  assert.equal((await f.db.query('SELECT count(*) AS n FROM campus_game_members')).rows[0].n,0,'deleting the switch also cleans identities');
  }finally{await f.db.close();}
 });
 
@@ -95,5 +102,6 @@ test("concurrent joins and Ready clicks converge; duplicate moves apply once and
   const forged=new Request('http://127.0.0.1:3012/api/campus/games?table=four',{method:'POST',headers:{origin:'https://evil.test'},body:JSON.stringify({action:'leave'})});
   assert.equal((await f.api(accounts[0]).POST(forged)).status,403);
   assert.equal((await f.request(accounts[0],'four',{action:'move',move:2,actor:id(accounts[1])})).status,400);
+  assert.equal((await f.request(accounts[0],'four',{action:'__proto__'})).status,400);
  }finally{await f.db.close();}
 });

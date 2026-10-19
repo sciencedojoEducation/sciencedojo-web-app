@@ -6,7 +6,7 @@ export function allowedGamePhoto(value: unknown, supabaseUrl: string | undefined
     if (url.protocol !== "https:" || url.username || url.password || url.port || url.hash) return null;
     const storage = supabaseUrl && new URL(supabaseUrl);
     if (storage && url.origin === storage.origin && /^\/storage\/v1\/object\/public\/avatars\//.test(url.pathname)) return url;
-    if (url.hostname === "lh3.googleusercontent.com" && /^\/a(?:\/|a\/)/.test(url.pathname)) return url;
+    if (url.hostname === "lh3.googleusercontent.com" && /^\/a(?:\/|-\/)/.test(url.pathname)) return url;
   } catch { /* Unsupported existing pictures use initials. */ }
   return null;
 }

@@ -144,6 +144,14 @@ function room(p:Place){
    trees.push({x:p.x+x,z:p.z-7,scale:1,y:base});
   }
   for(const x of [-7,7])box(at(x,1.2,-7),[3,2.4,.8],"#9a896c");
+  if(p.id==='commons'){
+   // Thin markings reuse the existing solid side tables: collision geometry is unchanged.
+   box(at(-5.3,.855,2.3),[.63,.025,.63],"#477a70");
+   for(let r=0;r<6;r++)for(let c=0;c<7;c++)box(at(-5.56+c*.087,.875,2.07+r*.087),[.06,.012,.06],(r+c)%3===0?"#ceae70":"#ded7bb");
+   box(at(6.7,.855,2.3),[.63,.025,.63],"#ded7bb");
+   for(let r=0;r<5;r++)for(let c=0;c<5;c++)box(at(6.45+c*.125,.875,2.05+r*.125),[.035,.012,.035],"#477a70");
+  }
+
  }
  if(p.kind==='fitness'){
   for(const x of [-6,0,6]){

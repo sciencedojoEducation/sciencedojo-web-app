@@ -64,6 +64,12 @@ jobs:
           TMPDIR: ${{ runner.temp }}
         run: npm run test:campus:vercel:browser
 
+      - name: Check two- and four-player board games on both campus transports
+        timeout-minutes: 15
+        env:
+          TMPDIR: ${{ runner.temp }}
+        run: npm run test:campus:games:browser && npm run test:campus:games:vercel:browser
+
       - name: Save synthetic campus browser evidence
         if: always()
         uses: actions/upload-artifact@v4

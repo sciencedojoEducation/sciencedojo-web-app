@@ -52,6 +52,7 @@ test("game usernames and existing avatar proxy reject addresses, credentials, re
   for(const url of ['http://127.0.0.1/a','https://evil.test/a','https://fixture.supabase.co.evil.test/storage/v1/object/public/avatars/a','https://user:secret@fixture.supabase.co/storage/v1/object/public/avatars/a','https://fixture.supabase.co/storage/v1/object/public/other/a','https://lh3.googleusercontent.com.evil.test/a/a'])assert.equal(allowedGamePhoto(url,base),null);
   assert.ok(allowedGamePhoto(base+'/storage/v1/object/public/avatars/a.png',base));
   assert.ok(allowedGamePhoto('https://lh3.googleusercontent.com/a/test',base));
+  assert.ok(allowedGamePhoto('https://lh3.googleusercontent.com/a-/test',base));
   const url=new URL(base+'/storage/v1/object/public/avatars/a.png');
   assert.equal(await readGamePhoto(url,async()=>new Response('<html>',{headers:{'content-type':'image/png'}})),null);
   assert.equal(await readGamePhoto(url,async()=>new Response('svg',{headers:{'content-type':'image/svg+xml'}})),null);

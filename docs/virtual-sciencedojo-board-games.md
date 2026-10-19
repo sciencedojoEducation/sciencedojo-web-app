@@ -136,3 +136,46 @@ Use the existing protected Preview if approved; no new paid service is proposed.
 Record a real completed multiplayer friend walkthrough before claiming the
 requested friend test is delivered. Keep this goal open until that outcome,
 or until the owner explicitly changes its scope.
+
+### Prepared activation sequence
+
+1. Privately record the existing friend accounts, test duration and responsible
+   session contact. Preserve the current owner's invitation; do not create a
+   public join link or grant staff/course permissions to game players. Record
+   the applicable eligibility/notice and operating decisions without fabricating
+   reviews or accepting anyone's notice.
+2. Confirm the protected beta branch's actual deployment/database binding and
+   existing 070–075 state. Check whether 076 is already present; its CREATE
+   statements are deliberately non-idempotent. Record current campus settings
+   and memberships privately before any proposed change.
+3. Obtain environment-specific approval for the exact
+   [076 migration](../sql/076_campus_board_games.sql) and bounded friend
+   invitations. Existing approval for owner-only migrations does not cover 076.
+   Apply the reviewed SQL transaction once, retaining its SHA-256 and actual
+   results privately. It adds two RLS-protected, direct-access-denied game
+   tables, one service-only RPC and a restricted switch-off cleanup trigger; no
+   course, payment or profile schema changes.
+4. Publish only the reviewed beta application revision to the same protected
+   Preview, retaining its authentication protection and current transport. No
+   new hosting service or separate games environment variables are needed.
+   Check how the named friends will pass deployment protection as well as the
+   application's own invitation/sign-in. Reuse existing authorized deployment
+   access if available. Otherwise prepare a bounded private Preview share-link
+   proposal for owner approval, checking current plan/replacement effects first.
+   Do not reuse the revoked QA link or silently enable a bypass. A permitted
+   hosting share link must never replace application admission or be published.
+5. Verify admission denial for an uninvited account, roster/photo denial for an
+   unjoined account, two real signed-in players sharing a match and four sharing
+   Dots & Boxes. Record actual hosted evidence separately from loopback fixtures.
+   Have the owner/friends complete a walkthrough themselves; invite approval
+   and automated browser success do not establish their experience.
+6. At the end, revoke only newly granted test invitations and restore the
+   recorded controls. Revoke the owner only if their owner review is also ending.
+   Use Leave table and verify empty game records. Turning off or deleting the
+   campus switch clears all game identities/boards in the same transaction.
+   A server-side RPC request
+   removes expired/disallowed seats and resets empty games; expired records are
+   cleaned lazily on the next game request, not by a new scheduled database job.
+   Do not describe a 45-second lease as a physical backup/log retention guarantee.
+   Roll back the application to its previous protected Preview if needed; do not
+   drop the additive schema or alter production as an incidental rollback.

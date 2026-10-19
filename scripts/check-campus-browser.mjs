@@ -1,3 +1,6 @@
+import {gamesFixture,attachGamesApi} from "../tests/helpers/campus-games-fixture.mjs";
+import {checkBoardGames} from "./campus-board-games-acceptance.mjs";
+import sharp from "sharp";
 import {checkLivingCube} from "./campus-living-cube-acceptance.mjs";
 /** Disposable loopback fixture: real campus UI + Colyseus; synthetic course, no production auth bypass. */
 import { createServer } from "node:http";
@@ -16,6 +19,14 @@ import {COURT,HOOPS,basketballAim} from "../lib/campus/basketball.ts";
 
 const vercel = process.argv.includes("--vercel");
 const shared = vercel ? await runtimeFixture(14) : null;
+const checkingGames=process.argv.includes('--games');
+let gameFixture=null,gameApi;
+if(checkingGames){
+ if(shared){await shared.db.exec(await readFile(new URL('../sql/076_campus_board_games.sql',import.meta.url),'utf8'));gameApi=attachGamesApi(shared).api;
+  for(let n=1;n<=6;n++)await shared.db.query('UPDATE profiles SET full_name=$2,avatar_url=$3 WHERE id=$1',[`30000000-0000-0000-0000-${String(n).padStart(12,'0')}`,`Game Friend ${n}`,`https://fixture.supabase.co/storage/v1/object/public/avatars/fixture-${n}.png`]);
+ }else{gameFixture=await gamesFixture();gameApi=gameFixture.api;}
+}
+const fixturePictures=checkingGames?await Promise.all(['#167c79','#b95e47','#7461a2','#8c710e','#467bad','#b28460'].map(background=>sharp({create:{width:40,height:40,channels:3,background}}).png().toBuffer())):[];
 
 const directory = await mkdtemp(join(tmpdir(), "sciencedojo-campus-browser-"));
 const origin = "http://127.0.0.1:3012",
@@ -29,9 +40,10 @@ let stalledEntries = 0;
 let next = 0;
 const identity = () => {
   const n = ++next;
-  if (shared) {
-    if (!shared.members[n - 1]) throw new Error("Synthetic account fixture exhausted");
-    return { ...shared.members[n - 1], blocked: [] };
+  if (shared || gameFixture) {
+    const members=shared?.members??gameFixture.identities;
+    if (!members[n - 1]) throw new Error("Synthetic account fixture exhausted");
+    return { ...members[n - 1], blocked: [] };
   }
   return {
     id: `40000000-0000-0000-0000-${String(n).padStart(12, "0")}`,
@@ -84,6 +96,16 @@ const http = createServer(async (req, res) => {
         path.endsWith("js") ? "text/javascript" : "text/css",
       );
       return res.end(await readFile(join(directory, path.slice(1))));
+    }
+    if(checkingGames&&path.startsWith('/api/campus/games')){
+      const own=/fixture=([0-9a-f-]+)/.exec(req.headers.cookie||'')?.[1];
+      const members=shared?.members??gameFixture.identities;
+      const account=members.findIndex(m=>m.id===own)+1;
+      let data='';for await(const chunk of req)data+=chunk;
+      const request=new Request(new URL(req.url,origin),{method:req.method,headers:req.headers,body:data||undefined});
+      const api=gameApi(account,async source=>new Response(fixturePictures[(Number(String(source).match(/(\d+)\.png$/)?.[1])||1)-1],{headers:{'content-type':'image/png'}}));
+      const reply=await api[path.endsWith('/photo')?'PHOTO':req.method](request);
+      res.writeHead(reply.status,Object.fromEntries(reply.headers));return res.end(Buffer.from(await reply.arrayBuffer()));
     }
     if (path === "/api/campus/admission") {
       let renewal = false;
@@ -224,7 +246,7 @@ try {
       tickets.delete(t);
       return who;
     },
-    refresh: async (id) => identities.get(id),
+    refresh: async (id) => checkingGames ? (await gameFixture.db.query("SELECT campus_service_identity($1) AS value",[id])).rows[0].value : identities.get(id),
   });
   if (process.argv.includes("--preview")) {
     console.log(
@@ -383,7 +405,9 @@ try {
       result.checks.push('Local graphics modes change the actual canvas resolution through pointer and keyboard controls, remain available in fullscreen, and preserve the connected world');
     };
     if(!process.argv.includes('--dashboard-only'))await checkGraphics();
-    if(process.argv.includes("--graphics-only")){
+    if(checkingGames){
+      await checkBoardGames({a,b,browser,origin,identities,shared,gameFixture,campus,result,directory,wireFrames,issuedTickets,handshakeHashes,errors});
+    }else if(process.argv.includes("--graphics-only")){
       // The focused display check still performs the shared wire/privacy audit below.
     }else if(process.argv.includes("--living-cube-only")){
       await checkLivingCube({page:a,peer:b,stage:a.getByRole("region",{name:/3D school/}),player,id:firstId,result,directory});
@@ -964,6 +988,9 @@ try {
     if (!wireFrames.length || !issuedTickets.length)
       throw new Error("Wire observation missing");
     for (const canary of [
+      "board-games-retained-course-canary",
+      ...(checkingGames?Array.from({length:6},(_,i)=>`30000000-0000-0000-0000-${String(i+1).padStart(12,"0")}`):[]),
+      "Game Friend", "FriendOne", "FriendTwo", "FriendThree", "FriendFour", "fixture.supabase.co/storage",
       "Synthetic test course",
       "/dashboard/academy/fixture",
       "/dashboard/student",
@@ -1002,6 +1029,7 @@ try {
     );
   }
 } catch(error) {
+  console.error("Campus browser failure:",error);
   if(browser){let n=0;for(const context of browser.contexts())for(const page of context.pages()){
     try{await page.screenshot({path:join(directory,`failure-${++n}.png`)});}catch{/* Retain any earlier evidence when the page already closed. */}
   }}
@@ -1010,6 +1038,7 @@ try {
 } finally {
   await browser?.close();
   await campus?.close();
+  await gameFixture?.db.close();
   http.closeAllConnections();
   await new Promise((resolve) => http.close(resolve));
 }

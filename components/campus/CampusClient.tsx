@@ -21,6 +21,8 @@ import {DEFAULT_LOOK,boundedLook,cameraDirection,keyboardDirection,clockLabel,sc
 import "./campus.css";
 import {useCampusFullscreen} from "./useCampusFullscreen";
 import BasketballHud from "./BasketballHud";
+import BoardGames from "./BoardGames";
+import {GAME_TABLES,type GameKind} from "@/lib/campus/board-games";
 import {HOOPS,COURT,onCourt,canTakeBasketball,basketballAim,currentShotPower,suggestedShot,type ShotControl} from "@/lib/campus/basketball";
 
 const subscribeClock=(notify:()=>void)=>{const timer=setInterval(notify,1000);return()=>clearInterval(timer);};
@@ -84,6 +86,7 @@ export default function CampusClient({
   const rememberedLook=useRef<CameraLook>(DEFAULT_LOOK);
   const rememberLook=useCallback((next:CameraLook)=>{rememberedLook.current=next;cameraRef.current.yaw=next.yaw;requestInput.current();},[]);
   const [usedDesk,setUsedDesk]=useState(false);
+  const [games,setGames]=useState<GameKind|null>(null);
   const [charging,setCharging]=useState(false),[shotPower,setShotPower]=useState(.55);
   const [targetHoop,setTargetHoop]=useState<"north"|"south">("north");
   const ballCharge=useRef<ShotControl>({started:null,power:.55});
@@ -322,6 +325,10 @@ export default function CampusClient({
     setUsedDesk(true);
     setHub(true);
   };
+  const openGames=(table:GameKind="four")=>{stopMovement();document.exitPointerLock?.();setSchoolPanel(null);setGames(table);};
+  const gameSafety=useCallback(()=>room.current?.send("refresh"),[]);
+  const closeGames=()=>{setGames(null);requestAnimationFrame(()=>stage.current?.focus());};
+  const nearbyGame=self&&!self.seat&&!self.travel?GAME_TABLES.find(t=>(self.floor??0)===t.floor&&Math.hypot(self.x-t.x,self.z-t.z)<2.4):undefined;
   const nearbyDesk = self && !self.seat ? SEATS
     .filter(seat => (seat.floor??0)===(self.floor??0)&&!self.travel&&Math.abs((self.elevation??0)-floorHeight(self.floor))<.05&&!snapshot.occupied.includes(seat.id) && Math.hypot(self.x-seat.x,self.z-seat.z)<=2.1)
     .sort((a,b)=>Math.hypot(self.x-a.x,self.z-a.z)-Math.hypot(self.x-b.x,self.z-b.z))[0] : undefined;
@@ -354,14 +361,15 @@ export default function CampusClient({
   const travel=(via:string,to:number)=>{stopMovement();send("environment",{action:"travel",via,to});stage.current?.focus();};
   const toggleGlass=(id:string)=>{stopMovement();send("environment",{action:"glass",room:id});stage.current?.focus();};
   const courtInteraction=atCourt&&!!ball;
-  const interactionLabel = self?.travel?`Riding ${self.travel}…`:journey?`${journey.connector.name} → level ${journey.to}`:switchRoom?`${snapshot.frosted?.includes(switchRoom.id)?"Clear":"Screen"} room glass`:courtInteraction?(mine?charging?"Release E to shoot":"Hold E, release to shoot":takeBall?"Pick up basketball":ball.mode==="held"?"Ball in use · wait for a rebound":"Move near the basketball"):self?.seat ? usedDesk ? "Stand up" : "Use computer" : nearbyDesk ? `Sit at ${nearbyDesk.name}` : "Move near a free study desk";
+  const interactionLabel = self?.travel?`Riding ${self.travel}…`:journey?`${journey.connector.name} → level ${journey.to}`:switchRoom?`${snapshot.frosted?.includes(switchRoom.id)?"Clear":"Screen"} room glass`:nearbyGame?`Play ${nearbyGame.name}`:courtInteraction?(mine?charging?"Release E to shoot":"Hold E, release to shoot":takeBall?"Pick up basketball":ball.mode==="held"?"Ball in use · wait for a rebound":"Move near the basketball"):self?.seat ? usedDesk ? "Stand up" : "Use computer" : nearbyDesk ? `Sit at ${nearbyDesk.name}` : "Move near a free study desk";
   const interact = () => {
-    if (!connected || hub || performance.now()-lastInteraction.current<400) return;
+    if (!connected || hub || games || performance.now()-lastInteraction.current<400) return;
     lastInteraction.current=performance.now();
     stopMovement();
     if(self?.travel)return;
     if(journey){travel(journey.connector.id,journey.to);return;}
     if(switchRoom){toggleGlass(switchRoom.id);return;}
+    if(nearbyGame){openGames(nearbyGame.id);return;}
     if(courtInteraction){
       if(mine)shootBall();
       else if(takeBall){send("basketball",{action:"take"});faceHoop(suggestedShot(self!).hoop.id);}
@@ -436,7 +444,7 @@ export default function CampusClient({
                 return;
               }
               if(event.key.toLowerCase()==="e"&&!event.altKey&&!event.ctrlKey&&!event.metaKey){event.preventDefault();if(!event.repeat){if(courtInteraction&&mine)startShot();else interact();}return;}
-              if (!connected || self?.seat || hub) return;
+              if (!connected || self?.seat || hub || games) return;
               const key = event.key.toLowerCase();
               if(!event.altKey&&!event.ctrlKey&&!event.metaKey){
                 if(key==="shift"){event.preventDefault();motionIntent.current.run=true;requestInput.current();return;}
@@ -486,14 +494,14 @@ export default function CampusClient({
                       (p) => !blocked.includes(p.id),
                     ),
                   }}
-                  active={!hub}
+                  active={!hub&&!games}
                   onUnavailable={unavailable}
                   view={view}
                   placeId={selectedPlace}
                   hour={hour}
                   look={look}
                   onLookChange={rememberLook}
-                  canLock={connected}
+                  canLock={connected&&!games}
                   onRelease={stopMovement}
                   charge={ballCharge}
                   charging={charging}
@@ -510,9 +518,10 @@ export default function CampusClient({
               <button className="secondary" aria-pressed={view === "first-person"} onClick={() => chooseCamera("first-person")}>First person</button>
               <button className="secondary" aria-pressed={view === "orbit"} onClick={() => chooseCamera("orbit")}>Orbit view</button>
               <button className="secondary" onClick={() => openPanel("people")}>People &amp; safety</button>
+              <button className="secondary" disabled={!connected||hub} onClick={()=>openGames()}>Games Lounge</button>
               {walkingTo && <button className="secondary" onClick={stopMovement}>Stop walking</button>}
             </div>
-            {connected && !hub && <button className="campus-interact" disabled={!!self?.travel||(!journey&&!switchRoom&&(courtInteraction?!mine&&!takeBall:!self?.seat&&!nearbyDesk))}
+            {connected && !hub && <button className="campus-interact" disabled={!!self?.travel||(!journey&&!switchRoom&&!nearbyGame&&(courtInteraction?!mine&&!takeBall:!self?.seat&&!nearbyDesk))}
               onPointerDown={event=>{if(!mine)return;event.preventDefault();stage.current?.focus();event.currentTarget.setPointerCapture(event.pointerId);startShot();}}
               onPointerUp={event=>{if(ballCharge.current.started!==null){shootBall(currentShotPower(ballCharge.current,performance.now()));if(event.currentTarget.hasPointerCapture(event.pointerId))event.currentTarget.releasePointerCapture(event.pointerId);}}}
               onPointerCancel={()=>{ballCharge.current.started=null;setCharging(false);}}
@@ -784,6 +793,7 @@ export default function CampusClient({
           </Link>
         </aside>
       </div>
+      {games&&<BoardGames initialTable={games} connected={connected} onSafety={gameSafety} onClose={closeGames} onLeaveSchool={()=>{closeGames();leave();}}/>}
       <dialog
         ref={hubDialog}
         className={`campus-hub ${hub ? "is-open" : ""}`}

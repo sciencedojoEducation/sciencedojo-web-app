@@ -120,4 +120,19 @@ BEGIN
 END; $$;
 REVOKE ALL ON FUNCTION public.campus_game(uuid,text,text,jsonb) FROM PUBLIC,anon,authenticated;
 GRANT EXECUTE ON FUNCTION public.campus_game(uuid,text,text,jsonb) TO service_role;
+-- Switch-off prevents app admission before a request can perform game cleanup.
+-- Clear ephemeral names/boards in that same database transaction instead.
+CREATE FUNCTION public.campus_games_switch_cleanup() RETURNS trigger LANGUAGE plpgsql
+SECURITY DEFINER SET search_path=public,pg_temp AS $$
+BEGIN
+ IF (TG_OP='DELETE' AND OLD.key='virtual_campus_enabled') OR
+    (TG_OP='UPDATE' AND NEW.key='virtual_campus_enabled' AND NOT coalesce(NEW.enabled,false)) THEN
+   DELETE FROM campus_game_members WHERE table_id IN ('four','boxes');
+   UPDATE campus_game_tables SET state=NULL,round=gen_random_uuid(),version=version+1 WHERE table_id IN ('four','boxes');
+ END IF;
+ RETURN NULL;
+END; $$;
+REVOKE ALL ON FUNCTION public.campus_games_switch_cleanup() FROM PUBLIC,anon,authenticated,service_role;
+CREATE TRIGGER campus_games_switch_off AFTER UPDATE OF enabled OR DELETE ON public.feature_flags
+FOR EACH ROW EXECUTE FUNCTION public.campus_games_switch_cleanup();
 COMMIT;

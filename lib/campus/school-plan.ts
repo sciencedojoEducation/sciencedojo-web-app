@@ -45,7 +45,7 @@ const upper = [
  ["quiet","Quiet study lounge","lounge",26,-26,2,"Soft beanbags, greenery and quiet laptop study."],
  ["fitness","Fitness studio","fitness",-52,0,2,"Training mats, treadmills and strength equipment for a break."],
  ["conservatory","Sky conservatory","garden",52,0,2,"Trees, comfortable benches and views across the school."],
- ["commons","Sky commons","lounge",26,26,2,"A leafy shared lounge overlooking the campus."]
+ ["commons","Sky Commons · Games Lounge","lounge",26,26,2,"Four in a Row and Dots & Boxes, beanbag seats and leafy views. Press E near a game table."]
 ] as const;
 // Fixed room identifiers and geometry only; no lesson choices or learner data.
 export const SCHOOL_PLACES:readonly Place[]=[...groundPlaces,...upper.map(([id,name,kind,x,z,floor,description])=>({id,name,kind,x,z,floor,description,width:20,depth:18,colour:floor===1?"#dce5d7":"#dedbc8",accent:floor===1?"#668d83":"#82946a",outdoor:kind==="garden"}))];

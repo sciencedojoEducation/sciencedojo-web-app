@@ -48,7 +48,7 @@ export function createGameApi(deps: GameApiDependencies) {
       const keys: Record<string,string[]> = {join:["action","username"],ready:["action","ready","round","version"],
         start:["action","round","version"],move:["action","move","round","version"],leave:["action"],
         block:["action","player"],report:["action","player","reason"]};
-      const allowed = keys[body.action];
+      const allowed = Object.hasOwn(keys,body.action) ? keys[body.action] : undefined;
       if (!allowed || Object.keys(body).some(k => !allowed.includes(k))) return json({error:"Invalid game request"},400);
       let result: RpcResult;
       if (body.action === "join") {
