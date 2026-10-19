@@ -10,7 +10,7 @@ export type BoardState = {
 export const GAME_TABLES = [
   { id: "four", name: "Four in a Row", capacity: 2, x: 20.7, z: 28.3, floor: 2 },
   { id: "boxes", name: "Dots & Boxes", capacity: 4, x: 32.7, z: 28.3, floor: 2 },
-  { id: "wortquest", name: "WortQuest", capacity: 4, x: 26.7, z: 28.3, floor: 2 },
+  { id: "wortquest", name: "WortQuest", capacity: 4, x: 20.7, z: 21.3, floor: 2 },
 ] as const;
 export function newBoard(kind: BoardKind, players: string[]): BoardState {
   if (!["four","boxes"].includes(kind) || players.length < 2 ||
