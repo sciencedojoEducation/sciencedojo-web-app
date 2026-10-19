@@ -43,6 +43,8 @@
     "test:campus:vercel:browser": "node --experimental-strip-types scripts/check-campus-browser.mjs --vercel",
     "test:campus:games:browser": "node --experimental-strip-types scripts/check-campus-browser.mjs --games",
     "test:campus:games:vercel:browser": "node --experimental-strip-types scripts/check-campus-browser.mjs --vercel --games",
+    "test:campus:vocabulary:browser": "node --experimental-strip-types scripts/check-campus-browser.mjs --vocabulary",
+    "test:campus:vocabulary:vercel:browser": "node --experimental-strip-types scripts/check-campus-browser.mjs --vercel --vocabulary",
     "test:campus:render": "node scripts/check-campus-render.mjs",
     "campus:preview": "node --experimental-strip-types scripts/check-campus-browser.mjs --preview"
   },

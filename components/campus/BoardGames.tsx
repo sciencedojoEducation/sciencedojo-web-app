@@ -2,6 +2,7 @@
 import {useEffect, useRef, useState, type CSSProperties} from "react";
 import {GAME_TABLES, type GameKind, type GameSnapshot} from "@/lib/campus/board-games";
 import "./board-games.css";
+import WortQuest, {type WortMode} from "./WortQuest";
 
 const colours = ["#167c79", "#b95e47", "#7461a2", "#8c710e"];
 const symbols = ["A", "B", "C", "D"];
@@ -18,6 +19,7 @@ export default function BoardGames({initialTable,connected,onClose,onLeaveSchool
 }) {
   const dialog = useRef<HTMLDialogElement>(null);
   const [table,setTable] = useState<GameKind>(initialTable);
+  const [wortMode,setWortMode]=useState<WortMode>("study");
   const [game,setGame] = useState<GameSnapshot | null>(null);
   const [profile,setProfile] = useState<{username:string;photo:boolean} | null>(null);
   const [username,setUsername] = useState("");
@@ -60,6 +62,7 @@ export default function BoardGames({initialTable,connected,onClose,onLeaveSchool
           return;
         }
         setGame(result.game);
+        if(table==="wortquest"&&result.game?.self)setWortMode("friends");
         if (result.profile) {setProfile(result.profile); setUsername(previous => previous || result.profile.username);}
         if(body && "action" in body && body.action==="block")onSafety();
         if (body) setMessage("action" in body && body.action === "report" ? "Report saved for the session moderator." : "");
@@ -104,25 +107,28 @@ export default function BoardGames({initialTable,connected,onClose,onLeaveSchool
     state.phase === "abandoned" ? "Round ended because a player left or became unavailable." :
     state.winners.length === 0 ? "Draw — well played!" :
     `${state.winners.map(i => game.members.find(m => m.id === state.players[i])?.username ?? "Player").join(" & ")}${state.winners.length > 1 ? " tie" : " wins"}!`;
+  const roster=game&&member?<div className="game-roster" aria-label="Players at this table">{game.members.map((m,i) => <article key={m.id} className={turn?.id === m.id && playing ? "is-turn" : ""} style={{"--player-colour":colours[i]} as CSSProperties}>
+        <Picture name={m.username} url={m.photo ? `/api/campus/games/photo?table=${table}&player=${m.id}` : null}/>
+        <div><strong>{m.username}{m.id === game.self ? " · you" : ""}</strong><span>{table==="wortquest" ? game.quiz ? `${game.quiz.scores[i]} / 100 points` : m.ready ? "Level confirmed" : "Not ready" : <>Piece {symbols[i]}{playing ? turn?.id === m.id ? " · playing" : " · waiting" : m.ready ? " · ready" : " · not ready"}</>}</span>
+        {state?.kind === "boxes" && <span>{state.scores[state.players.indexOf(m.id)] ?? 0} boxes</span>}</div>
+      </article>)}</div>:null;
   return <dialog ref={dialog} className="campus-games" aria-label="Games Lounge" onCancel={event => {event.preventDefault();onClose();}}>
     <header><div><p className="campus-eyebrow">SKY COMMONS · LEVEL 2</p><h2>Games Lounge</h2></div><button onClick={onClose}>Return to school →</button></header>
     <nav aria-label="Board games">{GAME_TABLES.map(t => <button key={t.id} aria-pressed={table === t.id}
-      disabled={!!member && t.id !== table} onClick={() => {setGame(null);setMessage("");setTable(t.id);}}>{t.name}<small>{t.id === "four" ? "2 players" : "2–4 players"}</small></button>)}</nav>
-    <p className="game-live" role="status" aria-live="polite">{status}</p>
+      disabled={!!member && t.id !== table} onClick={() => {setGame(null);setMessage("");setTable(t.id);}}>{t.name}<small>{t.id === "four" ? "2 players" : t.id === "wortquest" ? "Cards · solo or 2–4 friends" : "2–4 players"}</small></button>)}</nav>
+    <p className="game-live" role="status" aria-live="polite">{table === "wortquest" ? "WortQuest · German vocabulary" : status}</p>
+    {table==="wortquest"&&roster}
+    {table==="wortquest"&&<WortQuest game={game} mode={wortMode} onMode={setWortMode} busy={busy} connected={connected} send={send}/>}
     {message && <p role="alert" className="game-message">{message}</p>}
     {!connected ? <p>Inactive game seats expire after 45 seconds. Your course work stays open.</p> :
-    game && !member ? <section className="game-join">
+    game && !member && (table!=="wortquest"||wortMode==="friends") ? <section className="game-join">
       <Picture key={`${table}-self`} name={username || "Player"} url={profile?.photo ? `/api/campus/games/photo?table=${table}&player=self` : null}/>
       <div><h3>Choose how your friends see you</h3><label>Game username<input value={username} maxLength={24} autoComplete="off" onChange={event => setUsername(event.target.value)}/></label>
       <p>Joining shares this username and your existing profile picture with the players at this table. Your campus pseudonym stays in the school.</p>
       <button disabled={busy || !username.trim() || game.count >= current.capacity} onClick={() => send({action:"join",username})}>Join {current.name}</button></div>
     </section> : member && game && <>
-      <div className="game-roster" aria-label="Players at this table">{game.members.map((m,i) => <article key={m.id} className={turn?.id === m.id && playing ? "is-turn" : ""} style={{"--player-colour":colours[i]} as CSSProperties}>
-        <Picture name={m.username} url={m.photo ? `/api/campus/games/photo?table=${table}&player=${m.id}` : null}/>
-        <div><strong>{m.username}{m.id === game.self ? " · you" : ""}</strong><span>Piece {symbols[i]}{playing ? turn?.id === m.id ? " · playing" : " · waiting" : m.ready ? " · ready" : " · not ready"}</span>
-        {state?.kind === "boxes" && <span>{state.scores[state.players.indexOf(m.id)] ?? 0} boxes</span>}</div>
-      </article>)}</div>
-      {!playing && <div className="game-round-actions"><button disabled={busy} aria-pressed={member.ready} onClick={() => send({action:"ready",...stamp,ready:!member.ready})}>{member.ready ? "Not ready" : state ? "Ready for rematch" : "Ready to play"}</button>
+      {table!=="wortquest"&&roster}
+      {table!=="wortquest" && !playing && <div className="game-round-actions"><button disabled={busy} aria-pressed={member.ready} onClick={() => send({action:"ready",...stamp,ready:!member.ready})}>{member.ready ? "Not ready" : state ? "Ready for rematch" : "Ready to play"}</button>
         <button disabled={busy || game.members.length < 2 || !game.members.every(m => m.ready)} onClick={() => send({action:"start",...stamp})}>{state ? "Start rematch" : "Start game"}</button><span>Everyone must be ready.</span></div>}
       {state && <div className="game-board-wrap">
         {state.kind === "four" ? <div className="game-four" aria-label="Four in a Row board">
@@ -146,7 +152,7 @@ export default function BoardGames({initialTable,connected,onClose,onLeaveSchool
         {game.members.filter(m => m.id !== game.self).map(m => <div key={m.id}><span>{m.username}</span><button disabled={busy} onClick={() => send({action:"report",player:m.id,reason})}>Report {m.username}</button><button disabled={busy} onClick={() => send({action:"block",player:m.id})}>Block {m.username}</button></div>)}
         <p>Contact the supervisor named in your invitation for immediate help.</p></details>
     </>}
-    <details className="game-rules"><summary>How to play {current.name}</summary><p>{table === "four" ? "Take turns dropping a piece into a column. Four connected pieces horizontally, vertically or diagonally win. A full board without four is a draw." : "Take turns drawing one edge between two dots. Complete a box to claim it and play again. You can close two boxes with one edge. After all sixteen boxes are claimed, the most boxes wins; equal scores tie."}</p></details>
+    <details className="game-rules"><summary>How to play {current.name}</summary><p>{table==="wortquest" ? "Study word cards, then try a ten-card quiz. Correct answers earn ten points. Friend quizzes use the same level and cards for everyone; explanations and updated points appear after everyone answers. There is no speed bonus." : table === "four" ? "Take turns dropping a piece into a column. Four connected pieces horizontally, vertically or diagonally win. A full board without four is a draw." : "Take turns drawing one edge between two dots. Complete a box to claim it and play again. You can close two boxes with one edge. After all sixteen boxes are claimed, the most boxes wins; equal scores tie."}</p></details>
     <footer><span>Pictures and usernames are shared only with players at your table.</span><button className="secondary" disabled={busy} onClick={()=>void leaveSchool()}>Leave school</button></footer>
   </dialog>;
 }

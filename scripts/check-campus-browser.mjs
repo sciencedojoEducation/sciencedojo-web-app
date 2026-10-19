@@ -1,4 +1,5 @@
 import {gamesFixture,attachGamesApi} from "../tests/helpers/campus-games-fixture.mjs";
+import {checkWortQuest} from "./campus-vocabulary-acceptance.mjs";
 import {checkBoardGames} from "./campus-board-games-acceptance.mjs";
 import sharp from "sharp";
 import {checkLivingCube} from "./campus-living-cube-acceptance.mjs";
@@ -19,10 +20,11 @@ import {COURT,HOOPS,basketballAim} from "../lib/campus/basketball.ts";
 
 const vercel = process.argv.includes("--vercel");
 const shared = vercel ? await runtimeFixture(14) : null;
-const checkingGames=process.argv.includes('--games');
+const checkingVocabulary=process.argv.includes('--vocabulary');
+const checkingGames=process.argv.includes('--games')||checkingVocabulary;
 let gameFixture=null,gameApi;
 if(checkingGames){
- if(shared){await shared.db.exec(await readFile(new URL('../sql/076_campus_board_games.sql',import.meta.url),'utf8'));gameApi=attachGamesApi(shared).api;
+ if(shared){for(const file of ['076_campus_board_games.sql','077_campus_german_vocabulary.sql'])await shared.db.exec(await readFile(new URL('../sql/'+file,import.meta.url),'utf8'));gameApi=attachGamesApi(shared).api;
   for(let n=1;n<=6;n++)await shared.db.query('UPDATE profiles SET full_name=$2,avatar_url=$3 WHERE id=$1',[`30000000-0000-0000-0000-${String(n).padStart(12,'0')}`,`Game Friend ${n}`,`https://fixture.supabase.co/storage/v1/object/public/avatars/fixture-${n}.png`]);
  }else{gameFixture=await gamesFixture();gameApi=gameFixture.api;}
 }
@@ -407,7 +409,7 @@ try {
     };
     if(!process.argv.includes('--dashboard-only'))await checkGraphics();
     if(checkingGames){
-      await checkBoardGames({a,b,browser,origin,identities,shared,gameFixture,campus,result,directory,wireFrames,issuedTickets,handshakeHashes,errors});
+      await (checkingVocabulary?checkWortQuest:checkBoardGames)({a,b,browser,origin,identities,shared,gameFixture,campus,result,directory,wireFrames,issuedTickets,handshakeHashes,errors});
     }else if(process.argv.includes("--graphics-only")){
       // The focused display check still performs the shared wire/privacy audit below.
     }else if(process.argv.includes("--living-cube-only")){

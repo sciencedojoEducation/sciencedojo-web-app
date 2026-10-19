@@ -70,6 +70,12 @@ jobs:
           TMPDIR: ${{ runner.temp }}
         run: npm run test:campus:games:browser && npm run test:campus:games:vercel:browser
 
+      - name: Check German cards and two/four-player quizzes on both transports
+        timeout-minutes: 15
+        env:
+          TMPDIR: ${{ runner.temp }}
+        run: npm run test:campus:vocabulary:browser && npm run test:campus:vocabulary:vercel:browser
+
       - name: Save synthetic campus browser evidence
         if: always()
         uses: actions/upload-artifact@v4
