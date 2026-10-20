@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
+import { createPublicDataFetch } from "@/lib/public-data-fetch";
 
 export function createPublicClient() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -9,6 +10,7 @@ export function createPublicClient() {
   }
 
   return createClient(supabaseUrl, anonKey, {
+    global: { fetch: createPublicDataFetch() },
     auth: {
       autoRefreshToken: false,
       detectSessionInUrl: false,
