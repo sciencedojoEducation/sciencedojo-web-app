@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import BookAssessmentLink from "@/components/analytics/BookAssessmentLink";
 import { signOut } from "@/app/login/actions";
 import { businessNavigationItems } from "@/lib/business-navigation";
+import { getPublicResourceNavigation } from "@/lib/public-resource-navigation";
 
 const navLinkClass =
   "rounded-2xl border border-transparent px-4 py-3 text-sm font-medium text-secondary/80 transition-colors hover:border-primary/10 hover:bg-primary/5 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2";
@@ -36,6 +37,7 @@ export default function MobileNavbarMenu({
   showFocusDojo = true,
   showFreeAssessment = true,
 }: MobileNavbarMenuProps) {
+  const resourceItems = getPublicResourceNavigation({ learning_hub_enabled: showLearningHub, community_enabled: showCommunity, practice_dojo_enabled: showPracticeDojo, focus_dojo_enabled: showFocusDojo });
   const pathname = usePathname();
   const menuId = useId();
   const detailsRef = useRef<HTMLDetailsElement>(null);
@@ -162,26 +164,14 @@ export default function MobileNavbarMenu({
             <Link href="/how-it-works" onClick={closeMenu} className={navLinkClass}>
               How It Works
             </Link>
-            {showLearningHub && (
-              <Link href="/learning-hub" onClick={closeMenu} className={navLinkClass}>
-                Resources
-              </Link>
-            )}
-            {showCommunity && (
-              <Link href="/community" onClick={closeMenu} className={navLinkClass}>
-                Exam Community
-              </Link>
-            )}
-            {showPracticeDojo && (
-              <Link href="/ai-practice-studio" onClick={closeMenu} className={navLinkClass}>
-                Free Practice
-              </Link>
-            )}
-            {showFocusDojo && (
-              <Link href="/focus-dojo" onClick={closeMenu} className={navLinkClass}>
-                FocusDojo
-              </Link>
-            )}
+            {resourceItems.length > 0 && <details className="group/resources">
+              <summary className={`${navLinkClass} flex min-h-12 cursor-pointer list-none items-center justify-between [&::-webkit-details-marker]:hidden`}>
+                Resources <span aria-hidden="true" className="text-lg group-open/resources:rotate-45">+</span>
+              </summary>
+              <div className="ml-4 grid border-l border-secondary/10 pl-2">
+                {resourceItems.map(item => <Link key={item.href} href={item.href} onClick={closeMenu} className={navLinkClass}>{item.label}</Link>)}
+              </div>
+            </details>}
             <div className="my-2 grid gap-1 border-y border-secondary/10 py-3" role="group" aria-labelledby={`${menuId}-business`}>
               <p id={`${menuId}-business`} className="px-4 pb-1 text-xs font-semibold uppercase tracking-wider text-secondary/60">For Business</p>
               {businessNavigationItems.map(item => <Link key={item.href} href={item.href} onClick={closeMenu} className={navLinkClass}>{item.label}</Link>)}
@@ -190,9 +180,9 @@ export default function MobileNavbarMenu({
               <BookAssessmentLink
                 source="navbar_mobile"
                 onClick={closeMenu}
-                className="rounded-2xl bg-primary px-4 py-3 text-center text-sm font-black text-white shadow-lg shadow-primary/15 transition-colors hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                className="rounded-2xl bg-primary px-4 py-3 text-center text-sm font-semibold text-white shadow-lg shadow-primary/15 transition-colors hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
               >
-                Request a Free Learning Assessment
+                Request a free assessment
               </BookAssessmentLink>
             )}
             {isLoggedIn && (
@@ -240,7 +230,7 @@ function getFocusableElements(container: HTMLElement | null) {
 
   return Array.from(
     container.querySelectorAll<HTMLElement>(
-      'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+      'a[href], summary, button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
     ),
   ).filter((element) => !element.hasAttribute("disabled") && element.offsetParent !== null);
 }

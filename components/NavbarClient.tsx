@@ -1,12 +1,15 @@
 "use client";
 
 import Link from "next/link";
+import containerStyles from "./PublicSiteContainer.module.css";
 import { useEffect, useState } from "react";
 import { signOut } from "@/app/login/actions";
 import BookAssessmentLink from "@/components/analytics/BookAssessmentLink";
 import Logo from "@/components/Logo";
 import MobileNavbarMenu from "@/components/MobileNavbarMenu";
 import BusinessNavigationMenu from "@/components/BusinessNavigationMenu";
+import PublicNavigationDisclosure from "@/components/PublicNavigationDisclosure";
+import { getPublicResourceNavigation } from "@/lib/public-resource-navigation";
 import type { FeatureFlagKey } from "@/lib/feature-flags";
 import { createClient } from "@/utils/supabase/client";
 
@@ -44,12 +47,13 @@ export default function NavbarClient({ flags }: { flags: PublicFlagMap }) {
     };
   }, []);
 
+  const resourceItems = getPublicResourceNavigation(flags);
   const role = session?.role || "user";
   const dashboardHref = session ? `/dashboard/${role}` : undefined;
 
   return (
     <header data-public-site-header className="sticky top-0 z-50 w-full border-b border-primary/[0.08] bg-white/90 shadow-[0_1px_14px_rgba(0,26,68,0.05)] backdrop-blur-lg transition-all">
-      <div className={`${session ? "w-full px-8" : "container mx-auto px-4 md:px-8"} h-20 flex items-center justify-between transition-all duration-300`}>
+      <div className={`${session ? "w-full px-8" : containerStyles.container} h-20 flex items-center justify-between transition-all duration-300`}>
         <div className="flex items-center gap-3">
           <MobileNavbarMenu
             isLoggedIn={Boolean(session)}
@@ -71,8 +75,7 @@ export default function NavbarClient({ flags }: { flags: PublicFlagMap }) {
           {flags.course_pilot_enabled && <Link href="/courses" className="text-sm font-medium text-secondary/70 hover:text-primary">Courses</Link>}
           {flags.tutor_marketplace_enabled && <Link href="/find-tutors" className="text-sm font-medium text-secondary/70 hover:text-primary transition-colors">Find a Tutor</Link>}
           <Link href="/how-it-works" className="text-sm font-medium text-secondary/70 hover:text-primary transition-colors">How It Works</Link>
-          {flags.practice_dojo_enabled && <Link href="/ai-practice-studio" className="text-sm font-medium text-secondary/70 hover:text-primary transition-colors">Free Practice</Link>}
-          {flags.learning_hub_enabled && <Link href="/learning-hub" className="text-sm font-medium text-secondary/70 hover:text-primary transition-colors">Resources</Link>}
+          {resourceItems.length > 0 && <PublicNavigationDisclosure label="Resources" items={resourceItems} />}
           <BusinessNavigationMenu />
         </nav>
 
@@ -92,8 +95,8 @@ export default function NavbarClient({ flags }: { flags: PublicFlagMap }) {
               <Link href="/login" className="text-sm font-medium text-secondary hover:text-primary">Log in</Link>
               <Link href="/signup" className="text-sm font-medium text-secondary hover:text-primary">Sign up</Link>
               {flags.free_assessment_enabled && (
-                <BookAssessmentLink source="navbar" className="inline-flex min-h-11 items-center justify-center rounded-full bg-primary px-5 py-3 text-center text-xs font-black text-white shadow-lg shadow-primary/15 transition-all hover:-translate-y-0.5 hover:bg-primary-hover">
-                  Request a Free Learning Assessment
+                <BookAssessmentLink source="navbar" className="inline-flex min-h-11 items-center justify-center rounded-full bg-primary px-5 py-3 text-center text-sm font-semibold text-white shadow-lg shadow-primary/15 transition-all hover:-translate-y-0.5 hover:bg-primary-hover">
+                  Free assessment
                 </BookAssessmentLink>
               )}
             </>

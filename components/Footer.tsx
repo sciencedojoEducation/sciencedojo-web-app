@@ -1,6 +1,8 @@
 import Link from "next/link";
+import containerStyles from "./PublicSiteContainer.module.css";
 import Logo from "./Logo";
 import SocialLinks from "./SocialLinks";
+import { businessNavigationItems } from "@/lib/business-navigation";
 
 const footerGroups = [
   {
@@ -27,7 +29,7 @@ const footerGroups = [
     title: "Company",
     links: [
       ["About ScienceDojo", "/about"],
-      ["For Business", "/business/instructional-design"],
+      ...businessNavigationItems.map(({label, href}) => [label, href]),
       ["Dashboard", "/login"],
       ["Code of Conduct", "/code-of-conduct"],
       ["Community Guidelines", "/community/guidelines"],
@@ -55,12 +57,12 @@ const footerGroups = [
 export default function Footer() {
   return (
     <footer className="w-full border-t border-[#21446b] bg-[#071a35] py-16 text-white">
-      <div className="container mx-auto px-4 md:px-8">
+      <div className={containerStyles.container}>
         <div className="grid gap-10 lg:grid-cols-[1.1fr_1.8fr]">
           <div className="flex flex-col items-center gap-5 text-center md:items-start md:text-left">
             <Logo className="text-lg" dotClassName="w-1.5 h-1.5" inverted />
-            <p className="max-w-sm text-sm font-semibold leading-7 text-white/70">
-              Expert tutoring enhanced by smarter learning tools for modern online learning.
+            <p className="max-w-sm text-sm font-normal leading-7 text-white/70">
+              Personal learning support. Thoughtful learning and digital experiences for organisations.
             </p>
             <SocialLinks inverted />
           </div>
@@ -70,7 +72,7 @@ export default function Footer() {
                 <h3 className="text-xs font-black uppercase tracking-[0.2em] text-[#a9cee7]">{group.title}</h3>
                 <div className="mt-4 grid gap-3">
                   {group.links.map(([label, href]) => (
-                    <Link key={href} href={href} className="text-sm font-semibold text-white/80 transition-colors hover:text-cyan-200 focus-visible:rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-cyan-200">
+                    <Link key={href} href={href} className="text-sm font-normal text-white/80 transition-colors hover:text-cyan-200 focus-visible:rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-cyan-200">
                       {label}
                     </Link>
                   ))}
