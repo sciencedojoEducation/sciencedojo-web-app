@@ -57,3 +57,8 @@ The owner explicitly requested pushing the current engineering page and For Busi
 ## Public scroll-progress line — owner request, 19 October 2026
 
 The owner requested reusing the engineering page's scroll-filling line across public website pages, excluding dashboards. Use the single root `PublicScrollProgress` indicator and explicit public-header markers; keep it out of dashboards, admin, academy/workbook/campus, account/onboarding and booking screens. Do not reintroduce an engineering-only duplicate. The line reads document/viewport/header geometry only, stores/sends nothing, uses event-triggered frames, cleans up on private-route entry and stays hidden without scripts or scrolling. Keep actual page position distinct from learner/course completion. See `docs/public-scroll-progress.md` and the dated business release record for checks. Preserve existing private-study/tracking/campus document boundaries and B3/S1/R1/commercial gates.
+
+
+## Personal Lehrbuch — 23 October 2026
+
+The interactive textbook belongs inside ScienceDojo at `/workbooks/aspekte-neu-b2-lehrbuch`; read `docs/aspekte-lehrbuch.md`. Use the private admin workbook entry, existing ScienceDojo login and verified database-backed admin access. Preserve own-account reflections, private source/media proxying, separate Arbeitsbuch/Intensivtrainer state and private-material deployment exclusions. Migration 081 is additive; hosted schema, source upload and deployment require recorded evidence. No ChatGPT sign-in or public/learner release is inferred.
