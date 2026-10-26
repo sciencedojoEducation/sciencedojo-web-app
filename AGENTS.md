@@ -75,5 +75,7 @@ database/account API acceptance passed through an isolated production server; bo
 runs cleaned their three owned fixtures. A further browser-only admin fixture was
 rejected by automatic approval review; do not create more production admins without
 specific owner authorization. Use the existing owner admin for final browser checks.
-Canonical hosted browser acceptance/publication remain incomplete; do not infer
+PR23 is merged as d2de102 and the canonical admin reader is deployed. Main quality/cron
+checks and nine canonical anonymous HTTPS checks passed. Positive canonical admin
+browser saving still awaits the existing owner account sign-in; do not infer it,
 independent proofreading, human acceptance or broader learner-release permission.

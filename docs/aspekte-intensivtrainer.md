@@ -8,8 +8,9 @@ release preparation. It is separate from Lehrbuch, business and campus changes.
 
 ## Current reader
 
-Route: `/workbooks/aspekte-neu-b2-intensivtrainer`; admin navigation and the private
-workbook library link to it. The local review is on `http://localhost:3002`.
+Live admin-only reader: [Aspekte neu B2 Intensivtrainer](https://www.sciencedojo.co.uk/workbooks/aspekte-neu-b2-intensivtrainer).
+Admin navigation and the private workbook library link to it. The separate local
+review remains on `http://localhost:3002`.
 
 - Ten chapters and 80 printed-page destinations, pages 4–83; 283 native exercises,
   1,484 answer fields, 1,309 inline controls, 16 word banks and 619 vocabulary entries.
@@ -114,7 +115,7 @@ resolved-path private/environment trace verifier to CI, including clean checkout
 without private sources; do not treat that follow-up as hosted-checked until its
 own checks pass.
 
-**Not published.** After the owner explicitly approved the exact upload on
+After the owner explicitly approved the exact upload on
 26 October, the bounded uploader completed 198 objects / 20,517,294 bytes in the
 existing private bucket and verified representative SHA-256 hashes. All 198 cloud
 objects also matched their local hashes in a separate readback;
@@ -147,8 +148,30 @@ review because production admin creation requires specific authorization. It was
 not created and must not be retried indirectly. The remaining browser check will
 use the owner's existing admin account. The in-app sign-in tab is open; native
 Edge control was unsuitable while windows changed and then timed out. The later
-mismatched captures were discarded, not used as evidence. Canonical hosted admin
-browser acceptance and publication remain incomplete at this checkpoint.
+mismatched captures were discarded, not used as evidence. At that checkpoint, canonical admin browser acceptance and publication were
+incomplete; the later publication result is recorded below.
+
+## Production publication — 26 October 2026
+
+[PR #23](https://github.com/sciencedojoEducation/sciencedojo-web-app/pull/23) was
+merged from checked source revision `a8409a1` as main commit
+`d2de1025481d2e207f21c7a1c8e9ea570a3c9cb0`. Build/regression checks, cron security
+and Vercel Preview all passed for that source revision. Main's subsequent
+Build/regression run `40341787088` and Cron security run `40341787058` also passed.
+Vercel deployment `2FFPL1kHUDbvLjbmiUqQqsREJq4n` reported success for the merged
+revision; the canonical `www.sciencedojo.co.uk` reader is deployed.
+
+Nine anonymous canonical HTTPS checks passed: six content/state/source/invalid-path
+GETs and two state/feedback POSTs returned no-store 401 responses; the page used
+its normal login redirect and withheld exercise content. Evidence:
+`canonical-production-verification.json`. This proves deployment and the anonymous
+boundary, not positive signed-in browser saving on that domain.
+
+**Remaining:** sign in with the existing owner admin in the open in-app browser,
+then inspect the native book and confirm account save/reload on the canonical
+domain without changing existing answers. No further production admin fixture was
+created after the approval rejection. Do not claim this browser check, independent
+proofreading, human acceptance or wider learner rollout complete without evidence.
 
 ## Concrete release sequence
 
@@ -169,8 +192,9 @@ browser acceptance and publication remain incomplete at this checkpoint.
    specific owner authorization. Do not rerun it or reuse cleaned fixture records
    merely to repeat completed checks. Use the existing owner admin for the remaining
    canonical HTTPS/browser checks. Keep the old Arbeitsbuch and account work intact.
-   Release the verified isolated code branch through the existing deployment
-   process, then record actual sciencedojo.co.uk browser/access/save evidence.
+   The isolated code branch is now merged and deployed, with the anonymous
+   canonical checks passed. Record the remaining existing-admin browser/save check
+   when it is actually performed.
 4. If release verification fails, set `INTENSIVTRAINER_ENABLED=false` and retain
    private source/state for recovery. Do not remove old-book constraints/policies
    or delete account work as a rollback. No broader learner publication is approved.
@@ -194,6 +218,7 @@ and source adjustments remain alongside the private derived content.
 
 Evidence is private: `native-audit.json`, `http-verification.json`,
 `native-build-verification.json`, `production-anonymous-verification.json`,
+`migration082-verification.json`, `canonical-production-verification.json`,
 `private-upload-dry-run.json`, `private-upload-verification.json`,
 `source-cloud-verification.json`, `native-book-preview.jpg`, `native-phone-preview.jpg`.
 Historical `book-preview.jpg` is the superseded crop prototype.
