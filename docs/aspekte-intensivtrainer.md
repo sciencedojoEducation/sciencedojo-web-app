@@ -167,11 +167,29 @@ its normal login redirect and withheld exercise content. Evidence:
 `canonical-production-verification.json`. This proves deployment and the anonymous
 boundary, not positive signed-in browser saving on that domain.
 
-**Remaining:** sign in with the existing owner admin in the open in-app browser,
-then inspect the native book and confirm account save/reload on the canonical
-domain without changing existing answers. No further production admin fixture was
-created after the approval rejection. Do not claim this browser check, independent
-proofreading, human acceptance or wider learner rollout complete without evidence.
+### Existing owner admin browser check and first-visit correction
+
+On 26 October the owner signed into the canonical site with the existing admin
+account. The reader loaded its native exercises; navigation to page 5 saved to the
+account and survived a full page reload. The original page 4 was restored, the UI
+reported account save success and a read-only database check confirmed page 4.
+Automation edited no answer fields. Private evidence: `live-browser-verification.json`
+and `native-live-preview.jpg`. No additional admin fixture was created.
+
+The first server-rendered visit initially returned “Book access could not be
+confirmed” even though its membership insert succeeded. The installed Next fetch
+guide documents why: identical GETs are memoized within a server render, so the
+post-insert lookup reused the earlier empty response. Route handlers do not use
+that render memoization, which is why the earlier API acceptance did not expose it.
+
+The focused follow-up uses `readTrainerMembership` with the caller's abort signal,
+Next's documented memoization opt-out. It keeps both reads fresh and retains
+conflict-ignore enrollment, so a concurrent revocation cannot be overwritten.
+Two synthetic Supabase regressions reproduce the old memoized miss and the revoked
+membership race without creating production accounts. Twelve focused tests, scoped
+lint, TypeScript and the production build passed locally. CI checks and rollout
+revision are tracked with the first-visit follow-up. Independent proofreading,
+owner usability acceptance and broader learner publication are not inferred.
 
 ## Concrete release sequence
 
@@ -190,11 +208,10 @@ proofreading, human acceptance or wider learner rollout complete without evidenc
    disposable identities, including admin fixtures, and cleans them in `finally`.
    Following the later approval rejection, any further such account creation needs
    specific owner authorization. Do not rerun it or reuse cleaned fixture records
-   merely to repeat completed checks. Use the existing owner admin for the remaining
+   merely to repeat completed checks. Use the existing owner admin for any further
    canonical HTTPS/browser checks. Keep the old Arbeitsbuch and account work intact.
    The isolated code branch is now merged and deployed, with the anonymous
-   canonical checks passed. Record the remaining existing-admin browser/save check
-   when it is actually performed.
+   canonical checks passed. The existing-admin browser save/reload check has now passed, as recorded above.
 4. If release verification fails, set `INTENSIVTRAINER_ENABLED=false` and retain
    private source/state for recovery. Do not remove old-book constraints/policies
    or delete account work as a rollback. No broader learner publication is approved.

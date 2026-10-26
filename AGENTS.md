@@ -76,6 +76,9 @@ runs cleaned their three owned fixtures. A further browser-only admin fixture wa
 rejected by automatic approval review; do not create more production admins without
 specific owner authorization. Use the existing owner admin for final browser checks.
 PR23 is merged as d2de102 and the canonical admin reader is deployed. Main quality/cron
-checks and nine canonical anonymous HTTPS checks passed. Positive canonical admin
-browser saving still awaits the existing owner account sign-in; do not infer it,
-independent proofreading, human acceptance or broader learner-release permission.
+checks and nine canonical anonymous HTTPS checks passed. Canonical existing-owner admin browser open/save/reload passed with page 4
+restored and no answer-field edits. The first-visit follow-up passes the caller
+abort signal into membership reads to opt out of Next render memoization, retaining
+conflict-ignore enrollment and concurrent revocation protection. Preserve its
+synthetic regressions; do not infer independent proofreading, human acceptance
+or broader learner-release permission.

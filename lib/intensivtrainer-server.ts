@@ -4,6 +4,7 @@ import { join } from "node:path";
 import { TRAINER_KEY, trainerLocalRequest, emptyTrainerState, type TrainerManifest, type TrainerPage, type TrainerState } from "./intensivtrainer";
 import { requireWorkbookAccess, workbookFeatureEnabled, WorkbookAccessError, type WorkbookAccess } from "./workbook-access";
 import { studyPage } from "./aspekte-workbook";
+import { readTrainerMembership } from "./intensivtrainer-membership";
 import { createAdminClient } from "@/utils/supabase/admin";
 export const trainerRoot = join(process.cwd(), "private-materials", TRAINER_KEY, "derived");
 export const trainerEnabled = () => workbookFeatureEnabled() && process.env.INTENSIVTRAINER_ENABLED !== "false";
@@ -22,7 +23,7 @@ export async function requireTrainerAccess(request: Request): Promise<WorkbookAc
   if (process.env.WORKBOOK_ACCOUNT_MODE !== "true" && trainerLocalRequest(request.url, request.headers, process.env.NODE_ENV)) return { id: "local-preview", email: "", local: true, admin: true };
   const access = await requireWorkbookAccess(request, true);
   const admin = createAdminClient();
-  const membership = () => admin.from("workbook_memberships").select("active").eq("user_id", access.id).eq("book_key", TRAINER_KEY).maybeSingle();
+  const membership = () => readTrainerMembership(admin, access.id, request.signal);
   let row = await membership();
   if (row.error) throw new WorkbookAccessError(503, "Book access could not be checked.");
   if (!row.data) {
