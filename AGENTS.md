@@ -57,3 +57,17 @@ The owner explicitly requested pushing the current engineering page and For Busi
 ## Public scroll-progress line — owner request, 19 October 2026
 
 The owner requested reusing the engineering page's scroll-filling line across public website pages, excluding dashboards. Use the single root `PublicScrollProgress` indicator and explicit public-header markers; keep it out of dashboards, admin, academy/workbook/campus, account/onboarding and booking screens. Do not reintroduce an engineering-only duplicate. The line reads document/viewport/header geometry only, stores/sends nothing, uses event-triggered frames, cleans up on private-route entry and stays hidden without scripts or scrolling. Keep actual page position distinct from learner/course completion. See `docs/public-scroll-progress.md` and the dated business release record for checks. Preserve existing private-study/tracking/campus document boundaries and B3/S1/R1/commercial gates.
+
+## Private B2 Intensivtrainer — 26 October 2026
+
+The owner requested an Arbeitsbuch-inspired native Intensivtrainer on ScienceDojo,
+**admin accounts only for now**. Follow `docs/aspekte-intensivtrainer.md`. Reuse the
+shared `NativeWorkbookExercise` renderer; preserve existing Arbeitsbuch behavior
+and separate account/book data. Hosted page/API/assets/save/feedback must retain
+database-backed admin, verified-account, suspension and active-membership checks.
+Keep source/native JSON/OCR/illustrations and QA evidence in ignored private material,
+never public assets or Git. Preserve the damaged39–42/missing43 notices, absent
+solutions/audio and explicit Gemini transmission disclosure; no invented keys/grades.
+Migration082 and the private allowlisted upload remain unapplied/unpublished pending
+the documented schema access and exact-upload approval. Local checks do not prove
+hosted saving, deployment, independent proofreading or learner-release permission.
