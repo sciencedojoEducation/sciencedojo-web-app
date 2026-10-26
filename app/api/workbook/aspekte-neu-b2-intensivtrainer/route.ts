@@ -5,6 +5,6 @@ export async function GET(request: Request) {
   try {
     await requireTrainerAccess(request);
     const page = await readTrainerPage(Number(new URL(request.url).searchParams.get("page")));
-    return page ? Response.json({ page }, { headers: { "Cache-Control": "private, no-store" } }) : new Response(null, { status: 404 });
+    return page ? Response.json({ page }, { headers: { "Cache-Control": "private, no-store" } }) : new Response(null, { status: 404, headers: { "Cache-Control": "private, no-store" } });
   } catch (e) { return workbookError(e); }
 }

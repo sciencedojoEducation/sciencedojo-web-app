@@ -8,7 +8,7 @@ import { createAdminClient } from "@/utils/supabase/admin";
 export async function trainerAsset(request: Request, id: string, figure = false) {
   try {
     const access = await requireTrainerAccess(request);
-    if (!(figure ? /^fig-\d{1,2}-\d{1,2}$/ : /^page-\d{2}$/).test(id)) return new Response(null, { status: 404 });
+    if (!(figure ? /^fig-\d{1,2}-\d{1,2}$/ : /^page-\d{2}$/).test(id)) return new Response(null, { status: 404, headers: { "Cache-Control": "private, no-store" } });
     const path = figure ? `assets/figures/${id}.jpg` : `assets/${id}.jpg`;
     const headers = { "Content-Type": "image/jpeg", "Cache-Control": "private, no-store", "X-Content-Type-Options": "nosniff", "Cross-Origin-Resource-Policy": "same-origin" };
     if (access.local) {

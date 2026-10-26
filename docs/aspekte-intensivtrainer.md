@@ -122,19 +122,38 @@ eight anonymous download/signing attempts were denied. No learner saves, raw OCR
 helper scripts or source PDF were uploaded. Evidence:
 `derived/private-upload-verification.json` and `derived/source-cloud-verification.json`.
 
-Migration 082 has not been applied to hosted PostgreSQL. The available application
-service credential cannot run schema DDL; its read-only API inspection confirms
-`intensivtrainer_save_state` is not registered. The opened Supabase browser flow requires
-sign-in. The owner has been asked to open the ScienceDojo SQL Editor. This is an
-access prerequisite, not another request to approve the completed upload. Hosted
-admin saving/source verification and publication remain incomplete. Do not
-merge/publish code and claim completion while these prerequisites are absent.
+Migration 082 was applied on 26 October through the owner-opened authenticated
+SQL Editor after verifying the configured ScienceDojo project and the original
+old-book-only constraints. The transaction returned success. Postflight confirmed
+both expanded book-key constraints, both RESTRICTIVE admin policies, retained RLS,
+service-role execute permission and denied anon/authenticated execute permission.
+Do not reapply this non-idempotent migration. The private source bucket stayed
+private. Evidence: `migration082-result.jpg` and `migration082-verification.json`.
+
+Actual hosted-database/account checks through the isolated loopback production
+server passed on 26 October: native source withholding/proxying, verified nonadmin
+and anonymous denial, independent-session resume including previous-answer history,
+account binding, concurrent-save conflict, direct RLS/RPC denial, raw storage
+protection, demotion/suspension/revocation and old-book separation. All three owned
+fixture accounts and their data were removed. The initial run found missing
+no-store headers on invalid page/asset 404 responses; those headers were corrected,
+the production server rebuilt, and the whole account verifier passed on the rerun.
+Both runs' three fixture accounts/data were cleaned. Evidence:
+`account-verification-b088624a-0dcd-4263-a6e0-3b40e6706fe7.json` and its matching
+`account-fixtures-*.json` ownership/cleanup record. No Gemini request was made.
+
+A further disposable admin for browser-only QA was rejected by automatic approval
+review because production admin creation requires specific authorization. It was
+not created and must not be retried indirectly. The remaining browser check will
+use the owner's existing admin account. The in-app sign-in tab is open; native
+Edge control was unsuitable while windows changed and then timed out. The later
+mismatched captures were discarded, not used as evidence. Canonical hosted admin
+browser acceptance and publication remain incomplete at this checkpoint.
 
 ## Concrete release sequence
 
-1. **Pending:** Review/apply `sql/082_intensivtrainer.sql` in ScienceDojo's authenticated Supabase
-   SQL Editor (after existing workbook migration 069). Do not reapply unrelated
-   Lehrbuch/campus migrations. Preserve existing rows and bucket settings.
+1. **Completed 26 October:** Migration 082 was applied and its permissions/RLS
+   checked. Do not reapply it or unrelated Lehrbuch/campus migrations.
 2. **Completed 26 October with explicit owner approval.** Re-run only for an
    intentional reviewed source update:
    `node --env-file=.env.local scripts/publish-intensivtrainer-private.mjs --apply`.
@@ -142,20 +161,16 @@ merge/publish code and claim completion while these prerequisites are absent.
    bucket and prior Arbeitsbuch source identity. Apply uses only its exact allowlist
    and verifies representative uploaded hashes. Credentials and destination project
    identifiers must remain private.
-3. After the migration, run the prepared live verifier against the isolated
-   account-enforced production server:
-   `WORKBOOK_VERIFY_ORIGIN=http://localhost:3005 node --env-file=.env.local --experimental-strip-types scripts/verify-intensivtrainer-accounts.mjs --test-accounts`.
-   It first checks that the migration is registered, then creates three owned
-   disposable identities, checks admin/nonadmin access, native source protection,
-   independent-session resume, account binding, concurrent save conflicts,
-   direct RLS/RPC denial, role/suspension/revocation and old-book separation. It
-   removes the fixture accounts/data in `finally` and keeps private ownership and
-   cleanup evidence. This verifier is prepared/linted, **not yet executed**; it
-   sends no feedback to Gemini. Never reuse a cleaned fixture record.
-   Verify a real signed-in admin can open/save/reload the new book; a nonadmin and
-   revoked member cannot. Verify old Arbeitsbuch state stays separate. Record actual
-   hosted evidence, then release the isolated code branch through the existing
-   website deployment process and verify the sciencedojo.co.uk route.
+3. **Account API checks completed 26 October** against the isolated production
+   server and the actual hosted database. The maintained verifier is
+   `scripts/verify-intensivtrainer-accounts.mjs`; it creates three production
+   disposable identities, including admin fixtures, and cleans them in `finally`.
+   Following the later approval rejection, any further such account creation needs
+   specific owner authorization. Do not rerun it or reuse cleaned fixture records
+   merely to repeat completed checks. Use the existing owner admin for the remaining
+   canonical HTTPS/browser checks. Keep the old Arbeitsbuch and account work intact.
+   Release the verified isolated code branch through the existing deployment
+   process, then record actual sciencedojo.co.uk browser/access/save evidence.
 4. If release verification fails, set `INTENSIVTRAINER_ENABLED=false` and retain
    private source/state for recovery. Do not remove old-book constraints/policies
    or delete account work as a rollback. No broader learner publication is approved.

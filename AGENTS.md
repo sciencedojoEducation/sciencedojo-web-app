@@ -69,6 +69,11 @@ Keep source/native JSON/OCR/illustrations and QA evidence in ignored private mat
 never public assets or Git. Preserve the damaged39–42/missing43 notices, absent
 solutions/audio and explicit Gemini transmission disclosure; no invented keys/grades.
 The owner explicitly approved the exact private upload on 26 October; its 198-file
-package uploaded and sample hashes passed. Migration082 remains unapplied pending
-authenticated SQL Editor access. Hosted verification/publication remain incomplete. Local checks do not prove
-hosted saving, deployment, independent proofreading or learner-release permission.
+package uploaded and all object hashes passed. Migration082 was applied through
+the owner-opened authenticated SQL Editor and its grants/RLS checked. Actual hosted
+database/account API acceptance passed through an isolated production server; both
+runs cleaned their three owned fixtures. A further browser-only admin fixture was
+rejected by automatic approval review; do not create more production admins without
+specific owner authorization. Use the existing owner admin for final browser checks.
+Canonical hosted browser acceptance/publication remain incomplete; do not infer
+independent proofreading, human acceptance or broader learner-release permission.
