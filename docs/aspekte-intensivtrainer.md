@@ -142,7 +142,17 @@ merge/publish code and claim completion while these prerequisites are absent.
    bucket and prior Arbeitsbuch source identity. Apply uses only its exact allowlist
    and verifies representative uploaded hashes. Credentials and destination project
    identifiers must remain private.
-3. Verify a real signed-in admin can open/save/reload the new book; a nonadmin and
+3. After the migration, run the prepared live verifier against the isolated
+   account-enforced production server:
+   `WORKBOOK_VERIFY_ORIGIN=http://localhost:3005 node --env-file=.env.local --experimental-strip-types scripts/verify-intensivtrainer-accounts.mjs --test-accounts`.
+   It first checks that the migration is registered, then creates three owned
+   disposable identities, checks admin/nonadmin access, native source protection,
+   independent-session resume, account binding, concurrent save conflicts,
+   direct RLS/RPC denial, role/suspension/revocation and old-book separation. It
+   removes the fixture accounts/data in `finally` and keeps private ownership and
+   cleanup evidence. This verifier is prepared/linted, **not yet executed**; it
+   sends no feedback to Gemini. Never reuse a cleaned fixture record.
+   Verify a real signed-in admin can open/save/reload the new book; a nonadmin and
    revoked member cannot. Verify old Arbeitsbuch state stays separate. Record actual
    hosted evidence, then release the isolated code branch through the existing
    website deployment process and verify the sciencedojo.co.uk route.
