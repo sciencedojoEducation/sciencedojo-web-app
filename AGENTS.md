@@ -68,6 +68,7 @@ database-backed admin, verified-account, suspension and active-membership checks
 Keep source/native JSON/OCR/illustrations and QA evidence in ignored private material,
 never public assets or Git. Preserve the damaged39–42/missing43 notices, absent
 solutions/audio and explicit Gemini transmission disclosure; no invented keys/grades.
-Migration082 and the private allowlisted upload remain unapplied/unpublished pending
-the documented schema access and exact-upload approval. Local checks do not prove
+The owner explicitly approved the exact private upload on 26 October; its 198-file
+package uploaded and sample hashes passed. Migration082 remains unapplied pending
+authenticated SQL Editor access. Hosted verification/publication remain incomplete. Local checks do not prove
 hosted saving, deployment, independent proofreading or learner-release permission.

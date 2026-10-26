@@ -105,20 +105,38 @@ Completed locally:
   manifest, 80 native records, 79 original-page JPEGs and 38 figures. No learner
   saves, original PDF, raw OCR, helper scripts or obsolete task crops are included.
 
-**Not published.** Migration 082 has not been applied to hosted PostgreSQL. The
-available application service credential cannot run schema DDL. The private upload
-was rejected by automatic approval review because explicit permission for the
-specific external storage destination/payload was required; no source files were
-uploaded. Owner approval for that exact upload and authenticated schema access
-remain necessary before hosted admin saving/source verification and deployment.
-Do not merge/publish code and claim completion while these prerequisites are absent.
+Hosted PR evidence at code revision `2ed5569`: GitHub Build and regression checks
+and Cron security succeeded; Vercel reported its Preview Ready. Anonymous access
+to that preview redirected to Vercel sign-in, so this does not prove the workbook's
+hosted admin flow. [Draft PR #23](https://github.com/sciencedojoEducation/sciencedojo-web-app/pull/23)
+remains open and unmerged. A follow-up adds scoped native-workbook lint and the
+resolved-path private/environment trace verifier to CI, including clean checkouts
+without private sources; do not treat that follow-up as hosted-checked until its
+own checks pass.
+
+**Not published.** After the owner explicitly approved the exact upload on
+26 October, the bounded uploader completed 198 objects / 20,517,294 bytes in the
+existing private bucket and verified representative SHA-256 hashes. All 198 cloud
+objects also matched their local hashes in a separate readback;
+eight anonymous download/signing attempts were denied. No learner saves, raw OCR,
+helper scripts or source PDF were uploaded. Evidence:
+`derived/private-upload-verification.json` and `derived/source-cloud-verification.json`.
+
+Migration 082 has not been applied to hosted PostgreSQL. The available application
+service credential cannot run schema DDL; its read-only API inspection confirms
+`intensivtrainer_save_state` is not registered. The opened Supabase browser flow requires
+sign-in. The owner has been asked to open the ScienceDojo SQL Editor. This is an
+access prerequisite, not another request to approve the completed upload. Hosted
+admin saving/source verification and publication remain incomplete. Do not
+merge/publish code and claim completion while these prerequisites are absent.
 
 ## Concrete release sequence
 
-1. Review/apply `sql/082_intensivtrainer.sql` in ScienceDojo's authenticated Supabase
+1. **Pending:** Review/apply `sql/082_intensivtrainer.sql` in ScienceDojo's authenticated Supabase
    SQL Editor (after existing workbook migration 069). Do not reapply unrelated
    Lehrbuch/campus migrations. Preserve existing rows and bucket settings.
-2. With explicit upload approval, run
+2. **Completed 26 October with explicit owner approval.** Re-run only for an
+   intentional reviewed source update:
    `node --env-file=.env.local scripts/publish-intensivtrainer-private.mjs --apply`.
    The default command is a read-only dry-run that verifies the existing private
    bucket and prior Arbeitsbuch source identity. Apply uses only its exact allowlist
@@ -141,6 +159,7 @@ node --experimental-strip-types --test tests/intensivtrainer.test.mjs tests/inte
 npx tsc --noEmit --incremental false
 npm run build -- --webpack
 node scripts/verify-intensivtrainer-build.mjs
+node --env-file=.env.local scripts/verify-intensivtrainer-cloud.mjs
 ```
 
 The original `prepare-intensivtrainer.py`/local Vision tool produce base source/OCR
@@ -150,5 +169,6 @@ and source adjustments remain alongside the private derived content.
 
 Evidence is private: `native-audit.json`, `http-verification.json`,
 `native-build-verification.json`, `production-anonymous-verification.json`,
-`private-upload-dry-run.json`, `native-book-preview.jpg`, `native-phone-preview.jpg`.
+`private-upload-dry-run.json`, `private-upload-verification.json`,
+`source-cloud-verification.json`, `native-book-preview.jpg`, `native-phone-preview.jpg`.
 Historical `book-preview.jpg` is the superseded crop prototype.
