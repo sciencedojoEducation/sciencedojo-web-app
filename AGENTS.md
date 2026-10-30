@@ -86,3 +86,6 @@ or broader learner-release permission.
 ## Personal Lehrbuch — 23 October 2026
 
 The interactive textbook belongs inside ScienceDojo at `/workbooks/aspekte-neu-b2-lehrbuch`; read `docs/aspekte-lehrbuch.md`. Use the private admin workbook entry, existing ScienceDojo login and verified database-backed admin access. Preserve own-account reflections, private source/media proxying, separate Arbeitsbuch/Intensivtrainer state and private-material deployment exclusions. Migration 081 is additive; hosted schema, source upload and deployment require recorded evidence. No ChatGPT sign-in or public/learner release is inferred.
+
+
+The private Lehrbuch release completed on 30 October 2026: migration 081 is applied, PR #22 is merged into main, and the canonical ScienceDojo admin book passed live opening, pin/answer saving, reload/journal persistence and anonymous access gates. The synthetic note was removed without editing existing answers. Read the final release entry in `docs/aspekte-lehrbuch.md`; do not reapply 081 or treat this admin-only release as permission to publish the textbook to learners or the public.

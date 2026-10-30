@@ -40,7 +40,7 @@ Verified locally on 23 October:
 
 ## Release state
 
-Prepared in an isolated branch from current main so unrelated campus/business/homepage edits are excluded. Private source upload is complete. Migration 081 and production application release remain pending; SQL Editor access has been requested because the available server credentials cannot apply schema changes. Existing production workbook configuration remains unchanged. Do not present the local URL or tests as a published ScienceDojo release. Hosted account saving and actual admin navigation require a post-release check. The built production server rejects anonymous notes read/write/delete and image access with 401; both document and RSC requests redirect to normal ScienceDojo login without book content.
+Published on 30 October 2026 at `https://www.sciencedojo.co.uk/workbooks/aspekte-neu-b2-lehrbuch`. The owner applied migration 081; live schema/function probes passed. PR #22 is merged into main at software revision `bd0760a910177f15567d830252cd5ca970842c65`, whose tree matches the checked release `73f0f1c`. The production deployment succeeded. Normal ScienceDojo admin entry, private page loading, a pinned question/answer save, full reload and journal persistence passed in the existing owner's browser. The synthetic test entry was removed with exact ID/content/revision guards. Existing learning records were not edited.
 
 
 ### Status rechecked — 30 October 2026
@@ -51,3 +51,13 @@ PR #22 remains open/draft and is not merged into main. The current main branch h
 ### Owner-applied migration — 30 October 2026
 
 The owner reported running migration 081. A live schema probe confirms `workbook_reflections` is available and `workbook_save_reflection` exists; the function returns false for a nonexistent account without writing a row. The release branch was updated with current main and both admin workbook links/cards are retained, including the already-published Intensivtrainer. Production application deployment and live acceptance are still pending at this checkpoint.
+
+
+### Production completion — 30 October 2026
+
+- PR #22 merged into main; production Vercel deployment `84FSRHdW2cMie8Ks8QRd6N6SiSwv` succeeded for `bd0760a910177f15567d830252cd5ca970842c65`.
+- Hosted build/regression/engineering-browser/private-trace and cron checks passed on the identical release tree. Updated-main local type/build and 32 focused workbook/database regressions passed.
+- Existing authenticated admin navigation shows both Lehrbuch and Intensivtrainer links/cards. Actual canonical-site source images loaded, and a clearly synthetic question pin plus answer survived reload and appeared in My journal. Its exact database content matched before the single test row was removed; no real answers were modified.
+- Four anonymous API/media requests returned 401/no-store. Both anonymous document and RSC requests redirected to ScienceDojo login without book content.
+- Private evidence: `private-materials/aspekte-neu-b2-lehrbuch/derived/production-verification-2026-10-30.json` and `production-preview.jpg`. The current reading position was left unchanged after the owner began navigating.
+- Migration 081 is already applied: do not rerun its non-idempotent creation SQL. This completes the requested private admin textbook release, not public/learner publication, perfect scan accessibility or independent device/usability acceptance.
