@@ -34,6 +34,9 @@ jobs:
       - name: Lint native admin workbook files
         run: npx eslint components/workbook/AspekteWorkbook.tsx components/workbook/NativeWorkbookExercise.tsx components/workbook/IntensivtrainerBook.tsx components/workbook/useTrainerAccount.ts lib/intensivtrainer.ts lib/intensivtrainer-server.ts lib/intensivtrainer-membership.ts lib/intensivtrainer-assets.ts tests/intensivtrainer-membership.test.mjs app/api/workbook/aspekte-neu-b2-intensivtrainer app/workbooks/aspekte-neu-b2-intensivtrainer scripts/audit-intensivtrainer.mjs scripts/verify-intensivtrainer.mjs scripts/verify-intensivtrainer-build.mjs scripts/verify-intensivtrainer-cloud.mjs scripts/verify-intensivtrainer-accounts.mjs scripts/publish-intensivtrainer-private.mjs
 
+      - name: Lint private Lehrbuch files
+        run: npx eslint components/workbook/LehrbuchBook.tsx lib/lehrbuch.ts lib/lehrbuch-server.ts app/api/workbook/aspekte-neu-b2-lehrbuch scripts/lehrbuch-native-package.mjs scripts/publish-lehrbuch-private.mjs tests/lehrbuch-native.test.mjs
+
       - name: Lint latency hotfix files
         run: npm run lint:latency
 

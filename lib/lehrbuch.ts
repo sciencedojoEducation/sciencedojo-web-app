@@ -20,3 +20,16 @@ export function lehrbuchLocalRequest(request: Request, environment: string | und
       && !['cross-site', 'same-site'].includes(request.headers.get('sec-fetch-site') || '');
   } catch { return false; }
 }
+
+export type LehrbuchNativePage = {
+  nativeVersion: 1;
+  pdfPage: number;
+  bookPage: number;
+  section: string;
+  kind: 'exercises' | 'reference' | 'intro' | 'front';
+  content: import('./aspekte-workbook').WorkbookBlock[];
+  exercises: import('./aspekte-workbook').StudyExercise[];
+  entryIds: Record<string, string>;
+  exerciseNotes: Record<string, { question: string; reflection: string; review: string }>;
+  notices: string[];
+};
