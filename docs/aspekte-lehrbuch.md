@@ -9,7 +9,7 @@ Owner correction, 23 October 2026: this interactive book belongs inside ScienceD
 - ScienceDojo email/Google login and verified, active database-backed admin role are required outside the loopback development preview. This personal book is not added to public or learner catalogs. No ChatGPT sign-in is used.
 - All 202 owner-supplied textbook pages, ten chapter destinations, question pins, editable exercise answers, reflections, vocabulary, bookmarks, journal search/filter and JSON/Markdown exports are retained.
 - Old Sites JSON journal backups can be imported as new copies. No previously saved account data has been silently migrated or overwritten.
-- Original pages are scans. No invented automatic grades, answer keys or absent audio/video. Scanned source images are not fully screen-reader accessible.
+- Native exercise pages are the default. The original scans remain an optional comparison view with earlier pins. No invented automatic grades, answer keys or absent audio/video. OCR text can contain transcription errors; original scans are not fully screen-reader accessible.
 
 ## Private sources and saving
 
@@ -61,3 +61,21 @@ The owner reported running migration 081. A live schema probe confirms `workbook
 - Four anonymous API/media requests returned 401/no-store. Both anonymous document and RSC requests redirected to ScienceDojo login without book content.
 - Private evidence: `private-materials/aspekte-neu-b2-lehrbuch/derived/production-verification-2026-10-30.json` and `production-preview.jpg`. The current reading position was left unchanged after the owner began navigating.
 - Migration 081 is already applied: do not rerun its non-idempotent creation SQL. This completes the requested private admin textbook release, not public/learner publication, perfect scan accessibility or independent device/usability acceptance.
+
+
+### Native exercise correction — 30 October 2026
+
+The owner rejected the first release as scanned pages with notes and requested the Arbeitsbuch-style interactions immediately. That correction supersedes the earlier claim that the scan reader completed the intended interactive-book scope.
+
+The replacement reuses `NativeWorkbookExercise` from Arbeitsbuch/Intensivtrainer. All 202 source pages have private native data; the ten teaching chapters contain 541 source tasks with 939 answer fields, including 494 inline placements, selectable answers, matching banks, editable tables and writing drafts. There are 154 cropped source illustrations. Front matter, chapter openings, grammar summaries and appendix remain reading/reference pages. Original scans and all earlier journal/pin entries remain available.
+
+- Answers bind to stable book/page/task/field UUIDs in the existing own-account 081 table. Questions, reflections and self-review attach to actual tasks. Review lists collect “Noch üben”; retry queues a preserved previous-attempt copy before clearing the current fields. All entries appear in the searchable/exportable journal. Journal reads paginate beyond the database's default row cap.
+- Content and figures are authenticated server proxies with private/no-store responses. Source JSON, word-box OCR, manual source corrections, illustrations and QA evidence remain ignored private material, outside public assets and deployment traces. No new schema, account authority, public catalog or learner release is involved. Migration 081 is already applied and must not be rerun.
+- Local macOS Vision plus the PDF's independent text layer produce the source conversion. `scripts/prepare-lehrbuch-native.py` rebuilds the private package. Manual overrides stay private. Source task markers, columns, numbered gaps, actual choices and source illustration crops were checked and corrected on representative pages; full independent proofreading is not established. The original comparison view and OCR qualification remain in the book.
+- This source has no verified answer key or audio/video files. All fields use manual review, with explicit missing-media notices. No grades, recordings or external AI feedback are introduced. The optional renderer flags keep the other two books' existing defaults.
+
+Local evidence: all 485 regression tests passed (including privacy/CAS, account isolation, source-route gates, paginated loading and private package validation), TypeScript passed, scoped lint had no errors (the retained authenticated scan image has the existing image-optimization warning), and the production webpack build passed. The default Turbopack build cannot follow this worktree's shared dependency symlink; CI uses its own installed dependencies. Production traces contained no private source or environment files. Browser checks passed for inline text saving/reload, task questions, multiple word-bank selections, editable grammar choices, multiple choice, review status and preserved retry history. The 390px phone document measured 386px wide with no horizontal overflow; viewport restored. These checks do not establish perfect transcription or independent device/human acceptance.
+
+Private publication uses `node --env-file=.env.local scripts/publish-lehrbuch-private.mjs --native-only --apply`. Its strict allowlist includes only the 202 native pages, manifest and referenced illustration JPEGs; every uploaded object is downloaded and SHA-256 verified. It excludes OCR, overrides, notes and credentials. See private `derived/native-upload-verification.json` and `derived/native-build-verification.json` for actual evidence. Application production deployment/live acceptance are recorded separately below once verified.
+
+Private source publication completed: all 357 allowlisted native/illustration objects (8,074,422 bytes) were uploaded and downloaded with matching SHA-256 hashes. No journal data was uploaded. Local browser/check evidence is recorded in ignored `derived/native-local-verification-2026-10-30.json`.

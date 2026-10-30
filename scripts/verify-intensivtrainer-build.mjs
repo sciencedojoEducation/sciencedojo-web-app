@@ -8,12 +8,13 @@ async function optionalRealpath(path){
 }
 const trainerRoot=await optionalRealpath(join(root,'private-materials/aspekte-neu-b2-intensivtrainer'));
 const forbidden=(await Promise.all(['private-materials','private-materials/aspekte-neu-b2-intensivtrainer','private-materials/aspekte-neu-b2'].map(path=>optionalRealpath(join(root,path))))).filter(Boolean);
-let traces=0,files=0,trainerRoutes=0;
+const lehrbuchRoot=await optionalRealpath(join(root,'private-materials/aspekte-neu-b2-lehrbuch'));
+let traces=0,files=0,trainerRoutes=0,lehrbuchRoutes=0;
 async function walk(dir){for(const e of await readdir(dir,{withFileTypes:true})){
  const path=join(dir,e.name);
  if(e.isDirectory())await walk(path);
  else if(e.name.endsWith('.nft.json')){
-  traces++;if(path.includes('/aspekte-neu-b2-intensivtrainer/'))trainerRoutes++;
+  traces++;if(path.includes('/aspekte-neu-b2-intensivtrainer/'))trainerRoutes++;if(path.includes('/aspekte-neu-b2-lehrbuch/'))lehrbuchRoutes++;
   for(const entry of JSON.parse(await readFile(path,'utf8')).files){
    const traced=resolve(path,'..',entry),target=await realpath(traced);files++;
    assert.ok(![traced,target].some(p=>p.split(/[\\/]/).includes('private-materials')),`Private source path traced into ${path}`);
@@ -22,8 +23,9 @@ async function walk(dir){for(const e of await readdir(dir,{withFileTypes:true}))
   }
  }
 }}
-await walk(join(root,'.next/server/app'));assert.ok(trainerRoutes>=5);
+await walk(join(root,'.next/server/app'));assert.ok(trainerRoutes>=5);assert.ok(lehrbuchRoutes>=5);
 assert.equal(await stat(join(root,'.next/standalone/private-materials')).then(()=>true,e=>{if(e.code==='ENOENT')return false;throw e;}),false);
-const report={checkedAt:new Date().toISOString(),traces,files,trainerRoutes,privateFiles:0,environmentFiles:0};
+const report={checkedAt:new Date().toISOString(),traces,files,trainerRoutes,lehrbuchRoutes,privateFiles:0,environmentFiles:0};
 if(trainerRoot)await writeFile(join(trainerRoot,'derived/native-build-verification.json'),JSON.stringify(report,null,2));
+if(lehrbuchRoot)await writeFile(join(lehrbuchRoot,'derived/native-build-verification.json'),JSON.stringify(report,null,2));
 console.log(JSON.stringify(report));
