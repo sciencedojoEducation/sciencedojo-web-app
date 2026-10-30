@@ -12,7 +12,11 @@ async function change(request: Request, remove: boolean) {
     const access = await requireLehrbuchAccess(request);
     if (!workbookSameOrigin(request)) return json({ error: 'Invalid request origin.' }, 403);
     let entry;
-    try { entry = parseLehrbuchEntry(await workbookRequestJson(request, 150000)); }
+    try {
+      const input = await workbookRequestJson(request, 150000);
+      if (!input || input.owner !== access.id) return json({ error: 'The signed-in account changed. Reload the book; your draft remains on this device.' }, 409);
+      entry = parseLehrbuchEntry(input);
+    }
     catch (e) { if (e instanceof WorkbookAccessError) throw e; return json({ error: 'Invalid journal entry.' }, 400); }
     if (!await writeLehrbuchEntry(access, entry, remove)) return json({ error: 'This entry changed in another tab or device. Your draft is preserved.' }, 409);
     return json(remove ? { ok: true } : { revision: entry.revision + 1, updated: new Date().toISOString() });

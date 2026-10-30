@@ -17,7 +17,7 @@ Source pages: ignored `private-materials/aspekte-neu-b2-lehrbuch/derived/pages/`
 
 Migration `sql/081_workbook_reflections.sql` adds a separate, RLS-protected table and a service-only compare-and-swap writer. Admins can read only their own reflections; neither admin role nor this feature grants access to another person's journal. Direct authenticated database writes are denied. Account deletion cascades. Existing memberships, invitation rules, Arbeitsbuch progress/scoring and recordings remain unchanged.
 
-The development loopback preview saves atomically to ignored `derived/reflections-preview.json`. Local mode is explicitly labelled. Hosted mode saves to the authenticated ScienceDojo account. Pending browser drafts remain account/book-scoped, and stale writes produce a conflict with an option to save a recovered copy.
+The development loopback preview saves atomically to ignored `derived/reflections-preview.json`. Local mode is explicitly labelled. Hosted mode saves to the authenticated ScienceDojo account. The client binds mutations to its rendered account identity; the server rejects mismatches after an account switch, and the reader remounts for a new identity. Pending browser drafts remain account/book-scoped, and stale writes produce a conflict with an option to save a recovered copy.
 
 ## Preparation and validation
 
@@ -32,7 +32,7 @@ node --env-file=.env.local scripts/publish-lehrbuch-private.mjs --apply
 
 Verified locally on 23 October:
 
-- Four new model/local-store/actual-PostgreSQL migration tests passed; 22 existing workbook/access/database regressions passed. Checks include own-admin RLS, anonymous/non-admin denial, service-only writes, Unicode, atomic conflicts, suspension and account cleanup.
+- Five new model/local-store/actual-PostgreSQL/account-switch tests passed; 22 existing workbook/access/database regressions passed. Checks include own-admin RLS, anonymous/non-admin denial, service-only writes, Unicode, atomic conflicts, suspension and account cleanup.
 - TypeScript and the isolated current-main production build passed. Both new function traces exclude private materials, environment files and public static assets.
 - Actual isolated Next webpack preview served the page. All 202 protected JPEG responses matched local SHA-256, invalid media paths were denied, Unicode answers survived GET/reopen, stale writes conflicted and foreign-origin requests were rejected. Synthetic API fixtures were removed.
 - Browser exercise-answer save and reload passed inside the ScienceDojo route. The 390px journal/document layout had no horizontal overflow (document 386px). Temporary viewport reset. Preview examples are explicitly synthetic.
@@ -41,3 +41,8 @@ Verified locally on 23 October:
 ## Release state
 
 Prepared in an isolated branch from current main so unrelated campus/business/homepage edits are excluded. Private source upload is complete. Migration 081 and production application release remain pending; SQL Editor access has been requested because the available server credentials cannot apply schema changes. Existing production workbook configuration remains unchanged. Do not present the local URL or tests as a published ScienceDojo release. Hosted account saving and actual admin navigation require a post-release check. The built production server rejects anonymous notes read/write/delete and image access with 401; both document and RSC requests redirect to normal ScienceDojo login without book content.
+
+
+### Status rechecked — 30 October 2026
+
+PR #22 remains open/draft and is not merged into main. The current main branch has no Lehrbuch route, and a read-only live Supabase probe reports the reflection table unavailable (`PGRST205`), so migration 081 has not been confirmed applied. The final account-switch safeguard passed a fresh TypeScript check and all 27 focused model/access/PostgreSQL regressions. It is included in the updated draft release branch. No production merge, schema application or live admin saving acceptance is claimed.

@@ -41,7 +41,7 @@ export default function LehrbuchBook({owner}:{owner:string}) {
     try{
       while(pending.current.size){
         const sent=[...pending.current.values()][0];
-        const res=await fetch(`${LEHRBUCH_API}/entries`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(sent),signal:AbortSignal.timeout(15000)});
+        const res=await fetch(`${LEHRBUCH_API}/entries`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({...sent,owner}),signal:AbortSignal.timeout(15000)});
         const data=await res.json() as {error?:string;revision:number;updated:string};
         if(!res.ok){if(res.status===409)setConflict(sent.id);throw new Error(data.error||'Could not save.');}
         const latest=pending.current.get(sent.id);
@@ -64,6 +64,7 @@ export default function LehrbuchBook({owner}:{owner:string}) {
       try{
         const response=await fetch(`${LEHRBUCH_API}/entries`,{cache:'no-store',signal:AbortSignal.timeout(15000)});const data=await response.json() as {error?:string;entries:Entry[];owner:string};
         if(!response.ok)throw new Error(data.error||'Your journal could not be loaded.');
+        if(data.owner !== owner) throw new Error('Your signed-in account changed. Reload the book. Your drafts remain with the previous account.');
         if(!mounted)return;
         let drafts:Entry[]=[];try{drafts=JSON.parse(localStorage.getItem(key)||'[]').filter((e:Entry)=>entryValid(e));}catch{}
         const merged=new Map<string,Entry>(data.entries.map((e:Entry)=>[e.id,e]));
@@ -80,7 +81,7 @@ export default function LehrbuchBook({owner}:{owner:string}) {
   function go(n:number){if(n<1||n>202)return;setPage(n);setJump(String(n-1));setActive(null);setPinMode(false);setImageError(false);setNav(false);scroll.current?.scrollTo({top:0});try{localStorage.setItem(`sciencedojo-lehrbuch-page:${owner}`,String(n));}catch{}}
   useEffect(()=>{const listener=(e:KeyboardEvent)=>{if(e.target instanceof HTMLElement && /INPUT|TEXTAREA|SELECT|BUTTON/.test(e.target.tagName))return;if(e.key==='ArrowRight'){e.preventDefault();go(Math.min(page+1,202));}if(e.key==='ArrowLeft'){e.preventDefault();go(Math.max(page-1,1));}if(e.key==='Escape'){setPinMode(false);setNav(false);setHelp(false);}};window.addEventListener('keydown',listener);return()=>window.removeEventListener('keydown',listener);},[page]);
   function add(kind:string,x:number|null=null,y:number|null=null){if(!ready)return;const e:Entry={id:crypto.randomUUID(),page,kind,title:'',body:'',resolved:0,x,y,revision:0,updated:new Date().toISOString()};change(e);setActive(e.id);setPinMode(false);setFocus(false);setView('book');setTimeout(()=>document.getElementById(`title-${e.id}`)?.focus(),80);}
-  async function remove(e:Entry){if(!confirm('Delete this saved entry? Export a backup first if you want to keep a copy.'))return;await flushRef.current();if(pending.current.has(e.id))return;const fresh=entries.current.find(n=>n.id===e.id);if(!fresh)return;try{const r=await fetch(`${LEHRBUCH_API}/entries`,{method:'DELETE',headers:{'Content-Type':'application/json'},body:JSON.stringify(fresh),signal:AbortSignal.timeout(15000)});if(!r.ok)throw new Error((await r.json() as {error:string}).error);update(entries.current.filter(n=>n.id!==e.id));}catch(e){setError(e instanceof Error?e.message:'Unable to delete.');}}
+  async function remove(e:Entry){if(!confirm('Delete this saved entry? Export a backup first if you want to keep a copy.'))return;await flushRef.current();if(pending.current.has(e.id))return;const fresh=entries.current.find(n=>n.id===e.id);if(!fresh)return;try{const r=await fetch(`${LEHRBUCH_API}/entries`,{method:'DELETE',headers:{'Content-Type':'application/json'},body:JSON.stringify({...fresh,owner}),signal:AbortSignal.timeout(15000)});if(!r.ok)throw new Error((await r.json() as {error:string}).error);update(entries.current.filter(n=>n.id!==e.id));}catch(e){setError(e instanceof Error?e.message:'Unable to delete.');}}
   async function bookmark(){const saved=entries.current.find(e=>e.page===page&&e.kind==='bookmark');if(saved){await remove(saved);return;}const e:Entry={id:crypto.randomUUID(),page,kind:'bookmark',title:'Bookmarked page',body:'',resolved:0,x:null,y:null,revision:0,updated:new Date().toISOString()};change(e);}
   function backup(){download(`aspekte-learning-journal-${new Date().toISOString().slice(0,10)}.json`,JSON.stringify({format:'aspekte-b2-journal',version:1,exported:new Date().toISOString(),entries:entries.current},null,2),'application/json');setTools(false);}
   function exportText(){const out=entries.current.filter(e=>e.kind!=='bookmark').sort((a,b)=>a.page-b.page).map(e=>`${pageLabel(e.page)} · ${kinds[e.kind]?.label}\n${e.title}\n${e.body}${e.kind==='question'?`\nStatus: ${e.resolved?'Understood':'Still exploring'}`:''}\n`).join('\n---\n\n');download('aspekte-learning-reflections.md',`# My Aspekte B2 learning journal\n\n${out}`,'text/markdown');setTools(false);}

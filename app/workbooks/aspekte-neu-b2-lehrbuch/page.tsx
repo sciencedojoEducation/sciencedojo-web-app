@@ -15,5 +15,5 @@ export default async function LehrbuchPage() {
     if (e instanceof WorkbookAccessError && e.status === 404) notFound();
     return <main className="p-10"><h1>Private B2 Lehrbuch</h1><p>{e instanceof WorkbookAccessError ? e.message : 'Unable to check textbook access.'}</p><Link href="/dashboard/admin/workbooks">Back to private workbooks</Link></main>;
   }
-  return <LehrbuchBook owner={access.id} />;
+  return <LehrbuchBook key={access.id} owner={access.id} />;
 }

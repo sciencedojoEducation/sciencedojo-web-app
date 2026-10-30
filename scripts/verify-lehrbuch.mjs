@@ -6,9 +6,10 @@ if(!['localhost','127.0.0.1'].includes(new URL(origin).hostname))throw new Error
 const api=`${origin}/api/workbook/aspekte-neu-b2-lehrbuch`;
 const id=randomUUID();let revision=0;
 const entry={id,page:9,kind:'question',title:'Synthetic persistence check',body:'Meine Antwort. සිංහල ✓',resolved:0,x:3000,y:2500,revision,updated:''};
-async function call(method,body,from=origin){return fetch(`${api}/entries`,{method,headers:{'Content-Type':'application/json',Origin:from},body:JSON.stringify(body)});}
+async function call(method,body,from=origin){return fetch(`${api}/entries`,{method,headers:{'Content-Type':'application/json',Origin:from},body:JSON.stringify({...body,owner:body.owner||'local-preview'})});}
 try{
  assert.ok([401,403].includes((await call('PUT',entry,'https://other.test')).status));
+ assert.equal((await call('PUT',{...entry,owner:'another-account'})).status,409);
  let response=await call('PUT',entry);assert.equal(response.status,200);revision=(await response.json()).revision;assert.equal(revision,1);
  assert.equal((await call('PUT',entry)).status,409);
  const all=await(await fetch(`${api}/entries`)).json();assert.equal(all.entries.find(e=>e.id===id).body,entry.body);

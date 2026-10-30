@@ -61,3 +61,13 @@ test('actual SQL migration preserves own-admin privacy, service-only writes, CAS
  await db.query('DELETE FROM auth.users WHERE id=$1',[id(1)]);assert.equal((await db.query('SELECT * FROM workbook_reflections')).rows.length,0);
  }finally{await db.close();}
 });
+
+test('an open tab from another account cannot write or delete reflections',async()=>{
+ const code=ts.transpileModule(await readFile(new URL('../app/api/workbook/aspekte-neu-b2-lehrbuch/entries/route.ts',import.meta.url),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText;
+ const exports={};let writes=0;class AccessError extends Error{}
+ const modules={'@/lib/lehrbuch':{parseLehrbuchEntry},'@/lib/lehrbuch-server':{requireLehrbuchAccess:async()=>({id:'current-admin'}),readLehrbuchEntries:async()=>[],writeLehrbuchEntry:async()=>{writes++;return true;}},'@/lib/workbook-access':{WorkbookAccessError:AccessError,workbookSameOrigin:()=>true,workbookRequestJson:r=>r.json()}};
+ runInNewContext(code,{exports,require:n=>modules[n],Response});
+ const req=(method,owner)=>new Request('https://example.test/api',{method,headers:{'Content-Type':'application/json'},body:JSON.stringify({...sample,owner})});
+ for(const method of ['PUT','DELETE'])assert.equal((await exports[method](req(method,'previous-admin'))).status,409);
+ assert.equal(writes,0);assert.equal((await exports.PUT(req('PUT','current-admin'))).status,200);assert.equal(writes,1);
+});
