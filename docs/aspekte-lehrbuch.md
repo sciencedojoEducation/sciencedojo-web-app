@@ -46,3 +46,8 @@ Prepared in an isolated branch from current main so unrelated campus/business/ho
 ### Status rechecked — 30 October 2026
 
 PR #22 remains open/draft and is not merged into main. The current main branch has no Lehrbuch route, and a read-only live Supabase probe reports the reflection table unavailable (`PGRST205`), so migration 081 has not been confirmed applied. The final account-switch safeguard passed a fresh TypeScript check and all 27 focused model/access/PostgreSQL regressions. It is included in the updated draft release branch. No production merge, schema application or live admin saving acceptance is claimed.
+
+
+### Owner-applied migration — 30 October 2026
+
+The owner reported running migration 081. A live schema probe confirms `workbook_reflections` is available and `workbook_save_reflection` exists; the function returns false for a nonexistent account without writing a row. The release branch was updated with current main and both admin workbook links/cards are retained, including the already-published Intensivtrainer. Production application deployment and live acceptance are still pending at this checkpoint.
