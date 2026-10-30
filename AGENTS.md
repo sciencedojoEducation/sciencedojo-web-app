@@ -82,3 +82,7 @@ abort signal into membership reads to opt out of Next render memoization, retain
 conflict-ignore enrollment and concurrent revocation protection. Preserve its
 synthetic regressions; do not infer independent proofreading, human acceptance
 or broader learner-release permission.
+
+## Personal Lehrbuch — 23 October 2026
+
+The interactive textbook belongs inside ScienceDojo at `/workbooks/aspekte-neu-b2-lehrbuch`; read `docs/aspekte-lehrbuch.md`. Use the private admin workbook entry, existing ScienceDojo login and verified database-backed admin access. Preserve own-account reflections, private source/media proxying, separate Arbeitsbuch/Intensivtrainer state and private-material deployment exclusions. Migration 081 is additive; hosted schema, source upload and deployment require recorded evidence. No ChatGPT sign-in or public/learner release is inferred.

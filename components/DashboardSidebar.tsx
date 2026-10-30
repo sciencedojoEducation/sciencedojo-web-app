@@ -51,7 +51,7 @@ export default async function DashboardSidebar({ role }: { role: DashboardRole }
     sections.push({ title: "Courses", items: [{ name: "My Courses", href: "/dashboard/academy", iconName: "academy" }, { name: "Browse courses", href: "/courses", iconName: "academy" }] });
   }
   if (workbookFeatureEnabled()) {
-    if (role === "admin") sections.push({ title: "Private workbooks", items: [{ name: "Workbook access", href: "/dashboard/admin/workbooks", iconName: "academy" }, { name: "B2 Intensivtrainer", href: "/workbooks/aspekte-neu-b2-intensivtrainer", iconName: "academy" }] });
+    if (role === "admin") sections.push({ title: "Private workbooks", items: [{ name: "Workbook access", href: "/dashboard/admin/workbooks", iconName: "academy" }, { name: "B2 Lehrbuch", href: "/workbooks/aspekte-neu-b2-lehrbuch", iconName: "academy" }, { name: "B2 Intensivtrainer", href: "/workbooks/aspekte-neu-b2-intensivtrainer", iconName: "academy" }] });
     if (user) {
       const { data: workbookAccess } = await supabase.from("workbook_memberships").select("active").eq("user_id", user.id).eq("book_key", "aspekte-neu-b2").maybeSingle();
       if (workbookAccess?.active) sections.push({ title: "Private workbooks", items: [{ name: "My B2 workbook", href: "/workbooks/aspekte-neu-b2", iconName: "academy" }] });
