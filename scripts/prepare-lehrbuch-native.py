@@ -309,7 +309,9 @@ def main():
         if order:page['exercises'].sort(key=lambda e:order.index(e['id']) if e['id'] in order else len(order))
         seen=set()
         for e in page['exercises']:
-            patch=manual.get('exercises',{}).get(f'{index}:{e["id"]}',{})
+            # A complete source-reviewed page supersedes older OCR-era patches.
+            # Reapplying those patches can silently remove restored questions.
+            patch={} if 'exercises' in override else manual.get('exercises',{}).get(f'{index}:{e["id"]}',{})
             e.update(patch)
             if e['id']=='portrait':e['sourceLabel']=''
             if e['id'] in seen:e['id']+='-continuation'

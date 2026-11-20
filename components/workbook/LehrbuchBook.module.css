@@ -200,6 +200,7 @@
 /* Source-authored quizzes keep each question, image and answer together. */
 .book :global(.wb-exercise-cards .wb-fields){display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;align-items:start}
 .book :global(.wb-exercise-cards .wb-fields>.wb-field){min-width:0;border:1px solid #d8e5f2;border-radius:12px;background:#f7fbff;padding:16px}
+.book :global(.wb-exercise-cards .wb-fields>.wb-field:last-child:nth-child(odd)){grid-column:1/-1}
 .book :global(.wb-exercise-cards .wb-field>label){display:block;font:750 15px/1.7 var(--wb-title-font);margin-bottom:12px;color:#304b69}
 .book :global(.wb-exercise-cards .wb-option-row){display:flex;flex-direction:column;align-items:stretch;gap:8px}
 .book :global(.wb-exercise-cards .wb-option){width:100%;text-align:left;justify-content:flex-start;white-space:normal;min-height:44px;padding:10px 12px}

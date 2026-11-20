@@ -6,6 +6,7 @@ import {join} from 'node:path';
 import {runInNewContext} from 'node:vm';
 import ts from 'typescript';
 import {collectLehrbuchNative} from '../scripts/lehrbuch-native-package.mjs';
+import {auditActivities} from '../scripts/audit-lehrbuch-activities.mjs';
 const load=async(path,modules,extra={})=>{const exports={};runInNewContext(ts.transpileModule(await readFile(new URL(path,import.meta.url),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,{exports,require:n=>{assert.ok(n in modules,n);return modules[n];},Response,...extra});return exports;};
 class AccessError extends Error{constructor(status,message){super(message);this.status=status;}}
 const request=new Request('https://sciencedojo.test/api');
@@ -39,4 +40,12 @@ let supplied=false;try{await access(join(privateRoot,'native/v1/manifest.json'))
 test('all locally supplied native pages have stable bindings, source-task coverage and existing private figures',{skip:!supplied},async()=>{
  const {files,stats}=await collectLehrbuchNative(privateRoot);assert.equal(stats.pages,202);assert.ok(stats.exercises>500);assert.ok(stats.inline>400);assert.ok(files.every(f=>/^(native\/v1\/(\d{3}|manifest)\.json|figures\/v1\/p\d+-f\d+\.jpg)$/.test(f.path)));
  const first=JSON.parse(files.find(f=>f.path==='native/v1/011.json').data);assert.ok(first.exercises.some(e=>e.wordBank.length===12));assert.ok(first.exercises.some(e=>e.content.some(b=>b.type==='table')));
+});
+const inventoryPath=join(privateRoot,'source-activity-audit-2026-11-20.json');
+let inventoried=false;try{await access(inventoryPath);inventoried=true;}catch{}
+test('locally inventoried source questions survive regeneration without older patches removing restored fields',{skip:!inventoried},async()=>{
+ const inventory=JSON.parse(await readFile(inventoryPath,'utf8'));
+ const report=await auditActivities(privateRoot,inventory);
+ assert.deepEqual(report.errors,[]);
+ assert.ok(report.sourceReviewed>0);
 });
