@@ -3,9 +3,11 @@ import assert from 'node:assert/strict';
 import {readFile,mkdtemp,mkdir,writeFile,rm,access} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
+import {randomUUID} from 'node:crypto';
 import {runInNewContext} from 'node:vm';
 import ts from 'typescript';
 import {collectLehrbuchNative} from '../scripts/lehrbuch-native-package.mjs';
+import {auditActivities} from '../scripts/audit-lehrbuch-activities.mjs';
 const load=async(path,modules,extra={})=>{const exports={};runInNewContext(ts.transpileModule(await readFile(new URL(path,import.meta.url),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,{exports,require:n=>{assert.ok(n in modules,n);return modules[n];},Response,...extra});return exports;};
 class AccessError extends Error{constructor(status,message){super(message);this.status=status;}}
 const request=new Request('https://sciencedojo.test/api');
@@ -31,6 +33,24 @@ test('native package rejects orphan tokens and any unverified exact answer key',
  const page={nativeVersion:1,pdfPage:1,bookPage:0,content:[],exercises:[{id:'1',fields:[{id:'a',evaluation:'exact',answers:['invented']}],content:[]}],entryIds:{},exerciseNotes:{}};
  try{await writeFile(join(root,'native/v1/001.json'),JSON.stringify(page));await assert.rejects(collectLehrbuchNative(root),/unverified answer key/);
  page.exercises=[];page.content=[{type:'text',text:'{{missing}}'}];await writeFile(join(root,'native/v1/001.json'),JSON.stringify(page));await assert.rejects(collectLehrbuchNative(root),/no field/);
+ page.content=[];page.exercises=[{id:'quiz',fields:[{id:'a',evaluation:'review',illustration:{asset:'../private-file'}}],content:[]}];await writeFile(join(root,'native/v1/001.json'),JSON.stringify(page));await assert.rejects(collectLehrbuchNative(root),/Unexpected illustration asset/);
+ }finally{await rm(root,{recursive:true,force:true});}
+});
+test('upload validation rejects stale per-page metadata after a chapter opening becomes interactive',async()=>{
+ const root=await mkdtemp(join(tmpdir(),'lehrbuch-manifest-'));await mkdir(join(root,'native/v1'),{recursive:true});
+ const pages=[];let count=0;
+ try{
+  for(let n=1;n<=202;n++){
+   const required=n>=10&&n<=168&&!([0,13].includes((n-9)%16));
+   const page={nativeVersion:1,pdfPage:n,bookPage:n-1,kind:required?'exercises':'reference',content:[],exercises:required?[{id:'x',fields:[{id:'a',options:[],evaluation:'review'}],content:[]}]:[],entryIds:required?{[`${n-1}:x:a`]:randomUUID()}:{},exerciseNotes:required?{x:{question:randomUUID(),reflection:randomUUID(),review:randomUUID()}}:{}};
+   if(required)count++;
+   pages.push({pdfPage:n,bookPage:n-1,kind:page.kind,exercises:page.exercises.length,fields:page.exercises.length});
+   await writeFile(join(root,`native/v1/${String(n).padStart(3,'0')}.json`),JSON.stringify(page));
+  }
+  const manifest={pages,exercises:count,fields:count};const path=join(root,'native/v1/manifest.json');await writeFile(path,JSON.stringify(manifest));
+  assert.equal((await collectLehrbuchNative(root)).stats.pages,202);
+  manifest.pages[72].kind='intro';await writeFile(path,JSON.stringify(manifest));
+  await assert.rejects(collectLehrbuchNative(root),/Manifest page metadata differs/);
  }finally{await rm(root,{recursive:true,force:true});}
 });
 const privateRoot=join(process.cwd(),'private-materials/aspekte-neu-b2-lehrbuch/derived');
@@ -38,4 +58,12 @@ let supplied=false;try{await access(join(privateRoot,'native/v1/manifest.json'))
 test('all locally supplied native pages have stable bindings, source-task coverage and existing private figures',{skip:!supplied},async()=>{
  const {files,stats}=await collectLehrbuchNative(privateRoot);assert.equal(stats.pages,202);assert.ok(stats.exercises>500);assert.ok(stats.inline>400);assert.ok(files.every(f=>/^(native\/v1\/(\d{3}|manifest)\.json|figures\/v1\/p\d+-f\d+\.jpg)$/.test(f.path)));
  const first=JSON.parse(files.find(f=>f.path==='native/v1/011.json').data);assert.ok(first.exercises.some(e=>e.wordBank.length===12));assert.ok(first.exercises.some(e=>e.content.some(b=>b.type==='table')));
+});
+const inventoryPath=join(privateRoot,'source-activity-audit-2026-11-20.json');
+let inventoried=false;try{await access(inventoryPath);inventoried=true;}catch{}
+test('locally inventoried source questions survive regeneration without older patches removing restored fields',{skip:!inventoried},async()=>{
+ const inventory=JSON.parse(await readFile(inventoryPath,'utf8'));
+ const report=await auditActivities(privateRoot,inventory);
+ assert.deepEqual(report.errors,[]);
+ assert.ok(report.sourceReviewed>0);
 });
