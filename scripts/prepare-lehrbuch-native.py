@@ -331,7 +331,7 @@ def main():
         used_figures.update(f['illustration']['asset'] for e in page['exercises'] for f in e['fields'] if f.get('illustration'))
         report['pages']+=1;report['figures']=len(used_figures)
         (base/'native/v1'/f'{index:03}.json').write_text(json.dumps(page,ensure_ascii=False,indent=2))
-        manifest.append({'pdfPage':index,'bookPage':book,'kind':kind,'exercises':len(page['exercises']),'fields':sum(len(e['fields']) for e in page['exercises'])})
+        manifest.append({'pdfPage':index,'bookPage':book,'kind':page['kind'],'exercises':len(page['exercises']),'fields':sum(len(e['fields']) for e in page['exercises'])})
     (base/'native/v1/manifest.json').write_text(json.dumps({'version':1,'title':'Aspekte neu B2 · Lehrbuch','pages':manifest,'exercises':report['exercises'],'fields':report['fields']},ensure_ascii=False,indent=2))
     (base/'native-authoring-audit.json').write_text(json.dumps(report,ensure_ascii=False,indent=2));print(json.dumps({k:v for k,v in report.items() if k not in ['headings','recovered']},ensure_ascii=False))
 if __name__=='__main__':main()

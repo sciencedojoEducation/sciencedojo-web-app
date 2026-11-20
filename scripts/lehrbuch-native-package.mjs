@@ -4,7 +4,7 @@ import {createHash} from 'node:crypto';
 const uuid=/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
 const token=/\{\{([^}#]+)(?:#\d+)?\}\}/g;
 export async function collectLehrbuchNative(root){
- const files=[],figures=new Set(),ids=new Set();let exercises=0,fields=0,inline=0;
+ const files=[],pageMetadata=[],figures=new Set(),ids=new Set();let exercises=0,fields=0,inline=0;
  const add=async(path,type)=>{const data=await readFile(join(root,path));if(!data.length||data.length>5000000)throw new Error(`Invalid private source size: ${path}`);files.push({path,type,data,sha256:createHash('sha256').update(data).digest('hex')});return data;};
  const asset=name=>{if(!/^p[1-9]\d{0,2}-f[1-9]\d?$/.test(name))throw new Error('Unexpected illustration asset');figures.add(name);};
  const blocks=(list,fieldIds)=>{for(const b of list){if(b.type==='figure'){asset(b.asset);}const text=(b.text||'')+' '+(b.rows||[]).flat().join(' ');for(const m of text.matchAll(token)){if(!fieldIds.has(m[1]))throw new Error('Inline answer has no field');inline++;}}};
@@ -23,9 +23,11 @@ export async function collectLehrbuchNative(root){
    blocks(e.content||[],fieldIds);
   }
   if(Object.keys(page.entryIds).length!==page.exercises.reduce((s,e)=>s+e.fields.length,0))throw new Error('Orphan answer binding');
+  pageMetadata.push({pdfPage:n,bookPage:n-1,kind:page.kind,exercises:page.exercises.length,fields:page.exercises.reduce((s,e)=>s+e.fields.length,0)});
  }
  const manifest=JSON.parse((await add('native/v1/manifest.json','application/json')).toString());
  if(manifest.pages.length!==202||manifest.exercises!==exercises||manifest.fields!==fields)throw new Error('Manifest differs from source pages');
+ for(let n=0;n<pageMetadata.length;n++)for(const key of Object.keys(pageMetadata[n]))if(manifest.pages[n][key]!==pageMetadata[n][key])throw new Error(`Manifest page metadata differs: PDF page ${n+1}`);
  for(const name of [...figures].sort())await add(`figures/v1/${name}.jpg`,'image/jpeg');
  return {files,stats:{pages:202,exercises,fields,inline,figures:figures.size,files:files.length,bytes:files.reduce((s,f)=>s+f.data.length,0)}};
 }
