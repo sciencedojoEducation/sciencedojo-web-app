@@ -7,6 +7,7 @@ export type WorkbookField = {
   multiple?: boolean;
   multiline?: boolean;
   segments?: number;
+  illustration?: { asset: string; alt: string };
   answers: string[];
   evaluation: "exact" | "set" | "review" | "self";
 };
@@ -19,6 +20,7 @@ export type WorkbookBlock = {
   asset?: string;
   alt?: string;
   readingImage?: boolean;
+  responsive?: boolean;
 };
 export type WorkbookMarker = {
   type: "audio" | "solution" | "exam";
@@ -31,6 +33,7 @@ export type WorkbookMarker = {
 };
 export type WorkbookExercise = {
   id: string;
+  sourceLabel?: string;
   instruction: string;
   mode: "fill" | "choice" | "match" | "order" | "writing" | "speaking" | "self";
   wordBank: string[];
@@ -47,6 +50,7 @@ export type WorkbookExercise = {
   contextPages?: number[];
   contextExercises?: string[];
   relatedTracks?: number[];
+  layout?: "cards";
 };
 export type WorkbookPage = {
   bookPage: number;

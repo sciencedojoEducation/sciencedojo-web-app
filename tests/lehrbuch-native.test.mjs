@@ -31,6 +31,7 @@ test('native package rejects orphan tokens and any unverified exact answer key',
  const page={nativeVersion:1,pdfPage:1,bookPage:0,content:[],exercises:[{id:'1',fields:[{id:'a',evaluation:'exact',answers:['invented']}],content:[]}],entryIds:{},exerciseNotes:{}};
  try{await writeFile(join(root,'native/v1/001.json'),JSON.stringify(page));await assert.rejects(collectLehrbuchNative(root),/unverified answer key/);
  page.exercises=[];page.content=[{type:'text',text:'{{missing}}'}];await writeFile(join(root,'native/v1/001.json'),JSON.stringify(page));await assert.rejects(collectLehrbuchNative(root),/no field/);
+ page.content=[];page.exercises=[{id:'quiz',fields:[{id:'a',evaluation:'review',illustration:{asset:'../private-file'}}],content:[]}];await writeFile(join(root,'native/v1/001.json'),JSON.stringify(page));await assert.rejects(collectLehrbuchNative(root),/Unexpected illustration asset/);
  }finally{await rm(root,{recursive:true,force:true});}
 });
 const privateRoot=join(process.cwd(),'private-materials/aspekte-neu-b2-lehrbuch/derived');

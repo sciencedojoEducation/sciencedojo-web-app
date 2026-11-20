@@ -231,7 +231,7 @@ def main():
     parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--pdf',required=True,type=Path);parser.add_argument('--base',type=Path,default=ROOT/'private-materials/aspekte-neu-b2-lehrbuch/derived');args=parser.parse_args();base=args.base
     (base/'native/v1').mkdir(parents=True,exist_ok=True);(base/'figures/v1').mkdir(parents=True,exist_ok=True)
     manual=json.loads((base/'native-authoring-overrides.json').read_text()) if (base/'native-authoring-overrides.json').exists() else {}
-    pdf=PdfReader(args.pdf);report={'pages':0,'exercises':0,'fields':0,'figures':0,'inline':0,'pagesWithoutTasks':[],'headings':{},'recovered':[]};parent=0;previous=None;lastSection='Lehrbuch';all_ids=set();manifest=[]
+    pdf=PdfReader(args.pdf);report={'pages':0,'exercises':0,'fields':0,'figures':0,'inline':0,'pagesWithoutTasks':[],'headings':{},'recovered':[]};parent=0;previous=None;lastSection='Lehrbuch';all_ids=set();used_figures=set();manifest=[]
     for index in range(1,203):
         book=index-1;relative=(book-8)%16;chapter=(book-8)//16 if 8<=book<=167 else -1
         if relative==0 and chapter>=0:parent=0;previous=None;lastSection=TITLES[chapter]
@@ -303,12 +303,15 @@ def main():
         if 'exercises' in override:page['exercises']=override['exercises']
         if 'content' in override:page['content']=override['content']
         page['section']=override.get('section',page['section'])
+        page['kind']=override.get('kind',page['kind'])
+        page['notices']=override.get('notices',page['notices'])
         order=manual.get('exerciseOrder',{}).get(str(index),[])
         if order:page['exercises'].sort(key=lambda e:order.index(e['id']) if e['id'] in order else len(order))
         seen=set()
         for e in page['exercises']:
             patch=manual.get('exercises',{}).get(f'{index}:{e["id"]}',{})
             e.update(patch)
+            if e['id']=='portrait':e['sourceLabel']=''
             if e['id'] in seen:e['id']+='-continuation'
             seen.add(e['id']);e['wordBank']=list(dict.fromkeys(e.get('wordBank',[])))
             for f in e['fields']:
@@ -321,7 +324,10 @@ def main():
                 report['inline']+=len(tokens)
             report['exercises']+=1;report['fields']+=len(e['fields'])
         if not page['exercises']:report['pagesWithoutTasks'].append(book)
-        report['pages']+=1;report['figures']+=len(fs)
+        for block in page['content']+[block for e in page['exercises'] for block in e.get('content',[])]:
+            if block['type']=='figure':used_figures.add(block['asset'])
+        used_figures.update(f['illustration']['asset'] for e in page['exercises'] for f in e['fields'] if f.get('illustration'))
+        report['pages']+=1;report['figures']=len(used_figures)
         (base/'native/v1'/f'{index:03}.json').write_text(json.dumps(page,ensure_ascii=False,indent=2))
         manifest.append({'pdfPage':index,'bookPage':book,'kind':kind,'exercises':len(page['exercises']),'fields':sum(len(e['fields']) for e in page['exercises'])})
     (base/'native/v1/manifest.json').write_text(json.dumps({'version':1,'title':'Aspekte neu B2 · Lehrbuch','pages':manifest,'exercises':report['exercises'],'fields':report['fields']},ensure_ascii=False,indent=2))
