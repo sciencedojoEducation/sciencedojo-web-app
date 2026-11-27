@@ -99,3 +99,18 @@ The native Lehrbuch correction is now released: PR #25 merged as `c3d48d2`; its 
 On 30 October the owner requested the Lehrbuch match the colourful Arbeitsbuch/Intensivtrainer UI, including its sidebar and surrounding controls. Use the shared `wb-app`/chapter navigation theme, rounded workbook typography, multicolour chapter badges and blue page controls. Preserve task answers, own-account journal/drafts, pins, manual review, source privacy and backups. The Lehrbuch adds its existing reflection panel and journal using matching pastel cards. Its mobile chapter menu is a native modal dialog with Escape/focus return; three-digit page numbers must stay on one line. See the visual-alignment entry in `docs/aspekte-lehrbuch.md` and its private release evidence.
 
 On 20 November the owner reported missing/poorly converted activities, specifically Wissenschaft, and requested missing-question and layout repairs across the book. Follow `docs/aspekte-lehrbuch-content-audit.md` and its private source-page inventory. The old any-exercise-per-page validator is not a completeness gate. Inspect chapter openings, repeated question numbers across sections, tables, choices and supporting source text/images. Preserve existing meaningful field IDs; retired/ambiguous answers must remain visible in the own-account journal/page notes. Keep the colourful workbook UI and all existing private/admin/CAS/media boundaries. The audit covers all202 source pages; a representative sample or repaired Wissenschaft alone does not complete it.
+
+## Lehrbuch chapter 05 second review — 27 November 2026
+
+The owner prioritised reviewing every individual page of chapter 05. Printed72–87
+were compared visually against the source again; the live admin chapter now has
+59 tasks/176 responses, corrected OCR/paragraphs and supporting illustrations.
+All373 private package objects passed upload/download hashes. Canonical existing-owner
+answer/question save→reload→journal and all16 page checks passed; only the two
+owned synthetic rows were removed and all13 prior rows remained exactly unchanged.
+The older owner tab was preserved and the new reader restored to printed75.
+Keep stable answer bindings, the private-only audience, manual review and missing-media
+notices. Read the 27 November entry in `docs/aspekte-lehrbuch-content-audit.md`.
+The whole-book inventory is still74/202, with128 pages and33 reference layouts pending;
+do not infer full-book completion from chapter05. Publication now verifies illustrations
+before dependent page JSON and manifest last, with bounded fresh authenticated reads.
