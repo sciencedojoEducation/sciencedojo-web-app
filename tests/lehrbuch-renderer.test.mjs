@@ -7,6 +7,7 @@ import ts from 'typescript';
 import React from 'react';
 import {renderToStaticMarkup} from 'react-dom/server';
 import * as workbook from '../lib/aspekte-workbook.ts';
+import {lehrbuchExerciseLabel} from '../lib/lehrbuch.ts';
 const require=createRequire(import.meta.url);
 const exports={};
 const modules={react:React,'react/jsx-runtime':require('react/jsx-runtime'),'lucide-react':require('lucide-react'),'@/lib/aspekte-workbook':workbook,'./WorkbookRecorder':{default:()=>null},'./WorkbookMarkers':{default:()=>null},'@/lib/workbook-recording-client':{},'@/utils/supabase/client':{}};
@@ -44,4 +45,13 @@ test('multiple source choices show selected responses independently and preserve
 test('unnumbered source templates hide internal task IDs while retaining their answer bindings',()=>{
  const html=render(exercise([field('name')],{id:'person',sourceLabel:'',instruction:'Portrait template'}));
  assert.doesNotMatch(html,/wb-exercise-number/);assert.match(html,/id="72:person:name"/);assert.match(html,/Portrait template/);
+});
+test('corrected source numbers agree in exercise and journal labels while answer bindings keep their original task ID',()=>{
+ const html=render(exercise([field('response')],{id:'2b',sourceLabel:'4b'}),{page:103});
+ assert.match(html,/wb-exercise-number">4b</);
+ assert.match(html,/id="103:2b:response"/);
+ assert.equal(lehrbuchExerciseLabel('2b','4b'),'4b');
+ assert.equal(lehrbuchExerciseLabel('2c','4c'),'4c');
+ assert.equal(lehrbuchExerciseLabel('1a'),'1a');
+ assert.equal(lehrbuchExerciseLabel('portrait',''),'portrait');
 });

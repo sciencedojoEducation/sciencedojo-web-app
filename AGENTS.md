@@ -114,3 +114,20 @@ notices. Read the 27 November entry in `docs/aspekte-lehrbuch-content-audit.md`.
 The whole-book inventory is still74/202, with128 pages and33 reference layouts pending;
 do not infer full-book completion from chapter05. Publication now verifies illustrations
 before dependent page JSON and manifest last, with bounded fresh authenticated reads.
+
+## Lehrbuch chapter 06 — 27 November 2026
+
+The owner requested the next chapter review. All16 source pages88–103 in “Fit für …”
+were compared individually. Its51 tasks/175 fields restore opening puzzles, source
+tables/matching/listening cells, full phone cards/readings/portraits and film activities.
+All383 private package objects passed uploaded/downloaded hashes. Canonical all16-page
+checks and answer/two-choice/question save→reload→journal passed; the three owned
+synthetic rows were removed and all13 original rows were unchanged. Preserve original
+meaningful IDs;28 retired broad/ambiguous/model fields remain in page notes/journal.
+Legacy film task IDs2b/2c display source labels4b/4c, including newly created journal
+titles; never rename their persisted bindings or overwrite existing custom titles.
+Read the chapter06 entry in `docs/aspekte-lehrbuch-content-audit.md` for local checks,
+the recovered page94 browser network failure and actual source/application release
+evidence. The whole-book source inventory is now90/202, with112 pages and33 appendix
+reference layouts pending. Keep manual review, absent-media/OCR/source privacy and
+admin-only access. Do not rerun081 or infer full-book completion.

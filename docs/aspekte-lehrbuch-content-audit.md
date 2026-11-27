@@ -72,3 +72,36 @@ The former upload halted after an immediate read failed verification; a later re
 Private publication completed on 27 November: all **373 objects / 9,040,463 bytes** were uploaded and downloaded with matching SHA-256 hashes; the manifest was last. The package has 202 pages, 546 tasks, 1,097 fields and 170 figures. No verification retry was needed in this run. The original private source baseline remains available for rollback.
 
 PR27 is merged into main as `7516d1a`; its Vercel deployment status is successful. The existing-owner canonical browser opened every chapter 05 page, matching all expected task/field counts. The four pre-existing passive answers displayed in their corresponding fields. A new quiz answer and exercise-specific question survived save, reload and journal display and were confirmed in the database. Both exact synthetic rows were removed with owner/book/id/content/revision guards against their empty pre-test bindings. All 13 original rows matched the fresh baseline exactly afterward. The new reader was restored to printed page 75 with “All changes saved”; the older owner tab was untouched. Canonical anonymous content, illustration and entries requests all returned 401/no-store. Private evidence includes the full upload hash report, page checks, owned-fixture cleanup report and live quiz screenshot. Audio/video remains absent, review remains manual, and source text retains its OCR qualification. These checks establish this admin-only chapter release, not independent proofreading or completion of the remaining book.
+
+### Chapter 06 — 27 November 2026
+
+The owner requested checking the next chapter. All sixteen source images for **Fit für …**, printed pages 88–103, were inspected individually against the native version. The source review restores the 25 opening puzzles, independent category/listening/table cells, missing matching rows, complete phone role cards, reading passages, portraits and film activities. Supplied grammar examples are read-only; repeated OCR fragments are not additional answer blanks.
+
+| Printed page | Source activities checked | Response fields |
+| --- | --- | ---: |
+| 88 | Curiosities, relatives and common-word groups A–C | 13 |
+| 89 | Letter series, analogies, dates D–F; comparison and own quiz | 14 |
+| 90 | Shopping vocabulary, four listening topics, advantages/disadvantages and information columns | 12 |
+| 91 | Passive diagrams, four rule cells, seven unfilled blanks, four rewrites and discussion | 20 |
+| 92 | Personal response, two dialogues, coach advice and nine telephone matches | 13 |
+| 93 | Ten phrase groups, all six role cards and three conversation drafts | 5 |
+| 94 | Thirteen properties and five complete article-to-property matches | 7 |
+| 95 | Speaker notes, conjunction/verb/rule activities, four rewrites and reflection | 20 |
+| 96 | Mindmap, eight vocabulary matches, six complete listening statements and discussion | 16 |
+| 97 | Both full articles in reading order, separate notes and partner summary | 3 |
+| 98 | Full email, five idioms, six ordering/planning rows, final email and review | 22 |
+| 99 | Three photos with separate pro/contra cells, phrase categories and dialogue | 10 |
+| 100 | All six complete historical sport portraits, photos and research task | 1 |
+| 101 | Complete grammar reference tables and examples; reading only | 0 |
+| 102 | Four concentration photos, prior knowledge and both full reading texts | 6 |
+| 103 | Restored film observation/questions, all 28 properties, quotation and complete forum | 13 |
+
+The chapter has **51 tasks / 175 fields**. All 63 retained answer bindings match the preceding published package. Twenty-eight retired broad/ambiguous/model fields have explicit preservation reasons and remain editable as original page notes/journal entries; 112 source-specific fields are new. Original baseline and preceding-release compatibility audits both report zero errors. The full-book inventory is now **90/202**, with **112 pages and 33 appendix reference layouts pending**. This does not complete the whole book or establish independent proofreading.
+
+Two film tasks keep their legacy internal IDs `2b`/`2c` to preserve answers but display the correct source numbers `4b`/`4c`. The application correction also uses those source numbers in newly created answer, question, reflection and review titles and the associated note badge. Existing custom titles and UUIDs are preserved. A synthetic regression verifies the visible source label together with the unchanged binding. The local browser created a question showing “4b” against the original `2b` question UUID; its one exact synthetic row was removed and all ten prior local rows matched the baseline. Production publication of this application correction is tracked separately from the already-published source data.
+
+All sixteen pages matched the source inventory's task/field counts at desktop and in a confirmed 390px same-origin iframe (386px document). There were no duplicate control IDs or document overflow. The stacked email planning table was visually inspected. All **504 regression tests**, TypeScript, focused lint (the retained original-image warning only) and the production webpack build pass. Both build-trace checks report zero private/source/environment files. The temporary phone harness was removed; source text, OCR, crops, overrides, snapshots and learning records remain ignored private material.
+
+Private source publication completed: **383 objects / 9,110,796 bytes** all matched their upload/download hashes, with illustrations before pages and manifest last. The package totals 202 pages, 548 tasks, 1,181 fields and 180 figures. The canonical existing-owner reader opened all sixteen chapter pages with the expected task/field counts. A new answer, simultaneous two-word selection and exercise-specific question survived save → reload → journal and matched their database rows. All three owned rows were removed with owner/book/id/title/body/revision guards against empty pre-test bindings; all thirteen original rows remained exactly unchanged. One page94 browser fetch failed during the sweep; its direct authenticated content endpoint returned the correct data, and reopening the reader recovered the page. The remaining sweep completed. The evidence records this recovery without claiming a diagnosed network root cause. New content, illustration and entries endpoints returned anonymous 401/no-store.
+
+Private evidence is in `private-materials/lehrbuch-chapter06-2026-11-27/`. Preserve manual review, missing audio/video, historical portrait wording and source/OCR qualification. No schema change, external AI submission or broader audience is authorised by this chapter correction.
