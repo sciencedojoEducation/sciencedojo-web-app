@@ -1,6 +1,6 @@
 'use client';
 import styles from './LehrbuchBook.module.css';
-import { LEHRBUCH_API, type LehrbuchNativePage } from '@/lib/lehrbuch';
+import { LEHRBUCH_API, lehrbuchExerciseLabel, type LehrbuchNativePage } from '@/lib/lehrbuch';
 import NativeWorkbookExercise, { NativeWorkbookBlock } from './NativeWorkbookExercise';
 import type { WorkbookAnswers } from '@/lib/aspekte-workbook';
 import './workbook.css';
@@ -104,20 +104,21 @@ export default function LehrbuchBook({owner}:{owner:string}) {
   const byId=new Map(items.map(e=>[e.id,e]));
   const nativeAnswers:WorkbookAnswers=Object.fromEntries(Object.entries(nativePage?.entryIds||{}).map(([key,id])=>[key,byId.get(id)?.body||'']));
   const nativeHiddenIds=new Set([...Object.values(nativePage?.entryIds||{}),...Object.values(nativePage?.exerciseNotes||{}).map(n=>n.review)]);
+  const taskLabel=(id:string)=>lehrbuchExerciseLabel(id,nativePage?.exercises.find(e=>e.id===id)?.sourceLabel);
   function nativeAnswer(key:string,value:string){
     if(!ready||!nativePage)return;const id=nativePage.entryIds[key];if(!id)return;
     const [printed,exerciseId,fieldId]=key.split(':');const exercise=nativePage.exercises.find(e=>e.id===exerciseId);const f=exercise?.fields.find(f=>f.id===fieldId);
     const previous=entries.current.find(e=>e.id===id);
-    change({...previous||{id,page,kind:'answer',title:`Seite ${printed} · Übung ${exerciseId} · ${f?.label||fieldId}`,body:'',resolved:0,x:null,y:null,revision:0,updated:new Date().toISOString()},body:value});
+    change({...previous||{id,page,kind:'answer',title:`Seite ${printed} · Übung ${taskLabel(exerciseId)} · ${f?.label||fieldId}`,body:'',resolved:0,x:null,y:null,revision:0,updated:new Date().toISOString()},body:value});
   }
   function taskNote(exerciseId:string,kind:'question'|'reflection'){
     const id=nativePage?.exerciseNotes[exerciseId]?.[kind];if(!ready||!id)return;
-    if(!entries.current.some(e=>e.id===id))change({id,page,kind,title:kind==='question'?`Meine Frage zu Übung ${exerciseId}`:`Reflexion zu Übung ${exerciseId}`,body:'',resolved:0,x:null,y:null,revision:0,updated:new Date().toISOString()});
+    if(!entries.current.some(e=>e.id===id))change({id,page,kind,title:kind==='question'?`Meine Frage zu Übung ${taskLabel(exerciseId)}`:`Reflexion zu Übung ${taskLabel(exerciseId)}`,body:'',resolved:0,x:null,y:null,revision:0,updated:new Date().toISOString()});
     setActive(id);setFocus(false);setTimeout(()=>document.getElementById(`title-${id}`)?.focus(),100);
   }
   function reviewTask(exerciseId:string,reason:string){
     const id=nativePage?.exerciseNotes[exerciseId]?.review;if(!id||!ready)return;
-    const old=entries.current.find(e=>e.id===id);change({...old||{id,page,kind:'reflection',title:`Selbsteinschätzung · Übung ${exerciseId}`,resolved:0,x:null,y:null,revision:0,updated:new Date().toISOString()},body:reason==='self-review'?'Selbst geprüft':'Noch üben'});
+    const old=entries.current.find(e=>e.id===id);change({...old||{id,page,kind:'reflection',title:`Selbsteinschätzung · Übung ${taskLabel(exerciseId)}`,resolved:0,x:null,y:null,revision:0,updated:new Date().toISOString()},body:reason==='self-review'?'Selbst geprüft':'Noch üben'});
   }
   function retryTask(exerciseId:string){
     if(!nativePage||!ready)return;
@@ -131,7 +132,7 @@ export default function LehrbuchBook({owner}:{owner:string}) {
   const ch=chapterAt(page),current=chapters[ch],pageEntries=items.filter(e=>e.page===page&&e.kind!=='bookmark'),notes=items.filter(e=>e.kind!=='bookmark');
   const display=notes.filter(e=>(filter==='all'||(filter==='open'?e.kind==='question'&&!e.resolved:filter==='review'?e.kind==='reflection'&&e.body==='Noch üben':e.kind===filter))&&`${e.title} ${e.body}`.toLocaleLowerCase().includes(search.toLocaleLowerCase()));
   const pageNotes=pageEntries.filter(e=>!nativeHiddenIds.has(e.id));
-  function card(e:Entry){const sourceTask=Object.entries(nativePage?.exerciseNotes||{}).find(([,ids])=>ids.question===e.id||ids.reflection===e.id)?.[0];const meta=kinds[e.kind]||kinds.reflection,Icon=meta.icon;return <article className={`note-card ${e.kind} ${active===e.id?'active':''}`} key={e.id} id={`note-${e.id}`}><div className="note-heading"><span><Icon size={14}/>{meta.label}{sourceTask&&<span className="tiny">· Übung {sourceTask}</span>}{e.x!==null&&<span className="tiny">· pinned</span>}</span><button className="icon-btn small" title="Delete entry" aria-label="Delete entry" onClick={()=>void remove(e)}><Trash2 size={14}/></button></div><label className="sr-only" htmlFor={`title-${e.id}`}>{e.kind==='question'?'Your question':'Title or exercise reference'}</label><input id={`title-${e.id}`} className="note-title" maxLength={1000} value={e.title} placeholder={e.kind==='question'?'Write your question…':'Title or exercise (e.g. 1a)'} onChange={ev=>change({...e,title:ev.target.value})}/><label className="note-label" htmlFor={`body-${e.id}`}>{e.kind==='question'?'My answer / understanding':e.kind==='answer'?'My answer':e.kind==='vocabulary'?'Meaning & example':'My reflection'}</label><textarea id={`body-${e.id}`} rows={e.body.length>250?7:4} maxLength={40000} value={e.body} placeholder={e.kind==='question'?'Leave this open, or write what you think so far…':meta.placeholder} onChange={ev=>change({...e,body:ev.target.value})}/><div className="note-footer">{view==='journal'?<button className="text-btn" onClick={()=>{go(e.page);setView('book');setActive(e.id);}}> {pageLabel(e.page)} <ArrowUpRight size={12}/></button>:<span>{pageLabel(e.page)}</span>}{e.kind==='question'&&<label className="resolve"><input type="checkbox" checked={!!e.resolved} onChange={ev=>change({...e,resolved:ev.target.checked?1:0})}/>{e.resolved?'Understood':'Still exploring'}</label>}</div></article>;}
+  function card(e:Entry){const sourceTask=Object.entries(nativePage?.exerciseNotes||{}).find(([,ids])=>ids.question===e.id||ids.reflection===e.id)?.[0];const meta=kinds[e.kind]||kinds.reflection,Icon=meta.icon;return <article className={`note-card ${e.kind} ${active===e.id?'active':''}`} key={e.id} id={`note-${e.id}`}><div className="note-heading"><span><Icon size={14}/>{meta.label}{sourceTask&&<span className="tiny">· Übung {taskLabel(sourceTask)}</span>}{e.x!==null&&<span className="tiny">· pinned</span>}</span><button className="icon-btn small" title="Delete entry" aria-label="Delete entry" onClick={()=>void remove(e)}><Trash2 size={14}/></button></div><label className="sr-only" htmlFor={`title-${e.id}`}>{e.kind==='question'?'Your question':'Title or exercise reference'}</label><input id={`title-${e.id}`} className="note-title" maxLength={1000} value={e.title} placeholder={e.kind==='question'?'Write your question…':'Title or exercise (e.g. 1a)'} onChange={ev=>change({...e,title:ev.target.value})}/><label className="note-label" htmlFor={`body-${e.id}`}>{e.kind==='question'?'My answer / understanding':e.kind==='answer'?'My answer':e.kind==='vocabulary'?'Meaning & example':'My reflection'}</label><textarea id={`body-${e.id}`} rows={e.body.length>250?7:4} maxLength={40000} value={e.body} placeholder={e.kind==='question'?'Leave this open, or write what you think so far…':meta.placeholder} onChange={ev=>change({...e,body:ev.target.value})}/><div className="note-footer">{view==='journal'?<button className="text-btn" onClick={()=>{go(e.page);setView('book');setActive(e.id);}}> {pageLabel(e.page)} <ArrowUpRight size={12}/></button>:<span>{pageLabel(e.page)}</span>}{e.kind==='question'&&<label className="resolve"><input type="checkbox" checked={!!e.resolved} onChange={ev=>change({...e,resolved:ev.target.checked?1:0})}/>{e.resolved?'Understood':'Still exploring'}</label>}</div></article>;}
 
   const navigation=<>
     <Link className="wb-brand" href="/dashboard/admin/workbooks" aria-label="Back to ScienceDojo private workbooks">sciencedojo<span>.</span></Link>

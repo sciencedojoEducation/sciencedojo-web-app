@@ -1,6 +1,10 @@
 /** Personal textbook reflections. No source material or credentials in this model. */
 export const LEHRBUCH_KEY = 'aspekte-neu-b2-lehrbuch';
 export const LEHRBUCH_API = `/api/workbook/${LEHRBUCH_KEY}`;
+/** Human source numbering can be corrected without renaming saved task bindings. */
+export function lehrbuchExerciseLabel(exerciseId: string, sourceLabel?: string): string {
+  return sourceLabel?.trim() || exerciseId;
+}
 export type LehrbuchEntry = { id: string; page: number; kind: string; title: string; body: string; resolved: number; x: number | null; y: number | null; revision: number; updated: string };
 export function parseLehrbuchEntry(value: unknown): LehrbuchEntry {
   const e = value as LehrbuchEntry;
